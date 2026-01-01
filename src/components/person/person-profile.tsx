@@ -61,6 +61,7 @@ export function PersonProfile({
     type: r.type,
     person: r.relatedPerson,
     marriageDate: r.marriageDate,
+    divorceDate: r.divorceDate,
     isActive: r.isActive,
   }));
 
@@ -69,6 +70,7 @@ export function PersonProfile({
     type: getInverseType(r.type),
     person: r.person,
     marriageDate: r.marriageDate,
+    divorceDate: r.divorceDate,
     isActive: r.isActive,
   }));
 

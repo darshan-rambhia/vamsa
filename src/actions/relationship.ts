@@ -5,7 +5,9 @@ import { db } from "@/lib/db";
 import { requireMember } from "@/lib/auth";
 import {
   relationshipCreateSchema,
+  relationshipUpdateSchema,
   type RelationshipCreateInput,
+  type RelationshipUpdateInput,
 } from "@/schemas/relationship";
 import type { RelationshipType } from "@prisma/client";
 
@@ -88,6 +90,50 @@ export async function createRelationship(input: RelationshipCreateInput) {
   revalidatePath("/tree");
 
   return { success: true, relationship };
+}
+
+export async function updateRelationship(
+  id: string,
+  input: RelationshipUpdateInput
+) {
+  await requireMember();
+  const validated = relationshipUpdateSchema.parse(input);
+
+  const relationship = await db.relationship.findUnique({ where: { id } });
+  if (!relationship) {
+    throw new Error("Relationship not found");
+  }
+
+  const updated = await db.relationship.update({
+    where: { id },
+    data: {
+      marriageDate: validated.marriageDate,
+      divorceDate: validated.divorceDate,
+      isActive: validated.isActive,
+    },
+  });
+
+  if (relationship.type === "SPOUSE") {
+    await db.relationship.updateMany({
+      where: {
+        personId: relationship.relatedPersonId,
+        relatedPersonId: relationship.personId,
+        type: "SPOUSE",
+      },
+      data: {
+        marriageDate: validated.marriageDate,
+        divorceDate: validated.divorceDate,
+        isActive: validated.isActive,
+      },
+    });
+  }
+
+  revalidatePath("/people");
+  revalidatePath(`/people/${relationship.personId}`);
+  revalidatePath(`/people/${relationship.relatedPersonId}`);
+  revalidatePath("/tree");
+
+  return { success: true, relationship: updated };
 }
 
 export async function deleteRelationship(id: string) {
