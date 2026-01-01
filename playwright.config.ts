@@ -13,8 +13,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 2 : undefined,
   fullyParallel: true,
-  outputDir: "test-results/",
-  reporter: [["html", { outputFolder: "playwright-report" }], ["list"]],
+  outputDir: "test-output/results/",
+  reporter: [["html", { outputFolder: "test-output/playwright/" }], ["list"]],
 
   webServer: {
     command: "bun run dev",

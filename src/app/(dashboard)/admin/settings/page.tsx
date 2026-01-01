@@ -17,7 +17,7 @@ export default async function SettingsPage() {
       <div>
         <h1 className="text-3xl font-bold">Settings</h1>
         <p className="text-muted-foreground">
-          Configure your family tree application
+          Configure your Vamsa application
         </p>
       </div>
       <SettingsForm settings={settings} />

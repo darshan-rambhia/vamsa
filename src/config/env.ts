@@ -21,7 +21,7 @@ const envSchema = z.object({
   S3_ACCESS_KEY: z.string().optional(),
   S3_SECRET_KEY: z.string().optional(),
   S3_REGION: z.string().optional(),
-  NEXT_PUBLIC_APP_NAME: z.string().default("Family Tree"),
+  NEXT_PUBLIC_APP_NAME: z.string().default("Vamsa"),
   NEXT_PUBLIC_APP_URL: z.string().url().default("http://localhost:3000"),
 });
 

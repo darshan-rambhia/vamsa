@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: process.env.NEXT_PUBLIC_APP_NAME || "Family Tree",
+  title: process.env.NEXT_PUBLIC_APP_NAME || "Vamsa",
   description: "Manage and explore your family genealogy",
 };
 

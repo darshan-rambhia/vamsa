@@ -13,7 +13,7 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - STORAGE_PROVIDER=local
       - STORAGE_LOCAL_PATH=/app/data/uploads
-      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-Family Tree}
+      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-Vamsa}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
     volumes:
       - app_data:/app/data

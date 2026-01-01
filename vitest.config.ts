@@ -12,6 +12,7 @@ export default defineConfig({
     exclude: ["node_modules", ".next", "e2e"],
     coverage: {
       provider: "v8",
+      reportsDirectory: "test-output/coverage",
       reporter: ["text", "json", "html"],
       exclude: [
         "node_modules",
@@ -20,7 +21,19 @@ export default defineConfig({
         "**/*.d.ts",
         "**/*.config.*",
         "**/types/*",
+        "**/*.test.{ts,tsx}",
+        "**/*.spec.{ts,tsx}",
+        "**/vitest.setup.ts",
+        "src/app/**",
+        "src/config/env.ts",
+        "prisma/**",
       ],
+      thresholds: {
+        lines: 90,
+        functions: 90,
+        branches: 85,
+        statements: 90,
+      },
     },
   },
 });

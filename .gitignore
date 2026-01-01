@@ -10,7 +10,10 @@ build
 dist
 
 # Testing
+test-output
 coverage
+playwright-report
+test-results
 
 # Misc
 .DS_Store

@@ -85,6 +85,140 @@ describe("personCreateSchema", () => {
     const result = personCreateSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
   });
+
+  it("transforms date strings to Date objects", () => {
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      dateOfBirth: "2000-01-15",
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dateOfBirth).toBeInstanceOf(Date);
+    }
+  });
+
+  it("handles Date objects for dates", () => {
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      dateOfBirth: new Date(2000, 0, 15),
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dateOfBirth).toBeInstanceOf(Date);
+    }
+  });
+
+  it("accepts valid address", () => {
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      currentAddress: {
+        street: "123 Main St",
+        city: "Springfield",
+        state: "IL",
+        postalCode: "62701",
+        country: "USA",
+      },
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts valid social links", () => {
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      socialLinks: {
+        facebook: "https://facebook.com/johndoe",
+        twitter: "https://twitter.com/johndoe",
+        linkedin: "https://linkedin.com/in/johndoe",
+      },
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid social link URLs", () => {
+    const invalidData = {
+      firstName: "John",
+      lastName: "Doe",
+      socialLinks: {
+        facebook: "not-a-url",
+      },
+    };
+
+    const result = personCreateSchema.safeParse(invalidData);
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts empty string for email", () => {
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      email: "",
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts empty string for social links", () => {
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      socialLinks: {
+        facebook: "",
+        twitter: "",
+      },
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts null for dateOfBirth", () => {
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      dateOfBirth: null,
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts undefined for dateOfBirth", () => {
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      dateOfBirth: undefined,
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts empty string for dateOfBirth", () => {
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      dateOfBirth: "",
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dateOfBirth).toBeNull();
+    }
+  });
 });
 
 describe("personUpdateSchema", () => {

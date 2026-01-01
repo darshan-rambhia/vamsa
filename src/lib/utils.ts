@@ -17,15 +17,28 @@ export function parseDateString(value: string | null | undefined): Date | null {
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (match) {
     const [, year, month, day] = match;
-    // Create date at noon local time to avoid day boundary issues
-    return new Date(
-      parseInt(year),
-      parseInt(month) - 1,
-      parseInt(day),
-      12,
-      0,
-      0
-    );
+    const y = parseInt(year);
+    const m = parseInt(month);
+    const d = parseInt(day);
+
+    const isMonthValid = m >= 1 && m <= 12;
+    const isDayInRange = d >= 1 && d <= 31;
+    if (!isMonthValid || !isDayInRange) {
+      return null;
+    }
+
+    const date = new Date(y, m - 1, d, 12, 0, 0);
+
+    const dateWasNotWrappedByJavaScript =
+      date.getFullYear() === y &&
+      date.getMonth() === m - 1 &&
+      date.getDate() === d;
+
+    if (!dateWasNotWrappedByJavaScript) {
+      return null;
+    }
+
+    return date;
   }
 
   // Fallback: try to parse as-is (for ISO strings with time)

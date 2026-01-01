@@ -62,7 +62,7 @@ export default function LoginPage() {
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Welcome Back</CardTitle>
-        <CardDescription>Sign in to your family tree account</CardDescription>
+        <CardDescription>Sign in to your Vamsa account</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">

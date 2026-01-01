@@ -60,7 +60,7 @@ export function Navbar() {
           <Link href="/tree" className="mr-6 flex items-center space-x-2">
             <TreePine className="h-6 w-6" />
             <span className="hidden font-bold sm:inline-block">
-              {process.env.NEXT_PUBLIC_APP_NAME || "Family Tree"}
+              {process.env.NEXT_PUBLIC_APP_NAME || "Vamsa"}
             </span>
           </Link>
         </div>

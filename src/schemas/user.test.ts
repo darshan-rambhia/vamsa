@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loginSchema, registerSchema } from "./user";
+import { loginSchema, registerSchema, changePasswordSchema } from "./user";
 
 describe("loginSchema", () => {
   it("validates valid login data", () => {
@@ -97,5 +97,53 @@ describe("registerSchema", () => {
 
     const result = registerSchema.safeParse(invalidData);
     expect(result.success).toBe(false);
+  });
+});
+
+describe("changePasswordSchema", () => {
+  it("validates valid password change data", () => {
+    const validData = {
+      currentPassword: "oldpassword123",
+      newPassword: "newpassword123",
+      confirmPassword: "newpassword123",
+    };
+
+    const result = changePasswordSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+  });
+
+  it("requires current password", () => {
+    const invalidData = {
+      newPassword: "newpassword123",
+      confirmPassword: "newpassword123",
+    };
+
+    const result = changePasswordSchema.safeParse(invalidData);
+    expect(result.success).toBe(false);
+  });
+
+  it("requires new password to be at least 8 characters", () => {
+    const invalidData = {
+      currentPassword: "oldpassword123",
+      newPassword: "short",
+      confirmPassword: "short",
+    };
+
+    const result = changePasswordSchema.safeParse(invalidData);
+    expect(result.success).toBe(false);
+  });
+
+  it("requires passwords to match", () => {
+    const invalidData = {
+      currentPassword: "oldpassword123",
+      newPassword: "newpassword123",
+      confirmPassword: "different123",
+    };
+
+    const result = changePasswordSchema.safeParse(invalidData);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].path).toContain("confirmPassword");
+    }
   });
 });
