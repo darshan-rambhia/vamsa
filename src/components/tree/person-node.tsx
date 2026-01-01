@@ -8,17 +8,27 @@ import type { Person } from "@prisma/client";
 export interface PersonNodeData extends Record<string, unknown> {
   person: Person;
   onClick?: () => void;
+  hasHiddenChildren?: boolean;
+  hasHiddenParents?: boolean;
 }
 
 export type PersonNodeType = Node<PersonNodeData, "person">;
 
 export function PersonNode({ data }: NodeProps<PersonNodeType>) {
-  const { person, onClick } = data;
-  const initials = `${person.firstName.charAt(0)}${person.lastName.charAt(0)}`.toUpperCase();
+  const { person, onClick, hasHiddenChildren, hasHiddenParents } = data;
+  const initials =
+    `${person.firstName.charAt(0)}${person.lastName.charAt(0)}`.toUpperCase();
 
   return (
     <>
-      <Handle type="target" position={Position.Top} className="!bg-primary" />
+      <Handle
+        type="target"
+        position={Position.Top}
+        className={cn(
+          "!bg-primary",
+          hasHiddenParents && "!h-3 !w-3 !bg-yellow-500"
+        )}
+      />
       <div
         className={cn(
           "flex cursor-pointer flex-col items-center rounded-lg border bg-card p-3 shadow-sm transition-shadow hover:shadow-md",
@@ -42,7 +52,10 @@ export function PersonNode({ data }: NodeProps<PersonNodeType>) {
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!bg-primary"
+        className={cn(
+          "!bg-primary",
+          hasHiddenChildren && "!h-3 !w-3 !bg-yellow-500"
+        )}
       />
     </>
   );
