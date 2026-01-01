@@ -56,22 +56,34 @@ export function PersonProfile({
   const initials = getInitials(person.firstName, person.lastName);
   const age = calculateAge(person.dateOfBirth, person.dateOfPassing);
 
-  const allRelationships = [
-    ...person.relationshipsFrom.map((r) => ({
-      id: r.id,
-      type: r.type,
-      person: r.relatedPerson,
-      marriageDate: r.marriageDate,
-      isActive: r.isActive,
-    })),
-    ...person.relationshipsTo.map((r) => ({
-      id: r.id,
-      type: getInverseType(r.type),
-      person: r.person,
-      marriageDate: r.marriageDate,
-      isActive: r.isActive,
-    })),
-  ];
+  const fromRelationships = person.relationshipsFrom.map((r) => ({
+    id: r.id,
+    type: r.type,
+    person: r.relatedPerson,
+    marriageDate: r.marriageDate,
+    isActive: r.isActive,
+  }));
+
+  const toRelationships = person.relationshipsTo.map((r) => ({
+    id: r.id,
+    type: getInverseType(r.type),
+    person: r.person,
+    marriageDate: r.marriageDate,
+    isActive: r.isActive,
+  }));
+
+  // Symmetric relationships (SPOUSE, SIBLING) are stored bidirectionally - dedupe by person ID
+  const seenPersonIds = new Set<string>();
+  const allRelationships = [...fromRelationships, ...toRelationships].filter(
+    (r) => {
+      const isSymmetric = r.type === "SPOUSE" || r.type === "SIBLING";
+      if (isSymmetric) {
+        if (seenPersonIds.has(r.person.id)) return false;
+        seenPersonIds.add(r.person.id);
+      }
+      return true;
+    }
+  );
 
   const parents = allRelationships.filter((r) => r.type === "PARENT");
   const children = allRelationships.filter((r) => r.type === "CHILD");
@@ -130,9 +142,7 @@ export function PersonProfile({
                     <p className="text-sm text-muted-foreground">Born</p>
                     <p>{formatDate(person.dateOfBirth)}</p>
                     {person.isLiving && age !== null && (
-                      <p className="text-sm text-muted-foreground">
-                        Age {age}
-                      </p>
+                      <p className="text-sm text-muted-foreground">Age {age}</p>
                     )}
                   </div>
                 </div>
@@ -144,9 +154,7 @@ export function PersonProfile({
                     <p className="text-sm text-muted-foreground">Passed</p>
                     <p>{formatDate(person.dateOfPassing)}</p>
                     {age !== null && (
-                      <p className="text-sm text-muted-foreground">
-                        Age {age}
-                      </p>
+                      <p className="text-sm text-muted-foreground">Age {age}</p>
                     )}
                   </div>
                 </div>
