@@ -14,7 +14,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatDate, getInitials } from "@/lib/utils";
+import {
+  formatDate,
+  formatDateForInput,
+  getInitials,
+  parseDateString,
+} from "@/lib/utils";
 import { deleteRelationship, updateRelationship } from "@/actions/relationship";
 import { toast } from "@/hooks/use-toast";
 import type { Person } from "@prisma/client";
@@ -49,14 +54,8 @@ export function RelationshipsList({
 
   function openEditDialog(rel: RelationshipItem) {
     setEditingRel(rel);
-    setMarriageDate(
-      rel.marriageDate ? formatDateForInput(rel.marriageDate) : ""
-    );
-    setDivorceDate(rel.divorceDate ? formatDateForInput(rel.divorceDate) : "");
-  }
-
-  function formatDateForInput(date: Date): string {
-    return new Date(date).toISOString().split("T")[0];
+    setMarriageDate(formatDateForInput(rel.marriageDate));
+    setDivorceDate(formatDateForInput(rel.divorceDate));
   }
 
   async function handleUpdate() {
@@ -64,8 +63,8 @@ export function RelationshipsList({
     setIsLoading(true);
     try {
       await updateRelationship(editingRel.id, {
-        marriageDate: marriageDate ? new Date(marriageDate) : null,
-        divorceDate: divorceDate ? new Date(divorceDate) : null,
+        marriageDate: parseDateString(marriageDate),
+        divorceDate: parseDateString(divorceDate),
         isActive: !divorceDate,
       });
       router.refresh();

@@ -3,10 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -15,13 +15,32 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { personCreateSchema, type PersonCreateInput } from "@/schemas/person";
+import { personCreateSchema } from "@/schemas/person";
 import { createPerson, updatePerson } from "@/actions/person";
+import { formatDateForInput } from "@/lib/utils";
 import type { Person } from "@prisma/client";
+import type { Gender } from "@prisma/client";
 
 interface PersonFormProps {
   person?: Person;
   onSuccess?: () => void;
+}
+
+interface FormValues {
+  firstName: string;
+  lastName: string;
+  maidenName?: string;
+  dateOfBirth?: string;
+  dateOfPassing?: string;
+  birthPlace?: string;
+  nativePlace?: string;
+  gender?: Gender;
+  bio?: string;
+  email?: string;
+  phone?: string;
+  profession?: string;
+  employer?: string;
+  isLiving: boolean;
 }
 
 export function PersonForm({ person, onSuccess }: PersonFormProps) {
@@ -35,15 +54,14 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<PersonCreateInput>({
-    resolver: zodResolver(personCreateSchema),
+  } = useForm<FormValues>({
     defaultValues: person
       ? {
           firstName: person.firstName,
           lastName: person.lastName,
           maidenName: person.maidenName || undefined,
-          dateOfBirth: person.dateOfBirth || undefined,
-          dateOfPassing: person.dateOfPassing || undefined,
+          dateOfBirth: formatDateForInput(person.dateOfBirth) || undefined,
+          dateOfPassing: formatDateForInput(person.dateOfPassing) || undefined,
           birthPlace: person.birthPlace || undefined,
           nativePlace: person.nativePlace || undefined,
           gender: person.gender || undefined,
@@ -54,20 +72,21 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
           employer: person.employer || undefined,
           isLiving: person.isLiving,
         }
-      : { isLiving: true },
+      : { firstName: "", lastName: "", isLiving: true },
   });
 
   const isLiving = watch("isLiving");
 
-  async function onSubmit(data: PersonCreateInput) {
+  async function onSubmit(formData: FormValues) {
     setIsLoading(true);
     setError(null);
 
     try {
+      const parsed = personCreateSchema.parse(formData);
       if (person) {
-        await updatePerson(person.id, data);
+        await updatePerson(person.id, parsed);
       } else {
-        await createPerson(data);
+        await createPerson(parsed);
       }
       router.refresh();
       onSuccess?.();
@@ -124,9 +143,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
             <div className="space-y-2">
               <Label htmlFor="gender">Gender</Label>
               <Select
-                onValueChange={(value) =>
-                  setValue("gender", value as PersonCreateInput["gender"])
-                }
+                onValueChange={(value) => setValue("gender", value as Gender)}
                 defaultValue={person?.gender || undefined}
               >
                 <SelectTrigger>
@@ -186,10 +203,10 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
 
           <div className="space-y-2">
             <Label htmlFor="bio">About</Label>
-            <textarea
+            <Textarea
               id="bio"
               {...register("bio")}
-              className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              className="min-h-[100px]"
               placeholder="Brief biography or notes..."
             />
           </div>
