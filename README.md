@@ -1,5 +1,12 @@
 # Vamsa
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Bun](https://img.shields.io/badge/Bun-runtime-f9f1e1?logo=bun)](https://bun.sh/)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma)](https://www.prisma.io/)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
 > _Sanskrit: वंश (vaṃśa) - "bamboo; family tree; lineage"_
 
 A web application for managing family genealogy with role-based access, relationship visualization, and collaborative editing.
@@ -86,7 +93,7 @@ On first run, an admin account is created:
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 15 (App Router)
 - **Runtime**: Bun
 - **Database**: PostgreSQL / SQLite with Prisma
 - **Auth**: NextAuth.js (credentials + OIDC)
