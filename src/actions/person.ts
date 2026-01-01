@@ -12,20 +12,39 @@ import {
 
 export async function getPersons(options?: {
   search?: string;
+  status?: string;
+  gender?: string;
   limit?: number;
   offset?: number;
 }) {
-  const { search, limit = 50, offset = 0 } = options || {};
+  const { search, status, gender, limit = 50, offset = 0 } = options || {};
 
-  const where = search
-    ? {
-        OR: [
-          { firstName: { contains: search, mode: "insensitive" as const } },
-          { lastName: { contains: search, mode: "insensitive" as const } },
-          { maidenName: { contains: search, mode: "insensitive" as const } },
-        ],
-      }
-    : {};
+  const where: {
+    OR?: { firstName?: object; lastName?: object; maidenName?: object }[];
+    isLiving?: boolean;
+    gender?: "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY";
+  } = {};
+
+  if (search) {
+    where.OR = [
+      { firstName: { contains: search, mode: "insensitive" as const } },
+      { lastName: { contains: search, mode: "insensitive" as const } },
+      { maidenName: { contains: search, mode: "insensitive" as const } },
+    ];
+  }
+
+  if (status === "living") {
+    where.isLiving = true;
+  } else if (status === "deceased") {
+    where.isLiving = false;
+  }
+
+  if (
+    gender &&
+    ["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"].includes(gender)
+  ) {
+    where.gender = gender as "MALE" | "FEMALE" | "OTHER" | "PREFER_NOT_TO_SAY";
+  }
 
   const [persons, total] = await Promise.all([
     db.person.findMany({
@@ -119,23 +138,36 @@ export async function updatePerson(id: string, input: PersonUpdateInput) {
   }
 
   const updateData: Parameters<typeof db.person.update>[0]["data"] = {};
-  if (validated.firstName !== undefined) updateData.firstName = validated.firstName;
-  if (validated.lastName !== undefined) updateData.lastName = validated.lastName;
-  if (validated.maidenName !== undefined) updateData.maidenName = validated.maidenName;
-  if (validated.dateOfBirth !== undefined) updateData.dateOfBirth = validated.dateOfBirth;
-  if (validated.dateOfPassing !== undefined) updateData.dateOfPassing = validated.dateOfPassing;
-  if (validated.birthPlace !== undefined) updateData.birthPlace = validated.birthPlace;
-  if (validated.nativePlace !== undefined) updateData.nativePlace = validated.nativePlace;
+  if (validated.firstName !== undefined)
+    updateData.firstName = validated.firstName;
+  if (validated.lastName !== undefined)
+    updateData.lastName = validated.lastName;
+  if (validated.maidenName !== undefined)
+    updateData.maidenName = validated.maidenName;
+  if (validated.dateOfBirth !== undefined)
+    updateData.dateOfBirth = validated.dateOfBirth;
+  if (validated.dateOfPassing !== undefined)
+    updateData.dateOfPassing = validated.dateOfPassing;
+  if (validated.birthPlace !== undefined)
+    updateData.birthPlace = validated.birthPlace;
+  if (validated.nativePlace !== undefined)
+    updateData.nativePlace = validated.nativePlace;
   if (validated.gender !== undefined) updateData.gender = validated.gender;
   if (validated.bio !== undefined) updateData.bio = validated.bio;
   if (validated.email !== undefined) updateData.email = validated.email || null;
   if (validated.phone !== undefined) updateData.phone = validated.phone;
-  if (validated.currentAddress !== undefined) updateData.currentAddress = validated.currentAddress ?? undefined;
-  if (validated.workAddress !== undefined) updateData.workAddress = validated.workAddress ?? undefined;
-  if (validated.profession !== undefined) updateData.profession = validated.profession;
-  if (validated.employer !== undefined) updateData.employer = validated.employer;
-  if (validated.socialLinks !== undefined) updateData.socialLinks = validated.socialLinks ?? undefined;
-  if (validated.isLiving !== undefined) updateData.isLiving = validated.isLiving;
+  if (validated.currentAddress !== undefined)
+    updateData.currentAddress = validated.currentAddress ?? undefined;
+  if (validated.workAddress !== undefined)
+    updateData.workAddress = validated.workAddress ?? undefined;
+  if (validated.profession !== undefined)
+    updateData.profession = validated.profession;
+  if (validated.employer !== undefined)
+    updateData.employer = validated.employer;
+  if (validated.socialLinks !== undefined)
+    updateData.socialLinks = validated.socialLinks ?? undefined;
+  if (validated.isLiving !== undefined)
+    updateData.isLiving = validated.isLiving;
 
   const person = await db.person.update({
     where: { id },

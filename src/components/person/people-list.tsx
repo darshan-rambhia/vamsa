@@ -1,13 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { formatDate, calculateAge, getInitials } from "@/lib/utils";
 import type { Person, Relationship } from "@prisma/client";
 
@@ -22,6 +30,8 @@ interface PeopleListProps {
   page: number;
   totalPages: number;
   search: string;
+  status?: string;
+  gender?: string;
 }
 
 export function PeopleList({
@@ -30,22 +40,44 @@ export function PeopleList({
   page,
   totalPages,
   search,
+  status,
+  gender,
 }: PeopleListProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchValue, setSearchValue] = useState(search);
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    const params = new URLSearchParams(searchParams.toString());
-    if (searchValue) {
-      params.set("search", searchValue);
-    } else {
-      params.delete("search");
-    }
-    params.delete("page");
-    router.push(`/people?${params.toString()}`);
+  const updateParams = useCallback(
+    (updates: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(updates).forEach(([key, value]) => {
+        if (value) {
+          params.set(key, value);
+        } else {
+          params.delete(key);
+        }
+      });
+      params.delete("page");
+      router.push(`/people?${params.toString()}`);
+    },
+    [router, searchParams]
+  );
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchValue !== search) {
+        updateParams({ search: searchValue || null });
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchValue, search, updateParams]);
+
+  const clearFilters = () => {
+    setSearchValue("");
+    router.push("/people");
   };
+
+  const hasFilters = search || status || gender;
 
   const handlePageChange = (newPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -55,7 +87,7 @@ export function PeopleList({
 
   return (
     <div className="space-y-4">
-      <form onSubmit={handleSearch} className="flex gap-2">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -65,8 +97,65 @@ export function PeopleList({
             className="pl-10"
           />
         </div>
-        <Button type="submit">Search</Button>
-      </form>
+        <div className="flex gap-2">
+          <Select
+            value={status || "all"}
+            onValueChange={(v) =>
+              updateParams({ status: v === "all" ? null : v })
+            }
+          >
+            <SelectTrigger className="w-[130px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="living">Living</SelectItem>
+              <SelectItem value="deceased">Deceased</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={gender || "all"}
+            onValueChange={(v) =>
+              updateParams({ gender: v === "all" ? null : v })
+            }
+          >
+            <SelectTrigger className="w-[130px]">
+              <SelectValue placeholder="Gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="MALE">Male</SelectItem>
+              <SelectItem value="FEMALE">Female</SelectItem>
+              <SelectItem value="OTHER">Other</SelectItem>
+            </SelectContent>
+          </Select>
+          {hasFilters && (
+            <Button variant="ghost" size="icon" onClick={clearFilters}>
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {hasFilters && (
+        <div className="flex flex-wrap gap-2">
+          {search && <Badge variant="secondary">Search: {search}</Badge>}
+          {status && (
+            <Badge variant="secondary">
+              {status === "living" ? "Living" : "Deceased"}
+            </Badge>
+          )}
+          {gender && (
+            <Badge variant="secondary">
+              {gender === "MALE"
+                ? "Male"
+                : gender === "FEMALE"
+                  ? "Female"
+                  : "Other"}
+            </Badge>
+          )}
+        </div>
+      )}
 
       {persons.length === 0 ? (
         <div className="py-12 text-center text-muted-foreground">
@@ -100,10 +189,7 @@ export function PeopleList({
                       <p className="text-sm text-muted-foreground">
                         {formatDate(person.dateOfBirth)}
                         {person.isLiving && person.dateOfBirth && (
-                          <span>
-                            {" "}
-                            • Age {calculateAge(person.dateOfBirth)}
-                          </span>
+                          <span> • Age {calculateAge(person.dateOfBirth)}</span>
                         )}
                       </p>
                     )}
