@@ -1,0 +1,111 @@
+# Page snapshot
+
+```yaml
+- generic:
+  - generic:
+    - banner:
+      - generic:
+        - generic:
+          - link:
+            - /url: /tree
+            - img
+            - generic: Family Tree
+        - navigation:
+          - link:
+            - /url: /tree
+            - img
+            - text: Family Tree
+          - link:
+            - /url: /people
+            - img
+            - text: People
+          - link:
+            - /url: /admin/users
+            - img
+            - text: Users
+          - link:
+            - /url: /admin/suggestions
+            - img
+            - text: Suggestions
+          - link:
+            - /url: /admin/settings
+            - img
+            - text: Settings
+        - generic:
+          - button:
+            - generic:
+              - generic: A
+    - main:
+      - generic:
+        - generic:
+          - generic:
+            - heading [level=1]: People
+            - paragraph: 0 people in the family tree
+          - button [expanded]:
+            - img
+            - text: Add Person
+        - generic:
+          - generic:
+            - generic:
+              - img
+              - textbox:
+                - /placeholder: Search by name...
+            - button: Search
+          - generic: No people in the family tree yet
+  - list
+  - generic:
+    - generic:
+      - img
+    - button:
+      - img
+  - button "Open Next.js Dev Tools" [ref=e6] [cursor=pointer]:
+    - img [ref=e7]
+  - alert
+  - dialog "Add New Person" [ref=e11]:
+    - heading "Add New Person" [level=2] [ref=e13]
+    - generic [ref=e14]:
+      - generic [ref=e15]:
+        - tablist [ref=e16]:
+          - tab "Basic Info" [selected] [ref=e17] [cursor=pointer]
+          - tab "Contact" [ref=e18] [cursor=pointer]
+          - tab "Professional" [ref=e19] [cursor=pointer]
+        - tabpanel "Basic Info" [ref=e20]:
+          - generic [ref=e21]:
+            - generic [ref=e22]:
+              - text: First Name *
+              - textbox "First Name *" [ref=e23]: John
+            - generic [ref=e24]:
+              - text: Last Name *
+              - textbox "Last Name *" [ref=e25]: Doe
+          - generic [ref=e26]:
+            - text: Maiden Name
+            - textbox "Maiden Name" [ref=e27]
+          - generic [ref=e28]:
+            - generic [ref=e29]:
+              - text: Gender
+              - combobox [ref=e30] [cursor=pointer]:
+                - generic: Select gender
+                - img [ref=e31]
+              - combobox [ref=e33]
+            - generic [ref=e34]:
+              - text: Date of Birth
+              - textbox "Date of Birth" [active] [ref=e35]
+          - generic [ref=e36]:
+            - checkbox "Living" [checked] [ref=e37]
+            - generic [ref=e38]: Living
+          - generic [ref=e39]:
+            - generic [ref=e40]:
+              - text: Birth Place
+              - textbox "Birth Place" [ref=e41]
+            - generic [ref=e42]:
+              - text: Native Place
+              - textbox "Native Place" [ref=e43]
+          - generic [ref=e44]:
+            - text: About
+            - textbox "About" [ref=e45]:
+              - /placeholder: Brief biography or notes...
+      - button "Create" [ref=e47] [cursor=pointer]
+    - button "Close" [ref=e48] [cursor=pointer]:
+      - img [ref=e49]
+      - generic [ref=e52]: Close
+```

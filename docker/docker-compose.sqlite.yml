@@ -1,0 +1,23 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.sqlite
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/data/vamsa.db
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-me-in-production}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@family.local}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - STORAGE_PROVIDER=local
+      - STORAGE_LOCAL_PATH=/app/data/uploads
+      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-Family Tree}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+    volumes:
+      - app_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  app_data:
