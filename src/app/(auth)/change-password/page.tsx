@@ -40,11 +40,13 @@ export default function ChangePasswordPage() {
     try {
       await changePassword(data);
       await update({ mustChangePassword: false });
-      
+
       router.push("/tree");
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred");
+      setError(
+        err instanceof Error ? err.message : "An unexpected error occurred"
+      );
     } finally {
       setIsLoading(false);
     }

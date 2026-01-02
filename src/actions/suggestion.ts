@@ -11,7 +11,9 @@ import {
 } from "@/schemas/suggestion";
 import type { Prisma } from "@prisma/client";
 
-export async function getSuggestions(status?: "PENDING" | "APPROVED" | "REJECTED") {
+export async function getSuggestions(
+  status?: "PENDING" | "APPROVED" | "REJECTED"
+) {
   await requireAuth();
 
   const where = status ? { status } : {};
@@ -120,7 +122,9 @@ async function applySuggestion(suggestion: {
 
   switch (suggestion.type) {
     case "CREATE":
-      await db.person.create({ data: data as Parameters<typeof db.person.create>[0]["data"] });
+      await db.person.create({
+        data: data as Parameters<typeof db.person.create>[0]["data"],
+      });
       break;
 
     case "UPDATE":

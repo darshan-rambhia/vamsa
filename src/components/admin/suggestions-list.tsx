@@ -58,7 +58,10 @@ export function SuggestionsList({ suggestions }: SuggestionsListProps) {
     }
   }
 
-  const renderSuggestion = (suggestion: SuggestionItem, showActions = false) => (
+  const renderSuggestion = (
+    suggestion: SuggestionItem,
+    showActions = false
+  ) => (
     <Card key={suggestion.id}>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
@@ -86,8 +89,9 @@ export function SuggestionsList({ suggestions }: SuggestionsListProps) {
       </CardHeader>
       <CardContent className="space-y-2">
         <p className="text-sm text-muted-foreground">
-          Submitted by {suggestion.submittedBy.name || suggestion.submittedBy.email}{" "}
-          on {formatDate(suggestion.submittedAt)}
+          Submitted by{" "}
+          {suggestion.submittedBy.name || suggestion.submittedBy.email} on{" "}
+          {formatDate(suggestion.submittedAt)}
         </p>
         {suggestion.reason && (
           <p className="text-sm">
@@ -104,8 +108,9 @@ export function SuggestionsList({ suggestions }: SuggestionsListProps) {
         </details>
         {suggestion.reviewedBy && (
           <p className="text-sm text-muted-foreground">
-            Reviewed by {suggestion.reviewedBy.name || suggestion.reviewedBy.email}{" "}
-            on {formatDate(suggestion.reviewedAt)}
+            Reviewed by{" "}
+            {suggestion.reviewedBy.name || suggestion.reviewedBy.email} on{" "}
+            {formatDate(suggestion.reviewedAt)}
             {suggestion.reviewNote && `: ${suggestion.reviewNote}`}
           </p>
         )}

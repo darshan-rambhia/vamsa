@@ -26,7 +26,10 @@ export async function getLabels(): Promise<Labels> {
   try {
     const settings = await db.familySettings.findFirst();
     if (settings?.customLabels) {
-      return { ...defaultLabels, ...(settings.customLabels as Partial<Labels>) };
+      return {
+        ...defaultLabels,
+        ...(settings.customLabels as Partial<Labels>),
+      };
     }
   } catch {
     return defaultLabels;

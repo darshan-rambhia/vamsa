@@ -20,7 +20,10 @@ export async function POST(request: Request) {
     const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: "Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed." },
+        {
+          error:
+            "Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.",
+        },
         { status: 400 }
       );
     }
@@ -41,9 +44,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ url, path });
   } catch (error) {
     console.error("Upload error:", error);
-    return NextResponse.json(
-      { error: "Upload failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

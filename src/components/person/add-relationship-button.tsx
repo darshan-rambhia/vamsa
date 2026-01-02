@@ -157,9 +157,7 @@ export function AddRelationshipButton({
                     }`}
                     onClick={() => {
                       setValue("relatedPersonId", person.id);
-                      setSearchQuery(
-                        `${person.firstName} ${person.lastName}`
-                      );
+                      setSearchQuery(`${person.firstName} ${person.lastName}`);
                       setSearchResults([]);
                     }}
                   >

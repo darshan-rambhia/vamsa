@@ -103,7 +103,10 @@ export default function LoginPage() {
               Register
             </Link>
             {" or "}
-            <Link href="/claim-profile" className="text-primary hover:underline">
+            <Link
+              href="/claim-profile"
+              className="text-primary hover:underline"
+            >
               Claim your profile
             </Link>
           </div>
