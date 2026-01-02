@@ -100,3 +100,31 @@ export type BackupImportInput = z.infer<typeof backupImportSchema>;
 export type Conflict = z.infer<typeof conflictSchema>;
 export type ValidationResult = z.infer<typeof validationResultSchema>;
 export type ImportResult = z.infer<typeof importResultSchema>;
+
+export const backupValidationPreviewSchema = z.object({
+  stats: z.object({
+    new: z.object({
+      people: z.number(),
+      relationships: z.number(),
+      users: z.number(),
+    }),
+  }),
+  conflicts: z.object({
+    people: z.array(
+      z.object({
+        data: z.record(z.any()), // simplified for frontend
+        reason: z.string(),
+      })
+    ),
+    relationships: z.array(
+      z.object({
+        data: z.record(z.any()), // simplified
+        reason: z.string(),
+      })
+    ),
+  }),
+});
+
+export type BackupValidationPreview = z.infer<
+  typeof backupValidationPreviewSchema
+>;

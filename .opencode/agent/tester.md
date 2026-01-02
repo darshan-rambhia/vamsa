@@ -7,6 +7,14 @@ tools:
   write: true
   edit: true
   bash: true
+permission:
+  bash:
+    "bd comment*": allow
+    "bun run *": allow
+    "bunx prisma validate": allow
+    "vitest run *": allow
+    "*": ask
+    " ls -la *": allow
 ---
 
 You are the Testing Specialist for Vamsa Family Tree.

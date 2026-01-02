@@ -4,9 +4,16 @@ mode: primary
 model: anthropic/claude-opus-4-20250514
 temperature: 0.2
 tools:
+  read: true
   write: true
   edit: true
   bash: true
+permission:
+  bash:
+    "bd *": allow
+    "bun run *": allow
+    "bunx prisma validate": allow
+    "*": ask
 ---
 
 You are the Principal Architect for Vamsa Family Tree.
