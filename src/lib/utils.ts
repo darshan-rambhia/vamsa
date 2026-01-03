@@ -7,7 +7,7 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Parse a date-only string (YYYY-MM-DD) as a local date.
- * Avoids timezone issues by parsing as noon local time.
+ * Creates a date at midnight UTC to ensure consistent date-only storage.
  * Returns null for empty/invalid input.
  */
 export function parseDateString(value: string | null | undefined): Date | null {
@@ -27,12 +27,13 @@ export function parseDateString(value: string | null | undefined): Date | null {
       return null;
     }
 
-    const date = new Date(y, m - 1, d, 12, 0, 0);
+    // Create date at midnight UTC to ensure consistent date-only storage
+    const date = new Date(Date.UTC(y, m - 1, d));
 
     const dateWasNotWrappedByJavaScript =
-      date.getFullYear() === y &&
-      date.getMonth() === m - 1 &&
-      date.getDate() === d;
+      date.getUTCFullYear() === y &&
+      date.getUTCMonth() === m - 1 &&
+      date.getUTCDate() === d;
 
     if (!dateWasNotWrappedByJavaScript) {
       return null;
@@ -48,7 +49,7 @@ export function parseDateString(value: string | null | undefined): Date | null {
 
 /**
  * Format a date for display, handling timezone correctly.
- * For dates stored without time, this extracts just the date portion.
+ * For dates stored without time, this extracts just the date portion using UTC.
  */
 export function formatDate(date: Date | string | null | undefined): string {
   if (!date) return "";
@@ -67,12 +68,13 @@ export function formatDate(date: Date | string | null | undefined): string {
     year: "numeric",
     month: "long",
     day: "numeric",
+    timeZone: "UTC",
   });
 }
 
 /**
  * Format a date for input[type="date"] value (YYYY-MM-DD).
- * Extracts the local date components to avoid timezone shift.
+ * Extracts the UTC date components to avoid timezone shift.
  */
 export function formatDateForInput(
   date: Date | string | null | undefined
@@ -88,9 +90,9 @@ export function formatDateForInput(
     d = date;
   }
 
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
@@ -100,14 +102,23 @@ export function calculateAge(
 ): number | null {
   if (!dateOfBirth) return null;
   const endDate = dateOfPassing || new Date();
-  const age = endDate.getFullYear() - dateOfBirth.getFullYear();
-  const monthDiff = endDate.getMonth() - dateOfBirth.getMonth();
-  if (
-    monthDiff < 0 ||
-    (monthDiff === 0 && endDate.getDate() < dateOfBirth.getDate())
-  ) {
-    return age - 1;
+
+  // Use UTC components for consistent date-only calculations
+  const birthYear = dateOfBirth.getUTCFullYear();
+  const birthMonth = dateOfBirth.getUTCMonth();
+  const birthDay = dateOfBirth.getUTCDate();
+
+  const endYear = endDate.getUTCFullYear();
+  const endMonth = endDate.getUTCMonth();
+  const endDay = endDate.getUTCDate();
+
+  let age = endYear - birthYear;
+  const monthDiff = endMonth - birthMonth;
+
+  if (monthDiff < 0 || (monthDiff === 0 && endDay < birthDay)) {
+    age = age - 1;
   }
+
   return age;
 }
 
@@ -123,4 +134,22 @@ export function generateRandomPassword(length: number = 16): string {
 
 export function getInitials(firstName: string, lastName: string): string {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+}
+
+/**
+ * Create a date-only value at midnight UTC for consistent storage.
+ * This ensures dates are stored without timezone conversion.
+ */
+export function createDateOnly(year: number, month: number, day: number): Date {
+  return new Date(Date.UTC(year, month - 1, day));
+}
+
+/**
+ * Convert any date to a date-only value at midnight UTC.
+ * This strips time and timezone information.
+ */
+export function toDateOnly(date: Date): Date {
+  return new Date(
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+  );
 }

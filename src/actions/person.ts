@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAuth, requireMember } from "@/lib/auth";
+import { toDateOnly } from "@/lib/utils";
 import {
   personCreateSchema,
   personUpdateSchema,
@@ -93,8 +94,12 @@ export async function createPerson(input: PersonCreateInput) {
       firstName: validated.firstName,
       lastName: validated.lastName,
       maidenName: validated.maidenName,
-      dateOfBirth: validated.dateOfBirth,
-      dateOfPassing: validated.dateOfPassing,
+      dateOfBirth: validated.dateOfBirth
+        ? toDateOnly(validated.dateOfBirth)
+        : null,
+      dateOfPassing: validated.dateOfPassing
+        ? toDateOnly(validated.dateOfPassing)
+        : null,
       birthPlace: validated.birthPlace,
       nativePlace: validated.nativePlace,
       gender: validated.gender,
@@ -145,9 +150,13 @@ export async function updatePerson(id: string, input: PersonUpdateInput) {
   if (validated.maidenName !== undefined)
     updateData.maidenName = validated.maidenName;
   if (validated.dateOfBirth !== undefined)
-    updateData.dateOfBirth = validated.dateOfBirth;
+    updateData.dateOfBirth = validated.dateOfBirth
+      ? toDateOnly(validated.dateOfBirth)
+      : null;
   if (validated.dateOfPassing !== undefined)
-    updateData.dateOfPassing = validated.dateOfPassing;
+    updateData.dateOfPassing = validated.dateOfPassing
+      ? toDateOnly(validated.dateOfPassing)
+      : null;
   if (validated.birthPlace !== undefined)
     updateData.birthPlace = validated.birthPlace;
   if (validated.nativePlace !== undefined)

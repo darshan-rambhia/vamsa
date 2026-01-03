@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireMember } from "@/lib/auth";
+import { toDateOnly } from "@/lib/utils";
 import {
   relationshipCreateSchema,
   relationshipUpdateSchema,
@@ -44,7 +45,15 @@ export async function createRelationship(input: RelationshipCreateInput) {
   }
 
   const relationship = await db.relationship.create({
-    data: validated,
+    data: {
+      ...validated,
+      marriageDate: validated.marriageDate
+        ? toDateOnly(validated.marriageDate)
+        : null,
+      divorceDate: validated.divorceDate
+        ? toDateOnly(validated.divorceDate)
+        : null,
+    },
   });
 
   if (validated.type === "PARENT") {
@@ -69,8 +78,12 @@ export async function createRelationship(input: RelationshipCreateInput) {
         personId: validated.relatedPersonId,
         relatedPersonId: validated.personId,
         type: "SPOUSE",
-        marriageDate: validated.marriageDate,
-        divorceDate: validated.divorceDate,
+        marriageDate: validated.marriageDate
+          ? toDateOnly(validated.marriageDate)
+          : null,
+        divorceDate: validated.divorceDate
+          ? toDateOnly(validated.divorceDate)
+          : null,
         isActive: validated.isActive,
       },
     });
@@ -107,8 +120,12 @@ export async function updateRelationship(
   const updated = await db.relationship.update({
     where: { id },
     data: {
-      marriageDate: validated.marriageDate,
-      divorceDate: validated.divorceDate,
+      marriageDate: validated.marriageDate
+        ? toDateOnly(validated.marriageDate)
+        : null,
+      divorceDate: validated.divorceDate
+        ? toDateOnly(validated.divorceDate)
+        : null,
       isActive: validated.isActive,
     },
   });
@@ -121,8 +138,12 @@ export async function updateRelationship(
         type: "SPOUSE",
       },
       data: {
-        marriageDate: validated.marriageDate,
-        divorceDate: validated.divorceDate,
+        marriageDate: validated.marriageDate
+          ? toDateOnly(validated.marriageDate)
+          : null,
+        divorceDate: validated.divorceDate
+          ? toDateOnly(validated.divorceDate)
+          : null,
         isActive: validated.isActive,
       },
     });
