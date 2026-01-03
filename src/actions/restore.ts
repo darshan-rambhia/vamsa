@@ -368,7 +368,8 @@ async function addPhotosToBackupArchive(
   archive.finalize();
 }
 
-async function importPhotosCore(
+// Exported for testing
+export async function importPhotosCore(
   extractedFiles: Map<string, any>,
   deps: RestoreDependencies
 ): Promise<number> {

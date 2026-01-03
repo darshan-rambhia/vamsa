@@ -30,6 +30,7 @@ export interface BackupData {
     users: Record<string, unknown>[];
     suggestions: Record<string, unknown>[];
     settings?: Record<string, unknown> | null;
+    auditLogs?: Record<string, unknown>[];
   };
   photos: Array<{ id: string; photoUrl: string | null }>;
 }
