@@ -1,43 +1,58 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { ConflictResolver } from "./conflict-resolver";
+import { describe, it, expect, mock, beforeEach } from "bun:test";
 import type { Conflict } from "@/schemas/backup";
 
-// Mock dependencies
-vi.mock("@/lib/db", () => ({
+// Mock dependencies - must be defined before mock.module calls
+const mockFamilySettingsFindFirst = mock(() => Promise.resolve(null));
+const mockFamilySettingsCreate = mock(() => Promise.resolve({}));
+const mockFamilySettingsUpdate = mock(() => Promise.resolve({}));
+const mockPersonFindUnique = mock(() => Promise.resolve(null));
+const mockPersonCreate = mock(() => Promise.resolve({}));
+const mockPersonUpdate = mock(() => Promise.resolve({}));
+const mockUserFindUnique = mock(() => Promise.resolve(null));
+const mockUserCreate = mock(() => Promise.resolve({}));
+const mockUserUpdate = mock(() => Promise.resolve({}));
+const mockRelationshipFindUnique = mock(() => Promise.resolve(null));
+const mockRelationshipCreate = mock(() => Promise.resolve({}));
+const mockRelationshipUpdate = mock(() => Promise.resolve({}));
+const mockSuggestionCreate = mock(() => Promise.resolve({}));
+const mockAuditLogCreate = mock(() => Promise.resolve({}));
+
+mock.module("@/lib/db", () => ({
   db: {
     familySettings: {
-      findFirst: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
+      findFirst: mockFamilySettingsFindFirst,
+      create: mockFamilySettingsCreate,
+      update: mockFamilySettingsUpdate,
     },
     person: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
+      findUnique: mockPersonFindUnique,
+      create: mockPersonCreate,
+      update: mockPersonUpdate,
     },
     user: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
+      findUnique: mockUserFindUnique,
+      create: mockUserCreate,
+      update: mockUserUpdate,
     },
     relationship: {
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
+      findUnique: mockRelationshipFindUnique,
+      create: mockRelationshipCreate,
+      update: mockRelationshipUpdate,
     },
     suggestion: {
-      create: vi.fn(),
+      create: mockSuggestionCreate,
     },
     auditLog: {
-      create: vi.fn(),
+      create: mockAuditLogCreate,
     },
   },
 }));
 
-const { db } = await import("@/lib/db");
+// Import after mocks are set up
+const { ConflictResolver } = await import("./conflict-resolver");
 
 describe("ConflictResolver", () => {
-  let resolver: ConflictResolver;
+  let resolver: InstanceType<typeof ConflictResolver>;
   const mockImportedBy = {
     id: "admin-123",
     email: "admin@example.com",
@@ -150,27 +165,37 @@ describe("ConflictResolver", () => {
   ]);
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    // Reset all mocks
+    mockFamilySettingsFindFirst.mockReset();
+    mockFamilySettingsCreate.mockReset();
+    mockFamilySettingsUpdate.mockReset();
+    mockPersonFindUnique.mockReset();
+    mockPersonCreate.mockReset();
+    mockPersonUpdate.mockReset();
+    mockUserFindUnique.mockReset();
+    mockUserCreate.mockReset();
+    mockUserUpdate.mockReset();
+    mockRelationshipFindUnique.mockReset();
+    mockRelationshipCreate.mockReset();
+    mockRelationshipUpdate.mockReset();
+    mockSuggestionCreate.mockReset();
+    mockAuditLogCreate.mockReset();
 
     // Mock successful database operations by default
-    vi.mocked(db.familySettings.findFirst).mockResolvedValue(null);
-    vi.mocked(db.familySettings.create).mockResolvedValue({} as any);
-    vi.mocked(db.familySettings.update).mockResolvedValue({} as any);
-    vi.mocked(db.person.findUnique).mockResolvedValue(null);
-    vi.mocked(db.person.create).mockResolvedValue({} as any);
-    vi.mocked(db.person.update).mockResolvedValue({} as any);
-    vi.mocked(db.user.findUnique).mockResolvedValue(null);
-    vi.mocked(db.user.create).mockResolvedValue({} as any);
-    vi.mocked(db.user.update).mockResolvedValue({} as any);
-    vi.mocked(db.relationship.findUnique).mockResolvedValue(null);
-    vi.mocked(db.relationship.create).mockResolvedValue({} as any);
-    vi.mocked(db.relationship.update).mockResolvedValue({} as any);
-    vi.mocked(db.suggestion.create).mockResolvedValue({} as any);
-    vi.mocked(db.auditLog.create).mockResolvedValue({} as any);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    mockFamilySettingsFindFirst.mockResolvedValue(null);
+    mockFamilySettingsCreate.mockResolvedValue({} as any);
+    mockFamilySettingsUpdate.mockResolvedValue({} as any);
+    mockPersonFindUnique.mockResolvedValue(null);
+    mockPersonCreate.mockResolvedValue({} as any);
+    mockPersonUpdate.mockResolvedValue({} as any);
+    mockUserFindUnique.mockResolvedValue(null);
+    mockUserCreate.mockResolvedValue({} as any);
+    mockUserUpdate.mockResolvedValue({} as any);
+    mockRelationshipFindUnique.mockResolvedValue(null);
+    mockRelationshipCreate.mockResolvedValue({} as any);
+    mockRelationshipUpdate.mockResolvedValue({} as any);
+    mockSuggestionCreate.mockResolvedValue({} as any);
+    mockAuditLogCreate.mockResolvedValue({} as any);
   });
 
   describe("Skip Strategy", () => {
@@ -180,14 +205,13 @@ describe("ConflictResolver", () => {
 
     it("should skip importing settings when they already exist", async () => {
       // Mock existing settings
-      vi.mocked(db.familySettings.findFirst).mockResolvedValue({
+      mockFamilySettingsFindFirst.mockResolvedValue({
         id: "existing-settings",
         familyName: "Existing Family",
       } as any);
 
       // Mock user lookup for suggestions and audit logs to succeed
-      // Need to mock multiple calls since both suggestions and audit logs check for user
-      vi.mocked(db.user.findUnique)
+      mockUserFindUnique
         .mockResolvedValueOnce({
           id: "user-1",
           email: "admin@example.com",
@@ -198,7 +222,7 @@ describe("ConflictResolver", () => {
         } as any);
 
       // Mock person lookup for suggestions to succeed
-      vi.mocked(db.person.findUnique).mockResolvedValue({
+      mockPersonFindUnique.mockResolvedValue({
         id: "person-1",
         firstName: "John",
       } as any);
@@ -209,8 +233,8 @@ describe("ConflictResolver", () => {
         "Skipped family settings (already exists)"
       );
       expect(result.statistics.skippedItems).toBe(1);
-      expect(db.familySettings.update).not.toHaveBeenCalled();
-      expect(db.familySettings.create).not.toHaveBeenCalled();
+      expect(mockFamilySettingsUpdate).not.toHaveBeenCalled();
+      expect(mockFamilySettingsCreate).not.toHaveBeenCalled();
     });
 
     it("should skip people with conflicts", async () => {
@@ -228,7 +252,7 @@ describe("ConflictResolver", () => {
       ];
 
       // Mock user lookup for suggestions and audit logs to succeed
-      vi.mocked(db.user.findUnique)
+      mockUserFindUnique
         .mockResolvedValueOnce({
           id: "user-1",
           email: "admin@example.com",
@@ -239,7 +263,7 @@ describe("ConflictResolver", () => {
         } as any);
 
       // Mock person lookup for suggestions to succeed
-      vi.mocked(db.person.findUnique).mockResolvedValue({
+      mockPersonFindUnique.mockResolvedValue({
         id: "person-1",
         firstName: "John",
       } as any);
@@ -285,14 +309,14 @@ describe("ConflictResolver", () => {
 
     it("should replace existing settings", async () => {
       // Mock existing settings
-      vi.mocked(db.familySettings.findFirst).mockResolvedValue({
+      mockFamilySettingsFindFirst.mockResolvedValue({
         id: "existing-settings",
         familyName: "Existing Family",
       } as any);
 
       const result = await resolver.importData(mockExtractedFiles, []);
 
-      expect(db.familySettings.update).toHaveBeenCalledWith({
+      expect(mockFamilySettingsUpdate).toHaveBeenCalledWith({
         where: { id: "existing-settings" },
         data: expect.objectContaining({
           familyName: "Test Family",
@@ -304,7 +328,7 @@ describe("ConflictResolver", () => {
 
     it("should replace existing people", async () => {
       // Mock existing person
-      vi.mocked(db.person.findUnique).mockResolvedValue({
+      mockPersonFindUnique.mockResolvedValue({
         id: "person-1",
         firstName: "Existing John",
       } as any);
@@ -324,7 +348,7 @@ describe("ConflictResolver", () => {
 
       const result = await resolver.importData(mockExtractedFiles, conflicts);
 
-      expect(db.person.update).toHaveBeenCalledWith({
+      expect(mockPersonUpdate).toHaveBeenCalledWith({
         where: { id: "person-1" },
         data: expect.objectContaining({
           firstName: "John",
@@ -352,7 +376,7 @@ describe("ConflictResolver", () => {
 
       const result = await resolver.importData(mockExtractedFiles, conflicts);
 
-      expect(db.person.create).toHaveBeenCalledWith({
+      expect(mockPersonCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
           id: "person-1",
           firstName: "John",
@@ -370,7 +394,7 @@ describe("ConflictResolver", () => {
 
     it("should merge settings with existing data", async () => {
       // Mock existing settings
-      vi.mocked(db.familySettings.findFirst).mockResolvedValue({
+      mockFamilySettingsFindFirst.mockResolvedValue({
         id: "existing-settings",
         familyName: "Existing Family",
         description: null,
@@ -378,12 +402,11 @@ describe("ConflictResolver", () => {
 
       const result = await resolver.importData(mockExtractedFiles, []);
 
-      expect(db.familySettings.update).toHaveBeenCalledWith({
+      expect(mockFamilySettingsUpdate).toHaveBeenCalledWith({
         where: { id: "existing-settings" },
         data: expect.objectContaining({
           familyName: "Test Family", // Updated
           description: "Test description", // Added
-          // Other fields should be included too
         }),
       });
       expect(result.statistics.conflictsResolved).toBe(1);
@@ -391,7 +414,7 @@ describe("ConflictResolver", () => {
 
     it("should merge people data", async () => {
       // Mock existing person
-      vi.mocked(db.person.findUnique).mockResolvedValue({
+      mockPersonFindUnique.mockResolvedValue({
         id: "person-1",
         firstName: "Existing John",
         lastName: "Doe",
@@ -414,12 +437,11 @@ describe("ConflictResolver", () => {
 
       const result = await resolver.importData(mockExtractedFiles, conflicts);
 
-      expect(db.person.update).toHaveBeenCalledWith({
+      expect(mockPersonUpdate).toHaveBeenCalledWith({
         where: { id: "person-1" },
         data: expect.objectContaining({
           firstName: "John", // Updated
           email: "john@example.com", // Added
-          // bio should be preserved from existing
         }),
       });
       expect(result.statistics.conflictsResolved).toBe(1);
@@ -440,7 +462,7 @@ describe("ConflictResolver", () => {
       ];
 
       // Mock user lookup for suggestions and audit logs to succeed
-      vi.mocked(db.user.findUnique)
+      mockUserFindUnique
         .mockResolvedValueOnce({
           id: "user-1",
           email: "admin@example.com",
@@ -451,7 +473,7 @@ describe("ConflictResolver", () => {
         } as any);
 
       // Mock person lookup for suggestions to succeed
-      vi.mocked(db.person.findUnique).mockResolvedValue({
+      mockPersonFindUnique.mockResolvedValue({
         id: "person-1",
         firstName: "John",
       } as any);
@@ -472,7 +494,7 @@ describe("ConflictResolver", () => {
 
     it("should import data in correct order", async () => {
       // Mock user lookup for suggestions and audit logs to succeed
-      vi.mocked(db.user.findUnique)
+      mockUserFindUnique
         .mockResolvedValueOnce({
           id: "user-1",
           email: "admin@example.com",
@@ -483,7 +505,7 @@ describe("ConflictResolver", () => {
         } as any);
 
       // Mock person lookup for suggestions to succeed
-      vi.mocked(db.person.findUnique).mockResolvedValue({
+      mockPersonFindUnique.mockResolvedValue({
         id: "person-1",
         firstName: "John",
       } as any);
@@ -500,7 +522,7 @@ describe("ConflictResolver", () => {
 
     it("should skip suggestions with missing references", async () => {
       // Mock user not found
-      vi.mocked(db.user.findUnique).mockResolvedValue(null);
+      mockUserFindUnique.mockResolvedValue(null);
 
       const result = await resolver.importData(mockExtractedFiles, []);
 
@@ -516,7 +538,7 @@ describe("ConflictResolver", () => {
 
     it("should skip audit logs with missing user references", async () => {
       // Mock user not found for audit log
-      vi.mocked(db.user.findUnique)
+      mockUserFindUnique
         .mockResolvedValueOnce({ id: "user-1" } as any) // For suggestion check
         .mockResolvedValueOnce(null); // For audit log check
 
@@ -537,7 +559,7 @@ describe("ConflictResolver", () => {
     it("should prepare people data correctly", async () => {
       await resolver.importData(mockExtractedFiles, []);
 
-      expect(db.person.create).toHaveBeenCalledWith({
+      expect(mockPersonCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
           id: "person-1",
           firstName: "John",
@@ -552,7 +574,7 @@ describe("ConflictResolver", () => {
     it("should prepare user data correctly", async () => {
       await resolver.importData(mockExtractedFiles, []);
 
-      expect(db.user.create).toHaveBeenCalledWith({
+      expect(mockUserCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
           id: "user-1",
           email: "admin@example.com",
@@ -571,7 +593,7 @@ describe("ConflictResolver", () => {
     it("should prepare relationship data correctly", async () => {
       await resolver.importData(mockExtractedFiles, []);
 
-      expect(db.relationship.create).toHaveBeenCalledWith({
+      expect(mockRelationshipCreate).toHaveBeenCalledWith({
         data: expect.objectContaining({
           id: "rel-1",
           personId: "person-1",
@@ -593,9 +615,7 @@ describe("ConflictResolver", () => {
     });
 
     it("should handle database errors gracefully", async () => {
-      vi.mocked(db.person.create).mockRejectedValue(
-        new Error("Database error")
-      );
+      mockPersonCreate.mockRejectedValue(new Error("Database error"));
 
       const result = await resolver.importData(mockExtractedFiles, []);
 
@@ -644,13 +664,13 @@ describe("ConflictResolver", () => {
       ];
 
       // Mock existing person for conflict resolution
-      vi.mocked(db.person.findUnique).mockResolvedValue({
+      mockPersonFindUnique.mockResolvedValue({
         id: "person-1",
         firstName: "Existing",
       } as any);
 
       // Mock user lookup for suggestions and audit logs to succeed
-      vi.mocked(db.user.findUnique).mockResolvedValue({
+      mockUserFindUnique.mockResolvedValue({
         id: "user-1",
         email: "admin@example.com",
       } as any);

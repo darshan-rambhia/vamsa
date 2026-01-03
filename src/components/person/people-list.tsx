@@ -36,7 +36,7 @@ interface PeopleListProps {
 
 export function PeopleList({
   persons,
-  total,
+  total: _total,
   page,
   totalPages,
   search,

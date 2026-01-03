@@ -194,7 +194,7 @@ export function FamilyTree({
       (a, b) => a - b
     );
 
-    const familyGroups = new Map<
+    const _familyGroups = new Map<
       number,
       Array<{ parents: string[]; children: string[] }>
     >();
@@ -282,7 +282,7 @@ export function FamilyTree({
     const maxX = Math.max(...allXPositions);
     const offsetX = -(minX + maxX) / 2;
 
-    nodePositions.forEach((pos, id) => {
+    nodePositions.forEach((pos, _id) => {
       pos.x += offsetX;
     });
 
@@ -359,8 +359,8 @@ export function FamilyTree({
     currentPersonId,
   ]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, _setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, _setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: PersonNodeType) => {

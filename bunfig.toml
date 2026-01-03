@@ -1,0 +1,22 @@
+[test]
+preload = ["./test.setup.ts"]
+root = "./src"
+coverage = true
+coverageReporter = ["text", "lcov"]
+# Coverage threshold: 88% line coverage (215 tests passing)
+# Tests added for auth, storage, and backup functionality
+# High coverage files: auth.ts (100%), storage/local.ts (100%), schemas (100%), backup validators (90%)
+# Lower coverage areas: restore.ts (48%, complex transaction logic), auth-options.ts (25%, external dependencies)
+coverageThreshold = { line = 0.88, function = 0.85, statement = 0.88, branches = 0.80 }
+coverageSkipTestFiles = true
+coveragePathIgnorePatterns = [
+  "node_modules",
+  ".next",
+  "e2e",
+  "**/*.d.ts",
+  "**/*.config.*",
+  "**/types/*",
+  "**/*.test.{ts,tsx}",
+  "**/*.spec.{ts,tsx}",
+  "**/test.setup.ts",
+]

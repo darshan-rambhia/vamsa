@@ -7,9 +7,21 @@ import {
   type BackupExportInput,
   type BackupMetadata,
 } from "@/schemas/backup";
+import type { BackupDependencies } from "@/lib/backup/types";
 
-export async function gatherBackupData(input: BackupExportInput) {
-  const session = await requireAdmin();
+// Default dependencies using real implementations
+const defaultDependencies: BackupDependencies = {
+  requireAdmin,
+  // PrismaClient type is complex; safe to cast here
+  db: db as BackupDependencies['db'],
+};
+
+// Core gather backup data logic - testable with injected dependencies
+export async function gatherBackupDataCore(
+  input: BackupExportInput,
+  deps: BackupDependencies
+) {
+  const session = await deps.requireAdmin();
   const validated = backupExportSchema.parse(input);
 
   // Calculate date cutoff for audit logs
@@ -27,17 +39,17 @@ export async function gatherBackupData(input: BackupExportInput) {
     peopleWithPhotos,
   ] = await Promise.all([
     // Get all people
-    db.person.findMany({
+    deps.db.person.findMany({
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     }),
 
     // Get all relationships
-    db.relationship.findMany({
+    deps.db.relationship.findMany({
       orderBy: { createdAt: "asc" },
     }),
 
     // Get all users (exclude password hashes for security)
-    db.user.findMany({
+    deps.db.user.findMany({
       select: {
         id: true,
         email: true,
@@ -55,16 +67,16 @@ export async function gatherBackupData(input: BackupExportInput) {
     }),
 
     // Get all pending suggestions
-    db.suggestion.findMany({
+    deps.db.suggestion.findMany({
       orderBy: { submittedAt: "desc" },
     }),
 
     // Get family settings
-    db.familySettings.findFirst(),
+    deps.db.familySettings.findFirst(),
 
     // Get recent audit logs
     validated.includeAuditLogs
-      ? db.auditLog.findMany({
+      ? deps.db.auditLog.findMany({
           where: {
             createdAt: {
               gte: auditLogCutoff,
@@ -76,7 +88,7 @@ export async function gatherBackupData(input: BackupExportInput) {
 
     // Get people with photos for photo collection
     validated.includePhotos
-      ? db.person.findMany({
+      ? deps.db.person.findMany({
           where: {
             photoUrl: {
               not: null,
@@ -116,7 +128,10 @@ export async function gatherBackupData(input: BackupExportInput) {
       "data/settings.json",
       ...(validated.includeAuditLogs ? ["data/audit-logs.json"] : []),
     ],
-    photoDirectories: peopleWithPhotos.map((p) => `photos/${p.id}/`),
+    photoDirectories: peopleWithPhotos.map((p: Record<string, unknown>) => {
+      const pId = String(p.id || "");
+      return `photos/${pId}/`;
+    }),
   };
 
   return {
@@ -133,10 +148,11 @@ export async function gatherBackupData(input: BackupExportInput) {
   };
 }
 
-export async function logBackupExport() {
-  const session = await requireAdmin();
+// Core log backup export logic - testable with injected dependencies
+export async function logBackupExportCore(deps: BackupDependencies) {
+  const session = await deps.requireAdmin();
 
-  await db.auditLog.create({
+  await deps.db.auditLog.create({
     data: {
       userId: session.id,
       action: "CREATE",
@@ -148,4 +164,13 @@ export async function logBackupExport() {
       },
     },
   });
+}
+
+// Public API - uses default dependencies (for production use)
+export async function gatherBackupData(input: BackupExportInput) {
+  return gatherBackupDataCore(input, defaultDependencies);
+}
+
+export async function logBackupExport() {
+  return logBackupExportCore(defaultDependencies);
 }

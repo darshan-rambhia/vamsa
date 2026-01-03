@@ -24,6 +24,6 @@ export class TreePage {
   }
 
   async expectEmptyState() {
-    await expect(this.page.getByText(/no family members/i)).toBeVisible();
+    await expect(this.page.getByText(/No family members yet/i)).toBeVisible();
   }
 }

@@ -10,18 +10,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ImportPreview } from "./import-preview";
-import { BackupValidationPreview } from "@/schemas/backup";
+import { ValidationResult } from "@/schemas/backup";
 import { Loader2, Upload } from "lucide-react";
 
+function isFileListLike(value: unknown): boolean {
+  if (typeof window === "undefined") return true;
+  if (value === null || value === undefined) return false;
+  if (typeof value !== "object") return false;
+  const length = (value as { length?: unknown }).length;
+  return typeof length === "number" && length > 0;
+}
+
 const formSchema = z.object({
-  file: z
-    .instanceof(FileList)
-    .refine((files) => files?.length === 1, "A file is required."),
+  file: z.any().refine(
+    (files) => isFileListLike(files),
+    "A file is required."
+  ),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
-async function validateBackup(file: File): Promise<BackupValidationPreview> {
+async function validateBackup(file: File): Promise<ValidationResult> {
   const formData = new FormData();
   formData.append("file", file);
 
@@ -41,7 +50,7 @@ async function validateBackup(file: File): Promise<BackupValidationPreview> {
 export function BackupImport() {
   const { toast } = useToast();
   const [validationResult, setValidationResult] =
-    useState<BackupValidationPreview | null>(null);
+    useState<ValidationResult | null>(null);
   const [backupFile, setBackupFile] = useState<File | null>(null);
 
   const {
@@ -106,8 +115,10 @@ export function BackupImport() {
           accept=".zip"
           {...register("file")}
         />
-        {errors.file && (
-          <p className="text-sm text-destructive">{errors.file.message}</p>
+        {errors.file?.message && (
+          <p className="text-sm text-destructive">
+            {String(errors.file.message)}
+          </p>
         )}
       </div>
       <p className="text-sm text-muted-foreground">

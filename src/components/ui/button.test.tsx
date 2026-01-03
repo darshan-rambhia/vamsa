@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, mock } from "bun:test";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Button } from "./button";
@@ -37,7 +37,7 @@ describe("Button", () => {
 
   it("handles click events", async () => {
     const user = userEvent.setup();
-    const onClick = vi.fn();
+    const onClick = mock(() => {});
 
     render(<Button onClick={onClick}>Click</Button>);
     await user.click(screen.getByRole("button"));

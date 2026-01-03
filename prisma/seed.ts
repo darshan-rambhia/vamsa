@@ -57,6 +57,29 @@ async function main() {
 
   console.log(`Admin user created: ${email}`);
 
+  const memberEmail = "member@family.local";
+  const memberPassword = "member123";
+  const memberPasswordHash = await bcrypt.hash(memberPassword, 12);
+
+  const existingMember = await prisma.user.findUnique({
+    where: { email: memberEmail },
+  });
+
+  if (!existingMember) {
+    await prisma.user.create({
+      data: {
+        email: memberEmail,
+        name: "Family Member",
+        passwordHash: memberPasswordHash,
+        role: UserRole.MEMBER,
+        isActive: true,
+      },
+    });
+    console.log(
+      `Member user created: ${memberEmail} (password: ${memberPassword})`
+    );
+  }
+
   const existingSettings = await prisma.familySettings.findFirst();
 
   if (!existingSettings) {

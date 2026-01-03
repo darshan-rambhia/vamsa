@@ -139,7 +139,7 @@ async function addPhotosToArchive(
   archive: archiver.Archiver,
   photos: Array<{ id: string; photoUrl: string | null }>
 ) {
-  const storage = getStorageAdapter();
+  const _storage = getStorageAdapter();
   let processedPhotos = 0;
 
   for (const person of photos) {

@@ -2,19 +2,8 @@ import { db } from "@/lib/db";
 import type {
   ConflictResolutionStrategy,
   Conflict,
-  ImportResult,
 } from "@/schemas/backup";
-
-interface ImportStatistics {
-  peopleImported: number;
-  relationshipsImported: number;
-  usersImported: number;
-  suggestionsImported: number;
-  photosImported: number;
-  auditLogsImported: number;
-  conflictsResolved: number;
-  skippedItems: number;
-}
+import type { ExtractedFileContent, ImportStatistics } from "@/lib/backup/types";
 
 export class ConflictResolver {
   private strategy: ConflictResolutionStrategy;
@@ -39,7 +28,7 @@ export class ConflictResolver {
   }
 
   async importData(
-    extractedFiles: Map<string, any>,
+    extractedFiles: Map<string, ExtractedFileContent>,
     conflicts: Conflict[]
   ): Promise<{
     statistics: ImportStatistics;
@@ -97,7 +86,7 @@ export class ConflictResolver {
   }
 
   private async importSettings(
-    extractedFiles: Map<string, any>,
+    extractedFiles: Map<string, ExtractedFileContent>,
     conflictMap: Map<string, Conflict[]>,
     errors: string[],
     warnings: string[]

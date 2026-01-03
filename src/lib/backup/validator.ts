@@ -10,7 +10,7 @@ import {
 
 // Supported backup versions
 const SUPPORTED_VERSIONS = ["1.0.0"];
-const CURRENT_VERSION = "1.0.0";
+const _CURRENT_VERSION = "1.0.0";
 
 // Data schemas for validation
 const personDataSchema = z.object({
@@ -43,7 +43,7 @@ const relationshipDataSchema = z.object({
 
 export class BackupValidator {
   private zipBuffer: Buffer;
-  private extractedFiles: Map<string, any> = new Map();
+  private extractedFiles: Map<string, Record<string, unknown>> = new Map();
   private metadata: BackupMetadata | null = null;
 
   constructor(zipBuffer: Buffer) {
@@ -257,15 +257,23 @@ export class BackupValidator {
     // Check for existing people conflicts
     if (this.extractedFiles.has("data/people.json")) {
       const peopleData = this.extractedFiles.get("data/people.json");
-      const peopleConflicts = await this.detectPeopleConflicts(peopleData);
-      conflicts.push(...peopleConflicts);
+      if (Array.isArray(peopleData)) {
+        const peopleConflicts = await this.detectPeopleConflicts(
+          peopleData as Record<string, unknown>[]
+        );
+        conflicts.push(...peopleConflicts);
+      }
     }
 
     // Check for existing users conflicts
     if (this.extractedFiles.has("data/users.json")) {
       const usersData = this.extractedFiles.get("data/users.json");
-      const userConflicts = await this.detectUserConflicts(usersData);
-      conflicts.push(...userConflicts);
+      if (Array.isArray(usersData)) {
+        const userConflicts = await this.detectUserConflicts(
+          usersData as Record<string, unknown>[]
+        );
+        conflicts.push(...userConflicts);
+      }
     }
 
     // Check for relationship conflicts
@@ -273,21 +281,27 @@ export class BackupValidator {
       const relationshipsData = this.extractedFiles.get(
         "data/relationships.json"
       );
-      const relationshipConflicts =
-        await this.detectRelationshipConflicts(relationshipsData);
-      conflicts.push(...relationshipConflicts);
+      if (Array.isArray(relationshipsData)) {
+        const relationshipConflicts = await this.detectRelationshipConflicts(
+          relationshipsData as Record<string, unknown>[]
+        );
+        conflicts.push(...relationshipConflicts);
+      }
     }
 
     return { conflicts, warnings };
   }
 
-  private async detectPeopleConflicts(peopleData: any[]): Promise<Conflict[]> {
+  private async detectPeopleConflicts(
+    peopleData: Record<string, unknown>[]
+  ): Promise<Conflict[]> {
     const conflicts: Conflict[] = [];
 
     for (const person of peopleData) {
       // Check for ID conflicts
+      const personId = String(person.id || "");
       const existingById = await db.person.findUnique({
-        where: { id: person.id },
+        where: { id: personId },
       });
 
       if (existingById) {
@@ -299,15 +313,16 @@ export class BackupValidator {
           newData: person,
           conflictFields: this.getChangedFields(existingById, person),
           severity: "medium",
-          description: `Person with ID ${person.id} already exists`,
+          description: `Person with ID ${personId} already exists`,
         });
         continue;
       }
 
       // Check for email conflicts
-      if (person.email) {
+      const personEmail = typeof person.email === 'string' ? person.email : undefined;
+      if (personEmail) {
         const existingByEmail = await db.person.findFirst({
-          where: { email: person.email },
+          where: { email: personEmail },
         });
 
         if (existingByEmail) {
@@ -319,17 +334,19 @@ export class BackupValidator {
             newData: person,
             conflictFields: ["email"],
             severity: "high",
-            description: `Person with email ${person.email} already exists`,
+            description: `Person with email ${personEmail} already exists`,
           });
         }
       }
 
       // Check for name conflicts (potential duplicates)
+      const personFirstName = String(person.firstName || "");
+      const personLastName = String(person.lastName || "");
       const existingByName = await db.person.findFirst({
         where: {
-          firstName: person.firstName,
-          lastName: person.lastName,
-          dateOfBirth: person.dateOfBirth
+          firstName: personFirstName,
+          lastName: personLastName,
+          dateOfBirth: typeof person.dateOfBirth === 'string'
             ? new Date(person.dateOfBirth)
             : undefined,
         },
@@ -344,7 +361,7 @@ export class BackupValidator {
           newData: person,
           conflictFields: ["firstName", "lastName", "dateOfBirth"],
           severity: "low",
-          description: `Potential duplicate person: ${person.firstName} ${person.lastName}`,
+          description: `Potential duplicate person: ${personFirstName} ${personLastName}`,
         });
       }
     }
@@ -352,13 +369,16 @@ export class BackupValidator {
     return conflicts;
   }
 
-  private async detectUserConflicts(usersData: any[]): Promise<Conflict[]> {
+  private async detectUserConflicts(
+    usersData: Record<string, unknown>[]
+  ): Promise<Conflict[]> {
     const conflicts: Conflict[] = [];
 
     for (const user of usersData) {
       // Check for ID conflicts
+      const userId = String(user.id || "");
       const existingById = await db.user.findUnique({
-        where: { id: user.id },
+        where: { id: userId },
       });
 
       if (existingById) {
@@ -370,14 +390,15 @@ export class BackupValidator {
           newData: user,
           conflictFields: this.getChangedFields(existingById, user),
           severity: "high",
-          description: `User with ID ${user.id} already exists`,
+          description: `User with ID ${userId} already exists`,
         });
         continue;
       }
 
       // Check for email conflicts
+      const userEmail = String(user.email || "");
       const existingByEmail = await db.user.findUnique({
-        where: { email: user.email },
+        where: { email: userEmail },
       });
 
       if (existingByEmail) {
@@ -389,7 +410,7 @@ export class BackupValidator {
           newData: user,
           conflictFields: ["email"],
           severity: "high",
-          description: `User with email ${user.email} already exists`,
+          description: `User with email ${userEmail} already exists`,
         });
       }
     }
@@ -398,14 +419,15 @@ export class BackupValidator {
   }
 
   private async detectRelationshipConflicts(
-    relationshipsData: any[]
+    relationshipsData: Record<string, unknown>[]
   ): Promise<Conflict[]> {
     const conflicts: Conflict[] = [];
 
     for (const relationship of relationshipsData) {
       // Check for ID conflicts
+      const relationshipId = String(relationship.id || "");
       const existingById = await db.relationship.findUnique({
-        where: { id: relationship.id },
+        where: { id: relationshipId },
       });
 
       if (existingById) {
@@ -417,17 +439,22 @@ export class BackupValidator {
           newData: relationship,
           conflictFields: this.getChangedFields(existingById, relationship),
           severity: "medium",
-          description: `Relationship with ID ${relationship.id} already exists`,
+          description: `Relationship with ID ${relationshipId} already exists`,
         });
         continue;
       }
 
       // Check for duplicate relationships
+      const relPersonId = String(relationship.personId || "");
+      const relRelatedPersonId = String(relationship.relatedPersonId || "");
+      const relTypeStr = String(relationship.type || "PARENT");
+      const validTypes = ["PARENT", "CHILD", "SPOUSE", "SIBLING"];
+      const relType = validTypes.includes(relTypeStr) ? relTypeStr : "PARENT";
       const existingRelationship = await db.relationship.findFirst({
         where: {
-          personId: relationship.personId,
-          relatedPersonId: relationship.relatedPersonId,
-          type: relationship.type,
+          personId: relPersonId,
+          relatedPersonId: relRelatedPersonId,
+          type: relType as "PARENT" | "CHILD" | "SPOUSE" | "SIBLING",
         },
       });
 
@@ -448,7 +475,10 @@ export class BackupValidator {
     return conflicts;
   }
 
-  private getChangedFields(existing: any, incoming: any): string[] {
+  private getChangedFields(
+    existing: Record<string, unknown>,
+    incoming: Record<string, unknown>
+  ): string[] {
     const changedFields: string[] = [];
 
     for (const key in incoming) {

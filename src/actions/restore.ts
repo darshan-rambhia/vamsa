@@ -5,22 +5,34 @@ import { db } from "@/lib/db";
 import { getStorageAdapter } from "@/lib/storage";
 import { BackupValidator } from "@/lib/backup/validator";
 import { ConflictResolver } from "@/lib/backup/conflict-resolver";
-import { gatherBackupData, logBackupExport } from "@/actions/backup";
-import {
-  backupValidationSchema,
-  backupImportSchema,
-  type ValidationResult,
-  type ImportResult,
-  type ConflictResolutionStrategy,
+import { gatherBackupData } from "@/actions/backup";
+import type {
+  ValidationResult,
+  ImportResult,
+  ConflictResolutionStrategy,
 } from "@/schemas/backup";
+import type { RestoreDependencies } from "@/lib/backup/types";
 import archiver from "archiver";
-import { writeFile, mkdir } from "fs/promises";
+import { mkdir } from "fs/promises";
 import { join } from "path";
 
-export async function validateBackup(
-  formData: FormData
+// Default dependencies using real implementations
+const defaultDependencies: RestoreDependencies = {
+  requireAdmin,
+  db: db as any,
+  getStorageAdapter,
+  createValidator: (buffer: Buffer) => new BackupValidator(buffer),
+  createConflictResolver: (strategy, importedBy) =>
+    new ConflictResolver(strategy, importedBy),
+  gatherBackupData,
+};
+
+// Core validation logic - testable with injected dependencies
+export async function validateBackupCore(
+  formData: FormData,
+  deps: RestoreDependencies
 ): Promise<ValidationResult> {
-  const session = await requireAdmin();
+  await deps.requireAdmin();
 
   try {
     const file = formData.get("file") as File;
@@ -44,7 +56,7 @@ export async function validateBackup(
     const buffer = Buffer.from(arrayBuffer);
 
     // Validate backup
-    const validator = new BackupValidator(buffer);
+    const validator = deps.createValidator(buffer);
     const result = await validator.validate();
 
     return result;
@@ -56,16 +68,18 @@ export async function validateBackup(
   }
 }
 
-export async function importBackup(
+// Core import logic - testable with injected dependencies
+export async function importBackupCore(
   formData: FormData,
   strategy: ConflictResolutionStrategy,
   options: {
     createBackupBeforeImport: boolean;
     importPhotos: boolean;
     importAuditLogs: boolean;
-  }
+  },
+  deps: RestoreDependencies
 ): Promise<ImportResult> {
-  const session = await requireAdmin();
+  const session = await deps.requireAdmin();
 
   try {
     const file = formData.get("file") as File;
@@ -78,7 +92,7 @@ export async function importBackup(
     const buffer = Buffer.from(arrayBuffer);
 
     // Validate backup first
-    const validator = new BackupValidator(buffer);
+    const validator = deps.createValidator(buffer);
     const validationResult = await validator.validate();
 
     if (!validationResult.isValid) {
@@ -88,14 +102,14 @@ export async function importBackup(
     let backupCreated: string | undefined;
 
     // Create backup before import if requested
-    if (options.createBackupBeforeImport) {
-      backupCreated = await createPreImportBackup();
+    if (options.createBackupBeforeImport && deps.gatherBackupData) {
+      backupCreated = await createPreImportBackup(deps);
     }
 
     // Start database transaction for atomic import
-    const importResult = await db.$transaction(async (tx) => {
+    const importResult = await deps.db.$transaction(async (tx: any) => {
       // Create conflict resolver
-      const resolver = new ConflictResolver(strategy, {
+      const resolver = deps.createConflictResolver(strategy, {
         id: session.id,
         email: session.email,
         name: session.name || null,
@@ -109,8 +123,9 @@ export async function importBackup(
 
       // Import photos if requested
       if (options.importPhotos) {
-        const photosImported = await importPhotos(
-          validator.getExtractedFiles()
+        const photosImported = await importPhotosCore(
+          validator.getExtractedFiles(),
+          deps
         );
         statistics.photosImported = photosImported;
       }
@@ -153,7 +168,7 @@ export async function importBackup(
 
     // Log failed import attempt
     try {
-      await db.auditLog.create({
+      await deps.db.auditLog.create({
         data: {
           userId: session.id,
           action: "CREATE",
@@ -175,10 +190,78 @@ export async function importBackup(
   }
 }
 
-async function createPreImportBackup(): Promise<string> {
+// Core import history logic - testable with injected dependencies
+interface ImportHistoryEntry {
+  id: string;
+  importedAt: string;
+  importedBy: string;
+  strategy: string;
+  statistics: Record<string, unknown>;
+  success: boolean;
+}
+
+interface AuditLogWithUser {
+  id: string;
+  createdAt: Date;
+  entityType: string;
+  newData: Record<string, unknown>;
+  user: {
+    email: string;
+    name: string | null;
+  };
+}
+
+export async function getImportHistoryCore(
+  deps: RestoreDependencies
+): Promise<ImportHistoryEntry[]> {
+  await deps.requireAdmin();
+
+  const auditLogs = await deps.db.auditLog.findMany({
+    where: {
+      entityType: {
+        in: ["BACKUP_IMPORT", "BACKUP_IMPORT_FAILED"],
+      },
+    },
+    include: {
+      user: {
+        select: {
+          email: true,
+          name: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+    take: 50,
+  });
+
+  return auditLogs.map((log: unknown) => {
+    const typedLog = log as AuditLogWithUser;
+    const strategy = String(typedLog.newData.strategy || "unknown");
+    const statistics = typeof typedLog.newData.statistics === 'object' && typedLog.newData.statistics !== null
+      ? (typedLog.newData.statistics as Record<string, unknown>)
+      : {};
+
+    return {
+      id: typedLog.id,
+      importedAt: typedLog.createdAt.toISOString(),
+      importedBy: typedLog.user.name || typedLog.user.email,
+      strategy,
+      statistics,
+      success: typedLog.entityType === "BACKUP_IMPORT",
+    };
+  });
+}
+
+async function createPreImportBackup(deps: RestoreDependencies): Promise<string> {
+  if (!deps.gatherBackupData) {
+    throw new Error("gatherBackupData not available");
+  }
+
   try {
     // Gather current data for backup
-    const { metadata, data, photos } = await gatherBackupData({
+    const { metadata, data, photos } = await deps.gatherBackupData({
       includePhotos: true,
       includeAuditLogs: true,
       auditLogDays: 90,
@@ -206,7 +289,7 @@ async function createPreImportBackup(): Promise<string> {
         resolve(filename);
       });
 
-      archive.on("error", (err) => {
+      archive.on("error", (err: Error) => {
         reject(err);
       });
 
@@ -255,8 +338,6 @@ async function addPhotosToBackupArchive(
   archive: archiver.Archiver,
   photos: Array<{ id: string; photoUrl: string | null }>
 ): Promise<void> {
-  const storage = getStorageAdapter();
-
   for (const person of photos) {
     if (!person.photoUrl) continue;
 
@@ -287,8 +368,11 @@ async function addPhotosToBackupArchive(
   archive.finalize();
 }
 
-async function importPhotos(extractedFiles: Map<string, any>): Promise<number> {
-  const storage = getStorageAdapter();
+async function importPhotosCore(
+  extractedFiles: Map<string, any>,
+  deps: RestoreDependencies
+): Promise<number> {
+  const storage = deps.getStorageAdapter();
   let importedCount = 0;
 
   for (const [filePath, fileBuffer] of extractedFiles.entries()) {
@@ -305,22 +389,20 @@ async function importPhotos(extractedFiles: Map<string, any>): Promise<number> {
       const filename = pathParts[2];
 
       // Check if person exists
-      const person = await db.person.findUnique({ where: { id: personId } });
+      const person = await deps.db.person.findUnique({
+        where: { id: personId },
+      });
       if (!person) {
         console.warn(`Skipping photo for non-existent person: ${personId}`);
         continue;
       }
 
       // Upload photo to storage
-      const storedPath = await storage.upload(
-        fileBuffer,
-        filename,
-        "image/jpeg"
-      );
+      const storedPath = await storage.upload(fileBuffer, filename, "image/jpeg");
       const photoUrl = storage.getUrl(storedPath);
 
       // Update person with photo URL
-      await db.person.update({
+      await deps.db.person.update({
         where: { id: personId },
         data: { photoUrl },
       });
@@ -334,6 +416,25 @@ async function importPhotos(extractedFiles: Map<string, any>): Promise<number> {
   return importedCount;
 }
 
+// Public API - uses default dependencies (for production use)
+export async function validateBackup(
+  formData: FormData
+): Promise<ValidationResult> {
+  return validateBackupCore(formData, defaultDependencies);
+}
+
+export async function importBackup(
+  formData: FormData,
+  strategy: ConflictResolutionStrategy,
+  options: {
+    createBackupBeforeImport: boolean;
+    importPhotos: boolean;
+    importAuditLogs: boolean;
+  }
+): Promise<ImportResult> {
+  return importBackupCore(formData, strategy, options, defaultDependencies);
+}
+
 export async function getImportHistory(): Promise<
   Array<{
     id: string;
@@ -344,34 +445,5 @@ export async function getImportHistory(): Promise<
     success: boolean;
   }>
 > {
-  const session = await requireAdmin();
-
-  const auditLogs = await db.auditLog.findMany({
-    where: {
-      entityType: {
-        in: ["BACKUP_IMPORT", "BACKUP_IMPORT_FAILED"],
-      },
-    },
-    include: {
-      user: {
-        select: {
-          email: true,
-          name: true,
-        },
-      },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-    take: 50,
-  });
-
-  return auditLogs.map((log) => ({
-    id: log.id,
-    importedAt: log.createdAt.toISOString(),
-    importedBy: log.user.name || log.user.email,
-    strategy: (log.newData as any)?.strategy || "unknown",
-    statistics: (log.newData as any)?.statistics || {},
-    success: log.entityType === "BACKUP_IMPORT",
-  }));
+  return getImportHistoryCore(defaultDependencies);
 }

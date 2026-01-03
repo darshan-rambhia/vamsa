@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import {
-  BackupValidationPreview,
+  ValidationResult,
   ConflictResolutionStrategy,
 } from "@/schemas/backup";
 import { Button } from "@/components/ui/button";
@@ -30,7 +30,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, CheckCircle, Loader2 } from "lucide-react";
 
 interface ImportPreviewProps {
-  result: BackupValidationPreview;
+  result: ValidationResult;
   file: File;
   onReset: () => void;
 }
@@ -92,9 +92,13 @@ export function ImportPreview({ result, file, onReset }: ImportPreviewProps) {
     mutation.mutate({ file, strategy });
   };
 
-  const hasConflicts =
-    result.conflicts.people.length > 0 ||
-    result.conflicts.relationships.length > 0;
+  const personConflicts = result.conflicts.filter(
+    (c) => c.type === "person"
+  );
+  const relationshipConflicts = result.conflicts.filter(
+    (c) => c.type === "relationship"
+  );
+  const hasConflicts = personConflicts.length > 0 || relationshipConflicts.length > 0;
 
   return (
     <div className="space-y-6">
@@ -109,29 +113,30 @@ export function ImportPreview({ result, file, onReset }: ImportPreviewProps) {
           </p>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div className="rounded-lg border p-4">
-              <div className="text-sm text-muted-foreground">New People</div>
+              <div className="text-sm text-muted-foreground">People</div>
               <div className="text-2xl font-bold">
-                {result.stats.new.people}
+                {result.metadata.statistics.totalPeople}
               </div>
             </div>
             <div className="rounded-lg border p-4">
               <div className="text-sm text-muted-foreground">
-                New Relationships
+                Relationships
               </div>
               <div className="text-2xl font-bold">
-                {result.stats.new.relationships}
+                {result.metadata.statistics.totalRelationships}
               </div>
             </div>
             <div className="rounded-lg border p-4">
               <div className="text-sm text-muted-foreground">Conflicts</div>
               <div className="text-2xl font-bold">
-                {result.conflicts.people.length +
-                  result.conflicts.relationships.length}
+                {result.statistics.totalConflicts}
               </div>
             </div>
             <div className="rounded-lg border p-4">
               <div className="text-sm text-muted-foreground">Users</div>
-              <div className="text-2xl font-bold">{result.stats.new.users}</div>
+              <div className="text-2xl font-bold">
+                {result.metadata.statistics.totalUsers}
+              </div>
             </div>
           </div>
         </CardContent>
@@ -193,39 +198,62 @@ export function ImportPreview({ result, file, onReset }: ImportPreviewProps) {
                 existing and backup data (new fields are added).
               </p>
             </div>
-            <h3 className="font-semibold">
-              Conflicting People ({result.conflicts.people.length})
-            </h3>
-            <div className="max-h-60 overflow-auto rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Reason</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {result.conflicts.people.map(
-                    (
-                      p: {
-                        data: { firstName?: string; lastName?: string };
-                        reason: string;
-                      },
-                      i: number
-                    ) => (
-                      <TableRow key={i}>
-                        <TableCell>
-                          {p.data.firstName} {p.data.lastName}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{p.reason}</Badge>
-                        </TableCell>
+            {personConflicts.length > 0 && (
+              <>
+                <h3 className="font-semibold">
+                  Conflicting People ({personConflicts.length})
+                </h3>
+                <div className="max-h-60 overflow-auto rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Reason</TableHead>
                       </TableRow>
-                    )
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    </TableHeader>
+                    <TableBody>
+                      {personConflicts.map((c, i) => (
+                        <TableRow key={i}>
+                          <TableCell>
+                            {c.existingData?.firstName} {c.existingData?.lastName}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{c.description}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
+            )}
+            {relationshipConflicts.length > 0 && (
+              <>
+                <h3 className="font-semibold">
+                  Conflicting Relationships ({relationshipConflicts.length})
+                </h3>
+                <div className="max-h-60 overflow-auto rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID</TableHead>
+                        <TableHead>Reason</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {relationshipConflicts.map((c, i) => (
+                        <TableRow key={i}>
+                          <TableCell>{c.existingId}</TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{c.description}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}

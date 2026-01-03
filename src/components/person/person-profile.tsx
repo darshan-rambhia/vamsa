@@ -50,7 +50,7 @@ interface PersonProfileProps {
 export function PersonProfile({
   person,
   canEdit,
-  isAdmin,
+  isAdmin: _isAdmin,
 }: PersonProfileProps) {
   const [editOpen, setEditOpen] = useState(false);
   const initials = getInitials(person.firstName, person.lastName);

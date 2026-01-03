@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, afterEach, setSystemTime } from "bun:test";
 import {
   cn,
   parseDateString,
@@ -131,12 +131,8 @@ describe("formatDateForInput", () => {
 });
 
 describe("calculateAge", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
   afterEach(() => {
-    vi.useRealTimers();
+    setSystemTime();
   });
 
   it("returns null for null dateOfBirth", () => {
@@ -148,13 +144,13 @@ describe("calculateAge", () => {
   });
 
   it("calculates age correctly", () => {
-    vi.setSystemTime(new Date(2024, 5, 15));
+    setSystemTime(new Date(2024, 5, 15));
     const dob = new Date(1990, 5, 15);
     expect(calculateAge(dob)).toBe(34);
   });
 
   it("calculates age when birthday hasn't occurred this year", () => {
-    vi.setSystemTime(new Date(2024, 5, 14));
+    setSystemTime(new Date(2024, 5, 14));
     const dob = new Date(1990, 5, 15);
     expect(calculateAge(dob)).toBe(33);
   });
@@ -172,7 +168,7 @@ describe("calculateAge", () => {
   });
 
   it("handles same month but earlier day", () => {
-    vi.setSystemTime(new Date(2024, 5, 10));
+    setSystemTime(new Date(2024, 5, 10));
     const dob = new Date(1990, 5, 15);
     expect(calculateAge(dob)).toBe(33);
   });

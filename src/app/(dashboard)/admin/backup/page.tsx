@@ -2,7 +2,6 @@ import { requireAdmin } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BackupExport } from "@/components/admin/backup-export";
 import { BackupImport } from "@/components/admin/backup-import";
-import { Separator } from "@/components/ui/separator";
 
 export default async function BackupAdminPage() {
   await requireAdmin();

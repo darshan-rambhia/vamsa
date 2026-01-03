@@ -1,37 +1,43 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { BackupValidator } from "./validator";
+import { describe, it, expect, mock, beforeEach } from "bun:test";
 
-// Mock dependencies
-vi.mock("@/lib/db", () => ({
+// Mock dependencies - must be defined before mock.module calls
+const mockPersonFindUnique = mock(() => Promise.resolve(null));
+const mockPersonFindFirst = mock(() => Promise.resolve(null));
+const mockUserFindUnique = mock(() => Promise.resolve(null));
+const mockRelationshipFindUnique = mock(() => Promise.resolve(null));
+const mockRelationshipFindFirst = mock(() => Promise.resolve(null));
+
+mock.module("@/lib/db", () => ({
   db: {
     person: {
-      findUnique: vi.fn(),
-      findFirst: vi.fn(),
+      findUnique: mockPersonFindUnique,
+      findFirst: mockPersonFindFirst,
     },
     user: {
-      findUnique: vi.fn(),
+      findUnique: mockUserFindUnique,
     },
     relationship: {
-      findUnique: vi.fn(),
-      findFirst: vi.fn(),
+      findUnique: mockRelationshipFindUnique,
+      findFirst: mockRelationshipFindFirst,
     },
   },
 }));
 
-// Mock unzipper with a simpler approach
-vi.mock("unzipper", () => ({
+// Mock unzipper
+mock.module("unzipper", () => ({
   default: {
     Open: {
-      buffer: vi.fn(),
+      buffer: mock(() => Promise.resolve(null)),
     },
   },
 }));
 
-const { db } = await import("@/lib/db");
+// Import after mocks are set up
+const { BackupValidator } = await import("./validator");
 
 describe("BackupValidator", () => {
   let mockZipBuffer: Buffer;
-  let validator: BackupValidator;
+  let validator: InstanceType<typeof BackupValidator>;
 
   const validMetadata = {
     version: "1.0.0",
@@ -103,20 +109,21 @@ describe("BackupValidator", () => {
   ];
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    mockPersonFindUnique.mockReset();
+    mockPersonFindFirst.mockReset();
+    mockUserFindUnique.mockReset();
+    mockRelationshipFindUnique.mockReset();
+    mockRelationshipFindFirst.mockReset();
+
     mockZipBuffer = Buffer.from("mock zip content");
     validator = new BackupValidator(mockZipBuffer);
 
     // Mock successful database queries by default
-    vi.mocked(db.person.findUnique).mockResolvedValue(null);
-    vi.mocked(db.person.findFirst).mockResolvedValue(null);
-    vi.mocked(db.user.findUnique).mockResolvedValue(null);
-    vi.mocked(db.relationship.findUnique).mockResolvedValue(null);
-    vi.mocked(db.relationship.findFirst).mockResolvedValue(null);
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    mockPersonFindUnique.mockResolvedValue(null);
+    mockPersonFindFirst.mockResolvedValue(null);
+    mockUserFindUnique.mockResolvedValue(null);
+    mockRelationshipFindUnique.mockResolvedValue(null);
+    mockRelationshipFindFirst.mockResolvedValue(null);
   });
 
   // Test the validation logic by directly setting extracted files
@@ -283,7 +290,7 @@ describe("BackupValidator", () => {
 
   it("should detect person ID conflicts", async () => {
     // Mock existing person in database for person-1 only, null for person-2
-    vi.mocked(db.person.findUnique)
+    mockPersonFindUnique
       .mockResolvedValueOnce({
         id: "person-1",
         firstName: "Existing John",
@@ -293,7 +300,7 @@ describe("BackupValidator", () => {
       .mockResolvedValueOnce(null);
 
     // Mock no existing people by email or name
-    vi.mocked(db.person.findFirst).mockResolvedValue(null);
+    mockPersonFindFirst.mockResolvedValue(null);
 
     setupValidatorWithFiles({
       "metadata.json": validMetadata,
@@ -317,10 +324,10 @@ describe("BackupValidator", () => {
 
   it("should detect email conflicts", async () => {
     // Mock no existing people by ID
-    vi.mocked(db.person.findUnique).mockResolvedValue(null);
+    mockPersonFindUnique.mockResolvedValue(null);
 
     // Mock existing person with same email for john@example.com only
-    vi.mocked(db.person.findFirst)
+    mockPersonFindFirst
       .mockResolvedValueOnce({
         id: "existing-person",
         firstName: "Existing",
@@ -351,7 +358,7 @@ describe("BackupValidator", () => {
 
   it("should detect user conflicts", async () => {
     // Mock existing user
-    vi.mocked(db.user.findUnique).mockResolvedValue({
+    mockUserFindUnique.mockResolvedValue({
       id: "user-1",
       email: "admin@example.com",
       name: "Existing Admin",
@@ -380,7 +387,7 @@ describe("BackupValidator", () => {
 
   it("should detect relationship conflicts", async () => {
     // Mock existing relationship
-    vi.mocked(db.relationship.findUnique).mockResolvedValue({
+    mockRelationshipFindUnique.mockResolvedValue({
       id: "rel-1",
       personId: "person-1",
       relatedPersonId: "person-2",

@@ -15,9 +15,9 @@ test.describe("Family Tree", () => {
     await treePage.expectToBeOnTreePage();
   });
 
-  test("should show empty state when no people exist", async ({ page }) => {
+  test("should show tree container", async ({ page }) => {
     const treePage = new TreePage(page);
-    await treePage.expectEmptyState();
+    await treePage.expectTreeVisible();
   });
 
   test("should have navigation bar", async ({ page }) => {
