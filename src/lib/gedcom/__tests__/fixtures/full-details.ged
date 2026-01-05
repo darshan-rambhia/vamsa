@@ -1,0 +1,35 @@
+0 HEAD
+1 SOUR vamsa
+1 DATE 05 JAN 2026
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME Benjamin /Franklin/
+1 SEX M
+1 BIRT
+2 DATE 17 JAN 1706
+2 PLAC Boston, Massachusetts, USA
+1 DEAT
+2 DATE 17 APR 1790
+2 PLAC Philadelphia, Pennsylvania, USA
+1 OCCU Printer, Publisher, Scientist, Diplomat
+1 NOTE Founding Father and polymath
+0 @I2@ INDI
+1 NAME Deborah /Read/
+1 SEX F
+1 BIRT
+2 DATE 1707
+2 PLAC Philadelphia, Pennsylvania, USA
+1 DEAT
+2 DATE 1774
+2 PLAC Philadelphia, Pennsylvania, USA
+1 FAMS @F1@
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 MARR
+2 DATE 1730
+2 PLAC Philadelphia, Pennsylvania, USA
+0 TRLR

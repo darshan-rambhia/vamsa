@@ -13,6 +13,7 @@ import {
   Shield,
   Menu,
   Database,
+  FileDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,6 +36,7 @@ const adminItems = [
   { href: "/admin/users", label: "Users", icon: Shield },
   { href: "/admin/suggestions", label: "Suggestions", icon: LayoutDashboard },
   { href: "/admin/backup", label: "Backup & Restore", icon: Database },
+  { href: "/admin/gedcom", label: "GEDCOM", icon: FileDown },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 

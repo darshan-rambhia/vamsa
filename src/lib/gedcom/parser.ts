@@ -1,0 +1,694 @@
+/**
+ * GEDCOM 5.5.1 Parser
+ * Handles parsing of GEDCOM format files into structured TypeScript objects
+ */
+
+import type {
+  GedcomFile,
+  GedcomLine,
+  GedcomRecord,
+  ParsedDate,
+  ParsedIndividual,
+  ParsedFamily,
+  ValidationError,
+} from "./types";
+
+export class GedcomParser {
+  private lines: GedcomLine[] = [];
+  private records: GedcomRecord[] = [];
+  private errors: ValidationError[] = [];
+
+  /**
+   * Parse GEDCOM 5.5.1 text into structured format
+   */
+  parse(content: string): GedcomFile {
+    this.lines = [];
+    this.records = [];
+    this.errors = [];
+
+    // Split into lines and filter empty lines
+    const rawLines = content.split(/\r?\n/).filter((line) => line.trim());
+
+    // Parse each line and handle continuations
+    this.parseLines(rawLines);
+
+    // Build hierarchical record structure
+    this.buildRecords();
+
+    // Extract specific records
+    const header = this.records.find((r) => r.type === "HEAD");
+    const trailer = this.records.find((r) => r.type === "TRLR");
+    const individuals = this.records.filter((r) => r.type === "INDI");
+    const families = this.records.filter((r) => r.type === "FAM");
+
+    if (!header) {
+      throw new Error("Missing required HEAD record");
+    }
+    if (!trailer) {
+      throw new Error("Missing required TRLR record");
+    }
+
+    // Extract charset and version from header
+    const charsetLine = header.tags.get("CHAR")?.[0];
+    const _versionLine = header.tags.get("VERS")?.[0];
+    const _gedcomLine = header.tags.get("GEDC")?.[0];
+    const gedcVersionLine = header.tags
+      .get("GEDC")
+      ?.find((l) => l.tag === "VERS");
+
+    const charset = charsetLine?.value || "UTF-8";
+    const version = gedcVersionLine?.value || "5.5.1";
+
+    return {
+      header,
+      individuals,
+      families,
+      trailer,
+      version,
+      charset,
+    };
+  }
+
+  /**
+   * Parse lines and handle continuation lines (CONT/CONC)
+   */
+  private parseLines(rawLines: string[]): void {
+    let i = 0;
+    while (i < rawLines.length) {
+      const line = rawLines[i];
+      const parsedLine = this.parseLine(line);
+
+      if (!parsedLine) {
+        i++;
+        continue;
+      }
+
+      // Handle continuation lines
+      let continuedValue = parsedLine.value;
+      let nextIndex = i + 1;
+
+      while (nextIndex < rawLines.length) {
+        const nextLine = rawLines[nextIndex];
+        const nextParsed = this.parseLine(nextLine);
+
+        // Check if it's a continuation line (CONT or CONC)
+        if (!nextParsed) {
+          break;
+        }
+
+        // Check if next line is at higher level or lower level with continuation tags
+        const nextLevel = this.getLevel(nextLine);
+        const currentLevel = parsedLine.level;
+
+        if (
+          nextLevel > currentLevel &&
+          (nextParsed.tag === "CONT" || nextParsed.tag === "CONC")
+        ) {
+          // CONT adds line break, CONC concatenates
+          if (nextParsed.tag === "CONT") {
+            continuedValue += "\n" + nextParsed.value;
+          } else {
+            continuedValue += nextParsed.value;
+          }
+          nextIndex++;
+        } else {
+          break;
+        }
+      }
+
+      parsedLine.value = continuedValue;
+      this.lines.push(parsedLine);
+      i = nextIndex;
+    }
+  }
+
+  /**
+   * Parse a single GEDCOM line
+   * Format: <level> <tag> [<xref>] [<value>]
+   */
+  private parseLine(line: string): GedcomLine | null {
+    // Match GEDCOM line pattern
+    // Level is required, tag is required, xref/value are optional
+    const match = line.match(
+      /^(\d+)\s+(@[\w#]+@)?\s*(\w+)(?:\s+(@[\w#]+@|.*))?$/
+    );
+
+    if (!match) {
+      return null;
+    }
+
+    const [, levelStr, xref, tag, valueOrPointer] = match;
+    const level = parseInt(levelStr, 10);
+
+    // Determine if valueOrPointer is a pointer or value
+    let pointer: string | undefined;
+    let value: string;
+
+    if (valueOrPointer?.match(/^@[\w#]+@$/)) {
+      pointer = valueOrPointer;
+      value = "";
+    } else {
+      value = valueOrPointer || "";
+    }
+
+    return {
+      level,
+      tag,
+      xref,
+      value: value.trim(),
+      pointer,
+    };
+  }
+
+  /**
+   * Get level from a line string
+   */
+  private getLevel(line: string): number {
+    const match = line.match(/^(\d+)\s+/);
+    return match ? parseInt(match[1], 10) : 0;
+  }
+
+  /**
+   * Build hierarchical record structure from lines
+   */
+  private buildRecords(): void {
+    const recordStack: GedcomRecord[] = [];
+    let currentRecord: GedcomRecord | null = null;
+    let _currentParent: GedcomRecord | null = null;
+
+    for (const line of this.lines) {
+      // Top-level record
+      if (line.level === 0) {
+        // Save previous record
+        if (currentRecord) {
+          this.records.push(currentRecord);
+        }
+
+        const type = this.getRecordType(line.tag, line.xref);
+        currentRecord = {
+          type,
+          id: line.xref?.replace(/@/g, ""),
+          lines: [line],
+          tags: new Map(),
+        };
+        recordStack.length = 0;
+        recordStack.push(currentRecord);
+
+        // Add to tag map
+        const existing = currentRecord.tags.get(line.tag) || [];
+        existing.push(line);
+        currentRecord.tags.set(line.tag, existing);
+      } else if (currentRecord) {
+        // Add to current record
+        currentRecord.lines.push(line);
+
+        // Add to tag map
+        const existing = currentRecord.tags.get(line.tag) || [];
+        existing.push(line);
+        currentRecord.tags.set(line.tag, existing);
+      }
+    }
+
+    // Save last record
+    if (currentRecord) {
+      this.records.push(currentRecord);
+    }
+  }
+
+  /**
+   * Determine record type from tag
+   */
+  private getRecordType(
+    tag: string,
+    _xref?: string
+  ): "INDI" | "FAM" | "HEAD" | "TRLR" | "OTHER" {
+    if (tag === "HEAD") return "HEAD";
+    if (tag === "TRLR") return "TRLR";
+    if (tag === "INDI") return "INDI";
+    if (tag === "FAM") return "FAM";
+    return "OTHER";
+  }
+
+  /**
+   * Parse GEDCOM date format
+   * Handles: "15 JAN 1985", "JAN 1985", "1985", "ABT 1985", "BEF 1985", "AFT 1985", "BET 1975 AND 1985"
+   * Returns ISO date (YYYY-MM-DD) or null if invalid/partial
+   */
+  parseDate(gedcomDate: string): string | null {
+    if (!gedcomDate || !gedcomDate.trim()) {
+      return null;
+    }
+
+    const trimmed = gedcomDate.trim();
+    const parsed = this.parseDateComponents(trimmed);
+
+    if (!parsed.year) {
+      return null;
+    }
+
+    // Validate day is reasonable
+    if (parsed.day && (parsed.day < 1 || parsed.day > 31)) {
+      return null;
+    }
+
+    // Build ISO date with available components
+    let isoDate = String(parsed.year).padStart(4, "0");
+
+    if (parsed.month) {
+      isoDate += "-" + String(parsed.month).padStart(2, "0");
+
+      if (parsed.day) {
+        isoDate += "-" + String(parsed.day).padStart(2, "0");
+      }
+    }
+
+    return isoDate;
+  }
+
+  /**
+   * Parse date components from GEDCOM date string
+   */
+  private parseDateComponents(dateStr: string): ParsedDate {
+    const result: ParsedDate = {
+      isApproximate: false,
+      raw: dateStr,
+    };
+
+    // Check for date qualifiers
+    let workingStr = dateStr.trim();
+    const qualifierMatch = workingStr.match(/^(ABT|BEF|AFT|BET)\s+/);
+    if (qualifierMatch) {
+      result.qualifier = qualifierMatch[1] as any;
+      result.isApproximate = true;
+      workingStr = workingStr.substring(qualifierMatch[0].length).trim();
+    }
+
+    // Handle "BET ... AND ..." format (e.g., "BET 1975 AND 1985" or "BET 1 JAN 1975 AND 1 JAN 1985")
+    if (result.qualifier === "BET") {
+      // Try full date format first: "BET 15 JAN 1975 AND 15 JAN 1985"
+      const betFullMatch = workingStr.match(
+        /^(\d{1,2})\s+(\w+)\s+(\d{4})\s+AND\s+(\d{1,2})\s+(\w+)\s+(\d{4})$/
+      );
+      if (betFullMatch) {
+        result.day = parseInt(betFullMatch[1], 10);
+        result.month = this.monthToNumber(betFullMatch[2]);
+        result.year = parseInt(betFullMatch[3], 10);
+        return result;
+      }
+
+      // Try year-only format: "BET 1975 AND 1985"
+      const betYearMatch = workingStr.match(/^(\d{4})\s+AND\s+(\d{4})$/);
+      if (betYearMatch) {
+        result.year = parseInt(betYearMatch[1], 10);
+        return result;
+      }
+    }
+
+    // Try full date format: "15 JAN 1985"
+    const fullMatch = workingStr.match(/^(\d{1,2})\s+(\w+)\s+(\d{4})$/);
+    if (fullMatch) {
+      result.day = parseInt(fullMatch[1], 10);
+      result.month = this.monthToNumber(fullMatch[2]);
+      result.year = parseInt(fullMatch[3], 10);
+      return result;
+    }
+
+    // Try month-year format: "JAN 1985"
+    const monthYearMatch = workingStr.match(/^(\w+)\s+(\d{4})$/);
+    if (monthYearMatch) {
+      result.month = this.monthToNumber(monthYearMatch[1]);
+      result.year = parseInt(monthYearMatch[2], 10);
+      return result;
+    }
+
+    // Try year only: "1985"
+    const yearMatch = workingStr.match(/^(\d{4})$/);
+    if (yearMatch) {
+      result.year = parseInt(yearMatch[1], 10);
+      return result;
+    }
+
+    return result;
+  }
+
+  /**
+   * Convert month name to number (1-12)
+   */
+  private monthToNumber(monthName: string): number | undefined {
+    const months: Record<string, number> = {
+      JAN: 1,
+      FEB: 2,
+      MAR: 3,
+      APR: 4,
+      MAY: 5,
+      JUN: 6,
+      JUL: 7,
+      AUG: 8,
+      SEP: 9,
+      SEPT: 9,
+      OCT: 10,
+      NOV: 11,
+      DEC: 12,
+    };
+    return months[monthName.toUpperCase()];
+  }
+
+  /**
+   * Parse name in GEDCOM format
+   * Format: "Given /Surname/" or "Given" or "/Surname/"
+   */
+  parseName(gedcomName: string): { firstName?: string; lastName?: string } {
+    if (!gedcomName || !gedcomName.trim()) {
+      return {};
+    }
+
+    const trimmed = gedcomName.trim();
+
+    // Find surname between forward slashes
+    const surnameMatch = trimmed.match(/\/([^\/]*)\//);
+    const lastName = surnameMatch ? surnameMatch[1].trim() : undefined;
+
+    // Extract given names (everything before and after surname)
+    let firstName: string | undefined;
+    if (surnameMatch) {
+      // Remove the /surname/ part and trim
+      const withoutSurname = trimmed.replace(/\/[^\/]*\//, "").trim();
+      firstName = withoutSurname || undefined;
+    } else {
+      // No surname markers, entire thing is given name
+      firstName = trimmed || undefined;
+    }
+
+    return {
+      firstName: firstName || undefined,
+      lastName: lastName || undefined,
+    };
+  }
+
+  /**
+   * Validate GEDCOM file structure
+   */
+  validate(file: GedcomFile): ValidationError[] {
+    const errors: ValidationError[] = [];
+
+    // Check for required records
+    if (!file.header) {
+      errors.push({
+        message: "Missing required HEAD record",
+        severity: "error",
+      });
+    }
+
+    if (!file.trailer) {
+      errors.push({
+        message: "Missing required TRLR record",
+        severity: "error",
+      });
+    }
+
+    // Check for unique xrefs
+    const xrefSet = new Set<string>();
+    const allRecords = [
+      file.header,
+      ...file.individuals,
+      ...file.families,
+      file.trailer,
+    ].filter((r): r is GedcomRecord => r !== null && r !== undefined);
+
+    for (const record of allRecords) {
+      if (record.id) {
+        if (xrefSet.has(record.id)) {
+          errors.push({
+            message: `Duplicate xref: ${record.id}`,
+            severity: "error",
+          });
+        }
+        xrefSet.add(record.id);
+      }
+    }
+
+    // Check for broken references in families
+    const personIds = new Set(file.individuals.map((i) => i.id));
+    const familyIds = new Set(file.families.map((f) => f.id));
+
+    for (const family of file.families) {
+      const husbandLine = family.tags.get("HUSB")?.[0];
+      const wifeLine = family.tags.get("WIFE")?.[0];
+      const childLines = family.tags.get("CHIL") || [];
+
+      if (
+        husbandLine?.pointer &&
+        !personIds.has(husbandLine.pointer.replace(/@/g, ""))
+      ) {
+        errors.push({
+          message: `Broken reference in family ${family.id}: HUSB ${husbandLine.pointer} not found`,
+          severity: "warning",
+        });
+      }
+
+      if (
+        wifeLine?.pointer &&
+        !personIds.has(wifeLine.pointer.replace(/@/g, ""))
+      ) {
+        errors.push({
+          message: `Broken reference in family ${family.id}: WIFE ${wifeLine.pointer} not found`,
+          severity: "warning",
+        });
+      }
+
+      for (const childLine of childLines) {
+        if (
+          childLine.pointer &&
+          !personIds.has(childLine.pointer.replace(/@/g, ""))
+        ) {
+          errors.push({
+            message: `Broken reference in family ${family.id}: CHIL ${childLine.pointer} not found`,
+            severity: "warning",
+          });
+        }
+      }
+    }
+
+    // Check for broken family references in individuals
+    for (const person of file.individuals) {
+      const famcLines = person.tags.get("FAMC") || [];
+      const famsLines = person.tags.get("FAMS") || [];
+
+      for (const line of famcLines) {
+        if (line.pointer && !familyIds.has(line.pointer.replace(/@/g, ""))) {
+          errors.push({
+            message: `Broken reference in person ${person.id}: FAMC ${line.pointer} not found`,
+            severity: "warning",
+          });
+        }
+      }
+
+      for (const line of famsLines) {
+        if (line.pointer && !familyIds.has(line.pointer.replace(/@/g, ""))) {
+          errors.push({
+            message: `Broken reference in person ${person.id}: FAMS ${line.pointer} not found`,
+            severity: "warning",
+          });
+        }
+      }
+    }
+
+    return errors;
+  }
+
+  /**
+   * Parse individual record into structured data
+   */
+  parseIndividual(record: GedcomRecord): ParsedIndividual {
+    const id = record.id || "unknown";
+
+    // Extract names
+    const names: Array<{
+      full: string;
+      firstName?: string;
+      lastName?: string;
+    }> = [];
+    const nameLines = record.tags.get("NAME") || [];
+    for (const line of nameLines) {
+      const { firstName, lastName } = this.parseName(line.value);
+      names.push({
+        full: line.value,
+        firstName,
+        lastName,
+      });
+    }
+
+    // Extract sex
+    const sexLine = record.tags.get("SEX")?.[0];
+    const sex =
+      sexLine?.value === "M" || sexLine?.value === "F" || sexLine?.value === "X"
+        ? sexLine.value
+        : undefined;
+
+    // Extract birth information
+    const birtLine = record.tags.get("BIRT")?.[0];
+    const birthDate = birtLine
+      ? this.parseDateFromRecord(record, "BIRT")
+      : undefined;
+    const birthPlace = this.getPlaceFromEvent(record, "BIRT");
+
+    // Extract death information
+    const deathLine = record.tags.get("DEAT")?.[0];
+    const deathDate = deathLine
+      ? this.parseDateFromRecord(record, "DEAT")
+      : undefined;
+    const deathPlace = this.getPlaceFromEvent(record, "DEAT");
+
+    // Extract occupation
+    const occuLine = record.tags.get("OCCU")?.[0];
+    const occupation = occuLine?.value;
+
+    // Extract notes (skip empty notes)
+    const notes: string[] = [];
+    const noteLines = record.tags.get("NOTE") || [];
+    for (const line of noteLines) {
+      const noteValue = line.value.trim();
+      if (noteValue) {
+        notes.push(noteValue);
+      }
+    }
+
+    // Extract family references
+    const familiesAsChild: string[] = [];
+    const famcLines = record.tags.get("FAMC") || [];
+    for (const line of famcLines) {
+      if (line.pointer) {
+        familiesAsChild.push(line.pointer.replace(/@/g, ""));
+      }
+    }
+
+    const familiesAsSpouse: string[] = [];
+    const famsLines = record.tags.get("FAMS") || [];
+    for (const line of famsLines) {
+      if (line.pointer) {
+        familiesAsSpouse.push(line.pointer.replace(/@/g, ""));
+      }
+    }
+
+    return {
+      id,
+      names: names.length > 0 ? names : [{ full: "" }],
+      sex,
+      birthDate,
+      birthPlace,
+      deathDate,
+      deathPlace,
+      occupation,
+      notes,
+      familiesAsChild,
+      familiesAsSpouse,
+    };
+  }
+
+  /**
+   * Parse family record into structured data
+   */
+  parseFamily(record: GedcomRecord): ParsedFamily {
+    const id = record.id || "unknown";
+
+    // Extract spouse information
+    const husbandLine = record.tags.get("HUSB")?.[0];
+    const wifeLine = record.tags.get("WIFE")?.[0];
+    const husband = husbandLine?.pointer?.replace(/@/g, "");
+    const wife = wifeLine?.pointer?.replace(/@/g, "");
+
+    // Extract children
+    const children: string[] = [];
+    const childLines = record.tags.get("CHIL") || [];
+    for (const line of childLines) {
+      if (line.pointer) {
+        children.push(line.pointer.replace(/@/g, ""));
+      }
+    }
+
+    // Extract marriage information
+    const marriageDate = this.parseDateFromRecord(record, "MARR");
+    const marriagePlace = this.getPlaceFromEvent(record, "MARR") || undefined;
+
+    // Extract divorce information
+    const divorceDate = this.parseDateFromRecord(record, "DIV");
+
+    // Extract notes (skip empty notes)
+    const notes: string[] = [];
+    const noteLines = record.tags.get("NOTE") || [];
+    for (const line of noteLines) {
+      const noteValue = line.value.trim();
+      if (noteValue) {
+        notes.push(noteValue);
+      }
+    }
+
+    return {
+      id,
+      husband,
+      wife,
+      children,
+      marriageDate,
+      marriagePlace,
+      divorceDate,
+      notes,
+    };
+  }
+
+  /**
+   * Parse date from an event tag (BIRT, DEAT, MARR, etc.)
+   */
+  private parseDateFromRecord(
+    record: GedcomRecord,
+    eventTag: string
+  ): string | undefined {
+    const eventLines = record.tags.get(eventTag) || [];
+    for (const eventLine of eventLines) {
+      // Look for DATE substructure
+      const eventIndex = record.lines.indexOf(eventLine);
+
+      // Find DATE lines that are children of this event
+      for (let i = eventIndex + 1; i < record.lines.length; i++) {
+        const line = record.lines[i];
+
+        // Stop if we reach a line at the same or lower level as the event
+        if (line.level <= eventLine.level) {
+          break;
+        }
+
+        // Found a DATE child of this event
+        if (line.tag === "DATE") {
+          const parsed = this.parseDate(line.value);
+          if (parsed) {
+            return parsed;
+          }
+        }
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Get place from event tag
+   */
+  private getPlaceFromEvent(
+    record: GedcomRecord,
+    eventTag: string
+  ): string | undefined {
+    const eventLines = record.tags.get(eventTag) || [];
+    for (const eventLine of eventLines) {
+      // Look for PLAC substructure
+      const eventIndex = record.lines.indexOf(eventLine);
+      for (let i = eventIndex + 1; i < record.lines.length; i++) {
+        const line = record.lines[i];
+        if (line.level <= eventLine.level) {
+          break;
+        }
+        if (line.tag === "PLAC") {
+          return line.value;
+        }
+      }
+    }
+    return undefined;
+  }
+}

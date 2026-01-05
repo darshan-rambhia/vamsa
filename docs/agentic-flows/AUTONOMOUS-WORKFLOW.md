@@ -193,6 +193,7 @@ Loop: COMPLETE ✓
 ```
 
 **Parameters:**
+
 - `"Feature description"` - What you want to build (required)
 - `--max-iterations 50` - Max iterations before timeout (recommended)
 
@@ -282,6 +283,7 @@ But you don't have to! Tech Lead monitors everything automatically.
 ### Agent Takes Too Long
 
 If an agent gets stuck (no status change for 2+ hours):
+
 - Tech Lead detects timeout
 - Tech Lead notifies you
 - You can manually intervene: `@backend do-something`
@@ -290,6 +292,7 @@ If an agent gets stuck (no status change for 2+ hours):
 ### Reviewer Finds Issues
 
 If reviewer finds problems:
+
 - Reviewer documents in comments
 - Tech Lead reads comments on next iteration
 - Tech Lead identifies responsible agent
@@ -300,6 +303,7 @@ If reviewer finds problems:
 ### You Want to Stop
 
 If you want to exit the loop early:
+
 - Say: `cancel`
 - Tech Lead exits gracefully
 - Beads remain in their current state
@@ -309,16 +313,16 @@ If you want to exit the loop early:
 
 ## TYPICAL TIMELINE
 
-| Phase | Duration | Iterations |
-| --- | --- | --- |
-| Planning | 15-30 min | 1-2 |
-| Frontend | 1-2 hours | 4-6 |
-| Backend | 1-2 hours | 4-6 |
-| Testing | 45-60 min | 3-5 |
-| Review (clean) | 15-30 min | 2-3 |
-| Review (with fixes) | 30-60 min | 3-6 |
-| Commit | 5 min | 1 |
-| **TOTAL** | **4-8 hours** | **18-32** |
+| Phase               | Duration      | Iterations |
+| ------------------- | ------------- | ---------- |
+| Planning            | 15-30 min     | 1-2        |
+| Frontend            | 1-2 hours     | 4-6        |
+| Backend             | 1-2 hours     | 4-6        |
+| Testing             | 45-60 min     | 3-5        |
+| Review (clean)      | 15-30 min     | 2-3        |
+| Review (with fixes) | 30-60 min     | 3-6        |
+| Commit              | 5 min         | 1          |
+| **TOTAL**           | **4-8 hours** | **18-32**  |
 
 With good code that passes on first review: ~4-5 hours
 With issues that need fixing: ~6-8 hours
@@ -428,15 +432,15 @@ Ralph Wiggum enables **autonomous code generation** for single developers.
 
 Tech Lead Loop enables **autonomous feature delivery** for dev teams:
 
-| Aspect | Ralph Wiggum | Tech Lead Loop |
-| --- | --- | --- |
-| **Use Case** | Generate code autonomously | Orchestrate team of agents |
-| **Phases** | Write → Test → Iterate | Plan → Impl → Test → Review |
-| **Agents** | Single Claude instance | 5 specialized agents |
-| **Coordination** | Self-correcting loops | Multi-agent handoffs |
-| **Completion** | Completion promise | All beads closed + committed |
-| **Typical Time** | 1-6 hours | 4-8 hours |
-| **Output** | Code + tests | Complete feature + closed beads |
+| Aspect           | Ralph Wiggum               | Tech Lead Loop                  |
+| ---------------- | -------------------------- | ------------------------------- |
+| **Use Case**     | Generate code autonomously | Orchestrate team of agents      |
+| **Phases**       | Write → Test → Iterate     | Plan → Impl → Test → Review     |
+| **Agents**       | Single Claude instance     | 5 specialized agents            |
+| **Coordination** | Self-correcting loops      | Multi-agent handoffs            |
+| **Completion**   | Completion promise         | All beads closed + committed    |
+| **Typical Time** | 1-6 hours                  | 4-8 hours                       |
+| **Output**       | Code + tests               | Complete feature + closed beads |
 
 ---
 

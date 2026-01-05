@@ -5,6 +5,7 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
 ## Agents Overview
 
 ### 1. **techlead.md** (Primary Agent)
+
 - **Model**: `claude-opus-4-5-20251101`
 - **Temperature**: 0.2
 - **Permission Mode**: `acceptEdits`
@@ -19,6 +20,7 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
   - Coordinate issue resolution
 
 ### 2. **backend.md** (Subagent)
+
 - **Model**: `claude-haiku-4-5-20251001`
 - **Temperature**: 0.2
 - **Permission Mode**: `acceptEdits`
@@ -32,6 +34,7 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
   - Quality gates: prisma validate, typecheck, lint, build
 
 ### 3. **frontend.md** (Subagent)
+
 - **Model**: `claude-opus-4-5-20251101`
 - **Temperature**: 0.3
 - **Permission Mode**: `acceptEdits`
@@ -45,6 +48,7 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
   - Quality gates: format, typecheck, lint, build
 
 ### 4. **tester.md** (Subagent)
+
 - **Model**: `claude-haiku-4-5-20251001`
 - **Temperature**: 0.2
 - **Permission Mode**: `acceptEdits`
@@ -58,6 +62,7 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
   - NEVER commit to git
 
 ### 5. **reviewer.md** (Subagent)
+
 - **Model**: `claude-opus-4-5-20251101`
 - **Temperature**: 0.1
 - **Permission Mode**: `bypassPermissions`
@@ -74,27 +79,32 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
 ## Development Workflow
 
 ### Phase 1: Feature Analysis
+
 1. User requests feature
 2. Tech Lead analyzes requirements
 3. Tech Lead explores codebase
 4. Tech Lead proposes solution
 
 ### Phase 2: Plan Approval
+
 1. Tech Lead presents plan with beads
 2. User reviews and approves
 3. Tech Lead waits for "approved" response
 
 ### Phase 3: Implementation (Parallel)
+
 1. Tech Lead delegates to @frontend and @backend
 2. Both agents work independently
 3. Agents report `ready` when complete
 
 ### Phase 4: Testing
+
 1. Tech Lead invokes @tester
 2. Tester writes comprehensive tests
 3. Tester reports test coverage and passes
 
 ### Phase 5: Review & Completion
+
 1. Tech Lead invokes @reviewer
 2. Reviewer runs all quality gates
 3. Reviewer either closes bead or identifies issues
@@ -124,6 +134,7 @@ bd comment {bead-id} --body "Work complete. Quality gates: [status]"
 ## Quality Gates
 
 ### Backend Agent
+
 ```bash
 bunx prisma validate  # Database schema valid
 bun run typecheck     # TypeScript checks
@@ -132,6 +143,7 @@ bun run build         # Production build succeeds
 ```
 
 ### Frontend Agent
+
 ```bash
 bun run format        # Prettier formatting
 bun run typecheck     # TypeScript checks
@@ -140,6 +152,7 @@ bun run build         # Production build succeeds
 ```
 
 ### Tester Agent
+
 ```bash
 bun run test           # Unit tests pass
 bun run test:coverage  # Coverage >= 90% statements, 85% branches
@@ -147,6 +160,7 @@ bun run test:e2e       # E2E tests pass
 ```
 
 ### Reviewer Agent
+
 - Runs all backend quality gates
 - Runs all frontend quality gates
 - Runs all tester quality gates
@@ -178,6 +192,7 @@ bun run test:e2e       # E2E tests pass
 ## Stack Context
 
 These agents work with:
+
 - **Framework**: Next.js 15
 - **Runtime**: Bun
 - **Database**: Prisma (PostgreSQL/SQLite)

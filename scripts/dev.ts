@@ -20,7 +20,10 @@ const loadEnv = async () => {
         const [key, ...valueParts] = trimmed.split("=");
         let value = valueParts.join("=").trim();
         // Remove quotes if present
-        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        if (
+          (value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))
+        ) {
           value = value.slice(1, -1);
         }
         if (!process.env[key]) {
@@ -31,7 +34,8 @@ const loadEnv = async () => {
   } catch {
     // .env file not found, use defaults
     if (!process.env.DATABASE_URL) {
-      process.env.DATABASE_URL = "postgresql://vamsa:password@localhost:5432/vamsa";
+      process.env.DATABASE_URL =
+        "postgresql://vamsa:password@localhost:5432/vamsa";
     }
   }
 };
@@ -85,9 +89,12 @@ const cleanup = async () => {
   console.log("\n\n🛑 Shutting down...");
   try {
     console.log("📋 Stopping PostgreSQL...");
-    const proc = Bun.spawn(["docker", "compose", "-f", "docker/docker-compose.dev.yml", "down"], {
-      stdio: ["inherit", "inherit", "inherit"],
-    });
+    const proc = Bun.spawn(
+      ["docker", "compose", "-f", "docker/docker-compose.dev.yml", "down"],
+      {
+        stdio: ["inherit", "inherit", "inherit"],
+      }
+    );
     await proc.exited;
     console.log("✅ PostgreSQL stopped");
   } catch {

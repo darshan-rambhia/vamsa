@@ -25,6 +25,7 @@ When Tech Lead tries to exit a `/techlead-loop` session:
 ## Activation
 
 Hook activates only when:
+
 - User calls `/techlead-loop` command
 - Tech Lead agent is in primary mode
 - Tech Lead attempts to exit the session
@@ -38,6 +39,7 @@ Tech Lead outputs exactly:
 ```
 
 This tells the hook:
+
 - ✓ Feature planning complete
 - ✓ User approved plan
 - ✓ Frontend implementation complete
@@ -124,11 +126,13 @@ Tech Lead (Iteration N):
 ### Max Iterations Reached
 
 If loop hits max iterations (default: 50):
+
 - Hook logs error
 - Loop exits with warning
 - User can manually check status and resume
 
 **Typical iteration counts:**
+
 - Planning: 1-2 iterations
 - Frontend implementation: 4-6 iterations (polling every 30s)
 - Backend implementation: 4-6 iterations
@@ -143,6 +147,7 @@ If loop hits max iterations (default: 50):
 ### Agent Timeout
 
 If agent doesn't report ready within time limit:
+
 - Tech Lead detects timeout (no status change for 120 min)
 - Tech Lead notifies user
 - Tech Lead can attempt re-invocation
@@ -151,6 +156,7 @@ If agent doesn't report ready within time limit:
 ### Unexpected Exit
 
 If Tech Lead exits without completion signal and under max iterations:
+
 - Hook re-feeds prompt
 - Tech Lead resumes from where it left off
 - This enables recovery from transient errors
@@ -158,6 +164,7 @@ If Tech Lead exits without completion signal and under max iterations:
 ## Context Persistence
 
 The stop hook mechanism preserves:
+
 - ✓ All conversation history (user messages and agent responses)
 - ✓ Modified files on disk (Tech Lead sees git changes)
 - ✓ Git history (`git log` shows previous commits)
@@ -165,6 +172,7 @@ The stop hook mechanism preserves:
 - ✓ Agent status (Tech Lead can poll current state)
 
 This allows Tech Lead to:
+
 1. Understand what was accomplished in previous iterations
 2. Determine what to do next
 3. Recover from errors
@@ -172,21 +180,22 @@ This allows Tech Lead to:
 
 ## Comparison to Ralph Wiggum
 
-| Aspect | Ralph Wiggum | Tech Lead Loop |
-| --- | --- | --- |
-| Agent | Claude Code (single) | Tech Lead + subagents |
-| Feedback | Modified files, test output | File changes, bead status, agent responses |
-| Loop trigger | Stop hook on exit attempt | Stop hook on exit attempt |
-| Completion signal | Custom promise text | `<promise>FEATURE_COMPLETE</promise>` |
-| Typical iterations | 3-10 | 15-35 |
-| Typical duration | 1-6 hours | 4-8 hours |
-| Output | Code + test results | Complete feature + closed beads |
+| Aspect             | Ralph Wiggum                | Tech Lead Loop                             |
+| ------------------ | --------------------------- | ------------------------------------------ |
+| Agent              | Claude Code (single)        | Tech Lead + subagents                      |
+| Feedback           | Modified files, test output | File changes, bead status, agent responses |
+| Loop trigger       | Stop hook on exit attempt   | Stop hook on exit attempt                  |
+| Completion signal  | Custom promise text         | `<promise>FEATURE_COMPLETE</promise>`      |
+| Typical iterations | 3-10                        | 15-35                                      |
+| Typical duration   | 1-6 hours                   | 4-8 hours                                  |
+| Output             | Code + test results         | Complete feature + closed beads            |
 
 ## Implementation Notes
 
 This is a **self-referential feedback loop** enabled by the stop hook.
 
 The magic of the system:
+
 1. Tech Lead runs an iteration
 2. Tries to exit
 3. Hook detects incomplete work
@@ -197,6 +206,7 @@ The magic of the system:
 8. Loop repeats until completion signal
 
 This works because Claude maintains context across re-feeds and can:
+
 - Understand previous work
 - Identify blockers
 - Adapt strategy

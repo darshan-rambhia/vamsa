@@ -24,6 +24,7 @@ bd create "Backend: {Feature}" --type backend --parent {epic-id} --body "..."
 ```
 
 **Deliverables:**
+
 - Epic bead with overview and technical design
 - Frontend bead with UI/UX scope
 - Backend bead with API/database scope
@@ -41,6 +42,7 @@ bd create "Backend: {Feature}" --type backend --parent {epic-id} --body "..."
 ```
 
 Each agent:
+
 1. `bd show {bead-id}` → review requirements
 2. `bd assign {bead-id} @{agent-name}` → claim work
 3. `bd status {bead-id} in_progress` → signal start
@@ -50,6 +52,7 @@ Each agent:
 7. `bd comment {bead-id} --body "..."` → post results
 
 **Deliverables:**
+
 - Frontend: UI components, pages, forms
 - Backend: Server actions, database models, migrations
 - Both report status as `ready`
@@ -70,6 +73,7 @@ bd show {backend-bead-id}   # Should show: ready
 ```
 
 Tester:
+
 1. `bd show {epic-id}` → review acceptance criteria
 2. `bd assign {epic-id} @tester` → claim work
 3. `bd status {epic-id} in_progress` → signal start
@@ -81,6 +85,7 @@ Tester:
 9. `bd comment {epic-id} --body "Tests: X passing. Coverage: X%"` → post results
 
 **Deliverables:**
+
 - Unit tests covering all edge cases
 - E2E tests for user workflows
 - Coverage metrics exceeding thresholds
@@ -101,6 +106,7 @@ bd show {epic-id}  # Should show: ready
 ```
 
 Reviewer runs:
+
 1. `bun run typecheck` → no type errors
 2. `bun run lint` → no lint warnings
 3. `bun run test:run` → all tests pass
@@ -108,12 +114,14 @@ Reviewer runs:
 5. `bun run build` → production build succeeds
 
 **Scenario A - All checks pass:**
+
 ```bash
 # Reviewer closes beads
 bd close {epic-id} {frontend-bead-id} {backend-bead-id}
 ```
 
 **Scenario B - Issues found:**
+
 ```bash
 # Reviewer documents issues and requests tech lead to reassign
 bd comment {epic-id} --body "## Review Issues
@@ -140,6 +148,7 @@ bd assign {bead-id} @{agent-name}  # @frontend, @backend, or @tester
 ```
 
 **Deliverables:**
+
 - All quality gates passing
 - Reviewer closes all beads (ONLY reviewer can do this)
 - Feature approved for production
@@ -169,6 +178,7 @@ git push
 ```
 
 **Deliverables:**
+
 - All code committed to git
 - All beads marked closed
 - Feature ready for deployment
@@ -252,13 +262,13 @@ bunx prisma migrate dev --name {name}  # Create migration
 
 ### Agent Responsibilities
 
-| Agent      | Can Do                          | Cannot Do                  |
-| ---------- | ------------------------------- | -------------------------- |
-| Tech Lead  | Create beads, assign, orchestrate | Close beads, mark complete |
-| Frontend   | Implement UI, update status     | Close beads, commit code   |
-| Backend    | Implement API, update status    | Close beads, commit code   |
-| Tester     | Write tests, update status      | Close beads, modify code   |
-| Reviewer   | **Close beads**, run QA gates   | Implement, modify code     |
+| Agent     | Can Do                            | Cannot Do                  |
+| --------- | --------------------------------- | -------------------------- |
+| Tech Lead | Create beads, assign, orchestrate | Close beads, mark complete |
+| Frontend  | Implement UI, update status       | Close beads, commit code   |
+| Backend   | Implement API, update status      | Close beads, commit code   |
+| Tester    | Write tests, update status        | Close beads, modify code   |
+| Reviewer  | **Close beads**, run QA gates     | Implement, modify code     |
 
 ---
 
@@ -387,6 +397,7 @@ Tech Lead: Commit changes
 4. **Orchestration** (tech lead) - Coordinator who routes work and manages issues
 
 This ensures:
+
 - ✓ No premature closure (only reviewer can close)
 - ✓ All quality gates run (reviewer enforces)
 - ✓ Parallel efficiency (frontend + backend work simultaneously)

@@ -52,6 +52,7 @@ The Tech Lead agent runs in a self-referential loop:
 ## Stop Hook
 
 The system includes a stop hook that:
+
 - Checks for `<promise>FEATURE_COMPLETE</promise>` in output
 - If found: Allows normal exit (work is complete)
 - If not found: Re-feeds the entire prompt to Tech Lead
@@ -94,6 +95,7 @@ bd show {bead-id}  # Check status field for: open, in_progress, ready, closed
 ```
 
 Polling strategy:
+
 - Check status every 30 seconds
 - Timeout per phase: 120 minutes (frontend/backend), 120 minutes (tester), 30 minutes (reviewer)
 - If timeout occurs, notify user of stalled agent
@@ -134,6 +136,7 @@ Loop exits successfully when Tech Lead outputs:
 ```
 
 This indicates:
+
 - ✓ All beads created
 - ✓ User approved plan
 - ✓ Frontend implemented and reported ready
@@ -240,6 +243,7 @@ Loop exits. Feature complete!
 ## Comparison: Manual vs Loop
 
 ### Manual Approach (Current)
+
 ```
 User → Tech Lead: "Add feature"
 Tech Lead: Creates beads, presents plan
@@ -259,6 +263,7 @@ User: Tech Lead commits
 **Effort:** High - requires constant monitoring
 
 ### Loop Approach (New)
+
 ```
 User: /techlead-loop "Add feature"
 Tech Lead: Creates beads, presents plan
@@ -297,6 +302,7 @@ See: `.opencode/agent/techlead.md` for full updated prompt.
 ### Loop seems stuck (iterations keep increasing)
 
 Check:
+
 1. Did user say "approved"? Tech Lead is waiting for this.
 2. Check bead status: `bd show {bead-id}` - Is agent actually working?
 3. Check agent logs to see what they're doing
@@ -306,6 +312,7 @@ Check:
 ### Agent didn't start
 
 Check:
+
 1. Did Tech Lead actually invoke the agent? Look for `@agent-name` mention
 2. Check if agent config exists in `.opencode/agent/`
 3. Check permissions - agent may not have access to required commands
@@ -313,12 +320,14 @@ Check:
 ### Agent is working but loop keeps polling
 
 This is normal! Loop continues until agent reports status `ready`.
+
 - Agent typically reports within 1-2 hours for implementation
 - Loop keeps polling, Tech Lead is patient
 
 ### Want to manually intervene
 
 You can:
+
 1. Manually invoke any agent: `@agent-name do-something`
 2. Manually update bead status: `bd status {id} ready`
 3. Tech Lead will see the change on next poll and continue

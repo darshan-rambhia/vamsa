@@ -134,6 +134,7 @@ Frontend and backend CAN work in parallel:
 ```
 
 Both agents will:
+
 1. Update status to `in_progress`
 2. Work independently
 3. Run quality gates
@@ -238,12 +239,14 @@ When you try to exit after presenting plan, the stop hook will re-feed the conve
 Once user approves:
 
 1. **Invoke both agents in parallel** (do NOT wait between them):
+
    ```bash
    @frontend implement {frontend-bead-id}
    @backend implement {backend-bead-id}
    ```
 
 2. **Poll bead status** every 30 seconds:
+
    ```bash
    bd show {frontend-bead-id}  # Check for "ready"
    bd show {backend-bead-id}   # Check for "ready"
@@ -261,11 +264,13 @@ Once user approves:
 When both frontend and backend are ready:
 
 1. **Invoke tester**:
+
    ```bash
    @tester write tests for {epic-id}
    ```
 
 2. **Poll tester status** every 30 seconds:
+
    ```bash
    bd show {epic-id}  # Check tester progress
    ```
@@ -280,11 +285,13 @@ When both frontend and backend are ready:
 When tester reports ready:
 
 1. **Invoke reviewer**:
+
    ```bash
    @reviewer review {epic-id}
    ```
 
 2. **Poll reviewer status** every 30 seconds:
+
    ```bash
    bd show {epic-id}  # Check for closure or issues
    ```
@@ -310,6 +317,7 @@ When tester reports ready:
 When all beads are closed by reviewer:
 
 1. **Ask user for commit approval**:
+
    ```
    All quality gates passed and beads are closed!
    Ready to commit changes?
@@ -320,6 +328,7 @@ When all beads are closed by reviewer:
 2. **Wait for user to reply "commit"**
 
 3. **When user says "commit"**:
+
    ```bash
    git add .
    git commit -m "feat: {feature description}
@@ -335,6 +344,7 @@ When all beads are closed by reviewer:
    ```
 
 4. **Output completion signal**:
+
    ```
    All work complete!
    <promise>FEATURE_COMPLETE</promise>
@@ -398,17 +408,17 @@ Repeat until all pass
 
 ## Key Differences: Loop Mode vs Manual Mode
 
-| Aspect | Loop Mode (/techlead-loop) | Manual Mode |
-| --- | --- | --- |
-| Invocation | User calls `/techlead-loop "feature"` | User manually invokes agents |
-| Planning | Present plan, wait for "approved" | Present plan, wait for approval |
-| Implementation | Automatically invoke both agents | User invokes each agent |
-| Polling | Automatically poll status every 30s | User manually checks status |
-| Testing | Automatically invoke when ready | User invokes when ready |
-| Review | Automatically invoke when ready | User invokes when ready |
-| Issue fixes | Automatically reassign and retry | User manually reassigns |
-| Commit | Automatically commit when ready | User manually commits |
-| Completion | Output promise to exit loop | Manual workflow ends |
+| Aspect         | Loop Mode (/techlead-loop)            | Manual Mode                     |
+| -------------- | ------------------------------------- | ------------------------------- |
+| Invocation     | User calls `/techlead-loop "feature"` | User manually invokes agents    |
+| Planning       | Present plan, wait for "approved"     | Present plan, wait for approval |
+| Implementation | Automatically invoke both agents      | User invokes each agent         |
+| Polling        | Automatically poll status every 30s   | User manually checks status     |
+| Testing        | Automatically invoke when ready       | User invokes when ready         |
+| Review         | Automatically invoke when ready       | User invokes when ready         |
+| Issue fixes    | Automatically reassign and retry      | User manually reassigns         |
+| Commit         | Automatically commit when ready       | User manually commits           |
+| Completion     | Output promise to exit loop           | Manual workflow ends            |
 
 ---
 
@@ -421,6 +431,7 @@ You MUST output exactly this when all work is done:
 ```
 
 This tells the stop hook:
+
 - All beads created
 - User approved plan
 - Frontend, backend implementations complete
@@ -439,7 +450,7 @@ This example shows the entire flow from user request to completed feature.
 
 ### Phase 1: Analysis & Planning
 
-User requests: *"I want users to get email notifications when someone makes a suggestion"*
+User requests: _"I want users to get email notifications when someone makes a suggestion"_
 
 **Tech Lead Actions:**
 
@@ -543,7 +554,7 @@ Reply "approved" to proceed, or provide feedback.
 
 ### Phase 2: User Approval & Parallel Implementation
 
-User replies: *"approved"*
+User replies: _"approved"_
 
 **Tech Lead delegates:**
 
@@ -557,6 +568,7 @@ User replies: *"approved"*
 ```
 
 **Frontend Agent:**
+
 1. Updates status to `in_progress`
 2. Creates settings/notifications page
 3. Runs `bun run format && bun run typecheck && bun run lint && bun run build`
@@ -564,6 +576,7 @@ User replies: *"approved"*
 5. Posts: "Frontend implementation complete. Quality gates passed: format ✓, typecheck ✓, lint ✓, build ✓"
 
 **Backend Agent:**
+
 1. Updates status to `in_progress`
 2. Updates Prisma schema, creates migration
 3. Implements email service and server actions
@@ -587,6 +600,7 @@ bd show {backend-bead-id}   # Should show "ready"
 ```
 
 **Tester Agent:**
+
 1. Updates status to `in_progress`
 2. Writes unit tests for email service, notification actions
 3. Writes E2E tests for settings page workflow
@@ -612,6 +626,7 @@ bd show {epic-id}  # Should show "ready" with tester comments
 **Reviewer Agent:**
 
 Scenario A - All passes:
+
 1. Runs full quality gate suite
 2. Verifies each acceptance criterion
 3. All checks pass ✓
@@ -620,6 +635,7 @@ Scenario A - All passes:
 6. Also closes: `bd close {frontend-bead-id} {backend-bead-id}`
 
 Scenario B - Issues found:
+
 1. Runs quality gate suite
 2. Finds TypeScript error in email.ts
 3. Posts detailed comment with error details
@@ -647,6 +663,7 @@ bd assign {backend-bead-id} @backend
 ```
 
 **Backend Agent:**
+
 1. Updates status to `in_progress`
 2. Fixes TypeScript error and email template
 3. Runs `bun run typecheck && bun run build`
@@ -660,6 +677,7 @@ bd assign {backend-bead-id} @backend
 ```
 
 **Reviewer Agent:**
+
 1. Runs full quality gates again
 2. All checks pass ✓
 3. **CLOSES beads:** `bd close {backend-bead-id} {frontend-bead-id} {epic-id}`
@@ -763,16 +781,19 @@ git push
 ## Key Constraints (Governance)
 
 **Only @reviewer can:**
+
 - Close beads with `bd close`
 - Mark work as complete
 - Approve features for production
 
 **Tech Lead CANNOT:**
+
 - Close beads (even though you have broad permissions)
 - Mark work complete (blocks premature closure)
 - Skip quality gates (reviewer enforces them)
 
 **Why this design?**
+
 - Prevents accidental premature closure
 - Ensures all quality gates run
 - Maintains single point of oversight

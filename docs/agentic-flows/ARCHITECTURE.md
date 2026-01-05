@@ -90,6 +90,7 @@ Output: Approved beads ready for implementation
 ```
 
 **Tech Lead creates:**
+
 - **Epic bead** (parent): Overview, technical design, acceptance criteria
 - **Frontend bead** (child): UI scope, components, pages, forms
 - **Backend bead** (child): API logic, database, schemas, migrations
@@ -244,6 +245,7 @@ Output: Feature committed and pushed to remote
 **Decision:** Testing then review must happen in order (not parallel).
 
 **Why:**
+
 - Tester needs both frontend and backend complete
 - Tester tests the integration
 - Reviewer needs complete test suite
@@ -254,6 +256,7 @@ Output: Feature committed and pushed to remote
 **Decision:** Reviewer is the only agent who can execute `bd close`.
 
 **Why:**
+
 - Prevents premature closure
 - Ensures all quality gates run
 - Maintains single point of approval
@@ -266,6 +269,7 @@ Output: Feature committed and pushed to remote
 **Decision:** If reviewer finds issues, responsible agent fixes and reviewer re-validates.
 
 **Why:**
+
 - Maintains accountability
 - Each agent owns their domain
 - Prevents ad-hoc fixes by wrong person
@@ -276,6 +280,7 @@ Output: Feature committed and pushed to remote
 **Decision:** User approves plan before orchestration, approves commit after review.
 
 **Why:**
+
 - User sees full plan before implementation starts
 - User controls what gets shipped
 - Tech lead cannot ship without user consent
@@ -288,6 +293,7 @@ Output: Feature committed and pushed to remote
 ### Tech Lead (claude-opus-4-20250514)
 
 **Capabilities:**
+
 - Full codebase understanding
 - Architectural decisions
 - Cross-cutting concern analysis
@@ -295,6 +301,7 @@ Output: Feature committed and pushed to remote
 - Orchestration logic
 
 **Responsibilities:**
+
 1. Analyze feature requests
 2. Design solutions
 3. Create and structure beads
@@ -303,6 +310,7 @@ Output: Feature committed and pushed to remote
 6. Manage handoffs between agents
 
 **Restrictions:**
+
 - Cannot close beads (prevents premature approval)
 - Cannot implement code (stays focused on coordination)
 
@@ -313,6 +321,7 @@ Output: Feature committed and pushed to remote
 **Specialization:** React/Next.js UI implementation
 
 **Capabilities:**
+
 - Component architecture
 - shadcn/ui patterns
 - Form handling
@@ -320,6 +329,7 @@ Output: Feature committed and pushed to remote
 - Accessibility
 
 **Responsibilities:**
+
 1. Implement UI components
 2. Create pages
 3. Build forms
@@ -327,6 +337,7 @@ Output: Feature committed and pushed to remote
 5. Run quality gates (format, typecheck, lint, build)
 
 **Workflow:**
+
 ```
 Receive bead → Review requirements → Implement → Quality gates → Report ready
 ```
@@ -338,6 +349,7 @@ Receive bead → Review requirements → Implement → Quality gates → Report 
 **Specialization:** TypeScript/Prisma server-side implementation
 
 **Capabilities:**
+
 - Server actions
 - Prisma modeling
 - Database migrations
@@ -345,6 +357,7 @@ Receive bead → Review requirements → Implement → Quality gates → Report 
 - Auth/permission logic
 
 **Responsibilities:**
+
 1. Implement server actions
 2. Design database models
 3. Create Zod schemas
@@ -352,6 +365,7 @@ Receive bead → Review requirements → Implement → Quality gates → Report 
 5. Run quality gates (prisma validate, typecheck, lint, build)
 
 **Workflow:**
+
 ```
 Receive bead → Review requirements → Implement → Quality gates → Report ready
 ```
@@ -363,6 +377,7 @@ Receive bead → Review requirements → Implement → Quality gates → Report 
 **Specialization:** Test coverage and quality metrics
 
 **Capabilities:**
+
 - Vitest unit testing
 - Playwright E2E testing
 - Coverage analysis
@@ -370,6 +385,7 @@ Receive bead → Review requirements → Implement → Quality gates → Report 
 - Page Object Model (POM)
 
 **Responsibilities:**
+
 1. Write unit tests
 2. Write E2E tests
 3. Verify coverage thresholds
@@ -377,11 +393,13 @@ Receive bead → Review requirements → Implement → Quality gates → Report 
 5. Run all test suites
 
 **Restrictions:**
+
 - Cannot close beads (only reviewer can)
 - Cannot modify non-test code
 - Cannot commit to git
 
 **Workflow:**
+
 ```
 Receive epic → Review acceptance criteria → Write tests → Verify coverage → Report ready
 ```
@@ -393,6 +411,7 @@ Receive epic → Review acceptance criteria → Write tests → Verify coverage 
 **Specialization:** Quality assurance and approval gatekeeper
 
 **Capabilities:**
+
 - Full project understanding (same model as tech lead)
 - Quality gate orchestration
 - TypeScript/lint/build validation
@@ -400,6 +419,7 @@ Receive epic → Review acceptance criteria → Write tests → Verify coverage 
 - Acceptance criteria validation
 
 **Responsibilities:**
+
 1. Run typecheck
 2. Run lint
 3. Run all tests
@@ -409,6 +429,7 @@ Receive epic → Review acceptance criteria → Write tests → Verify coverage 
 7. **Close beads** (ONLY agent with this permission)
 
 **Workflow:**
+
 ```
 Receive bead → Run ALL quality gates →
   If pass: Close beads ✓
@@ -462,6 +483,7 @@ Closed:     Reviewer approved (only reviewer can transition to this state)
 ### Communication Protocol
 
 Agents communicate via:
+
 1. **Bead status** (`bd status {id}`) - Signal progress phase
 2. **Comments** (`bd comment {id}`) - Provide detailed feedback
 3. **Assignments** (`bd assign {id}`) - Signal ownership changes
@@ -474,12 +496,14 @@ Agents communicate via:
 ### Phase 2 (Frontend + Backend)
 
 Each implements independently and runs:
+
 - `bun run format` - Code formatting
 - `bun run typecheck` - Type safety
 - `bun run lint` - Code style
 - `bun run build` - Production build
 
 Backend additionally:
+
 - `bunx prisma validate` - Database schema integrity
 
 ### Phase 3 (Tester)
@@ -546,12 +570,14 @@ If fail: Loop back to "Reviewer identifies issue"
 ## SUCCESS METRICS
 
 ### Code Quality
+
 - ✓ TypeScript compilation passes
 - ✓ ESLint passes
 - ✓ Prettier formatting applied
 - ✓ Production build succeeds
 
 ### Test Coverage
+
 - ✓ 90% statement coverage
 - ✓ 85% branch coverage
 - ✓ 90% function coverage
@@ -559,11 +585,13 @@ If fail: Loop back to "Reviewer identifies issue"
 - ✓ All acceptance criteria tested
 
 ### Acceptance Criteria
+
 - ✓ Each criterion implemented
 - ✓ Each criterion has corresponding test
 - ✓ Each criterion verified by reviewer
 
 ### Delivery Process
+
 - ✓ Plan approved by user before implementation
 - ✓ Parallel frontend/backend execution
 - ✓ All quality gates enforced by reviewer
@@ -574,17 +602,17 @@ If fail: Loop back to "Reviewer identifies issue"
 
 ## TIMELINE EXAMPLE: Email Notifications Feature
 
-| Phase | Agent | Duration | Status |
-| --- | --- | --- | --- |
-| 1. Planning | Tech Lead | 30-45 min | Creates 3 beads, awaits approval |
-| 2a. Frontend | Frontend | 1-2 hrs | UI implementation (parallel) |
-| 2b. Backend | Backend | 1-2 hrs | API implementation (parallel) |
-| 3. Testing | Tester | 45-60 min | After both ready |
-| 4. Review | Reviewer | 20-30 min | After tests ready |
-| 4b. Fixes | Agent | 15-30 min | If issues found |
-| 4c. Re-review | Reviewer | 10-15 min | Final validation |
-| 5. Finalize | Tech Lead | 5 min | Commit and push |
-| **TOTAL** | | **4-6 hours** | From feature request to shipped |
+| Phase         | Agent     | Duration      | Status                           |
+| ------------- | --------- | ------------- | -------------------------------- |
+| 1. Planning   | Tech Lead | 30-45 min     | Creates 3 beads, awaits approval |
+| 2a. Frontend  | Frontend  | 1-2 hrs       | UI implementation (parallel)     |
+| 2b. Backend   | Backend   | 1-2 hrs       | API implementation (parallel)    |
+| 3. Testing    | Tester    | 45-60 min     | After both ready                 |
+| 4. Review     | Reviewer  | 20-30 min     | After tests ready                |
+| 4b. Fixes     | Agent     | 15-30 min     | If issues found                  |
+| 4c. Re-review | Reviewer  | 10-15 min     | Final validation                 |
+| 5. Finalize   | Tech Lead | 5 min         | Commit and push                  |
+| **TOTAL**     |           | **4-6 hours** | From feature request to shipped  |
 
 **Parallelization benefit:** Frontend and backend don't block each other, saving ~1-2 hours vs sequential approach.
 
@@ -593,6 +621,7 @@ If fail: Loop back to "Reviewer identifies issue"
 ## COMPARISON TO TRADITIONAL APPROACHES
 
 ### Traditional (Single Developer)
+
 ```
 Developer: Plan → Implement → Test → Ship
 Time: Slow, serial execution
@@ -600,6 +629,7 @@ Quality: Depends on individual rigor
 ```
 
 ### Ralph Wiggum Style (Autonomous Loop)
+
 ```
 Claude: Iterates autonomously until completion promise
 Time: 6+ hours unattended
@@ -607,6 +637,7 @@ Quality: Self-correcting through iteration
 ```
 
 ### Your System (Multi-Agent Team)
+
 ```
 Tech Lead: Analyze → Plan
 User: Approve
@@ -636,6 +667,7 @@ Your system is now fully documented with:
 ✅ **ARCHITECTURE.md** - This document
 
 **To use the system:**
+
 1. Describe your feature to the Tech Lead agent
 2. Tech Lead creates beads and presents plan
 3. Reply "approved" when ready

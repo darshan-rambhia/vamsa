@@ -1,0 +1,22 @@
+0 HEAD
+1 SOUR vamsa
+1 DATE 05 JAN 2026
+1 GEDC
+2 VERS 5.5.1
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME Alexander /Hamilton/
+1 SEX M
+1 BIRT
+2 DATE 11 JAN 1755
+1 DEAT
+2 DATE 12 JUL 1804
+1 OCCU Founding Father
+1 NOTE Alexander Hamilton was an American statesman and one of
+2 CONT the Founding Fathers of the United States. He was an
+2 CONT intimate associate of George Washington and became the
+2 CONT first Secretary of the Treasury. He was known for his
+2 CONT financial acumen and his advocacy for a strong federal
+2 CONT government.
+0 TRLR

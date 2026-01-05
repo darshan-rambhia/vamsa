@@ -51,6 +51,7 @@ Your agents are specific to Vamsa:
 ```
 
 **Problem:** Every project has different:
+
 - Tech stack (your project: Next.js + Bun + Prisma)
 - Quality gates (your thresholds: 90% coverage)
 - Conventions (your patterns: Server Actions, shadcn/ui)
@@ -70,6 +71,7 @@ bd close {bead-id}
 ```
 
 **Problem:** Not every project uses beads. Some use:
+
 - GitHub Issues
 - Linear
 - Jira
@@ -94,6 +96,7 @@ bunx prisma migrate dev
 ```
 
 **Problem:** Different projects have different commands:
+
 - Python projects: `black`, `mypy`, `pytest`
 - Rust projects: `cargo fmt`, `cargo test`
 - Go projects: `go fmt`, `go test`
@@ -104,6 +107,7 @@ bunx prisma migrate dev
 ### 4. Tech Stack Dependencies
 
 Your agents know about:
+
 - Next.js 15 (App Router, Server Components)
 - Prisma ORM
 - Zod for validation
@@ -160,11 +164,13 @@ project-root/.claude/
 ### Option A: Pure Plugin (Plug-and-Play)
 
 **Pros:**
+
 - Zero config needed
 - Works immediately
 - Easy to distribute
 
 **Cons:**
+
 - Only works for projects exactly like Vamsa
 - No customization
 
@@ -175,11 +181,13 @@ project-root/.claude/
 ### Option B: Configurable Plugin (Recommended)
 
 **Pros:**
+
 - Works for multiple tech stacks
 - Configurable per project
 - Reusable across projects
 
 **Cons:**
+
 - Requires configuration
 - More complex plugin code
 
@@ -192,27 +200,30 @@ project-root/.claude/
 ```yaml
 # .claude/config.json
 {
-  "issue_system": "beads",  # or "github", "jira"
-  "agents": {
-    "orchestrator": "claude-opus-4-5",
-    "frontend": "gemini-2.5-pro",
-    "backend": "claude-haiku-4-5",
-    "tester": "claude-haiku-4-5",
-    "reviewer": "claude-opus-4-5"
-  },
-  "quality_gates": [
-    "npm run format",
-    "npm run typecheck",
-    "npm run lint",
-    "npm run build",
-    "npm run test"
-  ],
-  "tech_stack": {
-    "language": "typescript",
-    "framework": "next.js",
-    "orm": "prisma",
-    "testing": "vitest+playwright"
-  }
+  "issue_system": "beads", # or "github", "jira"
+  "agents":
+    {
+      "orchestrator": "claude-opus-4-5",
+      "frontend": "gemini-2.5-pro",
+      "backend": "claude-haiku-4-5",
+      "tester": "claude-haiku-4-5",
+      "reviewer": "claude-opus-4-5",
+    },
+  "quality_gates":
+    [
+      "npm run format",
+      "npm run typecheck",
+      "npm run lint",
+      "npm run build",
+      "npm run test",
+    ],
+  "tech_stack":
+    {
+      "language": "typescript",
+      "framework": "next.js",
+      "orm": "prisma",
+      "testing": "vitest+playwright",
+    },
 }
 ```
 
@@ -221,11 +232,13 @@ The plugin reads this config and customizes behavior.
 ### Option C: Framework (Extensible)
 
 **Pros:**
+
 - Works for any project
 - Full customization
 - Educational value
 
 **Cons:**
+
 - Very complex
 - Requires deep documentation
 - Steep learning curve
@@ -251,6 +264,7 @@ The plugin reads this config and customizes behavior.
 **Week 1:**
 
 1. Create plugin scaffold
+
    ```
    plugins/multi-agent-workflow/
    ```
@@ -299,6 +313,7 @@ The plugin reads this config and customizes behavior.
 ```
 
 Works perfectly for Vamsa because:
+
 - Agents know your patterns
 - Quality gates match your setup
 - Beads system is installed
@@ -321,6 +336,7 @@ cp plugin-config-template.json .claude/config.json
 ```
 
 Works for any project because:
+
 - Agents generated from config
 - Quality gates from config
 - Issue system from config
@@ -467,6 +483,7 @@ The loop mechanism is solid. Now you need to validate it works in practice befor
 ## Next Steps
 
 Want to:
+
 1. **Test `/techlead-loop` now?** (Recommended) ← Do this first
 2. **Start plugin design?** I can help design the architecture
 3. **Hybrid approach?** Test + design in parallel
