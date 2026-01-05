@@ -53,7 +53,11 @@ function createMockDependencies(
         metadata: {
           version: "1.0.0",
           exportedAt: "2024-01-01T12:00:00.000Z",
-          exportedBy: { id: "admin", email: "admin@example.com", name: "Admin" },
+          exportedBy: {
+            id: "admin",
+            email: "admin@example.com",
+            name: "Admin",
+          },
           statistics: {
             totalPeople: 5,
             totalRelationships: 3,
@@ -97,7 +101,11 @@ function createMockDependencies(
       metadata: {
         version: "1.0.0",
         exportedAt: new Date().toISOString(),
-        exportedBy: { id: "admin-123", email: "admin@example.com", name: "Admin User" },
+        exportedBy: {
+          id: "admin-123",
+          email: "admin@example.com",
+          name: "Admin User",
+        },
         statistics: {
           totalPeople: 0,
           totalRelationships: 0,
@@ -213,7 +221,7 @@ describe("validateBackupCore", () => {
       createValidator: () => ({
         validate: async () => mockValidationResult,
         getExtractedFiles: () => new Map(),
-        }),
+      }),
     });
 
     const formData = new FormData();
@@ -235,7 +243,7 @@ describe("validateBackupCore", () => {
           throw new Error("Invalid ZIP structure");
         },
         getExtractedFiles: () => new Map(),
-        }),
+      }),
     });
 
     const formData = new FormData();
@@ -301,7 +309,7 @@ describe("importBackupCore", () => {
           warnings: [],
         }),
         getExtractedFiles: () => new Map(),
-        }),
+      }),
     });
 
     const formData = new FormData();
@@ -326,7 +334,12 @@ describe("importBackupCore", () => {
     });
     formData.append("file", validFile);
 
-    const result = await importBackupCore(formData, "skip", defaultOptions, deps);
+    const result = await importBackupCore(
+      formData,
+      "skip",
+      defaultOptions,
+      deps
+    );
 
     expect(result).toMatchObject({
       success: true,
@@ -361,7 +374,11 @@ describe("importBackupCore", () => {
           metadata: {
             version: "1.0.0",
             exportedAt: new Date().toISOString(),
-            exportedBy: { id: "admin-123", email: "admin@example.com", name: "Admin User" },
+            exportedBy: {
+              id: "admin-123",
+              email: "admin@example.com",
+              name: "Admin User",
+            },
             statistics: {
               totalPeople: 0,
               totalRelationships: 0,
@@ -396,7 +413,11 @@ describe("importBackupCore", () => {
     const result = await importBackupCore(
       formData,
       "skip",
-      { createBackupBeforeImport: true, importPhotos: false, importAuditLogs: false },
+      {
+        createBackupBeforeImport: true,
+        importPhotos: false,
+        importAuditLogs: false,
+      },
       deps
     );
 
@@ -415,12 +436,22 @@ describe("importBackupCore", () => {
     });
     formData.append("file", validFile);
 
-    const resultReplace = await importBackupCore(formData, "replace", defaultOptions, deps);
+    const resultReplace = await importBackupCore(
+      formData,
+      "replace",
+      defaultOptions,
+      deps
+    );
     expect(resultReplace.strategy).toBe("replace");
 
     const formData2 = new FormData();
     formData2.append("file", validFile);
-    const resultMerge = await importBackupCore(formData2, "merge", defaultOptions, deps);
+    const resultMerge = await importBackupCore(
+      formData2,
+      "merge",
+      defaultOptions,
+      deps
+    );
     expect(resultMerge.strategy).toBe("merge");
   });
 
@@ -437,7 +468,11 @@ describe("importBackupCore", () => {
     const result = await importBackupCore(
       formData,
       "skip",
-      { createBackupBeforeImport: false, importPhotos: true, importAuditLogs: false },
+      {
+        createBackupBeforeImport: false,
+        importPhotos: true,
+        importAuditLogs: false,
+      },
       deps
     );
 
@@ -475,7 +510,12 @@ describe("importBackupCore", () => {
     });
     formData.append("file", validFile);
 
-    const result = await importBackupCore(formData, "skip", defaultOptions, deps);
+    const result = await importBackupCore(
+      formData,
+      "skip",
+      defaultOptions,
+      deps
+    );
 
     expect(transactionCallbackExecuted).toBe(true);
     expect(result.success).toBe(true);
@@ -512,7 +552,12 @@ describe("importBackupCore", () => {
     });
     formData.append("file", validFile);
 
-    const result = await importBackupCore(formData, "skip", defaultOptions, deps);
+    const result = await importBackupCore(
+      formData,
+      "skip",
+      defaultOptions,
+      deps
+    );
 
     expect(auditLogCreated).toBe(true);
     expect(result.success).toBe(true);
@@ -786,7 +831,11 @@ describe("importBackupCore - pre-import backup and photo import", () => {
           metadata: {
             version: "1.0.0",
             exportedAt: new Date().toISOString(),
-            exportedBy: { id: "admin-123", email: "admin@example.com", name: "Admin User" },
+            exportedBy: {
+              id: "admin-123",
+              email: "admin@example.com",
+              name: "Admin User",
+            },
             statistics: {
               totalPeople: 0,
               totalRelationships: 0,
@@ -1001,7 +1050,12 @@ describe("importBackupCore - pre-import backup and photo import", () => {
     });
     formData.append("file", validFile);
 
-    const result = await importBackupCore(formData, "skip", defaultOptions, deps);
+    const result = await importBackupCore(
+      formData,
+      "skip",
+      defaultOptions,
+      deps
+    );
 
     expect(result.success).toBe(true);
   });
@@ -1057,7 +1111,12 @@ describe("importBackupCore - pre-import backup and photo import", () => {
     });
     formData.append("file", validFile);
 
-    const result = await importBackupCore(formData, "skip", defaultOptions, deps);
+    const result = await importBackupCore(
+      formData,
+      "skip",
+      defaultOptions,
+      deps
+    );
 
     expect(result.success).toBe(true);
     expect(capturedExtractedFiles).toBe(extractedFiles);
@@ -1090,7 +1149,12 @@ describe("importBackupCore - pre-import backup and photo import", () => {
     });
     formData.append("file", validFile);
 
-    const result = await importBackupCore(formData, "skip", defaultOptions, deps);
+    const result = await importBackupCore(
+      formData,
+      "skip",
+      defaultOptions,
+      deps
+    );
 
     expect(result.success).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
@@ -1642,7 +1706,12 @@ describe("importBackupCore - error logging", () => {
       });
       formData.append("file", validFile);
 
-      const result = await importBackupCore(formData, strategy, defaultOptions, deps);
+      const result = await importBackupCore(
+        formData,
+        strategy,
+        defaultOptions,
+        deps
+      );
 
       expect(result.strategy).toBe(strategy);
       expect(result.success).toBe(true);

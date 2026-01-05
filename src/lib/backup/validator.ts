@@ -43,7 +43,8 @@ const relationshipDataSchema = z.object({
 
 export class BackupValidator {
   private zipBuffer: Buffer;
-  private extractedFiles: Map<string, Record<string, unknown>> = new Map();
+  private extractedFiles: Map<string, Record<string, unknown> | Buffer> =
+    new Map();
   private metadata: BackupMetadata | null = null;
 
   constructor(zipBuffer: Buffer) {
@@ -319,7 +320,8 @@ export class BackupValidator {
       }
 
       // Check for email conflicts
-      const personEmail = typeof person.email === 'string' ? person.email : undefined;
+      const personEmail =
+        typeof person.email === "string" ? person.email : undefined;
       if (personEmail) {
         const existingByEmail = await db.person.findFirst({
           where: { email: personEmail },
@@ -346,9 +348,10 @@ export class BackupValidator {
         where: {
           firstName: personFirstName,
           lastName: personLastName,
-          dateOfBirth: typeof person.dateOfBirth === 'string'
-            ? new Date(person.dateOfBirth)
-            : undefined,
+          dateOfBirth:
+            typeof person.dateOfBirth === "string"
+              ? new Date(person.dateOfBirth)
+              : undefined,
         },
       });
 

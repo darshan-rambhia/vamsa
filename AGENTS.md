@@ -17,10 +17,10 @@ Agents are defined in `.opencode/agent/`:
 
 ```
 .opencode/agent/
-├── architect.md    # Primary - orchestrates all agents
+├── techlead.md     # Primary - orchestrates all agents
 ├── frontend.md     # Subagent - React/Next.js (gemini-2.5-pro)
-├── backend.md      # Subagent - Prisma/Actions (claude-sonnet-4)
-├── tester.md       # Subagent - Vitest + Playwright
+├── backend.md      # Subagent - Prisma/Actions (claude-haiku-4-5)
+├── tester.md       # Subagent - Vitest + Playwright (claude-haiku-4-5)
 └── reviewer.md     # Subagent - ONLY one that closes beads
 ```
 
@@ -28,7 +28,7 @@ Agents are defined in `.opencode/agent/`:
 
 **Primary agent (Tab to switch):**
 
-- `architect` - Use for new features, planning
+- `techlead` - Use for new features, planning, coordination
 
 **Subagents (@ mention):**
 
@@ -41,10 +41,10 @@ Agents are defined in `.opencode/agent/`:
 
 ### Workflow Summary
 
-1. **User** describes feature to **Architect**
-2. **Architect** analyzes, creates beads, presents plan
+1. **User** describes feature to **Tech Lead**
+2. **Tech Lead** analyzes, creates beads, presents plan
 3. **User** approves (or requests changes)
-4. **Architect** delegates to **Frontend** + **Backend** (parallel)
+4. **Tech Lead** delegates to **Frontend** + **Backend** (parallel)
 5. **Tester** writes tests after implementation
 6. **Reviewer** validates and marks complete (ONLY agent that can close beads)
 
@@ -59,18 +59,19 @@ Agents are defined in `.opencode/agent/`:
                             │
                             ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  ARCHITECT AGENT (claude-opus-4-5)                              │
+│  TECH LEAD AGENT (claude-opus-4-5)                              │
 │  - Analyzes requirements                                         │
 │  - Creates epic + implementation beads                          │
 │  - Defines acceptance criteria                                  │
 │  - Assigns frontend/backend scope                               │
+│  - Coordinates issue resolution                                 │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
             ┌───────────────┴───────────────┐
             ▼                               ▼
 ┌─────────────────────────┐   ┌─────────────────────────┐
 │ FRONTEND AGENT          │   │ BACKEND AGENT           │
-│ (gemini-3-pro-high)     │   │ (claude-sonnet-4-5)     │
+│ (gemini-2.5-pro)        │   │ (claude-haiku-4-5)      │
 │ - Implements UI/UX      │   │ - Implements API logic  │
 │ - Creates components    │   │ - DB migrations        │
 │ - Updates forms/pages   │   │ - Server actions       │
@@ -79,7 +80,7 @@ Agents are defined in `.opencode/agent/`:
             └─────────────┬─────────────┘
                           ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  TESTING AGENT (claude-opus-4-5)                                │
+│  TESTING AGENT (claude-haiku-4-5)                               │
 │  - Writes unit tests (vitest)                                   │
 │  - Writes E2E tests (playwright)                                │
 │  - Validates coverage requirements                              │
@@ -94,10 +95,10 @@ Agents are defined in `.opencode/agent/`:
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## Agent 1: ARCHITECT AGENT
+## Agent 1: TECH LEAD AGENT
 
 **Model:** anthropic/claude-opus-4-5  
-**Purpose:** Analyze requirements, design architecture, create implementation plan
+**Purpose:** Analyze requirements, design solutions, create implementation plan, coordinate agents, manage issue resolution
 
 ### When to Invoke
 
@@ -212,17 +213,18 @@ Epic: parent-bead-id
 ### Configuration
 
 ```yaml
-architect:
+techlead:
   model: anthropic/claude-opus-4-5
   system_prompt: |
-    You are the principal architect for Vamsa Family Tree.
+    You are the Tech Lead for Vamsa Family Tree.
 
     Your responsibilities:
     1. Analyze requirements thoroughly before creating beads
     2. Create detailed, implementable specs for each bead
     3. Define clear acceptance criteria that can be objectively verified
     4. Ensure frontend/backend beads are properly scoped
-    5. Consider edge cases, error handling, and security
+    5. Coordinate issue resolution when reviewer finds problems
+    6. Track progress via bead status
 
     Output format:
     - Use bead (bd) for issue creation
@@ -290,7 +292,7 @@ Steps:
 
 ## Agent 3: BACKEND AGENT
 
-**Model:** anthropic/claude-sonnet-4-5  
+**Model:** anthropic/claude-haiku-4-5  
 **Purpose:** Implement TypeScript/Prisma backend features
 
 ### When to Invoke
@@ -358,7 +360,7 @@ Steps:
 
 ## Agent 4: TESTING AGENT
 
-**Model:** anthropic/claude-opus-4-5  
+**Model:** anthropic/claude-haiku-4-5  
 **Purpose:** Write and update tests for all features
 
 ### When to Invoke

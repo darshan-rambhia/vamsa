@@ -239,9 +239,11 @@ export async function getImportHistoryCore(
   return auditLogs.map((log: unknown) => {
     const typedLog = log as AuditLogWithUser;
     const strategy = String(typedLog.newData.strategy || "unknown");
-    const statistics = typeof typedLog.newData.statistics === 'object' && typedLog.newData.statistics !== null
-      ? (typedLog.newData.statistics as Record<string, unknown>)
-      : {};
+    const statistics =
+      typeof typedLog.newData.statistics === "object" &&
+      typedLog.newData.statistics !== null
+        ? (typedLog.newData.statistics as Record<string, unknown>)
+        : {};
 
     return {
       id: typedLog.id,
@@ -254,7 +256,9 @@ export async function getImportHistoryCore(
   });
 }
 
-async function createPreImportBackup(deps: RestoreDependencies): Promise<string> {
+async function createPreImportBackup(
+  deps: RestoreDependencies
+): Promise<string> {
   if (!deps.gatherBackupData) {
     throw new Error("gatherBackupData not available");
   }
@@ -399,7 +403,11 @@ export async function importPhotosCore(
       }
 
       // Upload photo to storage
-      const storedPath = await storage.upload(fileBuffer, filename, "image/jpeg");
+      const storedPath = await storage.upload(
+        fileBuffer,
+        filename,
+        "image/jpeg"
+      );
       const photoUrl = storage.getUrl(storedPath);
 
       // Update person with photo URL

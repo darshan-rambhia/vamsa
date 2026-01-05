@@ -1,5 +1,10 @@
 import type { PrismaClient } from "@prisma/client";
-import type { ValidationResult, ConflictResolutionStrategy, Conflict, BackupMetadata } from "@/schemas/backup";
+import type {
+  ValidationResult,
+  ConflictResolutionStrategy,
+  Conflict,
+  BackupMetadata,
+} from "@/schemas/backup";
 
 // Session type for authenticated user
 export interface AuthSession {

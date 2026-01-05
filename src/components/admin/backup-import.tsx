@@ -22,10 +22,7 @@ function isFileListLike(value: unknown): boolean {
 }
 
 const formSchema = z.object({
-  file: z.any().refine(
-    (files) => isFileListLike(files),
-    "A file is required."
-  ),
+  file: z.any().refine((files) => isFileListLike(files), "A file is required."),
 });
 
 type FormValues = z.infer<typeof formSchema>;

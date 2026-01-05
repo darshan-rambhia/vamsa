@@ -13,7 +13,7 @@ import type { BackupDependencies } from "@/lib/backup/types";
 const defaultDependencies: BackupDependencies = {
   requireAdmin,
   // PrismaClient type is complex; safe to cast here
-  db: db as BackupDependencies['db'],
+  db: db as BackupDependencies["db"],
 };
 
 // Core gather backup data logic - testable with injected dependencies

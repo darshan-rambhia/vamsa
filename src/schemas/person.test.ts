@@ -219,6 +219,166 @@ describe("personCreateSchema", () => {
       expect(result.data.dateOfBirth).toBeNull();
     }
   });
+
+  describe("date handling for timezone independence", () => {
+    it("parses YYYY-MM-DD dates as UTC midnight", () => {
+      const validData = {
+        firstName: "John",
+        lastName: "Doe",
+        dateOfBirth: "1990-06-15",
+      };
+
+      const result = personCreateSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        const date = result.data.dateOfBirth!;
+        expect(date.getUTCFullYear()).toBe(1990);
+        expect(date.getUTCMonth()).toBe(5); // June is month 5 (0-indexed)
+        expect(date.getUTCDate()).toBe(15);
+        expect(date.getUTCHours()).toBe(0);
+        expect(date.getUTCMinutes()).toBe(0);
+        expect(date.getUTCSeconds()).toBe(0);
+      }
+    });
+
+    it("handles invalid date strings by returning null", () => {
+      const trulyInvalidDates = [
+        "invalid-date",
+        "not-a-date",
+        "abc-def-ghi",
+        "2023-13-01", // Invalid month
+        "2023-01-32", // Invalid day
+      ];
+
+      trulyInvalidDates.forEach((invalidDate) => {
+        const validData = {
+          firstName: "John",
+          lastName: "Doe",
+          dateOfBirth: invalidDate,
+        };
+
+        const result = personCreateSchema.safeParse(validData);
+        expect(result.success).toBe(true);
+        if (result.success) {
+          expect(result.data.dateOfBirth).toBeNull();
+        }
+      });
+    });
+  });
+
+  it("handles leap year dates correctly", () => {
+    // Valid leap year
+    const leapYearData = {
+      firstName: "John",
+      lastName: "Doe",
+      dateOfBirth: "2000-02-29",
+    };
+
+    const result1 = personCreateSchema.safeParse(leapYearData);
+    expect(result1.success).toBe(true);
+    if (result1.success) {
+      expect(result1.data.dateOfBirth).toBeInstanceOf(Date);
+      expect(result1.data.dateOfBirth!.getUTCFullYear()).toBe(2000);
+      expect(result1.data.dateOfBirth!.getUTCMonth()).toBe(1); // February
+      expect(result1.data.dateOfBirth!.getUTCDate()).toBe(29);
+    }
+
+    // Invalid leap year
+    const invalidLeapYearData = {
+      firstName: "John",
+      lastName: "Doe",
+      dateOfBirth: "1900-02-29", // 1900 is not a leap year
+    };
+
+    const result2 = personCreateSchema.safeParse(invalidLeapYearData);
+    expect(result2.success).toBe(true);
+    if (result2.success) {
+      expect(result2.data.dateOfBirth).toBeNull();
+    }
+  });
+
+  it("handles both dateOfBirth and dateOfPassing", () => {
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      dateOfBirth: "1950-03-15",
+      dateOfPassing: "2020-11-22",
+      isLiving: false,
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dateOfBirth).toBeInstanceOf(Date);
+      expect(result.data.dateOfBirth!.getUTCFullYear()).toBe(1950);
+      expect(result.data.dateOfBirth!.getUTCMonth()).toBe(2); // March
+      expect(result.data.dateOfBirth!.getUTCDate()).toBe(15);
+
+      expect(result.data.dateOfPassing).toBeInstanceOf(Date);
+      expect(result.data.dateOfPassing!.getUTCFullYear()).toBe(2020);
+      expect(result.data.dateOfPassing!.getUTCMonth()).toBe(10); // November
+      expect(result.data.dateOfPassing!.getUTCDate()).toBe(22);
+    }
+  });
+
+  it("preserves Date objects without transformation", () => {
+    const birthDate = new Date(Date.UTC(1985, 11, 25)); // Dec 25, 1985
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      dateOfBirth: birthDate,
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.dateOfBirth).toBeInstanceOf(Date);
+      expect(result.data.dateOfBirth!.getTime()).toBe(birthDate.getTime());
+    }
+  });
+
+  it("handles edge case dates", () => {
+    const edgeCases = [
+      "2023-01-01", // New Year's Day
+      "2023-12-31", // New Year's Eve
+      "2000-02-29", // Leap year
+      "1999-02-28", // Non-leap year February end
+    ];
+
+    edgeCases.forEach((dateString) => {
+      const validData = {
+        firstName: "John",
+        lastName: "Doe",
+        dateOfBirth: dateString,
+      };
+
+      const result = personCreateSchema.safeParse(validData);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.dateOfBirth).toBeInstanceOf(Date);
+        // Verify the date is stored at midnight UTC
+        expect(result.data.dateOfBirth!.getUTCHours()).toBe(0);
+        expect(result.data.dateOfBirth!.getUTCMinutes()).toBe(0);
+        expect(result.data.dateOfBirth!.getUTCSeconds()).toBe(0);
+      }
+    });
+  });
+
+  it("handles whitespace in date strings", () => {
+    const validData = {
+      firstName: "John",
+      lastName: "Doe",
+      dateOfBirth: "  1990-06-15  ",
+    };
+
+    const result = personCreateSchema.safeParse(validData);
+    expect(result.success).toBe(true);
+    if (result.success) {
+      // parseDateString should handle trimming and parse correctly
+      expect(result.data.dateOfBirth).toBeInstanceOf(Date);
+      expect(result.data.dateOfBirth!.getUTCFullYear()).toBe(1990);
+    }
+  });
 });
 
 describe("personUpdateSchema", () => {

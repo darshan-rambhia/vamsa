@@ -1,9 +1,9 @@
 import { db } from "@/lib/db";
+import type { ConflictResolutionStrategy, Conflict } from "@/schemas/backup";
 import type {
-  ConflictResolutionStrategy,
-  Conflict,
-} from "@/schemas/backup";
-import type { ExtractedFileContent, ImportStatistics } from "@/lib/backup/types";
+  ExtractedFileContent,
+  ImportStatistics,
+} from "@/lib/backup/types";
 
 export class ConflictResolver {
   private strategy: ConflictResolutionStrategy;
@@ -95,7 +95,7 @@ export class ConflictResolver {
       return;
     }
 
-    const settingsData = extractedFiles.get("data/settings.json");
+    const settingsData = extractedFiles.get("data/settings.json") as any;
     if (!settingsData) {
       return;
     }

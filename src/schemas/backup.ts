@@ -46,8 +46,8 @@ export const conflictSchema = z.object({
   type: z.enum(["person", "user", "relationship", "suggestion", "settings"]),
   action: z.enum(["create", "update"]),
   existingId: z.string().optional(),
-  existingData: z.record(z.any()).optional(),
-  newData: z.record(z.any()),
+  existingData: z.record(z.string(), z.any()).optional(),
+  newData: z.record(z.string(), z.any()),
   conflictFields: z.array(z.string()),
   severity: z.enum(["low", "medium", "high"]),
   description: z.string(),
@@ -59,8 +59,8 @@ export const validationResultSchema = z.object({
   conflicts: z.array(conflictSchema),
   statistics: z.object({
     totalConflicts: z.number(),
-    conflictsByType: z.record(z.number()),
-    conflictsBySeverity: z.record(z.number()),
+    conflictsByType: z.record(z.string(), z.number()),
+    conflictsBySeverity: z.record(z.string(), z.number()),
   }),
   errors: z.array(z.string()),
   warnings: z.array(z.string()),
@@ -112,13 +112,13 @@ export const backupValidationPreviewSchema = z.object({
   conflicts: z.object({
     people: z.array(
       z.object({
-        data: z.record(z.any()), // simplified for frontend
+        data: z.record(z.string(), z.any()), // simplified for frontend
         reason: z.string(),
       })
     ),
     relationships: z.array(
       z.object({
-        data: z.record(z.any()), // simplified
+        data: z.record(z.string(), z.any()), // simplified
         reason: z.string(),
       })
     ),

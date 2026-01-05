@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +16,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { personCreateSchema } from "@/schemas/person";
+import {
+  personCreateSchema,
+  PersonCreateInput,
+  PersonCreateFormInput,
+} from "@/schemas/person";
 import { createPerson, updatePerson } from "@/actions/person";
 import { formatDateForInput } from "@/lib/utils";
 import type { Person } from "@prisma/client";
@@ -24,23 +29,6 @@ import type { Gender } from "@prisma/client";
 interface PersonFormProps {
   person?: Person;
   onSuccess?: () => void;
-}
-
-interface FormValues {
-  firstName: string;
-  lastName: string;
-  maidenName?: string;
-  dateOfBirth?: string;
-  dateOfPassing?: string;
-  birthPlace?: string;
-  nativePlace?: string;
-  gender?: Gender;
-  bio?: string;
-  email?: string;
-  phone?: string;
-  profession?: string;
-  employer?: string;
-  isLiving: boolean;
 }
 
 export function PersonForm({ person, onSuccess }: PersonFormProps) {
@@ -54,14 +42,19 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
     setValue,
     watch,
     formState: { errors },
-  } = useForm<FormValues>({
+  } = useForm<PersonCreateFormInput>({
+    resolver: zodResolver(personCreateSchema),
     defaultValues: person
       ? {
           firstName: person.firstName,
           lastName: person.lastName,
           maidenName: person.maidenName || undefined,
-          dateOfBirth: formatDateForInput(person.dateOfBirth) || undefined,
-          dateOfPassing: formatDateForInput(person.dateOfPassing) || undefined,
+          dateOfBirth: person.dateOfBirth
+            ? formatDateForInput(person.dateOfBirth)
+            : undefined,
+          dateOfPassing: person.dateOfPassing
+            ? formatDateForInput(person.dateOfPassing)
+            : undefined,
           birthPlace: person.birthPlace || undefined,
           nativePlace: person.nativePlace || undefined,
           gender: person.gender || undefined,
@@ -72,21 +65,35 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
           employer: person.employer || undefined,
           isLiving: person.isLiving,
         }
-      : { firstName: "", lastName: "", isLiving: true },
+      : {
+          firstName: "",
+          lastName: "",
+          isLiving: true,
+          maidenName: "",
+          dateOfBirth: "",
+          dateOfPassing: "",
+          birthPlace: "",
+          nativePlace: "",
+          bio: "",
+          email: "",
+          phone: "",
+          profession: "",
+          employer: "",
+        },
   });
 
   const isLiving = watch("isLiving");
 
-  async function onSubmit(formData: FormValues) {
+  async function onSubmit(formData: PersonCreateInput) {
     setIsLoading(true);
     setError(null);
 
     try {
-      const parsed = personCreateSchema.parse(formData);
+      // The formData is already validated and transformed by zodResolver
       if (person) {
-        await updatePerson(person.id, parsed);
+        await updatePerson(person.id, formData);
       } else {
-        await createPerson(parsed);
+        await createPerson(formData);
       }
       router.refresh();
       onSuccess?.();
@@ -97,8 +104,14 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
     }
   }
 
+  // We need to cast onSubmit because react-hook-form's handleSubmit
+  // expects a function that takes the form input type, but with zodResolver,
+  // our onSubmit receives the transformed output type.
+  // This is a known typing pattern with zodResolver.
+  const processSubmit = handleSubmit(onSubmit as any);
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={processSubmit} className="space-y-6">
       {error && (
         <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
           {error}
@@ -166,6 +179,11 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                 type="date"
                 {...register("dateOfBirth")}
               />
+              {errors.dateOfBirth && (
+                <p className="text-sm text-destructive">
+                  {errors.dateOfBirth.message}
+                </p>
+              )}
             </div>
           </div>
 
@@ -187,6 +205,11 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                 type="date"
                 {...register("dateOfPassing")}
               />
+              {errors.dateOfPassing && (
+                <p className="text-sm text-destructive">
+                  {errors.dateOfPassing.message}
+                </p>
+              )}
             </div>
           )}
 
@@ -217,6 +240,11 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" {...register("email")} />
+              {errors.email && (
+                <p className="text-sm text-destructive">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>

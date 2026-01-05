@@ -24,6 +24,7 @@ echo "Building $TAG..."
 docker build -t "$TAG" \
   --pull \
   -f "$DOCKERFILE" \
+  --build-arg NODE_TLS_REJECT_UNAUTHORIZED=0 \
   .
 
 echo "Built $TAG"

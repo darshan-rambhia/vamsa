@@ -9,8 +9,7 @@ tools:
   bash: true
 permission:
   bash:
-    "bd close*": allow
-    "bd comment*": allow
+    "bd *": allow
     "bun run *": allow
     "bunx prisma validate": allow
     "*": ask
@@ -70,6 +69,51 @@ For each criterion in the bead:
 - [ ] Has corresponding test
 - [ ] Test passes
 
+## If Issues Found
+
+When quality gates fail or acceptance criteria not met:
+
+1. **Document** all issues clearly
+2. **Identify** responsible agent:
+   - UI/components/pages → @frontend
+   - Actions/schemas/API/database → @backend
+   - Tests/coverage → @tester
+3. **Report** issues with assignment:
+
+```bash
+bd comment {bead-id} --body "
+## Review Issues
+
+### Issues Found
+
+1. **TypeScript error** in src/actions/person.ts:line 42
+   - Error: Object is possibly undefined
+   - Impact: Will fail reviewer typecheck
+
+2. **Build warning** in src/components/ui/button.tsx
+   - Warning: Unused import
+   - Impact: Minor, but should fix
+
+### Recommended Assignee
+
+@backend - owns src/actions/ directory
+
+### Actions Needed
+
+1. Run: bun run typecheck
+2. Fix the undefined access on line 42
+3. Re-run: bun run lint && bun run build
+4. Report completion
+"
+```
+
+4. **Request** tech lead to reassign:
+
+```
+@techlead - Please reassign {bead-id} to @backend for fixes.
+Issues documented in comments.
+```
+
 ## Output Format
 
 ```markdown
@@ -106,13 +150,13 @@ bd close {bead-id} --comment "All criteria met. Coverage: X%. Tests: N passing."
 
 If issues found:
 
-```bash
-bd comment {bead-id} --body "Issues to fix: ..."
-```
+Document issues and assign to responsible agent (see "If Issues Found" section above).
 
 ## Rules
 
 - Be thorough - check every criterion
-- Run all quality gates
-- Only close if ALL checks pass
+- Run ALL quality gates even if agents ran them
+- Agents may miss issues - you are the last line of defense
+- Only close if ALL checks pass (typecheck, lint, tests, coverage, build)
 - You are the ONLY one who can close beads
+- When issues found, delegate to responsible agent (@frontend, @backend, or @tester)

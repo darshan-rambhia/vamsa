@@ -12,7 +12,7 @@ export const suggestionStatusEnum = z.enum(["PENDING", "APPROVED", "REJECTED"]);
 export const suggestionCreateSchema = z.object({
   type: suggestionTypeEnum,
   targetPersonId: z.string().optional().nullable(),
-  suggestedData: z.record(z.unknown()),
+  suggestedData: z.record(z.string(), z.unknown()),
   reason: z.string().optional(),
 });
 

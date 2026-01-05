@@ -1,8 +1,8 @@
 import { describe, it, expect, mock, beforeEach } from "bun:test";
 
 // Mock dependencies BEFORE importing auth-options
-const mockBcryptCompare = mock(async (password: string, hash: string) =>
-  password === "validpassword"
+const mockBcryptCompare = mock(
+  async (password: string, _hash: string) => password === "validpassword"
 );
 
 const mockDbUser = {
@@ -57,9 +57,8 @@ mock.module("next-auth/providers/oauth", () => ({
 }));
 
 // NOW import after mocks are set up
-const { authOptions, authorizeUser, buildOIDCProvider } = await import(
-  "./auth-options"
-);
+const { authOptions, authorizeUser, buildOIDCProvider } =
+  await import("./auth-options");
 
 describe("authOptions", () => {
   beforeEach(() => {
@@ -150,7 +149,7 @@ describe("authOptions", () => {
       try {
         await authorizeUser({
           email: "nonexistent@example.com",
-          password: "password"
+          password: "password",
         });
       } catch (error) {
         errorThrown = true;

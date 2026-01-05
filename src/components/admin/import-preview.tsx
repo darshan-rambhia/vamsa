@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import {
-  ValidationResult,
-  ConflictResolutionStrategy,
-} from "@/schemas/backup";
+import { ValidationResult, ConflictResolutionStrategy } from "@/schemas/backup";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -92,13 +89,12 @@ export function ImportPreview({ result, file, onReset }: ImportPreviewProps) {
     mutation.mutate({ file, strategy });
   };
 
-  const personConflicts = result.conflicts.filter(
-    (c) => c.type === "person"
-  );
+  const personConflicts = result.conflicts.filter((c) => c.type === "person");
   const relationshipConflicts = result.conflicts.filter(
     (c) => c.type === "relationship"
   );
-  const hasConflicts = personConflicts.length > 0 || relationshipConflicts.length > 0;
+  const hasConflicts =
+    personConflicts.length > 0 || relationshipConflicts.length > 0;
 
   return (
     <div className="space-y-6">
@@ -119,9 +115,7 @@ export function ImportPreview({ result, file, onReset }: ImportPreviewProps) {
               </div>
             </div>
             <div className="rounded-lg border p-4">
-              <div className="text-sm text-muted-foreground">
-                Relationships
-              </div>
+              <div className="text-sm text-muted-foreground">Relationships</div>
               <div className="text-2xl font-bold">
                 {result.metadata.statistics.totalRelationships}
               </div>
@@ -215,7 +209,8 @@ export function ImportPreview({ result, file, onReset }: ImportPreviewProps) {
                       {personConflicts.map((c, i) => (
                         <TableRow key={i}>
                           <TableCell>
-                            {c.existingData?.firstName} {c.existingData?.lastName}
+                            {(c.existingData?.firstName as string) || ""}{" "}
+                            {(c.existingData?.lastName as string) || ""}
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline">{c.description}</Badge>

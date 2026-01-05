@@ -73,8 +73,8 @@ describe("getStorageAdapter", () => {
   });
 
   it("exports StorageAdapter type", async () => {
-    const module = await import("./index");
+    const storageModule = await import("./index");
     // If the type is exported, this should not throw
-    expect(module).toBeDefined();
+    expect(storageModule).toBeDefined();
   });
 });

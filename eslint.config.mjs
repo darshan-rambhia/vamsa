@@ -34,7 +34,6 @@ export default [
     },
   },
 
-
   // Prettier config (must be last to override other formatting rules)
   prettierConfig,
 ];

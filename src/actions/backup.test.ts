@@ -122,7 +122,9 @@ function createMockDependencies(
         findMany: async () => {
           personFindManyCallCount++;
           // First call returns all people, second call returns people with photos
-          return personFindManyCallCount === 1 ? mockPeople : mockPeopleWithPhotos;
+          return personFindManyCallCount === 1
+            ? mockPeople
+            : mockPeopleWithPhotos;
         },
       },
       relationship: {

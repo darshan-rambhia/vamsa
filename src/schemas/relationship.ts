@@ -22,11 +22,11 @@ export const relationshipCreateSchema = z.object({
   type: relationshipTypeEnum,
   marriageDate: dateSchema.optional().nullable(),
   divorceDate: dateSchema.optional().nullable(),
-  isActive: z.boolean().default(true),
+  isActive: z.boolean().optional().default(true),
 });
 
 export const relationshipUpdateSchema = relationshipCreateSchema.partial();
 
 export type RelationshipType = z.infer<typeof relationshipTypeEnum>;
-export type RelationshipCreateInput = z.infer<typeof relationshipCreateSchema>;
+export type RelationshipCreateInput = z.input<typeof relationshipCreateSchema>;
 export type RelationshipUpdateInput = z.infer<typeof relationshipUpdateSchema>;

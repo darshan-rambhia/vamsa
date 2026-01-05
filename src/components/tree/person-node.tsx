@@ -15,7 +15,12 @@ export interface PersonNodeData extends Record<string, unknown> {
 export type PersonNodeType = Node<PersonNodeData, "person">;
 
 export function PersonNode({ data }: NodeProps<PersonNodeType>) {
-  const { person, onClick: _onClick, hasHiddenChildren, hasHiddenParents } = data;
+  const {
+    person,
+    onClick: _onClick,
+    hasHiddenChildren,
+    hasHiddenParents,
+  } = data;
   const initials =
     `${person.firstName.charAt(0)}${person.lastName.charAt(0)}`.toUpperCase();
 

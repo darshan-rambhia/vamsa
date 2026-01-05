@@ -60,8 +60,8 @@ model Person {
   firstName     String
   lastName      String
   maidenName    String?
-  dateOfBirth   DateTime?
-  dateOfPassing DateTime?
+  dateOfBirth   DateTime? @db.Date
+  dateOfPassing DateTime? @db.Date
   birthPlace    String?
   nativePlace   String?
   gender        Gender?
@@ -102,8 +102,8 @@ model Relationship {
   relatedPersonId String
   type            RelationshipType
 
-  marriageDate    DateTime?
-  divorceDate     DateTime?
+  marriageDate    DateTime? @db.Date
+  divorceDate     DateTime? @db.Date
   isActive        Boolean          @default(true)
 
   createdAt       DateTime         @default(now())

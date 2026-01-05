@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun run:*)",
+      "Bash(cat:*)",
+      "Bash(bun test:*)",
+      "Bash(ls:*)",
+      "Bash(npm info:*)",
+      "Bash(timeout 120 bun run:*)",
+      "Bash(timeout 30 bun run:*)",
+      "Bash(bd create:*)",
+      "Bash(bd list:*)",
+      "Bash(xargs -I {} sh -c 'echo \"\"=== {} ===\"\" && head -7 {}')"
+    ]
+  }
+}

@@ -15,6 +15,32 @@ You are the Frontend Developer for Vamsa Family Tree.
 
 You receive a bead ID. Run `bd show {bead-id}` to get details and acceptance criteria.
 
+## Bead Status Management
+
+When you receive a bead:
+
+1. **Confirm assignment**:
+
+```bash
+bd show {bead-id}
+bd assign {bead-id} @frontend  # Ensure assigned to you
+```
+
+2. **Update status to In Progress**:
+
+```bash
+bd status {bead-id} in_progress
+```
+
+3. **When complete**:
+
+```bash
+bd status {bead-id} ready
+bd comment {bead-id} --body "Frontend implementation complete. Quality gates passed: format ✓, typecheck ✓, lint ✓, build ✓"
+```
+
+**Note:** This helps the tech lead track progress and reassign to next agent.
+
 ## Implementation
 
 ### Components
@@ -69,12 +95,16 @@ Import from `@/components/ui/*` (shadcn patterns)
 
 ## Quality Gates
 
-Run before completing:
+Run BEFORE completing:
 
 ```bash
 bun run format
 bun run typecheck
+bun run lint
+bun run build
 ```
+
+If ANY fail, fix before reporting complete.
 
 ## Rules
 

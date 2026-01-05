@@ -7,6 +7,8 @@ import {
   calculateAge,
   generateRandomPassword,
   getInitials,
+  createDateOnly,
+  toDateOnly,
 } from "./utils";
 
 describe("cn", () => {
@@ -47,17 +49,17 @@ describe("parseDateString", () => {
   it("parses YYYY-MM-DD format correctly", () => {
     const result = parseDateString("2024-06-15");
     expect(result).toBeInstanceOf(Date);
-    expect(result?.getFullYear()).toBe(2024);
-    expect(result?.getMonth()).toBe(5);
-    expect(result?.getDate()).toBe(15);
-    expect(result?.getHours()).toBe(12);
+    expect(result?.getUTCFullYear()).toBe(2024);
+    expect(result?.getUTCMonth()).toBe(5);
+    expect(result?.getUTCDate()).toBe(15);
+    expect(result?.getUTCHours()).toBe(0);
   });
 
   it("parses ISO string with time", () => {
     const isoString = "2024-06-15T10:30:00Z";
     const result = parseDateString(isoString);
     expect(result).toBeInstanceOf(Date);
-    expect(result?.getFullYear()).toBe(2024);
+    expect(result?.getUTCFullYear()).toBe(2024);
   });
 
   it("returns null for invalid date string", () => {
@@ -87,7 +89,7 @@ describe("formatDate", () => {
   });
 
   it("formats Date object correctly", () => {
-    const date = new Date(2024, 5, 15);
+    const date = new Date(Date.UTC(2024, 5, 15));
     const result = formatDate(date);
     expect(result).toBe("June 15, 2024");
   });
@@ -112,12 +114,12 @@ describe("formatDateForInput", () => {
   });
 
   it("formats Date object as YYYY-MM-DD", () => {
-    const date = new Date(2024, 5, 15);
+    const date = new Date(Date.UTC(2024, 5, 15));
     expect(formatDateForInput(date)).toBe("2024-06-15");
   });
 
   it("formats date with single-digit month and day correctly", () => {
-    const date = new Date(2024, 0, 5);
+    const date = new Date(Date.UTC(2024, 0, 5));
     expect(formatDateForInput(date)).toBe("2024-01-05");
   });
 
@@ -144,32 +146,32 @@ describe("calculateAge", () => {
   });
 
   it("calculates age correctly", () => {
-    setSystemTime(new Date(2024, 5, 15));
-    const dob = new Date(1990, 5, 15);
+    setSystemTime(new Date(Date.UTC(2024, 5, 15)));
+    const dob = new Date(Date.UTC(1990, 5, 15));
     expect(calculateAge(dob)).toBe(34);
   });
 
   it("calculates age when birthday hasn't occurred this year", () => {
-    setSystemTime(new Date(2024, 5, 14));
-    const dob = new Date(1990, 5, 15);
+    setSystemTime(new Date(Date.UTC(2024, 5, 14)));
+    const dob = new Date(Date.UTC(1990, 5, 15));
     expect(calculateAge(dob)).toBe(33);
   });
 
   it("calculates age with dateOfPassing", () => {
-    const dob = new Date(1990, 5, 15);
-    const dop = new Date(2020, 5, 15);
+    const dob = new Date(Date.UTC(1990, 5, 15));
+    const dop = new Date(Date.UTC(2020, 5, 15));
     expect(calculateAge(dob, dop)).toBe(30);
   });
 
   it("calculates age when passing occurred before birthday in year", () => {
-    const dob = new Date(1990, 5, 15);
-    const dop = new Date(2020, 5, 14);
+    const dob = new Date(Date.UTC(1990, 5, 15));
+    const dop = new Date(Date.UTC(2020, 5, 14));
     expect(calculateAge(dob, dop)).toBe(29);
   });
 
   it("handles same month but earlier day", () => {
-    setSystemTime(new Date(2024, 5, 10));
-    const dob = new Date(1990, 5, 15);
+    setSystemTime(new Date(Date.UTC(2024, 5, 10)));
+    const dob = new Date(Date.UTC(1990, 5, 15));
     expect(calculateAge(dob)).toBe(33);
   });
 });
@@ -213,5 +215,46 @@ describe("getInitials", () => {
 
   it("handles names with special characters", () => {
     expect(getInitials("José", "María")).toBe("JM");
+  });
+});
+
+describe("createDateOnly", () => {
+  it("creates date at midnight UTC", () => {
+    const date = createDateOnly(2024, 6, 15);
+    expect(date.getUTCFullYear()).toBe(2024);
+    expect(date.getUTCMonth()).toBe(5); // 0-based
+    expect(date.getUTCDate()).toBe(15);
+    expect(date.getUTCHours()).toBe(0);
+    expect(date.getUTCMinutes()).toBe(0);
+    expect(date.getUTCSeconds()).toBe(0);
+  });
+
+  it("handles single digit month and day", () => {
+    const date = createDateOnly(2024, 1, 5);
+    expect(date.getUTCFullYear()).toBe(2024);
+    expect(date.getUTCMonth()).toBe(0);
+    expect(date.getUTCDate()).toBe(5);
+  });
+});
+
+describe("toDateOnly", () => {
+  it("converts date with time to date-only at midnight UTC", () => {
+    const dateWithTime = new Date("2024-06-15T14:30:45.123Z");
+    const dateOnly = toDateOnly(dateWithTime);
+    expect(dateOnly.getUTCFullYear()).toBe(2024);
+    expect(dateOnly.getUTCMonth()).toBe(5);
+    expect(dateOnly.getUTCDate()).toBe(15);
+    expect(dateOnly.getUTCHours()).toBe(0);
+    expect(dateOnly.getUTCMinutes()).toBe(0);
+    expect(dateOnly.getUTCSeconds()).toBe(0);
+  });
+
+  it("preserves date-only values", () => {
+    const dateOnly = new Date(Date.UTC(2024, 5, 15));
+    const result = toDateOnly(dateOnly);
+    expect(result.getUTCFullYear()).toBe(2024);
+    expect(result.getUTCMonth()).toBe(5);
+    expect(result.getUTCDate()).toBe(15);
+    expect(result.getUTCHours()).toBe(0);
   });
 });

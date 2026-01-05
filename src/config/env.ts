@@ -8,8 +8,8 @@ const envSchema = z.object({
   ADMIN_PASSWORD: z.string().optional(),
   OIDC_ENABLED: z
     .string()
-    .transform((v) => v === "true")
-    .default("false"),
+    .default("false")
+    .transform((v) => v === "true"),
   OIDC_PROVIDER_NAME: z.string().optional(),
   OIDC_ISSUER: z.string().optional(),
   OIDC_CLIENT_ID: z.string().optional(),

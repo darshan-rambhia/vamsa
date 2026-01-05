@@ -3,6 +3,8 @@ FROM oven/bun:1 AS base
 FROM base AS deps
 WORKDIR /app
 COPY package.json bun.lockb* ./
+# ARG NODE_TLS_REJECT_UNAUTHORIZED=0
+# ENV NODE_TLS_REJECT_UNAUTHORIZED=${NODE_TLS_REJECT_UNAUTHORIZED}
 RUN bun install --frozen-lockfile
 
 FROM base AS builder
