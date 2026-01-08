@@ -3,7 +3,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "dist/**", ".vinxi/**"]
     },
     "dev": {
       "cache": false,
@@ -16,7 +16,14 @@
       "dependsOn": ["^build"]
     },
     "test": {
-      "dependsOn": ["^build"]
+      "cache": false
+    },
+    "test:e2e": {
+      "cache": false,
+      "outputs": ["test-output/**"]
+    },
+    "test:coverage": {
+      "cache": false
     }
   }
 }

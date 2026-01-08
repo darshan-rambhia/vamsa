@@ -11,7 +11,9 @@
     "./styles.css": "./src/styles.css"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.4",
@@ -27,7 +29,10 @@
     "tailwind-merge": "^3.0.2"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.2.0",
+    "@types/bun": "^1.3.5",
     "@types/react": "^19.0.3",
+    "jsdom": "^26.0.0",
     "typescript": "^5.9.3"
   },
   "peerDependencies": {
