@@ -48,6 +48,9 @@ function AuthenticatedLayout() {
           </Button>
         }
       >
+        <NavLink href="/dashboard" active={pathname === "/dashboard"}>
+          Dashboard
+        </NavLink>
         <NavLink href="/people" active={pathname.startsWith("/people")}>
           People
         </NavLink>

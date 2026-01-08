@@ -4,7 +4,7 @@ import { api } from "@vamsa/api/convex/_generated/api";
 import { formatDate, calculateAge } from "@vamsa/lib";
 import { Id } from "@vamsa/api/convex/_generated/dataModel";
 import { Container } from "@vamsa/ui";
-import { Card, CardContent, Avatar, AvatarFallback, Badge, Button } from "@vamsa/ui/primitives";
+import { Card, CardContent, Avatar, Badge, Button } from "@vamsa/ui/primitives";
 
 export const Route = createFileRoute("/_authenticated/people/$personId")({
   component: PersonDetailComponent,
@@ -78,9 +78,11 @@ function PersonDetailComponent() {
       <Card className="mb-6">
         <CardContent className="py-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-            <Avatar className="h-24 w-24 text-2xl">
-              <AvatarFallback>{initials}</AvatarFallback>
-            </Avatar>
+            <Avatar
+              size="xl"
+              fallback={initials}
+              alt={`${person.firstName} ${person.lastName}`}
+            />
 
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-3 mb-2">

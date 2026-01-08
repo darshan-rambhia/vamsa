@@ -212,6 +212,45 @@ export const remove = mutation({
 });
 
 /**
+ * Get dashboard stats
+ */
+export const stats = query({
+  args: {
+    token: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args.token ?? null);
+
+    const persons = await ctx.db.query("persons").collect();
+    const relationships = await ctx.db.query("relationships").collect();
+
+    const totalPeople = persons.length;
+    const livingPeople = persons.filter((p) => p.isLiving).length;
+    const deceasedPeople = persons.filter((p) => !p.isLiving).length;
+    const totalRelationships = relationships.length;
+
+    // Get recent additions (last 5, sorted by creation time)
+    const sortedPersons = [...persons].sort(
+      (a, b) => b._creationTime - a._creationTime
+    );
+    const recentAdditions = sortedPersons.slice(0, 5).map((p) => ({
+      id: p._id,
+      firstName: p.firstName,
+      lastName: p.lastName,
+      createdAt: p._creationTime,
+    }));
+
+    return {
+      totalPeople,
+      livingPeople,
+      deceasedPeople,
+      totalRelationships,
+      recentAdditions,
+    };
+  },
+});
+
+/**
  * Get all persons for dropdown/select
  */
 export const listForSelect = query({
