@@ -57,6 +57,9 @@ function AuthenticatedLayout() {
         <NavLink href="/tree" active={pathname === "/tree"}>
           Tree
         </NavLink>
+        <NavLink href="/activity" active={pathname === "/activity"}>
+          Activity
+        </NavLink>
         <NavLink href="/admin" active={pathname.startsWith("/admin")}>
           Admin
         </NavLink>

@@ -217,6 +217,57 @@ export const deleteOld = mutation({
 });
 
 /**
+ * Get recent activity for all members (non-admin)
+ * Shows recent creates/updates to persons and relationships
+ */
+export const recentActivity = query({
+  args: {
+    token: v.string(),
+    limit: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await requireAuth(ctx, args.token);
+
+    const limit = args.limit ?? 20;
+
+    // Get recent logs that are relevant for activity feed
+    const logs = await ctx.db
+      .query("auditLogs")
+      .order("desc")
+      .take(100); // Fetch more to filter
+
+    // Filter to only show person/relationship activity (not system/settings)
+    const relevantLogs = logs.filter(
+      (log) =>
+        (log.entityType === "PERSON" || log.entityType === "RELATIONSHIP") &&
+        (log.actionType === "CREATE" || log.actionType === "UPDATE" || log.actionType === "DELETE")
+    );
+
+    const items = relevantLogs.slice(0, limit);
+
+    // Enrich with user data
+    const enriched = await Promise.all(
+      items.map(async (log) => {
+        const user = log.userId ? await ctx.db.get(log.userId) : null;
+        return {
+          id: log._id,
+          actionType: log.actionType,
+          entityType: log.entityType,
+          entityId: log.entityId,
+          description: log.description,
+          timestamp: log.timestamp,
+          user: user
+            ? { id: user._id, name: user.name || user.email }
+            : null,
+        };
+      })
+    );
+
+    return enriched;
+  },
+});
+
+/**
  * Get audit log statistics
  */
 export const getStats = query({
