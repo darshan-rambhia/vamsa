@@ -2,7 +2,7 @@
  * Custom Playwright Test Fixtures
  * Extends the base test with app-specific utilities and fixtures
  */
-import { test as base, expect, type Page, type BrowserContext } from "@playwright/test";
+import { test as base, expect, type Page } from "@playwright/test";
 
 /**
  * Test user credentials for different roles

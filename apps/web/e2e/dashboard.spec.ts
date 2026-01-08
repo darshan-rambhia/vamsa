@@ -36,7 +36,7 @@ test.describe("Dashboard", () => {
       await dashboard.goto();
 
       // Check for activity section or link
-      const activitySection = page
+      const _activitySection = page
         .locator('text="Recent Activity"')
         .or(page.locator('text="Activity"'))
         .or(page.locator('[data-recent-activity]'));
@@ -63,7 +63,7 @@ test.describe("Dashboard", () => {
 
   test.describe("Dashboard - Responsive", () => {
     test("dashboard stats should adapt to viewport", async ({ page, getViewportInfo }) => {
-      const { isMobile, isTablet } = getViewportInfo();
+      const { isMobile: _isMobile, isTablet: _isTablet } = getViewportInfo();
       const dashboard = new DashboardPage(page);
       await dashboard.goto();
 
@@ -245,7 +245,7 @@ test.describe("Navigation Flow", () => {
 
     // Dashboard link should be active/highlighted
     const dashboardLink = page.locator('a[href="/dashboard"]');
-    const classes = await dashboardLink.getAttribute("class");
+    const _classes = await dashboardLink.getAttribute("class");
 
     // Should have some indication of active state
     // (depends on implementation - active class, aria-current, etc.)
@@ -258,7 +258,7 @@ test.describe("Navigation Flow", () => {
 
     // Scroll down
     await page.evaluate(() => window.scrollTo(0, 200));
-    const scrollBefore = await page.evaluate(() => window.scrollY);
+    const _scrollBefore = await page.evaluate(() => window.scrollY);
 
     // Navigate to another page
     await page.goto("/activity");

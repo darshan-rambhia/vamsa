@@ -59,7 +59,7 @@ test.describe("Authentication", () => {
       await page.goto("/login");
 
       // Look for theme toggle button
-      const themeToggle = page.locator('[data-theme-toggle], button:has-text("theme")');
+      const _themeToggle = page.locator('[data-theme-toggle], button:has-text("theme")');
       // Theme toggle exists in corner
       await expect(page.locator("button").first()).toBeVisible();
     });

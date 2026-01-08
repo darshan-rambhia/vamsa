@@ -3,7 +3,7 @@
  * Tests CRUD operations for family members
  */
 import { test, expect, TEST_USERS } from "./fixtures";
-import { PeopleListPage, PersonDetailPage, PersonFormPage, Navigation } from "./fixtures/page-objects";
+import { PeopleListPage, PersonDetailPage, PersonFormPage } from "./fixtures/page-objects";
 
 test.describe("People Management", () => {
   // Login before each test
@@ -115,7 +115,7 @@ test.describe("People Management", () => {
       }
     });
 
-    test("should edit a person", async ({ page, waitForConvexSync }) => {
+    test("should edit a person", async ({ page, _waitForConvexSync }) => {
       const peopleList = new PeopleListPage(page);
       await peopleList.goto();
       await peopleList.waitForLoad();
@@ -224,7 +224,7 @@ test.describe("People - Responsive", () => {
   });
 
   test("people list should be responsive", async ({ page, getViewportInfo }) => {
-    const { isMobile, isTablet, width } = getViewportInfo();
+    const { _isMobile, isTablet: _isTablet, width } = getViewportInfo();
     const peopleList = new PeopleListPage(page);
     await peopleList.goto();
 
@@ -264,7 +264,7 @@ test.describe("People - Data Integrity", () => {
     await login(TEST_USERS.admin);
   });
 
-  test("should preserve data after page refresh", async ({ page, waitForConvexSync }) => {
+  test("should preserve data after page refresh", async ({ page, _waitForConvexSync }) => {
     const peopleList = new PeopleListPage(page);
     await peopleList.goto();
     await peopleList.waitForLoad();
@@ -283,7 +283,7 @@ test.describe("People - Data Integrity", () => {
 
   test("should reflect changes immediately (Convex reactivity)", async ({
     page,
-    waitForConvexSync,
+    _waitForConvexSync,
   }) => {
     // This test verifies Convex's reactive updates
     // When data changes, UI should update without manual refresh
