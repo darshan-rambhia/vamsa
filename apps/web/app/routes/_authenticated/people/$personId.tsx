@@ -3,6 +3,8 @@ import { useQuery } from "convex/react";
 import { api } from "@vamsa/api/convex/_generated/api";
 import { formatDate, calculateAge } from "@vamsa/lib";
 import { Id } from "@vamsa/api/convex/_generated/dataModel";
+import { Container } from "@vamsa/ui";
+import { Card, CardContent, Avatar, AvatarFallback, Badge, Button } from "@vamsa/ui/primitives";
 
 export const Route = createFileRoute("/_authenticated/people/$personId")({
   component: PersonDetailComponent,
@@ -19,127 +21,174 @@ function PersonDetailComponent() {
 
   if (person === undefined) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
+      <Container>
+        <div className="flex items-center justify-center py-16">
+          <div className="animate-pulse flex flex-col items-center gap-4">
+            <div className="h-24 w-24 rounded-full bg-muted" />
+            <div className="h-6 w-48 rounded bg-muted" />
+            <div className="h-4 w-32 rounded bg-muted" />
+          </div>
+        </div>
+      </Container>
     );
   }
 
   if (person === null) {
     return (
-      <div className="rounded-lg border bg-card p-8 text-center">
-        <h2 className="text-xl font-semibold text-foreground">Person not found</h2>
-        <Link
-          to="/people"
-          className="mt-4 inline-block rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          Back to People
-        </Link>
-      </div>
+      <Container>
+        <Card className="max-w-md mx-auto">
+          <CardContent className="py-12 text-center">
+            <div className="mb-4 text-muted-foreground/50">
+              <svg className="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <h2 className="font-display text-xl text-foreground mb-2">Person Not Found</h2>
+            <p className="text-muted-foreground mb-6">
+              This person may have been removed or the link is incorrect.
+            </p>
+            <Button asChild>
+              <Link to="/people">Back to People</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </Container>
     );
   }
 
   const birthDate = person.dateOfBirth ? new Date(person.dateOfBirth) : null;
   const deathDate = person.dateOfPassing ? new Date(person.dateOfPassing) : null;
   const age = calculateAge(birthDate, deathDate);
+  const initials = `${person.firstName?.[0] || ""}${person.lastName?.[0] || ""}`.toUpperCase();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <Link
-            to="/people"
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            &larr; Back to People
-          </Link>
-          <h1 className="mt-2 text-2xl font-bold text-foreground">
-            {person.firstName} {person.lastName}
-          </h1>
-        </div>
-        <Link
-          to="/people/$personId/edit"
-          params={{ personId }}
-          className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-        >
-          Edit
-        </Link>
+    <Container>
+      {/* Back link */}
+      <Link
+        to="/people"
+        className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-6"
+      >
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+        </svg>
+        Back to People
+      </Link>
+
+      {/* Person header card */}
+      <Card className="mb-6">
+        <CardContent className="py-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+            <Avatar className="h-24 w-24 text-2xl">
+              <AvatarFallback>{initials}</AvatarFallback>
+            </Avatar>
+
+            <div className="flex-1">
+              <div className="flex flex-wrap items-center gap-3 mb-2">
+                <h1 className="font-display text-3xl text-foreground">
+                  {person.firstName} {person.lastName}
+                </h1>
+                {person.isLiving ? (
+                  <Badge variant="secondary">Living</Badge>
+                ) : (
+                  <Badge variant="outline">Deceased</Badge>
+                )}
+              </div>
+
+              {(birthDate || person.birthPlace) && (
+                <p className="text-muted-foreground">
+                  {birthDate && (
+                    <span className="font-mono text-sm">
+                      {formatDate(birthDate)}
+                      {person.isLiving && age !== null && ` · ${age} years old`}
+                      {!person.isLiving && age !== null && ` — ${formatDate(deathDate!)} · lived ${age} years`}
+                    </span>
+                  )}
+                  {birthDate && person.birthPlace && " · "}
+                  {person.birthPlace && <span>Born in {person.birthPlace}</span>}
+                </p>
+              )}
+            </div>
+
+            <Button asChild variant="outline">
+              <Link to="/people/$personId/edit" params={{ personId }}>
+                Edit Profile
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Details grid */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Personal Info */}
+        <Card>
+          <CardContent className="py-6">
+            <h3 className="font-display text-lg text-foreground mb-4">Personal Information</h3>
+            <dl className="space-y-4">
+              <DetailRow label="Gender" value={person.gender ?? "Not specified"} />
+              {person.profession && <DetailRow label="Profession" value={person.profession} />}
+              {person.employer && <DetailRow label="Employer" value={person.employer} />}
+            </dl>
+          </CardContent>
+        </Card>
+
+        {/* Contact Info */}
+        <Card>
+          <CardContent className="py-6">
+            <h3 className="font-display text-lg text-foreground mb-4">Contact Information</h3>
+            <dl className="space-y-4">
+              {person.email ? (
+                <DetailRow
+                  label="Email"
+                  value={
+                    <a href={`mailto:${person.email}`} className="text-primary hover:underline">
+                      {person.email}
+                    </a>
+                  }
+                />
+              ) : (
+                <DetailRow label="Email" value="Not provided" muted />
+              )}
+              {person.phone ? (
+                <DetailRow label="Phone" value={person.phone} />
+              ) : (
+                <DetailRow label="Phone" value="Not provided" muted />
+              )}
+            </dl>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="rounded-lg border bg-card p-6">
-        <dl className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <dt className="text-sm font-medium text-muted-foreground">Gender</dt>
-            <dd className="mt-1 text-foreground">{person.gender ?? "Not specified"}</dd>
-          </div>
+      {/* Bio section */}
+      {person.bio && (
+        <Card className="mt-6">
+          <CardContent className="py-6">
+            <h3 className="font-display text-lg text-foreground mb-4">About</h3>
+            <p className="whitespace-pre-wrap text-foreground leading-relaxed">
+              {person.bio}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </Container>
+  );
+}
 
-          {birthDate && (
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Date of Birth</dt>
-              <dd className="mt-1 text-foreground">
-                {formatDate(birthDate)}
-                {person.isLiving && age !== null && ` (${age} years old)`}
-              </dd>
-            </div>
-          )}
-
-          {!person.isLiving && deathDate && (
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Date of Passing</dt>
-              <dd className="mt-1 text-foreground">
-                {formatDate(deathDate)}
-                {age !== null && ` (lived ${age} years)`}
-              </dd>
-            </div>
-          )}
-
-          {person.birthPlace && (
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Birth Place</dt>
-              <dd className="mt-1 text-foreground">{person.birthPlace}</dd>
-            </div>
-          )}
-
-          {person.profession && (
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Profession</dt>
-              <dd className="mt-1 text-foreground">{person.profession}</dd>
-            </div>
-          )}
-
-          {person.employer && (
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Employer</dt>
-              <dd className="mt-1 text-foreground">{person.employer}</dd>
-            </div>
-          )}
-
-          {person.email && (
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Email</dt>
-              <dd className="mt-1 text-foreground">
-                <a href={`mailto:${person.email}`} className="text-primary hover:underline">
-                  {person.email}
-                </a>
-              </dd>
-            </div>
-          )}
-
-          {person.phone && (
-            <div>
-              <dt className="text-sm font-medium text-muted-foreground">Phone</dt>
-              <dd className="mt-1 text-foreground">{person.phone}</dd>
-            </div>
-          )}
-        </dl>
-
-        {person.bio && (
-          <div className="mt-6 border-t pt-6">
-            <dt className="text-sm font-medium text-muted-foreground">About</dt>
-            <dd className="mt-2 whitespace-pre-wrap text-foreground">{person.bio}</dd>
-          </div>
-        )}
-      </div>
+function DetailRow({
+  label,
+  value,
+  muted = false
+}: {
+  label: string;
+  value: React.ReactNode;
+  muted?: boolean;
+}) {
+  return (
+    <div className="flex justify-between items-baseline">
+      <dt className="text-sm text-muted-foreground">{label}</dt>
+      <dd className={muted ? "text-muted-foreground/60 text-sm" : "text-foreground"}>
+        {value}
+      </dd>
     </div>
   );
 }

@@ -2,50 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ============================================
+   VAMSA DESIGN SYSTEM
+   Editorial + Earth Tones
+   ============================================ */
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Typography */
+    --font-display: "Fraunces", Georgia, serif;
+    --font-body: "Source Sans 3", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+    /* ========== LIGHT MODE ========== */
+    /* Backgrounds */
+    --background: 40 33% 98%;          /* #FDFBF7 - Warm cream */
+    --foreground: 120 27% 14%;         /* #1A2E1A - Deep forest */
+
+    /* Cards & Surfaces */
+    --card: 43 30% 93%;                /* #F5F1E8 - Soft parchment */
+    --card-foreground: 120 27% 14%;    /* #1A2E1A - Deep forest */
+
+    /* Popovers & Overlays */
+    --popover: 40 33% 98%;             /* #FDFBF7 - Warm cream */
+    --popover-foreground: 120 27% 14%; /* #1A2E1A - Deep forest */
+
+    /* Primary - Forest Green */
+    --primary: 114 38% 25%;            /* #2D5A27 - Forest green */
+    --primary-foreground: 40 33% 98%;  /* #FDFBF7 - Warm cream */
+
+    /* Secondary - Moss */
+    --secondary: 123 26% 39%;          /* #4A7C4E - Moss */
+    --secondary-foreground: 40 33% 98%;/* #FDFBF7 - Warm cream */
+
+    /* Muted - Subtle backgrounds */
+    --muted: 43 30% 93%;               /* #F5F1E8 - Soft parchment */
+    --muted-foreground: 24 30% 28%;    /* #5C4033 - Bark brown */
+
+    /* Accent - Warm highlight */
+    --accent: 43 25% 88%;              /* Slightly darker parchment */
+    --accent-foreground: 120 27% 14%;  /* #1A2E1A - Deep forest */
+
+    /* Destructive - Autumn red */
+    --destructive: 0 55% 39%;          /* #9B2C2C - Autumn red */
+    --destructive-foreground: 40 33% 98%;
+
+    /* Borders & Inputs */
+    --border: 35 20% 82%;              /* #D4C9B8 - Warm taupe */
+    --input: 35 20% 82%;               /* #D4C9B8 - Warm taupe */
+    --ring: 114 38% 25%;               /* #2D5A27 - Forest green */
+
+    /* Border radius */
     --radius: 0.5rem;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* ========== DARK MODE ========== */
+    /* Backgrounds */
+    --background: 120 27% 8%;          /* #0F1A0F - Deep forest night */
+    --foreground: 120 15% 93%;         /* #E8F0E8 - Pale sage */
+
+    /* Cards & Surfaces */
+    --card: 120 20% 12%;               /* #1A251A - Dark bark */
+    --card-foreground: 120 15% 93%;    /* #E8F0E8 - Pale sage */
+
+    /* Popovers & Overlays */
+    --popover: 120 20% 10%;            /* Slightly darker */
+    --popover-foreground: 120 15% 93%; /* #E8F0E8 - Pale sage */
+
+    /* Primary - Bright Moss */
+    --primary: 120 15% 49%;            /* #6B8E6B - Bright moss */
+    --primary-foreground: 120 27% 8%;  /* #0F1A0F - Deep forest night */
+
+    /* Secondary - Sage */
+    --secondary: 120 15% 64%;          /* #8FB88F - Sage highlight */
+    --secondary-foreground: 120 27% 8%;/* #0F1A0F - Deep forest night */
+
+    /* Muted */
+    --muted: 120 20% 15%;              /* Slightly lighter bark */
+    --muted-foreground: 120 10% 68%;   /* #A3B8A3 - Muted moss */
+
+    /* Accent */
+    --accent: 120 20% 18%;             /* Highlight bark */
+    --accent-foreground: 120 15% 93%;  /* #E8F0E8 - Pale sage */
+
+    /* Destructive - Soft coral */
+    --destructive: 0 64% 67%;          /* #E57373 - Soft coral */
+    --destructive-foreground: 120 27% 8%;
+
+    /* Borders & Inputs */
+    --border: 120 15% 20%;             /* #2D3D2D - Forest shadow */
+    --input: 120 15% 20%;              /* #2D3D2D - Forest shadow */
+    --ring: 120 15% 49%;               /* #6B8E6B - Bright moss */
   }
 }
 
@@ -53,7 +101,126 @@
   * {
     @apply border-border;
   }
+
+  html {
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "kern" 1, "liga" 1;
+  }
+
+  /* Editorial Typography */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    font-weight: 400;
+  }
+
+  h2 {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+  }
+
+  h3 {
+    font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+  }
+
+  /* Monospace for metadata */
+  code, kbd, samp, pre,
+  .font-mono {
+    font-family: var(--font-mono);
+  }
+
+  /* Refined focus styles */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Selection color */
+  ::selection {
+    @apply bg-primary/20 text-foreground;
+  }
+}
+
+/* ============================================
+   ANIMATION UTILITIES
+   Subtle & Refined Motion
+   ============================================ */
+
+@layer utilities {
+  .transition-smooth {
+    @apply transition-all duration-300 ease-out;
+  }
+
+  .transition-fast {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  /* Subtle hover lift */
+  .hover-lift {
+    @apply transition-smooth;
+  }
+  .hover-lift:hover {
+    @apply -translate-y-0.5 shadow-lg;
+  }
+
+  /* Fade in animation */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.4s ease-out forwards;
+  }
+
+  /* Staggered children animation */
+  .stagger-children > * {
+    @apply animate-fade-in;
+  }
+  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+  .stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+  .stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+  .stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+  .stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+  .stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+}
+
+/* ============================================
+   EDITORIAL LAYOUT UTILITIES
+   ============================================ */
+
+@layer utilities {
+  /* Editorial container */
+  .container-editorial {
+    @apply mx-auto px-6 sm:px-8 lg:px-12;
+    max-width: 80rem;
+  }
+
+  /* Generous spacing for editorial feel */
+  .section-padding {
+    @apply py-12 sm:py-16 lg:py-20;
+  }
+
+  /* Pull quote styling */
+  .pull-quote {
+    font-family: var(--font-display);
+    @apply text-2xl sm:text-3xl italic text-muted-foreground;
+    @apply border-l-4 border-primary pl-6 my-8;
   }
 }

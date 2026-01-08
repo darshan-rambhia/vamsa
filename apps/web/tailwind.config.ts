@@ -1,9 +1,18 @@
 import type { Config } from "tailwindcss";
 
 export default {
-  content: ["./app/**/*.{js,ts,jsx,tsx}"],
+  content: [
+    "./app/**/*.{js,ts,jsx,tsx}",
+    "../../packages/ui/src/**/*.{js,ts,jsx,tsx}",
+  ],
+  darkMode: "class",
   theme: {
     extend: {
+      fontFamily: {
+        display: ["var(--font-display)", "Georgia", "serif"],
+        body: ["var(--font-body)", "system-ui", "sans-serif"],
+        mono: ["var(--font-mono)", "ui-monospace", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -43,6 +52,20 @@ export default {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      keyframes: {
+        "fade-in": {
+          from: { opacity: "0", transform: "translateY(8px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-out": {
+          from: { opacity: "1", transform: "translateY(0)" },
+          to: { opacity: "0", transform: "translateY(8px)" },
+        },
+      },
+      animation: {
+        "fade-in": "fade-in 0.4s ease-out forwards",
+        "fade-out": "fade-out 0.4s ease-out forwards",
       },
     },
   },

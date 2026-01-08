@@ -1,3 +1,4 @@
+// Core primitives
 export { Button, buttonVariants, type ButtonProps } from "./button";
 export { Input } from "./input";
 export { Label } from "./label";
@@ -9,3 +10,8 @@ export {
   CardDescription,
   CardContent,
 } from "./card";
+
+// Additional primitives
+export { Badge, badgeVariants, type BadgeProps } from "./badge";
+export { Avatar } from "./avatar";
+export { ThemeToggle } from "./theme-toggle";
