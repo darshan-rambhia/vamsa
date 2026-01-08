@@ -1,5 +1,5 @@
 /**
- * GEDCOM 5.5.1 Parser
+ * GEDCOM 5.5.1 and 7.0 Parser
  * Handles parsing of GEDCOM format files into structured TypeScript objects
  */
 
@@ -12,22 +12,33 @@ import type {
   ParsedFamily,
   ValidationError,
 } from "./types";
+import { detectEncoding, normalizeEncoding } from "./encoding";
 
 export class GedcomParser {
   private lines: GedcomLine[] = [];
   private records: GedcomRecord[] = [];
   private errors: ValidationError[] = [];
+  private gedcomVersion: "5.5.1" | "7.0" = "5.5.1";
 
   /**
-   * Parse GEDCOM 5.5.1 text into structured format
+   * Parse GEDCOM 5.5.1 or 7.0 text into structured format
+   * Automatically detects and normalizes encoding
    */
   parse(content: string): GedcomFile {
     this.lines = [];
     this.records = [];
     this.errors = [];
 
+    // Step 1: Detect and normalize encoding (ANSEL -> UTF-8)
+    const detectedEncoding = detectEncoding(content);
+    let processedContent = content;
+
+    if (detectedEncoding === "ANSEL") {
+      processedContent = normalizeEncoding(content);
+    }
+
     // Split into lines and filter empty lines
-    const rawLines = content.split(/\r?\n/).filter((line) => line.trim());
+    const rawLines = processedContent.split(/\r?\n/).filter((line) => line.trim());
 
     // Parse each line and handle continuations
     this.parseLines(rawLines);
@@ -40,6 +51,8 @@ export class GedcomParser {
     const trailer = this.records.find((r) => r.type === "TRLR");
     const individuals = this.records.filter((r) => r.type === "INDI");
     const families = this.records.filter((r) => r.type === "FAM");
+    const sources = this.records.filter((r) => r.type === "SOUR");
+    const objects = this.records.filter((r) => r.type === "OBJE");
 
     if (!header) {
       throw new Error("Missing required HEAD record");
@@ -50,23 +63,60 @@ export class GedcomParser {
 
     // Extract charset and version from header
     const charsetLine = header.tags.get("CHAR")?.[0];
-    const _versionLine = header.tags.get("VERS")?.[0];
-    const _gedcomLine = header.tags.get("GEDC")?.[0];
-    const gedcVersionLine = header.tags
-      .get("GEDC")
-      ?.find((l) => l.tag === "VERS");
+
+    // Find GEDC > VERS nested structure
+    // Look for VERS lines that come after GEDC at level 1
+    let version = "5.5.1";
+    const gedcLines = header.tags.get("GEDC") || [];
+    if (gedcLines.length > 0) {
+      const gedcIndex = header.lines.indexOf(gedcLines[0]);
+      for (let i = gedcIndex + 1; i < header.lines.length; i++) {
+        const line = header.lines[i];
+        // Stop if we reach level 1 (sibling of GEDC)
+        if (line.level === 1) {
+          break;
+        }
+        // Found VERS as child of GEDC
+        if (line.tag === "VERS" && line.level === 2) {
+          version = line.value;
+          break;
+        }
+      }
+    }
 
     const charset = charsetLine?.value || "UTF-8";
-    const version = gedcVersionLine?.value || "5.5.1";
+
+    // Detect GEDCOM version (5.5.1 vs 7.0)
+    const detectedVersion = this.detectGedcomVersion(version);
+    this.gedcomVersion = detectedVersion;
 
     return {
       header,
       individuals,
       families,
+      sources,
+      objects,
       trailer,
       version,
       charset,
+      gedcomVersion: detectedVersion,
     };
+  }
+
+  /**
+   * Detect GEDCOM version from version string
+   */
+  private detectGedcomVersion(versionStr: string): "5.5.1" | "7.0" {
+    if (!versionStr) {
+      return "5.5.1"; // Default to 5.5.1
+    }
+
+    const normalized = versionStr.trim().toLowerCase();
+    if (normalized.includes("7.0") || normalized.startsWith("7")) {
+      return "7.0";
+    }
+
+    return "5.5.1";
   }
 
   /**
@@ -221,25 +271,38 @@ export class GedcomParser {
   private getRecordType(
     tag: string,
     _xref?: string
-  ): "INDI" | "FAM" | "HEAD" | "TRLR" | "OTHER" {
+  ): "INDI" | "FAM" | "HEAD" | "TRLR" | "SOUR" | "OBJE" | "OTHER" {
     if (tag === "HEAD") return "HEAD";
     if (tag === "TRLR") return "TRLR";
     if (tag === "INDI") return "INDI";
     if (tag === "FAM") return "FAM";
+    if (tag === "SOUR") return "SOUR";
+    if (tag === "OBJE") return "OBJE";
     return "OTHER";
   }
 
   /**
    * Parse GEDCOM date format
-   * Handles: "15 JAN 1985", "JAN 1985", "1985", "ABT 1985", "BEF 1985", "AFT 1985", "BET 1975 AND 1985"
-   * Returns ISO date (YYYY-MM-DD) or null if invalid/partial
+   * GEDCOM 5.5.1: "15 JAN 1985", "JAN 1985", "1985", "ABT 1985", "BEF 1985", "AFT 1985", "BET 1975 AND 1985"
+   * GEDCOM 7.0: ISO 8601 format "1985-01-15", "1985-01", "1985"
+   * Returns ISO date (YYYY-MM-DD) or partial ISO date (YYYY-MM or YYYY) or null if invalid
    */
-  parseDate(gedcomDate: string): string | null {
+  parseDate(gedcomDate: string, version: "5.5.1" | "7.0" = "5.5.1"): string | null {
     if (!gedcomDate || !gedcomDate.trim()) {
       return null;
     }
 
     const trimmed = gedcomDate.trim();
+
+    // Try GEDCOM 7.0 ISO 8601 format first if version is 7.0
+    if (version === "7.0") {
+      const iso8601Result = this.parseDateISO8601(trimmed);
+      if (iso8601Result) {
+        return iso8601Result;
+      }
+    }
+
+    // Fall back to GEDCOM 5.5.1 format
     const parsed = this.parseDateComponents(trimmed);
 
     if (!parsed.year) {
@@ -263,6 +326,34 @@ export class GedcomParser {
     }
 
     return isoDate;
+  }
+
+  /**
+   * Parse ISO 8601 date format used in GEDCOM 7.0
+   * Formats: "1985-01-15", "1985-01", "1985"
+   */
+  private parseDateISO8601(dateStr: string): string | null {
+    // Match ISO 8601 format
+    const iso8601Match = dateStr.match(/^(\d{4})(?:-(\d{2})(?:-(\d{2}))?)?$/);
+
+    if (!iso8601Match) {
+      return null;
+    }
+
+    const year = iso8601Match[1];
+    const month = iso8601Match[2];
+    const day = iso8601Match[3];
+
+    // Build result
+    let result = year;
+    if (month) {
+      result += "-" + month;
+      if (day) {
+        result += "-" + day;
+      }
+    }
+
+    return result;
   }
 
   /**
@@ -658,7 +749,7 @@ export class GedcomParser {
 
         // Found a DATE child of this event
         if (line.tag === "DATE") {
-          const parsed = this.parseDate(line.value);
+          const parsed = this.parseDate(line.value, this.gedcomVersion);
           if (parsed) {
             return parsed;
           }

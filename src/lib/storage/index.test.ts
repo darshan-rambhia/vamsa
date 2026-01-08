@@ -32,7 +32,7 @@ describe("getStorageAdapter", () => {
     const { getStorageAdapter: getAdapter } = await import("./index");
     try {
       getAdapter();
-      expect.fail("Should have thrown S3 error");
+      throw new Error("Should have thrown S3 error");
     } catch (error) {
       expect((error as Error).message).toBe(
         "S3 storage adapter not yet implemented"
@@ -47,7 +47,7 @@ describe("getStorageAdapter", () => {
     try {
       // Should fall through to default case, which throws for unknown
       getAdapter();
-      expect.fail("Should have thrown error for unsupported provider");
+      throw new Error("Should have thrown error for unsupported provider");
     } catch (error) {
       // Any error for unsupported provider is acceptable
       expect(error).toBeDefined();

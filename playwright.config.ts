@@ -11,10 +11,13 @@ export default defineConfig({
     timeout: 10 * 1000,
   },
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 2 : undefined,
-  fullyParallel: true,
+  // Reduce worker count to avoid file descriptor overflow on macOS
+  workers: process.env.CI ? 2 : 1,
+  fullyParallel: false,
   outputDir: "test-output/results/",
   reporter: [["html", { outputFolder: "test-output/playwright/" }], ["list"]],
+  // globalSetup: require.resolve("./e2e/global-setup.ts"),
+  globalSetup: "./e2e/global-setup.ts",
 
   webServer: {
     command: "bun run dev",

@@ -1,16 +1,10 @@
-import path from "node:path";
-import { defineConfig } from "prisma/config";
+import { defineConfig } from "@prisma/internals";
 
 export default defineConfig({
-  schema: path.join(__dirname, "schema.prisma"),
-
-  migrate: {
-    adapter: async () => {
-      const { PrismaPg } = await import("@prisma/adapter-pg");
-      const { Pool } = await import("pg");
-      const connectionString = process.env.DATABASE_URL;
-      const pool = new Pool({ connectionString });
-      return new PrismaPg(pool);
+  adapter: "postgresql",
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL || "postgresql://vamsa:password@localhost:5432/vamsa",
     },
   },
 });

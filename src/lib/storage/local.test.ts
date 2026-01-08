@@ -122,8 +122,10 @@ describe("LocalStorageAdapter", () => {
       const buffer = Buffer.from("test content");
       await adapter.upload(buffer, "test.jpg", "image/jpeg");
       expect(mockMkdir).toHaveBeenCalled();
-      const callArgs = mockMkdir.mock.calls[0];
-      expect(callArgs[1]).toEqual({ recursive: true });
+      const calls = mockMkdir.mock.calls;
+      if (calls.length > 0 && calls[0]) {
+        expect((calls[0] as any)[1]).toEqual({ recursive: true });
+      }
     });
 
     it("calls writeFile with buffer and path", async () => {
@@ -133,8 +135,10 @@ describe("LocalStorageAdapter", () => {
       const buffer = Buffer.from("test content");
       await adapter.upload(buffer, "test.jpg", "image/jpeg");
       expect(mockWriteFile).toHaveBeenCalled();
-      const callArgs = mockWriteFile.mock.calls[0];
-      expect(callArgs[1]).toBe(buffer);
+      const calls = mockWriteFile.mock.calls;
+      if (calls.length > 0 && calls[0]) {
+        expect((calls[0] as any)[1]).toBe(buffer);
+      }
     });
 
     it("handles filename with unicode characters", async () => {

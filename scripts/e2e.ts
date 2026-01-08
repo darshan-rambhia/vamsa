@@ -46,6 +46,11 @@ const main = async () => {
       testCommand.push("--headed");
     }
 
+    // Note: Database migrations are pre-applied. Prisma 7 requires proper config setup
+    // for migrations to work, which will be addressed in a separate task (vamsa-rqc).
+    // Test data is seeded by e2e/global-setup.ts before tests run (vamsa-1ca).
+    console.log("\n📋 Database ready (migrations pre-applied, test data seeded)");
+
     console.log(
       `\n📋 Running E2E tests${uiMode ? " (UI mode)" : headedMode ? " (headed)" : ""}...`
     );

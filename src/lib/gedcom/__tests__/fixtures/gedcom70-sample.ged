@@ -1,0 +1,50 @@
+0 HEAD
+1 SOUR GEDCOM 7.0 Test
+1 DATE 2026-01-05
+1 GEDC
+2 VERS 7.0
+2 FORM LINEAGE-LINKED
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME John /Smith/
+1 SEX M
+1 BIRT
+2 DATE 1985-01-15
+2 PLAC Boston, Massachusetts, USA
+1 OCCU Software Engineer
+1 NOTE John was born in Boston
+0 @I2@ INDI
+1 NAME Jane /Doe/
+1 SEX F
+1 BIRT
+2 DATE 1988-06-20
+2 PLAC Portland, Oregon, USA
+1 DEAT
+2 DATE 2020-03-15
+1 NOTE Jane was an educator
+0 @I3@ INDI
+1 NAME Robert /Smith/
+1 SEX M
+1 BIRT
+2 DATE 1990-12-31
+2 PLAC Seattle, Washington, USA
+1 NOTE Robert was born on New Year's Eve
+0 @I4@ INDI
+1 NAME Mary /Johnson/
+1 SEX F
+1 BIRT
+2 DATE 1992-07-04
+2 PLAC Denver, Colorado, USA
+1 NOTE Mary was born on Independence Day
+0 @F1@ FAM
+1 HUSB @I1@
+1 WIFE @I2@
+1 CHIL @I3@
+1 CHIL @I4@
+1 MARR
+2 DATE 2010-06-15
+2 PLAC Las Vegas, Nevada, USA
+1 DIV
+2 DATE 2019-03-20
+1 NOTE They were married for 9 years
+0 TRLR

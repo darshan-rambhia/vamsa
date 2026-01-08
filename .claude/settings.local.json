@@ -23,7 +23,23 @@
       "Bash(bd comments:*)",
       "Bash(bunx prisma validate:*)",
       "Bash(eslint:*)",
-      "Bash(bd comment:*)"
+      "Bash(bd comment:*)",
+      "Bash(bunx eslint:*)",
+      "Bash(bd set-state:*)",
+      "Bash(bd state:*)",
+      "Bash(timeout 45 bun run:*)",
+      "Bash(timeout 60 bun run:*)",
+      "Bash(timeout 90 bun run:*)",
+      "Bash(bunx prisma:*)",
+      "Bash(timeout 300 bun run:*)",
+      "Bash(timeout 600 bun run:*)",
+      "Bash(timeout 180 bun run:*)",
+      "Bash(DATABASE_URL=\"postgresql://vamsa:password@localhost:5432/vamsa\" bunx prisma db push:*)",
+      "Bash(timeout 180 bunx playwright test:*)",
+      "Bash(timeout 60 bunx playwright test:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(xargs cat:*)"
     ]
   }
 }

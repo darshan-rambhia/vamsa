@@ -19,7 +19,7 @@ export interface GedcomLine {
  * A record in GEDCOM structure (individual, family, header, trailer)
  */
 export interface GedcomRecord {
-  type: "INDI" | "FAM" | "HEAD" | "TRLR" | "OTHER";
+  type: "INDI" | "FAM" | "HEAD" | "TRLR" | "SOUR" | "OBJE" | "OTHER";
   id?: string; // xref without @ signs
   lines: GedcomLine[];
   tags: Map<string, GedcomLine[]>; // Fast lookup by tag
@@ -32,9 +32,12 @@ export interface GedcomFile {
   header: GedcomRecord;
   individuals: GedcomRecord[];
   families: GedcomRecord[];
+  sources: GedcomRecord[]; // GEDCOM Phase 2: Source records
+  objects: GedcomRecord[]; // GEDCOM Phase 2: Multimedia object records
   trailer: GedcomRecord;
-  version: string;
+  version: string; // GEDCOM version (e.g., "5.5.1" or "7.0")
   charset: string;
+  gedcomVersion?: "5.5.1" | "7.0"; // Structured version identifier
 }
 
 /**

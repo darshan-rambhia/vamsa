@@ -4,22 +4,27 @@
  */
 
 import type { GedcomIndividualData, GedcomFamilyData } from "./mapper-types";
+import type { VamsaSource } from "./source-mapper";
+import type { VamsaMediaObject } from "./object-mapper";
 
 export interface GeneratorOptions {
   sourceProgram?: string;
   submitterName?: string;
   maxLineLength?: number; // Default 80
+  version?: "5.5.1" | "7.0"; // GEDCOM version to export (default 5.5.1)
 }
 
 export class GedcomGenerator {
   private maxLineLength: number;
   private sourceProgram: string;
   private submitterName: string;
+  private version: "5.5.1" | "7.0";
 
   constructor(options?: GeneratorOptions) {
     this.maxLineLength = options?.maxLineLength || 80;
     this.sourceProgram = options?.sourceProgram || "vamsa";
     this.submitterName = options?.submitterName || "Vamsa User";
+    this.version = options?.version || "5.5.1";
   }
 
   /**
@@ -56,35 +61,46 @@ export class GedcomGenerator {
 
   /**
    * Generate GEDCOM header
+   * Supports both GEDCOM 5.5.1 and 7.0 formats
    */
   private generateHeader(): string {
     const today = new Date();
-    const day = String(today.getDate()).padStart(2, "0");
-    const months = [
-      "JAN",
-      "FEB",
-      "MAR",
-      "APR",
-      "MAY",
-      "JUN",
-      "JUL",
-      "AUG",
-      "SEP",
-      "OCT",
-      "NOV",
-      "DEC",
-    ];
-    const month = months[today.getMonth()];
-    const year = today.getFullYear();
 
     const lines: string[] = [];
     lines.push("0 HEAD");
     lines.push(`1 SOUR ${this.sourceProgram}`);
     lines.push(`2 NAME ${this.sourceProgram}`);
     lines.push("2 VERS 1.0");
-    lines.push(`1 DATE ${day} ${month} ${year}`);
+
+    // Format date based on version
+    if (this.version === "7.0") {
+      // GEDCOM 7.0 uses ISO 8601 format
+      const isoDate = today.toISOString().split("T")[0];
+      lines.push(`1 DATE ${isoDate}`);
+    } else {
+      // GEDCOM 5.5.1 uses traditional format
+      const day = String(today.getDate()).padStart(2, "0");
+      const months = [
+        "JAN",
+        "FEB",
+        "MAR",
+        "APR",
+        "MAY",
+        "JUN",
+        "JUL",
+        "AUG",
+        "SEP",
+        "OCT",
+        "NOV",
+        "DEC",
+      ];
+      const month = months[today.getMonth()];
+      const year = today.getFullYear();
+      lines.push(`1 DATE ${day} ${month} ${year}`);
+    }
+
     lines.push("1 GEDC");
-    lines.push("2 VERS 5.5.1");
+    lines.push(`2 VERS ${this.version}`);
     lines.push("2 FORM LINEAGE-LINKED");
     lines.push("1 CHAR UTF-8");
     lines.push("1 SUBM @SUBM1@");
@@ -124,7 +140,8 @@ export class GedcomGenerator {
     if (individual.birthDate || individual.birthPlace) {
       lines.push("1 BIRT");
       if (individual.birthDate) {
-        lines.push(`2 DATE ${individual.birthDate}`);
+        const formattedDate = this.formatDate(individual.birthDate);
+        lines.push(`2 DATE ${formattedDate}`);
       }
       if (individual.birthPlace) {
         lines.push(`2 PLAC ${individual.birthPlace}`);
@@ -135,7 +152,8 @@ export class GedcomGenerator {
     if (individual.deathDate || individual.deathPlace) {
       lines.push("1 DEAT");
       if (individual.deathDate) {
-        lines.push(`2 DATE ${individual.deathDate}`);
+        const formattedDate = this.formatDate(individual.deathDate);
+        lines.push(`2 DATE ${formattedDate}`);
       }
       if (individual.deathPlace) {
         lines.push(`2 PLAC ${individual.deathPlace}`);
@@ -190,7 +208,8 @@ export class GedcomGenerator {
     if (family.marriageDate || family.marriagePlace) {
       lines.push("1 MARR");
       if (family.marriageDate) {
-        lines.push(`2 DATE ${family.marriageDate}`);
+        const formattedDate = this.formatDate(family.marriageDate);
+        lines.push(`2 DATE ${formattedDate}`);
       }
       if (family.marriagePlace) {
         lines.push(`2 PLAC ${family.marriagePlace}`);
@@ -200,7 +219,8 @@ export class GedcomGenerator {
     // Divorce event (optional)
     if (family.divorceDate) {
       lines.push("1 DIV");
-      lines.push(`2 DATE ${family.divorceDate}`);
+      const formattedDate = this.formatDate(family.divorceDate);
+      lines.push(`2 DATE ${formattedDate}`);
     }
 
     // Children
@@ -240,6 +260,71 @@ export class GedcomGenerator {
     }
 
     return line;
+  }
+
+  /**
+   * Format date for GEDCOM output based on version
+   * GEDCOM 5.5.1: "15 JAN 1985"
+   * GEDCOM 7.0: "1985-01-15" (ISO 8601)
+   */
+  private formatDate(isoDate: string): string {
+    if (!isoDate) {
+      return "";
+    }
+
+    if (this.version === "7.0") {
+      // ISO 8601 format - already in correct format
+      return isoDate;
+    }
+
+    // GEDCOM 5.5.1 format - convert from ISO to traditional format
+    const parts = isoDate.split("-");
+    if (parts.length === 3) {
+      const day = String(parseInt(parts[2], 10));
+      const year = parts[0];
+      const monthIndex = parseInt(parts[1], 10) - 1;
+      const months = [
+        "JAN",
+        "FEB",
+        "MAR",
+        "APR",
+        "MAY",
+        "JUN",
+        "JUL",
+        "AUG",
+        "SEP",
+        "OCT",
+        "NOV",
+        "DEC",
+      ];
+      const month = months[monthIndex];
+      return `${day} ${month} ${year}`;
+    } else if (parts.length === 2) {
+      // Month-year only
+      const year = parts[0];
+      const monthIndex = parseInt(parts[1], 10) - 1;
+      const months = [
+        "JAN",
+        "FEB",
+        "MAR",
+        "APR",
+        "MAY",
+        "JUN",
+        "JUL",
+        "AUG",
+        "SEP",
+        "OCT",
+        "NOV",
+        "DEC",
+      ];
+      const month = months[monthIndex];
+      return `${month} ${year}`;
+    } else if (parts.length === 1) {
+      // Year only
+      return parts[0];
+    }
+
+    return isoDate;
   }
 
   /**
@@ -304,5 +389,74 @@ export class GedcomGenerator {
     }
 
     return lines;
+  }
+
+  /**
+   * Generate SOUR (Source) record
+   * GEDCOM Phase 2: Source Citations Support
+   */
+  generateSource(source: VamsaSource & { xref: string }): string {
+    const lines: string[] = [];
+
+    // Opening record
+    lines.push(`0 ${source.xref} SOUR`);
+
+    // Title (required)
+    lines.push(`1 TITL ${source.title}`);
+
+    // Author (optional)
+    if (source.author) {
+      lines.push(`1 AUTH ${source.author}`);
+    }
+
+    // Publication date (optional)
+    if (source.publicationDate) {
+      lines.push(`1 PUBL ${source.publicationDate}`);
+    }
+
+    // Repository (optional)
+    if (source.repository) {
+      lines.push(`1 REPO ${source.repository}`);
+    }
+
+    // Notes (optional)
+    if (source.notes) {
+      const noteLines = this.formatLongLine(1, "NOTE", source.notes);
+      lines.push(...noteLines);
+    }
+
+    return lines.join("\n");
+  }
+
+  /**
+   * Generate OBJE (Object/Multimedia) record
+   * GEDCOM Phase 2: Multimedia Object Support
+   */
+  generateObject(object: VamsaMediaObject & { xref: string }): string {
+    const lines: string[] = [];
+
+    // Opening record
+    lines.push(`0 ${object.xref} OBJE`);
+
+    // File path (required)
+    lines.push(`1 FILE ${object.filePath}`);
+
+    // Format (optional but recommended)
+    if (object.format) {
+      lines.push(`1 FORM ${object.format}`);
+    }
+
+    // Title (optional)
+    if (object.title) {
+      lines.push(`1 TITL ${object.title}`);
+    }
+
+    // Description/Notes (optional)
+    if (object.description) {
+      const noteLines = this.formatLongLine(1, "NOTE", object.description);
+      lines.push(...noteLines);
+    }
+
+    return lines.join("\n");
   }
 }

@@ -92,6 +92,9 @@ model Person {
 
   suggestions   Suggestion[] @relation("SuggestionTarget")
 
+  eventSources  EventSource[] @relation("PersonEventSources")
+  eventMedia    EventMedia[]  @relation("PersonEventMedia")
+
   @@index([lastName, firstName])
   @@index([createdById])
 }
@@ -246,4 +249,70 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// GEDCOM Phase 2: Source Citations Support
+model Source {
+  id              String   @id @default(cuid())
+  title           String
+  author          String?
+  publicationDate String?  // ISO date format
+  description     String?
+  repository      String?
+  notes           String?
+
+  eventSources    EventSource[] @relation("SourceEvents")
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([title])
+}
+
+// Join table for Event to Source relationships
+model EventSource {
+  id        String  @id @default(cuid())
+  sourceId  String
+  personId  String
+  eventType String  // e.g., BIRT, DEAT, MARR, BURI, GRAD, etc.
+
+  source    Source  @relation("SourceEvents", fields: [sourceId], references: [id], onDelete: Cascade)
+  person    Person  @relation("PersonEventSources", fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, personId, eventType])
+  @@index([sourceId])
+  @@index([personId])
+  @@index([eventType])
+}
+
+// GEDCOM Phase 2: Multimedia Object Support
+model MediaObject {
+  id          String   @id @default(cuid())
+  filePath    String
+  format      String   // e.g., JPEG, PNG, PDF
+  title       String?
+  description String?
+
+  eventMedia  EventMedia[] @relation("MediaEvents")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([filePath])
+}
+
+// Join table for Event to MediaObject relationships
+model EventMedia {
+  id           String  @id @default(cuid())
+  mediaId      String
+  personId     String
+  eventType    String  // e.g., BIRT, DEAT, MARR, BURI, GRAD, etc.
+
+  media        MediaObject @relation("MediaEvents", fields: [mediaId], references: [id], onDelete: Cascade)
+  person       Person      @relation("PersonEventMedia", fields: [personId], references: [id], onDelete: Cascade)
+
+  @@unique([mediaId, personId, eventType])
+  @@index([mediaId])
+  @@index([personId])
+  @@index([eventType])
 }

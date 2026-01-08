@@ -490,4 +490,188 @@ describe("GedcomGenerator", () => {
     expect(parsed.individuals.length).toBe(0);
     expect(parsed.families.length).toBe(0);
   });
+
+  // Test 16: GEDCOM 7.0 generation
+  it("should generate GEDCOM 7.0 with ISO 8601 date format", () => {
+    const generator = new GedcomGenerator({
+      version: "7.0",
+      sourceProgram: "vamsa",
+      submitterName: "Test User",
+    });
+
+    const individuals: GedcomIndividualData[] = [
+      {
+        xref: "@I1@",
+        name: "John /Smith/",
+        sex: "M",
+        birthDate: "1985-01-15",
+        notes: [],
+        familiesAsSpouse: [],
+        familiesAsChild: [],
+      },
+    ];
+    const families: GedcomFamilyData[] = [];
+
+    const output = generator.generate(individuals, families);
+
+    // Check for GEDCOM 7.0 version
+    expect(output).toContain("2 VERS 7.0");
+
+    // Check for ISO 8601 date format in header
+    expect(output).toMatch(/1 DATE \d{4}-\d{2}-\d{2}/);
+
+    // Parse back
+    const parser = new GedcomParser();
+    const parsed = parser.parse(output);
+    expect(parsed.gedcomVersion).toBe("7.0");
+  });
+
+  // Test 17: GEDCOM 7.0 with ISO 8601 dates in events
+  it("should format event dates as ISO 8601 in GEDCOM 7.0", () => {
+    const generator = new GedcomGenerator({
+      version: "7.0",
+      sourceProgram: "vamsa",
+    });
+
+    const individuals: GedcomIndividualData[] = [
+      {
+        xref: "@I1@",
+        name: "Jane /Doe/",
+        sex: "F",
+        birthDate: "1990-05-20",
+        deathDate: "2024-12-25",
+        notes: [],
+        familiesAsSpouse: [],
+        familiesAsChild: [],
+      },
+    ];
+    const families: GedcomFamilyData[] = [];
+
+    const output = generator.generate(individuals, families);
+
+    // ISO 8601 dates in events should be in YYYY-MM-DD format
+    expect(output).toContain("2 DATE 1990-05-20");
+    expect(output).toContain("2 DATE 2024-12-25");
+  });
+
+  // Test 18: GEDCOM 5.5.1 vs 7.0 date format difference
+  it("should use different date formats for GEDCOM 5.5.1 vs 7.0", () => {
+    const date551 = new GedcomGenerator({
+      version: "5.5.1",
+      sourceProgram: "vamsa",
+    });
+
+    const date70 = new GedcomGenerator({
+      version: "7.0",
+      sourceProgram: "vamsa",
+    });
+
+    const individuals: GedcomIndividualData[] = [
+      {
+        xref: "@I1@",
+        name: "John /Smith/",
+        birthDate: "1985-01-15",
+        notes: [],
+        familiesAsSpouse: [],
+        familiesAsChild: [],
+      },
+    ];
+
+    const output551 = date551.generate(individuals, []);
+    const output70 = date70.generate(individuals, []);
+
+    // 5.5.1 should have traditional format (15 JAN 1985)
+    expect(output551).toMatch(/DATE 15 JAN 1985/);
+    // 7.0 should have ISO 8601 format (1985-01-15)
+    expect(output70).toMatch(/DATE 1985-01-15/);
+  });
+
+  // Test 19: Marriage date in GEDCOM 7.0
+  it("should format marriage dates as ISO 8601 in GEDCOM 7.0", () => {
+    const generator = new GedcomGenerator({
+      version: "7.0",
+      sourceProgram: "vamsa",
+    });
+
+    const individuals: GedcomIndividualData[] = [
+      {
+        xref: "@I1@",
+        name: "John /Smith/",
+        notes: [],
+        familiesAsSpouse: ["@F1@"],
+        familiesAsChild: [],
+      },
+    ];
+
+    const families: GedcomFamilyData[] = [
+      {
+        xref: "@F1@",
+        children: [],
+        marriageDate: "2000-06-15",
+        notes: [],
+      },
+    ];
+
+    const output = generator.generate(individuals, families);
+
+    expect(output).toContain("2 DATE 2000-06-15");
+  });
+
+  // Test 20: Round-trip GEDCOM 7.0 generation and parsing
+  it("should maintain GEDCOM 7.0 format through generate and parse", () => {
+    const generator = new GedcomGenerator({
+      version: "7.0",
+      sourceProgram: "vamsa",
+      submitterName: "Test User",
+    });
+
+    const individuals: GedcomIndividualData[] = [
+      {
+        xref: "@I1@",
+        name: "John /Smith/",
+        sex: "M",
+        birthDate: "1985-01-15",
+        notes: ["Test note"],
+        familiesAsSpouse: ["@F1@"],
+        familiesAsChild: [],
+      },
+      {
+        xref: "@I2@",
+        name: "Jane /Smith/",
+        sex: "F",
+        birthDate: "1988-03-20",
+        notes: [],
+        familiesAsSpouse: ["@F1@"],
+        familiesAsChild: [],
+      },
+    ];
+
+    const families: GedcomFamilyData[] = [
+      {
+        xref: "@F1@",
+        husband: "@I1@",
+        wife: "@I2@",
+        children: [],
+        marriageDate: "2010-07-10",
+        notes: [],
+      },
+    ];
+
+    const output = generator.generate(individuals, families);
+
+    // Parse it back
+    const parser = new GedcomParser();
+    const parsed = parser.parse(output);
+
+    // Verify GEDCOM 7.0 version preserved
+    expect(parsed.gedcomVersion).toBe("7.0");
+
+    // Verify data preserved
+    expect(parsed.individuals).toHaveLength(2);
+    expect(parsed.families).toHaveLength(1);
+
+    // Verify dates are preserved in ISO format
+    const john = parser.parseIndividual(parsed.individuals[0]);
+    expect(john.birthDate).toBe("1985-01-15");
+  });
 });

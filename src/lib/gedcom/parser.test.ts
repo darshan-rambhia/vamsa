@@ -565,4 +565,79 @@ describe("GedcomParser", () => {
       expect(individual.birthDate).toBe("1985");
     });
   });
+
+  describe("GEDCOM 7.0 support", () => {
+    it("should detect GEDCOM 7.0 version from header", () => {
+      const gedcom70 = `0 HEAD
+1 SOUR MyApp
+1 GEDC
+2 VERS 7.0
+1 CHAR UTF-8
+0 TRLR`;
+
+      const result = parser.parse(gedcom70);
+      expect(result.gedcomVersion).toBe("7.0");
+      expect(result.version).toBe("7.0");
+    });
+
+    it("should default to GEDCOM 5.5.1 when version not specified", () => {
+      const minimalGedcom = `0 HEAD
+1 SOUR MyApp
+0 TRLR`;
+
+      const result = parser.parse(minimalGedcom);
+      expect(result.gedcomVersion).toBe("5.5.1");
+    });
+
+    it("should handle GEDCOM 7.0 file with ISO 8601 dates", () => {
+      const gedcom70WithDates = `0 HEAD
+1 SOUR MyApp
+1 GEDC
+2 VERS 7.0
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME John /Smith/
+1 BIRT
+2 DATE 1985-01-15
+0 TRLR`;
+
+      const result = parser.parse(gedcom70WithDates);
+      expect(result.gedcomVersion).toBe("7.0");
+      expect(result.individuals).toHaveLength(1);
+
+      const individual = parser.parseIndividual(result.individuals[0]);
+      expect(individual.birthDate).toBe("1985-01-15");
+    });
+
+    it("should handle mixed date formats in GEDCOM 7.0", () => {
+      const mixedDatesGedcom = `0 HEAD
+1 SOUR MyApp
+1 GEDC
+2 VERS 7.0
+1 CHAR UTF-8
+0 @I1@ INDI
+1 NAME Full /Date/
+1 BIRT
+2 DATE 1985-01-15
+0 @I2@ INDI
+1 NAME Month /Year/
+1 BIRT
+2 DATE 1985-01
+0 @I3@ INDI
+1 NAME Year /Only/
+1 BIRT
+2 DATE 1985
+0 TRLR`;
+
+      const result = parser.parse(mixedDatesGedcom);
+      expect(result.gedcomVersion).toBe("7.0");
+
+      const individuals = result.individuals.map((i) =>
+        parser.parseIndividual(i)
+      );
+      expect(individuals[0].birthDate).toBe("1985-01-15");
+      expect(individuals[1].birthDate).toBe("1985-01");
+      expect(individuals[2].birthDate).toBe("1985");
+    });
+  });
 });

@@ -12,4 +12,8 @@ export const fixtures = {
   sparseData: () => fs.readFileSync(path.join(__dirname, 'sparse-data.ged'), 'utf-8'),
   largeFamily: () => fs.readFileSync(path.join(__dirname, 'large-family.ged'), 'utf-8'),
   fullDetails: () => fs.readFileSync(path.join(__dirname, 'full-details.ged'), 'utf-8'),
+  anselEncoded: () => fs.readFileSync(path.join(__dirname, 'ansel-encoded.ged'), 'utf-8'),
+  gedcom70Sample: () => fs.readFileSync(path.join(__dirname, 'gedcom70-sample.ged'), 'utf-8'),
+  withSources: () => fs.readFileSync(path.join(__dirname, 'with-sources.ged'), 'utf-8'),
+  withMultimedia: () => fs.readFileSync(path.join(__dirname, 'with-multimedia.ged'), 'utf-8'),
 };

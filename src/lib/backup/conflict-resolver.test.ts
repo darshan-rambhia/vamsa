@@ -59,7 +59,7 @@ describe("ConflictResolver", () => {
     name: "Admin User",
   };
 
-  const mockExtractedFiles = new Map([
+  const mockExtractedFiles = new Map<string, Record<string, unknown> | Record<string, unknown>[]>([
     [
       "data/settings.json",
       {
@@ -70,6 +70,8 @@ describe("ConflictResolver", () => {
         defaultPrivacy: "PRIVATE",
         allowSelfRegistration: false,
         requireApprovalForEdits: true,
+        createdAt: "2024-01-01T12:00:00.000Z",
+        updatedAt: "2024-01-01T12:00:00.000Z",
       },
     ],
     [
@@ -80,16 +82,36 @@ describe("ConflictResolver", () => {
           firstName: "John",
           lastName: "Doe",
           email: "john@example.com",
+          maidenName: null,
+          dateOfBirth: null,
+          dateOfPassing: null,
+          birthPlace: null,
+          bio: null,
+          photo: null,
+          photoUrl: null,
+          isDeceased: false,
+          privacyLevel: "PRIVATE",
           createdAt: "2024-01-01T12:00:00.000Z",
           updatedAt: "2024-01-01T12:00:00.000Z",
+          createdById: null,
         },
         {
           id: "person-2",
           firstName: "Jane",
           lastName: "Smith",
           email: null,
+          maidenName: null,
+          dateOfBirth: null,
+          dateOfPassing: null,
+          birthPlace: null,
+          bio: null,
+          photo: null,
+          photoUrl: null,
+          isDeceased: false,
+          privacyLevel: "PRIVATE",
           createdAt: "2024-01-02T12:00:00.000Z",
           updatedAt: "2024-01-02T12:00:00.000Z",
+          createdById: null,
         },
       ],
     ],
@@ -162,7 +184,7 @@ describe("ConflictResolver", () => {
         },
       ],
     ],
-  ]);
+  ]) as Map<string, any>;
 
   beforeEach(() => {
     // Reset all mocks
@@ -635,7 +657,7 @@ describe("ConflictResolver", () => {
     });
 
     it("should handle invalid data gracefully", async () => {
-      const invalidFiles = new Map([["data/people.json", "not an array"]]);
+      const invalidFiles = new Map([["data/people.json", "not an array"]]) as Map<string, any>;
 
       const result = await resolver.importData(invalidFiles, []);
 
