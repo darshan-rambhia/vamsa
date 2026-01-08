@@ -8,6 +8,7 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 const adminNavItems = [
   { href: "/admin/users", label: "Users" },
+  { href: "/admin/invites", label: "Invites" },
   { href: "/admin/suggestions", label: "Suggestions" },
   { href: "/admin/settings", label: "Settings" },
   { href: "/admin/backup", label: "Backup" },

@@ -203,6 +203,27 @@ export default defineSchema({
     .index("by_personId", ["personId"])
     .index("by_eventType", ["eventType"]),
 
+  // Invites table for family member invitations
+  invites: defineTable({
+    email: v.string(),
+    personId: v.optional(v.id("persons")), // Optional: link to existing person record
+    role: v.union(v.literal("ADMIN"), v.literal("MEMBER"), v.literal("VIEWER")),
+    invitedById: v.id("users"),
+    token: v.string(), // Unique invite token
+    expiresAt: v.number(), // Unix timestamp
+    acceptedAt: v.optional(v.number()), // When invite was accepted
+    status: v.union(
+      v.literal("PENDING"),
+      v.literal("ACCEPTED"),
+      v.literal("EXPIRED"),
+      v.literal("REVOKED")
+    ),
+  })
+    .index("by_email", ["email"])
+    .index("by_token", ["token"])
+    .index("by_invitedById", ["invitedById"])
+    .index("by_status", ["status"]),
+
   // Media Objects (GEDCOM Phase 2)
   mediaObjects: defineTable({
     filePath: v.string(),
