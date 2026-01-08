@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "convex/react";
 import { api } from "@vamsa/api/convex/_generated/api";
 import {
+  Container,
   PageHeader,
   Button,
   Card,
@@ -20,17 +21,19 @@ function PeopleListComponent() {
 
   if (persons === undefined) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <div className="text-center space-y-4">
-          <div className="mx-auto h-12 w-12 animate-pulse rounded-full bg-primary/20" />
-          <p className="text-muted-foreground">Loading your family...</p>
+      <Container>
+        <div className="flex items-center justify-center py-24">
+          <div className="text-center space-y-4">
+            <div className="mx-auto h-12 w-12 animate-pulse rounded-full bg-primary/20" />
+            <p className="text-muted-foreground">Loading your family...</p>
+          </div>
         </div>
-      </div>
+      </Container>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
+    <Container className="space-y-8 animate-fade-in">
       <PageHeader
         title="People"
         description="Everyone in your family tree"
@@ -114,6 +117,6 @@ function PeopleListComponent() {
           ))}
         </div>
       )}
-    </div>
+    </Container>
   );
 }

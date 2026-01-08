@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useLocation } from "@tanstack/react-router";
 import { getSessionToken } from "~/lib/auth";
-import { Nav, NavLink, Container, Button } from "@vamsa/ui";
+import { Nav, NavLink, Button } from "@vamsa/ui";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async () => {
@@ -59,10 +59,8 @@ function AuthenticatedLayout() {
         </NavLink>
       </Nav>
 
-      <main className="py-8">
-        <Container>
-          <Outlet />
-        </Container>
+      <main className="py-6 sm:py-8">
+        <Outlet />
       </main>
     </div>
   );
