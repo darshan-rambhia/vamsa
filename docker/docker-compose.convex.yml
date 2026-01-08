@@ -1,0 +1,67 @@
+# Vamsa with Convex Backend (Self-Hosted)
+# This is the new architecture using TanStack Start + Convex
+#
+# Usage:
+#   docker compose -f docker/docker-compose.convex.yml up -d
+#
+# First time setup:
+#   1. Start services: docker compose -f docker/docker-compose.convex.yml up -d
+#   2. Open dashboard: http://localhost:6791
+#   3. Deploy schema: cd packages/api && npx convex deploy --url http://localhost:3210
+#   4. Access app: http://localhost:3000
+
+services:
+  # Vamsa Web App (TanStack Start)
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_CONVEX_URL=http://convex:3210
+      - CONVEX_URL=http://convex:3210
+      - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@family.local}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - STORAGE_PROVIDER=local
+      - STORAGE_LOCAL_PATH=/app/data/uploads
+    volumes:
+      - uploads:/app/data/uploads
+    depends_on:
+      convex:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Convex Backend (replaces PostgreSQL + Prisma)
+  convex:
+    image: ghcr.io/get-convex/convex-backend:latest
+    ports:
+      - "3210:3210"   # Backend API
+      - "3211:3211"   # HTTP actions
+    environment:
+      - CONVEX_SITE_URL=http://localhost:3000
+      - CONVEX_BACKEND_URL=http://localhost:3210
+    volumes:
+      - convex_data:/convex/data  # SQLite storage
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3210/version"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    restart: unless-stopped
+
+  # Convex Dashboard (for admin/debugging)
+  convex-dashboard:
+    image: ghcr.io/get-convex/convex-dashboard:latest
+    ports:
+      - "6791:6791"
+    environment:
+      - CONVEX_BACKEND_URL=http://convex:3210
+    depends_on:
+      - convex
+    restart: unless-stopped
+
+volumes:
+  uploads:
+  convex_data:
