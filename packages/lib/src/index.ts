@@ -10,3 +10,6 @@ export {
 
 // General utilities
 export { generateRandomPassword, getInitials } from "./utils";
+
+// GEDCOM support
+export * from "./gedcom";
