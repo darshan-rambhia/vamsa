@@ -41,3 +41,6 @@ export {
   SelectItem,
   SelectSeparator,
 } from "./select";
+
+// Tabs
+export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";

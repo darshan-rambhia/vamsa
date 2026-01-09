@@ -69,10 +69,7 @@ export class ObjectParser {
    * Warns on absolute paths (prefer relative)
    * Warns on non-existent files
    */
-  validateObject(
-    object: ParsedObject,
-    baseDir?: string
-  ): ObjectValidation {
+  validateObject(object: ParsedObject, baseDir?: string): ObjectValidation {
     const warnings: string[] = [];
     const errors: string[] = [];
 
@@ -109,10 +106,7 @@ export class ObjectParser {
    * Extract objects referenced by an event in a person's record
    * Returns array of object xref IDs linked to the event
    */
-  extractEventObjects(
-    record: GedcomRecord,
-    eventTag: string
-  ): string[] {
+  extractEventObjects(record: GedcomRecord, eventTag: string): string[] {
     const objects: string[] = [];
 
     // Find the event lines

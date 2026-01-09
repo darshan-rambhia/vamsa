@@ -1,49 +1,72 @@
-FROM oven/bun:1 AS base
+# Build stage
+FROM node:22-alpine AS builder
 
-FROM base AS deps
-WORKDIR /app
-COPY package.json bun.lockb* ./
-# ARG NODE_TLS_REJECT_UNAUTHORIZED=0
-# ENV NODE_TLS_REJECT_UNAUTHORIZED=${NODE_TLS_REJECT_UNAUTHORIZED}
-RUN bun install --frozen-lockfile
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@9 --activate
 
-FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
+
+# Copy workspace configuration
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY turbo.json ./
+
+# Copy package.json files for all workspace packages
+COPY apps/web/package.json ./apps/web/
+COPY packages/api/package.json ./packages/api/
+COPY packages/lib/package.json ./packages/lib/
+COPY packages/schemas/package.json ./packages/schemas/
+COPY packages/ui/package.json ./packages/ui/
+
+# Install dependencies
+RUN pnpm install --frozen-lockfile
+
+# Copy source code
 COPY . .
 
-ENV NEXT_TELEMETRY_DISABLED=1
+# Generate Prisma client (with dummy DATABASE_URL since it's only needed for build)
+WORKDIR /app/packages/api
+ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
+RUN pnpm run db:generate || true
+
+# Build the web app
+WORKDIR /app
 ENV NODE_ENV=production
+RUN pnpm --filter @vamsa/web build
 
-RUN bunx prisma generate
-RUN bun run build
+# Production stage
+FROM node:22-alpine AS runner
 
-FROM base AS runner
+# Install pnpm for running the app
+RUN corepack enable && corepack prepare pnpm@9 --activate
+
 WORKDIR /app
 
-ENV NODE_ENV=production
-ENV NEXT_TELEMETRY_DISABLED=1
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 --ingroup nodejs vamsa
 
-RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 --gid nodejs nextjs
+# Copy built application
+COPY --from=builder --chown=vamsa:nodejs /app/apps/web/dist ./apps/web/dist
+COPY --from=builder --chown=vamsa:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=vamsa:nodejs /app/apps/web/node_modules ./apps/web/node_modules
+COPY --from=builder --chown=vamsa:nodejs /app/packages ./packages
 
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/prisma ./prisma
+# Copy workspace configuration for runtime
+COPY --from=builder --chown=vamsa:nodejs /app/package.json ./
+COPY --from=builder --chown=vamsa:nodejs /app/pnpm-workspace.yaml ./
+COPY --from=builder --chown=vamsa:nodejs /app/apps/web/package.json ./apps/web/
 
-RUN mkdir .next
-RUN chown nextjs:nodejs .next
+# Create data directory for uploads
+RUN mkdir -p /app/data/uploads && chown -R vamsa:nodejs /app/data
 
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
-RUN mkdir -p /app/data/uploads
-RUN chown -R nextjs:nodejs /app/data
-
-USER nextjs
+USER vamsa
 
 EXPOSE 3000
 
+ENV NODE_ENV=production
 ENV PORT=3000
-ENV HOSTNAME="0.0.0.0"
+ENV HOST=0.0.0.0
 
-CMD ["bun", "run", "server.js"]
+WORKDIR /app/apps/web
+
+CMD ["node", "dist/server/server.js"]

@@ -1,3 +1,4 @@
+/* istanbul ignore file */
 /**
  * Test Setup for Bun + jsdom
  * Provides a DOM environment for React component testing

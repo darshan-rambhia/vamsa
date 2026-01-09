@@ -22,9 +22,7 @@ describe("ObjectParser", () => {
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
       // Find first object record
-      const objectRecord = gedcomFile.objects.find(
-        (r) => r.id === "O1"
-      );
+      const objectRecord = gedcomFile.objects.find((r) => r.id === "O1");
 
       expect(objectRecord).toBeDefined();
       if (!objectRecord) return;
@@ -42,9 +40,7 @@ describe("ObjectParser", () => {
       const gedcomContent = fixtures.withMultimedia();
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
-      const objectRecord = gedcomFile.objects.find(
-        (r) => r.id === "O1"
-      );
+      const objectRecord = gedcomFile.objects.find((r) => r.id === "O1");
 
       expect(objectRecord).toBeDefined();
       if (!objectRecord) return;
@@ -67,9 +63,7 @@ describe("ObjectParser", () => {
 0 TRLR`;
 
       const gedcomFile = gedcomParser.parse(gedcomContent);
-      const objectRecord = gedcomFile.objects.find(
-        (r) => r.id === "O1"
-      );
+      const objectRecord = gedcomFile.objects.find((r) => r.id === "O1");
 
       expect(objectRecord).toBeDefined();
       if (!objectRecord) return;
@@ -98,9 +92,7 @@ describe("ObjectParser", () => {
 0 TRLR`;
 
         const gedcomFile = gedcomParser.parse(gedcomContent);
-        const objectRecord = gedcomFile.objects.find(
-          (r) => r.id === "O1"
-        );
+        const objectRecord = gedcomFile.objects.find((r) => r.id === "O1");
 
         expect(objectRecord).toBeDefined();
         if (!objectRecord) return;
@@ -116,9 +108,7 @@ describe("ObjectParser", () => {
       const gedcomContent = fixtures.withMultimedia();
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
-      const personRecord = gedcomFile.individuals.find(
-        (r) => r.id === "I1"
-      );
+      const personRecord = gedcomFile.individuals.find((r) => r.id === "I1");
 
       expect(personRecord).toBeDefined();
       if (!personRecord) return;
@@ -151,10 +141,7 @@ describe("ObjectParser", () => {
       const personRecord = gedcomFile.individuals[0];
       expect(personRecord).toBeDefined();
 
-      const objects = objectParser.extractEventObjects(
-        personRecord,
-        "BIRT"
-      );
+      const objects = objectParser.extractEventObjects(personRecord, "BIRT");
 
       expect(Array.isArray(objects)).toBe(true);
       expect(objects.length).toBe(0);
@@ -180,10 +167,7 @@ describe("ObjectParser", () => {
       const gedcomFile = gedcomParser.parse(gedcomContent);
       const personRecord = gedcomFile.individuals[0];
 
-      const objects = objectParser.extractEventObjects(
-        personRecord,
-        "BIRT"
-      );
+      const objects = objectParser.extractEventObjects(personRecord, "BIRT");
 
       // Should only have one O1, not two
       expect(objects.length).toBe(1);
@@ -306,9 +290,7 @@ describe("ObjectParser", () => {
 0 TRLR`;
 
       const gedcomFile = gedcomParser.parse(gedcomContent);
-      const objectRecord = gedcomFile.objects.find(
-        (r) => r.id === "O1"
-      );
+      const objectRecord = gedcomFile.objects.find((r) => r.id === "O1");
 
       expect(objectRecord).toBeDefined();
       if (!objectRecord) return;
@@ -358,9 +340,7 @@ describe("ObjectParser", () => {
 0 TRLR`;
 
       const gedcomFile = gedcomParser.parse(gedcomContent);
-      const objectRecord = gedcomFile.objects.find(
-        (r) => r.id === "O1"
-      );
+      const objectRecord = gedcomFile.objects.find((r) => r.id === "O1");
 
       expect(objectRecord).toBeDefined();
       if (!objectRecord) return;

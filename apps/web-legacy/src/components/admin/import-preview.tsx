@@ -109,25 +109,25 @@ export function ImportPreview({ result, file, onReset }: ImportPreviewProps) {
           </p>
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             <div className="rounded-lg border p-4">
-              <div className="text-sm text-muted-foreground">People</div>
+              <div className="text-muted-foreground text-sm">People</div>
               <div className="text-2xl font-bold">
                 {result.metadata.statistics.totalPeople}
               </div>
             </div>
             <div className="rounded-lg border p-4">
-              <div className="text-sm text-muted-foreground">Relationships</div>
+              <div className="text-muted-foreground text-sm">Relationships</div>
               <div className="text-2xl font-bold">
                 {result.metadata.statistics.totalRelationships}
               </div>
             </div>
             <div className="rounded-lg border p-4">
-              <div className="text-sm text-muted-foreground">Conflicts</div>
+              <div className="text-muted-foreground text-sm">Conflicts</div>
               <div className="text-2xl font-bold">
                 {result.statistics.totalConflicts}
               </div>
             </div>
             <div className="rounded-lg border p-4">
-              <div className="text-sm text-muted-foreground">Users</div>
+              <div className="text-muted-foreground text-sm">Users</div>
               <div className="text-2xl font-bold">
                 {result.metadata.statistics.totalUsers}
               </div>
@@ -183,7 +183,7 @@ export function ImportPreview({ result, file, onReset }: ImportPreviewProps) {
                   <SelectItem value="merge">Merge Existing Data</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="mt-2 text-sm text-muted-foreground">
+              <p className="text-muted-foreground mt-2 text-sm">
                 - <span className="font-semibold">Skip:</span> Ignore data from
                 the backup file if it already exists.
                 <br />- <span className="font-semibold">Replace:</span>{" "}

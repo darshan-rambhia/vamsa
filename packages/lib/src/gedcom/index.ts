@@ -15,7 +15,12 @@ export {
   type GedcomFamilyData,
   type MapOptions,
 } from "./mapper";
-export { detectEncoding, normalizeEncoding, anselToUtf8, utf8ToAnsel } from "./encoding";
+export {
+  detectEncoding,
+  normalizeEncoding,
+  anselToUtf8,
+  utf8ToAnsel,
+} from "./encoding";
 export type {
   GedcomLine,
   GedcomRecord,

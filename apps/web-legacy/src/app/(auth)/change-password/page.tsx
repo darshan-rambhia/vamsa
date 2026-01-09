@@ -65,7 +65,7 @@ export default function ChangePasswordPage() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
               {error}
             </div>
           )}
@@ -77,7 +77,7 @@ export default function ChangePasswordPage() {
               {...register("currentPassword")}
             />
             {errors.currentPassword && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.currentPassword.message}
               </p>
             )}
@@ -90,7 +90,7 @@ export default function ChangePasswordPage() {
               {...register("newPassword")}
             />
             {errors.newPassword && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.newPassword.message}
               </p>
             )}
@@ -103,7 +103,7 @@ export default function ChangePasswordPage() {
               {...register("confirmPassword")}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.confirmPassword.message}
               </p>
             )}

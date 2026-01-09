@@ -53,71 +53,75 @@ describe("ANSEL Encoding", () => {
 
     it("should convert ANSEL extended characters to UTF-8", () => {
       // Test ¡ (inverted exclamation) = 0xE0
-      const buffer = Buffer.from([0xE0]);
+      const buffer = Buffer.from([0xe0]);
       expect(anselToUtf8(buffer)).toBe("¡");
     });
 
     it("should convert ANSEL combining sequences", () => {
       // Test combining acute: A (0x41) + acute combining (0xE0) = Á (U+00C1)
-      const buffer = Buffer.from([0x41, 0xE0]);
+      const buffer = Buffer.from([0x41, 0xe0]);
       expect(anselToUtf8(buffer)).toBe("Á");
     });
 
     it("should handle mixed ASCII and ANSEL", () => {
       // "José" where é is represented as e + combining diaeresis (0xE4)
       const buffer = Buffer.from([
-        0x4A, 0x6F, 0x73, 0x65, 0xE4, // Jose + combining diaeresis on e
+        0x4a,
+        0x6f,
+        0x73,
+        0x65,
+        0xe4, // Jose + combining diaeresis on e
       ]);
       expect(anselToUtf8(buffer)).toBe("Josë");
     });
 
     it("should convert German umlaut ü (u + diaeresis)", () => {
       // u (0x75) + diaeresis combining (0xE4) = ü (U+00FC)
-      const buffer = Buffer.from([0x75, 0xE4]);
+      const buffer = Buffer.from([0x75, 0xe4]);
       expect(anselToUtf8(buffer)).toBe("ü");
     });
 
     it("should convert uppercase umlauts", () => {
       // U (0x55) + diaeresis combining (0xE4) = Ü (U+00DC)
-      const buffer = Buffer.from([0x55, 0xE4]);
+      const buffer = Buffer.from([0x55, 0xe4]);
       expect(anselToUtf8(buffer)).toBe("Ü");
     });
 
     it("should handle Müller example", () => {
       // M + ü + ller = M + u(0x75) + diaeresis(0xE4) + ller
-      const buffer = Buffer.from([0x4D, 0x75, 0xE4, 0x6C, 0x6C, 0x65, 0x72]);
+      const buffer = Buffer.from([0x4d, 0x75, 0xe4, 0x6c, 0x6c, 0x65, 0x72]);
       expect(anselToUtf8(buffer)).toBe("Müller");
     });
 
     it("should handle François example", () => {
       // Fran + c(0x63) + cedilla(0xE8) + ois
       const buffer = Buffer.from([
-        0x46, 0x72, 0x61, 0x6E, 0x63, 0xE8, 0x6F, 0x69, 0x73,
+        0x46, 0x72, 0x61, 0x6e, 0x63, 0xe8, 0x6f, 0x69, 0x73,
       ]);
       expect(anselToUtf8(buffer)).toBe("François");
     });
 
     it("should handle combining grave accent", () => {
       // a + grave combining (0xE1) = à (U+00E0)
-      const buffer = Buffer.from([0x61, 0xE1]);
+      const buffer = Buffer.from([0x61, 0xe1]);
       expect(anselToUtf8(buffer)).toBe("à");
     });
 
     it("should handle combining circumflex", () => {
       // a + circumflex combining (0xE2) = â (U+00E2)
-      const buffer = Buffer.from([0x61, 0xE2]);
+      const buffer = Buffer.from([0x61, 0xe2]);
       expect(anselToUtf8(buffer)).toBe("â");
     });
 
     it("should handle combining tilde", () => {
       // n + tilde combining (0xE3) = ñ (U+00F1)
-      const buffer = Buffer.from([0x6E, 0xE3]);
+      const buffer = Buffer.from([0x6e, 0xe3]);
       expect(anselToUtf8(buffer)).toBe("ñ");
     });
 
     it("should handle unknown characters gracefully", () => {
       // Unknown ANSEL code should pass through
-      const buffer = Buffer.from([0x41, 0xFF]);
+      const buffer = Buffer.from([0x41, 0xff]);
       expect(anselToUtf8(buffer).length).toBeGreaterThan(0);
     });
   });
@@ -132,14 +136,14 @@ describe("ANSEL Encoding", () => {
       const buffer = utf8ToAnsel("ü");
       // Should be u (0x75) + diaeresis combining (0xE4)
       expect(buffer[0]).toBe(0x75);
-      expect(buffer[1]).toBe(0xE4);
+      expect(buffer[1]).toBe(0xe4);
     });
 
     it("should convert UTF-8 é to ANSEL e + acute", () => {
       const buffer = utf8ToAnsel("é");
       // Should be e + acute combining
       expect(buffer[0]).toBe(0x65);
-      expect(buffer[1]).toBe(0xE0);
+      expect(buffer[1]).toBe(0xe0);
     });
 
     it("should convert Müller", () => {
@@ -163,19 +167,19 @@ describe("ANSEL Encoding", () => {
     it("should handle Copyright sign", () => {
       const buffer = utf8ToAnsel("©");
       // © is 0xCD in ANSEL
-      expect(buffer[0]).toBe(0xCD);
+      expect(buffer[0]).toBe(0xcd);
     });
 
     it("should handle Registered sign", () => {
       const buffer = utf8ToAnsel("®");
       // ® is 0xCE or 0x84 in ANSEL
-      expect([0x84, 0xCE].includes(buffer[0])).toBe(true);
+      expect([0x84, 0xce].includes(buffer[0])).toBe(true);
     });
 
     it("should handle Pound sign", () => {
       const buffer = utf8ToAnsel("£");
       // £ is 0xCC in ANSEL
-      expect(buffer[0]).toBe(0xCC);
+      expect(buffer[0]).toBe(0xcc);
     });
   });
 
@@ -309,14 +313,14 @@ describe("ANSEL Encoding", () => {
 
     it("should handle consecutive combining marks", () => {
       // Test two combining marks in a row
-      const buffer = Buffer.from([0x41, 0xE0, 0x45, 0xE1]); // A + acute + E + grave
+      const buffer = Buffer.from([0x41, 0xe0, 0x45, 0xe1]); // A + acute + E + grave
       const result = anselToUtf8(buffer);
       expect(result).toContain("Á");
       expect(result).toContain("È");
     });
 
     it("should handle partial combining sequence at end", () => {
-      const buffer = Buffer.from([0x41, 0xE0]); // A + acute at end
+      const buffer = Buffer.from([0x41, 0xe0]); // A + acute at end
       const result = anselToUtf8(buffer);
       expect(result).toBe("Á");
     });

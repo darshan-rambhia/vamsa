@@ -130,7 +130,9 @@ describe("GedcomMapper", () => {
       const result = mapper.mapFromGedcom(file);
 
       // Should have spouse relationships (bidirectional)
-      const spouseRels = result.relationships.filter((r) => r.type === "SPOUSE");
+      const spouseRels = result.relationships.filter(
+        (r) => r.type === "SPOUSE"
+      );
       expect(spouseRels.length).toBe(2);
 
       // Check marriage date
@@ -164,7 +166,9 @@ describe("GedcomMapper", () => {
       const result = mapper.mapFromGedcom(file);
 
       // Should have PARENT relationships (from parents to child)
-      const parentRels = result.relationships.filter((r) => r.type === "PARENT");
+      const parentRels = result.relationships.filter(
+        (r) => r.type === "PARENT"
+      );
       expect(parentRels.length).toBe(2); // 2 parents
 
       // Should have CHILD relationships (from child to parents)
@@ -187,12 +191,20 @@ describe("GedcomMapper", () => {
       const mapper = new GedcomMapper();
 
       // Without ignoreMissingReferences
-      const result1 = mapper.mapFromGedcom(file, { ignoreMissingReferences: false });
-      expect(result1.errors.some((e) => e.type === "broken_reference")).toBe(true);
+      const result1 = mapper.mapFromGedcom(file, {
+        ignoreMissingReferences: false,
+      });
+      expect(result1.errors.some((e) => e.type === "broken_reference")).toBe(
+        true
+      );
 
       // With ignoreMissingReferences
-      const result2 = mapper.mapFromGedcom(file, { ignoreMissingReferences: true });
-      expect(result2.errors.filter((e) => e.type === "broken_reference").length).toBe(0);
+      const result2 = mapper.mapFromGedcom(file, {
+        ignoreMissingReferences: true,
+      });
+      expect(
+        result2.errors.filter((e) => e.type === "broken_reference").length
+      ).toBe(0);
     });
 
     test("handles individuals without names", () => {
@@ -292,7 +304,13 @@ describe("GedcomMapper", () => {
 
     test("maps female correctly", () => {
       const people: VamsaPerson[] = [
-        { id: "person1", firstName: "Jane", lastName: "Doe", gender: "FEMALE", isLiving: true },
+        {
+          id: "person1",
+          firstName: "Jane",
+          lastName: "Doe",
+          gender: "FEMALE",
+          isLiving: true,
+        },
       ];
 
       const mapper = new GedcomMapper();
@@ -303,7 +321,13 @@ describe("GedcomMapper", () => {
 
     test("maps OTHER gender correctly", () => {
       const people: VamsaPerson[] = [
-        { id: "person1", firstName: "Pat", lastName: "Smith", gender: "OTHER", isLiving: true },
+        {
+          id: "person1",
+          firstName: "Pat",
+          lastName: "Smith",
+          gender: "OTHER",
+          isLiving: true,
+        },
       ];
 
       const mapper = new GedcomMapper();
@@ -314,8 +338,20 @@ describe("GedcomMapper", () => {
 
     test("maps spouse relationships to families", () => {
       const people: VamsaPerson[] = [
-        { id: "person1", firstName: "John", lastName: "Doe", gender: "MALE", isLiving: true },
-        { id: "person2", firstName: "Jane", lastName: "Doe", gender: "FEMALE", isLiving: true },
+        {
+          id: "person1",
+          firstName: "John",
+          lastName: "Doe",
+          gender: "MALE",
+          isLiving: true,
+        },
+        {
+          id: "person2",
+          firstName: "Jane",
+          lastName: "Doe",
+          gender: "FEMALE",
+          isLiving: true,
+        },
       ];
 
       const relationships: VamsaRelationship[] = [
@@ -350,16 +386,52 @@ describe("GedcomMapper", () => {
 
     test("maps parent-child relationships", () => {
       const people: VamsaPerson[] = [
-        { id: "person1", firstName: "John", lastName: "Doe", gender: "MALE", isLiving: true },
-        { id: "person2", firstName: "Jane", lastName: "Doe", gender: "FEMALE", isLiving: true },
+        {
+          id: "person1",
+          firstName: "John",
+          lastName: "Doe",
+          gender: "MALE",
+          isLiving: true,
+        },
+        {
+          id: "person2",
+          firstName: "Jane",
+          lastName: "Doe",
+          gender: "FEMALE",
+          isLiving: true,
+        },
         { id: "person3", firstName: "Baby", lastName: "Doe", isLiving: true },
       ];
 
       const relationships: VamsaRelationship[] = [
-        { id: "rel1", personId: "person1", relatedPersonId: "person2", type: "SPOUSE", isActive: true },
-        { id: "rel2", personId: "person2", relatedPersonId: "person1", type: "SPOUSE", isActive: true },
-        { id: "rel3", personId: "person1", relatedPersonId: "person3", type: "PARENT", isActive: true },
-        { id: "rel4", personId: "person2", relatedPersonId: "person3", type: "PARENT", isActive: true },
+        {
+          id: "rel1",
+          personId: "person1",
+          relatedPersonId: "person2",
+          type: "SPOUSE",
+          isActive: true,
+        },
+        {
+          id: "rel2",
+          personId: "person2",
+          relatedPersonId: "person1",
+          type: "SPOUSE",
+          isActive: true,
+        },
+        {
+          id: "rel3",
+          personId: "person1",
+          relatedPersonId: "person3",
+          type: "PARENT",
+          isActive: true,
+        },
+        {
+          id: "rel4",
+          personId: "person2",
+          relatedPersonId: "person3",
+          type: "PARENT",
+          isActive: true,
+        },
       ];
 
       const mapper = new GedcomMapper();
@@ -373,16 +445,52 @@ describe("GedcomMapper", () => {
 
     test("updates individual family references", () => {
       const people: VamsaPerson[] = [
-        { id: "person1", firstName: "John", lastName: "Doe", gender: "MALE", isLiving: true },
-        { id: "person2", firstName: "Jane", lastName: "Doe", gender: "FEMALE", isLiving: true },
+        {
+          id: "person1",
+          firstName: "John",
+          lastName: "Doe",
+          gender: "MALE",
+          isLiving: true,
+        },
+        {
+          id: "person2",
+          firstName: "Jane",
+          lastName: "Doe",
+          gender: "FEMALE",
+          isLiving: true,
+        },
         { id: "person3", firstName: "Baby", lastName: "Doe", isLiving: true },
       ];
 
       const relationships: VamsaRelationship[] = [
-        { id: "rel1", personId: "person1", relatedPersonId: "person2", type: "SPOUSE", isActive: true },
-        { id: "rel2", personId: "person2", relatedPersonId: "person1", type: "SPOUSE", isActive: true },
-        { id: "rel3", personId: "person1", relatedPersonId: "person3", type: "PARENT", isActive: true },
-        { id: "rel4", personId: "person2", relatedPersonId: "person3", type: "PARENT", isActive: true },
+        {
+          id: "rel1",
+          personId: "person1",
+          relatedPersonId: "person2",
+          type: "SPOUSE",
+          isActive: true,
+        },
+        {
+          id: "rel2",
+          personId: "person2",
+          relatedPersonId: "person1",
+          type: "SPOUSE",
+          isActive: true,
+        },
+        {
+          id: "rel3",
+          personId: "person1",
+          relatedPersonId: "person3",
+          type: "PARENT",
+          isActive: true,
+        },
+        {
+          id: "rel4",
+          personId: "person2",
+          relatedPersonId: "person3",
+          type: "PARENT",
+          isActive: true,
+        },
       ];
 
       const mapper = new GedcomMapper();
@@ -400,7 +508,7 @@ describe("GedcomMapper", () => {
 
     test("handles person without last name", () => {
       const people: VamsaPerson[] = [
-        { id: "person1", firstName: "Madonna", isLiving: true },
+        { id: "person1", firstName: "Madonna", lastName: "", isLiving: true },
       ];
 
       const mapper = new GedcomMapper();
@@ -462,7 +570,10 @@ describe("GedcomMapper", () => {
       const vamsaData = mapper.mapFromGedcom(file);
 
       // Map back to GEDCOM
-      const gedcomData = mapper.mapToGedcom(vamsaData.people, vamsaData.relationships);
+      const gedcomData = mapper.mapToGedcom(
+        vamsaData.people,
+        vamsaData.relationships
+      );
 
       // Verify individual data preserved
       const john = gedcomData.individuals.find((i) => i.name.includes("John"));

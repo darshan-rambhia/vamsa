@@ -22,9 +22,7 @@ describe("SourceParser", () => {
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
       // Find first source record
-      const sourceRecord = gedcomFile.sources.find(
-        (r) => r.id === "S1"
-      );
+      const sourceRecord = gedcomFile.sources.find((r) => r.id === "S1");
 
       expect(sourceRecord).toBeDefined();
       if (!sourceRecord) return;
@@ -44,9 +42,7 @@ describe("SourceParser", () => {
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
       // Find S3 which has less data
-      const sourceRecord = gedcomFile.sources.find(
-        (r) => r.id === "S3"
-      );
+      const sourceRecord = gedcomFile.sources.find((r) => r.id === "S3");
 
       expect(sourceRecord).toBeDefined();
       if (!sourceRecord) return;
@@ -64,9 +60,7 @@ describe("SourceParser", () => {
       const gedcomContent = fixtures.withSources();
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
-      const sourceRecord = gedcomFile.sources.find(
-        (r) => r.id === "S1"
-      );
+      const sourceRecord = gedcomFile.sources.find((r) => r.id === "S1");
 
       expect(sourceRecord).toBeDefined();
       if (!sourceRecord) return;
@@ -84,9 +78,7 @@ describe("SourceParser", () => {
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
       // Find person with birth sources
-      const personRecord = gedcomFile.individuals.find(
-        (r) => r.id === "I1"
-      );
+      const personRecord = gedcomFile.individuals.find((r) => r.id === "I1");
 
       expect(personRecord).toBeDefined();
       if (!personRecord) return;
@@ -104,9 +96,7 @@ describe("SourceParser", () => {
       const gedcomContent = fixtures.withSources();
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
-      const personRecord = gedcomFile.individuals.find(
-        (r) => r.id === "I1"
-      );
+      const personRecord = gedcomFile.individuals.find((r) => r.id === "I1");
 
       expect(personRecord).toBeDefined();
       if (!personRecord) return;
@@ -127,10 +117,7 @@ describe("SourceParser", () => {
       const personRecord = gedcomFile.individuals[0];
       expect(personRecord).toBeDefined();
 
-      const sources = sourceParser.extractEventSources(
-        personRecord,
-        "BIRT"
-      );
+      const sources = sourceParser.extractEventSources(personRecord, "BIRT");
 
       expect(Array.isArray(sources)).toBe(true);
       expect(sources.length).toBe(0);
@@ -143,10 +130,7 @@ describe("SourceParser", () => {
       const personRecord = gedcomFile.individuals[0];
       expect(personRecord).toBeDefined();
 
-      const sources = sourceParser.extractEventSources(
-        personRecord,
-        "GRAD"
-      );
+      const sources = sourceParser.extractEventSources(personRecord, "GRAD");
 
       expect(Array.isArray(sources)).toBe(true);
       expect(sources.length).toBe(0);
@@ -172,10 +156,7 @@ describe("SourceParser", () => {
       const gedcomFile = gedcomParser.parse(gedcomContent);
       const personRecord = gedcomFile.individuals[0];
 
-      const sources = sourceParser.extractEventSources(
-        personRecord,
-        "BIRT"
-      );
+      const sources = sourceParser.extractEventSources(personRecord, "BIRT");
 
       // Should only have one S1, not two
       expect(sources.length).toBe(1);
@@ -195,9 +176,7 @@ describe("SourceParser", () => {
 0 TRLR`;
 
       const gedcomFile = gedcomParser.parse(gedcomContent);
-      const sourceRecord = gedcomFile.sources.find(
-        (r) => r.id === "S1"
-      );
+      const sourceRecord = gedcomFile.sources.find((r) => r.id === "S1");
 
       expect(sourceRecord).toBeDefined();
       if (!sourceRecord) return;
@@ -219,9 +198,7 @@ describe("SourceParser", () => {
 0 TRLR`;
 
       const gedcomFile = gedcomParser.parse(gedcomContent);
-      const sourceRecord = gedcomFile.sources.find(
-        (r) => r.id === "S1"
-      );
+      const sourceRecord = gedcomFile.sources.find((r) => r.id === "S1");
 
       expect(sourceRecord).toBeDefined();
       if (!sourceRecord) return;
@@ -246,9 +223,7 @@ describe("SourceParser", () => {
 0 TRLR`;
 
       const gedcomFile = gedcomParser.parse(gedcomContent);
-      const sourceRecord = gedcomFile.sources.find(
-        (r) => r.id === "S1"
-      );
+      const sourceRecord = gedcomFile.sources.find((r) => r.id === "S1");
 
       expect(sourceRecord).toBeDefined();
       if (!sourceRecord) return;

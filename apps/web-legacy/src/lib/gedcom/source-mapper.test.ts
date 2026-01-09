@@ -24,9 +24,7 @@ describe("SourceMapper", () => {
       const gedcomContent = fixtures.withSources();
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
-      const sourceRecord = gedcomFile.sources.find(
-        (r) => r.id === "S1"
-      );
+      const sourceRecord = gedcomFile.sources.find((r) => r.id === "S1");
 
       expect(sourceRecord).toBeDefined();
       if (!sourceRecord) return;
@@ -159,9 +157,7 @@ describe("SourceMapper", () => {
       const gedcomContent = fixtures.withSources();
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
-      const sourceRecord = gedcomFile.sources.find(
-        (r) => r.id === "S1"
-      );
+      const sourceRecord = gedcomFile.sources.find((r) => r.id === "S1");
 
       expect(sourceRecord).toBeDefined();
       if (!sourceRecord) return;

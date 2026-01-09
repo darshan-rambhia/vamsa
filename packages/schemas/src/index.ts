@@ -73,3 +73,79 @@ export {
   type ImportResult,
   type BackupValidationPreview,
 } from "./backup";
+
+// Event schemas
+export {
+  eventTypeEnum,
+  eventCreateSchema,
+  eventUpdateSchema,
+  eventParticipantCreateSchema,
+  eventParticipantRemoveSchema,
+  type EventType,
+  type EventCreateInput,
+  type EventCreateOutput,
+  type EventUpdateInput,
+  type EventUpdateOutput,
+  type EventParticipantCreateInput,
+  type EventParticipantRemoveInput,
+} from "./event";
+
+// Place schemas
+export {
+  placeTypeEnum,
+  personPlaceTypeEnum,
+  placeCreateSchema,
+  placeUpdateSchema,
+  placePersonLinkCreateSchema,
+  type PlaceType,
+  type PersonPlaceType,
+  type PlaceCreateInput,
+  type PlaceCreateFormInput,
+  type PlaceUpdateInput,
+  type PlaceUpdateFormInput,
+  type PlacePersonLinkCreateInput,
+} from "./place";
+
+// Media schemas
+export {
+  mediaFormatEnum,
+  mediaUploadSchema,
+  mediaMetadataSchema,
+  mediaReorderSchema,
+  linkMediaToEventSchema,
+  setPrimaryPhotoSchema,
+  type MediaFormat,
+  type MediaUploadInput,
+  type MediaMetadataInput,
+  type MediaReorderInput,
+  type LinkMediaToEventInput,
+  type SetPrimaryPhotoInput,
+} from "./media";
+
+// Source schemas
+export {
+  sourceTypeEnum,
+  citationFormatEnum,
+  confidenceEnum,
+  reliabilityEnum,
+  sourceCreateSchema,
+  sourceUpdateSchema,
+  researchNoteCreateSchema,
+  researchNoteUpdateSchema,
+  citationGenerateSchema,
+  linkSourceToEventSchema,
+  type SourceType,
+  type CitationFormat,
+  type Confidence,
+  type Reliability,
+  type SourceCreateInput,
+  type SourceCreateOutput,
+  type SourceUpdateInput,
+  type SourceUpdateOutput,
+  type ResearchNoteCreateInput,
+  type ResearchNoteCreateOutput,
+  type ResearchNoteUpdateInput,
+  type ResearchNoteUpdateOutput,
+  type CitationGenerateInput,
+  type LinkSourceToEventInput,
+} from "./source";

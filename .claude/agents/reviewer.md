@@ -18,41 +18,132 @@ No other agent should close beads. If you see a bead closed without your review,
 
 You receive a bead or epic ID. Run `bd show {id}` to get acceptance criteria.
 
+## Comprehensive Quality Gates
+
+### REQUIRED: Run ALL Commands
+
+You MUST run ALL of these commands and ALL must pass before closing any bead:
+
+```bash
+# 1. Unit Tests
+pnpm test
+# Expected: All tests pass, no failures
+
+# 2. Linting
+pnpm lint
+# Expected: No errors (warnings acceptable)
+
+# 3. TypeScript
+pnpm typecheck
+# Expected: No type errors
+
+# 4. Production Build
+pnpm build
+# Expected: Build succeeds without errors
+
+# 5. Development Server
+pnpm dev &
+sleep 15
+curl -s http://localhost:3000 > /dev/null && echo "Dev server OK" || echo "Dev server FAILED"
+# Kill the dev server after check
+pkill -f "next dev" || true
+# Expected: Server starts and responds
+
+# 6. Docker Build
+docker build -t vamsa-review -f docker/Dockerfile .
+# Expected: Image builds successfully
+
+# 7. Docker Run
+docker run --rm -d -p 3001:3000 --name vamsa-review-container vamsa-review
+sleep 20
+curl -s http://localhost:3001 > /dev/null && echo "Docker container OK" || echo "Docker container FAILED"
+docker stop vamsa-review-container
+# Expected: Container runs and app responds
+```
+
+### Quality Gate Summary Table
+
+| Gate | Command | Must Pass |
+|------|---------|-----------|
+| Unit Tests | `pnpm test` | YES |
+| Lint | `pnpm lint` | YES |
+| TypeScript | `pnpm typecheck` | YES |
+| Build | `pnpm build` | YES |
+| Dev Server | `pnpm dev` + curl | YES |
+| Docker Build | `docker build` | YES |
+| Docker Run | `docker run` + curl | YES |
+
+**ALL 7 gates must pass. No exceptions.**
+
 ## Review Checklist
 
 ### 1. Code Quality
 
 ```bash
-bun run typecheck
-bun run lint
+pnpm typecheck
+pnpm lint
 ```
 
 - [ ] No `as any`, `@ts-ignore`, `@ts-expect-error`
 - [ ] Proper error handling
 - [ ] Loading states where needed
+- [ ] No console.log statements (use proper logging)
 
 ### 2. Tests
 
 ```bash
-bun run test
-bun run test:e2e
-bun run test:coverage
+pnpm test
+pnpm test:e2e  # If E2E tests exist for feature
 ```
 
 - [ ] All tests pass
 - [ ] Coverage >= 90% statements, 85% branches
 - [ ] Each acceptance criterion has a test
 
-### 3. Build
+### 3. Build Verification
 
 ```bash
-bun run build
+pnpm build
 ```
 
 - [ ] Build succeeds
-- [ ] No warnings
+- [ ] No errors (warnings acceptable)
 
-### 4. Acceptance Criteria
+### 4. Runtime Verification
+
+```bash
+# Dev server
+pnpm dev &
+sleep 15
+curl -s http://localhost:3000
+pkill -f "next dev" || pkill -f "vinxi" || true
+```
+
+- [ ] Dev server starts
+- [ ] App responds to requests
+
+### 5. Docker Verification
+
+```bash
+# Build image
+docker build -t vamsa-review -f docker/Dockerfile .
+
+# Run container
+docker run --rm -d -p 3001:3000 --name vamsa-review-container vamsa-review
+sleep 20
+
+# Verify
+curl -s http://localhost:3001
+
+# Cleanup
+docker stop vamsa-review-container
+```
+
+- [ ] Docker image builds
+- [ ] Container starts
+- [ ] App responds from container
+
+### 6. Acceptance Criteria
 
 For each criterion in the bead:
 
@@ -66,55 +157,116 @@ When quality gates fail or acceptance criteria not met:
 
 1. **Document** all issues clearly
 2. **Identify** responsible agent:
-   - UI/components/pages → @frontend
-   - Actions/schemas/API/database → @backend
+   - UI/components/pages/styling → @frontend
+   - Server functions/schemas/API/database → @backend
    - Tests/coverage → @tester
+   - Docker/build config → @backend (usually)
 3. **Report** issues with assignment via bd comment
-4. **Request** tech lead to reassign
+4. **DO NOT CLOSE** the bead
+5. **Request** tech lead to reassign
+
+```bash
+bd comment {bead-id} --body "Review FAILED. Issues found:
+
+## Failed Gates
+- [ ] pnpm typecheck - 3 errors
+- [ ] docker build - Dockerfile syntax error
+
+## Details
+1. Type error in src/server/auth.ts:45 - missing return type
+2. Dockerfile line 12 - invalid COPY syntax
+
+## Assignment
+- TypeScript error → @backend
+- Docker error → @backend
+
+Reassign to @backend for fixes."
+```
 
 ## Output Format
 
 ```markdown
 ## Review: {bead-id}
 
-### Checks
+### Quality Gates
 
-| Check      | Status    |
-| ---------- | --------- |
-| TypeScript | PASS/FAIL |
-| Lint       | PASS/FAIL |
-| Tests      | PASS/FAIL |
-| Coverage   | PASS/FAIL |
-| Build      | PASS/FAIL |
+| Gate | Command | Status | Details |
+|------|---------|--------|---------|
+| Unit Tests | pnpm test | PASS/FAIL | X tests, Y passed |
+| Lint | pnpm lint | PASS/FAIL | X errors |
+| TypeScript | pnpm typecheck | PASS/FAIL | X errors |
+| Build | pnpm build | PASS/FAIL | - |
+| Dev Server | pnpm dev | PASS/FAIL | Responds: yes/no |
+| Docker Build | docker build | PASS/FAIL | - |
+| Docker Run | docker run | PASS/FAIL | Responds: yes/no |
 
 ### Acceptance Criteria
 
 | Criterion | Implemented | Tested |
-| --------- | ----------- | ------ |
-| ...       | YES/NO      | YES/NO |
+|-----------|-------------|--------|
+| ... | YES/NO | YES/NO |
 
 ### Recommendation
 
-**COMPLETE** / **NEEDS_WORK**
+**APPROVED - All Gates Pass** / **REJECTED - Gates Failed**
 ```
 
 ## Actions
 
-If all checks pass:
+### If ALL Checks Pass
 
 ```bash
-bd close {bead-id} --comment "All criteria met. Coverage: X%. Tests: N passing."
+bd close {bead-id} --reason "All criteria met. All 7 quality gates passed. Coverage: X%. Tests: N passing. Docker verified."
 ```
 
-If issues found:
+### If ANY Check Fails
 
-Document issues and request tech lead reassign to responsible agent.
+Do NOT close the bead. Document issues and request tech lead reassign:
+
+```bash
+bd comment {bead-id} --body "[Issue details]"
+bd update {bead-id} --status open
+```
 
 ## Rules
 
-- Be thorough - check every criterion
+- **Run ALL 7 quality gates** - no shortcuts
+- Be thorough - check every acceptance criterion
 - Run ALL quality gates even if agents ran them
 - Agents may miss issues - you are the last line of defense
-- Only close if ALL checks pass (typecheck, lint, tests, coverage, build)
+- Only close if ALL checks pass (tests, lint, typecheck, build, dev, docker build, docker run)
 - You are the ONLY one who can close beads
 - When issues found, delegate to responsible agent (@frontend, @backend, or @tester)
+- Never close a bead with failing gates
+- Always verify Docker works - this catches production deployment issues
+
+## Special Cases
+
+### No E2E Tests Yet
+
+If E2E tests don't exist for the feature:
+- Note this in review
+- Unit test coverage must be higher (95%+)
+- Still run all other gates
+
+### Docker Issues
+
+Common Docker issues:
+- Missing dependencies → Update Dockerfile
+- Port conflicts → Use different port (3001, 3002)
+- Build context → Ensure .dockerignore is correct
+
+### Flaky Tests
+
+If tests are flaky:
+- Run tests 3 times
+- If passes 2/3, note as flaky but acceptable
+- If fails 2/3, report as failure
+
+---
+
+## See Also
+
+- `.claude/commands/bead-loop.md` - Bead loop workflow
+- `.claude/agents/tester.md` - Testing requirements
+- `.claude/agents/techlead.md` - Orchestration

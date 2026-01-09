@@ -23,15 +23,13 @@ const PageHeader = React.forwardRef<HTMLElement, PageHeaderProps>(
             {title}
           </h1>
           {description && (
-            <p className="text-lg text-muted-foreground max-w-2xl">
+            <p className="text-muted-foreground max-w-2xl text-lg">
               {description}
             </p>
           )}
         </div>
         {actions && (
-          <div className="flex shrink-0 items-center gap-3">
-            {actions}
-          </div>
+          <div className="flex shrink-0 items-center gap-3">{actions}</div>
         )}
       </header>
     );

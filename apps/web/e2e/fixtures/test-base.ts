@@ -43,6 +43,8 @@ export interface TestFixtures {
   login: (user?: TestUser) => Promise<void>;
   /** Logout helper */
   logout: () => Promise<void>;
+  /** Clear all authentication (cookies, storage) */
+  clearAuth: () => Promise<void>;
   /** Wait for Convex data to sync */
   waitForConvexSync: () => Promise<void>;
   /** Check if user is authenticated */
@@ -77,44 +79,45 @@ export const test = base.extend<TestFixtures>({
       console.log(`[Login] Attempting to login with ${user.email}`);
       await page.goto("/login");
 
-      // Wait for the login form to be visible
-      await page.waitForSelector('input[name="email"]', { state: "visible" });
+      // Wait for the login form to be visible (Playwright auto-waits for visibility on interactions)
+      await page.getByTestId("login-form").waitFor({ state: "visible", timeout: 5000 });
 
-      // Fill in credentials
-      await page.fill('input[name="email"]', user.email);
-      await page.fill('input[name="password"]', user.password);
+      // Fill in credentials - use type() instead of fill() to trigger onChange on React controlled components
+      const emailInput = page.getByTestId("login-email-input");
+      const passwordInput = page.getByTestId("login-password-input");
 
-      // Submit the form
-      await page.click('button[type="submit"]');
+      // Type email and password (this triggers onChange and updates React state)
+      await emailInput.type(user.email, { delay: 50 });
+      await passwordInput.type(user.password, { delay: 50 });
 
-      console.log(`[Login] Form submitted for ${user.email}, waiting for redirect...`);
+      console.log(`[Login] Form submitted for ${user.email}...`);
 
-      // Wait a moment for form processing
-      await page.waitForTimeout(500);
+      // Click submit button and wait for navigation to complete
+      await page.getByTestId("login-submit-button").click();
 
-      // Check for error messages on the page
-      const errorElement = await page.locator(".text-destructive").first().textContent().catch(() => null);
-      if (errorElement) {
-        throw new Error(`Login error displayed: ${errorElement}`);
-      }
-
-      // Wait for navigation to complete - try multiple paths
+      // Wait for successful navigation (either people, dashboard, or tree page)
+      // This implicitly waits for the page load and auth cookie to be set
       try {
-        await page.waitForURL(/\/(people|dashboard|tree)/, { timeout: 15000 });
+        await page.waitForURL(/\/(people|dashboard|tree)/, { timeout: 10000 });
         console.log(`[Login] Redirect successful, now at ${page.url()}`);
       } catch (err) {
-        // If waitForURL times out, check if we're at least not on login anymore
+        // If navigation times out, check if there's an error message displayed
+        const loginError = page.getByTestId("login-error");
+        if (await loginError.isVisible().catch(() => false)) {
+          const errorText = await loginError.textContent();
+          throw new Error(`Login error displayed: ${errorText}`);
+        }
+
         const url = page.url();
-
-        console.log(`[Login] Timeout - Current URL: ${url}`);
-
         if (url.includes("/login")) {
           throw new Error(`Login failed: still on login page after submission. No error message on page.`);
         }
+
+        throw err;
       }
 
       // Ensure the nav is visible (indicates successful auth)
-      await page.waitForSelector("nav", { state: "visible", timeout: 5000 });
+      await page.getByTestId("main-nav").waitFor({ state: "visible", timeout: 5000 });
       console.log(`[Login] Navigation visible, login successful`);
     };
 
@@ -127,7 +130,7 @@ export const test = base.extend<TestFixtures>({
   logout: async ({ page }, use) => {
     const logoutFn = async () => {
       // Click sign out button in nav
-      await page.click('a[href="/login"]:has-text("Sign out")');
+      await page.getByTestId("signout-button").click();
 
       // Wait for redirect to login page
       await page.waitForURL("/login");
@@ -137,14 +140,50 @@ export const test = base.extend<TestFixtures>({
   },
 
   /**
+   * Clear authentication - removes all cookies and local storage
+   * Used for testing unauthenticated behavior
+   */
+  clearAuth: async ({ page }, use) => {
+    const clearFn = async () => {
+      // Clear all cookies (including HTTP-only session cookie)
+      await page.context().clearCookies();
+
+      // Clear local and session storage - catch errors from cross-origin pages
+      try {
+        await page.evaluate(() => {
+          try {
+            localStorage.clear();
+          } catch (_e) {
+            // Ignore localStorage errors (cross-origin)
+          }
+          try {
+            sessionStorage.clear();
+          } catch (_e) {
+            // Ignore sessionStorage errors (cross-origin)
+          }
+        });
+      } catch (_e) {
+        // Ignore page.evaluate errors for pages that restrict storage access
+      }
+
+      console.log("[ClearAuth] Cleared all authentication");
+    };
+
+    await use(clearFn);
+  },
+
+  /**
    * Wait for Convex to sync data
-   * Convex is reactive so this should be quick, but we add a small buffer
+   * Convex is reactive so updates propagate quickly.
+   * Instead of waiting for networkidle, we wait for specific UI updates
+   * or use a small timeout for state changes to render.
    */
   waitForConvexSync: async ({ page }, use) => {
     const waitFn = async () => {
-      // Convex updates are near-instant but we wait for any pending requests
-      await page.waitForLoadState("networkidle");
-      // Small buffer for UI updates
+      // Convex updates are near-instant
+      // Use a small timeout to allow React to process state updates
+      // In practice, this can be replaced with waiting for specific elements
+      // that indicate data has loaded (e.g., await page.getByTestId('data-loaded').isVisible())
       await page.waitForTimeout(100);
     };
 
@@ -160,11 +199,8 @@ export const test = base.extend<TestFixtures>({
       // If we're on login page, not authenticated
       if (url.includes("/login")) return false;
 
-      // Check for nav with sign out button
-      const signOutButton = page.locator(
-        'a[href="/login"]:has-text("Sign out")'
-      );
-      return await signOutButton.isVisible();
+      // Check for main nav which is only visible when authenticated
+      return await page.getByTestId("main-nav").isVisible().catch(() => false);
     };
 
     await use(checkFn);
@@ -222,10 +258,22 @@ export const vamsaExpect = {
    * Assert that navigation is visible (user is authenticated)
    */
   async toBeLoggedIn(page: Page) {
-    const nav = page.locator("nav");
+    const nav = page.getByTestId("main-nav");
+    // Navigation element should exist and be visible
     await expect(nav).toBeVisible();
-    const signOut = page.locator('a[href="/login"]:has-text("Sign out")');
-    await expect(signOut).toBeVisible();
+
+    // Check that either:
+    // 1. Navigation links are visible (desktop mode), OR
+    // 2. Mobile menu button exists (responsive mode)
+    // This confirms the user is logged in (nav only visible when authenticated)
+    const peopleLink = page.getByTestId("nav-people");
+    const mobileMenuButton = page.getByTestId("nav-mobile-menu-button");
+
+    const hasVisibleLink = await peopleLink.isVisible().catch(() => false);
+    const hasMobileMenu = await mobileMenuButton.isVisible().catch(() => false);
+
+    // Must have either visible navigation link or mobile menu button
+    expect(hasVisibleLink || hasMobileMenu).toBeTruthy();
   },
 
   /**

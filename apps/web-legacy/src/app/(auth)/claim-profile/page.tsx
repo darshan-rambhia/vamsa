@@ -89,16 +89,16 @@ export default function ClaimProfilePage() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
               {error}
             </div>
           )}
           <div className="space-y-2">
             <Label htmlFor="profile">Select Your Profile</Label>
             {loadingProfiles ? (
-              <p className="text-sm text-muted-foreground">Loading...</p>
+              <p className="text-muted-foreground text-sm">Loading...</p>
             ) : profiles.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-muted-foreground text-sm">
                 No unclaimed profiles available
               </p>
             ) : (
@@ -116,7 +116,7 @@ export default function ClaimProfilePage() {
               </Select>
             )}
             {errors.personId && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.personId.message}
               </p>
             )}
@@ -130,14 +130,14 @@ export default function ClaimProfilePage() {
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <p className="text-destructive text-sm">{errors.email.message}</p>
             )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Create Password</Label>
             <Input id="password" type="password" {...register("password")} />
             {errors.password && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.password.message}
               </p>
             )}
@@ -151,7 +151,7 @@ export default function ClaimProfilePage() {
           >
             {isLoading ? "Claiming..." : "Claim Profile"}
           </Button>
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-center text-sm">
             Not in the tree yet?{" "}
             <Link href="/register" className="text-primary hover:underline">
               Register as new

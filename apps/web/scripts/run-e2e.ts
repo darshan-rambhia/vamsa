@@ -73,8 +73,11 @@ async function cleanup() {
 async function main() {
   const playwrightArgs = process.argv.slice(2);
 
-  // Check if --debug flag is present to enable webserver logs
-  const isDebugMode = playwrightArgs.includes("--debug");
+  // Check if --logs flag is present to enable webserver logs
+  const hasServerLogs = playwrightArgs.includes("--logs");
+
+  // Remove our custom flags from playwright args (playwright doesn't know about --logs)
+  const filteredArgs = playwrightArgs.filter(arg => arg !== "--logs");
 
   console.log("🚀 Starting E2E test runner...\n");
 
@@ -132,13 +135,14 @@ async function main() {
     // Step 3: Run Playwright tests
     console.log("🧪 Step 3/4: Running Playwright tests...\n");
     const testResult = await run(
-      ["bunx", "playwright", "test", ...playwrightArgs],
+      ["bunx", "playwright", "test", ...filteredArgs],
       {
         cwd: WEB_DIR,
         env: {
+          ...process.env,
           DATABASE_URL: E2E_DATABASE_URL,
-          // Pass debug mode to Playwright config
-          PLAYWRIGHT_DEBUG: isDebugMode ? "true" : "false",
+          // Pass server logs flag to Playwright config
+          PLAYWRIGHT_LOGS: hasServerLogs ? "true" : "false",
         },
       }
     );

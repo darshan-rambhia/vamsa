@@ -32,10 +32,7 @@ export class SourceMapper {
   /**
    * Map a parsed GEDCOM source to Vamsa database format
    */
-  mapToVamsa(
-    parsedSource: ParsedSource,
-    vamsaId?: string
-  ): VamsaSource {
+  mapToVamsa(parsedSource: ParsedSource, vamsaId?: string): VamsaSource {
     return {
       id: vamsaId,
       title: parsedSource.title,

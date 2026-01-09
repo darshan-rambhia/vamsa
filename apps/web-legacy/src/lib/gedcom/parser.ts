@@ -38,7 +38,9 @@ export class GedcomParser {
     }
 
     // Split into lines and filter empty lines
-    const rawLines = processedContent.split(/\r?\n/).filter((line) => line.trim());
+    const rawLines = processedContent
+      .split(/\r?\n/)
+      .filter((line) => line.trim());
 
     // Parse each line and handle continuations
     this.parseLines(rawLines);
@@ -224,7 +226,7 @@ export class GedcomParser {
   private buildRecords(): void {
     const recordStack: GedcomRecord[] = [];
     let currentRecord: GedcomRecord | null = null;
-    let _currentParent: GedcomRecord | null = null;
+    const _currentParent: GedcomRecord | null = null;
 
     for (const line of this.lines) {
       // Top-level record
@@ -287,7 +289,10 @@ export class GedcomParser {
    * GEDCOM 7.0: ISO 8601 format "1985-01-15", "1985-01", "1985"
    * Returns ISO date (YYYY-MM-DD) or partial ISO date (YYYY-MM or YYYY) or null if invalid
    */
-  parseDate(gedcomDate: string, version: "5.5.1" | "7.0" = "5.5.1"): string | null {
+  parseDate(
+    gedcomDate: string,
+    version: "5.5.1" | "7.0" = "5.5.1"
+  ): string | null {
     if (!gedcomDate || !gedcomDate.trim()) {
       return null;
     }

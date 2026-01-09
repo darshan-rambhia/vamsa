@@ -96,13 +96,13 @@ export function GedcomImportPreview({
           </p>
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-lg border p-4">
-              <div className="text-sm text-muted-foreground">People</div>
+              <div className="text-muted-foreground text-sm">People</div>
               <div className="text-2xl font-bold">
                 {result.preview?.peopleCount || 0}
               </div>
             </div>
             <div className="rounded-lg border p-4">
-              <div className="text-sm text-muted-foreground">Families</div>
+              <div className="text-muted-foreground text-sm">Families</div>
               <div className="text-2xl font-bold">
                 {result.preview?.familiesCount || 0}
               </div>

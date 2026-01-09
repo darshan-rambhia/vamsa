@@ -47,7 +47,7 @@ export function GedcomExport() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Export your family tree data in GEDCOM format. This format is compatible
         with most genealogy software and allows you to share your data or create
         backups.

@@ -113,7 +113,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
   return (
     <form onSubmit={processSubmit} className="space-y-6">
       {error && (
-        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+        <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
           {error}
         </div>
       )}
@@ -131,7 +131,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
               <Label htmlFor="firstName">First Name *</Label>
               <Input id="firstName" {...register("firstName")} />
               {errors.firstName && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.firstName.message}
                 </p>
               )}
@@ -140,7 +140,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
               <Label htmlFor="lastName">Last Name *</Label>
               <Input id="lastName" {...register("lastName")} />
               {errors.lastName && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.lastName.message}
                 </p>
               )}
@@ -180,7 +180,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                 {...register("dateOfBirth")}
               />
               {errors.dateOfBirth && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.dateOfBirth.message}
                 </p>
               )}
@@ -206,7 +206,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
                 {...register("dateOfPassing")}
               />
               {errors.dateOfPassing && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.dateOfPassing.message}
                 </p>
               )}
@@ -241,7 +241,7 @@ export function PersonForm({ person, onSuccess }: PersonFormProps) {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" {...register("email")} />
               {errors.email && (
-                <p className="text-sm text-destructive">
+                <p className="text-destructive text-sm">
                   {errors.email.message}
                 </p>
               )}

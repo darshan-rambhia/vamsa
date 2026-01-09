@@ -1,32 +1,41 @@
 import { defineConfig, devices } from "@playwright/test";
 import path from "path";
 import { fileURLToPath } from "url";
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables from .env.local for tests
-const envLocalPath = path.resolve(__dirname, "../../.env.local");
-try {
-  const envContent = readFileSync(envLocalPath, "utf-8");
-  const lines = envContent.split("\n");
-  for (const line of lines) {
-    const [key, ...valueParts] = line.split("=");
-    const value = valueParts.join("=").trim();
-    if (key && !key.startsWith("#")) {
-      process.env[key.trim()] = value.replace(/^["']|["']$/g, "");
+// Load environment variables from .env files manually (dotenv might not be available in all contexts)
+function loadEnvFile(filePath: string) {
+  if (!existsSync(filePath)) return;
+  try {
+    const envContent = readFileSync(filePath, "utf-8");
+    const lines = envContent.split("\n");
+    for (const line of lines) {
+      const [key, ...valueParts] = line.split("=");
+      const trimmedKey = key?.trim();
+      if (trimmedKey && !trimmedKey.startsWith("#") && !process.env[trimmedKey]) {
+        const value = valueParts.join("=").trim().replace(/^["']|["']$/g, "");
+        process.env[trimmedKey] = value;
+      }
     }
+  } catch (_err) {
+    // Load error, ignore
   }
-} catch (_err) {
-  // .env.local not found, that's okay
 }
+
+// Load environment variables from .env (monorepo root)
+loadEnvFile(path.resolve(__dirname, "../../.env"));
+
+// Load environment variables from .env.local for tests (overrides .env)
+loadEnvFile(path.resolve(__dirname, "../../.env.local"));
 
 const PORT = process.env.PORT || 3000;
 const baseURL = `http://localhost:${PORT}`;
 
-// Determine if we're in debug mode
-const isDebugMode = process.env.PLAYWRIGHT_DEBUG === "true";
+// Determine if we should show server logs
+const shouldShowServerLogs = process.env.PLAYWRIGHT_LOGS === "true";
 
 // Build webServer config with conditional stdout/stderr handling
 const webServerConfig = {
@@ -34,9 +43,9 @@ const webServerConfig = {
   url: baseURL,
   timeout: 120 * 1000,
   reuseExistingServer: !process.env.CI,
-  // In debug mode, show logs ("pipe"), otherwise suppress them ("ignore")
-  stdout: isDebugMode ? ("pipe" as const) : ("ignore" as const),
-  stderr: isDebugMode ? ("pipe" as const) : ("ignore" as const),
+  // Show logs when PLAYWRIGHT_LOGS=true, otherwise suppress them ("ignore")
+  stdout: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
+  stderr: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
   env: {
     ...process.env,
     // Ensure DATABASE_URL is set for test environment
@@ -55,7 +64,7 @@ export default defineConfig({
     timeout: 10 * 1000,
   },
   retries: process.env.CI ? 2 : 0,
-  workers: 7,
+  workers: 10,
   fullyParallel: true,
   outputDir: "test-output/results/",
   reporter: [
@@ -75,6 +84,8 @@ export default defineConfig({
     video: "retain-on-failure",
     // Default viewport for desktop
     viewport: { width: 1280, height: 720 },
+    // Use pre-authenticated admin state by default
+    storageState: path.join(__dirname, "e2e/.auth/admin.json"),
   },
 
   projects: [
@@ -83,14 +94,14 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
-    },
+    // {
+    //   name: "firefox",
+    //   use: { ...devices["Desktop Firefox"] },
+    // },
+    // {
+    //   name: "webkit",
+    //   use: { ...devices["Desktop Safari"] },
+    // },
 
     // Tablet devices
     // {

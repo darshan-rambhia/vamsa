@@ -68,7 +68,7 @@ export function SuggestionsList({ suggestions }: SuggestionsListProps) {
           <CardTitle className="text-lg">
             {suggestion.type.replace("_", " ")}
             {suggestion.targetPerson && (
-              <span className="ml-2 font-normal text-muted-foreground">
+              <span className="text-muted-foreground ml-2 font-normal">
                 for {suggestion.targetPerson.firstName}{" "}
                 {suggestion.targetPerson.lastName}
               </span>
@@ -88,7 +88,7 @@ export function SuggestionsList({ suggestions }: SuggestionsListProps) {
         </div>
       </CardHeader>
       <CardContent className="space-y-2">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Submitted by{" "}
           {suggestion.submittedBy.name || suggestion.submittedBy.email} on{" "}
           {formatDate(suggestion.submittedAt)}
@@ -99,15 +99,15 @@ export function SuggestionsList({ suggestions }: SuggestionsListProps) {
           </p>
         )}
         <details className="text-sm">
-          <summary className="cursor-pointer text-muted-foreground">
+          <summary className="text-muted-foreground cursor-pointer">
             View suggested data
           </summary>
-          <pre className="mt-2 overflow-auto rounded bg-muted p-2 text-xs">
+          <pre className="bg-muted mt-2 overflow-auto rounded p-2 text-xs">
             {JSON.stringify(suggestion.suggestedData, null, 2)}
           </pre>
         </details>
         {suggestion.reviewedBy && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm">
             Reviewed by{" "}
             {suggestion.reviewedBy.name || suggestion.reviewedBy.email} on{" "}
             {formatDate(suggestion.reviewedAt)}
@@ -148,7 +148,7 @@ export function SuggestionsList({ suggestions }: SuggestionsListProps) {
       </TabsList>
       <TabsContent value="pending" className="space-y-4">
         {pending.length === 0 ? (
-          <p className="py-8 text-center text-muted-foreground">
+          <p className="text-muted-foreground py-8 text-center">
             No pending suggestions
           </p>
         ) : (
@@ -157,7 +157,7 @@ export function SuggestionsList({ suggestions }: SuggestionsListProps) {
       </TabsContent>
       <TabsContent value="approved" className="space-y-4">
         {approved.length === 0 ? (
-          <p className="py-8 text-center text-muted-foreground">
+          <p className="text-muted-foreground py-8 text-center">
             No approved suggestions
           </p>
         ) : (
@@ -166,7 +166,7 @@ export function SuggestionsList({ suggestions }: SuggestionsListProps) {
       </TabsContent>
       <TabsContent value="rejected" className="space-y-4">
         {rejected.length === 0 ? (
-          <p className="py-8 text-center text-muted-foreground">
+          <p className="text-muted-foreground py-8 text-center">
             No rejected suggestions
           </p>
         ) : (

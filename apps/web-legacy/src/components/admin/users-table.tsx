@@ -108,28 +108,28 @@ export function UsersTable({ users }: UsersTableProps) {
         <Card key={user.id}>
           <CardContent className="flex items-center justify-between p-4">
             <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
+              <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-full">
                 {getRoleIcon(user.role)}
               </div>
               <div>
                 <p className="font-medium">
                   {user.name || user.email}
                   {!user.isActive && (
-                    <span className="ml-2 text-sm text-muted-foreground">
+                    <span className="text-muted-foreground ml-2 text-sm">
                       (Inactive)
                     </span>
                   )}
                 </p>
-                <p className="text-sm text-muted-foreground">{user.email}</p>
+                <p className="text-muted-foreground text-sm">{user.email}</p>
                 {user.person && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Linked to: {user.person.firstName} {user.person.lastName}
                   </p>
                 )}
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-right text-sm text-muted-foreground">
+              <div className="text-muted-foreground text-right text-sm">
                 <p>Role: {user.role}</p>
                 {user.lastLoginAt && (
                   <p>Last login: {formatDate(user.lastLoginAt)}</p>

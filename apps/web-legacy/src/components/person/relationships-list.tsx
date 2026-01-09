@@ -97,7 +97,7 @@ export function RelationshipsList({
 
   if (relationships.length === 0) {
     return (
-      <p className="py-4 text-center text-muted-foreground">{emptyMessage}</p>
+      <p className="text-muted-foreground py-4 text-center">{emptyMessage}</p>
     );
   }
 
@@ -126,17 +126,17 @@ export function RelationshipsList({
                   {rel.person.firstName} {rel.person.lastName}
                 </p>
                 {showMarriageInfo && rel.marriageDate && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Married {formatDate(rel.marriageDate)}
                   </p>
                 )}
                 {showMarriageInfo && rel.divorceDate && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-muted-foreground text-sm">
                     Divorced {formatDate(rel.divorceDate)}
                   </p>
                 )}
                 {!rel.person.isLiving && (
-                  <p className="text-sm text-muted-foreground">Deceased</p>
+                  <p className="text-muted-foreground text-sm">Deceased</p>
                 )}
               </div>
             </Link>
@@ -156,7 +156,7 @@ export function RelationshipsList({
                   size="icon"
                   onClick={() => handleDelete(rel.id)}
                 >
-                  <Trash2 className="h-4 w-4 text-destructive" />
+                  <Trash2 className="text-destructive h-4 w-4" />
                 </Button>
               </div>
             )}

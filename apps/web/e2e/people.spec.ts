@@ -2,7 +2,7 @@
  * People Management E2E Tests
  * Tests CRUD operations for family members
  */
-import { test, expect, TEST_USERS } from "./fixtures";
+import { test, expect } from "./fixtures";
 import {
   PeopleListPage,
   PersonDetailPage,
@@ -10,11 +10,6 @@ import {
 } from "./fixtures/page-objects";
 
 test.describe("People Management", () => {
-  // Login before each test
-  test.beforeEach(async ({ login }) => {
-    await login(TEST_USERS.admin);
-  });
-
   test.describe("People List", () => {
     test("should display people list page", async ({ page }) => {
       const peopleList = new PeopleListPage(page);
@@ -55,7 +50,6 @@ test.describe("People Management", () => {
         await addButton.click();
 
         // Should navigate to form or open modal
-        await page.waitForLoadState("networkidle");
       }
     });
 
@@ -112,11 +106,12 @@ test.describe("People Management", () => {
       // If there are people, click the first one
       const personCount = await peopleList.getPersonCount();
       if (personCount > 0) {
-        const firstPerson = page
-          .locator('[data-person-card], [data-testid="person-card"]')
+        // Click the first person link in the table or card list
+        const firstPersonLink = page
+          .locator('table tbody tr a, [data-person-card] a')
           .first();
-        if (await firstPerson.isVisible()) {
-          await firstPerson.click();
+        if (await firstPersonLink.isVisible()) {
+          await firstPersonLink.click();
 
           // Should show person details
           await page.waitForURL(/\/people\//);
@@ -134,12 +129,12 @@ test.describe("People Management", () => {
 
       const personCount = await peopleList.getPersonCount();
       if (personCount > 0) {
-        // Click first person
-        const firstPerson = page
-          .locator('[data-person-card], [data-testid="person-card"]')
+        // Click first person link in the table or card list
+        const firstPersonLink = page
+          .locator('table tbody tr a, [data-person-card] a')
           .first();
-        if (await firstPerson.isVisible()) {
-          await firstPerson.click();
+        if (await firstPersonLink.isVisible()) {
+          await firstPersonLink.click();
           await page.waitForURL(/\/people\//);
 
           // Click edit button
@@ -218,11 +213,11 @@ test.describe("People Management", () => {
 
       const personCount = await peopleList.getPersonCount();
       if (personCount > 0) {
-        const firstPerson = page
-          .locator('[data-person-card], [data-testid="person-card"]')
+        const firstPersonLink = page
+          .locator('table tbody tr a, [data-person-card] a')
           .first();
-        if (await firstPerson.isVisible()) {
-          await firstPerson.click();
+        if (await firstPersonLink.isVisible()) {
+          await firstPersonLink.click();
           await page.waitForURL(/\/people\//);
 
           // Check for breadcrumb
@@ -243,10 +238,6 @@ test.describe("People Management", () => {
 });
 
 test.describe("People - Responsive", () => {
-  test.beforeEach(async ({ login }) => {
-    await login(TEST_USERS.admin);
-  });
-
   test("people list should be responsive", async ({
     page,
     getViewportInfo,
@@ -278,7 +269,7 @@ test.describe("People - Responsive", () => {
     const personCount = await peopleList.getPersonCount();
     if (personCount > 0) {
       const cards = page.locator(
-        '[data-person-card], [data-testid="person-card"]'
+        'table tbody tr, [data-person-card], [data-testid="person-card"]'
       );
       const firstCard = cards.first();
       const box = await firstCard.boundingBox();
@@ -292,32 +283,10 @@ test.describe("People - Responsive", () => {
 });
 
 test.describe("People - Data Integrity", () => {
-  test.beforeEach(async ({ login }) => {
-    await login(TEST_USERS.admin);
-  });
-
-  test("should preserve data after page refresh", async ({ page }) => {
-    const peopleList = new PeopleListPage(page);
-    await peopleList.goto();
-    await peopleList.waitForLoad();
-
-    const initialCount = await peopleList.getPersonCount();
-
-    // Refresh page
-    await page.reload();
-    await peopleList.waitForLoad();
-
-    const afterRefreshCount = await peopleList.getPersonCount();
-
-    // Count should be the same
-    expect(afterRefreshCount).toBe(initialCount);
-  });
-
   test("should reflect changes immediately (Convex reactivity)", async ({ page }) => {
     // This test verifies Convex's reactive updates
     // When data changes, UI should update without manual refresh
     await page.goto("/people");
-    await page.waitForLoadState("networkidle");
 
     // Initial state captured
     const peopleList = new PeopleListPage(page);

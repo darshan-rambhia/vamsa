@@ -60,15 +60,26 @@ describe("Card", () => {
   describe("ref forwarding", () => {
     test("forwards ref correctly", () => {
       let cardRef: HTMLDivElement | null = null;
-      render(<Card ref={(el) => (cardRef = el)}>Content</Card>);
-      expect(cardRef).toBeInstanceOf(HTMLDivElement);
+      render(
+        <Card
+          ref={(el) => {
+            cardRef = el;
+          }}
+        >
+          Content
+        </Card>
+      );
+      expect(cardRef).not.toBeNull();
+      expect(cardRef!.tagName).toBe("DIV");
     });
   });
 });
 
 describe("CardHeader", () => {
   test("renders header element", () => {
-    const { getByTestId } = render(<CardHeader data-testid="header">Header</CardHeader>);
+    const { getByTestId } = render(
+      <CardHeader data-testid="header">Header</CardHeader>
+    );
     expect(getByTestId("header")).toBeDefined();
   });
 
@@ -78,7 +89,9 @@ describe("CardHeader", () => {
   });
 
   test("applies base styles with padding", () => {
-    const { getByTestId } = render(<CardHeader data-testid="header">Header</CardHeader>);
+    const { getByTestId } = render(
+      <CardHeader data-testid="header">Header</CardHeader>
+    );
     const header = getByTestId("header");
     expect(header.className).toContain("p-6");
   });
@@ -95,8 +108,17 @@ describe("CardHeader", () => {
 
   test("forwards ref correctly", () => {
     let headerRef: HTMLDivElement | null = null;
-    render(<CardHeader ref={(el) => (headerRef = el)}>Header</CardHeader>);
-    expect(headerRef).toBeInstanceOf(HTMLDivElement);
+    render(
+      <CardHeader
+        ref={(el) => {
+          headerRef = el;
+        }}
+      >
+        Header
+      </CardHeader>
+    );
+    expect(headerRef).not.toBeNull();
+    expect(headerRef!.tagName).toBe("DIV");
   });
 });
 
@@ -107,7 +129,9 @@ describe("CardTitle", () => {
   });
 
   test("renders h3 by default", () => {
-    const { getByTestId } = render(<CardTitle data-testid="title">Title</CardTitle>);
+    const { getByTestId } = render(
+      <CardTitle data-testid="title">Title</CardTitle>
+    );
     const title = getByTestId("title");
     expect(title.tagName).toBe("H3");
   });
@@ -118,7 +142,9 @@ describe("CardTitle", () => {
   });
 
   test("applies font styles", () => {
-    const { getByTestId } = render(<CardTitle data-testid="title">Title</CardTitle>);
+    const { getByTestId } = render(
+      <CardTitle data-testid="title">Title</CardTitle>
+    );
     const title = getByTestId("title");
     expect(title.className).toContain("font-display");
     expect(title.className).toContain("font-medium");
@@ -136,31 +162,47 @@ describe("CardTitle", () => {
 
   test("forwards ref correctly", () => {
     let titleRef: HTMLHeadingElement | null = null;
-    render(<CardTitle ref={(el) => (titleRef = el)}>Title</CardTitle>);
+    render(
+      <CardTitle
+        ref={(el) => {
+          titleRef = el;
+        }}
+      >
+        Title
+      </CardTitle>
+    );
     expect(titleRef).toBeInstanceOf(HTMLHeadingElement);
   });
 });
 
 describe("CardDescription", () => {
   test("renders paragraph element", () => {
-    const { getByTestId } = render(<CardDescription data-testid="desc">Description</CardDescription>);
+    const { getByTestId } = render(
+      <CardDescription data-testid="desc">Description</CardDescription>
+    );
     const desc = getByTestId("desc");
     expect(desc.tagName).toBe("P");
   });
 
   test("renders with children", () => {
-    const { getByText } = render(<CardDescription>Card description text</CardDescription>);
+    const { getByText } = render(
+      <CardDescription>Card description text</CardDescription>
+    );
     expect(getByText("Card description text")).toBeDefined();
   });
 
   test("applies muted text style", () => {
-    const { getByTestId } = render(<CardDescription data-testid="desc">Description</CardDescription>);
+    const { getByTestId } = render(
+      <CardDescription data-testid="desc">Description</CardDescription>
+    );
     const desc = getByTestId("desc");
     expect(desc.className).toContain("text-muted-foreground");
   });
 
   test("applies small text size", () => {
-    const { getByTestId } = render(<CardDescription data-testid="desc">Description</CardDescription>);
+    const { getByTestId } = render(
+      <CardDescription data-testid="desc">Description</CardDescription>
+    );
     const desc = getByTestId("desc");
     expect(desc.className).toContain("text-sm");
   });
@@ -178,7 +220,13 @@ describe("CardDescription", () => {
   test("forwards ref correctly", () => {
     let descRef: HTMLParagraphElement | null = null;
     render(
-      <CardDescription ref={(el) => (descRef = el)}>Description</CardDescription>
+      <CardDescription
+        ref={(el) => {
+          descRef = el;
+        }}
+      >
+        Description
+      </CardDescription>
     );
     expect(descRef).toBeInstanceOf(HTMLParagraphElement);
   });
@@ -186,7 +234,9 @@ describe("CardDescription", () => {
 
 describe("CardContent", () => {
   test("renders content element", () => {
-    const { getByTestId } = render(<CardContent data-testid="content">Content</CardContent>);
+    const { getByTestId } = render(
+      <CardContent data-testid="content">Content</CardContent>
+    );
     expect(getByTestId("content")).toBeDefined();
   });
 
@@ -196,7 +246,9 @@ describe("CardContent", () => {
   });
 
   test("applies padding styles", () => {
-    const { getByTestId } = render(<CardContent data-testid="content">Content</CardContent>);
+    const { getByTestId } = render(
+      <CardContent data-testid="content">Content</CardContent>
+    );
     const content = getByTestId("content");
     expect(content.className).toContain("p-6");
   });
@@ -213,14 +265,24 @@ describe("CardContent", () => {
 
   test("forwards ref correctly", () => {
     let contentRef: HTMLDivElement | null = null;
-    render(<CardContent ref={(el) => (contentRef = el)}>Content</CardContent>);
+    render(
+      <CardContent
+        ref={(el) => {
+          contentRef = el;
+        }}
+      >
+        Content
+      </CardContent>
+    );
     expect(contentRef).toBeInstanceOf(HTMLDivElement);
   });
 });
 
 describe("CardFooter", () => {
   test("renders footer element", () => {
-    const { getByTestId } = render(<CardFooter data-testid="footer">Footer</CardFooter>);
+    const { getByTestId } = render(
+      <CardFooter data-testid="footer">Footer</CardFooter>
+    );
     expect(getByTestId("footer")).toBeDefined();
   });
 
@@ -230,7 +292,9 @@ describe("CardFooter", () => {
   });
 
   test("applies flex styles for actions", () => {
-    const { getByTestId } = render(<CardFooter data-testid="footer">Footer</CardFooter>);
+    const { getByTestId } = render(
+      <CardFooter data-testid="footer">Footer</CardFooter>
+    );
     const footer = getByTestId("footer");
     expect(footer.className).toContain("flex");
     expect(footer.className).toContain("items-center");
@@ -248,7 +312,15 @@ describe("CardFooter", () => {
 
   test("forwards ref correctly", () => {
     let footerRef: HTMLDivElement | null = null;
-    render(<CardFooter ref={(el) => (footerRef = el)}>Footer</CardFooter>);
+    render(
+      <CardFooter
+        ref={(el) => {
+          footerRef = el;
+        }}
+      >
+        Footer
+      </CardFooter>
+    );
     expect(footerRef).toBeInstanceOf(HTMLDivElement);
   });
 });

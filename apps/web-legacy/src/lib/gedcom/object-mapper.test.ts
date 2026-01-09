@@ -24,9 +24,7 @@ describe("ObjectMapper", () => {
       const gedcomContent = fixtures.withMultimedia();
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
-      const objectRecord = gedcomFile.objects.find(
-        (r) => r.id === "O1"
-      );
+      const objectRecord = gedcomFile.objects.find((r) => r.id === "O1");
 
       expect(objectRecord).toBeDefined();
       if (!objectRecord) return;
@@ -124,7 +122,15 @@ describe("ObjectMapper", () => {
     });
 
     it("should support various event types", () => {
-      const eventTypes = ["BIRT", "DEAT", "MARR", "DIV", "BURI", "GRAD", "PHOT"];
+      const eventTypes = [
+        "BIRT",
+        "DEAT",
+        "MARR",
+        "DIV",
+        "BURI",
+        "GRAD",
+        "PHOT",
+      ];
 
       for (const eventType of eventTypes) {
         const link = objectMapper.createEventMediaLink(
@@ -153,9 +159,7 @@ describe("ObjectMapper", () => {
       const gedcomContent = fixtures.withMultimedia();
       const gedcomFile = gedcomParser.parse(gedcomContent);
 
-      const objectRecord = gedcomFile.objects.find(
-        (r) => r.id === "O1"
-      );
+      const objectRecord = gedcomFile.objects.find((r) => r.id === "O1");
 
       expect(objectRecord).toBeDefined();
       if (!objectRecord) return;

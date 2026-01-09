@@ -68,10 +68,7 @@ export class SourceParser {
    * Extract sources referenced by an event in a person's record
    * Returns array of source xref IDs linked to the event
    */
-  extractEventSources(
-    record: GedcomRecord,
-    eventTag: string
-  ): string[] {
+  extractEventSources(record: GedcomRecord, eventTag: string): string[] {
     const sources: string[] = [];
 
     // Find the event lines

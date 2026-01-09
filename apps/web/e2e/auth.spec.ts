@@ -7,6 +7,9 @@ import { LoginPage, Navigation } from "./fixtures/page-objects";
 
 test.describe("Authentication", () => {
   test.describe("Login Page", () => {
+    // Skip pre-authenticated state for these tests since we're testing login functionality
+    test.use({ storageState: { cookies: [], origins: [] } });
+
     test("should display login form", async ({ page }) => {
       await page.goto("/login");
 
@@ -54,10 +57,8 @@ test.describe("Authentication", () => {
       // Should be redirected to authenticated area
       await expect(page).toHaveURL(/\/(people|dashboard)/);
 
-      // Navigation should be visible
-      const nav = new Navigation(page);
-      await expect(nav.nav).toBeVisible();
-      await expect(nav.signOutButton).toBeVisible();
+      // Use the custom matcher to verify logged in state
+      await vamsaExpect.toBeLoggedIn(page);
     });
 
     test("should have theme toggle on login page", async ({ page }) => {
@@ -73,6 +74,9 @@ test.describe("Authentication", () => {
   });
 
   test.describe("Protected Routes", () => {
+    // Skip pre-authenticated state for these tests since we're testing unauthenticated access
+    test.use({ storageState: { cookies: [], origins: [] } });
+
     test("should redirect to login when accessing protected route without auth", async ({
       page,
     }) => {
@@ -172,7 +176,7 @@ test.describe("Authentication", () => {
       await expect(page).toHaveURL("/people");
 
       await page.goto("/tree");
-      await expect(page).toHaveURL("/tree");
+      await expect(page).toHaveURL(/\/tree(\?|$)/);
 
       // Still authenticated
       await vamsaExpect.toBeLoggedIn(page);
@@ -187,7 +191,7 @@ test.describe("Authentication", () => {
       await expect(page).toHaveURL(/\/admin/);
 
       // Should see admin content, not error
-      await expect(page.locator("text=Users")).toBeVisible();
+      await expect(page.getByRole("link", { name: "Users" })).toBeVisible();
     });
 
     test.skip("member user should have limited admin access", async ({

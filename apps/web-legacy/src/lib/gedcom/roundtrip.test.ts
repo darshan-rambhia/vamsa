@@ -2,10 +2,7 @@ import { describe, it, expect, beforeEach } from "bun:test";
 import { GedcomParser } from "./parser";
 import { GedcomMapper } from "./mapper";
 import { GedcomGenerator } from "./generator";
-import type {
-  VamsaPerson,
-  VamsaRelationship,
-} from "./mapper-types";
+import type { VamsaPerson, VamsaRelationship } from "./mapper-types";
 
 describe("GEDCOM Roundtrip: Import → Export → Re-import", () => {
   let parser: GedcomParser;
@@ -1274,9 +1271,7 @@ describe("GEDCOM Roundtrip: Advanced Cases", () => {
     expect(originalJohn.names[0].lastName).toBe("Smith");
 
     // After roundtrip, reparsed person should also have names preserved
-    const reparsedJohn = parser.parseIndividual(
-      result.reparsed.individuals[0]
-    );
+    const reparsedJohn = parser.parseIndividual(result.reparsed.individuals[0]);
     expect(reparsedJohn.names[0].firstName).toBe("John");
     expect(reparsedJohn.names[0].lastName).toBe("Smith");
   });
@@ -1732,8 +1727,12 @@ describe("GEDCOM Roundtrip: Phase 2 - Source Citations (SOUR)", () => {
     expect(parsed.sources.length).toBeGreaterThanOrEqual(3);
 
     // Verify each has publication date
-    const publicationDates = parsed.sources.map((s) => s.tags.get("PUBL")?.[0]?.value);
-    expect(publicationDates.filter((p) => p !== undefined).length).toBeGreaterThan(0);
+    const publicationDates = parsed.sources.map(
+      (s) => s.tags.get("PUBL")?.[0]?.value
+    );
+    expect(
+      publicationDates.filter((p) => p !== undefined).length
+    ).toBeGreaterThan(0);
   });
 
   it("should preserve sources linked to birth, death, and marriage events", () => {

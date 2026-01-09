@@ -25,7 +25,9 @@ describe("Button", () => {
     });
 
     test("renders with custom className", () => {
-      const { getByRole } = render(<Button className="custom-class">Button</Button>);
+      const { getByRole } = render(
+        <Button className="custom-class">Button</Button>
+      );
       const button = getByRole("button");
       expect(button.className).toContain("custom-class");
     });
@@ -39,7 +41,9 @@ describe("Button", () => {
     });
 
     test("applies destructive variant", () => {
-      const { getByRole } = render(<Button variant="destructive">Delete</Button>);
+      const { getByRole } = render(
+        <Button variant="destructive">Delete</Button>
+      );
       const button = getByRole("button");
       expect(button.className).toContain("bg-destructive");
     });
@@ -51,7 +55,9 @@ describe("Button", () => {
     });
 
     test("applies secondary variant", () => {
-      const { getByRole } = render(<Button variant="secondary">Secondary</Button>);
+      const { getByRole } = render(
+        <Button variant="secondary">Secondary</Button>
+      );
       const button = getByRole("button");
       expect(button.className).toContain("bg-secondary");
     });
@@ -129,13 +135,17 @@ describe("Button", () => {
     });
 
     test("passes through aria attributes", () => {
-      const { getByRole } = render(<Button aria-label="Close dialog">X</Button>);
+      const { getByRole } = render(
+        <Button aria-label="Close dialog">X</Button>
+      );
       const button = getByRole("button");
       expect(button.getAttribute("aria-label")).toBe("Close dialog");
     });
 
     test("passes through data attributes", () => {
-      const { getByTestId } = render(<Button data-testid="submit-btn">Submit</Button>);
+      const { getByTestId } = render(
+        <Button data-testid="submit-btn">Submit</Button>
+      );
       expect(getByTestId("submit-btn")).toBeDefined();
     });
   });

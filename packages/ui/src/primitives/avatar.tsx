@@ -42,7 +42,7 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
           // Background for fallback
           "bg-primary/10 text-primary font-display font-medium",
           // Border
-          "ring-2 ring-border ring-offset-2 ring-offset-background",
+          "ring-border ring-offset-background ring-2 ring-offset-2",
           // Size
           sizeClasses[size],
           className

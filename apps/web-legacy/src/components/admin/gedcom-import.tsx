@@ -119,12 +119,12 @@ export function GedcomImport() {
           {...register("file")}
         />
         {errors.file?.message && (
-          <p className="text-sm text-destructive">
+          <p className="text-destructive text-sm">
             {String(errors.file.message)}
           </p>
         )}
       </div>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Import a family tree from GEDCOM format. The file will be validated
         before import to ensure data integrity.
       </p>

@@ -27,11 +27,15 @@ test.describe("Date Handling - Timezone Independence", () => {
     await page.waitForURL("/people", { timeout: 10000 });
     await page.waitForTimeout(500);
 
-    const personLink = page.getByRole("link", { name: /TestJane BirthdayCheck/i }).first();
+    const personLink = page
+      .getByRole("link", { name: /TestJane BirthdayCheck/i })
+      .first();
     await personLink.click();
     await page.waitForURL(/\/people\/[a-z0-9]+/, { timeout: 10000 });
 
-    await expect(page.getByText("January 2, 1990")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText("January 2, 1990")).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("marriage anniversary remains consistent across timezones", async ({
@@ -56,11 +60,15 @@ test.describe("Date Handling - Timezone Independence", () => {
     await peoplePage.goto();
     await page.waitForTimeout(500);
 
-    const personLink = page.getByRole("link", { name: /TestSpouse2 Marriage2/i }).first();
+    const personLink = page
+      .getByRole("link", { name: /TestSpouse2 Marriage2/i })
+      .first();
     if (await personLink.isVisible()) {
       await personLink.click();
       await page.waitForURL(/\/people\/[a-z0-9]+/, { timeout: 10000 });
-      await expect(page.getByText("June 15, 1985")).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText("June 15, 1985")).toBeVisible({
+        timeout: 5000,
+      });
     }
   });
 
@@ -82,11 +90,15 @@ test.describe("Date Handling - Timezone Independence", () => {
     await peoplePage.goto();
     await page.waitForTimeout(500);
 
-    const personLink = page.getByRole("link", { name: /TestLeap Year3/i }).first();
+    const personLink = page
+      .getByRole("link", { name: /TestLeap Year3/i })
+      .first();
     if (await personLink.isVisible()) {
       await personLink.click();
       await page.waitForURL(/\/people\/[a-z0-9]+/, { timeout: 10000 });
-      await expect(page.getByText("February 29, 2000")).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText("February 29, 2000")).toBeVisible({
+        timeout: 5000,
+      });
     }
   });
 
@@ -108,11 +120,15 @@ test.describe("Date Handling - Timezone Independence", () => {
     await peoplePage.goto();
     await page.waitForTimeout(500);
 
-    const personLink = page.getByRole("link", { name: /TestEditDate Test4/i }).first();
+    const personLink = page
+      .getByRole("link", { name: /TestEditDate Test4/i })
+      .first();
     if (await personLink.isVisible()) {
       await personLink.click();
       await page.waitForURL(/\/people\/[a-z0-9]+/, { timeout: 10000 });
-      await expect(page.getByText("June 15, 1990")).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText("June 15, 1990")).toBeVisible({
+        timeout: 5000,
+      });
     }
   });
 
@@ -136,11 +152,15 @@ test.describe("Date Handling - Timezone Independence", () => {
     await peoplePage.goto();
     await page.waitForTimeout(500);
 
-    const personLink = page.getByRole("link", { name: /TestDeceased Person5/i }).first();
+    const personLink = page
+      .getByRole("link", { name: /TestDeceased Person5/i })
+      .first();
     if (await personLink.isVisible()) {
       await personLink.click();
       await page.waitForURL(/\/people\/[a-z0-9]+/, { timeout: 10000 });
-      await expect(page.getByText("March 15, 1920")).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText("March 15, 1920")).toBeVisible({
+        timeout: 5000,
+      });
     }
   });
 
@@ -168,7 +188,9 @@ test.describe("Date Handling - Timezone Independence", () => {
     await peoplePage.goto();
     await page.waitForTimeout(500);
 
-    const personLink = page.getByRole("link", { name: /TestAge Person6/i }).first();
+    const personLink = page
+      .getByRole("link", { name: /TestAge Person6/i })
+      .first();
     if (await personLink.isVisible()) {
       await personLink.click();
       await page.waitForURL(/\/people\/[a-z0-9]+/, { timeout: 10000 });
@@ -195,11 +217,15 @@ test.describe("Date Handling - Timezone Independence", () => {
     await peoplePage.goto();
     await page.waitForTimeout(500);
 
-    const personLink = page.getByRole("link", { name: /TestValid Date7/i }).first();
+    const personLink = page
+      .getByRole("link", { name: /TestValid Date7/i })
+      .first();
     if (await personLink.isVisible()) {
       await personLink.click();
       await page.waitForURL(/\/people\/[a-z0-9]+/, { timeout: 10000 });
-      await expect(page.getByText("June 15, 1990")).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText("June 15, 1990")).toBeVisible({
+        timeout: 5000,
+      });
     }
   });
 
@@ -223,11 +249,15 @@ test.describe("Date Handling - Timezone Independence", () => {
     await peoplePage.goto();
     await page.waitForTimeout(500);
 
-    const personLink = page.getByRole("link", { name: /TestFormat Test8/i }).first();
+    const personLink = page
+      .getByRole("link", { name: /TestFormat Test8/i })
+      .first();
     if (await personLink.isVisible()) {
       await personLink.click();
       await page.waitForURL(/\/people\/[a-z0-9]+/, { timeout: 10000 });
-      await expect(page.getByText("December 25, 1985")).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText("December 25, 1985")).toBeVisible({
+        timeout: 5000,
+      });
     }
   });
 
@@ -249,16 +279,22 @@ test.describe("Date Handling - Timezone Independence", () => {
     await peoplePage.goto();
     await page.waitForTimeout(500);
 
-    const personLink = page.getByRole("link", { name: /TestTimezone Test9/i }).first();
+    const personLink = page
+      .getByRole("link", { name: /TestTimezone Test9/i })
+      .first();
     if (await personLink.isVisible()) {
       await personLink.click();
       await page.waitForURL(/\/people\/[a-z0-9]+/, { timeout: 10000 });
-      await expect(page.getByText("January 2, 1990")).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText("January 2, 1990")).toBeVisible({
+        timeout: 5000,
+      });
 
       await page.reload();
       await page.waitForTimeout(1000);
 
-      await expect(page.getByText("January 2, 1990")).toBeVisible({ timeout: 5000 });
+      await expect(page.getByText("January 2, 1990")).toBeVisible({
+        timeout: 5000,
+      });
     }
   });
 });

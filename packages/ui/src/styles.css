@@ -1,6 +1,4 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 /* ============================================
    VAMSA DESIGN SYSTEM
@@ -16,84 +14,84 @@
 
     /* ========== LIGHT MODE ========== */
     /* Backgrounds */
-    --background: 40 33% 98%;          /* #FDFBF7 - Warm cream */
-    --foreground: 120 27% 14%;         /* #1A2E1A - Deep forest */
+    --background: 40 33% 98%; /* #FDFBF7 - Warm cream */
+    --foreground: 120 27% 14%; /* #1A2E1A - Deep forest */
 
     /* Cards & Surfaces */
-    --card: 43 30% 93%;                /* #F5F1E8 - Soft parchment */
-    --card-foreground: 120 27% 14%;    /* #1A2E1A - Deep forest */
+    --card: 43 30% 93%; /* #F5F1E8 - Soft parchment */
+    --card-foreground: 120 27% 14%; /* #1A2E1A - Deep forest */
 
     /* Popovers & Overlays */
-    --popover: 40 33% 98%;             /* #FDFBF7 - Warm cream */
+    --popover: 40 33% 98%; /* #FDFBF7 - Warm cream */
     --popover-foreground: 120 27% 14%; /* #1A2E1A - Deep forest */
 
     /* Primary - Forest Green */
-    --primary: 114 38% 25%;            /* #2D5A27 - Forest green */
-    --primary-foreground: 40 33% 98%;  /* #FDFBF7 - Warm cream */
+    --primary: 114 38% 25%; /* #2D5A27 - Forest green */
+    --primary-foreground: 40 33% 98%; /* #FDFBF7 - Warm cream */
 
     /* Secondary - Moss */
-    --secondary: 123 26% 39%;          /* #4A7C4E - Moss */
-    --secondary-foreground: 40 33% 98%;/* #FDFBF7 - Warm cream */
+    --secondary: 123 26% 39%; /* #4A7C4E - Moss */
+    --secondary-foreground: 40 33% 98%; /* #FDFBF7 - Warm cream */
 
     /* Muted - Subtle backgrounds */
-    --muted: 43 30% 93%;               /* #F5F1E8 - Soft parchment */
-    --muted-foreground: 24 30% 28%;    /* #5C4033 - Bark brown */
+    --muted: 43 30% 93%; /* #F5F1E8 - Soft parchment */
+    --muted-foreground: 24 30% 28%; /* #5C4033 - Bark brown */
 
     /* Accent - Warm highlight */
-    --accent: 43 25% 88%;              /* Slightly darker parchment */
-    --accent-foreground: 120 27% 14%;  /* #1A2E1A - Deep forest */
+    --accent: 43 25% 88%; /* Slightly darker parchment */
+    --accent-foreground: 120 27% 14%; /* #1A2E1A - Deep forest */
 
     /* Destructive - Autumn red */
-    --destructive: 0 55% 39%;          /* #9B2C2C - Autumn red */
+    --destructive: 0 55% 39%; /* #9B2C2C - Autumn red */
     --destructive-foreground: 40 33% 98%;
 
     /* Borders & Inputs */
-    --border: 35 20% 82%;              /* #D4C9B8 - Warm taupe */
-    --input: 35 20% 82%;               /* #D4C9B8 - Warm taupe */
-    --ring: 114 38% 25%;               /* #2D5A27 - Forest green */
+    --border: 35 20% 82%; /* #D4C9B8 - Warm taupe */
+    --input: 35 20% 82%; /* #D4C9B8 - Warm taupe */
+    --ring: 114 38% 25%; /* #2D5A27 - Forest green */
 
     /* Border radius */
     --radius: 0.5rem;
   }
 
   .dark {
-    /* ========== DARK MODE ========== */
-    /* Backgrounds */
-    --background: 120 27% 8%;          /* #0F1A0F - Deep forest night */
-    --foreground: 120 15% 93%;         /* #E8F0E8 - Pale sage */
+    /* ========== DARK MODE (Matte) ========== */
+    /* Backgrounds - Softer, less stark */
+    --background: 120 8% 14%; /* Matte dark forest - softer than pure dark */
+    --foreground: 120 8% 90%; /* Soft sage white */
 
-    /* Cards & Surfaces */
-    --card: 120 20% 12%;               /* #1A251A - Dark bark */
-    --card-foreground: 120 15% 93%;    /* #E8F0E8 - Pale sage */
+    /* Cards & Surfaces - Subtle lift from background */
+    --card: 120 8% 18%; /* Matte bark - subtle contrast */
+    --card-foreground: 120 8% 90%; /* Soft sage white */
 
     /* Popovers & Overlays */
-    --popover: 120 20% 10%;            /* Slightly darker */
-    --popover-foreground: 120 15% 93%; /* #E8F0E8 - Pale sage */
+    --popover: 120 8% 16%; /* Between bg and card */
+    --popover-foreground: 120 8% 90%; /* Soft sage white */
 
-    /* Primary - Bright Moss */
-    --primary: 120 15% 49%;            /* #6B8E6B - Bright moss */
-    --primary-foreground: 120 27% 8%;  /* #0F1A0F - Deep forest night */
+    /* Primary - Muted moss green */
+    --primary: 120 20% 45%; /* Softer moss green */
+    --primary-foreground: 120 8% 14%; /* Dark background */
 
-    /* Secondary - Sage */
-    --secondary: 120 15% 64%;          /* #8FB88F - Sage highlight */
-    --secondary-foreground: 120 27% 8%;/* #0F1A0F - Deep forest night */
+    /* Secondary - Gentle sage */
+    --secondary: 120 12% 55%; /* Muted sage */
+    --secondary-foreground: 120 8% 14%; /* Dark background */
 
-    /* Muted */
-    --muted: 120 20% 15%;              /* Slightly lighter bark */
-    --muted-foreground: 120 10% 68%;   /* #A3B8A3 - Muted moss */
+    /* Muted - Subtle distinction */
+    --muted: 120 6% 22%; /* Soft matte surface */
+    --muted-foreground: 120 6% 60%; /* Gentle gray-green */
 
-    /* Accent */
-    --accent: 120 20% 18%;             /* Highlight bark */
-    --accent-foreground: 120 15% 93%;  /* #E8F0E8 - Pale sage */
+    /* Accent - Warm matte highlight */
+    --accent: 120 8% 25%; /* Subtle accent surface */
+    --accent-foreground: 120 8% 90%; /* Soft sage white */
 
-    /* Destructive - Soft coral */
-    --destructive: 0 64% 67%;          /* #E57373 - Soft coral */
-    --destructive-foreground: 120 27% 8%;
+    /* Destructive - Muted coral */
+    --destructive: 0 45% 60%; /* Softer coral */
+    --destructive-foreground: 120 8% 14%;
 
-    /* Borders & Inputs */
-    --border: 120 15% 20%;             /* #2D3D2D - Forest shadow */
-    --input: 120 15% 20%;              /* #2D3D2D - Forest shadow */
-    --ring: 120 15% 49%;               /* #6B8E6B - Bright moss */
+    /* Borders & Inputs - Low contrast for matte feel */
+    --border: 120 6% 26%; /* Subtle border */
+    --input: 120 6% 26%; /* Subtle input */
+    --ring: 120 20% 45%; /* Matches primary */
   }
 }
 
@@ -110,11 +108,18 @@
 
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "kern" 1, "liga" 1;
+    font-feature-settings:
+      "kern" 1,
+      "liga" 1;
   }
 
   /* Editorial Typography */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     font-weight: 500;
     letter-spacing: -0.02em;
@@ -135,14 +140,17 @@
   }
 
   /* Monospace for metadata */
-  code, kbd, samp, pre,
+  code,
+  kbd,
+  samp,
+  pre,
   .font-mono {
     font-family: var(--font-mono);
   }
 
   /* Refined focus styles */
   :focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+    @apply ring-ring ring-offset-background outline-none ring-2 ring-offset-2;
   }
 
   /* Selection color */
@@ -193,12 +201,24 @@
   .stagger-children > * {
     @apply animate-fade-in;
   }
-  .stagger-children > *:nth-child(1) { animation-delay: 0ms; }
-  .stagger-children > *:nth-child(2) { animation-delay: 50ms; }
-  .stagger-children > *:nth-child(3) { animation-delay: 100ms; }
-  .stagger-children > *:nth-child(4) { animation-delay: 150ms; }
-  .stagger-children > *:nth-child(5) { animation-delay: 200ms; }
-  .stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+  .stagger-children > *:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  .stagger-children > *:nth-child(2) {
+    animation-delay: 50ms;
+  }
+  .stagger-children > *:nth-child(3) {
+    animation-delay: 100ms;
+  }
+  .stagger-children > *:nth-child(4) {
+    animation-delay: 150ms;
+  }
+  .stagger-children > *:nth-child(5) {
+    animation-delay: 200ms;
+  }
+  .stagger-children > *:nth-child(6) {
+    animation-delay: 250ms;
+  }
 }
 
 /* ============================================
@@ -220,7 +240,7 @@
   /* Pull quote styling */
   .pull-quote {
     font-family: var(--font-display);
-    @apply text-2xl sm:text-3xl italic text-muted-foreground;
-    @apply border-l-4 border-primary pl-6 my-8;
+    @apply text-muted-foreground text-2xl italic sm:text-3xl;
+    @apply border-primary my-8 border-l-4 pl-6;
   }
 }

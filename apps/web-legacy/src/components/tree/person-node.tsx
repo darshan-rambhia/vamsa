@@ -36,7 +36,7 @@ export function PersonNode({ data }: NodeProps<PersonNodeType>) {
       />
       <div
         className={cn(
-          "flex cursor-pointer flex-col items-center rounded-lg border bg-card p-3 shadow-sm transition-shadow hover:shadow-md",
+          "bg-card flex cursor-pointer flex-col items-center rounded-lg border p-3 shadow-sm transition-shadow hover:shadow-md",
           !person.isLiving && "opacity-75"
         )}
       >
@@ -50,7 +50,7 @@ export function PersonNode({ data }: NodeProps<PersonNodeType>) {
           </p>
           <p className="text-sm font-medium leading-tight">{person.lastName}</p>
           {!person.isLiving && (
-            <p className="text-xs text-muted-foreground">Deceased</p>
+            <p className="text-muted-foreground text-xs">Deceased</p>
           )}
         </div>
       </div>

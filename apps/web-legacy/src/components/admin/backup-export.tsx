@@ -41,7 +41,7 @@ export function BackupExport() {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Download a complete backup of your family tree data. This includes all
         people, relationships, and settings. The file will be in ZIP format.
       </p>

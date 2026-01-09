@@ -9,10 +9,10 @@ const Card = React.forwardRef<
     ref={ref}
     className={cn(
       // Base - parchment background with warm border
-      "rounded-lg border-2 border-border bg-card text-card-foreground",
+      "border-border bg-card text-card-foreground rounded-lg border-2",
       // Subtle shadow that lifts on hover
       "shadow-sm transition-all duration-300 ease-out",
-      "hover:shadow-md hover:border-primary/20",
+      "hover:border-primary/20 hover:shadow-md",
       className
     )}
     {...props}
@@ -54,7 +54,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn("text-sm text-muted-foreground leading-relaxed", className)}
+    className={cn("text-muted-foreground text-sm leading-relaxed", className)}
     {...props}
   />
 ));
@@ -74,10 +74,7 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn(
-      "flex items-center gap-4 p-6 pt-0",
-      className
-    )}
+    className={cn("flex items-center gap-4 p-6 pt-0", className)}
     {...props}
   />
 ));

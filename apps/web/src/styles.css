@@ -1,0 +1,275 @@
+@import "tailwindcss";
+
+/* ============================================
+   VAMSA DESIGN SYSTEM
+   Editorial + Earth Tones - Tailwind CSS v4
+   ============================================ */
+
+@theme {
+  /* Typography */
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Source Sans 3", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Colors - Light Mode (using HSL values as oklch approximations) */
+  --color-background: oklch(0.98 0.01 80);
+  --color-foreground: oklch(0.22 0.05 145);
+
+  --color-card: oklch(0.95 0.02 80);
+  --color-card-foreground: oklch(0.22 0.05 145);
+
+  --color-popover: oklch(0.98 0.01 80);
+  --color-popover-foreground: oklch(0.22 0.05 145);
+
+  --color-primary: oklch(0.38 0.12 145);
+  --color-primary-foreground: oklch(0.98 0.01 80);
+
+  --color-secondary: oklch(0.52 0.1 145);
+  --color-secondary-foreground: oklch(0.98 0.01 80);
+
+  --color-muted: oklch(0.95 0.02 80);
+  --color-muted-foreground: oklch(0.38 0.06 40);
+
+  --color-accent: oklch(0.9 0.02 80);
+  --color-accent-foreground: oklch(0.22 0.05 145);
+
+  --color-destructive: oklch(0.5 0.18 25);
+  --color-destructive-foreground: oklch(0.98 0.01 80);
+
+  --color-border: oklch(0.85 0.02 60);
+  --color-input: oklch(0.85 0.02 60);
+  --color-ring: oklch(0.38 0.12 145);
+
+  /* Border radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+}
+
+/* Dark mode colors */
+.dark {
+  --color-background: oklch(0.15 0.03 145);
+  --color-foreground: oklch(0.94 0.02 145);
+
+  --color-card: oklch(0.18 0.03 145);
+  --color-card-foreground: oklch(0.94 0.02 145);
+
+  --color-popover: oklch(0.16 0.03 145);
+  --color-popover-foreground: oklch(0.94 0.02 145);
+
+  --color-primary: oklch(0.58 0.08 145);
+  --color-primary-foreground: oklch(0.15 0.03 145);
+
+  --color-secondary: oklch(0.7 0.08 145);
+  --color-secondary-foreground: oklch(0.15 0.03 145);
+
+  --color-muted: oklch(0.22 0.03 145);
+  --color-muted-foreground: oklch(0.72 0.04 145);
+
+  --color-accent: oklch(0.25 0.03 145);
+  --color-accent-foreground: oklch(0.94 0.02 145);
+
+  --color-destructive: oklch(0.7 0.15 25);
+  --color-destructive-foreground: oklch(0.15 0.03 145);
+
+  --color-border: oklch(0.28 0.03 145);
+  --color-input: oklch(0.28 0.03 145);
+  --color-ring: oklch(0.58 0.08 145);
+}
+
+/* Base styles */
+* {
+  border-color: var(--color-border);
+}
+
+html {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-feature-settings:
+    "kern" 1,
+    "liga" 1;
+}
+
+/* Editorial Typography */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 400;
+}
+
+h2 {
+  font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+}
+
+h3 {
+  font-size: clamp(1.25rem, 2.5vw, 1.75rem);
+}
+
+/* Monospace for metadata */
+code,
+kbd,
+samp,
+pre,
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+/* Refined focus styles */
+:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--color-ring),
+    0 0 0 4px var(--color-background);
+}
+
+/* Selection color */
+::selection {
+  background-color: color-mix(in oklch, var(--color-primary) 20%, transparent);
+  color: var(--color-foreground);
+}
+
+/* ============================================
+   ANIMATION UTILITIES
+   Subtle & Refined Motion
+   ============================================ */
+
+.transition-smooth {
+  transition: all 300ms ease-out;
+}
+
+.transition-fast {
+  transition: all 200ms ease-out;
+}
+
+/* Subtle hover lift */
+.hover-lift {
+  transition: all 300ms ease-out;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Fade in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out forwards;
+}
+
+/* Staggered children animation */
+.stagger-children > * {
+  animation: fade-in 0.4s ease-out forwards;
+}
+.stagger-children > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.stagger-children > *:nth-child(2) {
+  animation-delay: 50ms;
+}
+.stagger-children > *:nth-child(3) {
+  animation-delay: 100ms;
+}
+.stagger-children > *:nth-child(4) {
+  animation-delay: 150ms;
+}
+.stagger-children > *:nth-child(5) {
+  animation-delay: 200ms;
+}
+.stagger-children > *:nth-child(6) {
+  animation-delay: 250ms;
+}
+
+/* ============================================
+   EDITORIAL LAYOUT UTILITIES
+   ============================================ */
+
+/* Editorial container */
+.container-editorial {
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+  max-width: 80rem;
+}
+
+@media (min-width: 640px) {
+  .container-editorial {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-editorial {
+    padding-left: 3rem;
+    padding-right: 3rem;
+  }
+}
+
+/* Generous spacing for editorial feel */
+.section-padding {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+@media (min-width: 640px) {
+  .section-padding {
+    padding-top: 4rem;
+    padding-bottom: 4rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .section-padding {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+}
+
+/* Pull quote styling */
+.pull-quote {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-style: italic;
+  color: var(--color-muted-foreground);
+  border-left: 4px solid var(--color-primary);
+  padding-left: 1.5rem;
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 640px) {
+  .pull-quote {
+    font-size: 1.875rem;
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "cookies": [
+    {
+      "name": "vamsa-session",
+      "value": "b159d9be55d1d4808917b14e0cc84f62e7108aed09c7b91c5cbc63cba6de07df",
+      "domain": "localhost",
+      "path": "/",
+      "expires": 1770562067.621445,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": []
+}

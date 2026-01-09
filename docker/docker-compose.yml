@@ -1,3 +1,4 @@
+name: vamsa
 services:
   app:
     build:
@@ -7,19 +8,20 @@ services:
       - "3000:3000"
     environment:
       - DATABASE_URL=postgresql://vamsa:vamsa@db:5432/vamsa
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-change-me-in-production}
-      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - SESSION_SECRET=${SESSION_SECRET:-change-me-in-production}
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@family.local}
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
       - STORAGE_PROVIDER=local
       - STORAGE_LOCAL_PATH=/app/data/uploads
-      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME:-Vamsa}
-      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - APP_NAME=${APP_NAME:-Vamsa}
+      - APP_URL=${APP_URL:-http://localhost:3000}
     volumes:
       - uploads:/app/data/uploads
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   db:
@@ -42,7 +44,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile
     command: >
-      sh -c "bunx prisma migrate deploy && bun run db:seed"
+      sh -c "cd /app/packages/api && npx prisma migrate deploy && npx tsx prisma/seed.ts"
     environment:
       - DATABASE_URL=postgresql://vamsa:vamsa@db:5432/vamsa
       - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@family.local}

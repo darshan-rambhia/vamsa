@@ -135,7 +135,7 @@ export function AddRelationshipButton({
               </SelectContent>
             </Select>
             {errors.type && (
-              <p className="text-sm text-destructive">{errors.type.message}</p>
+              <p className="text-destructive text-sm">{errors.type.message}</p>
             )}
           </div>
 
@@ -152,7 +152,7 @@ export function AddRelationshipButton({
                   <button
                     key={person.id}
                     type="button"
-                    className={`w-full px-3 py-2 text-left hover:bg-muted ${
+                    className={`hover:bg-muted w-full px-3 py-2 text-left ${
                       selectedRelatedPerson === person.id ? "bg-muted" : ""
                     }`}
                     onClick={() => {
@@ -163,7 +163,7 @@ export function AddRelationshipButton({
                   >
                     {person.firstName} {person.lastName}
                     {!person.isLiving && (
-                      <span className="ml-2 text-muted-foreground">
+                      <span className="text-muted-foreground ml-2">
                         (Deceased)
                       </span>
                     )}
@@ -172,7 +172,7 @@ export function AddRelationshipButton({
               </div>
             )}
             {errors.relatedPersonId && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.relatedPersonId.message}
               </p>
             )}

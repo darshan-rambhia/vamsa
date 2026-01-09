@@ -118,7 +118,7 @@ export function PersonProfile({
                 <p className="text-muted-foreground">née {person.maidenName}</p>
               )}
               {!person.isLiving && (
-                <span className="mt-2 rounded-full bg-muted px-3 py-1 text-sm">
+                <span className="bg-muted mt-2 rounded-full px-3 py-1 text-sm">
                   Deceased
                 </span>
               )}
@@ -139,35 +139,35 @@ export function PersonProfile({
             <div className="space-y-4">
               {person.dateOfBirth && (
                 <div className="flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="text-muted-foreground h-4 w-4" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Born</p>
+                    <p className="text-muted-foreground text-sm">Born</p>
                     <p>{formatDate(person.dateOfBirth)}</p>
                     {person.isLiving && age !== null && (
-                      <p className="text-sm text-muted-foreground">Age {age}</p>
+                      <p className="text-muted-foreground text-sm">Age {age}</p>
                     )}
                   </div>
                 </div>
               )}
               {person.dateOfPassing && (
                 <div className="flex items-center gap-3">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Calendar className="text-muted-foreground h-4 w-4" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Passed</p>
+                    <p className="text-muted-foreground text-sm">Passed</p>
                     <p>{formatDate(person.dateOfPassing)}</p>
                     {age !== null && (
-                      <p className="text-sm text-muted-foreground">Age {age}</p>
+                      <p className="text-muted-foreground text-sm">Age {age}</p>
                     )}
                   </div>
                 </div>
               )}
               {(person.birthPlace || person.nativePlace) && (
                 <div className="flex items-center gap-3">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <MapPin className="text-muted-foreground h-4 w-4" />
                   <div>
                     {person.birthPlace && (
                       <>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           Birth Place
                         </p>
                         <p>{person.birthPlace}</p>
@@ -175,7 +175,7 @@ export function PersonProfile({
                     )}
                     {person.nativePlace && (
                       <>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-muted-foreground text-sm">
                           Native Place
                         </p>
                         <p>{person.nativePlace}</p>
@@ -186,12 +186,12 @@ export function PersonProfile({
               )}
               {person.profession && (
                 <div className="flex items-center gap-3">
-                  <Briefcase className="h-4 w-4 text-muted-foreground" />
+                  <Briefcase className="text-muted-foreground h-4 w-4" />
                   <div>
-                    <p className="text-sm text-muted-foreground">Profession</p>
+                    <p className="text-muted-foreground text-sm">Profession</p>
                     <p>{person.profession}</p>
                     {person.employer && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         at {person.employer}
                       </p>
                     )}
@@ -200,7 +200,7 @@ export function PersonProfile({
               )}
               {person.email && (
                 <div className="flex items-center gap-3">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <Mail className="text-muted-foreground h-4 w-4" />
                   <a
                     href={`mailto:${person.email}`}
                     className="text-primary hover:underline"
@@ -211,7 +211,7 @@ export function PersonProfile({
               )}
               {person.phone && (
                 <div className="flex items-center gap-3">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <Phone className="text-muted-foreground h-4 w-4" />
                   <a
                     href={`tel:${person.phone}`}
                     className="text-primary hover:underline"

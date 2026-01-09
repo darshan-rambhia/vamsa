@@ -666,41 +666,55 @@ async function main() {
 
   console.log(`Admin user created: ${adminEmail} (linked to Arjun Sharma)`);
 
-  // Create test users for E2E tests
+  // Create test users for E2E tests - link them to persons in the family tree
+  // Note: Each person can only be linked to one user (unique constraint on personId)
+  // Production admin is linked to parentArjun, so test users use different people
   const testUsers = [
     {
       email: "admin@test.vamsa.local",
       name: "Test Admin",
       password: "TestAdmin123!",
       role: UserRole.ADMIN,
+      personId: parentRohan.id, // Link to Rohan (different from production admin's Arjun)
     },
     {
       email: "member@test.vamsa.local",
       name: "Test Member",
       password: "TestMember123!",
       role: UserRole.MEMBER,
+      personId: parentRahul.id, // Link to Rahul
     },
     {
       email: "viewer@test.vamsa.local",
       name: "Test Viewer",
       password: "TestViewer123!",
       role: UserRole.VIEWER,
+      personId: parentAditya.id, // Link to Aditya
     },
   ];
 
   for (const user of testUsers) {
     const hash = await bcrypt.hash(user.password, 12);
-    await prisma.user.create({
+    const createdUser = await prisma.user.create({
       data: {
         email: user.email,
         name: user.name,
         passwordHash: hash,
         role: user.role,
         isActive: true,
+        personId: user.personId, // Link to the person
       },
     });
-    console.log(`Test user created: ${user.email}`);
+    console.log(`Test user created: ${user.email} (ID: ${createdUser.id})`);
   }
+
+  // Verify test users were created
+  const testUsersCount = await prisma.user.count({
+    where: {
+      email: { in: testUsers.map(u => u.email) },
+    },
+  });
+  console.log(`\nVerification: ${testUsersCount} test users found in database`);
 
   console.log("\n========================================");
   console.log("SEED COMPLETED SUCCESSFULLY!");

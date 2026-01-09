@@ -1,0 +1,30 @@
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
+import { defineConfig } from "vite";
+import tsConfigPaths from "vite-tsconfig-paths";
+import viteReact from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "path";
+
+export default defineConfig({
+  // Load .env from monorepo root
+  envDir: path.resolve(__dirname, "../.."),
+  server: {
+    port: 3000,
+  },
+  resolve: {
+    alias: {
+      "@vamsa/ui": path.resolve(__dirname, "../../packages/ui/src"),
+      "@vamsa/api": path.resolve(__dirname, "../../packages/api"),
+      "@vamsa/lib": path.resolve(__dirname, "../../packages/lib/src"),
+      "@vamsa/schemas": path.resolve(__dirname, "../../packages/schemas/src"),
+    },
+  },
+  plugins: [
+    tailwindcss(),
+    tsConfigPaths({
+      projects: ["./tsconfig.json"],
+    }),
+    tanstackStart(),
+    viteReact(),
+  ],
+});

@@ -58,7 +58,7 @@ export function Navbar() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="bg-background/95 supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50 w-full border-b backdrop-blur">
       <div className="container flex h-14 items-center">
         <div className="mr-4 flex">
           <Link href="/tree" className="mr-6 flex items-center space-x-2">
@@ -75,7 +75,7 @@ export function Navbar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center text-sm font-medium transition-colors hover:text-primary",
+                "hover:text-primary flex items-center text-sm font-medium transition-colors",
                 pathname === item.href
                   ? "text-foreground"
                   : "text-muted-foreground"
@@ -91,7 +91,7 @@ export function Navbar() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center text-sm font-medium transition-colors hover:text-primary",
+                  "hover:text-primary flex items-center text-sm font-medium transition-colors",
                   pathname.startsWith(item.href)
                     ? "text-foreground"
                     : "text-muted-foreground"
@@ -120,7 +120,7 @@ export function Navbar() {
                   <p className="text-sm font-medium leading-none">
                     {session?.user?.name || "User"}
                   </p>
-                  <p className="text-xs leading-none text-muted-foreground">
+                  <p className="text-muted-foreground text-xs leading-none">
                     {session?.user?.email}
                   </p>
                 </div>

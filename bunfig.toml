@@ -1,0 +1,25 @@
+[test]
+# Exclude test setup files and test files from coverage
+coveragePathIgnorePatterns = [
+  "**/test-setup.ts",
+  "**/*.test.ts",
+  "**/*.spec.ts",
+  "**/*.test.tsx",
+  "**/*.spec.tsx"
+]
+
+# Coverage thresholds to maintain code quality
+[test.coverageThreshold]
+lines = 95
+functions = 95
+branches = 90
+
+[test.coverageThreshold."@vamsa/lib"]
+lines = 98.82       # Current: 98.82%
+functions = 98.12   # Current: 98.12%
+branches = 95
+
+[test.coverageThreshold."@vamsa/ui"]
+lines = 100         # Current: 100%
+functions = 100     # Current: 100%
+branches = 100

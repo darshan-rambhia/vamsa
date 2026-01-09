@@ -419,7 +419,7 @@ export function FamilyTree({
   if (persons.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center text-center">
-        <p className="text-lg text-muted-foreground">
+        <p className="text-muted-foreground text-lg">
           No family members yet. Start by adding the first person!
         </p>
       </div>
@@ -451,7 +451,7 @@ export function FamilyTree({
       {currentPersonId && (
         <Panel
           position="top-right"
-          className="flex gap-2 rounded-lg border bg-background/80 p-2"
+          className="bg-background/80 flex gap-2 rounded-lg border p-2"
         >
           <Button
             size="sm"

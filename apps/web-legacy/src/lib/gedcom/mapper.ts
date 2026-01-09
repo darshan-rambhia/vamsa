@@ -364,7 +364,7 @@ export class GedcomMapper {
       if (rel.type === "SPOUSE") {
         // Find or create family for this couple
         let familyKey = `${rel.personId}-${rel.relatedPersonId}`;
-        let reverseKey = `${rel.relatedPersonId}-${rel.personId}`;
+        const reverseKey = `${rel.relatedPersonId}-${rel.personId}`;
 
         // Check if we already have this couple in reverse order
         if (familyMap.has(reverseKey) && !familyMap.has(familyKey)) {

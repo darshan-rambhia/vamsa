@@ -44,7 +44,9 @@ describe("GedcomParser", () => {
       const content = `0 TRLR`;
 
       const parser = new GedcomParser();
-      expect(() => parser.parse(content)).toThrow("Missing required HEAD record");
+      expect(() => parser.parse(content)).toThrow(
+        "Missing required HEAD record"
+      );
     });
 
     test("throws error for missing TRLR", () => {
@@ -53,7 +55,9 @@ describe("GedcomParser", () => {
 2 VERS 5.5.1`;
 
       const parser = new GedcomParser();
-      expect(() => parser.parse(content)).toThrow("Missing required TRLR record");
+      expect(() => parser.parse(content)).toThrow(
+        "Missing required TRLR record"
+      );
     });
 
     test("parses individual records", () => {
@@ -143,7 +147,8 @@ describe("GedcomParser", () => {
     });
 
     test("handles Windows line endings", () => {
-      const content = "0 HEAD\r\n1 GEDC\r\n2 VERS 5.5.1\r\n1 CHAR UTF-8\r\n0 TRLR";
+      const content =
+        "0 HEAD\r\n1 GEDC\r\n2 VERS 5.5.1\r\n1 CHAR UTF-8\r\n0 TRLR";
 
       const parser = new GedcomParser();
       const result = parser.parse(content);
@@ -209,7 +214,9 @@ describe("GedcomParser", () => {
     test("handles between dates (BET...AND)", () => {
       const parser = new GedcomParser();
       expect(parser.parseDate("BET 1975 AND 1985")).toBe("1975");
-      expect(parser.parseDate("BET 15 JAN 1975 AND 15 JAN 1985")).toBe("1975-01-15");
+      expect(parser.parseDate("BET 15 JAN 1975 AND 15 JAN 1985")).toBe(
+        "1975-01-15"
+      );
     });
 
     test("returns null for invalid date", () => {
@@ -514,7 +521,9 @@ describe("GedcomParser", () => {
       const file = parser.parse(content);
       const errors = parser.validate(file);
 
-      const duplicateError = errors.find((e) => e.message.includes("Duplicate xref"));
+      const duplicateError = errors.find((e) =>
+        e.message.includes("Duplicate xref")
+      );
       expect(duplicateError).toBeDefined();
     });
 
@@ -531,7 +540,9 @@ describe("GedcomParser", () => {
       const file = parser.parse(content);
       const errors = parser.validate(file);
 
-      const brokenRef = errors.find((e) => e.message.includes("HUSB") && e.message.includes("not found"));
+      const brokenRef = errors.find(
+        (e) => e.message.includes("HUSB") && e.message.includes("not found")
+      );
       expect(brokenRef).toBeDefined();
     });
 
@@ -548,7 +559,9 @@ describe("GedcomParser", () => {
       const file = parser.parse(content);
       const errors = parser.validate(file);
 
-      const brokenRef = errors.find((e) => e.message.includes("WIFE") && e.message.includes("not found"));
+      const brokenRef = errors.find(
+        (e) => e.message.includes("WIFE") && e.message.includes("not found")
+      );
       expect(brokenRef).toBeDefined();
     });
 
@@ -565,7 +578,9 @@ describe("GedcomParser", () => {
       const file = parser.parse(content);
       const errors = parser.validate(file);
 
-      const brokenRef = errors.find((e) => e.message.includes("CHIL") && e.message.includes("not found"));
+      const brokenRef = errors.find(
+        (e) => e.message.includes("CHIL") && e.message.includes("not found")
+      );
       expect(brokenRef).toBeDefined();
     });
 
@@ -583,7 +598,9 @@ describe("GedcomParser", () => {
       const file = parser.parse(content);
       const errors = parser.validate(file);
 
-      const brokenRef = errors.find((e) => e.message.includes("FAMC") && e.message.includes("not found"));
+      const brokenRef = errors.find(
+        (e) => e.message.includes("FAMC") && e.message.includes("not found")
+      );
       expect(brokenRef).toBeDefined();
     });
 
@@ -601,7 +618,9 @@ describe("GedcomParser", () => {
       const file = parser.parse(content);
       const errors = parser.validate(file);
 
-      const brokenRef = errors.find((e) => e.message.includes("FAMS") && e.message.includes("not found"));
+      const brokenRef = errors.find(
+        (e) => e.message.includes("FAMS") && e.message.includes("not found")
+      );
       expect(brokenRef).toBeDefined();
     });
   });

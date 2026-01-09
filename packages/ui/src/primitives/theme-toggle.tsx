@@ -41,7 +41,7 @@ const ThemeToggle = React.forwardRef<HTMLButtonElement, ThemeToggleProps>(
           ref={ref}
           className={cn(
             "inline-flex items-center justify-center rounded-md",
-            "border-2 border-border bg-background",
+            "border-border bg-background border-2",
             "transition-all duration-200 ease-out",
             "hover:bg-accent hover:border-primary/30",
             sizeClasses,
@@ -61,10 +61,10 @@ const ThemeToggle = React.forwardRef<HTMLButtonElement, ThemeToggleProps>(
         aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
         className={cn(
           "inline-flex items-center justify-center rounded-md",
-          "border-2 border-border bg-background",
+          "border-border bg-background border-2",
           "transition-all duration-200 ease-out",
           "hover:bg-accent hover:border-primary/30",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+          "focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
           sizeClasses,
           className
         )}

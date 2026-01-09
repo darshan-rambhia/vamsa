@@ -23,7 +23,7 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
           // Background with subtle blur
           "bg-background/95 backdrop-blur-sm",
           // Border
-          "border-b-2 border-border",
+          "border-border border-b-2",
           className
         )}
         {...props}
@@ -57,7 +57,7 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className={cn(
-                  "md:hidden inline-flex items-center justify-center",
+                  "inline-flex items-center justify-center md:hidden",
                   "h-9 w-9 rounded-md",
                   "text-muted-foreground hover:text-foreground",
                   "hover:bg-accent",
@@ -65,14 +65,35 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
                 )}
                 aria-label="Toggle menu"
                 aria-expanded={mobileMenuOpen}
+                data-testid="nav-mobile-menu-button"
               >
                 {mobileMenuOpen ? (
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 ) : (
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                  <svg
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M4 6h16M4 12h16M4 18h16"
+                    />
                   </svg>
                 )}
               </button>
@@ -82,23 +103,26 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
 
         {/* Mobile menu dropdown */}
         {children && mobileMenuOpen && (
-          <div className="md:hidden border-t border-border bg-background">
-            <div className="px-4 py-3 space-y-1">
+          <div className="border-border bg-background border-t md:hidden">
+            <div className="space-y-1 px-4 py-3">
               {React.Children.map(children, (child) => {
                 if (React.isValidElement(child)) {
-                  return React.cloneElement(child as React.ReactElement<{ className?: string }>, {
-                    className: cn(
-                      (child.props as { className?: string }).className,
-                      "w-full justify-start"
-                    ),
-                  });
+                  return React.cloneElement(
+                    child as React.ReactElement<{ className?: string }>,
+                    {
+                      className: cn(
+                        (child.props as { className?: string }).className,
+                        "w-full justify-start"
+                      ),
+                    }
+                  );
                 }
                 return child;
               })}
             </div>
             {/* Mobile actions */}
             {actions && (
-              <div className="px-4 py-3 border-t border-border sm:hidden">
+              <div className="border-border border-t px-4 py-3 sm:hidden">
                 {actions}
               </div>
             )}
@@ -121,7 +145,7 @@ const NavLink = React.forwardRef<HTMLAnchorElement, NavLinkProps>(
         ref={ref}
         className={cn(
           // Base styles
-          "inline-flex items-center px-4 py-2 text-sm font-medium rounded-md",
+          "inline-flex items-center rounded-md px-4 py-2 text-sm font-medium",
           // Transition
           "transition-all duration-200 ease-out",
           // States

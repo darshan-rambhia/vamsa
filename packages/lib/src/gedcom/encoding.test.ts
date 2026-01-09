@@ -3,7 +3,12 @@
  * Tests ANSEL to UTF-8 conversion and encoding detection
  */
 import { describe, test, expect } from "bun:test";
-import { detectEncoding, normalizeEncoding, anselToUtf8, utf8ToAnsel } from "./encoding";
+import {
+  detectEncoding,
+  normalizeEncoding,
+  anselToUtf8,
+  utf8ToAnsel,
+} from "./encoding";
 
 describe("detectEncoding", () => {
   test("detects UTF-8 encoding", () => {
@@ -87,55 +92,55 @@ describe("anselToUtf8", () => {
 
   test("handles combining acute accent (0xE0)", () => {
     // "A" + combining acute = "Á"
-    const input = Buffer.from([0x41, 0xE0]);
+    const input = Buffer.from([0x41, 0xe0]);
     const result = anselToUtf8(input);
     expect(result).toBe("Á");
   });
 
   test("handles combining grave accent (0xE1)", () => {
     // "A" + combining grave = "À"
-    const input = Buffer.from([0x41, 0xE1]);
+    const input = Buffer.from([0x41, 0xe1]);
     const result = anselToUtf8(input);
     expect(result).toBe("À");
   });
 
   test("handles combining circumflex (0xE2)", () => {
     // "A" + combining circumflex = "Â"
-    const input = Buffer.from([0x41, 0xE2]);
+    const input = Buffer.from([0x41, 0xe2]);
     const result = anselToUtf8(input);
     expect(result).toBe("Â");
   });
 
   test("handles combining tilde (0xE3)", () => {
     // "N" + combining tilde = "Ñ"
-    const input = Buffer.from([0x4E, 0xE3]);
+    const input = Buffer.from([0x4e, 0xe3]);
     const result = anselToUtf8(input);
     expect(result).toBe("Ñ");
   });
 
   test("handles combining diaeresis (0xE4)", () => {
     // "U" + combining diaeresis = "Ü"
-    const input = Buffer.from([0x55, 0xE4]);
+    const input = Buffer.from([0x55, 0xe4]);
     const result = anselToUtf8(input);
     expect(result).toBe("Ü");
   });
 
   test("handles combining ring (0xE5)", () => {
     // "A" + combining ring = "Å"
-    const input = Buffer.from([0x41, 0xE5]);
+    const input = Buffer.from([0x41, 0xe5]);
     const result = anselToUtf8(input);
     expect(result).toBe("Å");
   });
 
   test("handles combining cedilla (0xE8)", () => {
     // "C" + combining cedilla = "Ç"
-    const input = Buffer.from([0x43, 0xE8]);
+    const input = Buffer.from([0x43, 0xe8]);
     const result = anselToUtf8(input);
     expect(result).toBe("Ç");
   });
 
   test("handles Uint8Array input", () => {
-    const input = new Uint8Array([0x48, 0x65, 0x6C, 0x6C, 0x6F]); // "Hello"
+    const input = new Uint8Array([0x48, 0x65, 0x6c, 0x6c, 0x6f]); // "Hello"
     const result = anselToUtf8(input);
     expect(result).toBe("Hello");
   });
@@ -159,7 +164,7 @@ describe("utf8ToAnsel", () => {
     const result = utf8ToAnsel(input);
     // Result should be two bytes: A (0x41) + acute (0xE0)
     expect(result[0]).toBe(0x41);
-    expect(result[1]).toBe(0xE0);
+    expect(result[1]).toBe(0xe0);
   });
 
   test("round-trips ASCII text", () => {

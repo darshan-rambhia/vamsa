@@ -30,10 +30,7 @@ export class ObjectMapper {
   /**
    * Map a parsed GEDCOM object to Vamsa database format
    */
-  mapToVamsa(
-    parsedObject: ParsedObject,
-    vamsaId?: string
-  ): VamsaMediaObject {
+  mapToVamsa(parsedObject: ParsedObject, vamsaId?: string): VamsaMediaObject {
     return {
       id: vamsaId,
       filePath: parsedObject.filePath,

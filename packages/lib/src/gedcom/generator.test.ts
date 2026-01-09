@@ -164,13 +164,39 @@ describe("GedcomGenerator", () => {
 
     test("handles multiple individuals and families", () => {
       const individuals: GedcomIndividualData[] = [
-        { xref: "@I1@", name: "John /Doe/", sex: "M", notes: [], familiesAsSpouse: [], familiesAsChild: [] },
-        { xref: "@I2@", name: "Jane /Doe/", sex: "F", notes: [], familiesAsSpouse: [], familiesAsChild: [] },
-        { xref: "@I3@", name: "Baby /Doe/", notes: [], familiesAsSpouse: [], familiesAsChild: [] },
+        {
+          xref: "@I1@",
+          name: "John /Doe/",
+          sex: "M",
+          notes: [],
+          familiesAsSpouse: [],
+          familiesAsChild: [],
+        },
+        {
+          xref: "@I2@",
+          name: "Jane /Doe/",
+          sex: "F",
+          notes: [],
+          familiesAsSpouse: [],
+          familiesAsChild: [],
+        },
+        {
+          xref: "@I3@",
+          name: "Baby /Doe/",
+          notes: [],
+          familiesAsSpouse: [],
+          familiesAsChild: [],
+        },
       ];
 
       const families: GedcomFamilyData[] = [
-        { xref: "@F1@", husband: "@I1@", wife: "@I2@", children: ["@I3@"], notes: [] },
+        {
+          xref: "@F1@",
+          husband: "@I1@",
+          wife: "@I2@",
+          children: ["@I3@"],
+          notes: [],
+        },
       ];
 
       const result = generator.generate(individuals, families);
@@ -185,7 +211,14 @@ describe("GedcomGenerator", () => {
   describe("date formatting", () => {
     test("formats full date in 5.5.1 format", () => {
       const individuals: GedcomIndividualData[] = [
-        { xref: "@I1@", name: "Test //", birthDate: "1985-01-15", notes: [], familiesAsSpouse: [], familiesAsChild: [] },
+        {
+          xref: "@I1@",
+          name: "Test //",
+          birthDate: "1985-01-15",
+          notes: [],
+          familiesAsSpouse: [],
+          familiesAsChild: [],
+        },
       ];
 
       const result = generator.generate(individuals, []);
@@ -194,7 +227,14 @@ describe("GedcomGenerator", () => {
 
     test("formats month-year date", () => {
       const individuals: GedcomIndividualData[] = [
-        { xref: "@I1@", name: "Test //", birthDate: "1985-01", notes: [], familiesAsSpouse: [], familiesAsChild: [] },
+        {
+          xref: "@I1@",
+          name: "Test //",
+          birthDate: "1985-01",
+          notes: [],
+          familiesAsSpouse: [],
+          familiesAsChild: [],
+        },
       ];
 
       const result = generator.generate(individuals, []);
@@ -203,7 +243,14 @@ describe("GedcomGenerator", () => {
 
     test("formats year-only date", () => {
       const individuals: GedcomIndividualData[] = [
-        { xref: "@I1@", name: "Test //", birthDate: "1985", notes: [], familiesAsSpouse: [], familiesAsChild: [] },
+        {
+          xref: "@I1@",
+          name: "Test //",
+          birthDate: "1985",
+          notes: [],
+          familiesAsSpouse: [],
+          familiesAsChild: [],
+        },
       ];
 
       const result = generator.generate(individuals, []);
@@ -217,7 +264,14 @@ describe("GedcomGenerator", () => {
       });
 
       const individuals: GedcomIndividualData[] = [
-        { xref: "@I1@", name: "Test //", birthDate: "1985-01-15", notes: [], familiesAsSpouse: [], familiesAsChild: [] },
+        {
+          xref: "@I1@",
+          name: "Test //",
+          birthDate: "1985-01-15",
+          notes: [],
+          familiesAsSpouse: [],
+          familiesAsChild: [],
+        },
       ];
 
       const result = generator70.generate(individuals, []);
@@ -226,7 +280,14 @@ describe("GedcomGenerator", () => {
 
     test("handles empty date", () => {
       const individuals: GedcomIndividualData[] = [
-        { xref: "@I1@", name: "Test //", birthDate: "", notes: [], familiesAsSpouse: [], familiesAsChild: [] },
+        {
+          xref: "@I1@",
+          name: "Test //",
+          birthDate: "",
+          notes: [],
+          familiesAsSpouse: [],
+          familiesAsChild: [],
+        },
       ];
 
       const result = generator.generate(individuals, []);
@@ -237,9 +298,18 @@ describe("GedcomGenerator", () => {
 
   describe("long line handling", () => {
     test("handles long notes with CONT continuation", () => {
-      const longNote = "This is a very long note that should exceed the maximum line length and require continuation. ".repeat(5);
+      const longNote =
+        "This is a very long note that should exceed the maximum line length and require continuation. ".repeat(
+          5
+        );
       const individuals: GedcomIndividualData[] = [
-        { xref: "@I1@", name: "Test //", notes: [longNote], familiesAsSpouse: [], familiesAsChild: [] },
+        {
+          xref: "@I1@",
+          name: "Test //",
+          notes: [longNote],
+          familiesAsSpouse: [],
+          familiesAsChild: [],
+        },
       ];
 
       const result = generator.generate(individuals, []);
@@ -255,7 +325,13 @@ describe("GedcomGenerator", () => {
 
       const longNote = "A".repeat(200);
       const individuals: GedcomIndividualData[] = [
-        { xref: "@I1@", name: "Test //", notes: [longNote], familiesAsSpouse: [], familiesAsChild: [] },
+        {
+          xref: "@I1@",
+          name: "Test //",
+          notes: [longNote],
+          familiesAsSpouse: [],
+          familiesAsChild: [],
+        },
       ];
 
       const result = generator80.generate(individuals, []);

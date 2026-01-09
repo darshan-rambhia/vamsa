@@ -113,12 +113,12 @@ export function BackupImport() {
           {...register("file")}
         />
         {errors.file?.message && (
-          <p className="text-sm text-destructive">
+          <p className="text-destructive text-sm">
             {String(errors.file.message)}
           </p>
         )}
       </div>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-sm">
         Importing will add or update data. It is strongly recommended to perform
         a backup first.
       </p>

@@ -59,7 +59,10 @@ describe("ConflictResolver", () => {
     name: "Admin User",
   };
 
-  const mockExtractedFiles = new Map<string, Record<string, unknown> | Record<string, unknown>[]>([
+  const mockExtractedFiles = new Map<
+    string,
+    Record<string, unknown> | Record<string, unknown>[]
+  >([
     [
       "data/settings.json",
       {
@@ -657,7 +660,9 @@ describe("ConflictResolver", () => {
     });
 
     it("should handle invalid data gracefully", async () => {
-      const invalidFiles = new Map([["data/people.json", "not an array"]]) as Map<string, any>;
+      const invalidFiles = new Map([
+        ["data/people.json", "not an array"],
+      ]) as Map<string, any>;
 
       const result = await resolver.importData(invalidFiles, []);
 

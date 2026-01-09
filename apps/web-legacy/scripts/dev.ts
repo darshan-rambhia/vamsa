@@ -49,9 +49,14 @@ const runCommand = async (label: string, command: string[]) => {
     if (!env.DATABASE_URL) {
       try {
         const envFile = await Bun.file(".env").text();
-        const dbUrlLine = envFile.split("\n").find(line => line.startsWith("DATABASE_URL"));
+        const dbUrlLine = envFile
+          .split("\n")
+          .find((line) => line.startsWith("DATABASE_URL"));
         if (dbUrlLine) {
-          env.DATABASE_URL = dbUrlLine.split("=")[1].trim().replace(/^["']|["']$/g, "");
+          env.DATABASE_URL = dbUrlLine
+            .split("=")[1]
+            .trim()
+            .replace(/^["']|["']$/g, "");
         } else {
           env.DATABASE_URL = "postgresql://vamsa:password@localhost:5432/vamsa";
         }

@@ -13,7 +13,9 @@ describe("Input", () => {
     });
 
     test("renders with placeholder", () => {
-      const { getByPlaceholderText } = render(<Input placeholder="Enter text" />);
+      const { getByPlaceholderText } = render(
+        <Input placeholder="Enter text" />
+      );
       expect(getByPlaceholderText("Enter text")).toBeDefined();
     });
 
@@ -51,13 +53,17 @@ describe("Input", () => {
     });
 
     test("renders date type", () => {
-      const { getByTestId } = render(<Input type="date" data-testid="date-input" />);
+      const { getByTestId } = render(
+        <Input type="date" data-testid="date-input" />
+      );
       const input = getByTestId("date-input");
       expect(input.getAttribute("type")).toBe("date");
     });
 
     test("renders file type", () => {
-      const { getByTestId } = render(<Input type="file" data-testid="file-input" />);
+      const { getByTestId } = render(
+        <Input type="file" data-testid="file-input" />
+      );
       const input = getByTestId("file-input");
       expect(input.getAttribute("type")).toBe("file");
     });
@@ -72,7 +78,9 @@ describe("Input", () => {
     });
 
     test("applies custom className", () => {
-      const { getByTestId } = render(<Input className="custom-class" data-testid="custom-input" />);
+      const { getByTestId } = render(
+        <Input className="custom-class" data-testid="custom-input" />
+      );
       const input = getByTestId("custom-input");
       expect(input.className).toContain("custom-class");
     });
@@ -90,7 +98,9 @@ describe("Input", () => {
     });
 
     test("has disabled styles", () => {
-      const { getByTestId } = render(<Input disabled data-testid="disabled-input" />);
+      const { getByTestId } = render(
+        <Input disabled data-testid="disabled-input" />
+      );
       const input = getByTestId("disabled-input");
       expect(input.className).toContain("disabled:");
     });
@@ -155,7 +165,13 @@ describe("Input", () => {
   describe("ref forwarding", () => {
     test("forwards ref correctly", () => {
       let inputRef: HTMLInputElement | null = null;
-      render(<Input ref={(el) => (inputRef = el)} />);
+      render(
+        <Input
+          ref={(el) => {
+            inputRef = el;
+          }}
+        />
+      );
       expect(inputRef).toBeInstanceOf(HTMLInputElement);
     });
   });

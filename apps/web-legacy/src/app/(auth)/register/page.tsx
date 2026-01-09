@@ -57,7 +57,7 @@ export default function RegisterPage() {
       <form onSubmit={handleSubmit(onSubmit)}>
         <CardContent className="space-y-4">
           {error && (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
               {error}
             </div>
           )}
@@ -69,7 +69,7 @@ export default function RegisterPage() {
               {...register("name")}
             />
             {errors.name && (
-              <p className="text-sm text-destructive">{errors.name.message}</p>
+              <p className="text-destructive text-sm">{errors.name.message}</p>
             )}
           </div>
           <div className="space-y-2">
@@ -81,14 +81,14 @@ export default function RegisterPage() {
               {...register("email")}
             />
             {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
+              <p className="text-destructive text-sm">{errors.email.message}</p>
             )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
             <Input id="password" type="password" {...register("password")} />
             {errors.password && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.password.message}
               </p>
             )}
@@ -101,7 +101,7 @@ export default function RegisterPage() {
               {...register("confirmPassword")}
             />
             {errors.confirmPassword && (
-              <p className="text-sm text-destructive">
+              <p className="text-destructive text-sm">
                 {errors.confirmPassword.message}
               </p>
             )}
@@ -111,7 +111,7 @@ export default function RegisterPage() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Creating account..." : "Create Account"}
           </Button>
-          <div className="text-center text-sm text-muted-foreground">
+          <div className="text-muted-foreground text-center text-sm">
             Already have an account?{" "}
             <Link href="/login" className="text-primary hover:underline">
               Sign in

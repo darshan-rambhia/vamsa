@@ -89,7 +89,7 @@ export function PeopleList({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder="Search by name..."
             value={searchValue}
@@ -158,7 +158,7 @@ export function PeopleList({
       )}
 
       {persons.length === 0 ? (
-        <div className="py-12 text-center text-muted-foreground">
+        <div className="text-muted-foreground py-12 text-center">
           {search
             ? `No results found for "${search}"`
             : "No people in the family tree yet"}
@@ -179,14 +179,14 @@ export function PeopleList({
                     <h3 className="truncate font-semibold">
                       {person.firstName} {person.lastName}
                       {person.maidenName && (
-                        <span className="font-normal text-muted-foreground">
+                        <span className="text-muted-foreground font-normal">
                           {" "}
                           (née {person.maidenName})
                         </span>
                       )}
                     </h3>
                     {person.dateOfBirth && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-muted-foreground text-sm">
                         {formatDate(person.dateOfBirth)}
                         {person.isLiving && person.dateOfBirth && (
                           <span> • Age {calculateAge(person.dateOfBirth)}</span>
@@ -194,10 +194,10 @@ export function PeopleList({
                       </p>
                     )}
                     {!person.isLiving && (
-                      <p className="text-sm text-muted-foreground">Deceased</p>
+                      <p className="text-muted-foreground text-sm">Deceased</p>
                     )}
                     {person.profession && (
-                      <p className="truncate text-sm text-muted-foreground">
+                      <p className="text-muted-foreground truncate text-sm">
                         {person.profession}
                       </p>
                     )}
@@ -219,7 +219,7 @@ export function PeopleList({
           >
             Previous
           </Button>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-muted-foreground text-sm">
             Page {page} of {totalPages}
           </span>
           <Button

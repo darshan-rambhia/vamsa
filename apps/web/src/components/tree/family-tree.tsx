@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from "react";
+import { useCallback, useRef, useEffect, useMemo } from "react";
 import {
   ReactFlow,
   Background,
@@ -57,58 +57,66 @@ export function FamilyTree({
   const reactFlowInstance = useReactFlow();
   const initialFitDone = useRef(false);
 
-  // Transform server nodes to React Flow nodes
-  const reactFlowNodes: PersonNodeType[] = layout.nodes.map((node) => ({
-    id: node.id,
-    type: "person" as const,
-    position: { x: node.x, y: node.y },
-    data: {
-      person: node.person,
-      onClick: () =>
-        navigate({ to: "/people/$personId", params: { personId: node.id } }),
-      hasHiddenChildren: node.hasHiddenChildren,
-      hasHiddenParents: node.hasHiddenParents,
-      hasHiddenSpouses: node.hasHiddenSpouses,
-      isCurrentUser: node.isCurrentUser,
-    },
-    style: { width: NODE_WIDTH, height: NODE_HEIGHT },
-  }));
+  // Transform server nodes to React Flow nodes - memoized to prevent infinite loops
+  const reactFlowNodes: PersonNodeType[] = useMemo(
+    () =>
+      layout.nodes.map((node) => ({
+        id: node.id,
+        type: "person" as const,
+        position: { x: node.x, y: node.y },
+        data: {
+          person: node.person,
+          onClick: () =>
+            navigate({ to: "/people/$personId", params: { personId: node.id } }),
+          hasHiddenChildren: node.hasHiddenChildren,
+          hasHiddenParents: node.hasHiddenParents,
+          hasHiddenSpouses: node.hasHiddenSpouses,
+          isCurrentUser: node.isCurrentUser,
+        },
+        style: { width: NODE_WIDTH, height: NODE_HEIGHT },
+      })),
+    [layout.nodes, navigate]
+  );
 
-  // Transform server edges to React Flow edges
-  const reactFlowEdges: Edge[] = layout.edges.map((edge) => {
-    if (edge.type === "spouse") {
-      const color = edge.isDivorced ? DIVORCED_COLOR : SPOUSE_COLOR;
-      return {
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        sourceHandle: "spouse-right",
-        targetHandle: "spouse-left",
-        type: "straight",
-        style: {
-          stroke: color,
-          strokeWidth: 2,
-          strokeDasharray: edge.isDivorced ? "3,3" : "5,5",
-        },
-        label: edge.isDivorced ? "ex" : "spouse",
-        labelStyle: { fontSize: 11, fill: color, fontWeight: 500 },
-        labelBgStyle: { fill: "white", fillOpacity: 0.8 },
-      };
-    } else {
-      // parent-child edge
-      return {
-        id: edge.id,
-        source: edge.source,
-        target: edge.target,
-        type: "smoothstep",
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-          color: PARENT_CHILD_COLOR,
-        },
-        style: { stroke: PARENT_CHILD_COLOR, strokeWidth: 2 },
-      };
-    }
-  });
+  // Transform server edges to React Flow edges - memoized to prevent infinite loops
+  const reactFlowEdges: Edge[] = useMemo(
+    () =>
+      layout.edges.map((edge) => {
+        if (edge.type === "spouse") {
+          const color = edge.isDivorced ? DIVORCED_COLOR : SPOUSE_COLOR;
+          return {
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            sourceHandle: "spouse-right",
+            targetHandle: "spouse-left",
+            type: "straight",
+            style: {
+              stroke: color,
+              strokeWidth: 2,
+              strokeDasharray: edge.isDivorced ? "3,3" : "5,5",
+            },
+            label: edge.isDivorced ? "ex" : "spouse",
+            labelStyle: { fontSize: 11, fill: color, fontWeight: 500 },
+            labelBgStyle: { fill: "white", fillOpacity: 0.8 },
+          };
+        } else {
+          // parent-child edge
+          return {
+            id: edge.id,
+            source: edge.source,
+            target: edge.target,
+            type: "smoothstep",
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              color: PARENT_CHILD_COLOR,
+            },
+            style: { stroke: PARENT_CHILD_COLOR, strokeWidth: 2 },
+          };
+        }
+      }),
+    [layout.edges]
+  );
 
   const [nodes, _setNodes, onNodesChange] = useNodesState(reactFlowNodes);
   const [edges, _setEdges, onEdgesChange] = useEdgesState(reactFlowEdges);
@@ -128,7 +136,7 @@ export function FamilyTree({
     }
   }, [layout, reactFlowInstance]);
 
-  // Update nodes/edges when layout changes
+  // Update nodes/edges when layout changes (only when memoized values actually change)
   useEffect(() => {
     _setNodes(reactFlowNodes);
     _setEdges(reactFlowEdges);
@@ -162,7 +170,7 @@ export function FamilyTree({
   if (layout.nodes.length === 0) {
     return (
       <div className="flex h-full flex-col items-center justify-center text-center">
-        <p className="text-lg text-muted-foreground">
+        <p className="text-muted-foreground text-lg">
           No family members yet. Start by adding the first person!
         </p>
       </div>
@@ -198,7 +206,7 @@ export function FamilyTree({
       {hasCurrentUser && (
         <Panel
           position="top-right"
-          className="flex gap-2 rounded-lg border bg-background/80 p-2 backdrop-blur"
+          className="bg-background/80 flex gap-2 rounded-lg border p-2 backdrop-blur"
         >
           <Button
             size="sm"

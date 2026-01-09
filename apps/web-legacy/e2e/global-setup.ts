@@ -38,7 +38,7 @@ async function globalSetup(_config: FullConfig) {
     // Check if User table exists
     let userTableExists = false;
     try {
-      await client.query("SELECT 1 FROM \"User\" LIMIT 1");
+      await client.query('SELECT 1 FROM "User" LIMIT 1');
       userTableExists = true;
     } catch {
       userTableExists = false;
@@ -49,9 +49,7 @@ async function globalSetup(_config: FullConfig) {
       try {
         const migrationsDir = join(process.cwd(), "prisma", "migrations");
         const migrationDirs = readdirSync(migrationsDir)
-          .filter((f) =>
-            statSync(join(migrationsDir, f)).isDirectory()
-          )
+          .filter((f) => statSync(join(migrationsDir, f)).isDirectory())
           .sort();
 
         for (const dir of migrationDirs) {
@@ -86,7 +84,7 @@ async function globalSetup(_config: FullConfig) {
 
     // Check if admin user already exists
     const result = await client.query(
-      "SELECT id FROM \"User\" WHERE email = $1 LIMIT 1",
+      'SELECT id FROM "User" WHERE email = $1 LIMIT 1',
       ["admin@family.local"]
     );
 
@@ -117,7 +115,7 @@ async function globalSetup(_config: FullConfig) {
 
     // Create family settings if not exists
     const settingsResult = await client.query(
-      "SELECT id FROM \"FamilySettings\" LIMIT 1"
+      'SELECT id FROM "FamilySettings" LIMIT 1'
     );
 
     if (settingsResult.rows.length === 0) {

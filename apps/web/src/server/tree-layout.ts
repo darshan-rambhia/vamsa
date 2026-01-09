@@ -123,7 +123,13 @@ function buildRelationshipMaps(relationships: Relationship[]) {
     });
   });
 
-  return { childToParents, parentToChildren, spouseMap, siblingMap, spouseRels };
+  return {
+    childToParents,
+    parentToChildren,
+    spouseMap,
+    siblingMap,
+    spouseRels,
+  };
 }
 
 /**
@@ -219,12 +225,15 @@ function calculateGenerations(
   relationships: Relationship[],
   focusedPersonId: string
 ): Map<string, number> {
-  const { childToParents, parentToChildren } = buildRelationshipMaps(relationships);
+  const { childToParents, parentToChildren } =
+    buildRelationshipMaps(relationships);
   const generations = new Map<string, number>();
   const visited = new Set<string>();
 
   // BFS from focused person
-  const queue: { personId: string; gen: number }[] = [{ personId: focusedPersonId, gen: 0 }];
+  const queue: { personId: string; gen: number }[] = [
+    { personId: focusedPersonId, gen: 0 },
+  ];
 
   while (queue.length > 0) {
     const { personId, gen } = queue.shift()!;
@@ -330,7 +339,11 @@ function positionNodes(
 
   if (isFullView) {
     // Full tree view - use generation-based layout
-    const generations = calculateGenerations(persons, relationships, focusedPersonId);
+    const generations = calculateGenerations(
+      persons,
+      relationships,
+      focusedPersonId
+    );
 
     // Group visible people by generation
     const byGeneration = new Map<number, string[]>();
@@ -383,7 +396,10 @@ function positionNodes(
         const width = coupleWidths[i];
         if (couple.spouse) {
           positions.set(couple.primary, { x: x + NODE_WIDTH / 2, y });
-          positions.set(couple.spouse, { x: x + NODE_WIDTH / 2 + SPOUSE_SPACING, y });
+          positions.set(couple.spouse, {
+            x: x + NODE_WIDTH / 2 + SPOUSE_SPACING,
+            y,
+          });
         } else {
           positions.set(couple.primary, { x: x + width / 2, y });
         }
@@ -448,20 +464,28 @@ function positionNodes(
       );
 
       const parentCenterX = focusedSpouse
-        ? (positions.get(focusedPersonId)!.x + positions.get(focusedSpouse)!.x) / 2
+        ? (positions.get(focusedPersonId)!.x +
+            positions.get(focusedSpouse)!.x) /
+          2
         : positions.get(focusedPersonId)!.x;
 
       let childX = parentCenterX - totalWidth / 2;
 
       childrenWithSpouses.forEach(({ childId, spouse, width }) => {
         if (spouse) {
-          positions.set(childId, { x: childX + NODE_WIDTH / 2, y: VERTICAL_SPACING });
+          positions.set(childId, {
+            x: childX + NODE_WIDTH / 2,
+            y: VERTICAL_SPACING,
+          });
           positions.set(spouse, {
             x: childX + NODE_WIDTH / 2 + SPOUSE_SPACING,
             y: VERTICAL_SPACING,
           });
         } else {
-          positions.set(childId, { x: childX + NODE_WIDTH / 2, y: VERTICAL_SPACING });
+          positions.set(childId, {
+            x: childX + NODE_WIDTH / 2,
+            y: VERTICAL_SPACING,
+          });
         }
         childX += width + HORIZONTAL_SPACING;
       });
@@ -469,10 +493,16 @@ function positionNodes(
 
     // Handle expanded nodes
     const positioned = new Set(positions.keys());
-    const unpositioned = [...visiblePersonIds].filter((id) => !positioned.has(id));
+    const unpositioned = [...visiblePersonIds].filter(
+      (id) => !positioned.has(id)
+    );
 
     if (unpositioned.length > 0) {
-      const generations = calculateGenerations(persons, relationships, focusedPersonId);
+      const generations = calculateGenerations(
+        persons,
+        relationships,
+        focusedPersonId
+      );
 
       // Group by generation
       const byGen = new Map<number, string[]>();
@@ -492,7 +522,8 @@ function positionNodes(
           }
         });
 
-        let x = maxX === -Infinity ? 0 : maxX + SPOUSE_SPACING + HORIZONTAL_SPACING;
+        let x =
+          maxX === -Infinity ? 0 : maxX + SPOUSE_SPACING + HORIZONTAL_SPACING;
 
         const processed = new Set<string>();
         const sortedPeople = sortByBirthDate(peopleInGen);
@@ -502,7 +533,11 @@ function positionNodes(
           processed.add(personId);
 
           const spouse = getVisibleSpouse(personId);
-          if (spouse && peopleInGen.includes(spouse) && !processed.has(spouse)) {
+          if (
+            spouse &&
+            peopleInGen.includes(spouse) &&
+            !processed.has(spouse)
+          ) {
             processed.add(spouse);
             positions.set(personId, { x, y });
             positions.set(spouse, { x: x + SPOUSE_SPACING, y });
@@ -634,8 +669,10 @@ export function computeTreeLayout(
         // Determine which person is on the left (source) and right (target)
         const pos1 = positions.get(rel.personId);
         const pos2 = positions.get(rel.relatedPersonId);
-        const leftPerson = (pos1?.x ?? 0) < (pos2?.x ?? 0) ? rel.personId : rel.relatedPersonId;
-        const rightPerson = leftPerson === rel.personId ? rel.relatedPersonId : rel.personId;
+        const leftPerson =
+          (pos1?.x ?? 0) < (pos2?.x ?? 0) ? rel.personId : rel.relatedPersonId;
+        const rightPerson =
+          leftPerson === rel.personId ? rel.relatedPersonId : rel.personId;
 
         edges.push({
           id: `spouse-${key}`,
