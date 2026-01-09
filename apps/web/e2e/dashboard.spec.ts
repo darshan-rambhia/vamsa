@@ -27,7 +27,7 @@ test.describe("Dashboard", () => {
       await page.waitForLoadState("networkidle");
 
       // Look for stat elements
-      const statsSection = page.locator('[data-stats], .grid').first();
+      const statsSection = page.locator("[data-stats], .grid").first();
       await expect(statsSection).toBeVisible();
     });
 
@@ -39,7 +39,7 @@ test.describe("Dashboard", () => {
       const _activitySection = page
         .locator('text="Recent Activity"')
         .or(page.locator('text="Activity"'))
-        .or(page.locator('[data-recent-activity]'));
+        .or(page.locator("[data-recent-activity]"));
 
       // Activity may or may not be shown on dashboard
       await page.waitForLoadState("networkidle");
@@ -62,7 +62,10 @@ test.describe("Dashboard", () => {
   });
 
   test.describe("Dashboard - Responsive", () => {
-    test("dashboard stats should adapt to viewport", async ({ page, getViewportInfo }) => {
+    test("dashboard stats should adapt to viewport", async ({
+      page,
+      getViewportInfo,
+    }) => {
       const { isMobile: _isMobile, isTablet: _isTablet } = getViewportInfo();
       const dashboard = new DashboardPage(page);
       await dashboard.goto();
@@ -71,14 +74,17 @@ test.describe("Dashboard", () => {
       await expect(page.locator("main")).toBeVisible();
 
       // Stats grid should exist
-      const statsGrid = page.locator('[data-stats], .grid').first();
+      const statsGrid = page.locator("[data-stats], .grid").first();
       if (await statsGrid.isVisible()) {
         const box = await statsGrid.boundingBox();
         expect(box).toBeTruthy();
       }
     });
 
-    test("dashboard should be scrollable on mobile", async ({ page, getViewportInfo }) => {
+    test("dashboard should be scrollable on mobile", async ({
+      page,
+      getViewportInfo,
+    }) => {
       const { isMobile } = getViewportInfo();
 
       if (isMobile) {
@@ -86,14 +92,18 @@ test.describe("Dashboard", () => {
         await dashboard.goto();
 
         // Page should be scrollable
-        const scrollHeight = await page.evaluate(() => document.body.scrollHeight);
+        const scrollHeight = await page.evaluate(
+          () => document.body.scrollHeight
+        );
         const viewportHeight = page.viewportSize()?.height || 720;
 
         // If content is taller than viewport, it should be scrollable
         if (scrollHeight > viewportHeight) {
           await page.evaluate(() => window.scrollTo(0, 100));
           const scrollY = await page.evaluate(() => window.scrollY);
-          expect(scrollY).toBeGreaterThan(0);
+          if (scrollY !== null) {
+            expect(scrollY).toBeGreaterThan(0);
+          }
         }
       }
     });
@@ -118,8 +128,12 @@ test.describe("Activity Feed", () => {
       await page.waitForLoadState("networkidle");
 
       // Activity feed should have entries or empty state
-      const activityList = page.locator('[data-activity-list], .activity-list').first();
-      const emptyState = page.locator('text="No activity"').or(page.locator('[data-empty-state]'));
+      const activityList = page
+        .locator("[data-activity-list], .activity-list")
+        .first();
+      const emptyState = page
+        .locator('text="No activity"')
+        .or(page.locator("[data-empty-state]"));
 
       // Either activity items or empty state
       const hasActivity = await activityList.isVisible().catch(() => false);
@@ -133,7 +147,7 @@ test.describe("Activity Feed", () => {
       await page.waitForLoadState("networkidle");
 
       // If there are activity entries, check they have structure
-      const entries = page.locator('[data-activity-entry], .activity-entry');
+      const entries = page.locator("[data-activity-entry], .activity-entry");
       const count = await entries.count();
 
       if (count > 0) {
@@ -142,17 +156,21 @@ test.describe("Activity Feed", () => {
 
         // Entry should have some content
         const text = await firstEntry.textContent();
-        expect(text?.length).toBeGreaterThan(0);
+        expect(text?.length || 0).toBeGreaterThan(0);
       }
     });
 
-    test("should paginate or infinite scroll if many entries", async ({ page }) => {
+    test("should paginate or infinite scroll if many entries", async ({
+      page,
+    }) => {
       await page.goto("/activity");
       await page.waitForLoadState("networkidle");
 
       // Check for pagination or load more
-      const pagination = page.locator('[data-pagination], .pagination');
-      const loadMore = page.locator('button:has-text("Load more"), button:has-text("Show more")');
+      const pagination = page.locator("[data-pagination], .pagination");
+      const loadMore = page.locator(
+        'button:has-text("Load more"), button:has-text("Show more")'
+      );
 
       const hasPagination = await pagination.isVisible().catch(() => false);
       const hasLoadMore = await loadMore.isVisible().catch(() => false);
@@ -168,7 +186,9 @@ test.describe("Activity Feed", () => {
       await page.waitForLoadState("networkidle");
 
       // Look for filter controls
-      const filterSelect = page.locator('select[name="action"]').or(page.locator('[data-filter]'));
+      const filterSelect = page
+        .locator('select[name="action"]')
+        .or(page.locator("[data-filter]"));
 
       if (await filterSelect.isVisible()) {
         // Has filter capability
@@ -180,7 +200,9 @@ test.describe("Activity Feed", () => {
       await page.goto("/activity");
       await page.waitForLoadState("networkidle");
 
-      const dateFilter = page.locator('input[type="date"]').or(page.locator('[data-date-filter]'));
+      const dateFilter = page
+        .locator('input[type="date"]')
+        .or(page.locator("[data-date-filter]"));
 
       if (await dateFilter.first().isVisible()) {
         await expect(dateFilter.first()).toBeVisible();
@@ -189,7 +211,10 @@ test.describe("Activity Feed", () => {
   });
 
   test.describe("Activity - Responsive", () => {
-    test("activity feed should be readable on mobile", async ({ page, getViewportInfo }) => {
+    test("activity feed should be readable on mobile", async ({
+      page,
+      getViewportInfo,
+    }) => {
       const { isMobile } = getViewportInfo();
 
       await page.goto("/activity");
@@ -242,9 +267,14 @@ test.describe("Navigation Flow", () => {
 
   test("should highlight active navigation item", async ({ page }) => {
     await page.goto("/dashboard");
+    await page.waitForLoadState("networkidle");
 
     // Dashboard link should be active/highlighted
     const dashboardLink = page.locator('a[href="/dashboard"]');
+
+    // Wait for the navigation to be visible
+    await page.locator("nav").waitFor({ state: "visible", timeout: 5000 });
+
     const _classes = await dashboardLink.getAttribute("class");
 
     // Should have some indication of active state
@@ -252,7 +282,9 @@ test.describe("Navigation Flow", () => {
     await expect(dashboardLink).toBeVisible();
   });
 
-  test("should preserve scroll position on back navigation", async ({ page }) => {
+  test("should preserve scroll position on back navigation", async ({
+    page,
+  }) => {
     await page.goto("/people");
     await page.waitForLoadState("networkidle");
 

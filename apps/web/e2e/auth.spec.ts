@@ -19,7 +19,9 @@ test.describe("Authentication", () => {
       await expect(page.locator("text=Vamsa")).toBeVisible();
     });
 
-    test("should show validation errors for empty form submission", async ({ page }) => {
+    test("should show validation errors for empty form submission", async ({
+      page,
+    }) => {
       const loginPage = new LoginPage(page);
       await loginPage.goto();
 
@@ -43,7 +45,10 @@ test.describe("Authentication", () => {
       expect(errorText).toContain("Invalid");
     });
 
-    test("should successfully login with valid credentials", async ({ page, login }) => {
+    test("should successfully login with valid credentials", async ({
+      page,
+      login,
+    }) => {
       await login(TEST_USERS.admin);
 
       // Should be redirected to authenticated area
@@ -59,7 +64,9 @@ test.describe("Authentication", () => {
       await page.goto("/login");
 
       // Look for theme toggle button
-      const _themeToggle = page.locator('[data-theme-toggle], button:has-text("theme")');
+      const _themeToggle = page.locator(
+        '[data-theme-toggle], button:has-text("theme")'
+      );
       // Theme toggle exists in corner
       await expect(page.locator("button").first()).toBeVisible();
     });
@@ -76,22 +83,30 @@ test.describe("Authentication", () => {
       await expect(page).toHaveURL(/\/login/);
     });
 
-    test("should redirect to login when accessing dashboard without auth", async ({ page }) => {
+    test("should redirect to login when accessing dashboard without auth", async ({
+      page,
+    }) => {
       await page.goto("/dashboard");
       await expect(page).toHaveURL(/\/login/);
     });
 
-    test("should redirect to login when accessing admin without auth", async ({ page }) => {
+    test("should redirect to login when accessing admin without auth", async ({
+      page,
+    }) => {
       await page.goto("/admin");
       await expect(page).toHaveURL(/\/login/);
     });
 
-    test("should redirect to login when accessing tree without auth", async ({ page }) => {
+    test("should redirect to login when accessing tree without auth", async ({
+      page,
+    }) => {
       await page.goto("/tree");
       await expect(page).toHaveURL(/\/login/);
     });
 
-    test("should redirect to login when accessing activity without auth", async ({ page }) => {
+    test("should redirect to login when accessing activity without auth", async ({
+      page,
+    }) => {
       await page.goto("/activity");
       await expect(page).toHaveURL(/\/login/);
     });
@@ -112,7 +127,11 @@ test.describe("Authentication", () => {
       await vamsaExpect.toBeLoggedOut(page);
     });
 
-    test("should not access protected routes after logout", async ({ page, login, logout }) => {
+    test("should not access protected routes after logout", async ({
+      page,
+      login,
+      logout,
+    }) => {
       // Login
       await login(TEST_USERS.admin);
 
@@ -139,7 +158,10 @@ test.describe("Authentication", () => {
       await vamsaExpect.toBeLoggedIn(page);
     });
 
-    test("should maintain session when navigating between pages", async ({ page, login }) => {
+    test("should maintain session when navigating between pages", async ({
+      page,
+      login,
+    }) => {
       await login(TEST_USERS.admin);
 
       // Navigate to different pages
@@ -168,7 +190,10 @@ test.describe("Authentication", () => {
       await expect(page.locator("text=Users")).toBeVisible();
     });
 
-    test.skip("member user should have limited admin access", async ({ page, login }) => {
+    test.skip("member user should have limited admin access", async ({
+      page,
+      login,
+    }) => {
       await login(TEST_USERS.member);
 
       await page.goto("/admin");
@@ -177,7 +202,10 @@ test.describe("Authentication", () => {
       // This test documents expected behavior
     });
 
-    test.skip("viewer user should not access admin panel", async ({ page, login }) => {
+    test.skip("viewer user should not access admin panel", async ({
+      page,
+      login,
+    }) => {
       await login(TEST_USERS.viewer);
 
       await page.goto("/admin");
@@ -189,7 +217,10 @@ test.describe("Authentication", () => {
 });
 
 test.describe("Authentication - Responsive", () => {
-  test("login page should be responsive on mobile", async ({ page, getViewportInfo }) => {
+  test("login page should be responsive on mobile", async ({
+    page,
+    getViewportInfo,
+  }) => {
     const { isMobile } = getViewportInfo();
 
     await page.goto("/login");
@@ -202,11 +233,15 @@ test.describe("Authentication - Responsive", () => {
     if (isMobile) {
       const card = page.locator(".max-w-md");
       const boundingBox = await card.boundingBox();
-      expect(boundingBox?.width).toBeGreaterThan(300);
+      expect(boundingBox?.width || 0).toBeGreaterThan(300);
     }
   });
 
-  test("navigation should adapt to viewport", async ({ page, login, getViewportInfo }) => {
+  test("navigation should adapt to viewport", async ({
+    page,
+    login,
+    getViewportInfo,
+  }) => {
     await login(TEST_USERS.admin);
 
     const { isMobile, isTablet } = getViewportInfo();
@@ -214,7 +249,9 @@ test.describe("Authentication - Responsive", () => {
 
     if (isMobile || isTablet) {
       // On smaller screens, might have mobile menu
-      const hasMobileMenu = await nav.mobileMenuButton.isVisible().catch(() => false);
+      const hasMobileMenu = await nav.mobileMenuButton
+        .isVisible()
+        .catch(() => false);
       // Either mobile menu or regular nav should be visible
       expect(hasMobileMenu || (await nav.nav.isVisible())).toBeTruthy();
     } else {

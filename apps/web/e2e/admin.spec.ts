@@ -39,7 +39,7 @@ test.describe("Admin Panel", () => {
         await page.waitForLoadState("networkidle");
 
         // Should show user management UI
-        const usersList = page.locator('[data-users-list], table, .users-list');
+        const usersList = page.locator("[data-users-list], table, .users-list");
         await expect(usersList.first()).toBeVisible();
       }
     });
@@ -86,7 +86,9 @@ test.describe("Admin Panel", () => {
       await page.waitForLoadState("networkidle");
 
       const createButton = page
-        .locator('button:has-text("Create"), button:has-text("Invite"), button:has-text("New")')
+        .locator(
+          'button:has-text("Create"), button:has-text("Invite"), button:has-text("New")'
+        )
         .first();
 
       if (await createButton.isVisible()) {
@@ -99,7 +101,9 @@ test.describe("Admin Panel", () => {
       await page.waitForLoadState("networkidle");
 
       const createButton = page
-        .locator('button:has-text("Create"), button:has-text("Invite"), button:has-text("New")')
+        .locator(
+          'button:has-text("Create"), button:has-text("Invite"), button:has-text("New")'
+        )
         .first();
 
       if (await createButton.isVisible()) {
@@ -148,7 +152,9 @@ test.describe("Admin Panel", () => {
 
       // Look for import functionality
       const importButton = page
-        .locator('button:has-text("Import"), input[type="file"], label:has-text("Import")')
+        .locator(
+          'button:has-text("Import"), input[type="file"], label:has-text("Import")'
+        )
         .first();
 
       if (await importButton.isVisible()) {
@@ -158,7 +164,10 @@ test.describe("Admin Panel", () => {
   });
 
   test.describe("Admin - Responsive", () => {
-    test("admin panel should be usable on tablet", async ({ page, getViewportInfo }) => {
+    test("admin panel should be usable on tablet", async ({
+      page,
+      getViewportInfo,
+    }) => {
       const { isTablet, isMobile } = getViewportInfo();
 
       await page.goto("/admin");
@@ -175,7 +184,10 @@ test.describe("Admin Panel", () => {
       }
     });
 
-    test("admin forms should be usable on mobile", async ({ page, getViewportInfo }) => {
+    test("admin forms should be usable on mobile", async ({
+      page,
+      getViewportInfo,
+    }) => {
       const { isMobile } = getViewportInfo();
 
       if (isMobile) {
@@ -191,7 +203,7 @@ test.describe("Admin Panel", () => {
           if (await input.isVisible()) {
             const box = await input.boundingBox();
             // Input should be reasonably sized for touch
-            expect(box?.width).toBeGreaterThan(100);
+            expect(box?.width || 0).toBeGreaterThan(100);
           }
         }
       }
@@ -217,10 +229,18 @@ test.describe("Tree View", () => {
 
     // Either tree canvas/SVG or empty state
     const tree = page.locator("canvas, svg, [data-tree]");
-    const emptyState = page.locator('text="No family tree"').or(page.locator("[data-empty-state]"));
+    const emptyState = page
+      .locator('text="No family tree"')
+      .or(page.locator("[data-empty-state]"));
 
-    const hasTree = await tree.first().isVisible().catch(() => false);
-    const isEmpty = await emptyState.first().isVisible().catch(() => false);
+    const hasTree = await tree
+      .first()
+      .isVisible()
+      .catch(() => false);
+    const isEmpty = await emptyState
+      .first()
+      .isVisible()
+      .catch(() => false);
 
     expect(hasTree || isEmpty || true).toBeTruthy();
   });
@@ -234,8 +254,8 @@ test.describe("Tree View", () => {
     if (await tree.isVisible()) {
       // Tree should be clickable/interactive
       const box = await tree.boundingBox();
-      expect(box?.width).toBeGreaterThan(100);
-      expect(box?.height).toBeGreaterThan(100);
+      expect(box?.width || 0).toBeGreaterThan(100);
+      expect(box?.height || 0).toBeGreaterThan(100);
     }
   });
 

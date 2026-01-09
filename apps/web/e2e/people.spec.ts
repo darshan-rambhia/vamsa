@@ -3,7 +3,11 @@
  * Tests CRUD operations for family members
  */
 import { test, expect, TEST_USERS } from "./fixtures";
-import { PeopleListPage, PersonDetailPage, PersonFormPage } from "./fixtures/page-objects";
+import {
+  PeopleListPage,
+  PersonDetailPage,
+  PersonFormPage,
+} from "./fixtures/page-objects";
 
 test.describe("People Management", () => {
   // Login before each test
@@ -32,7 +36,9 @@ test.describe("People Management", () => {
       const personCount = await peopleList.getPersonCount();
       if (personCount === 0) {
         // Should show empty state message or add button
-        const emptyState = page.locator('text="No people"').or(page.locator('text="Add"'));
+        const emptyState = page
+          .locator('text="No people"')
+          .or(page.locator('text="Add"'));
         await expect(emptyState.first()).toBeVisible();
       }
     });
@@ -42,7 +48,9 @@ test.describe("People Management", () => {
       await peopleList.goto();
 
       // Find and click add button
-      const addButton = page.locator('button:has-text("Add"), a:has-text("Add")').first();
+      const addButton = page
+        .locator('button:has-text("Add"), a:has-text("Add")')
+        .first();
       if (await addButton.isVisible()) {
         await addButton.click();
 
@@ -72,7 +80,9 @@ test.describe("People Management", () => {
       await page.goto("/people");
 
       // Click add button
-      const addButton = page.locator('button:has-text("Add"), a:has-text("Add")').first();
+      const addButton = page
+        .locator('button:has-text("Add"), a:has-text("Add")')
+        .first();
       if (await addButton.isVisible()) {
         await addButton.click();
 
@@ -102,7 +112,9 @@ test.describe("People Management", () => {
       // If there are people, click the first one
       const personCount = await peopleList.getPersonCount();
       if (personCount > 0) {
-        const firstPerson = page.locator('[data-person-card], [data-testid="person-card"]').first();
+        const firstPerson = page
+          .locator('[data-person-card], [data-testid="person-card"]')
+          .first();
         if (await firstPerson.isVisible()) {
           await firstPerson.click();
 
@@ -115,7 +127,7 @@ test.describe("People Management", () => {
       }
     });
 
-    test("should edit a person", async ({ page, _waitForConvexSync }) => {
+    test("should edit a person", async ({ page }) => {
       const peopleList = new PeopleListPage(page);
       await peopleList.goto();
       await peopleList.waitForLoad();
@@ -123,13 +135,17 @@ test.describe("People Management", () => {
       const personCount = await peopleList.getPersonCount();
       if (personCount > 0) {
         // Click first person
-        const firstPerson = page.locator('[data-person-card], [data-testid="person-card"]').first();
+        const firstPerson = page
+          .locator('[data-person-card], [data-testid="person-card"]')
+          .first();
         if (await firstPerson.isVisible()) {
           await firstPerson.click();
           await page.waitForURL(/\/people\//);
 
           // Click edit button
-          const editButton = page.locator('button:has-text("Edit"), a:has-text("Edit")').first();
+          const editButton = page
+            .locator('button:has-text("Edit"), a:has-text("Edit")')
+            .first();
           if (await editButton.isVisible()) {
             await editButton.click();
 
@@ -143,7 +159,9 @@ test.describe("People Management", () => {
     test("should validate required fields on person form", async ({ page }) => {
       await page.goto("/people");
 
-      const addButton = page.locator('button:has-text("Add"), a:has-text("Add")').first();
+      const addButton = page
+        .locator('button:has-text("Add"), a:has-text("Add")')
+        .first();
       if (await addButton.isVisible()) {
         await addButton.click();
 
@@ -170,7 +188,9 @@ test.describe("People Management", () => {
       const personCount = await peopleList.getPersonCount();
       if (personCount > 0) {
         // Go to person detail
-        const firstPerson = page.locator('[data-person-card], [data-testid="person-card"]').first();
+        const firstPerson = page
+          .locator('[data-person-card], [data-testid="person-card"]')
+          .first();
         if (await firstPerson.isVisible()) {
           await firstPerson.click();
           await page.waitForURL(/\/people\//);
@@ -198,13 +218,17 @@ test.describe("People Management", () => {
 
       const personCount = await peopleList.getPersonCount();
       if (personCount > 0) {
-        const firstPerson = page.locator('[data-person-card], [data-testid="person-card"]').first();
+        const firstPerson = page
+          .locator('[data-person-card], [data-testid="person-card"]')
+          .first();
         if (await firstPerson.isVisible()) {
           await firstPerson.click();
           await page.waitForURL(/\/people\//);
 
           // Check for breadcrumb
-          const breadcrumb = page.locator('[data-breadcrumb], nav[aria-label="Breadcrumb"]');
+          const breadcrumb = page.locator(
+            '[data-breadcrumb], nav[aria-label="Breadcrumb"]'
+          );
           if (await breadcrumb.isVisible()) {
             const peopleLink = breadcrumb.locator('a:has-text("People")');
             if (await peopleLink.isVisible()) {
@@ -223,8 +247,11 @@ test.describe("People - Responsive", () => {
     await login(TEST_USERS.admin);
   });
 
-  test("people list should be responsive", async ({ page, getViewportInfo }) => {
-    const { _isMobile, isTablet: _isTablet, width } = getViewportInfo();
+  test("people list should be responsive", async ({
+    page,
+    getViewportInfo,
+  }) => {
+    const { isMobile, isTablet: _isTablet, width } = getViewportInfo();
     const peopleList = new PeopleListPage(page);
     await peopleList.goto();
 
@@ -239,7 +266,10 @@ test.describe("People - Responsive", () => {
     }
   });
 
-  test("person cards should adapt to viewport", async ({ page, getViewportInfo }) => {
+  test("person cards should adapt to viewport", async ({
+    page,
+    getViewportInfo,
+  }) => {
     const { isMobile } = getViewportInfo();
     const peopleList = new PeopleListPage(page);
     await peopleList.goto();
@@ -247,13 +277,15 @@ test.describe("People - Responsive", () => {
 
     const personCount = await peopleList.getPersonCount();
     if (personCount > 0) {
-      const cards = page.locator('[data-person-card], [data-testid="person-card"]');
+      const cards = page.locator(
+        '[data-person-card], [data-testid="person-card"]'
+      );
       const firstCard = cards.first();
       const box = await firstCard.boundingBox();
 
       if (isMobile && box) {
         // On mobile, cards should be nearly full width
-        expect(box.width).toBeGreaterThan(200);
+        expect(box.width || 0).toBeGreaterThan(200);
       }
     }
   });
@@ -264,7 +296,7 @@ test.describe("People - Data Integrity", () => {
     await login(TEST_USERS.admin);
   });
 
-  test("should preserve data after page refresh", async ({ page, _waitForConvexSync }) => {
+  test("should preserve data after page refresh", async ({ page }) => {
     const peopleList = new PeopleListPage(page);
     await peopleList.goto();
     await peopleList.waitForLoad();
@@ -281,10 +313,7 @@ test.describe("People - Data Integrity", () => {
     expect(afterRefreshCount).toBe(initialCount);
   });
 
-  test("should reflect changes immediately (Convex reactivity)", async ({
-    page,
-    _waitForConvexSync,
-  }) => {
+  test("should reflect changes immediately (Convex reactivity)", async ({ page }) => {
     // This test verifies Convex's reactive updates
     // When data changes, UI should update without manual refresh
     await page.goto("/people");

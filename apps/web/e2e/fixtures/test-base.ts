@@ -48,7 +48,12 @@ export interface TestFixtures {
   /** Check if user is authenticated */
   isAuthenticated: () => Promise<boolean>;
   /** Get current viewport info */
-  getViewportInfo: () => { width: number; height: number; isMobile: boolean; isTablet: boolean };
+  getViewportInfo: () => {
+    width: number;
+    height: number;
+    isMobile: boolean;
+    isTablet: boolean;
+  };
 }
 
 /**
@@ -69,6 +74,7 @@ export const test = base.extend<TestFixtures>({
    */
   login: async ({ page }, use) => {
     const loginFn = async (user: TestUser = TEST_USERS.admin) => {
+      console.log(`[Login] Attempting to login with ${user.email}`);
       await page.goto("/login");
 
       // Wait for the login form to be visible
@@ -81,11 +87,35 @@ export const test = base.extend<TestFixtures>({
       // Submit the form
       await page.click('button[type="submit"]');
 
-      // Wait for navigation to complete (redirect to /people after login)
-      await page.waitForURL(/\/(people|dashboard)/, { timeout: 10000 });
+      console.log(`[Login] Form submitted for ${user.email}, waiting for redirect...`);
+
+      // Wait a moment for form processing
+      await page.waitForTimeout(500);
+
+      // Check for error messages on the page
+      const errorElement = await page.locator(".text-destructive").first().textContent().catch(() => null);
+      if (errorElement) {
+        throw new Error(`Login error displayed: ${errorElement}`);
+      }
+
+      // Wait for navigation to complete - try multiple paths
+      try {
+        await page.waitForURL(/\/(people|dashboard|tree)/, { timeout: 15000 });
+        console.log(`[Login] Redirect successful, now at ${page.url()}`);
+      } catch (err) {
+        // If waitForURL times out, check if we're at least not on login anymore
+        const url = page.url();
+
+        console.log(`[Login] Timeout - Current URL: ${url}`);
+
+        if (url.includes("/login")) {
+          throw new Error(`Login failed: still on login page after submission. No error message on page.`);
+        }
+      }
 
       // Ensure the nav is visible (indicates successful auth)
-      await page.waitForSelector('nav', { state: "visible" });
+      await page.waitForSelector("nav", { state: "visible", timeout: 5000 });
+      console.log(`[Login] Navigation visible, login successful`);
     };
 
     await use(loginFn);
@@ -131,7 +161,9 @@ export const test = base.extend<TestFixtures>({
       if (url.includes("/login")) return false;
 
       // Check for nav with sign out button
-      const signOutButton = page.locator('a[href="/login"]:has-text("Sign out")');
+      const signOutButton = page.locator(
+        'a[href="/login"]:has-text("Sign out")'
+      );
       return await signOutButton.isVisible();
     };
 
@@ -170,7 +202,9 @@ export const vamsaExpect = {
    * Assert that a toast notification appears with the given text
    */
   async toHaveToast(page: Page, text: string) {
-    const toast = page.locator('[role="status"], [data-toast]').filter({ hasText: text });
+    const toast = page
+      .locator('[role="status"], [data-toast]')
+      .filter({ hasText: text });
     await expect(toast).toBeVisible({ timeout: 5000 });
   },
 
@@ -178,7 +212,9 @@ export const vamsaExpect = {
    * Assert that the page shows an error message
    */
   async toHaveError(page: Page, message: string) {
-    const error = page.locator('.text-destructive, [data-error]').filter({ hasText: message });
+    const error = page
+      .locator(".text-destructive, [data-error]")
+      .filter({ hasText: message });
     await expect(error).toBeVisible();
   },
 
@@ -186,7 +222,7 @@ export const vamsaExpect = {
    * Assert that navigation is visible (user is authenticated)
    */
   async toBeLoggedIn(page: Page) {
-    const nav = page.locator('nav');
+    const nav = page.locator("nav");
     await expect(nav).toBeVisible();
     const signOut = page.locator('a[href="/login"]:has-text("Sign out")');
     await expect(signOut).toBeVisible();

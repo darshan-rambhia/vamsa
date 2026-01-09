@@ -61,7 +61,9 @@ async function run(
 
 async function cleanup() {
   console.log("🧹 Cleaning up...");
-  await run(["docker-compose", "-f", composeFile, "down", "-v"], { quiet: true });
+  await run(["docker-compose", "-f", composeFile, "down", "-v"], {
+    quiet: true,
+  });
   if (existsSync(composeFile)) {
     unlinkSync(composeFile);
   }
@@ -70,6 +72,9 @@ async function cleanup() {
 
 async function main() {
   const playwrightArgs = process.argv.slice(2);
+
+  // Check if --debug flag is present to enable webserver logs
+  const isDebugMode = playwrightArgs.includes("--debug");
 
   console.log("🚀 Starting E2E test runner...\n");
 
@@ -94,26 +99,31 @@ async function main() {
 
     // Step 2: Run migrations and seed
     console.log("🔄 Step 2/4: Running Prisma migrations and seeding...");
-    const migrateResult = await run(
-      ["bunx", "prisma", "db", "push"],
-      {
+
+    // Reset database (delete all data) to ensure clean state
+    console.log("   - Resetting database...");
+    const resetResult = await run(["bunx", "prisma", "db", "push", "--force-reset"], {
+      cwd: API_DIR,
+      env: { DATABASE_URL: E2E_DATABASE_URL },
+    });
+    if (resetResult !== 0) {
+      // If force-reset fails, try regular push (might be first run)
+      const pushResult = await run(["bunx", "prisma", "db", "push"], {
         cwd: API_DIR,
         env: { DATABASE_URL: E2E_DATABASE_URL },
+      });
+      if (pushResult !== 0) {
+        throw new Error(`Prisma db push failed with exit code ${pushResult}`);
       }
-    );
-    if (migrateResult !== 0) {
-      throw new Error(`Prisma db push failed with exit code ${migrateResult}`);
     }
     console.log("✅ Database schema applied");
 
     // Run seed to create test users
-    const seedResult = await run(
-      ["bunx", "tsx", "prisma/seed.ts"],
-      {
-        cwd: API_DIR,
-        env: { DATABASE_URL: E2E_DATABASE_URL },
-      }
-    );
+    console.log("   - Seeding test data...");
+    const seedResult = await run(["bunx", "tsx", "prisma/seed.ts"], {
+      cwd: API_DIR,
+      env: { DATABASE_URL: E2E_DATABASE_URL },
+    });
     if (seedResult !== 0) {
       throw new Error(`Prisma seed failed with exit code ${seedResult}`);
     }
@@ -121,10 +131,17 @@ async function main() {
 
     // Step 3: Run Playwright tests
     console.log("🧪 Step 3/4: Running Playwright tests...\n");
-    const testResult = await run(["bunx", "playwright", "test", ...playwrightArgs], {
-      cwd: WEB_DIR,
-      env: { DATABASE_URL: E2E_DATABASE_URL },
-    });
+    const testResult = await run(
+      ["bunx", "playwright", "test", ...playwrightArgs],
+      {
+        cwd: WEB_DIR,
+        env: {
+          DATABASE_URL: E2E_DATABASE_URL,
+          // Pass debug mode to Playwright config
+          PLAYWRIGHT_DEBUG: isDebugMode ? "true" : "false",
+        },
+      }
+    );
 
     // Step 4: Cleanup
     console.log("\n🧹 Step 4/4: Cleaning up...");
