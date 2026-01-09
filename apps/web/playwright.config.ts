@@ -34,8 +34,9 @@ const webServerConfig = {
   url: baseURL,
   timeout: 120 * 1000,
   reuseExistingServer: !process.env.CI,
-  stdout: isDebugMode ? ("ignore" as const) : ("pipe" as const),
-  stderr: isDebugMode ? ("ignore" as const) : ("pipe" as const),
+  // In debug mode, show logs ("pipe"), otherwise suppress them ("ignore")
+  stdout: isDebugMode ? ("pipe" as const) : ("ignore" as const),
+  stderr: isDebugMode ? ("pipe" as const) : ("ignore" as const),
   env: {
     ...process.env,
     // Ensure DATABASE_URL is set for test environment
