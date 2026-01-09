@@ -84,6 +84,13 @@ async function main() {
   try {
     // Step 1: Start PostgreSQL
     console.log("📦 Step 1/4: Starting PostgreSQL...");
+
+    // First, ensure any old containers are removed
+    console.log("   - Cleaning up old containers...");
+    await run(["docker-compose", "-f", composeFile, "down", "-v"], {
+      quiet: true,
+    });
+
     const dockerResult = await run([
       "docker-compose",
       "-f",
@@ -100,21 +107,14 @@ async function main() {
     // Step 2: Run migrations and seed
     console.log("🔄 Step 2/4: Running Prisma migrations and seeding...");
 
-    // Reset database (delete all data) to ensure clean state
-    console.log("   - Resetting database...");
-    const resetResult = await run(["bunx", "prisma", "db", "push", "--force-reset"], {
+    // Push schema to database (handles migrations)
+    console.log("   - Applying database schema...");
+    const pushResult = await run(["bunx", "prisma", "db", "push", "--accept-data-loss"], {
       cwd: API_DIR,
       env: { DATABASE_URL: E2E_DATABASE_URL },
     });
-    if (resetResult !== 0) {
-      // If force-reset fails, try regular push (might be first run)
-      const pushResult = await run(["bunx", "prisma", "db", "push"], {
-        cwd: API_DIR,
-        env: { DATABASE_URL: E2E_DATABASE_URL },
-      });
-      if (pushResult !== 0) {
-        throw new Error(`Prisma db push failed with exit code ${pushResult}`);
-      }
+    if (pushResult !== 0) {
+      throw new Error(`Prisma db push failed with exit code ${pushResult}`);
     }
     console.log("✅ Database schema applied");
 
