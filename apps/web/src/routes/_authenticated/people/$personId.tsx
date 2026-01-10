@@ -259,7 +259,11 @@ function PersonDetailComponent() {
         </TabsContent>
 
         <TabsContent value="relationships">
-          <RelationshipsTab relationships={person.relationships || []} />
+          <RelationshipsTab
+            relationships={person.relationships || []}
+            personId={personId}
+            personName={`${person.firstName} ${person.lastName}`}
+          />
         </TabsContent>
 
         <TabsContent value="sources">

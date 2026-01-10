@@ -1,5 +1,6 @@
-import { Card, CardContent, Badge } from "@vamsa/ui/primitives";
+import { Card, CardContent } from "@vamsa/ui/primitives";
 import { Link } from "@tanstack/react-router";
+import { AddRelationshipButton } from "./add-relationship-button";
 
 interface Relationship {
   id: string;
@@ -13,9 +14,17 @@ interface Relationship {
 
 interface RelationshipsTabProps {
   relationships: Relationship[];
+  personId: string;
+  personName: string;
+  onRelationshipAdded?: () => void;
 }
 
-export function RelationshipsTab({ relationships }: RelationshipsTabProps) {
+export function RelationshipsTab({
+  relationships,
+  personId,
+  personName,
+  onRelationshipAdded,
+}: RelationshipsTabProps) {
   if (relationships.length === 0) {
     return (
       <Card>
@@ -38,9 +47,14 @@ export function RelationshipsTab({ relationships }: RelationshipsTabProps) {
           <h3 className="font-display text-foreground mb-2 text-xl">
             No Relationships Yet
           </h3>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             Family relationships will appear here once added.
           </p>
+          <AddRelationshipButton
+            personId={personId}
+            personName={personName}
+            onSuccess={onRelationshipAdded}
+          />
         </CardContent>
       </Card>
     );
@@ -61,6 +75,13 @@ export function RelationshipsTab({ relationships }: RelationshipsTabProps) {
 
   return (
     <div className="space-y-6">
+      <div className="flex justify-end">
+        <AddRelationshipButton
+          personId={personId}
+          personName={personName}
+          onSuccess={onRelationshipAdded}
+        />
+      </div>
       {Object.entries(relationshipsByType).map(([type, rels]) => (
         <Card key={type}>
           <CardContent className="py-6">

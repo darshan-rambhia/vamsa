@@ -8,11 +8,21 @@ import { validateSession, logout } from "~/server/auth";
 import { Nav, NavLink, Button } from "@vamsa/ui";
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const result = await validateSession();
     if (!result.valid) {
       throw redirect({ to: "/login" });
     }
+
+    // Redirect users who must change password to the change-password page
+    // unless they're already on that page
+    if (
+      result.user?.mustChangePassword &&
+      location.pathname !== "/change-password"
+    ) {
+      throw redirect({ to: "/change-password" });
+    }
+
     return { user: result.user };
   },
   component: AuthenticatedLayout,
@@ -65,20 +75,40 @@ function AuthenticatedLayout() {
           </Button>
         }
       >
-        <NavLink href="/dashboard" active={pathname === "/dashboard"} data-testid="nav-dashboard">
+        <NavLink
+          href="/dashboard"
+          active={pathname === "/dashboard"}
+          data-testid="nav-dashboard"
+        >
           Dashboard
         </NavLink>
-        <NavLink href="/people" active={pathname.startsWith("/people")} data-testid="nav-people">
+        <NavLink
+          href="/people"
+          active={pathname.startsWith("/people")}
+          data-testid="nav-people"
+        >
           People
         </NavLink>
-        <NavLink href="/tree" active={pathname === "/tree"} data-testid="nav-tree">
+        <NavLink
+          href="/tree"
+          active={pathname === "/tree"}
+          data-testid="nav-tree"
+        >
           Tree
         </NavLink>
-        <NavLink href="/activity" active={pathname === "/activity"} data-testid="nav-activity">
+        <NavLink
+          href="/activity"
+          active={pathname === "/activity"}
+          data-testid="nav-activity"
+        >
           Activity
         </NavLink>
         {user?.role === "ADMIN" && (
-          <NavLink href="/admin" active={pathname.startsWith("/admin")} data-testid="nav-admin">
+          <NavLink
+            href="/admin"
+            active={pathname.startsWith("/admin")}
+            data-testid="nav-admin"
+          >
             Admin
           </NavLink>
         )}

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import { z } from "zod";
 import {
@@ -6,6 +7,34 @@ import {
   type Person,
   type Relationship as LayoutRelationship,
 } from "./tree-layout";
+
+const TOKEN_COOKIE_NAME = "vamsa-session";
+
+// Auth helper function
+async function requireAuth(
+  requiredRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
+) {
+  const token = getCookie(TOKEN_COOKIE_NAME);
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const session = await prisma.session.findFirst({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!session || session.expiresAt < new Date()) {
+    throw new Error("Session expired");
+  }
+
+  const roleHierarchy = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
+  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
+    throw new Error(`Requires ${requiredRole} role or higher`);
+  }
+
+  return session.user;
+}
 
 const relationshipTypeSchema = z.enum(["PARENT", "CHILD", "SPOUSE", "SIBLING"]);
 
@@ -56,6 +85,29 @@ export const createRelationship = createServerFn({ method: "POST" })
     return createRelationshipSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const user = await requireAuth("MEMBER");
+
+    // Prevent self-relationship
+    if (data.personId === data.relatedPersonId) {
+      throw new Error("Cannot create relationship with self");
+    }
+
+    // Check for duplicate relationship
+    const existing = await prisma.relationship.findFirst({
+      where: {
+        personId: data.personId,
+        relatedPersonId: data.relatedPersonId,
+        type: data.type,
+      },
+    });
+
+    if (existing) {
+      throw new Error("This relationship already exists");
+    }
+
+    // Set isActive based on divorceDate
+    const isActive = !data.divorceDate;
+
     // Create the relationship
     const relationship = await prisma.relationship.create({
       data: {
@@ -64,7 +116,7 @@ export const createRelationship = createServerFn({ method: "POST" })
         type: data.type,
         marriageDate: data.marriageDate ? new Date(data.marriageDate) : null,
         divorceDate: data.divorceDate ? new Date(data.divorceDate) : null,
-        isActive: true,
+        isActive,
       },
     });
 
@@ -77,7 +129,7 @@ export const createRelationship = createServerFn({ method: "POST" })
           type: data.type,
           marriageDate: data.marriageDate ? new Date(data.marriageDate) : null,
           divorceDate: data.divorceDate ? new Date(data.divorceDate) : null,
-          isActive: true,
+          isActive,
         },
       });
     } else if (data.type === "PARENT") {
@@ -87,7 +139,7 @@ export const createRelationship = createServerFn({ method: "POST" })
           personId: data.relatedPersonId,
           relatedPersonId: data.personId,
           type: "CHILD",
-          isActive: true,
+          isActive,
         },
       });
     } else if (data.type === "CHILD") {
@@ -97,10 +149,17 @@ export const createRelationship = createServerFn({ method: "POST" })
           personId: data.relatedPersonId,
           relatedPersonId: data.personId,
           type: "PARENT",
-          isActive: true,
+          isActive,
         },
       });
     }
+
+    console.warn(
+      "[Relationships Server] Created relationship:",
+      relationship.id,
+      "by user:",
+      user.id
+    );
 
     return { id: relationship.id };
   });

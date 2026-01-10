@@ -1,12 +1,6 @@
-import {
-  createFileRoute,
-  Link,
-  useNavigate,
-  useSearch,
-} from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { z } from "zod";
-import { login } from "~/server/auth";
+import { register } from "~/server/auth";
 import {
   Button,
   Card,
@@ -19,41 +13,39 @@ import {
   ThemeToggle,
 } from "@vamsa/ui";
 
-const searchSchema = z.object({
-  registered: z.boolean().optional(),
-  claimed: z.boolean().optional(),
+export const Route = createFileRoute("/register")({
+  component: RegisterComponent,
 });
 
-export const Route = createFileRoute("/login")({
-  component: LoginComponent,
-  validateSearch: searchSchema,
-});
-
-function LoginComponent() {
+function RegisterComponent() {
   const navigate = useNavigate();
-  const { registered, claimed } = useSearch({ from: "/login" });
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[Login Page] Form submitted");
+    console.log("[Register Page] Form submitted");
     setError(null);
     setIsLoading(true);
 
     try {
       console.log(
-        "[Login Page] Calling login server function with email:",
+        "[Register Page] Calling register server function with email:",
         email
       );
-      const result = await login({ data: { email, password } });
-      console.log("[Login Page] Login successful, result:", result);
-      navigate({ to: "/people" });
+      const result = await register({
+        data: { name, email, password, confirmPassword },
+      });
+      console.log("[Register Page] Registration successful, result:", result);
+      navigate({ to: "/login", search: { registered: true } });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Login failed";
-      console.error("[Login Page] Login failed:", errorMessage);
+      const errorMessage =
+        err instanceof Error ? err.message : "Registration failed";
+      console.error("[Register Page] Registration failed:", errorMessage);
       setError(errorMessage);
       setIsLoading(false);
     }
@@ -72,7 +64,7 @@ function LoginComponent() {
         <div className="bg-secondary/5 absolute -bottom-1/4 -right-1/4 h-1/2 w-1/2 rounded-full blur-3xl" />
       </div>
 
-      {/* Login card */}
+      {/* Register card */}
       <Card className="animate-fade-in relative w-full max-w-md">
         <CardHeader className="space-y-4 text-center">
           {/* Logo */}
@@ -95,7 +87,7 @@ function LoginComponent() {
           <div>
             <CardTitle className="text-3xl">Vamsa</CardTitle>
             <CardDescription className="mt-2 text-base">
-              Welcome back. Sign in to explore your family history.
+              Create an account to explore your family history.
             </CardDescription>
           </div>
         </CardHeader>
@@ -104,32 +96,12 @@ function LoginComponent() {
           <form
             onSubmit={handleSubmit}
             className="space-y-6"
-            data-testid="login-form"
+            data-testid="register-form"
           >
-            {registered && (
-              <div
-                className="border-primary/30 bg-primary/10 text-primary rounded-lg border-2 px-4 py-3 text-sm"
-                data-testid="login-success"
-              >
-                <div className="mb-1 font-semibold">Account created!</div>
-                <div>Please sign in with your new credentials.</div>
-              </div>
-            )}
-
-            {claimed && (
-              <div
-                className="border-primary/30 bg-primary/10 text-primary rounded-lg border-2 px-4 py-3 text-sm"
-                data-testid="login-claimed-success"
-              >
-                <div className="mb-1 font-semibold">Profile claimed!</div>
-                <div>Please sign in with your new credentials.</div>
-              </div>
-            )}
-
             {error && (
               <div
                 className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border-2 px-4 py-3 text-sm"
-                data-testid="login-error"
+                data-testid="register-error"
               >
                 <div className="mb-1 font-semibold">Error:</div>
                 <div>{error}</div>
@@ -137,6 +109,21 @@ function LoginComponent() {
             )}
 
             <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Your full name"
+                  data-testid="register-name-input"
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
                 <Input
@@ -148,7 +135,7 @@ function LoginComponent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  data-testid="login-email-input"
+                  data-testid="register-email-input"
                 />
               </div>
 
@@ -158,12 +145,27 @@ function LoginComponent() {
                   id="password"
                   name="password"
                   type="password"
-                  autoComplete="current-password"
+                  autoComplete="new-password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
-                  data-testid="login-password-input"
+                  data-testid="register-password-input"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your password"
+                  data-testid="register-confirm-password-input"
                 />
               </div>
             </div>
@@ -173,22 +175,17 @@ function LoginComponent() {
               size="lg"
               disabled={isLoading}
               className="w-full"
-              data-testid="login-submit-button"
+              data-testid="register-submit-button"
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? "Creating account..." : "Create Account"}
             </Button>
 
-            <div className="text-center text-sm">
-              <span className="text-muted-foreground">
-                Don't have an account?{" "}
-              </span>
-              <Link
-                to="/register"
-                className="text-primary font-medium hover:underline"
-              >
-                Create one
+            <p className="text-muted-foreground text-center text-sm">
+              Already have an account?{" "}
+              <Link to="/login" className="text-primary hover:underline">
+                Sign in
               </Link>
-            </div>
+            </p>
           </form>
         </CardContent>
       </Card>

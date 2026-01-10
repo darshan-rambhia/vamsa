@@ -1,6 +1,59 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import { z } from "zod";
+
+const TOKEN_COOKIE_NAME = "vamsa-session";
+
+// Auth helper function
+async function requireAuth(
+  requiredRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
+) {
+  const token = getCookie(TOKEN_COOKIE_NAME);
+  if (!token) {
+    throw new Error("Not authenticated");
+  }
+
+  const session = await prisma.session.findFirst({
+    where: { token },
+    include: { user: true },
+  });
+
+  if (!session || session.expiresAt < new Date()) {
+    throw new Error("Session expired");
+  }
+
+  const roleHierarchy = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
+  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
+    throw new Error(`Requires ${requiredRole} role or higher`);
+  }
+
+  return session.user;
+}
+
+// Audit log helper
+async function logAuditAction(
+  userId: string,
+  action: "CREATE" | "UPDATE" | "DELETE",
+  entityId: string,
+  previousData?: unknown,
+  newData?: unknown
+) {
+  try {
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action,
+        entityType: "Person",
+        entityId,
+        previousData: previousData as any,
+        newData: newData as any,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to log audit action:", error);
+  }
+}
 
 // Validation schemas
 const createPersonSchema = z.object({
@@ -145,6 +198,8 @@ export const createPerson = createServerFn({ method: "POST" })
     return createPersonSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const user = await requireAuth("MEMBER");
+
     const person = await prisma.person.create({
       data: {
         firstName: data.firstName,
@@ -162,8 +217,11 @@ export const createPerson = createServerFn({ method: "POST" })
         profession: data.profession || null,
         employer: data.employer || null,
         isLiving: data.isLiving ?? true,
+        createdById: user.id,
       },
     });
+
+    await logAuditAction(user.id, "CREATE", person.id, null, data);
 
     return { id: person.id };
   });
@@ -174,7 +232,30 @@ export const updatePerson = createServerFn({ method: "POST" })
     return updatePersonSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const user = await requireAuth("MEMBER");
     const { id, ...updates } = data;
+
+    // Get existing person
+    const existing = await prisma.person.findUnique({
+      where: { id },
+      include: { user: true },
+    });
+
+    if (!existing) {
+      throw new Error("Person not found");
+    }
+
+    // Permission check: User can edit if they are an ADMIN or editing their own profile
+    const linkedUser = await prisma.user.findUnique({
+      where: { personId: id },
+    });
+
+    const isOwnProfile = linkedUser?.id === user.id;
+    const isAdmin = user.role === "ADMIN";
+
+    if (!isOwnProfile && !isAdmin) {
+      throw new Error("You can only edit your own profile");
+    }
 
     const person = await prisma.person.update({
       where: { id },
@@ -189,6 +270,8 @@ export const updatePerson = createServerFn({ method: "POST" })
       },
     });
 
+    await logAuditAction(user.id, "UPDATE", person.id, existing, updates);
+
     return { id: person.id };
   });
 
@@ -196,25 +279,43 @@ export const updatePerson = createServerFn({ method: "POST" })
 export const deletePerson = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
+    const user = await requireAuth("ADMIN");
+
+    const person = await prisma.person.findUnique({
+      where: { id: data.id },
+    });
+
+    if (!person) {
+      throw new Error("Person not found");
+    }
+
     await prisma.person.delete({
       where: { id: data.id },
     });
+
+    await logAuditAction(user.id, "DELETE", data.id, person, null);
 
     return { success: true };
   });
 
 // Search persons
 export const searchPersons = createServerFn({ method: "GET" })
-  .inputValidator((data: { query: string }) => data)
+  .inputValidator((data: { query: string; excludeId?: string }) => data)
   .handler(async ({ data }) => {
     const persons = await prisma.person.findMany({
       where: {
-        OR: [
-          { firstName: { contains: data.query, mode: "insensitive" } },
-          { lastName: { contains: data.query, mode: "insensitive" } },
+        AND: [
+          {
+            OR: [
+              { firstName: { contains: data.query, mode: "insensitive" } },
+              { lastName: { contains: data.query, mode: "insensitive" } },
+            ],
+          },
+          // Exclude the specified person if excludeId is provided
+          ...(data.excludeId ? [{ id: { not: data.excludeId } }] : []),
         ],
       },
-      take: 20,
+      take: 10,
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     });
 
@@ -223,5 +324,6 @@ export const searchPersons = createServerFn({ method: "GET" })
       firstName: p.firstName,
       lastName: p.lastName,
       photoUrl: p.photoUrl,
+      isLiving: p.isLiving,
     }));
   });

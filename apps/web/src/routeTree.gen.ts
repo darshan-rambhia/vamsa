@@ -9,12 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RegisterRouteImport } from './routes/register'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as ClaimProfileRouteImport } from './routes/claim-profile'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthenticatedTreeRouteImport } from './routes/_authenticated/tree'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
 import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
 import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
@@ -25,9 +28,19 @@ import { Route as AuthenticatedAdminInvitesRouteImport } from './routes/_authent
 import { Route as AuthenticatedAdminBackupRouteImport } from './routes/_authenticated/admin/backup'
 import { Route as AuthenticatedPeoplePersonIdEditRouteImport } from './routes/_authenticated/people/$personId_.edit'
 
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClaimProfileRoute = ClaimProfileRouteImport.update({
+  id: '/claim-profile',
+  path: '/claim-profile',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -54,6 +67,12 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedChangePasswordRoute =
+  AuthenticatedChangePasswordRouteImport.update({
+    id: '/change-password',
+    path: '/change-password',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -108,9 +127,12 @@ const AuthenticatedPeoplePersonIdEditRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/claim-profile': typeof ClaimProfileRoute
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/activity': typeof AuthenticatedActivityRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/tree': typeof AuthenticatedTreeRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -124,9 +146,12 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/claim-profile': typeof ClaimProfileRoute
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/activity': typeof AuthenticatedActivityRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/tree': typeof AuthenticatedTreeRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -142,9 +167,12 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
+  '/claim-profile': typeof ClaimProfileRoute
   '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
   '/_authenticated/activity': typeof AuthenticatedActivityRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
+  '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/tree': typeof AuthenticatedTreeRoute
   '/invite/$token': typeof InviteTokenRoute
@@ -160,9 +188,12 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/claim-profile'
     | '/login'
+    | '/register'
     | '/activity'
     | '/admin'
+    | '/change-password'
     | '/dashboard'
     | '/tree'
     | '/invite/$token'
@@ -176,9 +207,12 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/claim-profile'
     | '/login'
+    | '/register'
     | '/activity'
     | '/admin'
+    | '/change-password'
     | '/dashboard'
     | '/tree'
     | '/invite/$token'
@@ -193,9 +227,12 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/claim-profile'
     | '/login'
+    | '/register'
     | '/_authenticated/activity'
     | '/_authenticated/admin'
+    | '/_authenticated/change-password'
     | '/_authenticated/dashboard'
     | '/_authenticated/tree'
     | '/invite/$token'
@@ -211,17 +248,33 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
+  ClaimProfileRoute: typeof ClaimProfileRoute
   LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
   InviteTokenRoute: typeof InviteTokenRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/claim-profile': {
+      id: '/claim-profile'
+      path: '/claim-profile'
+      fullPath: '/claim-profile'
+      preLoaderRoute: typeof ClaimProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -257,6 +310,13 @@ declare module '@tanstack/react-router' {
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/change-password': {
+      id: '/_authenticated/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof AuthenticatedChangePasswordRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin': {
@@ -343,6 +403,7 @@ const AuthenticatedAdminRouteWithChildren =
 interface AuthenticatedRouteChildren {
   AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
+  AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedTreeRoute: typeof AuthenticatedTreeRoute
   AuthenticatedPeoplePersonIdRoute: typeof AuthenticatedPeoplePersonIdRoute
@@ -354,6 +415,7 @@ interface AuthenticatedRouteChildren {
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedActivityRoute: AuthenticatedActivityRoute,
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
+  AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedTreeRoute: AuthenticatedTreeRoute,
   AuthenticatedPeoplePersonIdRoute: AuthenticatedPeoplePersonIdRoute,
@@ -369,7 +431,9 @@ const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
+  ClaimProfileRoute: ClaimProfileRoute,
   LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
   InviteTokenRoute: InviteTokenRoute,
 }
 export const routeTree = rootRouteImport
