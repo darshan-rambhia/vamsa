@@ -18,6 +18,7 @@ The email notification system allows the application to send automated emails to
 The system uses **Resend** as the email service provider. Resend is a modern email API that handles email delivery, bounce tracking, and analytics.
 
 **Configuration:**
+
 - Set `RESEND_API_KEY` environment variable with your Resend API key
 - Set `EMAIL_FROM` environment variable for the sender address (defaults to `noreply@vamsa.family`)
 - Set `APP_URL` environment variable for generating links in emails (defaults to `https://vamsa.family`)
@@ -25,6 +26,7 @@ The system uses **Resend** as the email service provider. Resend is a modern ema
 ### Database Schema
 
 #### User Model Updates
+
 - Added `emailNotificationPreferences` JSON field with default notification settings:
   ```json
   {
@@ -36,6 +38,7 @@ The system uses **Resend** as the email service provider. Resend is a modern ema
   ```
 
 #### New EmailLog Model
+
 Tracks all sent, failed, and bounced emails:
 
 ```prisma
@@ -82,6 +85,7 @@ apps/web/src/server/
 Sends an email via Resend and logs it to the database.
 
 **Parameters:**
+
 - `to`: Recipient email address
 - `template`: EmailTemplate object with subject, html, and text
 - `emailType`: Type of email (for logging and tracking)
@@ -89,11 +93,13 @@ Sends an email via Resend and logs it to the database.
 - `metadata`: Optional object with additional context
 
 **Returns:**
+
 ```typescript
 { success: boolean; messageId?: string; error?: string }
 ```
 
 **Example:**
+
 ```typescript
 const result = await emailService.sendEmail(
   user.email,
@@ -115,6 +121,7 @@ Parses notification preferences from stored JSON.
 Checks if a user wants to receive a particular notification type.
 
 **Parameters:**
+
 - `preferences`: NotificationPreferences object
 - `notificationType`: One of "suggestionsCreated", "suggestionsUpdated", "newMemberJoined", "birthdayReminders"
 
@@ -147,6 +154,7 @@ Get current user's email notification preferences.
 **Returns:** `Record<string, boolean>` with preference flags
 
 **Usage:**
+
 ```typescript
 const preferences = await getEmailNotificationPreferences();
 console.log(preferences.suggestionsCreated); // true or false
@@ -157,6 +165,7 @@ console.log(preferences.suggestionsCreated); // true or false
 Update current user's email notification preferences.
 
 **Parameters:**
+
 ```typescript
 {
   suggestionsCreated?: boolean;
@@ -167,15 +176,20 @@ Update current user's email notification preferences.
 ```
 
 **Returns:**
+
 ```typescript
-{ success: boolean; preferences: Record<string, boolean> }
+{
+  success: boolean;
+  preferences: Record<string, boolean>;
+}
 ```
 
 **Usage:**
+
 ```typescript
 const result = await updateEmailNotificationPreferences({
   suggestionsCreated: false,
-  birthdayReminders: true
+  birthdayReminders: true,
 });
 ```
 
@@ -258,6 +272,7 @@ pnpm db:generate
 ```
 
 This will:
+
 - Create the `EmailLog` table
 - Add `emailNotificationPreferences` column to `User` table
 - Generate updated Prisma client types
@@ -269,12 +284,12 @@ For production deployments, add a scheduled job to call `sendBirthdayReminders()
 **Example with Node-cron (in `packages/api/src/cron/tasks.ts`):**
 
 ```typescript
-import cron from 'node-cron';
-import { sendBirthdayReminders } from '@vamsa/web/src/server/notifications';
+import cron from "node-cron";
+import { sendBirthdayReminders } from "@vamsa/web/src/server/notifications";
 
 // Run daily at 9 AM
-cron.schedule('0 9 * * *', async () => {
-  console.log('Running birthday reminders...');
+cron.schedule("0 9 * * *", async () => {
+  console.log("Running birthday reminders...");
   await sendBirthdayReminders();
 });
 ```
@@ -313,23 +328,26 @@ All errors are logged with context for debugging.
 ### Manual Testing
 
 1. **Get Preferences:**
+
    ```typescript
    const prefs = await getEmailNotificationPreferences();
    ```
 
 2. **Update Preferences:**
+
    ```typescript
    await updateEmailNotificationPreferences({
-     suggestionsCreated: false
+     suggestionsCreated: false,
    });
    ```
 
 3. **Create a Test Suggestion:**
+
    ```typescript
    await createSuggestion({
      type: "CREATE",
      suggestedData: { firstName: "Test", lastName: "User" },
-     reason: "Testing email notifications"
+     reason: "Testing email notifications",
    });
    ```
 
@@ -388,11 +406,13 @@ Visit https://resend.com/emails to view:
 ### Emails Not Being Sent
 
 1. **Check API Key**: Verify `RESEND_API_KEY` is set
+
    ```bash
    echo $RESEND_API_KEY
    ```
 
 2. **Check EmailLog Table**:
+
    ```sql
    SELECT * FROM "EmailLog"
    WHERE status != 'sent'
@@ -413,6 +433,7 @@ Visit https://resend.com/emails to view:
 ### Notification Preferences Not Updating
 
 1. **Check User Record**: Verify `emailNotificationPreferences` column exists
+
    ```sql
    SELECT "emailNotificationPreferences" FROM "User" LIMIT 1;
    ```

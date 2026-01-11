@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import type { Prisma } from "@vamsa/api";
-import { notifySuggestionCreated, notifySuggestionUpdated } from "./notifications";
+import {
+  notifySuggestionCreated,
+  notifySuggestionUpdated,
+} from "./notifications";
 
 const TOKEN_COOKIE_NAME = "vamsa-session";
 

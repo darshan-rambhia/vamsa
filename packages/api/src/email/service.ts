@@ -40,7 +40,9 @@ export class EmailService {
             emailType,
             status: "sent",
             createdById: userId,
-            metadata: metadata ? (metadata as Prisma.InputJsonValue) : undefined,
+            metadata: metadata
+              ? (metadata as Prisma.InputJsonValue)
+              : undefined,
           },
         });
 
@@ -66,7 +68,9 @@ export class EmailService {
             status: "failed",
             error: response.error.message,
             createdById: userId,
-            metadata: metadata ? (metadata as Prisma.InputJsonValue) : undefined,
+            metadata: metadata
+              ? (metadata as Prisma.InputJsonValue)
+              : undefined,
           },
         });
 
@@ -109,7 +113,9 @@ export class EmailService {
             status: "failed",
             error: errorMessage,
             createdById: userId,
-            metadata: metadata ? (metadata as Prisma.InputJsonValue) : undefined,
+            metadata: metadata
+              ? (metadata as Prisma.InputJsonValue)
+              : undefined,
           },
         });
       } catch (logError) {
@@ -126,9 +132,7 @@ export class EmailService {
   /**
    * Parse notification preferences from JSON
    */
-  parseNotificationPreferences(
-    json: unknown
-  ): NotificationPreferences {
+  parseNotificationPreferences(json: unknown): NotificationPreferences {
     if (!json || typeof json !== "object") {
       return {
         suggestionsCreated: true,

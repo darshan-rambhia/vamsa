@@ -103,6 +103,7 @@ CREATE TABLE "EmailLog" (
 ### User Model Changes
 
 Added JSON field with default notification preferences:
+
 ```sql
 emailNotificationPreferences JSONB DEFAULT '{
   "suggestionsCreated": true,
@@ -117,6 +118,7 @@ emailNotificationPreferences JSONB DEFAULT '{
 ### Email Service Pattern
 
 The `EmailService` class provides:
+
 - Graceful degradation (logs instead of sends when API key missing)
 - Automatic email logging to database
 - Support for metadata storage for tracking context
@@ -137,6 +139,7 @@ The `EmailService` class provides:
 ### User Preferences
 
 Each user has JSON preferences stored in the User model:
+
 ```typescript
 {
   suggestionsCreated: boolean,    // Notify about pending review items
@@ -164,6 +167,7 @@ Each user has JSON preferences stored in the User model:
 ## Environment Setup
 
 Required environment variables:
+
 ```env
 RESEND_API_KEY=your_api_key
 EMAIL_FROM=noreply@vamsa.family
@@ -173,6 +177,7 @@ APP_URL=https://vamsa.family  # For dev: http://localhost:3000
 ## Type Safety
 
 All code is fully TypeScript with:
+
 - Strong typing for preferences and templates
 - Zod validation for input data
 - Proper error handling with typed returns
@@ -199,6 +204,7 @@ All code is fully TypeScript with:
 ### Automated Testing (E2E)
 
 Can be added with:
+
 - Mock Resend API in test environment
 - Assert `EmailLog` entries created
 - Verify email content and recipients
@@ -212,6 +218,7 @@ Can be added with:
 ## Future Enhancements
 
 Ready for future additions:
+
 - Email template customization UI
 - Unsubscribe links in email footers
 - Email digest/batching
@@ -223,6 +230,7 @@ Ready for future additions:
 ## Files Summary
 
 ### Created (5 files)
+
 - `/packages/api/src/email/config.ts`
 - `/packages/api/src/email/templates.ts`
 - `/packages/api/src/email/service.ts`
@@ -230,6 +238,7 @@ Ready for future additions:
 - `/apps/web/src/server/notifications.ts`
 
 ### Modified (5 files)
+
 - `/packages/api/package.json`
 - `/packages/api/prisma/schema.prisma`
 - `/packages/api/src/index.ts`
@@ -237,6 +246,7 @@ Ready for future additions:
 - `/apps/web/src/server/suggestions.ts`
 
 ### Documentation (2 files)
+
 - `/docs/EMAIL_NOTIFICATIONS.md` - Full API and setup documentation
 - `/IMPLEMENTATION_SUMMARY.md` - This file
 

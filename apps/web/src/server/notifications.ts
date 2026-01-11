@@ -41,7 +41,10 @@ export const getEmailNotificationPreferences = createServerFn({
 }).handler(async () => {
   const user = await requireAuth();
 
-  const preferences = user.emailNotificationPreferences as Record<string, boolean> || {
+  const preferences = (user.emailNotificationPreferences as Record<
+    string,
+    boolean
+  >) || {
     suggestionsCreated: true,
     suggestionsUpdated: true,
     newMemberJoined: true,
@@ -68,7 +71,10 @@ export const updateEmailNotificationPreferences = createServerFn({
   .handler(async ({ data }) => {
     const user = await requireAuth();
 
-    const currentPrefs = user.emailNotificationPreferences as Record<string, boolean> || {
+    const currentPrefs = (user.emailNotificationPreferences as Record<
+      string,
+      boolean
+    >) || {
       suggestionsCreated: true,
       suggestionsUpdated: true,
       newMemberJoined: true,
@@ -125,7 +131,9 @@ export async function notifySuggestionCreated(suggestionId: string) {
         admin.emailNotificationPreferences
       );
 
-      if (!emailService.shouldSendNotification(preferences, "suggestionsCreated")) {
+      if (
+        !emailService.shouldSendNotification(preferences, "suggestionsCreated")
+      ) {
         continue;
       }
 
@@ -188,7 +196,9 @@ export async function notifySuggestionUpdated(
       submitter.emailNotificationPreferences
     );
 
-    if (!emailService.shouldSendNotification(preferences, "suggestionsUpdated")) {
+    if (
+      !emailService.shouldSendNotification(preferences, "suggestionsUpdated")
+    ) {
       return;
     }
 
@@ -267,7 +277,9 @@ export async function notifyNewMemberJoined(userId: string) {
         member.emailNotificationPreferences
       );
 
-      if (!emailService.shouldSendNotification(preferences, "newMemberJoined")) {
+      if (
+        !emailService.shouldSendNotification(preferences, "newMemberJoined")
+      ) {
         continue;
       }
 
@@ -344,7 +356,9 @@ export async function sendBirthdayReminders() {
     });
 
     if (!systemUser) {
-      console.warn("[Notifications] No system user found for birthday reminders");
+      console.warn(
+        "[Notifications] No system user found for birthday reminders"
+      );
       return;
     }
 
@@ -355,7 +369,9 @@ export async function sendBirthdayReminders() {
           user.emailNotificationPreferences
         );
 
-        if (!emailService.shouldSendNotification(preferences, "birthdayReminders")) {
+        if (
+          !emailService.shouldSendNotification(preferences, "birthdayReminders")
+        ) {
           continue;
         }
 

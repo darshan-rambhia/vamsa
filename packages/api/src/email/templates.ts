@@ -10,12 +10,13 @@ export function createSuggestionCreatedEmail(
   suggestionType: string,
   dashboardUrl: string
 ): EmailTemplate {
-  const typeLabel = {
-    CREATE: "New Person Suggestion",
-    UPDATE: "Person Information Update",
-    DELETE: "Person Deletion",
-    ADD_RELATIONSHIP: "New Relationship Suggestion",
-  }[suggestionType] || suggestionType;
+  const typeLabel =
+    {
+      CREATE: "New Person Suggestion",
+      UPDATE: "Person Information Update",
+      DELETE: "Person Deletion",
+      ADD_RELATIONSHIP: "New Relationship Suggestion",
+    }[suggestionType] || suggestionType;
 
   const html = `
     <!DOCTYPE html>
