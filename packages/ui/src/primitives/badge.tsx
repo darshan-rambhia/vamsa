@@ -8,17 +8,17 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        // Default - forest green (for "Living")
-        default: "bg-primary/15 text-primary border border-primary/25",
-        // Secondary - moss green
+        // Default - forest green
+        default: "bg-primary/20 text-primary border border-primary/30",
+        // Secondary - forest green for "Living" status (WCAG 2 AA compliant)
         secondary:
-          "bg-secondary/25 text-secondary-foreground border border-secondary/35",
+          "bg-primary/15 text-primary border border-primary/40",
         // Destructive - autumn red
         destructive:
-          "bg-destructive/15 text-destructive border border-destructive/25",
-        // Outline - just border (for "Deceased")
+          "bg-destructive/20 text-destructive border border-destructive/30",
+        // Outline - dark border for "Deceased" (WCAG 2 AA compliant)
         outline:
-          "border-2 border-muted-foreground/40 text-muted-foreground bg-transparent",
+          "border-2 border-foreground/70 text-foreground/90 bg-background/50",
         // Muted - subtle (for tab counts, etc.)
         muted: "bg-muted/80 text-muted-foreground border border-transparent",
       },
