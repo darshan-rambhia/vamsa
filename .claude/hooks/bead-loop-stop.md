@@ -125,17 +125,18 @@ Tech Lead (Final Iteration):
 
 For processing N beads:
 
-| Phase | Iterations per bead |
-|-------|---------------------|
-| Selection & enrichment | 2-3 |
-| Backend implementation | 3-5 |
-| Frontend implementation | 3-5 |
-| Testing | 2-4 |
-| Review (all gates) | 3-6 |
-| Issue resolution | 0-5 (if issues found) |
-| **Subtotal per bead** | **13-28** |
+| Phase                   | Iterations per bead   |
+| ----------------------- | --------------------- |
+| Selection & enrichment  | 2-3                   |
+| Backend implementation  | 3-5                   |
+| Frontend implementation | 3-5                   |
+| Testing                 | 2-4                   |
+| Review (all gates)      | 3-6                   |
+| Issue resolution        | 0-5 (if issues found) |
+| **Subtotal per bead**   | **13-28**             |
 
 **For 14 "Port" beads:**
+
 - Minimum: 14 × 13 = 182 iterations
 - Typical: 14 × 20 = 280 iterations
 - With issues: 14 × 25 = 350 iterations
@@ -222,13 +223,13 @@ This allows Tech Lead to:
 
 ## Differences from techlead-loop-stop
 
-| Aspect | techlead-loop-stop | bead-loop-stop |
-|--------|-------------------|----------------|
-| **Signal** | `FEATURE_COMPLETE` | `BEAD_LOOP_COMPLETE` |
-| **Scope** | Single feature | Multiple beads |
-| **Quality gates** | Standard | Comprehensive + Docker |
-| **Typical iterations** | 15-35 | 50-500 |
-| **Completion trigger** | Feature done | All beads done |
+| Aspect                 | techlead-loop-stop | bead-loop-stop         |
+| ---------------------- | ------------------ | ---------------------- |
+| **Signal**             | `FEATURE_COMPLETE` | `BEAD_LOOP_COMPLETE`   |
+| **Scope**              | Single feature     | Multiple beads         |
+| **Quality gates**      | Standard           | Comprehensive + Docker |
+| **Typical iterations** | 15-35              | 50-500                 |
+| **Completion trigger** | Feature done       | All beads done         |
 
 ## User Experience
 

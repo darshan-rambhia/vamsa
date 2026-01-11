@@ -63,15 +63,15 @@ docker stop vamsa-review-container
 
 ### Quality Gate Summary Table
 
-| Gate | Command | Must Pass |
-|------|---------|-----------|
-| Unit Tests | `pnpm test` | YES |
-| Lint | `pnpm lint` | YES |
-| TypeScript | `pnpm typecheck` | YES |
-| Build | `pnpm build` | YES |
-| Dev Server | `pnpm dev` + curl | YES |
-| Docker Build | `docker build` | YES |
-| Docker Run | `docker run` + curl | YES |
+| Gate         | Command             | Must Pass |
+| ------------ | ------------------- | --------- |
+| Unit Tests   | `pnpm test`         | YES       |
+| Lint         | `pnpm lint`         | YES       |
+| TypeScript   | `pnpm typecheck`    | YES       |
+| Build        | `pnpm build`        | YES       |
+| Dev Server   | `pnpm dev` + curl   | YES       |
+| Docker Build | `docker build`      | YES       |
+| Docker Run   | `docker run` + curl | YES       |
 
 **ALL 7 gates must pass. No exceptions.**
 
@@ -190,21 +190,21 @@ Reassign to @backend for fixes."
 
 ### Quality Gates
 
-| Gate | Command | Status | Details |
-|------|---------|--------|---------|
-| Unit Tests | pnpm test | PASS/FAIL | X tests, Y passed |
-| Lint | pnpm lint | PASS/FAIL | X errors |
-| TypeScript | pnpm typecheck | PASS/FAIL | X errors |
-| Build | pnpm build | PASS/FAIL | - |
-| Dev Server | pnpm dev | PASS/FAIL | Responds: yes/no |
-| Docker Build | docker build | PASS/FAIL | - |
-| Docker Run | docker run | PASS/FAIL | Responds: yes/no |
+| Gate         | Command        | Status    | Details           |
+| ------------ | -------------- | --------- | ----------------- |
+| Unit Tests   | pnpm test      | PASS/FAIL | X tests, Y passed |
+| Lint         | pnpm lint      | PASS/FAIL | X errors          |
+| TypeScript   | pnpm typecheck | PASS/FAIL | X errors          |
+| Build        | pnpm build     | PASS/FAIL | -                 |
+| Dev Server   | pnpm dev       | PASS/FAIL | Responds: yes/no  |
+| Docker Build | docker build   | PASS/FAIL | -                 |
+| Docker Run   | docker run     | PASS/FAIL | Responds: yes/no  |
 
 ### Acceptance Criteria
 
 | Criterion | Implemented | Tested |
-|-----------|-------------|--------|
-| ... | YES/NO | YES/NO |
+| --------- | ----------- | ------ |
+| ...       | YES/NO      | YES/NO |
 
 ### Recommendation
 
@@ -245,6 +245,7 @@ bd update {bead-id} --status open
 ### No E2E Tests Yet
 
 If E2E tests don't exist for the feature:
+
 - Note this in review
 - Unit test coverage must be higher (95%+)
 - Still run all other gates
@@ -252,6 +253,7 @@ If E2E tests don't exist for the feature:
 ### Docker Issues
 
 Common Docker issues:
+
 - Missing dependencies → Update Dockerfile
 - Port conflicts → Use different port (3001, 3002)
 - Build context → Ensure .dockerignore is correct
@@ -259,6 +261,7 @@ Common Docker issues:
 ### Flaky Tests
 
 If tests are flaky:
+
 - Run tests 3 times
 - If passes 2/3, note as flaky but acceptable
 - If fails 2/3, report as failure

@@ -281,14 +281,17 @@ export function SourcesManagementTab({ personId }: SourcesManagementTabProps) {
                 description: editingSource.description ?? undefined,
                 repository: editingSource.repository ?? undefined,
                 notes: editingSource.notes ?? undefined,
-                sourceType: (editingSource.sourceType as SourceType) ?? undefined,
-                citationFormat: (editingSource.citationFormat as CitationFormat) ?? undefined,
+                sourceType:
+                  (editingSource.sourceType as SourceType) ?? undefined,
+                citationFormat:
+                  (editingSource.citationFormat as CitationFormat) ?? undefined,
                 doi: editingSource.doi ?? undefined,
                 url: editingSource.url ?? undefined,
                 isbn: editingSource.isbn ?? undefined,
                 callNumber: editingSource.callNumber ?? undefined,
                 accessDate: editingSource.accessDate ?? undefined,
-                confidence: (editingSource.confidence as Confidence) ?? undefined,
+                confidence:
+                  (editingSource.confidence as Confidence) ?? undefined,
               }}
               onSuccess={closeModal}
               onCancel={closeModal}

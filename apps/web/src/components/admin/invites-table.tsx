@@ -168,10 +168,7 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
         )}
 
         <div className="overflow-x-auto">
-          <table
-            className="w-full text-sm"
-            data-testid="invites-table"
-          >
+          <table className="w-full text-sm" data-testid="invites-table">
             <thead>
               <tr className="border-border border-b">
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">
@@ -218,7 +215,8 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
                   <td className="px-4 py-3">
                     <span
                       className={
-                        invite.status === "PENDING" && isExpired(invite.expiresAt)
+                        invite.status === "PENDING" &&
+                        isExpired(invite.expiresAt)
                           ? "text-destructive"
                           : ""
                       }
@@ -252,11 +250,13 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Revoke Invite</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  Revoke Invite
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to revoke this invite for{" "}
-                                  <strong>{invite.email}</strong>? The invite link
-                                  will no longer work.
+                                  Are you sure you want to revoke this invite
+                                  for <strong>{invite.email}</strong>? The
+                                  invite link will no longer work.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -280,12 +280,15 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
                           disabled={actionLoading === invite.id}
                           data-testid={`resend-invite-${invite.id}`}
                         >
-                          {actionLoading === invite.id ? "Resending..." : "Resend"}
+                          {actionLoading === invite.id
+                            ? "Resending..."
+                            : "Resend"}
                         </Button>
                       )}
                       {invite.status === "ACCEPTED" && (
                         <span className="text-muted-foreground text-xs">
-                          Accepted {invite.acceptedAt && formatDate(invite.acceptedAt)}
+                          Accepted{" "}
+                          {invite.acceptedAt && formatDate(invite.acceptedAt)}
                         </span>
                       )}
                     </div>

@@ -158,7 +158,9 @@ export function SourceForm({
           <Label htmlFor="sourceType">Source Type</Label>
           <Select
             value={sourceType || ""}
-            onValueChange={(value) => setValue("sourceType", value as SourceType)}
+            onValueChange={(value) =>
+              setValue("sourceType", value as SourceType)
+            }
             disabled={isLoading}
           >
             <SelectTrigger>
@@ -286,7 +288,9 @@ export function SourceForm({
           <Label htmlFor="citationFormat">Citation Format</Label>
           <Select
             value={watch("citationFormat") || ""}
-            onValueChange={(value) => setValue("citationFormat", value as CitationFormat)}
+            onValueChange={(value) =>
+              setValue("citationFormat", value as CitationFormat)
+            }
             disabled={isLoading}
           >
             <SelectTrigger>
@@ -305,7 +309,9 @@ export function SourceForm({
           <Label htmlFor="confidence">Confidence Level</Label>
           <Select
             value={watch("confidence") || ""}
-            onValueChange={(value) => setValue("confidence", value as Confidence)}
+            onValueChange={(value) =>
+              setValue("confidence", value as Confidence)
+            }
             disabled={isLoading}
           >
             <SelectTrigger>

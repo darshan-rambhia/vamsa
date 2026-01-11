@@ -420,7 +420,11 @@ function positionNodes(
           processed.add(personId);
 
           const spouse = getVisibleSpouse(personId);
-          if (spouse && peopleInGen.includes(spouse) && !processed.has(spouse)) {
+          if (
+            spouse &&
+            peopleInGen.includes(spouse) &&
+            !processed.has(spouse)
+          ) {
             processed.add(spouse);
             couples.push({ primary: personId, spouse });
           } else {

@@ -33,7 +33,7 @@ const TabsTrigger = React.forwardRef<
       "disabled:pointer-events-none disabled:opacity-50",
       // Active state: prominent background, primary-tinted text, and shadow
       "data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-md",
-      "data-[state=active]:border data-[state=active]:border-primary/20",
+      "data-[state=active]:border-primary/20 data-[state=active]:border",
       // Inactive state: subtle hover feedback
       "data-[state=inactive]:hover:bg-background/50 data-[state=inactive]:hover:text-foreground/80",
       className

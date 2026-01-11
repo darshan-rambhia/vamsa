@@ -8,6 +8,14 @@ export const eventTypeEnum = z.enum([
   "DIVORCE",
   "BURIAL",
   "GRADUATION",
+  "ENGAGEMENT",
+  "DIVORCE_FILED",
+  "ADOPTION",
+  "CONFIRMATION",
+  "IMMIGRATION",
+  "EMIGRATION",
+  "NATURALIZATION",
+  "RESIDENCE",
   "CUSTOM",
 ]);
 

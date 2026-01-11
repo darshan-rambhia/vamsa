@@ -41,7 +41,9 @@ async function main() {
   // Check if persons already exist
   const existingPersons = await prisma.person.count();
   const existingUsers = await prisma.user.count();
-  console.log(`Current database state: ${existingPersons} persons, ${existingUsers} users`);
+  console.log(
+    `Current database state: ${existingPersons} persons, ${existingUsers} users`
+  );
 
   if (existingPersons > 0) {
     console.log("Persons already exist. Skipping person and user creation.");
@@ -711,7 +713,7 @@ async function main() {
   // Verify test users were created
   const testUsersCount = await prisma.user.count({
     where: {
-      email: { in: testUsers.map(u => u.email) },
+      email: { in: testUsers.map((u) => u.email) },
     },
   });
   console.log(`\nVerification: ${testUsersCount} test users found in database`);

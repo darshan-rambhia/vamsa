@@ -30,13 +30,16 @@ interface CreateInviteDialogProps {
   onInviteCreated: () => void;
 }
 
-export function CreateInviteDialog({ onInviteCreated }: CreateInviteDialogProps) {
+export function CreateInviteDialog({
+  onInviteCreated,
+}: CreateInviteDialogProps) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{ token: string; email: string } | null>(
-    null
-  );
+  const [success, setSuccess] = useState<{
+    token: string;
+    email: string;
+  } | null>(null);
   const [persons, setPersons] = useState<
     Array<{ id: string; firstName: string; lastName: string }>
   >([]);
@@ -154,7 +157,9 @@ export function CreateInviteDialog({ onInviteCreated }: CreateInviteDialogProps)
           <div className="space-y-4">
             <div className="rounded-lg border-2 border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:text-green-400">
               <p className="font-medium">Invite sent successfully</p>
-              <p className="mt-1">An invite has been created for {success.email}</p>
+              <p className="mt-1">
+                An invite has been created for {success.email}
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -211,7 +216,9 @@ export function CreateInviteDialog({ onInviteCreated }: CreateInviteDialogProps)
                 data-testid="invite-email-input"
               />
               {errors.email && (
-                <p className="text-destructive text-sm">{errors.email.message}</p>
+                <p className="text-destructive text-sm">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -221,15 +228,14 @@ export function CreateInviteDialog({ onInviteCreated }: CreateInviteDialogProps)
                 name="role"
                 control={control}
                 render={({ field }) => (
-                  <Select
-                    value={field.value}
-                    onValueChange={field.onChange}
-                  >
+                  <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger data-testid="invite-role-select">
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="VIEWER">Viewer - Can only view</SelectItem>
+                      <SelectItem value="VIEWER">
+                        Viewer - Can only view
+                      </SelectItem>
                       <SelectItem value="MEMBER">Member - Can edit</SelectItem>
                       <SelectItem value="ADMIN">Admin - Full access</SelectItem>
                     </SelectContent>

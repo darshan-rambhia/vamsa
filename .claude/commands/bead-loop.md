@@ -24,13 +24,20 @@ Autonomous bead-by-bead development loop. The Tech Lead iterates through open be
 
 The Tech Lead processes beads one at a time in priority order:
 
+### PrePhase: Setup
+
+1. Ask the user for filer criteria if not provided
+2. Validate `bd` CLI is installed and configured
+3. Ask the user if how many beads to process if not provided
+4. Ask the user if they want to interactively confirm each bead before proceeding
+
 ### Phase 1: Bead Selection (Each Iteration Start)
 
 1. **List available beads**: `bd ready` to see unblocked beads
 2. **Select highest priority bead** that matches filter
 3. **Check dependencies**: Skip if blocked by other beads
 4. **Present bead to user**: Show what will be worked on next
-5. **Wait for user confirmation**: User says "proceed" or "skip"
+5. **Optionally wait for user confirmation**: If at the start of the loop, user had indicated they want to confirm, wait for user to say "proceed" or "skip"
 
 ### Phase 2: Bead Enrichment
 
@@ -40,6 +47,7 @@ After user confirms a bead:
 2. **Explore legacy code**: Find referenced files in apps/web-legacy
 3. **Analyze implementation patterns**: Understand existing code structure
 4. **Update bead with granular details**:
+
    ```bash
    bd update {bead-id} --description "$(cat <<'EOF'
    # Detailed Implementation Plan
@@ -68,16 +76,19 @@ After user confirms a bead:
 Based on bead type, delegate to appropriate agents:
 
 **Frontend-only beads**:
+
 ```
 @frontend implement {bead-id}
 ```
 
 **Backend-only beads**:
+
 ```
 @backend implement {bead-id}
 ```
 
 **Full-stack beads** (most common):
+
 ```
 @backend implement {bead-id}  # First - creates server functions
 [Wait for backend ready]
@@ -93,6 +104,7 @@ After implementation agents report ready:
 ```
 
 Tester writes:
+
 - Unit tests (Bun test)
 - E2E tests (Playwright)
 - Verifies coverage thresholds
@@ -106,6 +118,7 @@ After tester reports ready, invoke reviewer with FULL quality gates:
 ```
 
 **Reviewer MUST run ALL of these commands**:
+
 ```bash
 pnpm test           # All unit tests pass
 pnpm lint           # ESLint validation
@@ -207,15 +220,15 @@ Tech Lead (orchestrator)
 
 ## Quality Gates (Reviewer Must Run All)
 
-| Command | Purpose | Must Pass |
-|---------|---------|-----------|
-| `pnpm test` | Unit tests | Yes |
-| `pnpm lint` | ESLint | Yes |
-| `pnpm typecheck` | TypeScript | Yes |
-| `pnpm build` | Production build | Yes |
-| `pnpm dev` | Dev server starts | Yes |
-| `docker build` | Container builds | Yes |
-| `docker run` | Container runs | Yes |
+| Command          | Purpose           | Must Pass |
+| ---------------- | ----------------- | --------- |
+| `pnpm test`      | Unit tests        | Yes       |
+| `pnpm lint`      | ESLint            | Yes       |
+| `pnpm typecheck` | TypeScript        | Yes       |
+| `pnpm build`     | Production build  | Yes       |
+| `pnpm dev`       | Dev server starts | Yes       |
+| `docker build`   | Container builds  | Yes       |
+| `docker run`     | Container runs    | Yes       |
 
 **Bead can only be closed if ALL gates pass.**
 
@@ -310,15 +323,15 @@ Tech Lead (Final Iteration):
 
 ## Differences from /techlead-loop
 
-| Aspect | /techlead-loop | /bead-loop |
-|--------|---------------|------------|
-| **Input** | Feature description | Existing beads |
-| **Bead creation** | Creates new beads | Uses existing beads |
-| **Scope** | Single feature | Multiple beads |
-| **Enrichment** | Initial design | Granular implementation details |
-| **Quality gates** | Standard (test, lint, build) | Comprehensive (+ docker) |
-| **Flow** | Feature → Beads → Implementation | Beads → Enrich → Implementation |
-| **Typical iterations** | 15-35 | 50-100 (multiple beads) |
+| Aspect                 | /techlead-loop                   | /bead-loop                      |
+| ---------------------- | -------------------------------- | ------------------------------- |
+| **Input**              | Feature description              | Existing beads                  |
+| **Bead creation**      | Creates new beads                | Uses existing beads             |
+| **Scope**              | Single feature                   | Multiple beads                  |
+| **Enrichment**         | Initial design                   | Granular implementation details |
+| **Quality gates**      | Standard (test, lint, build)     | Comprehensive (+ docker)        |
+| **Flow**               | Feature → Beads → Implementation | Beads → Enrich → Implementation |
+| **Typical iterations** | 15-35                            | 50-100 (multiple beads)         |
 
 ## User Interaction Points
 

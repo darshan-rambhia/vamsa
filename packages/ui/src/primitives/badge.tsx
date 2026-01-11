@@ -17,7 +17,8 @@ const badgeVariants = cva(
         destructive:
           "bg-destructive/15 text-destructive border border-destructive/25",
         // Outline - just border (for "Deceased")
-        outline: "border-2 border-muted-foreground/40 text-muted-foreground bg-transparent",
+        outline:
+          "border-2 border-muted-foreground/40 text-muted-foreground bg-transparent",
         // Muted - subtle (for tab counts, etc.)
         muted: "bg-muted/80 text-muted-foreground border border-transparent",
       },
