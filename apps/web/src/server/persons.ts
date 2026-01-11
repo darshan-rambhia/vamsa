@@ -130,9 +130,6 @@ export const getPerson = createServerFn({ method: "GET" })
         relationshipsFrom: {
           include: { relatedPerson: true },
         },
-        relationshipsTo: {
-          include: { person: true },
-        },
       },
     });
 
@@ -141,31 +138,19 @@ export const getPerson = createServerFn({ method: "GET" })
     }
 
     // Build relationships list
-    const relationships = [
-      ...person.relationshipsFrom.map((r) => ({
-        id: r.id,
-        type: r.type,
-        relatedPerson: {
-          id: r.relatedPerson.id,
-          firstName: r.relatedPerson.firstName,
-          lastName: r.relatedPerson.lastName,
-        },
-      })),
-      ...person.relationshipsTo.map((r) => ({
-        id: r.id,
-        type:
-          r.type === "PARENT"
-            ? "CHILD"
-            : r.type === "CHILD"
-              ? "PARENT"
-              : r.type,
-        relatedPerson: {
-          id: r.person.id,
-          firstName: r.person.firstName,
-          lastName: r.person.lastName,
-        },
-      })),
-    ];
+    // Only use relationshipsFrom to avoid duplicates since relationships are stored bidirectionally
+    const relationships = person.relationshipsFrom.map((r) => ({
+      id: r.id,
+      type: r.type,
+      marriageDate: r.marriageDate?.toISOString().split("T")[0] ?? null,
+      divorceDate: r.divorceDate?.toISOString().split("T")[0] ?? null,
+      isActive: r.isActive,
+      relatedPerson: {
+        id: r.relatedPerson.id,
+        firstName: r.relatedPerson.firstName,
+        lastName: r.relatedPerson.lastName,
+      },
+    }));
 
     return {
       id: person.id,
