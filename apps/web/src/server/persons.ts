@@ -84,14 +84,6 @@ export const listPersons = createServerFn({ method: "GET" }).handler(
   async () => {
     const persons = await prisma.person.findMany({
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-      include: {
-        relationshipsFrom: {
-          include: { relatedPerson: true },
-        },
-        relationshipsTo: {
-          include: { person: true },
-        },
-      },
     });
 
     return {
