@@ -17,23 +17,35 @@ const resources = {
   hi: { translation: hiTranslations },
 };
 
-// Only initialize in browser environment
-if (typeof window !== "undefined") {
-  i18n
-    .use(LanguageDetector)
-    .use(initReactI18next)
-    .init({
-      resources,
-      fallbackLng: "en",
-      defaultNS: "translation",
-      interpolation: {
-        escapeValue: false,
-      },
-      detection: {
-        order: ["localStorage", "navigator", "htmlTag"],
-        caches: ["localStorage"],
-      },
-    });
+const isServer = typeof window === "undefined";
+
+// Initialize i18n for both SSR and client
+i18n.use(initReactI18next).init({
+  resources,
+  fallbackLng: "en",
+  defaultNS: "translation",
+  lng: "en", // Set default language for SSR
+  interpolation: {
+    escapeValue: false,
+  },
+});
+
+// Only use language detector in browser (not available during SSR)
+if (!isServer) {
+  i18n.use(LanguageDetector);
+  // Re-initialize with language detection
+  i18n.init({
+    resources,
+    fallbackLng: "en",
+    defaultNS: "translation",
+    interpolation: {
+      escapeValue: false,
+    },
+    detection: {
+      order: ["localStorage", "navigator", "htmlTag"],
+      caches: ["localStorage"],
+    },
+  });
 }
 
 export default i18n;

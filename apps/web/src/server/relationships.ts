@@ -269,12 +269,7 @@ export const deleteRelationship = createServerFn({ method: "POST" })
 // Get family tree data (legacy - returns raw data)
 export const getFamilyTree = createServerFn({ method: "GET" }).handler(
   async () => {
-    const persons = await prisma.person.findMany({
-      include: {
-        relationshipsFrom: true,
-        relationshipsTo: true,
-      },
-    });
+    const persons = await prisma.person.findMany();
 
     const relationships = await prisma.relationship.findMany();
 
