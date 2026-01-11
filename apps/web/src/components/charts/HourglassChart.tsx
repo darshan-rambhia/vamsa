@@ -138,8 +138,8 @@ export function HourglassChart({
           .attr("y1", source.y + nodeHeight / 2)
           .attr("x2", target.x)
           .attr("y2", target.y - nodeHeight / 2)
-          .attr("stroke", "hsl(var(--border))")
-          .attr("stroke-width", 2);
+          .style("stroke", "var(--color-border)")
+          .style("stroke-width", "2px");
       } else if (edge.type === "spouse") {
         edgeGroup
           .append("line")
@@ -147,9 +147,9 @@ export function HourglassChart({
           .attr("y1", source.y)
           .attr("x2", Math.max(source.x, target.x) - nodeWidth / 2)
           .attr("y2", target.y)
-          .attr("stroke", "hsl(var(--primary))")
-          .attr("stroke-width", 2)
-          .attr("stroke-dasharray", "5,5");
+          .style("stroke", "var(--color-primary)")
+          .style("stroke-width", "2px")
+          .style("stroke-dasharray", "5,5");
       }
     });
 
@@ -177,40 +177,40 @@ export function HourglassChart({
         .attr("width", nodeWidth)
         .attr("height", nodeHeight)
         .attr("rx", 8)
-        .attr(
+        .style(
           "fill",
           isRoot
-            ? "hsl(var(--primary) / 0.1)"
+            ? "color-mix(in oklch, var(--color-primary) 10%, transparent)"
             : node.isLiving
-              ? "hsl(var(--card))"
-              : "hsl(var(--muted))"
+              ? "var(--color-card)"
+              : "var(--color-muted)"
         )
-        .attr(
+        .style(
           "stroke",
           isRoot
-            ? "hsl(var(--primary))"
+            ? "var(--color-primary)"
             : node.isLiving
-              ? "hsl(var(--primary) / 0.5)"
-              : "hsl(var(--border))"
+              ? "color-mix(in oklch, var(--color-primary) 50%, transparent)"
+              : "var(--color-border)"
         )
-        .attr("stroke-width", isRoot ? 3 : 2)
+        .style("stroke-width", isRoot ? "3px" : "2px")
         .on("mouseenter", function () {
           d3.select(this)
             .transition()
             .duration(200)
-            .attr("fill", "hsl(var(--accent))");
+            .style("fill", "var(--color-accent)");
         })
         .on("mouseleave", function () {
           d3.select(this)
             .transition()
             .duration(200)
-            .attr(
+            .style(
               "fill",
               isRoot
-                ? "hsl(var(--primary) / 0.1)"
+                ? "color-mix(in oklch, var(--color-primary) 10%, transparent)"
                 : node.isLiving
-                  ? "hsl(var(--card))"
-                  : "hsl(var(--muted))"
+                  ? "var(--color-card)"
+                  : "var(--color-muted)"
             );
         });
 
@@ -220,9 +220,9 @@ export function HourglassChart({
         .attr("x", nodeWidth / 2)
         .attr("y", nodeHeight / 2 - 8)
         .attr("text-anchor", "middle")
-        .attr("fill", "hsl(var(--foreground))")
-        .attr("font-size", "14px")
-        .attr("font-weight", isRoot ? "700" : "600")
+        .style("fill", "var(--color-foreground)")
+        .style("font-size", "14px")
+        .style("font-weight", isRoot ? "700" : "600")
         .text(`${node.firstName} ${node.lastName}`);
 
       // Birth/death dates
@@ -240,8 +240,8 @@ export function HourglassChart({
           .attr("x", nodeWidth / 2)
           .attr("y", nodeHeight / 2 + 12)
           .attr("text-anchor", "middle")
-          .attr("fill", "hsl(var(--muted-foreground))")
-          .attr("font-size", "12px")
+          .style("fill", "var(--color-muted-foreground)")
+          .style("font-size", "12px")
           .text(dateText.join(" - "));
       }
 
@@ -255,9 +255,9 @@ export function HourglassChart({
         .attr("cx", 4)
         .attr("cy", 4)
         .attr("r", 4)
-        .attr(
+        .style(
           "fill",
-          node.isLiving ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))"
+          node.isLiving ? "var(--color-primary)" : "var(--color-muted-foreground)"
         );
     });
 

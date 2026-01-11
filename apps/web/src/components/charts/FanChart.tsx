@@ -107,9 +107,9 @@ export function FanChart({ nodes, edges, onNodeClick }: FanChartProps) {
         .attr("cy", centerY)
         .attr("r", radius)
         .attr("fill", "none")
-        .attr("stroke", "hsl(var(--border))")
-        .attr("stroke-width", 1)
-        .attr("stroke-dasharray", "5,5");
+        .style("stroke", "var(--color-border)")
+        .style("stroke-width", "1px")
+        .style("stroke-dasharray", "5,5");
     }
 
     // Draw edges as curved paths
@@ -130,9 +130,9 @@ export function FanChart({ nodes, edges, onNodeClick }: FanChartProps) {
         edgeGroup
           .append("path")
           .attr("d", path.toString())
-          .attr("stroke", "hsl(var(--border))")
-          .attr("stroke-width", 2)
-          .attr("fill", "none");
+          .style("stroke", "var(--color-border)")
+          .style("stroke-width", "2px")
+          .style("fill", "none");
       } else if (edge.type === "spouse") {
         // Arc connection along the same generation circle
         if (source.radius === target.radius && source.radius > 0) {
@@ -152,10 +152,10 @@ export function FanChart({ nodes, edges, onNodeClick }: FanChartProps) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .attr("d", arc({ startAngle, endAngle } as any))
             .attr("transform", `translate(${centerX}, ${centerY})`)
-            .attr("stroke", "hsl(var(--primary))")
-            .attr("stroke-width", 2)
-            .attr("stroke-dasharray", "5,5")
-            .attr("fill", "none");
+            .style("stroke", "var(--color-primary)")
+            .style("stroke-width", "2px")
+            .style("stroke-dasharray", "5,5")
+            .style("fill", "none");
         }
       }
     });
@@ -180,42 +180,42 @@ export function FanChart({ nodes, edges, onNodeClick }: FanChartProps) {
       nodeG
         .append("circle")
         .attr("r", nodeRadius)
-        .attr(
+        .style(
           "fill",
           isRoot
-            ? "hsl(var(--primary) / 0.2)"
+            ? "color-mix(in oklch, var(--color-primary) 20%, transparent)"
             : node.isLiving
-              ? "hsl(var(--card))"
-              : "hsl(var(--muted))"
+              ? "var(--color-card)"
+              : "var(--color-muted)"
         )
-        .attr(
+        .style(
           "stroke",
           isRoot
-            ? "hsl(var(--primary))"
+            ? "var(--color-primary)"
             : node.isLiving
-              ? "hsl(var(--primary))"
-              : "hsl(var(--border))"
+              ? "var(--color-primary)"
+              : "var(--color-border)"
         )
-        .attr("stroke-width", isRoot ? 3 : 2)
+        .style("stroke-width", isRoot ? "3px" : "2px")
         .on("mouseenter", function () {
           d3.select(this)
             .transition()
             .duration(200)
             .attr("r", nodeRadius + 5)
-            .attr("fill", "hsl(var(--accent))");
+            .style("fill", "var(--color-accent)");
         })
         .on("mouseleave", function () {
           d3.select(this)
             .transition()
             .duration(200)
             .attr("r", nodeRadius)
-            .attr(
+            .style(
               "fill",
               isRoot
-                ? "hsl(var(--primary) / 0.2)"
+                ? "color-mix(in oklch, var(--color-primary) 20%, transparent)"
                 : node.isLiving
-                  ? "hsl(var(--card))"
-                  : "hsl(var(--muted))"
+                  ? "var(--color-card)"
+                  : "var(--color-muted)"
             );
         });
 
@@ -234,9 +234,9 @@ export function FanChart({ nodes, edges, onNodeClick }: FanChartProps) {
         .attr("x", 0)
         .attr("y", -4)
         .attr("text-anchor", "middle")
-        .attr("fill", "hsl(var(--foreground))")
-        .attr("font-size", "11px")
-        .attr("font-weight", isRoot ? "700" : "600")
+        .style("fill", "var(--color-foreground)")
+        .style("font-size", "11px")
+        .style("font-weight", isRoot ? "700" : "600")
         .text(firstName);
 
       nodeG
@@ -244,9 +244,9 @@ export function FanChart({ nodes, edges, onNodeClick }: FanChartProps) {
         .attr("x", 0)
         .attr("y", 8)
         .attr("text-anchor", "middle")
-        .attr("fill", "hsl(var(--foreground))")
-        .attr("font-size", "11px")
-        .attr("font-weight", isRoot ? "700" : "600")
+        .style("fill", "var(--color-foreground)")
+        .style("font-size", "11px")
+        .style("font-weight", isRoot ? "700" : "600")
         .text(lastName);
 
       // Birth year (outside the circle)
@@ -257,8 +257,8 @@ export function FanChart({ nodes, edges, onNodeClick }: FanChartProps) {
           .attr("x", 0)
           .attr("y", nodeRadius + 15)
           .attr("text-anchor", "middle")
-          .attr("fill", "hsl(var(--muted-foreground))")
-          .attr("font-size", "10px")
+          .style("fill", "var(--color-muted-foreground)")
+          .style("font-size", "10px")
           .text(year.toString());
       }
 
@@ -268,9 +268,9 @@ export function FanChart({ nodes, edges, onNodeClick }: FanChartProps) {
         .attr("cx", nodeRadius - 10)
         .attr("cy", -nodeRadius + 10)
         .attr("r", 4)
-        .attr(
+        .style(
           "fill",
-          node.isLiving ? "hsl(var(--primary))" : "hsl(var(--muted-foreground))"
+          node.isLiving ? "var(--color-primary)" : "var(--color-muted-foreground)"
         );
     });
 
