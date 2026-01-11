@@ -10,15 +10,15 @@ const badgeVariants = cva(
       variant: {
         // Default - forest green
         default: "bg-primary/20 text-primary border border-primary/30",
-        // Secondary - forest green for "Living" status (WCAG 2 AA compliant)
+        // Secondary - vibrant green for "Living" status (WCAG 2 AA compliant)
         secondary:
-          "bg-primary/15 text-primary border border-primary/40",
+          "bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400 border border-green-400 dark:border-green-700",
         // Destructive - autumn red
         destructive:
           "bg-destructive/20 text-destructive border border-destructive/30",
-        // Outline - dark border for "Deceased" (WCAG 2 AA compliant)
+        // Outline - warm brown for "Deceased" (WCAG 2 AA compliant, earth tones aesthetic)
         outline:
-          "border-2 border-foreground/70 text-foreground/90 bg-background/50",
+          "bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-400 border border-amber-300 dark:border-amber-700",
         // Muted - subtle (for tab counts, etc.)
         muted: "bg-muted/80 text-muted-foreground border border-transparent",
       },
