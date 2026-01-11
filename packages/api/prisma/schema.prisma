@@ -70,6 +70,14 @@ enum EventType {
   DIVORCE
   BURIAL
   GRADUATION
+  ENGAGEMENT
+  DIVORCE_FILED
+  ADOPTION
+  CONFIRMATION
+  IMMIGRATION
+  EMIGRATION
+  NATURALIZATION
+  RESIDENCE
   CUSTOM
 }
 
@@ -180,6 +188,7 @@ model User {
   role               UserRole @default(VIEWER)
   isActive           Boolean  @default(true)
   mustChangePassword Boolean  @default(false)
+  preferredLanguage  String?  @default("en")
 
   invitedById String?
 

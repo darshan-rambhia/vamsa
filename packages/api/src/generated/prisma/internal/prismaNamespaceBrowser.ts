@@ -139,6 +139,7 @@ export const UserScalarFieldEnum = {
   role: 'role',
   isActive: 'isActive',
   mustChangePassword: 'mustChangePassword',
+  preferredLanguage: 'preferredLanguage',
   invitedById: 'invitedById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',

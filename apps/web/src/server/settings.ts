@@ -68,6 +68,11 @@ const updateSettingsSchema = z.object({
   requireApprovalForEdits: z.boolean(),
 });
 
+// Language preference schema
+const languagePreferenceSchema = z.object({
+  language: z.enum(["en", "hi"]),
+});
+
 // Update family settings (admin only)
 export const updateFamilySettings = createServerFn({ method: "POST" })
   .inputValidator((data: z.infer<typeof updateSettingsSchema>) => {
@@ -112,4 +117,58 @@ export const updateFamilySettings = createServerFn({ method: "POST" })
       console.warn("[Settings Server] Settings created:", created.id);
       return { success: true, id: created.id };
     }
+  });
+
+// Get user's language preference
+export const getUserLanguagePreference = createServerFn({
+  method: "GET",
+}).handler(async () => {
+  const user = await requireAuth("VIEWER");
+
+  const userData = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { preferredLanguage: true },
+  });
+
+  if (!userData) {
+    throw new Error("User not found");
+  }
+
+  return {
+    language: userData.preferredLanguage ?? "en",
+  };
+});
+
+// Set user's language preference
+export const setUserLanguagePreference = createServerFn({
+  method: "POST",
+})
+  .inputValidator((data: z.infer<typeof languagePreferenceSchema>) => {
+    return languagePreferenceSchema.parse(data);
+  })
+  .handler(async ({ data }) => {
+    const user = await requireAuth("VIEWER");
+
+    const updated = await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        preferredLanguage: data.language,
+      },
+      select: {
+        id: true,
+        preferredLanguage: true,
+      },
+    });
+
+    console.warn(
+      "[Settings Server] Language preference updated for user:",
+      user.id,
+      "to",
+      data.language
+    );
+
+    return {
+      success: true,
+      language: updated.preferredLanguage ?? "en",
+    };
   });
