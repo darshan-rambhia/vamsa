@@ -14,6 +14,7 @@ import {
   deleteMedia,
   updateMediaMetadata,
   setPrimaryPhoto,
+  uploadMedia,
 } from "~/server/media";
 
 export function MediaTab() {
@@ -50,11 +51,34 @@ export function MediaTab() {
     enabled: !!editingMediaId,
   });
 
-  // Upload mutation (placeholder - needs implementation)
+  // Upload mutation
   const uploadMutation = useMutation({
-    mutationFn: async (_file: File) => {
-      // TODO: Implement file upload to storage and create media record
-      throw new Error("Upload not yet implemented");
+    mutationFn: async (file: File) => {
+      // Read file as base64
+      return new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64String = (reader.result as string).split(",")[1];
+          if (!base64String) {
+            reject(new Error("Failed to read file"));
+            return;
+          }
+          resolve(base64String);
+        };
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.readAsDataURL(file);
+      }).then((base64Data) =>
+        uploadMedia({
+          data: {
+            personId,
+            fileName: file.name,
+            mimeType: file.type,
+            fileSize: file.size,
+            base64Data,
+            title: file.name.split(".")[0],
+          },
+        })
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["personMedia", personId] });

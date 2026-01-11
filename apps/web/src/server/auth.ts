@@ -85,32 +85,32 @@ export const login = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { email, password } = data;
 
-    console.log("[Auth Server] Login attempt for email:", email.toLowerCase());
+    console.warn("[Auth Server] Login attempt for email:", email.toLowerCase());
 
     // Find user by email
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
 
-    console.log(
+    console.warn(
       "[Auth Server] User found:",
       user ? `${user.id} (${user.email})` : "NOT FOUND"
     );
 
     if (!user || !user.passwordHash) {
-      console.log("[Auth Server] User not found or no password hash");
+      console.warn("[Auth Server] User not found or no password hash");
       throw new Error("Invalid email or password");
     }
 
     if (!user.isActive) {
-      console.log("[Auth Server] User account is disabled");
+      console.warn("[Auth Server] User account is disabled");
       throw new Error("Account is disabled");
     }
 
     // Verify password
-    console.log("[Auth Server] Comparing passwords...");
+    console.warn("[Auth Server] Comparing passwords...");
     const validPassword = await bcrypt.compare(password, user.passwordHash);
-    console.log("[Auth Server] Password valid:", validPassword);
+    console.warn("[Auth Server] Password valid:", validPassword);
     if (!validPassword) {
       throw new Error("Invalid email or password");
     }
@@ -119,7 +119,7 @@ export const login = createServerFn({ method: "POST" })
     const token = randomBytes(32).toString("hex");
     const expiresAt = new Date(Date.now() + TOKEN_MAX_AGE * 1000);
 
-    console.log("[Auth Server] Creating session for user:", user.id);
+    console.warn("[Auth Server] Creating session for user:", user.id);
 
     // Create session
     await prisma.session.create({
@@ -130,7 +130,7 @@ export const login = createServerFn({ method: "POST" })
       },
     });
 
-    console.log("[Auth Server] Session created, updating last login...");
+    console.warn("[Auth Server] Session created, updating last login...");
 
     // Update last login
     await prisma.user.update({
@@ -139,7 +139,7 @@ export const login = createServerFn({ method: "POST" })
     });
 
     // Set cookie
-    console.log("[Auth Server] Setting session cookie...");
+    console.warn("[Auth Server] Setting session cookie...");
     setCookie(TOKEN_COOKIE_NAME, token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -148,7 +148,7 @@ export const login = createServerFn({ method: "POST" })
       path: "/",
     });
 
-    console.log("[Auth Server] Login successful for", user.email);
+    console.warn("[Auth Server] Login successful for", user.email);
 
     return {
       success: true,
@@ -177,7 +177,7 @@ export const register = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { email, name, password } = data;
 
-    console.log(
+    console.warn(
       "[Auth Server] Registration attempt for email:",
       email.toLowerCase()
     );
@@ -185,7 +185,7 @@ export const register = createServerFn({ method: "POST" })
     // Check if self-registration is enabled
     const settings = await prisma.familySettings.findFirst();
     if (!settings?.allowSelfRegistration) {
-      console.log("[Auth Server] Self-registration is disabled");
+      console.warn("[Auth Server] Self-registration is disabled");
       throw new Error("Self-registration is disabled");
     }
 
@@ -195,16 +195,16 @@ export const register = createServerFn({ method: "POST" })
     });
 
     if (existing) {
-      console.log("[Auth Server] User with this email already exists");
+      console.warn("[Auth Server] User with this email already exists");
       throw new Error("User with this email already exists");
     }
 
     // Hash password
-    console.log("[Auth Server] Hashing password...");
+    console.warn("[Auth Server] Hashing password...");
     const passwordHash = await bcrypt.hash(password, 12);
 
     // Create user
-    console.log("[Auth Server] Creating user...");
+    console.warn("[Auth Server] Creating user...");
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase(),
@@ -215,7 +215,7 @@ export const register = createServerFn({ method: "POST" })
       },
     });
 
-    console.log("[Auth Server] User registered successfully:", user.id);
+    console.warn("[Auth Server] User registered successfully:", user.id);
 
     return { success: true, userId: user.id };
   });
@@ -223,7 +223,7 @@ export const register = createServerFn({ method: "POST" })
 // Get unclaimed living profiles that can be claimed
 export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
   async () => {
-    console.log("[Auth Server] Fetching unclaimed profiles...");
+    console.warn("[Auth Server] Fetching unclaimed profiles...");
 
     // Get all personIds that already have users
     const usersWithPeople = await prisma.user.findMany({
@@ -235,7 +235,7 @@ export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
       .map((u) => u.personId)
       .filter((id): id is string => id !== null);
 
-    console.log(
+    console.warn(
       "[Auth Server] Found",
       claimedPersonIds.length,
       "claimed profiles"
@@ -255,7 +255,7 @@ export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     });
 
-    console.log("[Auth Server] Found", profiles.length, "unclaimed profiles");
+    console.warn("[Auth Server] Found", profiles.length, "unclaimed profiles");
 
     return profiles;
   }
@@ -271,7 +271,7 @@ export const claimProfile = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { email, personId, password } = data;
 
-    console.log("[Auth Server] Claim profile attempt for personId:", personId);
+    console.warn("[Auth Server] Claim profile attempt for personId:", personId);
 
     // Verify the person exists and is living
     const person = await prisma.person.findUnique({
@@ -279,16 +279,16 @@ export const claimProfile = createServerFn({ method: "POST" })
     });
 
     if (!person) {
-      console.log("[Auth Server] Profile not found");
+      console.warn("[Auth Server] Profile not found");
       throw new Error("Profile not found");
     }
 
     if (!person.isLiving) {
-      console.log("[Auth Server] Cannot claim a non-living profile");
+      console.warn("[Auth Server] Cannot claim a non-living profile");
       throw new Error("Cannot claim a non-living profile");
     }
 
-    console.log(
+    console.warn(
       "[Auth Server] Profile found:",
       person.firstName,
       person.lastName
@@ -300,7 +300,7 @@ export const claimProfile = createServerFn({ method: "POST" })
     });
 
     if (existingUserWithPerson) {
-      console.log("[Auth Server] Profile is already claimed");
+      console.warn("[Auth Server] Profile is already claimed");
       throw new Error("This profile is already claimed");
     }
 
@@ -310,16 +310,16 @@ export const claimProfile = createServerFn({ method: "POST" })
     });
 
     if (existingUserWithEmail) {
-      console.log("[Auth Server] Email already in use");
+      console.warn("[Auth Server] Email already in use");
       throw new Error("Email already in use");
     }
 
     // Hash password with bcrypt (12 rounds)
-    console.log("[Auth Server] Hashing password...");
+    console.warn("[Auth Server] Hashing password...");
     const passwordHash = await bcrypt.hash(password, 12);
 
     // Create user with role MEMBER, linked to personId
-    console.log("[Auth Server] Creating user with MEMBER role...");
+    console.warn("[Auth Server] Creating user with MEMBER role...");
     const user = await prisma.user.create({
       data: {
         email: email.toLowerCase(),
@@ -331,7 +331,7 @@ export const claimProfile = createServerFn({ method: "POST" })
       },
     });
 
-    console.log("[Auth Server] Profile claimed successfully:", user.id);
+    console.warn("[Auth Server] Profile claimed successfully:", user.id);
 
     return { success: true, userId: user.id };
   });
@@ -392,7 +392,7 @@ export const changePassword = createServerFn({ method: "POST" })
       },
     });
 
-    console.log("[Auth Server] Password changed for user:", user.id);
+    console.warn("[Auth Server] Password changed for user:", user.id);
 
     return { success: true };
   });

@@ -28,18 +28,13 @@ function ChangePasswordComponent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[Change Password Page] Form submitted");
     setError(null);
     setIsLoading(true);
 
     try {
-      console.log(
-        "[Change Password Page] Calling changePassword server function"
-      );
       await changePassword({
         data: { currentPassword, newPassword, confirmPassword },
       });
-      console.log("[Change Password Page] Password changed successfully");
       navigate({ to: "/people" });
     } catch (err) {
       const errorMessage =

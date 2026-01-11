@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import { z } from "zod";
+import type { Prisma } from "@vamsa/api";
 
 const TOKEN_COOKIE_NAME = "vamsa-session";
 
@@ -46,8 +47,8 @@ async function logAuditAction(
         action,
         entityType: "Person",
         entityId,
-        previousData: previousData as any,
-        newData: newData as any,
+        previousData: previousData as Prisma.InputJsonValue,
+        newData: newData as Prisma.InputJsonValue,
       },
     });
   } catch (error) {

@@ -63,7 +63,7 @@ export function MediaCard({
 
       {/* Title overlay on hover */}
       {media.title && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <div className="bg-linear-to-t pointer-events-none absolute inset-x-0 bottom-0 from-black/60 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
           <p className="line-clamp-2 text-sm font-medium text-white">
             {media.title}
           </p>
@@ -114,7 +114,11 @@ export function MediaCard({
                   className="fixed inset-0 z-10"
                   onClick={() => setShowMenu(false)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " " || e.key === "Escape") {
+                    if (
+                      e.key === "Enter" ||
+                      e.key === " " ||
+                      e.key === "Escape"
+                    ) {
                       setShowMenu(false);
                     }
                   }}

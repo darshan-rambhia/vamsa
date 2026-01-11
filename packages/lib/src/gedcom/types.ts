@@ -19,7 +19,16 @@ export interface GedcomLine {
  * A record in GEDCOM structure (individual, family, header, trailer)
  */
 export interface GedcomRecord {
-  type: "INDI" | "FAM" | "HEAD" | "TRLR" | "SOUR" | "OBJE" | "OTHER";
+  type:
+    | "INDI"
+    | "FAM"
+    | "HEAD"
+    | "TRLR"
+    | "SOUR"
+    | "OBJE"
+    | "REPO"
+    | "SUBM"
+    | "OTHER";
   id?: string; // xref without @ signs
   lines: GedcomLine[];
   tags: Map<string, GedcomLine[]>; // Fast lookup by tag
@@ -34,6 +43,8 @@ export interface GedcomFile {
   families: GedcomRecord[];
   sources: GedcomRecord[]; // GEDCOM Phase 2: Source records
   objects: GedcomRecord[]; // GEDCOM Phase 2: Multimedia object records
+  repositories: GedcomRecord[]; // GEDCOM Phase 2: Repository records
+  submitters: GedcomRecord[]; // GEDCOM Phase 2: Submitter records
   trailer: GedcomRecord;
   version: string; // GEDCOM version (e.g., "5.5.1" or "7.0")
   charset: string;
@@ -95,4 +106,32 @@ export interface ParsedDate {
   isApproximate: boolean;
   qualifier?: "ABT" | "BEF" | "AFT" | "BET";
   raw: string;
+}
+
+/**
+ * Parsed repository data (REPO record)
+ */
+export interface ParsedRepository {
+  id: string;
+  name: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  notes: string[];
+}
+
+/**
+ * Parsed submitter data (SUBM record)
+ */
+export interface ParsedSubmitter {
+  id: string;
+  name: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  notes: string[];
 }

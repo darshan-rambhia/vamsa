@@ -5,7 +5,6 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
-  Input,
   Label,
   Select,
   SelectContent,
@@ -15,9 +14,9 @@ import {
   Badge,
 } from "@vamsa/ui/primitives";
 import {
-  researchNoteCreateSchema,
   type ResearchNoteCreateInput,
   type ResearchNoteUpdateInput,
+  type Reliability,
 } from "@vamsa/schemas";
 import {
   createResearchNote,
@@ -337,7 +336,7 @@ export function ResearchNoteForm({
           <Select
             value={watch("conclusionReliability") || ""}
             onValueChange={(value) =>
-              setValue("conclusionReliability", value as any)
+              setValue("conclusionReliability", value as Reliability)
             }
             disabled={isLoading}
           >

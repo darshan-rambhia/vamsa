@@ -27,6 +27,8 @@ export type {
   GedcomFile,
   ParsedIndividual,
   ParsedFamily,
+  ParsedRepository,
+  ParsedSubmitter,
   ParsedDate,
   ValidationError,
 } from "./types";

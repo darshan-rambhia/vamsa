@@ -28,14 +28,18 @@ async function authenticateUser(
   console.log(`[E2E Setup] Authenticating ${userType} user...`);
 
   await page.goto(`${baseURL}/login`);
-  console.log(`[E2E Setup] Navigated to login page, current URL: ${page.url()}`);
+  console.log(
+    `[E2E Setup] Navigated to login page, current URL: ${page.url()}`
+  );
 
   // Wait for the page to fully load and JavaScript to be ready
   await page.waitForLoadState("domcontentloaded", { timeout: 10000 });
   console.log(`[E2E Setup] Page DOMContentLoaded`);
 
   // Wait for login form to be visible
-  await page.getByTestId("login-form").waitFor({ state: "visible", timeout: 5000 });
+  await page
+    .getByTestId("login-form")
+    .waitFor({ state: "visible", timeout: 5000 });
   console.log(`[E2E Setup] Login form is visible`);
 
   // Fill credentials - use type() instead of fill() to trigger onChange on React controlled components
@@ -56,7 +60,9 @@ async function authenticateUser(
   // Verify the form was filled
   const filledEmail = await emailInput.inputValue();
   const filledPassword = await passwordInput.inputValue();
-  console.log(`[E2E Setup] Form filled - Email: ${filledEmail}, Password length: ${filledPassword.length}`);
+  console.log(
+    `[E2E Setup] Form filled - Email: ${filledEmail}, Password length: ${filledPassword.length}`
+  );
 
   // Check if submit button is enabled
   const submitButton = page.getByTestId("login-submit-button");
@@ -79,7 +85,10 @@ async function authenticateUser(
     console.error(`[E2E Setup] Navigation timeout after button click`);
 
     // Check for login error message on the page
-    const loginErrorVisible = await page.getByTestId("login-error").isVisible().catch(() => false);
+    const loginErrorVisible = await page
+      .getByTestId("login-error")
+      .isVisible()
+      .catch(() => false);
     if (loginErrorVisible) {
       const errorText = await page.getByTestId("login-error").textContent();
       console.error(`[E2E Setup] Login error displayed: ${errorText}`);
@@ -92,17 +101,25 @@ async function authenticateUser(
 
     // Log button and form state
     const buttonText = await submitButton.textContent().catch(() => "unknown");
-    const buttonDisabled = await submitButton.isDisabled().catch(() => "unknown");
-    console.error(`[E2E Setup] Button state - Text: "${buttonText}", Disabled: ${buttonDisabled}`);
+    const buttonDisabled = await submitButton
+      .isDisabled()
+      .catch(() => "unknown");
+    console.error(
+      `[E2E Setup] Button state - Text: "${buttonText}", Disabled: ${buttonDisabled}`
+    );
 
     // Try to wait for the load event anyway and check the URL
     try {
       await page.waitForLoadState("domcontentloaded", { timeout: 5000 });
       const urlAfterLoad = page.url();
-      console.log(`[E2E Setup] After DOMContentLoaded, URL is: ${urlAfterLoad}`);
+      console.log(
+        `[E2E Setup] After DOMContentLoaded, URL is: ${urlAfterLoad}`
+      );
 
       if (!urlAfterLoad.includes("/login")) {
-        console.log(`[E2E Setup] Seems like navigation did succeed to ${urlAfterLoad}`);
+        console.log(
+          `[E2E Setup] Seems like navigation did succeed to ${urlAfterLoad}`
+        );
       }
     } catch {
       // Ignore load state error
@@ -114,7 +131,9 @@ async function authenticateUser(
   console.log(`[E2E Setup] Navigation successful to ${page.url()}`);
 
   // Verify we're logged in by checking for nav (with extended timeout)
-  await page.getByTestId("main-nav").waitFor({ state: "visible", timeout: 10000 });
+  await page
+    .getByTestId("main-nav")
+    .waitFor({ state: "visible", timeout: 10000 });
 
   console.log(`[E2E Setup] ✓ ${userType} user authenticated`);
 }
@@ -166,10 +185,14 @@ async function globalSetup(config: FullConfig) {
     } catch {
       retries++;
       if (retries >= maxRetries) {
-        console.error(`[E2E Setup] Server failed to start after ${maxRetries} attempts`);
+        console.error(
+          `[E2E Setup] Server failed to start after ${maxRetries} attempts`
+        );
         throw new Error(`Server not available at ${baseURL}`);
       }
-      console.log(`[E2E Setup] Waiting for server... (attempt ${retries}/${maxRetries})`);
+      console.log(
+        `[E2E Setup] Waiting for server... (attempt ${retries}/${maxRetries})`
+      );
       await new Promise((r) => setTimeout(r, 2000));
     }
   }
@@ -178,7 +201,10 @@ async function globalSetup(config: FullConfig) {
   try {
     await authenticateUser(page, baseURL, ADMIN_CREDENTIALS, "admin");
     const adminState = await page.context().storageState();
-    writeFileSync(path.join(storageDir, "admin.json"), JSON.stringify(adminState, null, 2));
+    writeFileSync(
+      path.join(storageDir, "admin.json"),
+      JSON.stringify(adminState, null, 2)
+    );
     console.log("[E2E Setup] ✓ Admin auth state saved");
   } catch (err) {
     console.error("[E2E Setup] Failed to authenticate admin user:", err);
@@ -188,7 +214,9 @@ async function globalSetup(config: FullConfig) {
   // Close the first page and create a fresh one for member authentication
   // This avoids session conflicts from the admin session
   await page.close();
-  console.log("[E2E Setup] Closed admin session page, creating fresh page for member...");
+  console.log(
+    "[E2E Setup] Closed admin session page, creating fresh page for member..."
+  );
 
   const memberPage = await browser.newPage();
 
@@ -215,7 +243,10 @@ async function globalSetup(config: FullConfig) {
   try {
     await authenticateUser(memberPage, baseURL, MEMBER_CREDENTIALS, "member");
     const memberState = await memberPage.context().storageState();
-    writeFileSync(path.join(storageDir, "member.json"), JSON.stringify(memberState, null, 2));
+    writeFileSync(
+      path.join(storageDir, "member.json"),
+      JSON.stringify(memberState, null, 2)
+    );
     console.log("[E2E Setup] ✓ Member auth state saved");
   } catch (err) {
     console.error("[E2E Setup] Failed to authenticate member user:", err);

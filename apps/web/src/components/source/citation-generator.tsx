@@ -92,7 +92,7 @@ export function CitationGenerator({ sourceId }: CitationGeneratorProps) {
 
       {/* Generated citation */}
       <div className="space-y-2">
-        <Label>Generated Citation</Label>
+        <p className="text-sm font-medium">Generated Citation</p>
         <div className="bg-muted border-border relative rounded-md border-2 p-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-4">

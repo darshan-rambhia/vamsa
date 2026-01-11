@@ -80,7 +80,9 @@ export const test = base.extend<TestFixtures>({
       await page.goto("/login");
 
       // Wait for the login form to be visible (Playwright auto-waits for visibility on interactions)
-      await page.getByTestId("login-form").waitFor({ state: "visible", timeout: 5000 });
+      await page
+        .getByTestId("login-form")
+        .waitFor({ state: "visible", timeout: 5000 });
 
       // Fill in credentials - use type() instead of fill() to trigger onChange on React controlled components
       const emailInput = page.getByTestId("login-email-input");
@@ -110,14 +112,18 @@ export const test = base.extend<TestFixtures>({
 
         const url = page.url();
         if (url.includes("/login")) {
-          throw new Error(`Login failed: still on login page after submission. No error message on page.`);
+          throw new Error(
+            `Login failed: still on login page after submission. No error message on page.`
+          );
         }
 
         throw err;
       }
 
       // Ensure the nav is visible (indicates successful auth)
-      await page.getByTestId("main-nav").waitFor({ state: "visible", timeout: 5000 });
+      await page
+        .getByTestId("main-nav")
+        .waitFor({ state: "visible", timeout: 5000 });
       console.log(`[Login] Navigation visible, login successful`);
     };
 
@@ -126,11 +132,36 @@ export const test = base.extend<TestFixtures>({
 
   /**
    * Logout fixture - handles sign out
+   * Handles both desktop and mobile viewports
    */
   logout: async ({ page }, use) => {
     const logoutFn = async () => {
-      // Click sign out button in nav
-      await page.getByTestId("signout-button").click();
+      const mobileMenuButton = page.getByTestId("nav-mobile-menu-button");
+
+      // Check if we're in mobile mode (mobile menu button visible)
+      const isMobileMode = await mobileMenuButton
+        .isVisible()
+        .catch(() => false);
+
+      if (isMobileMode) {
+        // Open mobile menu
+        await mobileMenuButton.click();
+        // Wait for menu animation
+        await page.waitForTimeout(300);
+      }
+
+      // Find any visible signout button and click it
+      // There may be two (desktop and mobile), but only one should be visible
+      const signoutButtons = page.getByTestId("signout-button");
+      const count = await signoutButtons.count();
+
+      for (let i = 0; i < count; i++) {
+        const button = signoutButtons.nth(i);
+        if (await button.isVisible().catch(() => false)) {
+          await button.click();
+          break;
+        }
+      }
 
       // Wait for redirect to login page
       await page.waitForURL("/login");
@@ -200,7 +231,10 @@ export const test = base.extend<TestFixtures>({
       if (url.includes("/login")) return false;
 
       // Check for main nav which is only visible when authenticated
-      return await page.getByTestId("main-nav").isVisible().catch(() => false);
+      return await page
+        .getByTestId("main-nav")
+        .isVisible()
+        .catch(() => false);
     };
 
     await use(checkFn);

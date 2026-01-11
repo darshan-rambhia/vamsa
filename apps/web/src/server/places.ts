@@ -423,6 +423,70 @@ export const getPlaceHierarchyPath = createServerFn({ method: "GET" })
     return pathParts.join(", ");
   });
 
+// Get all child places of a place
+export const getPlaceChildren = createServerFn({ method: "GET" })
+  .inputValidator((data: { parentId: string }) => data)
+  .handler(async ({ data }) => {
+    const children = await prisma.place.findMany({
+      where: { parentId: data.parentId },
+      orderBy: [{ placeType: "asc" }, { name: "asc" }],
+    });
+
+    return children.map(formatPlace);
+  });
+
+// Update a place-person link
+export const updatePlacePersonLink = createServerFn({ method: "POST" })
+  .inputValidator(
+    (data: {
+      linkId: string;
+      fromYear?: number | null;
+      toYear?: number | null;
+      type?: string | null;
+    }) => data
+  )
+  .handler(async ({ data }) => {
+    const { linkId, ...updates } = data;
+
+    // Verify link exists
+    const link = await prisma.placePersonLink.findUnique({
+      where: { id: linkId },
+      include: {
+        place: {
+          include: { parent: true },
+        },
+      },
+    });
+
+    if (!link) {
+      throw new Error("Place-person link not found");
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (updates.fromYear !== undefined) updateData.fromYear = updates.fromYear;
+    if (updates.toYear !== undefined) updateData.toYear = updates.toYear;
+    if (updates.type !== undefined) updateData.type = updates.type;
+
+    const updatedLink = await prisma.placePersonLink.update({
+      where: { id: linkId },
+      data: updateData,
+      include: {
+        place: {
+          include: { parent: true },
+        },
+      },
+    });
+
+    return {
+      id: updatedLink.id,
+      place: formatPlace(updatedLink.place),
+      parentName: updatedLink.place.parent?.name || null,
+      fromYear: updatedLink.fromYear,
+      toYear: updatedLink.toYear,
+      type: updatedLink.type,
+    };
+  });
+
 // Unlink a person from a place
 export const unlinkPersonFromPlace = createServerFn({ method: "POST" })
   .inputValidator((data: { linkId: string }) => data)

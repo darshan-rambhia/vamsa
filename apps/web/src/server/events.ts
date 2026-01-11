@@ -5,12 +5,7 @@ import {
   eventUpdateSchema,
   eventParticipantCreateSchema,
   eventParticipantRemoveSchema,
-  type EventCreateInput,
-  type EventUpdateInput,
-  type EventParticipantCreateInput,
-  type EventParticipantRemoveInput,
 } from "@vamsa/schemas";
-import { z } from "zod";
 
 // Get all events for a person
 export const getPersonEvents = createServerFn({ method: "GET" })

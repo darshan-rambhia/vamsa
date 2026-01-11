@@ -28,24 +28,17 @@ function RegisterComponent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[Register Page] Form submitted");
     setError(null);
     setIsLoading(true);
 
     try {
-      console.log(
-        "[Register Page] Calling register server function with email:",
-        email
-      );
-      const result = await register({
+      await register({
         data: { name, email, password, confirmPassword },
       });
-      console.log("[Register Page] Registration successful, result:", result);
       navigate({ to: "/login", search: { registered: true } });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Registration failed";
-      console.error("[Register Page] Registration failed:", errorMessage);
       setError(errorMessage);
       setIsLoading(false);
     }

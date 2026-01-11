@@ -356,29 +356,77 @@ function positionNodes(
     // Sort generations
     const sortedGens = [...byGeneration.keys()].sort((a, b) => a - b);
 
+    // Helper to get parent pair key for a child (used for grouping siblings)
+    const getParentPairKey = (childId: string): string => {
+      const parents = childToParents.get(childId);
+      if (!parents || parents.size === 0) return `no-parents-${childId}`;
+      // Sort parent IDs to ensure consistent key regardless of order
+      return [...parents].sort().join("-");
+    };
+
     // Position each generation
     sortedGens.forEach((gen) => {
       const peopleInGen = byGeneration.get(gen)!;
       const y = gen * VERTICAL_SPACING;
 
-      // Group people into couples (spouse pairs)
+      // Group people into couples (spouse pairs), grouping siblings together
       const couples: { primary: string; spouse: string | null }[] = [];
       const processed = new Set<string>();
 
-      // Sort by birth date first
-      const sortedPeople = sortByBirthDate(peopleInGen);
-
-      sortedPeople.forEach((personId) => {
-        if (processed.has(personId)) return;
-        processed.add(personId);
-
-        const spouse = getVisibleSpouse(personId);
-        if (spouse && peopleInGen.includes(spouse) && !processed.has(spouse)) {
-          processed.add(spouse);
-          couples.push({ primary: personId, spouse });
-        } else {
-          couples.push({ primary: personId, spouse: null });
+      // First, group by parent pair to keep siblings together
+      const siblingGroups = new Map<string, string[]>();
+      peopleInGen.forEach((personId) => {
+        const parentKey = getParentPairKey(personId);
+        if (!siblingGroups.has(parentKey)) {
+          siblingGroups.set(parentKey, []);
         }
+        siblingGroups.get(parentKey)!.push(personId);
+      });
+
+      // Sort each sibling group by birth date
+      siblingGroups.forEach((siblings) => {
+        siblings.sort((a, b) => {
+          const personA = personMap.get(a);
+          const personB = personMap.get(b);
+          const dateA = personA?.dateOfBirth
+            ? new Date(personA.dateOfBirth).getTime()
+            : Infinity;
+          const dateB = personB?.dateOfBirth
+            ? new Date(personB.dateOfBirth).getTime()
+            : Infinity;
+          return dateA - dateB;
+        });
+      });
+
+      // Sort sibling groups by the oldest sibling's birth date
+      const sortedGroups = [...siblingGroups.entries()].sort(
+        ([, siblingsA], [, siblingsB]) => {
+          const oldestA = personMap.get(siblingsA[0]);
+          const oldestB = personMap.get(siblingsB[0]);
+          const dateA = oldestA?.dateOfBirth
+            ? new Date(oldestA.dateOfBirth).getTime()
+            : Infinity;
+          const dateB = oldestB?.dateOfBirth
+            ? new Date(oldestB.dateOfBirth).getTime()
+            : Infinity;
+          return dateA - dateB;
+        }
+      );
+
+      // Process each sibling group, keeping siblings together
+      sortedGroups.forEach(([, siblings]) => {
+        siblings.forEach((personId) => {
+          if (processed.has(personId)) return;
+          processed.add(personId);
+
+          const spouse = getVisibleSpouse(personId);
+          if (spouse && peopleInGen.includes(spouse) && !processed.has(spouse)) {
+            processed.add(spouse);
+            couples.push({ primary: personId, spouse });
+          } else {
+            couples.push({ primary: personId, spouse: null });
+          }
+        });
       });
 
       // Calculate total width

@@ -1,7 +1,9 @@
 // Core primitives
 export { Button, buttonVariants, type ButtonProps } from "./button";
+export { Checkbox } from "./checkbox";
 export { Input } from "./input";
 export { Label } from "./label";
+export { Textarea } from "./textarea";
 export {
   Card,
   CardHeader,
@@ -44,3 +46,18 @@ export {
 
 // Tabs
 export { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
+
+// AlertDialog
+export {
+  AlertDialog,
+  AlertDialogPortal,
+  AlertDialogOverlay,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "./alert-dialog";

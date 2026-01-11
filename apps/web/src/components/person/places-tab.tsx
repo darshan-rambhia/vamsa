@@ -1,8 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, Badge } from "@vamsa/ui/primitives";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Card,
+  CardContent,
+  Badge,
+  Button,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@vamsa/ui/primitives";
 import { PlaceDetailModal } from "../place/place-detail-modal";
+import { PlaceLinkFormModal } from "./place-link-form-modal";
+import { unlinkPersonFromPlace } from "~/server/places";
 
 interface PersonPlace {
   id: string;
@@ -21,10 +37,31 @@ interface PersonPlace {
 
 interface PlacesTabProps {
   places: PersonPlace[];
+  personId?: string;
 }
 
-export function PlacesTab({ places }: PlacesTabProps) {
+export function PlacesTab({ places, personId }: PlacesTabProps) {
+  const queryClient = useQueryClient();
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [editingLink, setEditingLink] = useState<PersonPlace | null>(null);
+  const [linkToDelete, setLinkToDelete] = useState<string | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: unlinkPersonFromPlace,
+    onSuccess: () => {
+      if (personId) {
+        queryClient.invalidateQueries({ queryKey: ["personPlaces", personId] });
+      }
+      setLinkToDelete(null);
+    },
+  });
+
+  const handleDeleteLink = async () => {
+    if (linkToDelete) {
+      await deleteMutation.mutateAsync({ data: { linkId: linkToDelete } });
+    }
+  };
 
   if (places.length === 0) {
     return (
@@ -53,10 +90,13 @@ export function PlacesTab({ places }: PlacesTabProps) {
           <h3 className="font-display text-foreground mb-2 text-xl">
             No Places Recorded
           </h3>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground mb-4">
             Places where this person lived, worked, or visited will appear here
             once added.
           </p>
+          {personId && (
+            <Button onClick={() => setIsAddModalOpen(true)}>Add Place</Button>
+          )}
         </CardContent>
       </Card>
     );
@@ -88,15 +128,19 @@ export function PlacesTab({ places }: PlacesTabProps) {
         {/* Timeline view */}
         <Card>
           <CardContent className="py-6">
-            <h3 className="font-display text-foreground mb-6 text-lg">
-              Timeline
-            </h3>
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="font-display text-foreground text-lg">Timeline</h3>
+              {personId && (
+                <Button onClick={() => setIsAddModalOpen(true)}>
+                  Add Place
+                </Button>
+              )}
+            </div>
             <div className="space-y-4">
               {sortedPlaces.map((place) => (
                 <div
                   key={place.id}
-                  onClick={() => setSelectedPlaceId(place.place.id)}
-                  className="border-border hover:border-primary/30 hover:bg-accent/5 cursor-pointer rounded-md border p-4 transition-all duration-200"
+                  className="border-border rounded-md border p-4 transition-all duration-200"
                 >
                   <div className="flex items-start justify-between gap-4">
                     {/* Icon */}
@@ -122,7 +166,18 @@ export function PlacesTab({ places }: PlacesTabProps) {
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 space-y-2">
+                    <div
+                      className="hover:bg-accent/5 flex-1 cursor-pointer space-y-2 rounded-md p-2 transition-colors"
+                      onClick={() => setSelectedPlaceId(place.place.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelectedPlaceId(place.place.id);
+                        }
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
                       <div className="flex flex-wrap items-center gap-2">
                         <h4 className="font-display text-foreground text-base">
                           {place.place.name}
@@ -153,20 +208,57 @@ export function PlacesTab({ places }: PlacesTabProps) {
                       )}
                     </div>
 
-                    {/* Arrow */}
-                    <svg
-                      className="text-muted-foreground h-5 w-5 shrink-0"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                      strokeWidth={2}
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                    {/* Actions */}
+                    {personId && (
+                      <div className="flex shrink-0 items-center gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingLink(place);
+                          }}
+                          data-testid={`edit-place-${place.id}`}
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                          </svg>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setLinkToDelete(place.id);
+                          }}
+                          data-testid={`delete-place-${place.id}`}
+                        >
+                          <svg
+                            className="h-4 w-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -209,11 +301,21 @@ export function PlacesTab({ places }: PlacesTabProps) {
                       .map((place) => (
                         <div
                           key={place.id}
-                          onClick={() => setSelectedPlaceId(place.place.id)}
-                          className="border-border hover:border-primary/30 hover:bg-accent/5 cursor-pointer rounded-md border p-3 transition-all duration-200"
+                          className="border-border rounded-md border p-3 transition-all duration-200"
                         >
                           <div className="flex items-start justify-between gap-4">
-                            <div className="flex-1 space-y-1">
+                            <div
+                              className="hover:bg-accent/5 flex-1 cursor-pointer space-y-1 rounded-md p-2 transition-colors"
+                              onClick={() => setSelectedPlaceId(place.place.id)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setSelectedPlaceId(place.place.id);
+                                }
+                              }}
+                              role="button"
+                              tabIndex={0}
+                            >
                               <div className="flex items-center gap-2">
                                 <p className="text-foreground text-sm font-medium">
                                   {place.place.name}
@@ -234,19 +336,54 @@ export function PlacesTab({ places }: PlacesTabProps) {
                                 </p>
                               )}
                             </div>
-                            <svg
-                              className="text-muted-foreground h-4 w-4 shrink-0"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth={2}
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M9 5l7 7-7 7"
-                              />
-                            </svg>
+                            {personId && (
+                              <div className="flex shrink-0 items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingLink(place);
+                                  }}
+                                >
+                                  <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                    />
+                                  </svg>
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setLinkToDelete(place.id);
+                                  }}
+                                >
+                                  <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                                    />
+                                  </svg>
+                                </Button>
+                              </div>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -265,6 +402,48 @@ export function PlacesTab({ places }: PlacesTabProps) {
           onClose={() => setSelectedPlaceId(null)}
         />
       )}
+
+      {/* Add/Edit place link modal */}
+      {personId && (
+        <>
+          <PlaceLinkFormModal
+            personId={personId}
+            open={isAddModalOpen}
+            onOpenChange={setIsAddModalOpen}
+          />
+          <PlaceLinkFormModal
+            personId={personId}
+            open={!!editingLink}
+            onOpenChange={(open) => !open && setEditingLink(null)}
+            existingLink={editingLink}
+          />
+        </>
+      )}
+
+      {/* Delete confirmation dialog */}
+      <AlertDialog
+        open={!!linkToDelete}
+        onOpenChange={(open) => !open && setLinkToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Place Link</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove this place link? This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteLink}
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? "Removing..." : "Remove"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

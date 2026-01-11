@@ -22,6 +22,14 @@ export function PersonPlaceCard({ place, onClick }: PersonPlaceCardProps) {
   return (
     <div
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (onClick && (e.key === "Enter" || e.key === " ")) {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
       className={
         onClick
           ? "border-border hover:border-primary/30 hover:bg-accent/5 cursor-pointer rounded-md border p-4 transition-all duration-200"

@@ -67,7 +67,10 @@ export function FamilyTree({
         data: {
           person: node.person,
           onClick: () =>
-            navigate({ to: "/people/$personId", params: { personId: node.id } }),
+            navigate({
+              to: "/people/$personId",
+              params: { personId: node.id },
+            }),
           hasHiddenChildren: node.hasHiddenChildren,
           hasHiddenParents: node.hasHiddenParents,
           hasHiddenSpouses: node.hasHiddenSpouses,

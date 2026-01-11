@@ -20,6 +20,11 @@ import {
 import { listSources, deleteSource, getSource } from "~/server/sources";
 import { SourceForm } from "./source-form";
 import { CitationGenerator } from "./citation-generator";
+import type {
+  SourceType,
+  CitationFormat,
+  Confidence,
+} from "@vamsa/schemas";
 
 type SortOption = "title" | "date" | "type";
 
@@ -321,14 +326,14 @@ export function SourceManagement() {
                 description: editingSource.description ?? undefined,
                 repository: editingSource.repository ?? undefined,
                 notes: editingSource.notes ?? undefined,
-                sourceType: (editingSource.sourceType as any) ?? undefined,
-                citationFormat: (editingSource.citationFormat as any) ?? undefined,
+                sourceType: (editingSource.sourceType as SourceType) ?? undefined,
+                citationFormat: (editingSource.citationFormat as CitationFormat) ?? undefined,
                 doi: editingSource.doi ?? undefined,
                 url: editingSource.url ?? undefined,
                 isbn: editingSource.isbn ?? undefined,
                 callNumber: editingSource.callNumber ?? undefined,
                 accessDate: editingSource.accessDate ?? undefined,
-                confidence: (editingSource.confidence as any) ?? undefined,
+                confidence: (editingSource.confidence as Confidence) ?? undefined,
               }}
               onSuccess={() => setEditingSourceId(null)}
               onCancel={() => setEditingSourceId(null)}

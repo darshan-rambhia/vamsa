@@ -44,7 +44,7 @@ function EditPersonComponent() {
         <div className="py-16 text-center">
           <h2 className="text-xl font-medium">Person not found</h2>
           <p className="text-muted-foreground mt-2">
-            The person you're looking for doesn't exist.
+            The person you&apos;re looking for doesn&apos;t exist.
           </p>
         </div>
       </Container>

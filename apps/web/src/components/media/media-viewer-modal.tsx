@@ -290,7 +290,7 @@ export function MediaViewerModal({
 
       {/* Delete confirmation dialog */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center">
+        <div className="z-60 fixed inset-0 flex items-center justify-center">
           <button
             type="button"
             className="bg-background/80 absolute inset-0 backdrop-blur-sm"

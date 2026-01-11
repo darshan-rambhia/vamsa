@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent } from "@vamsa/ui/primitives";
+import { Card, CardContent, Button } from "@vamsa/ui/primitives";
 import { EventTimeline } from "../events/event-timeline";
 import { EventDetailModal } from "./event-detail-modal";
+import { EventFormModal } from "./event-form-modal";
 import { type EventType } from "@vamsa/schemas";
 
 interface EventData {
@@ -26,40 +27,69 @@ interface EventData {
 
 interface EventsTabProps {
   events: EventData[];
+  personId: string;
 }
 
-export function EventsTab({ events }: EventsTabProps) {
+export function EventsTab({ events, personId }: EventsTabProps) {
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
+  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
 
   const selectedEvent = events.find((e) => e.id === selectedEventId);
 
   if (events.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-12 text-center">
-          <div className="text-muted-foreground/50 mb-4">
-            <svg
-              className="mx-auto h-16 w-16"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={1}
+      <>
+        <Card>
+          <CardContent className="py-12 text-center">
+            <div className="text-muted-foreground/50 mb-4">
+              <svg
+                className="mx-auto h-16 w-16"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                />
+              </svg>
+            </div>
+            <h3 className="font-display text-foreground mb-2 text-xl">
+              No Events Recorded
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              Life events and milestones will appear here once added.
+            </p>
+            <Button
+              onClick={() => setIsFormModalOpen(true)}
+              data-testid="add-event-button"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-          <h3 className="font-display text-foreground mb-2 text-xl">
-            No Events Recorded
-          </h3>
-          <p className="text-muted-foreground">
-            Life events and milestones will appear here once added.
-          </p>
-        </CardContent>
-      </Card>
+              <svg
+                className="mr-2 h-4 w-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 4v16m8-8H4"
+                />
+              </svg>
+              Add Event
+            </Button>
+          </CardContent>
+        </Card>
+
+        <EventFormModal
+          personId={personId}
+          open={isFormModalOpen}
+          onOpenChange={setIsFormModalOpen}
+        />
+      </>
     );
   }
 
@@ -86,6 +116,29 @@ export function EventsTab({ events }: EventsTabProps) {
   return (
     <>
       <div className="space-y-6">
+        {/* Add Event Button */}
+        <div className="flex justify-end">
+          <Button
+            onClick={() => setIsFormModalOpen(true)}
+            data-testid="add-event-button"
+          >
+            <svg
+              className="mr-2 h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Add Event
+          </Button>
+        </div>
+
         {/* Timeline view */}
         <Card>
           <CardContent className="py-6">
@@ -139,6 +192,14 @@ export function EventsTab({ events }: EventsTabProps) {
                         <div
                           key={event.id}
                           onClick={() => setSelectedEventId(event.id)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              setSelectedEventId(event.id);
+                            }
+                          }}
+                          role="button"
+                          tabIndex={0}
                           className="border-border hover:border-primary/30 hover:bg-accent/5 cursor-pointer rounded-md border p-3 transition-all duration-200"
                         >
                           <div className="flex items-start justify-between gap-4">
@@ -194,9 +255,17 @@ export function EventsTab({ events }: EventsTabProps) {
       {selectedEvent && (
         <EventDetailModal
           event={selectedEvent}
+          personId={personId}
           onClose={() => setSelectedEventId(null)}
         />
       )}
+
+      {/* Event form modal */}
+      <EventFormModal
+        personId={personId}
+        open={isFormModalOpen}
+        onOpenChange={setIsFormModalOpen}
+      />
     </>
   );
 }

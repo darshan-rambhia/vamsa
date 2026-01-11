@@ -2,7 +2,7 @@
  * Dashboard & Activity E2E Tests
  * Tests dashboard stats and activity feed
  */
-import { test, expect, TEST_USERS } from "./fixtures";
+import { test, expect } from "./fixtures";
 import { DashboardPage, Navigation } from "./fixtures/page-objects";
 
 test.describe("Dashboard", () => {
@@ -224,7 +224,11 @@ test.describe("Navigation Flow", () => {
   test("should navigate through all main pages", async ({ page }) => {
     const nav = new Navigation(page);
 
-    // Start at dashboard
+    // Start at a known page first (tests use pre-auth state but need initial navigation)
+    await page.goto("/people");
+    await expect(page).toHaveURL("/people");
+
+    // Navigate to dashboard
     await nav.goToDashboard();
     await expect(page).toHaveURL("/dashboard");
 
@@ -232,9 +236,9 @@ test.describe("Navigation Flow", () => {
     await nav.goToPeople();
     await expect(page).toHaveURL("/people");
 
-    // Go to tree
+    // Go to tree (may have query params like ?view=focused)
     await nav.goToTree();
-    await expect(page).toHaveURL("/tree");
+    await expect(page).toHaveURL(/\/tree/);
 
     // Go to activity
     await nav.goToActivity();
@@ -249,7 +253,9 @@ test.describe("Navigation Flow", () => {
     await page.goto("/dashboard");
 
     // Wait for the navigation to be visible
-    await page.getByTestId("main-nav").waitFor({ state: "visible", timeout: 5000 });
+    await page
+      .getByTestId("main-nav")
+      .waitFor({ state: "visible", timeout: 5000 });
 
     // Dashboard link should be active/highlighted - use testId for robust selector
     const dashboardLink = page.getByTestId("nav-dashboard");

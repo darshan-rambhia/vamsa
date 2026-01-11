@@ -41,12 +41,9 @@ function ClaimProfileComponent() {
   useEffect(() => {
     const loadProfiles = async () => {
       try {
-        console.log("[Claim Profile Page] Fetching unclaimed profiles...");
         const result = await getUnclaimedProfiles();
-        console.log("[Claim Profile Page] Loaded profiles:", result);
         setProfiles(result);
-      } catch (err) {
-        console.error("[Claim Profile Page] Failed to load profiles:", err);
+      } catch (_err) {
         setError("Failed to load available profiles");
       } finally {
         setIsLoadingProfiles(false);
@@ -58,24 +55,17 @@ function ClaimProfileComponent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[Claim Profile Page] Form submitted");
     setError(null);
     setIsLoading(true);
 
     try {
-      console.log(
-        "[Claim Profile Page] Calling claimProfile server function with personId:",
-        selectedPersonId
-      );
-      const result = await claimProfile({
+      await claimProfile({
         data: { email, personId: selectedPersonId, password },
       });
-      console.log("[Claim Profile Page] Claim successful, result:", result);
       navigate({ to: "/login", search: { claimed: true } });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to claim profile";
-      console.error("[Claim Profile Page] Claim failed:", errorMessage);
       setError(errorMessage);
       setIsLoading(false);
     }

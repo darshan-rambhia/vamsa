@@ -32,7 +32,7 @@ export function EventTimeline({ events, onEventClick }: EventTimelineProps) {
       {/* Vertical line */}
       <div className="bg-border absolute left-3 top-0 h-full w-0.5 sm:left-5" />
 
-      {events.map((event, index) => {
+      {events.map((event) => {
         const eventTypeConfig = getEventTypeConfig(event.type);
 
         return (
@@ -40,6 +40,14 @@ export function EventTimeline({ events, onEventClick }: EventTimelineProps) {
             key={event.id}
             className="group relative"
             onClick={() => onEventClick?.(event.id)}
+            onKeyDown={(e) => {
+              if (onEventClick && (e.key === "Enter" || e.key === " ")) {
+                e.preventDefault();
+                onEventClick(event.id);
+              }
+            }}
+            role={onEventClick ? "button" : undefined}
+            tabIndex={onEventClick ? 0 : undefined}
           >
             {/* Timeline dot */}
             <div

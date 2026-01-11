@@ -77,7 +77,7 @@ async function main() {
   const hasServerLogs = playwrightArgs.includes("--logs");
 
   // Remove our custom flags from playwright args (playwright doesn't know about --logs)
-  const filteredArgs = playwrightArgs.filter(arg => arg !== "--logs");
+  const filteredArgs = playwrightArgs.filter((arg) => arg !== "--logs");
 
   console.log("🚀 Starting E2E test runner...\n");
 
@@ -112,10 +112,13 @@ async function main() {
 
     // Push schema to database (handles migrations)
     console.log("   - Applying database schema...");
-    const pushResult = await run(["bunx", "prisma", "db", "push", "--accept-data-loss"], {
-      cwd: API_DIR,
-      env: { DATABASE_URL: E2E_DATABASE_URL },
-    });
+    const pushResult = await run(
+      ["bunx", "prisma", "db", "push", "--accept-data-loss"],
+      {
+        cwd: API_DIR,
+        env: { DATABASE_URL: E2E_DATABASE_URL },
+      }
+    );
     if (pushResult !== 0) {
       throw new Error(`Prisma db push failed with exit code ${pushResult}`);
     }

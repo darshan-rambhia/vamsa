@@ -1,19 +1,119 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Button, Card, CardContent } from "@vamsa/ui";
+import { useState } from "react";
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  Input,
+  Label,
+  ThemeToggle,
+} from "@vamsa/ui";
+import { getInviteByToken, acceptInvite } from "~/server/invites";
 
 export const Route = createFileRoute("/invite/$token")({
+  loader: async ({ params }) => {
+    const result = await getInviteByToken({ data: { token: params.token } });
+    return result;
+  },
   component: InviteAcceptPage,
 });
 
 function InviteAcceptPage() {
   const { token } = Route.useParams();
+  const loaderData = Route.useLoaderData();
   const navigate = useNavigate();
 
+  const [name, setName] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await acceptInvite({ data: { token, name, password } });
+      navigate({ to: "/login", search: { invited: true } });
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to accept invite";
+      setError(errorMessage);
+      setIsLoading(false);
+    }
+  };
+
+  // Invalid invite
+  if (!loaderData.valid || !loaderData.invite) {
+    return (
+      <div className="bg-background relative flex min-h-screen flex-col items-center justify-center px-4">
+        <div className="absolute right-6 top-6">
+          <ThemeToggle />
+        </div>
+
+        <Card className="w-full max-w-md">
+          <CardContent className="py-12 text-center">
+            <div className="bg-destructive/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+              <svg
+                className="text-destructive h-8 w-8"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z"
+                />
+              </svg>
+            </div>
+            <h2 className="mb-2 text-xl font-semibold">Invalid Invite</h2>
+            <p className="text-muted-foreground mb-6">
+              {loaderData.error || "This invite link is not valid."}
+            </p>
+            <Button onClick={() => navigate({ to: "/login" })}>
+              Go to Login
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const { invite } = loaderData;
+
   return (
-    <div className="bg-background flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardContent className="py-12 text-center">
-          <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+    <div className="bg-background relative flex min-h-screen flex-col items-center justify-center px-4">
+      <div className="absolute right-6 top-6">
+        <ThemeToggle />
+      </div>
+
+      {/* Decorative background pattern */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="bg-primary/5 absolute -left-1/4 -top-1/4 h-1/2 w-1/2 rounded-full blur-3xl" />
+        <div className="bg-secondary/5 absolute -bottom-1/4 -right-1/4 h-1/2 w-1/2 rounded-full blur-3xl" />
+      </div>
+
+      <Card className="animate-fade-in relative w-full max-w-md">
+        <CardHeader className="space-y-4 text-center">
+          <div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
             <svg
               className="text-primary h-8 w-8"
               fill="none"
@@ -28,19 +128,100 @@ function InviteAcceptPage() {
               />
             </svg>
           </div>
-          <h2 className="mb-2 text-xl font-semibold">
-            Invite System Coming Soon
-          </h2>
-          <p className="text-muted-foreground mb-6">
-            The invite acceptance feature is being migrated to the new
-            architecture.
-          </p>
-          <p className="text-muted-foreground mb-4 text-xs">
-            Invite token: {token}
-          </p>
-          <Button onClick={() => navigate({ to: "/login" })}>
-            Go to Login
-          </Button>
+
+          <div>
+            <CardTitle className="text-3xl">Join Vamsa</CardTitle>
+            <CardDescription className="mt-2 text-base">
+              You have been invited to join the family tree
+              {invite.person && (
+                <>
+                  {" "}
+                  as{" "}
+                  <span className="font-medium">
+                    {invite.person.firstName} {invite.person.lastName}
+                  </span>
+                </>
+              )}
+            </CardDescription>
+          </div>
+        </CardHeader>
+
+        <CardContent>
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-6"
+            data-testid="invite-accept-form"
+          >
+            {error && (
+              <div
+                className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border-2 px-4 py-3 text-sm"
+                data-testid="invite-accept-error"
+              >
+                {error}
+              </div>
+            )}
+
+            <div className="rounded-lg border-2 border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:text-green-400">
+              <p className="font-medium">Invite Details</p>
+              <p className="mt-1">Email: {invite.email}</p>
+              <p>Role: {invite.role}</p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Your Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your full name"
+                  data-testid="invite-name-input"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Create Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  data-testid="invite-password-input"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  autoComplete="new-password"
+                  required
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirm your password"
+                  data-testid="invite-confirm-password-input"
+                />
+              </div>
+            </div>
+
+            <Button
+              type="submit"
+              size="lg"
+              disabled={isLoading}
+              className="w-full"
+              data-testid="invite-accept-submit"
+            >
+              {isLoading ? "Creating account..." : "Accept Invite"}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>

@@ -11,5 +11,16 @@ export {
 // General utilities
 export { generateRandomPassword, getInitials } from "./utils";
 
+// Event utilities
+export {
+  mapGedcomTagToEventType,
+  mapEventTypeToGedcomTag,
+  getEventTypeLabel,
+  type EventType,
+  GEDCOM_TO_EVENT_TYPE,
+  EVENT_TYPE_TO_GEDCOM,
+  EVENT_TYPE_LABELS,
+} from "./event";
+
 // GEDCOM support
 export * from "./gedcom";

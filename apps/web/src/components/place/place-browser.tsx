@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, Badge, Button } from "@vamsa/ui/primitives";
-import { getPlace, getPlaceHierarchy } from "~/server/places";
+import { getPlace, getPlaceHierarchy, getPlaceChildren } from "~/server/places";
 
 interface PlaceBrowserProps {
   initialPlaceId?: string;
@@ -32,11 +32,7 @@ export function PlaceBrowser({
 
   const { data: children = [] } = useQuery({
     queryKey: ["placeChildren", currentPlaceId],
-    queryFn: async () => {
-      // This would be a new server function to get children
-      // For now, we'll return empty array
-      return [];
-    },
+    queryFn: () => getPlaceChildren({ data: { parentId: currentPlaceId! } }),
     enabled: !!currentPlaceId && (place?.childCount ?? 0) > 0,
   });
 

@@ -1,12 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "./db";
-import { z } from "zod";
 import {
   mediaMetadataSchema,
   mediaReorderSchema,
   linkMediaToEventSchema,
   setPrimaryPhotoSchema,
 } from "@vamsa/schemas";
+import { writeFile, mkdir } from "fs/promises";
+import { existsSync } from "fs";
+import path from "path";
+import { randomUUID } from "crypto";
 
 // Get all media for a person
 export const getPersonMedia = createServerFn({ method: "GET" })
@@ -343,5 +346,151 @@ export const linkMediaToEvent = createServerFn({ method: "POST" })
       mediaId: link.mediaId,
       personId: link.personId,
       eventType: link.eventType,
+    };
+  });
+
+// Helper to get upload directory
+function getUploadDir(): string {
+  if (process.env.MEDIA_STORAGE_PATH) {
+    return process.env.MEDIA_STORAGE_PATH;
+  }
+  // Use data/uploads/media directory in project root
+  return path.join(process.cwd(), "data", "uploads", "media");
+}
+
+// Helper to ensure upload directory exists
+async function ensureUploadDir(): Promise<void> {
+  const uploadDir = getUploadDir();
+  if (!existsSync(uploadDir)) {
+    await mkdir(uploadDir, { recursive: true });
+  }
+}
+
+// Helper to get file extension from mime type
+function getExtension(mimeType: string): string {
+  const extensions: Record<string, string> = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/gif": ".gif",
+    "image/webp": ".webp",
+    "image/tiff": ".tiff",
+    "application/pdf": ".pdf",
+    "image/bmp": ".bmp",
+    "image/svg+xml": ".svg",
+  };
+  return extensions[mimeType] || ".bin";
+}
+
+// Upload media for a person
+export const uploadMedia = createServerFn({ method: "POST" })
+  .inputValidator(
+    (data: {
+      personId: string;
+      fileName: string;
+      mimeType: string;
+      fileSize: number;
+      base64Data: string;
+      title?: string;
+      caption?: string;
+      description?: string;
+      source?: string;
+    }) => data
+  )
+  .handler(async ({ data }) => {
+    const {
+      personId,
+      fileName,
+      mimeType,
+      fileSize,
+      base64Data,
+      title,
+      caption,
+      description,
+      source,
+    } = data;
+
+    // Verify person exists
+    const person = await prisma.person.findUnique({
+      where: { id: personId },
+    });
+
+    if (!person) {
+      throw new Error("Person not found");
+    }
+
+    // Ensure upload directory exists
+    await ensureUploadDir();
+
+    // Generate unique filename
+    const ext = getExtension(mimeType);
+    const uniqueFileName = `${randomUUID()}${ext}`;
+    const uploadDir = getUploadDir();
+    const filePath = path.join(uploadDir, uniqueFileName);
+    const relativePath = `/data/uploads/media/${uniqueFileName}`;
+
+    // Decode and save file
+    try {
+      const buffer = Buffer.from(base64Data, "base64");
+      await writeFile(filePath, buffer);
+    } catch (error) {
+      throw new Error(
+        `Failed to save file: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
+    // Determine format from mime type
+    const format = mimeType.split("/")[1]?.toUpperCase() || "UNKNOWN";
+
+    // Create media object in database
+    const mediaObject = await prisma.mediaObject.create({
+      data: {
+        filePath: relativePath,
+        format,
+        mimeType,
+        fileSize,
+        title: title || fileName,
+        description: description || null,
+        source: source || null,
+        uploadedAt: new Date(),
+      },
+    });
+
+    // Get existing media count for this person
+    const existingMedia = await prisma.personMedia.findMany({
+      where: { personId },
+      orderBy: { displayOrder: "desc" },
+      take: 1,
+    });
+
+    const displayOrder =
+      existingMedia.length > 0 ? (existingMedia[0]?.displayOrder ?? 0) + 1 : 0;
+    const isPrimary = existingMedia.length === 0; // First photo is primary
+
+    // Link media to person
+    const personMedia = await prisma.personMedia.create({
+      data: {
+        personId,
+        mediaId: mediaObject.id,
+        caption: caption || null,
+        isPrimary,
+        displayOrder,
+      },
+    });
+
+    return {
+      id: personMedia.id,
+      mediaId: mediaObject.id,
+      filePath: mediaObject.filePath,
+      format: mediaObject.format,
+      mimeType: mediaObject.mimeType,
+      fileSize: mediaObject.fileSize,
+      title: mediaObject.title,
+      description: mediaObject.description,
+      source: mediaObject.source,
+      caption: personMedia.caption,
+      isPrimary: personMedia.isPrimary,
+      displayOrder: personMedia.displayOrder,
+      uploadedAt: mediaObject.uploadedAt.toISOString(),
+      createdAt: personMedia.createdAt.toISOString(),
     };
   });

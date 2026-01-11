@@ -161,13 +161,9 @@ function PeopleListComponent() {
                     </td>
                     <td className="px-4 py-3">
                       {person.isLiving ? (
-                        <Badge variant="default" className="text-xs">
-                          Living
-                        </Badge>
+                        <Badge variant="secondary">Living</Badge>
                       ) : (
-                        <Badge variant="muted" className="text-xs">
-                          Deceased
-                        </Badge>
+                        <Badge variant="outline">Deceased</Badge>
                       )}
                     </td>
                   </tr>

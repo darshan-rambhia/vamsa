@@ -10,6 +10,8 @@ import type {
   ParsedDate,
   ParsedIndividual,
   ParsedFamily,
+  ParsedRepository,
+  ParsedSubmitter,
   ValidationError,
 } from "./types";
 import { detectEncoding, normalizeEncoding } from "./encoding";
@@ -55,6 +57,8 @@ export class GedcomParser {
     const families = this.records.filter((r) => r.type === "FAM");
     const sources = this.records.filter((r) => r.type === "SOUR");
     const objects = this.records.filter((r) => r.type === "OBJE");
+    const repositories = this.records.filter((r) => r.type === "REPO");
+    const submitters = this.records.filter((r) => r.type === "SUBM");
 
     if (!header) {
       throw new Error("Missing required HEAD record");
@@ -98,6 +102,8 @@ export class GedcomParser {
       families,
       sources,
       objects,
+      repositories,
+      submitters,
       trailer,
       version,
       charset,
@@ -273,13 +279,24 @@ export class GedcomParser {
   private getRecordType(
     tag: string,
     _xref?: string
-  ): "INDI" | "FAM" | "HEAD" | "TRLR" | "SOUR" | "OBJE" | "OTHER" {
+  ):
+    | "INDI"
+    | "FAM"
+    | "HEAD"
+    | "TRLR"
+    | "SOUR"
+    | "OBJE"
+    | "REPO"
+    | "SUBM"
+    | "OTHER" {
     if (tag === "HEAD") return "HEAD";
     if (tag === "TRLR") return "TRLR";
     if (tag === "INDI") return "INDI";
     if (tag === "FAM") return "FAM";
     if (tag === "SOUR") return "SOUR";
     if (tag === "OBJE") return "OBJE";
+    if (tag === "REPO") return "REPO";
+    if (tag === "SUBM") return "SUBM";
     return "OTHER";
   }
 
@@ -786,5 +803,109 @@ export class GedcomParser {
       }
     }
     return undefined;
+  }
+
+  /**
+   * Parse repository record into structured data
+   */
+  parseRepository(record: GedcomRecord): ParsedRepository {
+    const id = record.id || "unknown";
+
+    // Extract name (NAME tag)
+    const nameLine = record.tags.get("NAME")?.[0];
+    const name = nameLine?.value || "";
+
+    // Extract address components
+    const addrLine = record.tags.get("ADDR")?.[0];
+    const address = addrLine?.value;
+
+    // Extract city (CITY tag)
+    const cityLine = record.tags.get("CITY")?.[0];
+    const city = cityLine?.value;
+
+    // Extract state (STAE tag)
+    const stateLine = record.tags.get("STAE")?.[0];
+    const state = stateLine?.value;
+
+    // Extract country (CTRY tag)
+    const countryLine = record.tags.get("CTRY")?.[0];
+    const country = countryLine?.value;
+
+    // Extract phone (PHON tag)
+    const phoneLine = record.tags.get("PHON")?.[0];
+    const phone = phoneLine?.value;
+
+    // Extract email (EMAIL tag)
+    const emailLine = record.tags.get("EMAIL")?.[0];
+    const email = emailLine?.value;
+
+    // Extract website (WWW tag)
+    const websiteLine = record.tags.get("WWW")?.[0];
+    const website = websiteLine?.value;
+
+    // Extract notes (NOTE tag, skip empty notes)
+    const notes: string[] = [];
+    const noteLines = record.tags.get("NOTE") || [];
+    for (const line of noteLines) {
+      const noteValue = line.value.trim();
+      if (noteValue) {
+        notes.push(noteValue);
+      }
+    }
+
+    return {
+      id,
+      name,
+      address,
+      city,
+      state,
+      country,
+      phone,
+      email,
+      website,
+      notes,
+    };
+  }
+
+  /**
+   * Parse submitter record into structured data
+   */
+  parseSubmitter(record: GedcomRecord): ParsedSubmitter {
+    const id = record.id || "unknown";
+
+    // Extract name (NAME tag)
+    const nameLine = record.tags.get("NAME")?.[0];
+    const name = nameLine?.value || "";
+
+    // Extract address (ADDR tag)
+    const addrLine = record.tags.get("ADDR")?.[0];
+    const address = addrLine?.value;
+
+    // Extract phone (PHON tag)
+    const phoneLine = record.tags.get("PHON")?.[0];
+    const phone = phoneLine?.value;
+
+    // Extract email (EMAIL tag)
+    const emailLine = record.tags.get("EMAIL")?.[0];
+    const email = emailLine?.value;
+
+    // Extract notes (NOTE tag, skip empty notes)
+    const notes: string[] = [];
+    const noteLines = record.tags.get("NOTE") || [];
+    for (const line of noteLines) {
+      const noteValue = line.value.trim();
+      if (noteValue) {
+        notes.push(noteValue);
+      }
+    }
+
+    return {
+      id,
+      name,
+      address,
+      phone,
+      email,
+      notes,
+    };
   }
 }

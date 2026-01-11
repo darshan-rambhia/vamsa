@@ -15,8 +15,15 @@ function loadEnvFile(filePath: string) {
     for (const line of lines) {
       const [key, ...valueParts] = line.split("=");
       const trimmedKey = key?.trim();
-      if (trimmedKey && !trimmedKey.startsWith("#") && !process.env[trimmedKey]) {
-        const value = valueParts.join("=").trim().replace(/^["']|["']$/g, "");
+      if (
+        trimmedKey &&
+        !trimmedKey.startsWith("#") &&
+        !process.env[trimmedKey]
+      ) {
+        const value = valueParts
+          .join("=")
+          .trim()
+          .replace(/^["']|["']$/g, "");
         process.env[trimmedKey] = value;
       }
     }
@@ -49,7 +56,9 @@ const webServerConfig = {
   env: {
     ...process.env,
     // Ensure DATABASE_URL is set for test environment
-    DATABASE_URL: process.env.DATABASE_URL || "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
+    DATABASE_URL:
+      process.env.DATABASE_URL ||
+      "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
   },
 };
 
@@ -64,7 +73,7 @@ export default defineConfig({
     timeout: 10 * 1000,
   },
   retries: process.env.CI ? 2 : 0,
-  workers: 10,
+  workers: 15,
   fullyParallel: true,
   outputDir: "test-output/results/",
   reporter: [

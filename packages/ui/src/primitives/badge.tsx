@@ -3,22 +3,23 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full px-3 py-1 text-xs font-medium transition-colors",
+  // Improved padding (px-2.5 py-0.5 -> px-3 py-1) and added letter-spacing for better readability
+  "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide transition-colors",
   {
     variants: {
       variant: {
-        // Default - forest green
-        default: "bg-primary/10 text-primary border border-primary/20",
-        // Secondary - moss
+        // Default - forest green (for "Living")
+        default: "bg-primary/15 text-primary border border-primary/25",
+        // Secondary - moss green
         secondary:
-          "bg-secondary/20 text-secondary-foreground border border-secondary/30",
+          "bg-secondary/25 text-secondary-foreground border border-secondary/35",
         // Destructive - autumn red
         destructive:
-          "bg-destructive/10 text-destructive border border-destructive/20",
-        // Outline - just border
-        outline: "border-2 border-border text-foreground bg-transparent",
-        // Muted - subtle
-        muted: "bg-muted text-muted-foreground border border-transparent",
+          "bg-destructive/15 text-destructive border border-destructive/25",
+        // Outline - just border (for "Deceased")
+        outline: "border-2 border-muted-foreground/40 text-muted-foreground bg-transparent",
+        // Muted - subtle (for tab counts, etc.)
+        muted: "bg-muted/80 text-muted-foreground border border-transparent",
       },
     },
     defaultVariants: {

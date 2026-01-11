@@ -74,75 +74,84 @@ export class Navigation {
   }
 
   async goToDashboard() {
-    await this._clickNavLink(this.dashboardLink);
+    await this._clickNavLinkByTestId("nav-dashboard");
     await this.page.waitForURL("/dashboard");
   }
 
   async goToPeople() {
-    await this._clickNavLink(this.peopleLink);
+    await this._clickNavLinkByTestId("nav-people");
     await this.page.waitForURL("/people");
   }
 
   async goToTree() {
-    await this._clickNavLink(this.treeLink);
+    await this._clickNavLinkByTestId("nav-tree");
     await this.page.waitForURL(/\/tree(\?|$)/);
   }
 
   async goToActivity() {
-    await this._clickNavLink(this.activityLink);
+    await this._clickNavLinkByTestId("nav-activity");
     await this.page.waitForURL("/activity");
   }
 
   async goToAdmin() {
-    await this._clickNavLink(this.adminLink);
+    await this._clickNavLinkByTestId("nav-admin");
     await this.page.waitForURL("/admin");
   }
 
-  private async _clickNavLink(link: Locator) {
-    // Check if link is visible
-    const isVisible = await link.isVisible({ timeout: 1000 }).catch(() => false);
+  private async _clickNavLinkByTestId(testId: string) {
+    // First check if mobile menu button is visible (indicates we're in mobile mode)
+    const isMobileMode = await this.mobileMenuButton
+      .isVisible({ timeout: 1000 })
+      .catch(() => false);
 
-    if (!isVisible) {
-      // Link is not visible, try to open the mobile menu
-      const menuButtonVisible = await this.mobileMenuButton.isVisible({ timeout: 1000 }).catch(() => false);
-      if (menuButtonVisible) {
-        // Click the menu button to toggle it open
-        await this.mobileMenuButton.click();
-        // Wait for animation and for the link to become visible
-        await link.waitFor({ state: "visible", timeout: 5000 }).catch(() => {});
-      } else {
-        // Link is hidden but mobile menu button is also not visible
-        // This can happen if links are in DOM but hidden by CSS (e.g., md:hidden)
-        // Force click using JavaScript to bypass visibility check
-        await link.evaluate((el) => (el as HTMLElement).click());
+    if (isMobileMode) {
+      // In mobile mode, we need to open the menu first
+      await this.mobileMenuButton.click();
+      // Wait for mobile menu animation
+      await this.page.waitForTimeout(300);
+    }
+
+    // Find all elements with this testid and click the visible one
+    // There may be two (desktop and mobile), but only one should be visible
+    const links = this.page.getByTestId(testId);
+    const count = await links.count();
+
+    for (let i = 0; i < count; i++) {
+      const link = links.nth(i);
+      if (await link.isVisible().catch(() => false)) {
+        await link.click();
         return;
       }
     }
 
-    // Now click the link (it should be visible or we tried to make it visible)
-    try {
-      await link.click({ timeout: 5000 });
-    } catch {
-      // If visible click fails, force click using JavaScript
-      await link.evaluate((el) => (el as HTMLElement).click());
-    }
+    // If no visible link found, try force click on first one
+    await links.first().evaluate((el) => (el as HTMLElement).click());
   }
 
   async signOut() {
-    // Check if sign-out button is visible, if not try to open mobile menu
-    if (!(await this.signOutButton.isVisible({ timeout: 1000 }).catch(() => false))) {
-      if (await this.mobileMenuButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-        await this.mobileMenuButton.click();
-        await this.page.waitForTimeout(300);
-      }
+    // First check if mobile menu button is visible (indicates we're in mobile mode)
+    const isMobileMode = await this.mobileMenuButton
+      .isVisible({ timeout: 1000 })
+      .catch(() => false);
+
+    if (isMobileMode) {
+      // In mobile mode, we need to open the menu first for sign-out button to exist in DOM
+      await this.mobileMenuButton.click();
+      // Wait for mobile menu animation
+      await this.page.waitForTimeout(300);
     }
 
-    // Try to click the sign-out button
-    try {
-      await this.signOutButton.click({ timeout: 5000 });
-    } catch {
-      // If visible click fails, force click using JavaScript
-      await this.signOutButton.evaluate((el) => (el as HTMLElement).click());
+    // Find any visible signout button and click it
+    // There may be two (desktop and mobile), but only one should be visible
+    const signoutButtons = this.page.getByTestId("signout-button");
+    const count = await signoutButtons.count();
+
+    for (let i = 0; i < count; i++) {
+      const button = signoutButtons.nth(i);
+      if (await button.isVisible().catch(() => false)) {
+        await button.click();
+        break;
+      }
     }
 
     await this.page.waitForURL("/login");
@@ -168,19 +177,30 @@ export class PeopleListPage {
   constructor(page: Page) {
     this.page = page;
     this.searchInput = page.locator('input[placeholder*="Search"]');
-    this.addPersonButton = page.locator('button:has-text("Add"), a:has-text("Add Person")');
+    this.addPersonButton = page.locator(
+      'button:has-text("Add"), a:has-text("Add Person")'
+    );
     // People are rendered as table rows with links containing person names
-    this.personCards = page.locator('table tbody tr, [data-person-card], [data-testid="person-card"]');
-    this.emptyState = page.locator('[data-empty-state], :text("No people found"), :text("No people")');
-    this.loadingSpinner = page.locator('[data-loading], .animate-spin');
+    this.personCards = page.locator(
+      'table tbody tr, [data-person-card], [data-testid="person-card"]'
+    );
+    this.emptyState = page.locator(
+      '[data-empty-state], :text("No people found"), :text("No people")'
+    );
+    this.loadingSpinner = page.locator("[data-loading], .animate-spin");
   }
 
   async goto() {
     await this.page.goto("/people");
     // Wait for either person cards to load or empty state to be visible
     await Promise.race([
-      this.personCards.first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {}),
-      this.emptyState.waitFor({ state: "visible", timeout: 10000 }).catch(() => {}),
+      this.personCards
+        .first()
+        .waitFor({ state: "visible", timeout: 10000 })
+        .catch(() => {}),
+      this.emptyState
+        .waitFor({ state: "visible", timeout: 10000 })
+        .catch(() => {}),
     ]);
   }
 
@@ -208,9 +228,16 @@ export class PeopleListPage {
     // Wait for loading to finish (spinner to be hidden) and content to load
     // Wait for either content to appear or spinner to disappear
     await Promise.race([
-      this.personCards.first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {}),
-      this.emptyState.waitFor({ state: "visible", timeout: 10000 }).catch(() => {}),
-      this.loadingSpinner.waitFor({ state: "hidden", timeout: 10000 }).catch(() => {}),
+      this.personCards
+        .first()
+        .waitFor({ state: "visible", timeout: 10000 })
+        .catch(() => {}),
+      this.emptyState
+        .waitFor({ state: "visible", timeout: 10000 })
+        .catch(() => {}),
+      this.loadingSpinner
+        .waitFor({ state: "hidden", timeout: 10000 })
+        .catch(() => {}),
     ]);
   }
 }
@@ -230,10 +257,16 @@ export class PersonDetailPage {
   constructor(page: Page) {
     this.page = page;
     this.nameHeading = page.locator("h1, [data-person-name]");
-    this.editButton = page.locator('button:has-text("Edit"), a:has-text("Edit")');
+    this.editButton = page.locator(
+      'button:has-text("Edit"), a:has-text("Edit")'
+    );
     this.deleteButton = page.locator('button:has-text("Delete")');
-    this.backButton = page.locator('button:has-text("Back"), a:has-text("Back")');
-    this.relationshipsSection = page.locator('[data-relationships], :text("Relationships")');
+    this.backButton = page.locator(
+      'button:has-text("Back"), a:has-text("Back")'
+    );
+    this.relationshipsSection = page.locator(
+      '[data-relationships], :text("Relationships")'
+    );
     this.detailsSection = page.locator('[data-details], :text("Details")');
   }
 
@@ -272,17 +305,24 @@ export class DashboardPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.statsCards = page.locator('[data-stat-card], .stat-card');
-    this.recentActivity = page.locator('[data-recent-activity], :text("Recent Activity")');
-    this.welcomeMessage = page.locator('[data-welcome], h1');
+    this.statsCards = page.locator("[data-stat-card], .stat-card");
+    this.recentActivity = page.locator(
+      '[data-recent-activity], :text("Recent Activity")'
+    );
+    this.welcomeMessage = page.locator("[data-welcome], h1");
   }
 
   async goto() {
     await this.page.goto("/dashboard");
     // Wait for welcome message or stats cards to indicate page is ready
     await Promise.race([
-      this.welcomeMessage.waitFor({ state: "visible", timeout: 10000 }).catch(() => {}),
-      this.statsCards.first().waitFor({ state: "visible", timeout: 10000 }).catch(() => {}),
+      this.welcomeMessage
+        .waitFor({ state: "visible", timeout: 10000 })
+        .catch(() => {}),
+      this.statsCards
+        .first()
+        .waitFor({ state: "visible", timeout: 10000 })
+        .catch(() => {}),
     ]);
   }
 
@@ -305,7 +345,7 @@ export class AdminPage {
   constructor(page: Page) {
     this.page = page;
     // Admin nav uses a nav element with links, not semantic tabs
-    this.tabs = page.locator('nav').first();
+    this.tabs = page.locator("nav").first();
     this.usersTab = page.locator('a[href="/admin/users"]');
     this.invitesTab = page.locator('a[href="/admin/invites"]');
     this.backupTab = page.locator('a[href="/admin/backup"]');
@@ -357,9 +397,11 @@ export class PersonFormPage {
     this.birthPlaceInput = page.locator('input[name="birthPlace"]');
     this.genderSelect = page.locator('[name="gender"], select[name="gender"]');
     this.bioTextarea = page.locator('textarea[name="bio"]');
-    this.saveButton = page.locator('button[type="submit"], button:has-text("Save")');
+    this.saveButton = page.locator(
+      'button[type="submit"], button:has-text("Save")'
+    );
     this.cancelButton = page.locator('button:has-text("Cancel")');
-    this.formErrors = page.locator('.text-destructive, [data-error]');
+    this.formErrors = page.locator(".text-destructive, [data-error]");
   }
 
   async waitForFormReady() {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, Badge, Button } from "@vamsa/ui/primitives";
+import { Card, CardContent, Badge } from "@vamsa/ui/primitives";
 import type { PersonSourcesResponse, SourceWithEvents } from "~/server/sources";
 import { SourceDetailModal } from "./source-detail-modal";
 

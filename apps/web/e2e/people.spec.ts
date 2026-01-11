@@ -108,7 +108,7 @@ test.describe("People Management", () => {
       if (personCount > 0) {
         // Click the first person link in the table or card list
         const firstPersonLink = page
-          .locator('table tbody tr a, [data-person-card] a')
+          .locator("table tbody tr a, [data-person-card] a")
           .first();
         if (await firstPersonLink.isVisible()) {
           await firstPersonLink.click();
@@ -131,7 +131,7 @@ test.describe("People Management", () => {
       if (personCount > 0) {
         // Click first person link in the table or card list
         const firstPersonLink = page
-          .locator('table tbody tr a, [data-person-card] a')
+          .locator("table tbody tr a, [data-person-card] a")
           .first();
         if (await firstPersonLink.isVisible()) {
           await firstPersonLink.click();
@@ -214,7 +214,7 @@ test.describe("People Management", () => {
       const personCount = await peopleList.getPersonCount();
       if (personCount > 0) {
         const firstPersonLink = page
-          .locator('table tbody tr a, [data-person-card] a')
+          .locator("table tbody tr a, [data-person-card] a")
           .first();
         if (await firstPersonLink.isVisible()) {
           await firstPersonLink.click();
@@ -283,7 +283,9 @@ test.describe("People - Responsive", () => {
 });
 
 test.describe("People - Data Integrity", () => {
-  test("should reflect changes immediately (Convex reactivity)", async ({ page }) => {
+  test("should reflect changes immediately (Convex reactivity)", async ({
+    page,
+  }) => {
     // This test verifies Convex's reactive updates
     // When data changes, UI should update without manual refresh
     await page.goto("/people");

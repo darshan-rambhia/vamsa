@@ -239,7 +239,7 @@ function PersonDetailComponent() {
               </CardContent>
             </Card>
           ) : (
-            <EventsTab events={events} />
+            <EventsTab events={events} personId={personId} />
           )}
         </TabsContent>
 
@@ -254,7 +254,7 @@ function PersonDetailComponent() {
               </CardContent>
             </Card>
           ) : (
-            <PlacesTab places={places} />
+            <PlacesTab places={places} personId={personId} />
           )}
         </TabsContent>
 

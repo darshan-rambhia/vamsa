@@ -22,6 +22,7 @@ import {
 const searchSchema = z.object({
   registered: z.boolean().optional(),
   claimed: z.boolean().optional(),
+  invited: z.boolean().optional(),
 });
 
 export const Route = createFileRoute("/login")({
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginComponent() {
   const navigate = useNavigate();
-  const { registered, claimed } = useSearch({ from: "/login" });
+  const { registered, claimed, invited } = useSearch({ from: "/login" });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -39,21 +40,14 @@ function LoginComponent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("[Login Page] Form submitted");
     setError(null);
     setIsLoading(true);
 
     try {
-      console.log(
-        "[Login Page] Calling login server function with email:",
-        email
-      );
-      const result = await login({ data: { email, password } });
-      console.log("[Login Page] Login successful, result:", result);
+      await login({ data: { email, password } });
       navigate({ to: "/people" });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Login failed";
-      console.error("[Login Page] Login failed:", errorMessage);
       setError(errorMessage);
       setIsLoading(false);
     }
@@ -126,6 +120,16 @@ function LoginComponent() {
               </div>
             )}
 
+            {invited && (
+              <div
+                className="border-primary/30 bg-primary/10 text-primary rounded-lg border-2 px-4 py-3 text-sm"
+                data-testid="login-invited-success"
+              >
+                <div className="mb-1 font-semibold">Invite accepted!</div>
+                <div>Please sign in with your new credentials.</div>
+              </div>
+            )}
+
             {error && (
               <div
                 className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border-2 px-4 py-3 text-sm"
@@ -180,7 +184,7 @@ function LoginComponent() {
 
             <div className="text-center text-sm">
               <span className="text-muted-foreground">
-                Don't have an account?{" "}
+                Don&apos;t have an account?{" "}
               </span>
               <Link
                 to="/register"

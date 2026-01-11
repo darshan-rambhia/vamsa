@@ -50,12 +50,14 @@ const createRelationshipSchema = z.object({
 export const getRelationships = createServerFn({ method: "GET" })
   .inputValidator((data: { personId: string }) => data)
   .handler(async ({ data }) => {
+    // Only fetch relationships FROM this person to avoid duplicates
+    // Since relationships are stored bidirectionally (A->B and B->A),
+    // we only need to look at relationships where personId matches
     const relationships = await prisma.relationship.findMany({
       where: {
-        OR: [{ personId: data.personId }, { relatedPersonId: data.personId }],
+        personId: data.personId,
       },
       include: {
-        person: true,
         relatedPerson: true,
       },
     });
@@ -66,11 +68,6 @@ export const getRelationships = createServerFn({ method: "GET" })
       isActive: r.isActive,
       marriageDate: r.marriageDate?.toISOString().split("T")[0] ?? null,
       divorceDate: r.divorceDate?.toISOString().split("T")[0] ?? null,
-      person: {
-        id: r.person.id,
-        firstName: r.person.firstName,
-        lastName: r.person.lastName,
-      },
       relatedPerson: {
         id: r.relatedPerson.id,
         firstName: r.relatedPerson.firstName,
@@ -164,10 +161,74 @@ export const createRelationship = createServerFn({ method: "POST" })
     return { id: relationship.id };
   });
 
+const updateRelationshipSchema = z.object({
+  id: z.string(),
+  marriageDate: z.string().optional().nullable(),
+  divorceDate: z.string().optional().nullable(),
+});
+
+// Update a relationship
+export const updateRelationship = createServerFn({ method: "POST" })
+  .inputValidator((data: z.infer<typeof updateRelationshipSchema>) => {
+    return updateRelationshipSchema.parse(data);
+  })
+  .handler(async ({ data }) => {
+    const user = await requireAuth("MEMBER");
+
+    // Find the relationship
+    const relationship = await prisma.relationship.findUnique({
+      where: { id: data.id },
+    });
+
+    if (!relationship) {
+      throw new Error("Relationship not found");
+    }
+
+    // Determine isActive based on divorceDate
+    const isActive = !data.divorceDate;
+
+    // Update primary relationship
+    const updated = await prisma.relationship.update({
+      where: { id: data.id },
+      data: {
+        marriageDate: data.marriageDate ? new Date(data.marriageDate) : null,
+        divorceDate: data.divorceDate ? new Date(data.divorceDate) : null,
+        isActive,
+      },
+    });
+
+    // BIDIRECTIONAL SYNC for SPOUSE type
+    if (relationship.type === "SPOUSE") {
+      await prisma.relationship.updateMany({
+        where: {
+          personId: relationship.relatedPersonId,
+          relatedPersonId: relationship.personId,
+          type: "SPOUSE",
+        },
+        data: {
+          marriageDate: data.marriageDate ? new Date(data.marriageDate) : null,
+          divorceDate: data.divorceDate ? new Date(data.divorceDate) : null,
+          isActive,
+        },
+      });
+    }
+
+    console.warn(
+      "[Relationships Server] Updated relationship:",
+      data.id,
+      "by user:",
+      user.id
+    );
+
+    return { id: updated.id };
+  });
+
 // Delete a relationship
 export const deleteRelationship = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
+    const user = await requireAuth("MEMBER");
+
     const relationship = await prisma.relationship.findUnique({
       where: { id: data.id },
     });
@@ -194,6 +255,13 @@ export const deleteRelationship = createServerFn({ method: "POST" })
               : relationship.type,
       },
     });
+
+    console.warn(
+      "[Relationships Server] Deleted relationship:",
+      data.id,
+      "by user:",
+      user.id
+    );
 
     return { success: true };
   });

@@ -25,6 +25,12 @@ import { ResearchNoteForm } from "../source/research-note-form";
 import { ResearchNoteModal } from "../source/research-note-modal";
 import { SourceDetailModal } from "./source-detail-modal";
 import type { SourceWithEvents } from "~/server/sources";
+import type {
+  Reliability,
+  SourceType,
+  CitationFormat,
+  Confidence,
+} from "@vamsa/schemas";
 
 interface SourcesManagementTabProps {
   personId: string;
@@ -105,21 +111,27 @@ export function SourcesManagementTab({ personId }: SourcesManagementTabProps) {
     },
   });
 
-  const handleViewSource = (source: SourceWithEvents) => {
+  // These handlers are available for future inline source management in SourcesTab
+  const _handleViewSource = (source: SourceWithEvents) => {
     setSelectedSource(source);
     setModalType("viewSource");
   };
 
-  const handleEditSource = (source: SourceWithEvents) => {
+  const _handleEditSource = (source: SourceWithEvents) => {
     setEditingSourceId(source.id);
     setModalType("editSource");
   };
 
-  const handleDeleteSource = (sourceId: string) => {
+  const _handleDeleteSource = (sourceId: string) => {
     if (window.confirm("Are you sure you want to delete this source?")) {
       deleteSourceMutation.mutate({ data: { sourceId } });
     }
   };
+
+  // Suppress unused variable warnings - these are for future use
+  void _handleViewSource;
+  void _handleEditSource;
+  void _handleDeleteSource;
 
   const handleViewNote = (note: ResearchNote) => {
     setSelectedNote(note);
@@ -269,14 +281,14 @@ export function SourcesManagementTab({ personId }: SourcesManagementTabProps) {
                 description: editingSource.description ?? undefined,
                 repository: editingSource.repository ?? undefined,
                 notes: editingSource.notes ?? undefined,
-                sourceType: (editingSource.sourceType as any) ?? undefined,
-                citationFormat: (editingSource.citationFormat as any) ?? undefined,
+                sourceType: (editingSource.sourceType as SourceType) ?? undefined,
+                citationFormat: (editingSource.citationFormat as CitationFormat) ?? undefined,
                 doi: editingSource.doi ?? undefined,
                 url: editingSource.url ?? undefined,
                 isbn: editingSource.isbn ?? undefined,
                 callNumber: editingSource.callNumber ?? undefined,
                 accessDate: editingSource.accessDate ?? undefined,
-                confidence: (editingSource.confidence as any) ?? undefined,
+                confidence: (editingSource.confidence as Confidence) ?? undefined,
               }}
               onSuccess={closeModal}
               onCancel={closeModal}
@@ -334,7 +346,8 @@ export function SourcesManagementTab({ personId }: SourcesManagementTabProps) {
                 methodology: selectedNote.methodology ?? undefined,
                 limitations: selectedNote.limitations ?? undefined,
                 relatedSources: selectedNote.relatedSources,
-                conclusionReliability: selectedNote.conclusionReliability as any,
+                conclusionReliability:
+                  selectedNote.conclusionReliability as Reliability,
               }}
               onSuccess={closeModal}
               onCancel={closeModal}

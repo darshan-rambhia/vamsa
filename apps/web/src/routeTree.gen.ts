@@ -23,7 +23,10 @@ import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
 import { Route as AuthenticatedPeopleNewRouteImport } from './routes/_authenticated/people/new'
 import { Route as AuthenticatedPeoplePersonIdRouteImport } from './routes/_authenticated/people/$personId'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
+import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin/suggestions'
 import { Route as AuthenticatedAdminSourcesRouteImport } from './routes/_authenticated/admin/sources'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
 import { Route as AuthenticatedAdminInvitesRouteImport } from './routes/_authenticated/admin/invites'
 import { Route as AuthenticatedAdminBackupRouteImport } from './routes/_authenticated/admin/backup'
 import { Route as AuthenticatedPeoplePersonIdEditRouteImport } from './routes/_authenticated/people/$personId_.edit'
@@ -100,10 +103,27 @@ const AuthenticatedPeoplePersonIdRoute =
     path: '/people/$personId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedAdminSuggestionsRoute =
+  AuthenticatedAdminSuggestionsRouteImport.update({
+    id: '/suggestions',
+    path: '/suggestions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminSourcesRoute =
   AuthenticatedAdminSourcesRouteImport.update({
     id: '/sources',
     path: '/sources',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminInvitesRoute =
@@ -138,7 +158,10 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/sources': typeof AuthenticatedAdminSourcesRoute
+  '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/people/new': typeof AuthenticatedPeopleNewRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
@@ -157,7 +180,10 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/sources': typeof AuthenticatedAdminSourcesRoute
+  '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/people/new': typeof AuthenticatedPeopleNewRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
@@ -178,7 +204,10 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/_authenticated/admin/invites': typeof AuthenticatedAdminInvitesRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/sources': typeof AuthenticatedAdminSourcesRoute
+  '/_authenticated/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/_authenticated/people/new': typeof AuthenticatedPeopleNewRoute
   '/_authenticated/people/': typeof AuthenticatedPeopleIndexRoute
@@ -199,7 +228,10 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/admin/backup'
     | '/admin/invites'
+    | '/admin/settings'
     | '/admin/sources'
+    | '/admin/suggestions'
+    | '/admin/users'
     | '/people/$personId'
     | '/people/new'
     | '/people'
@@ -218,7 +250,10 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/admin/backup'
     | '/admin/invites'
+    | '/admin/settings'
     | '/admin/sources'
+    | '/admin/suggestions'
+    | '/admin/users'
     | '/people/$personId'
     | '/people/new'
     | '/people'
@@ -238,7 +273,10 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_authenticated/admin/backup'
     | '/_authenticated/admin/invites'
+    | '/_authenticated/admin/settings'
     | '/_authenticated/admin/sources'
+    | '/_authenticated/admin/suggestions'
+    | '/_authenticated/admin/users'
     | '/_authenticated/people/$personId'
     | '/_authenticated/people/new'
     | '/_authenticated/people/'
@@ -354,11 +392,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPeoplePersonIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/suggestions': {
+      id: '/_authenticated/admin/suggestions'
+      path: '/suggestions'
+      fullPath: '/admin/suggestions'
+      preLoaderRoute: typeof AuthenticatedAdminSuggestionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/sources': {
       id: '/_authenticated/admin/sources'
       path: '/sources'
       fullPath: '/admin/sources'
       preLoaderRoute: typeof AuthenticatedAdminSourcesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/invites': {
@@ -388,13 +447,19 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminBackupRoute: typeof AuthenticatedAdminBackupRoute
   AuthenticatedAdminInvitesRoute: typeof AuthenticatedAdminInvitesRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminSourcesRoute: typeof AuthenticatedAdminSourcesRoute
+  AuthenticatedAdminSuggestionsRoute: typeof AuthenticatedAdminSuggestionsRoute
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminBackupRoute: AuthenticatedAdminBackupRoute,
   AuthenticatedAdminInvitesRoute: AuthenticatedAdminInvitesRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminSourcesRoute: AuthenticatedAdminSourcesRoute,
+  AuthenticatedAdminSuggestionsRoute: AuthenticatedAdminSuggestionsRoute,
+  AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
 }
 
 const AuthenticatedAdminRouteWithChildren =

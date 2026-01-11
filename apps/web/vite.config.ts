@@ -10,6 +10,7 @@ export default defineConfig({
   envDir: path.resolve(__dirname, "../.."),
   server: {
     port: 3000,
+    middlewareMode: false,
   },
   resolve: {
     alias: {
