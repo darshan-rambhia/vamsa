@@ -22,6 +22,7 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
 import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
 import { Route as AuthenticatedMapsIndexRouteImport } from './routes/_authenticated/maps/index'
+import { Route as AuthenticatedChartsIndexRouteImport } from './routes/_authenticated/charts/index'
 import { Route as AuthenticatedPeopleNewRouteImport } from './routes/_authenticated/people/new'
 import { Route as AuthenticatedPeoplePersonIdRouteImport } from './routes/_authenticated/people/$personId'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
@@ -98,6 +99,12 @@ const AuthenticatedMapsIndexRoute = AuthenticatedMapsIndexRouteImport.update({
   path: '/maps/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedChartsIndexRoute =
+  AuthenticatedChartsIndexRouteImport.update({
+    id: '/charts/',
+    path: '/charts/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedPeopleNewRoute = AuthenticatedPeopleNewRouteImport.update({
   id: '/people/new',
   path: '/people/new',
@@ -170,6 +177,7 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/people/new': typeof AuthenticatedPeopleNewRoute
+  '/charts': typeof AuthenticatedChartsIndexRoute
   '/maps': typeof AuthenticatedMapsIndexRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
   '/people/$personId/edit': typeof AuthenticatedPeoplePersonIdEditRoute
@@ -193,6 +201,7 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/people/new': typeof AuthenticatedPeopleNewRoute
+  '/charts': typeof AuthenticatedChartsIndexRoute
   '/maps': typeof AuthenticatedMapsIndexRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
   '/people/$personId/edit': typeof AuthenticatedPeoplePersonIdEditRoute
@@ -218,6 +227,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/_authenticated/people/new': typeof AuthenticatedPeopleNewRoute
+  '/_authenticated/charts/': typeof AuthenticatedChartsIndexRoute
   '/_authenticated/maps/': typeof AuthenticatedMapsIndexRoute
   '/_authenticated/people/': typeof AuthenticatedPeopleIndexRoute
   '/_authenticated/people/$personId_/edit': typeof AuthenticatedPeoplePersonIdEditRoute
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/people/$personId'
     | '/people/new'
+    | '/charts'
     | '/maps'
     | '/people'
     | '/people/$personId/edit'
@@ -266,6 +277,7 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/people/$personId'
     | '/people/new'
+    | '/charts'
     | '/maps'
     | '/people'
     | '/people/$personId/edit'
@@ -290,6 +302,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/users'
     | '/_authenticated/people/$personId'
     | '/_authenticated/people/new'
+    | '/_authenticated/charts/'
     | '/_authenticated/maps/'
     | '/_authenticated/people/'
     | '/_authenticated/people/$personId_/edit'
@@ -397,6 +410,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMapsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/charts/': {
+      id: '/_authenticated/charts/'
+      path: '/charts'
+      fullPath: '/charts'
+      preLoaderRoute: typeof AuthenticatedChartsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/people/new': {
       id: '/_authenticated/people/new'
       path: '/people/new'
@@ -492,6 +512,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedTreeRoute: typeof AuthenticatedTreeRoute
   AuthenticatedPeoplePersonIdRoute: typeof AuthenticatedPeoplePersonIdRoute
   AuthenticatedPeopleNewRoute: typeof AuthenticatedPeopleNewRoute
+  AuthenticatedChartsIndexRoute: typeof AuthenticatedChartsIndexRoute
   AuthenticatedMapsIndexRoute: typeof AuthenticatedMapsIndexRoute
   AuthenticatedPeopleIndexRoute: typeof AuthenticatedPeopleIndexRoute
   AuthenticatedPeoplePersonIdEditRoute: typeof AuthenticatedPeoplePersonIdEditRoute
@@ -505,6 +526,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedTreeRoute: AuthenticatedTreeRoute,
   AuthenticatedPeoplePersonIdRoute: AuthenticatedPeoplePersonIdRoute,
   AuthenticatedPeopleNewRoute: AuthenticatedPeopleNewRoute,
+  AuthenticatedChartsIndexRoute: AuthenticatedChartsIndexRoute,
   AuthenticatedMapsIndexRoute: AuthenticatedMapsIndexRoute,
   AuthenticatedPeopleIndexRoute: AuthenticatedPeopleIndexRoute,
   AuthenticatedPeoplePersonIdEditRoute: AuthenticatedPeoplePersonIdEditRoute,

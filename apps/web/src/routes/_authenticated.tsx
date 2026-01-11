@@ -101,6 +101,13 @@ function AuthenticatedLayout() {
           Tree
         </NavLink>
         <NavLink
+          href="/charts"
+          active={pathname.startsWith("/charts")}
+          data-testid="nav-charts"
+        >
+          Charts
+        </NavLink>
+        <NavLink
           href="/maps"
           active={pathname.startsWith("/maps")}
           data-testid="nav-maps"

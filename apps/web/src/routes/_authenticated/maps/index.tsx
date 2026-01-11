@@ -8,13 +8,7 @@ import {
 import { TimelineSlider } from "~/components/maps/timeline-slider";
 import { MapControls } from "~/components/maps/map-controls";
 import { getFamilyLocations, getPlacesByTimeRange } from "~/server/maps";
-import {
-  Container,
-  PageHeader,
-  Card,
-  CardContent,
-  Button,
-} from "@vamsa/ui";
+import { Container, PageHeader, Card, CardContent, Button } from "@vamsa/ui";
 
 export const Route = createFileRoute("/_authenticated/maps/")({
   component: MapsComponent,
@@ -33,8 +27,7 @@ function MapsComponent() {
   // Fetch all family locations
   const { data: familyData, isLoading: isLoadingFamily } = useQuery({
     queryKey: ["family-locations"],
-    queryFn: () =>
-      getFamilyLocations({ data: { onlyHeadOfFamily: false } }),
+    queryFn: () => getFamilyLocations({ data: { onlyHeadOfFamily: false } }),
   });
 
   // Fetch timeline filtered locations
