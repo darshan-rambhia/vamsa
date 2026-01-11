@@ -43,7 +43,8 @@
     "invalidEmail": "Invalid email address",
     "passwordsDoNotMatch": "Passwords do not match",
     "minLength": "Must be at least {{length}} characters",
-    "selectLanguage": "Select Language"
+    "selectLanguage": "Select Language",
+    "actions": "Quick Actions"
   },
   "auth": {
     "login": "Login",

@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { validateSession, logout } from "~/server/auth";
 import { Nav, NavLink, Button } from "@vamsa/ui";
+import { LanguageSwitcher } from "~/components/layout/language-switcher";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -65,14 +66,17 @@ function AuthenticatedLayout() {
           </a>
         }
         actions={
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSignOut}
-            data-testid="signout-button"
-          >
-            Sign out
-          </Button>
+          <div className="flex items-center gap-3">
+            <LanguageSwitcher />
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              data-testid="signout-button"
+            >
+              Sign out
+            </Button>
+          </div>
         }
       >
         <NavLink

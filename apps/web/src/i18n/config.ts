@@ -30,11 +30,7 @@ if (typeof window !== "undefined") {
         escapeValue: false,
       },
       detection: {
-        order: [
-          "localStorage",
-          "navigator",
-          "htmlTag",
-        ],
+        order: ["localStorage", "navigator", "htmlTag"],
         caches: ["localStorage"],
       },
     });

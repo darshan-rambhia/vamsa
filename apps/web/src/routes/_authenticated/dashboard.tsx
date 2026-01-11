@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { getDashboardStats, getPendingSuggestions } from "~/server/dashboard";
 import {
   Container,
@@ -11,12 +12,17 @@ import {
   CardTitle,
   Avatar,
 } from "@vamsa/ui";
+import { formatRelativeTime } from "~/lib/format";
+import type { SupportedLocale } from "~/lib/format";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   component: DashboardComponent,
 });
 
 function DashboardComponent() {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language as SupportedLocale;
+
   const { data: stats, isLoading } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: () => getDashboardStats(),
@@ -30,11 +36,11 @@ function DashboardComponent() {
   return (
     <Container className="space-y-8">
       <PageHeader
-        title="Dashboard"
-        description="Overview of your family tree"
+        title={t("dashboard.title")}
+        description={t("dashboard.welcome")}
         actions={
           <Button asChild>
-            <Link to="/people/new">Add Person</Link>
+            <Link to="/people/new">{t("people.addPerson")}</Link>
           </Button>
         }
       />
@@ -42,7 +48,7 @@ function DashboardComponent() {
       {/* Stats cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total People"
+          title={t("dashboard.totalPeople")}
           value={stats?.totalPeople ?? 0}
           icon={
             <svg
@@ -63,7 +69,7 @@ function DashboardComponent() {
           href="/people"
         />
         <StatCard
-          title="Living"
+          title={t("people.living")}
           value={stats?.livingPeople ?? 0}
           icon={
             <svg
@@ -84,7 +90,7 @@ function DashboardComponent() {
           variant="success"
         />
         <StatCard
-          title="Deceased"
+          title={t("people.deceased")}
           value={stats?.deceasedPeople ?? 0}
           icon={
             <svg
@@ -105,7 +111,7 @@ function DashboardComponent() {
           variant="muted"
         />
         <StatCard
-          title="Relationships"
+          title={t("people.relationships")}
           value={stats?.totalRelationships ?? 0}
           icon={
             <svg
@@ -132,12 +138,12 @@ function DashboardComponent() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Recent Additions</span>
+              <span>{t("dashboard.recentActivity")}</span>
               <Link
                 to="/people"
                 className="text-primary text-sm font-normal hover:underline"
               >
-                View all
+                {t("common.search")}
               </Link>
             </CardTitle>
           </CardHeader>
@@ -159,7 +165,7 @@ function DashboardComponent() {
               </div>
             ) : !stats?.recentAdditions.length ? (
               <p className="text-muted-foreground py-8 text-center">
-                No people added yet. Start by adding your first family member.
+                {t("dashboard.noActivity")}
               </p>
             ) : (
               <div className="space-y-3">
@@ -179,7 +185,8 @@ function DashboardComponent() {
                         {person.firstName} {person.lastName}
                       </p>
                       <p className="text-muted-foreground text-sm">
-                        Added {formatRelativeTime(person.createdAt)}
+                        {t("common.add")}{" "}
+                        {formatRelativeTime(person.createdAt, locale)}
                       </p>
                     </div>
                   </Link>
@@ -193,12 +200,12 @@ function DashboardComponent() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Pending Suggestions</span>
+              <span>{t("admin.pendingApprovals")}</span>
               <Link
                 to="/admin"
                 className="text-primary text-sm font-normal hover:underline"
               >
-                Review all
+                {t("common.search")}
               </Link>
             </CardTitle>
           </CardHeader>
@@ -236,7 +243,7 @@ function DashboardComponent() {
                   </svg>
                 </div>
                 <p className="text-muted-foreground">
-                  All caught up! No pending suggestions.
+                  {t("dashboard.noActivity")}
                 </p>
               </div>
             ) : (
@@ -276,7 +283,7 @@ function DashboardComponent() {
       {/* Quick Actions */}
       <Card>
         <CardHeader>
-          <CardTitle>Quick Actions</CardTitle>
+          <CardTitle>{t("common.actions")}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -297,8 +304,8 @@ function DashboardComponent() {
                   />
                 </svg>
               }
-              label="Add Person"
-              description="Add a new family member"
+              label={t("people.addPerson")}
+              description={t("people.addPerson")}
             />
             <QuickAction
               href="/tree"
@@ -317,8 +324,8 @@ function DashboardComponent() {
                   />
                 </svg>
               }
-              label="View Tree"
-              description="Explore family connections"
+              label={t("navigation.family")}
+              description={t("navigation.family")}
             />
             <QuickAction
               href="/people"
@@ -337,8 +344,8 @@ function DashboardComponent() {
                   />
                 </svg>
               }
-              label="Search People"
-              description="Find family members"
+              label={t("common.search")}
+              description={t("navigation.people")}
             />
             <QuickAction
               href="/admin/backup"
@@ -357,8 +364,8 @@ function DashboardComponent() {
                   />
                 </svg>
               }
-              label="Backup Data"
-              description="Export family data"
+              label={t("common.save")}
+              description={t("common.save")}
             />
           </div>
         </CardContent>
@@ -541,20 +548,4 @@ function getSuggestionLabel(type: string): string {
     default:
       return "Suggestion";
   }
-}
-
-function formatRelativeTime(timestamp: number): string {
-  const now = Date.now();
-  const diff = now - timestamp;
-
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes}m ago`;
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-
-  return new Date(timestamp).toLocaleDateString();
 }

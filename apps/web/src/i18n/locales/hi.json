@@ -43,7 +43,8 @@
     "invalidEmail": "अमान्य ईमेल पता",
     "passwordsDoNotMatch": "पासवर्ड मेल नहीं खाते",
     "minLength": "कम से कम {{length}} वर्णों का होना चाहिए",
-    "selectLanguage": "भाषा चुनें"
+    "selectLanguage": "भाषा चुनें",
+    "actions": "त्वरित क्रियाएं"
   },
   "auth": {
     "login": "लॉगिन",

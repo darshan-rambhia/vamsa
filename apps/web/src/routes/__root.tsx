@@ -7,6 +7,8 @@ import {
   createRootRoute,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { I18nextProvider } from "react-i18next";
+import i18n from "~/i18n/config";
 import appCss from "~/styles.css?url";
 
 const queryClient = new QueryClient({
@@ -89,8 +91,13 @@ function RootComponent() {
 const DARK_MODE_SCRIPT = `(function(){var s=localStorage.getItem('theme');var p=window.matchMedia('(prefers-color-scheme:dark)').matches;if(s==='dark'||(!s&&p)){document.documentElement.classList.add('dark')}})()`;
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  // Get current language from i18n (defaults to 'en')
+  const currentLang = i18n.language || "en";
+  // Determine text direction (ltr for English and Hindi, rtl for future languages like Arabic)
+  const dir = currentLang === "ar" ? "rtl" : "ltr";
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang={currentLang} dir={dir} suppressHydrationWarning>
       <head>
         <HeadContent />
         {/* Prevent dark mode flash - static script with hardcoded content, no user input */}
@@ -98,7 +105,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="font-body antialiased">
         <QueryClientProvider client={queryClient}>
-          {children}
+          <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
         </QueryClientProvider>
         <Scripts />
       </body>
