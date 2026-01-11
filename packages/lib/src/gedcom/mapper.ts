@@ -480,14 +480,14 @@ export class GedcomMapper {
     const trimmed = gedcomName.trim();
 
     // Find surname between forward slashes
-    const surnameMatch = trimmed.match(/\/([^\/]*)\//);
+    const surnameMatch = trimmed.match(/\/([^/]*)\//);
     const lastName = surnameMatch ? surnameMatch[1].trim() : undefined;
 
     // Extract given names (everything before and after surname)
     let firstName: string | undefined;
     if (surnameMatch) {
       // Remove the /surname/ part and trim
-      const withoutSurname = trimmed.replace(/\/[^\/]*\//, "").trim();
+      const withoutSurname = trimmed.replace(/\/[^/]*\//, "").trim();
       firstName = withoutSurname || undefined;
     } else {
       // No surname markers, entire thing is given name

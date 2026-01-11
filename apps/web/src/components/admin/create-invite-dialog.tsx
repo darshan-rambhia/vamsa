@@ -158,9 +158,9 @@ export function CreateInviteDialog({ onInviteCreated }: CreateInviteDialogProps)
             </div>
 
             <div className="space-y-2">
-              <Label>Invite Link</Label>
+              <Label htmlFor="invite-link">Invite Link</Label>
               <div className="bg-muted flex items-center gap-2 rounded-md p-2">
-                <code className="flex-1 truncate text-sm">
+                <code id="invite-link" className="flex-1 truncate text-sm">
                   {`${typeof window !== "undefined" ? window.location.origin : ""}/invite/${success.token}`}
                 </code>
                 <Button
