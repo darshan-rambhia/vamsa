@@ -196,6 +196,8 @@ model User {
   updatedAt   DateTime  @updatedAt
   lastLoginAt DateTime?
 
+  emailNotificationPreferences Json? @default("{\"suggestionsCreated\":true,\"suggestionsUpdated\":true,\"newMemberJoined\":true,\"birthdayReminders\":true}")
+
   person    Person? @relation("UserPerson", fields: [personId], references: [id])
   invitedBy User?   @relation("UserInvites", fields: [invitedById], references: [id])
   invitees  User[]  @relation("UserInvites")
@@ -209,6 +211,7 @@ model User {
   sessions      Session[]
   invites       Invite[]       @relation("InvitedBy")
   researchNotes ResearchNote[] @relation("ResearchNoteCreator")
+  emailLogs     EmailLog[]      @relation("EmailLogCreator")
 
   @@index([email])
   @@index([personId])
@@ -514,4 +517,24 @@ model PlacePersonLink {
   @@unique([personId, placeId, type])
   @@index([personId])
   @@index([placeId])
+}
+
+model EmailLog {
+  id              String   @id @default(cuid())
+  recipientEmail  String
+  subject         String
+  emailType       String   // "suggestion_created", "suggestion_updated", "new_member", "birthday_reminder"
+  status          String   @default("sent") // "sent", "failed", "bounced"
+  sentAt          DateTime @default(now())
+  error           String?
+  resendId        String?  // Store Resend email ID for tracking
+  metadata        Json?    // Store any additional metadata
+
+  createdBy   User   @relation("EmailLogCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+
+  @@index([recipientEmail])
+  @@index([emailType])
+  @@index([status])
+  @@index([sentAt])
 }

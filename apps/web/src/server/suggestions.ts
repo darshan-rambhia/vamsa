@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import type { Prisma } from "@vamsa/api";
+import { notifySuggestionCreated, notifySuggestionUpdated } from "./notifications";
 
 const TOKEN_COOKIE_NAME = "vamsa-session";
 
@@ -102,6 +103,9 @@ export const createSuggestion = createServerFn({ method: "POST" })
       },
     });
 
+    // Send notification to admins about new suggestion
+    await notifySuggestionCreated(suggestion.id);
+
     return {
       id: suggestion.id,
       type: suggestion.type,
@@ -148,6 +152,9 @@ export const reviewSuggestion = createServerFn({ method: "POST" })
         reviewedAt: new Date(),
       },
     });
+
+    // Send notification to submitter about review outcome
+    await notifySuggestionUpdated(data.suggestionId, data.status);
 
     return { success: true };
   });

@@ -8,6 +8,7 @@ import { prisma } from "./db";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { z } from "zod";
+import { notifyNewMemberJoined } from "./notifications";
 
 const TOKEN_COOKIE_NAME = "vamsa-session";
 const TOKEN_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds
@@ -217,6 +218,9 @@ export const register = createServerFn({ method: "POST" })
 
     console.warn("[Auth Server] User registered successfully:", user.id);
 
+    // Send notification about new member joined (if they are a viewer, they won't trigger notifications yet)
+    // We'll notify when they upgrade to MEMBER role
+
     return { success: true, userId: user.id };
   });
 
@@ -332,6 +336,9 @@ export const claimProfile = createServerFn({ method: "POST" })
     });
 
     console.warn("[Auth Server] Profile claimed successfully:", user.id);
+
+    // Send notification about new family member joined
+    await notifyNewMemberJoined(user.id);
 
     return { success: true, userId: user.id };
   });

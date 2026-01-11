@@ -31,7 +31,8 @@
     "@vamsa/schemas": "workspace:*",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.7",
-    "pg": "^8.13.1"
+    "pg": "^8.13.1",
+    "resend": "^3.0.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
