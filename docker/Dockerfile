@@ -17,8 +17,8 @@ COPY packages/lib/package.json ./packages/lib/
 COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/ui/package.json ./packages/ui/
 
-# Install dependencies
-RUN pnpm install --frozen-lockfile
+# Install dependencies (including devDependencies needed for build)
+RUN pnpm install --frozen-lockfile --prod=false
 
 # Copy source code
 COPY . .
@@ -26,12 +26,12 @@ COPY . .
 # Generate Prisma client (with dummy DATABASE_URL since it's only needed for build)
 WORKDIR /app/packages/api
 ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
-RUN pnpm run db:generate || true
+RUN npx prisma generate || true
 
 # Build the web app
 WORKDIR /app
-ENV NODE_ENV=production
 RUN pnpm --filter @vamsa/web build
+ENV NODE_ENV=production
 
 # Production stage
 FROM node:22-alpine AS runner
