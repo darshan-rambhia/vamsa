@@ -103,70 +103,70 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-    // {
-    //   name: "firefox",
-    //   use: { ...devices["Desktop Firefox"] },
-    // },
-    // {
-    //   name: "webkit",
-    //   use: { ...devices["Desktop Safari"] },
-    // },
+    {
+      name: "firefox",
+      use: { ...devices["Desktop Firefox"] },
+    },
+    {
+      name: "webkit",
+      use: { ...devices["Desktop Safari"] },
+    },
 
     // Tablet devices
-    // {
-    //   name: "tablet-ipad",
-    //   use: { ...devices["iPad Pro"] },
-    // },
-    // {
-    //   name: "tablet-android",
-    //   use: { ...devices["Galaxy Tab S4"] },
-    // },
+    {
+      name: "tablet-ipad",
+      use: { ...devices["iPad Pro"] },
+    },
+    {
+      name: "tablet-android",
+      use: { ...devices["Galaxy Tab S4"] },
+    },
 
-    // // Mobile devices
-    // {
-    //   name: "mobile-iphone",
-    //   use: { ...devices["iPhone 14 Pro"] },
-    // },
-    // {
-    //   name: "mobile-android",
-    //   use: { ...devices["Pixel 7"] },
-    // },
+    // Mobile devices
+    {
+      name: "mobile-iphone",
+      use: { ...devices["iPhone 14 Pro"] },
+    },
+    {
+      name: "mobile-android",
+      use: { ...devices["Pixel 7"] },
+    },
 
     // Responsive breakpoints for design system testing
-    // {
-    //   name: "viewport-sm",
-    //   use: {
-    //     viewport: { width: 640, height: 900 },
-    //     userAgent: "Playwright/Viewport-SM",
-    //   },
-    // },
-    // {
-    //   name: "viewport-md",
-    //   use: {
-    //     viewport: { width: 768, height: 1024 },
-    //     userAgent: "Playwright/Viewport-MD",
-    //   },
-    // },
-    // {
-    //   name: "viewport-lg",
-    //   use: {
-    //     viewport: { width: 1024, height: 768 },
-    //     userAgent: "Playwright/Viewport-LG",
-    //   },
-    // },
-    // {
-    //   name: "viewport-xl",
-    //   use: {
-    //     viewport: { width: 1280, height: 800 },
-    //     userAgent: "Playwright/Viewport-XL",
-    //   },
-    // },
-    // {
-    //   name: "viewport-2xl",
-    //   use: {
-    //     viewport: { width: 1536, height: 864 },
-    //     userAgent: "Playwright/Viewport-2XL",
-    //   },
-    // },
+    {
+      name: "viewport-sm",
+      use: {
+        viewport: { width: 640, height: 900 },
+        userAgent: "Playwright/Viewport-SM",
+      },
+    },
+    {
+      name: "viewport-md",
+      use: {
+        viewport: { width: 768, height: 1024 },
+        userAgent: "Playwright/Viewport-MD",
+      },
+    },
+    {
+      name: "viewport-lg",
+      use: {
+        viewport: { width: 1024, height: 768 },
+        userAgent: "Playwright/Viewport-LG",
+      },
+    },
+    {
+      name: "viewport-xl",
+      use: {
+        viewport: { width: 1280, height: 800 },
+        userAgent: "Playwright/Viewport-XL",
+      },
+    },
+    {
+      name: "viewport-2xl",
+      use: {
+        viewport: { width: 1536, height: 864 },
+        userAgent: "Playwright/Viewport-2XL",
+      },
+    },
   ],
 });

@@ -1,0 +1,18 @@
+FROM nginx:1.27-alpine
+
+# Copy nginx configuration
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+
+# Remove default nginx config
+RUN rm -f /etc/nginx/conf.d/default.conf.default
+
+# Create directory structure that matches what we'll mount
+RUN mkdir -p /app/apps/web/dist/client
+
+# Add healthcheck
+RUN apk add --no-cache wget
+
+EXPOSE 80
+
+# Use nginx's default command (nginx -g 'daemon off;')
+CMD ["nginx", "-g", "daemon off;"]

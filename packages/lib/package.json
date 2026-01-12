@@ -10,7 +10,8 @@
     "./utils": "./src/utils.ts",
     "./date": "./src/date.ts",
     "./gedcom": "./src/gedcom/index.ts",
-    "./backup": "./src/backup/index.ts"
+    "./backup": "./src/backup/index.ts",
+    "./logger": "./src/logger.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -19,7 +20,9 @@
     "test:coverage": "bun test --coverage"
   },
   "dependencies": {
-    "date-fns": "^4.1.0"
+    "date-fns": "^4.1.0",
+    "pino": "^10.1.1",
+    "pino-pretty": "^13.1.3"
   },
   "devDependencies": {
     "@types/bun": "^1.3.5",
