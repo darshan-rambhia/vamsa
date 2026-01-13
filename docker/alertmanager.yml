@@ -1,0 +1,162 @@
+# Alertmanager Configuration for Vamsa
+# Handles alert routing, grouping, and notifications
+#
+# SETUP INSTRUCTIONS:
+# 1. Copy this file to alertmanager.local.yml
+# 2. Replace SLACK_WEBHOOK_PLACEHOLDER with your actual Slack webhook URL
+# 3. Mount alertmanager.local.yml instead of alertmanager.yml in docker-compose
+#
+# For development without Slack, this config will work as-is (alerts logged to console)
+
+global:
+  # How long to wait before sending notification that alert is resolved
+  resolve_timeout: 5m
+  # SMTP configuration for email alerts (uncomment and configure to enable)
+  # smtp_smarthost: 'smtp.gmail.com:587'
+  # smtp_from: 'vamsa-alerts@example.com'
+  # smtp_auth_username: 'your-smtp-username'
+  # smtp_auth_password: 'your-smtp-password'
+  # smtp_require_tls: true
+
+# Alert routing tree
+route:
+  # Group alerts by name and component
+  group_by: ["alertname", "component"]
+
+  # Wait time before sending first notification for a group
+  group_wait: 30s
+
+  # Wait time before sending notifications about new alerts in a group
+  group_interval: 5m
+
+  # Wait time before re-sending a notification about a firing alert
+  repeat_interval: 12h
+
+  # Default receiver (logs alerts for development)
+  receiver: "default-receiver"
+
+  # Child routes for specific alert types
+  routes:
+    # Critical alerts: High priority notification
+    - match:
+        severity: critical
+      receiver: "critical-alerts"
+      group_wait: 10s
+      group_interval: 1m
+      repeat_interval: 4h
+      continue: true
+
+    # Warning alerts: Standard notification
+    - match:
+        severity: warning
+      receiver: "warning-alerts"
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+
+    # Info alerts: Low priority, batch together
+    - match:
+        severity: info
+      receiver: "info-alerts"
+      group_wait: 5m
+      group_interval: 30m
+      repeat_interval: 24h
+
+# Notification receivers
+receivers:
+  # Default receiver: Webhook for development (logs to console if not configured)
+  - name: "default-receiver"
+    # No configuration needed - alerts will be visible in Alertmanager UI
+
+  # Critical alerts: Configure Slack webhook for production
+  # To enable: Replace SLACK_WEBHOOK_PLACEHOLDER with your webhook URL
+  - name: "critical-alerts"
+    # Uncomment and configure for Slack notifications:
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+    #     channel: '#vamsa-alerts'
+    #     send_resolved: true
+    #     title: |
+    #       {{ if eq .Status "firing" }}CRITICAL{{ else }}RESOLVED{{ end }}: {{ .GroupLabels.alertname }}
+    #     text: |
+    #       {{ range .Alerts }}
+    #       *Alert:* {{ .Labels.alertname }}
+    #       *Severity:* {{ .Labels.severity }}
+    #       *Component:* {{ .Labels.component }}
+    #       *Status:* {{ .Status }}
+    #       *Description:* {{ .Annotations.description }}
+    #       {{ if .Annotations.runbook_url }}*Runbook:* <{{ .Annotations.runbook_url }}|View>{{ end }}
+    #       {{ if eq .Status "firing" }}*Started:* {{ .StartsAt.Format "2006-01-02 15:04:05 MST" }}{{ end }}
+    #       {{ if eq .Status "resolved" }}*Resolved:* {{ .EndsAt.Format "2006-01-02 15:04:05 MST" }}{{ end }}
+    #       ---
+    #       {{ end }}
+    #     color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+    #     icon_emoji: ':rotating_light:'
+    #     username: 'Vamsa Alerts'
+
+  # Warning alerts: Configure Slack webhook for production
+  - name: "warning-alerts"
+    # Uncomment and configure for Slack notifications:
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+    #     channel: '#vamsa-alerts'
+    #     send_resolved: true
+    #     title: |
+    #       {{ if eq .Status "firing" }}WARNING{{ else }}RESOLVED{{ end }}: {{ .GroupLabels.alertname }}
+    #     text: |
+    #       {{ range .Alerts }}
+    #       *Alert:* {{ .Labels.alertname }}
+    #       *Component:* {{ .Labels.component }}
+    #       *Description:* {{ .Annotations.description }}
+    #       {{ if .Annotations.runbook_url }}*Runbook:* <{{ .Annotations.runbook_url }}|View>{{ end }}
+    #       ---
+    #       {{ end }}
+    #     color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+    #     icon_emoji: ':warning:'
+    #     username: 'Vamsa Alerts'
+
+  # Info alerts: Low priority notifications
+  - name: "info-alerts"
+    # Uncomment and configure for Slack notifications:
+    # slack_configs:
+    #   - api_url: 'https://hooks.slack.com/services/YOUR/WEBHOOK/URL'
+    #     channel: '#vamsa-alerts'
+    #     send_resolved: false
+    #     title: 'Info: {{ .GroupLabels.alertname }}'
+    #     text: |
+    #       {{ range .Alerts }}
+    #       {{ .Annotations.description }}
+    #       {{ end }}
+    #     color: 'good'
+    #     icon_emoji: ':information_source:'
+    #     username: 'Vamsa Alerts'
+
+# Alert inhibition rules
+# Prevent duplicate or lower-priority alerts when higher ones are firing
+inhibit_rules:
+  # Inhibit warning alerts when critical alert for same component is firing
+  - source_match:
+      severity: "critical"
+    target_match:
+      severity: "warning"
+    equal: ["component", "instance"]
+
+  # Inhibit info alerts when warning or critical for same component is firing
+  - source_match:
+      severity: "warning"
+    target_match:
+      severity: "info"
+    equal: ["component", "instance"]
+
+  - source_match:
+      severity: "critical"
+    target_match:
+      severity: "info"
+    equal: ["component", "instance"]
+
+  # Inhibit all alerts when PrometheusTargetDown is firing
+  - source_match:
+      alertname: "PrometheusTargetDown"
+    target_match_re:
+      alertname: ".+"
+    equal: ["instance"]

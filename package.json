@@ -33,6 +33,11 @@
     "docker:down": "docker compose -f docker/docker-compose.yml down",
     "docker:logs": "docker compose -f docker/docker-compose.yml logs -f",
     "docker:build": "docker compose -f docker/docker-compose.yml build",
+    "// === Observability ===": "",
+    "observability:start": "./scripts/start-observability.sh",
+    "observability:stop": "docker-compose -f docker/docker-compose.observability.yml down",
+    "observability:logs": "docker-compose -f docker/docker-compose.observability.yml logs -f",
+    "observability:restart": "pnpm observability:stop && pnpm observability:start",
     "// === Utilities ===": "",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
   },

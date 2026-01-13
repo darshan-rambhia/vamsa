@@ -75,6 +75,7 @@ A new `ChartSkeleton` component displays loading messages for large datasets:
 - Provides visual feedback during rendering
 
 **Thresholds**:
+
 - 500-2000 people: "Loading family tree..." (~2-5s)
 - 2000+ people: "Rendering large family tree..." (~5-10s)
 
@@ -84,7 +85,9 @@ Built-in performance monitoring logs render times in development mode:
 
 ```typescript
 if (process.env.NODE_ENV === "development") {
-  console.log(`[Performance] AncestorChart rendered ${nodes.length} nodes in ${renderTime}ms`);
+  console.log(
+    `[Performance] AncestorChart rendered ${nodes.length} nodes in ${renderTime}ms`
+  );
 }
 ```
 
@@ -103,51 +106,62 @@ const zoom = createZoomBehavior(svg, g, [0.1, 4], debouncedZoomHandler);
 New utility hooks for performance optimization:
 
 ### `useChartLoadingState(nodeCount)`
+
 Returns loading state configuration based on dataset size.
 
 ### `useDebouncedZoom(callback, delay)`
+
 Debounces zoom/pan handlers for smooth interactions.
 
 ### `useScheduledAnimation()`
+
 Schedules animations using `requestAnimationFrame` to avoid layout thrashing.
 
 ### `usePerformanceMonitor(componentName, enabled)`
+
 Tracks and logs component render times.
 
 ### `useNodePositions(nodes, width, nodeWidth, levelHeight, marginTop)`
+
 Memoizes node position calculations.
 
 ### `useChartDimensions(containerWidth, nodeCount, minHeight)`
+
 Memoizes chart dimension calculations.
 
 ### `useValidEdges(edges, nodePositions)`
+
 Filters edges to only include those with valid source/target nodes.
 
 ### `useGenerationGroups(nodes)`
+
 Memoizes generation grouping calculations.
 
 ### `useVisibleNodes(nodes, nodePositions, viewport)`
-*(Prepared for future optimization)*
+
+_(Prepared for future optimization)_
 Returns only visible nodes within the viewport for virtual rendering.
 
 ## Performance Targets
 
 Based on the implementation, expected performance:
 
-| Dataset Size | Initial Render Time | Interaction FPS | Tooltip Response |
-|-------------|--------------------|-----------------|--------------------|
-| <500 people | <2s | 60fps | <100ms |
-| 500-2000 people | 2-5s | 60fps | <100ms |
-| 2000+ people | 5-10s | 60fps | <100ms |
+| Dataset Size    | Initial Render Time | Interaction FPS | Tooltip Response |
+| --------------- | ------------------- | --------------- | ---------------- |
+| <500 people     | <2s                 | 60fps           | <100ms           |
+| 500-2000 people | 2-5s                | 60fps           | <100ms           |
+| 2000+ people    | 5-10s               | 60fps           | <100ms           |
 
 ## Files Modified
 
 ### New Files
+
 - `/apps/web/src/lib/chart-performance.ts` - Performance utility hooks
 - `/apps/web/src/components/charts/ChartSkeleton.tsx` - Loading skeleton component
 - `/docs/PERFORMANCE_OPTIMIZATIONS.md` - This documentation
 
 ### Modified Files
+
 - `/apps/web/src/lib/d3-utils.ts` - Enhanced zoom behavior
 - `/apps/web/src/components/charts/AncestorChart.tsx` - Added optimizations
 - `/apps/web/src/components/charts/DescendantChart.tsx` - Added optimizations
@@ -159,13 +173,17 @@ Based on the implementation, expected performance:
 ## Future Enhancements
 
 ### Virtual Rendering (Deferred)
+
 The `useVisibleNodes` hook is prepared but not yet implemented in charts. This would:
+
 - Only render nodes visible in the current viewport
 - Dramatically improve performance for 5000+ person datasets
 - Require more complex viewport tracking
 
 ### Canvas Rendering (Future)
+
 For extremely large datasets (10,000+ people), consider:
+
 - Switching from SVG to Canvas rendering
 - WebGL acceleration for very large trees
 - Progressive rendering with chunking
@@ -173,6 +191,7 @@ For extremely large datasets (10,000+ people), consider:
 ## Testing
 
 All quality gates passed:
+
 - ✅ Format check (`pnpm format`)
 - ✅ Type check (`pnpm typecheck`)
 - ✅ Lint check (`pnpm lint`)
@@ -181,6 +200,7 @@ All quality gates passed:
 ## Backward Compatibility
 
 All optimizations are backward compatible:
+
 - Existing functionality maintained
 - No breaking API changes
 - Same visual appearance

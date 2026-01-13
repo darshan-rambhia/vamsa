@@ -1,0 +1,209 @@
+# Prometheus Alert Rules for Vamsa
+# These rules detect performance degradation, errors, and system issues
+# and trigger notifications via Alertmanager.
+
+groups:
+  # ===========================================
+  # HTTP Performance Alerts
+  # ===========================================
+  - name: http_alerts
+    interval: 30s
+    rules:
+      # High HTTP error rate (>5% for 5 minutes)
+      - alert: HighHTTPErrorRate
+        expr: |
+          (
+            sum(rate(vamsa_http_request_count{status_code=~"5.."}[5m])) /
+            sum(rate(vamsa_http_request_count[5m]))
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+          component: http
+        annotations:
+          summary: "High HTTP error rate detected"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#highhttperrorrate"
+
+      # Slow HTTP response time (P95 >1s for 5 minutes)
+      - alert: SlowHTTPResponse
+        expr: |
+          histogram_quantile(0.95,
+            rate(vamsa_http_request_duration_ms_bucket[5m])
+          ) > 1000
+        for: 5m
+        labels:
+          severity: warning
+          component: http
+        annotations:
+          summary: "HTTP response time is slow"
+          description: "P95 latency is {{ $value | humanize }}ms (threshold: 1000ms)"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#slowhttpresponse"
+
+      # Unusual request rate spike (3x normal for 10 minutes)
+      - alert: HTTPRequestRateSpike
+        expr: |
+          rate(vamsa_http_request_count[5m]) >
+          (
+            avg_over_time(rate(vamsa_http_request_count[5m])[1h:5m]) * 3
+          )
+        for: 10m
+        labels:
+          severity: warning
+          component: http
+        annotations:
+          summary: "Unusual increase in request rate"
+          description: "Request rate is {{ $value | humanize }} req/s (3x normal)"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#httprequestrratespike"
+
+  # ===========================================
+  # Database Alerts
+  # ===========================================
+  - name: database_alerts
+    interval: 30s
+    rules:
+      # Too many slow queries (>500ms)
+      - alert: TooManySlowQueries
+        expr: sum(rate(vamsa_prisma_slow_query_count[5m])) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "High number of slow database queries"
+          description: "{{ $value | humanize }} slow queries/sec (>500ms each)"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#toomanyslowqueries"
+
+      # High database error rate (>1% for 5 minutes)
+      - alert: HighDatabaseErrorRate
+        expr: |
+          (
+            sum(rate(vamsa_prisma_error_count[5m])) /
+            sum(rate(vamsa_prisma_query_count[5m]))
+          ) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "High database error rate"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 1%)"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#highdatabaseerrorrate"
+
+      # High database query latency (P95 >500ms for 10 minutes)
+      - alert: HighDatabaseQueryLatency
+        expr: |
+          histogram_quantile(0.95,
+            rate(vamsa_prisma_query_duration_ms_bucket[5m])
+          ) > 500
+        for: 10m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database queries are slow"
+          description: "P95 query time is {{ $value | humanize }}ms (threshold: 500ms)"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#highdatabasequerylatency"
+
+  # ===========================================
+  # Application Alerts
+  # ===========================================
+  - name: application_alerts
+    interval: 30s
+    rules:
+      # Chart rendering failures
+      - alert: ChartRenderingFailures
+        expr: |
+          sum(rate(vamsa_error_count{error_type="ChartRenderError"}[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: charts
+        annotations:
+          summary: "Chart rendering errors detected"
+          description: "{{ $value | humanize }} chart render errors/sec"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#chartrenderingfailures"
+
+      # High zero-result search rate
+      - alert: HighSearchFailureRate
+        expr: |
+          (
+            rate(vamsa_search_zero_result_count[5m]) /
+            rate(vamsa_search_result_count[5m])
+          ) > 0.5
+        for: 10m
+        labels:
+          severity: info
+          component: search
+        annotations:
+          summary: "High rate of zero-result searches"
+          description: "{{ $value | humanizePercentage }} of searches return no results"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#highsearchfailurerate"
+
+      # GEDCOM import errors
+      - alert: GEDCOMImportErrors
+        expr: rate(vamsa_gedcom_error_count[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          component: gedcom
+        annotations:
+          summary: "GEDCOM import errors detected"
+          description: "{{ $value | humanize }} GEDCOM errors/sec"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#gedcomimporterrors"
+
+      # No active users for extended period (possible service issue)
+      - alert: NoActiveUsers
+        expr: vamsa_active_users == 0
+        for: 30m
+        labels:
+          severity: warning
+          component: application
+        annotations:
+          summary: "No active users for 30 minutes"
+          description: "Application may be down or inaccessible"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#noactiveusers"
+
+  # ===========================================
+  # System Alerts
+  # ===========================================
+  - name: system_alerts
+    interval: 30s
+    rules:
+      # Prometheus target down
+      - alert: PrometheusTargetDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: system
+        annotations:
+          summary: "Prometheus target is down"
+          description: "Target {{ $labels.instance }} has been down for 5 minutes"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#prometheustargetdown"
+
+      # OTEL Collector not receiving data
+      - alert: OTELCollectorNoData
+        expr: |
+          increase(otelcol_receiver_accepted_metric_points[5m]) == 0
+        for: 10m
+        labels:
+          severity: warning
+          component: observability
+        annotations:
+          summary: "OpenTelemetry Collector not receiving metrics"
+          description: "No metric points received in the last 10 minutes"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#otelcollectornodata"
+
+      # Alertmanager not connected
+      - alert: AlertmanagerDown
+        expr: |
+          prometheus_notifications_alertmanagers_discovered == 0
+        for: 5m
+        labels:
+          severity: critical
+          component: alerting
+        annotations:
+          summary: "Alertmanager is not connected"
+          description: "Prometheus cannot reach any Alertmanager instance"
+          runbook_url: "https://github.com/vamsa/vamsa/blob/main/docs/runbooks/alerts.md#alertmanagerdown"

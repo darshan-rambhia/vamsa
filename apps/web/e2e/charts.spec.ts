@@ -2694,11 +2694,7 @@ test.describe("Feature: Chart Visualizations", () => {
   test("should handle loading state for different chart types", async ({
     page,
   }) => {
-    const chartTypes = [
-      /timeline/i,
-      /matrix/i,
-      /bowtie/i,
-    ];
+    const chartTypes = [/timeline/i, /matrix/i, /bowtie/i];
 
     for (const chartType of chartTypes) {
       await page.goto("/");

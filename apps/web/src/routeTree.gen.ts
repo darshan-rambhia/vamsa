@@ -34,6 +34,7 @@ import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authentic
 import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin/suggestions'
 import { Route as AuthenticatedAdminSourcesRouteImport } from './routes/_authenticated/admin/sources'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authenticated/admin/metrics'
 import { Route as AuthenticatedAdminInvitesRouteImport } from './routes/_authenticated/admin/invites'
 import { Route as AuthenticatedAdminBackupRouteImport } from './routes/_authenticated/admin/backup'
 import { Route as AuthenticatedPeoplePersonIdEditRouteImport } from './routes/_authenticated/people/$personId_.edit'
@@ -170,6 +171,12 @@ const AuthenticatedAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminMetricsRoute =
+  AuthenticatedAdminMetricsRouteImport.update({
+    id: '/metrics',
+    path: '/metrics',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminInvitesRoute =
   AuthenticatedAdminInvitesRouteImport.update({
     id: '/invites',
@@ -203,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/invite/$token': typeof InviteTokenRoute
   '/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
+  '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/sources': typeof AuthenticatedAdminSourcesRoute
   '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
@@ -232,6 +240,7 @@ export interface FileRoutesByTo {
   '/invite/$token': typeof InviteTokenRoute
   '/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
+  '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/sources': typeof AuthenticatedAdminSourcesRoute
   '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
@@ -263,6 +272,7 @@ export interface FileRoutesById {
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/_authenticated/admin/invites': typeof AuthenticatedAdminInvitesRoute
+  '/_authenticated/admin/metrics': typeof AuthenticatedAdminMetricsRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/sources': typeof AuthenticatedAdminSourcesRoute
   '/_authenticated/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
@@ -294,6 +304,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/admin/backup'
     | '/admin/invites'
+    | '/admin/metrics'
     | '/admin/settings'
     | '/admin/sources'
     | '/admin/suggestions'
@@ -323,6 +334,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/admin/backup'
     | '/admin/invites'
+    | '/admin/metrics'
     | '/admin/settings'
     | '/admin/sources'
     | '/admin/suggestions'
@@ -353,6 +365,7 @@ export interface FileRouteTypes {
     | '/invite/$token'
     | '/_authenticated/admin/backup'
     | '/_authenticated/admin/invites'
+    | '/_authenticated/admin/metrics'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/sources'
     | '/_authenticated/admin/suggestions'
@@ -558,6 +571,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/metrics': {
+      id: '/_authenticated/admin/metrics'
+      path: '/metrics'
+      fullPath: '/admin/metrics'
+      preLoaderRoute: typeof AuthenticatedAdminMetricsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/invites': {
       id: '/_authenticated/admin/invites'
       path: '/invites'
@@ -585,6 +605,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminBackupRoute: typeof AuthenticatedAdminBackupRoute
   AuthenticatedAdminInvitesRoute: typeof AuthenticatedAdminInvitesRoute
+  AuthenticatedAdminMetricsRoute: typeof AuthenticatedAdminMetricsRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminSourcesRoute: typeof AuthenticatedAdminSourcesRoute
   AuthenticatedAdminSuggestionsRoute: typeof AuthenticatedAdminSuggestionsRoute
@@ -594,6 +615,7 @@ interface AuthenticatedAdminRouteChildren {
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminBackupRoute: AuthenticatedAdminBackupRoute,
   AuthenticatedAdminInvitesRoute: AuthenticatedAdminInvitesRoute,
+  AuthenticatedAdminMetricsRoute: AuthenticatedAdminMetricsRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminSourcesRoute: AuthenticatedAdminSourcesRoute,
   AuthenticatedAdminSuggestionsRoute: AuthenticatedAdminSuggestionsRoute,

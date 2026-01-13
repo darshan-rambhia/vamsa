@@ -4,19 +4,26 @@ import {
   Link,
   useLocation,
 } from "@tanstack/react-router";
-import { Container, PageHeader } from "@vamsa/ui";
+import { Container, PageHeader, Badge } from "@vamsa/ui";
 import { cn } from "@vamsa/ui";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   component: AdminLayout,
 });
 
-const adminNavItems = [
+interface AdminNavItem {
+  href: string;
+  label: string;
+  badge?: string;
+}
+
+const adminNavItems: AdminNavItem[] = [
   { href: "/admin/users", label: "Users" },
   { href: "/admin/invites", label: "Invites" },
   { href: "/admin/suggestions", label: "Suggestions" },
   { href: "/admin/settings", label: "Settings" },
   { href: "/admin/backup", label: "Backup" },
+  { href: "/admin/metrics", label: "Metrics", badge: "BETA" },
 ];
 
 function AdminLayout() {
@@ -39,13 +46,18 @@ function AdminLayout() {
               to={item.href}
               className={cn(
                 "px-4 py-3 text-sm font-medium transition-colors",
-                "-mb-0.5 border-b-2",
+                "-mb-0.5 border-b-2 flex items-center gap-2",
                 isActive
                   ? "border-primary text-primary"
                   : "text-muted-foreground hover:text-foreground hover:border-border border-transparent"
               )}
             >
               {item.label}
+              {item.badge && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                  {item.badge}
+                </Badge>
+              )}
             </Link>
           );
         })}

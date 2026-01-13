@@ -8,6 +8,7 @@ import {
 } from "./tree-layout";
 import { logger } from "@vamsa/lib/logger";
 import { requireAuth } from "./middleware/require-auth";
+import { recordRelationshipCalc } from "../../server/metrics/application";
 
 const relationshipTypeSchema = z.enum(["PARENT", "CHILD", "SPOUSE", "SIBLING"]);
 
@@ -275,6 +276,7 @@ export const getFamilyTreeLayout = createServerFn({ method: "POST" })
     return treeLayoutInputSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const start = Date.now();
     const { focusedPersonId, view, expandedNodes, generationDepth } = data;
 
     // Fetch all persons and relationships
@@ -312,6 +314,15 @@ export const getFamilyTreeLayout = createServerFn({ method: "POST" })
       expandedNodes,
       generationDepth,
     });
+
+    // Record metrics
+    const duration = Date.now() - start;
+    recordRelationshipCalc(
+      "tree_layout",
+      duration,
+      layout.nodes?.length,
+      layout.nodes?.length > 0
+    );
 
     return layout;
   });

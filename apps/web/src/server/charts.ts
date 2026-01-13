@@ -24,6 +24,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "./db";
 import { z } from "zod";
 import { requireAuth } from "./middleware/require-auth";
+import { recordChartMetrics } from "../../server/metrics/application";
 
 // Types for chart data structures
 export interface ChartNode {
@@ -499,6 +500,7 @@ export const getAncestorChart = createServerFn({ method: "POST" })
     return ancestorChartSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const start = Date.now();
     await requireAuth("VIEWER");
 
     const { personId, generations } = data;
@@ -579,6 +581,10 @@ export const getAncestorChart = createServerFn({ method: "POST" })
       }
     });
 
+    // Record metrics
+    const duration = Date.now() - start;
+    recordChartMetrics("ancestor", nodes.length, duration);
+
     return {
       nodes,
       edges,
@@ -599,6 +605,7 @@ export const getDescendantChart = createServerFn({ method: "POST" })
     return descendantChartSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const start = Date.now();
     await requireAuth("VIEWER");
 
     const { personId, generations } = data;
@@ -680,6 +687,10 @@ export const getDescendantChart = createServerFn({ method: "POST" })
       }
     });
 
+    // Record metrics
+    const duration = Date.now() - start;
+    recordChartMetrics("descendant", nodes.length, duration);
+
     return {
       nodes,
       edges,
@@ -700,6 +711,7 @@ export const getHourglassChart = createServerFn({ method: "POST" })
     return hourglassChartSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const start = Date.now();
     await requireAuth("VIEWER");
 
     const { personId, ancestorGenerations, descendantGenerations } = data;
@@ -793,6 +805,10 @@ export const getHourglassChart = createServerFn({ method: "POST" })
       }
     });
 
+    // Record metrics
+    const duration = Date.now() - start;
+    recordChartMetrics("hourglass", nodes.length, duration);
+
     return {
       nodes,
       edges,
@@ -848,6 +864,7 @@ export const getFanChart = createServerFn({ method: "POST" })
     return fanChartSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const start = Date.now();
     await requireAuth("VIEWER");
 
     const { personId, generations } = data;
@@ -932,6 +949,10 @@ export const getFanChart = createServerFn({ method: "POST" })
       }
     });
 
+    // Record metrics
+    const duration = Date.now() - start;
+    recordChartMetrics("fan", nodes.length, duration);
+
     return {
       nodes,
       edges,
@@ -953,6 +974,7 @@ export const getTimelineChart = createServerFn({ method: "POST" })
     return timelineChartSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const start = Date.now();
     await requireAuth("VIEWER");
 
     const { startYear, endYear, sortBy } = data;
@@ -1014,6 +1036,10 @@ export const getTimelineChart = createServerFn({ method: "POST" })
     const maxYear =
       years.length > 0 ? Math.max(...years, currentYear) : currentYear;
 
+    // Record metrics
+    const duration = Date.now() - start;
+    recordChartMetrics("timeline", entries.length, duration);
+
     return {
       entries,
       metadata: {
@@ -1034,6 +1060,7 @@ export const getRelationshipMatrix = createServerFn({ method: "POST" })
     return relationshipMatrixSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const start = Date.now();
     await requireAuth("VIEWER");
 
     const { personIds, maxPeople } = data;
@@ -1106,6 +1133,10 @@ export const getRelationshipMatrix = createServerFn({ method: "POST" })
     const totalRelationships = matrix.filter(
       (m) => m.relationshipType && m.relationshipType !== "SELF"
     ).length;
+
+    // Record metrics
+    const duration = Date.now() - start;
+    recordChartMetrics("matrix", people.length, duration);
 
     return {
       people,
@@ -1192,6 +1223,7 @@ export const getBowtieChart = createServerFn({ method: "POST" })
     return bowtieChartSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const start = Date.now();
     await requireAuth("VIEWER");
 
     const { personId, generations } = data;
@@ -1308,6 +1340,10 @@ export const getBowtieChart = createServerFn({ method: "POST" })
     const paternalCount = nodes.filter((n) => n.side === "paternal").length;
     const maternalCount = nodes.filter((n) => n.side === "maternal").length;
 
+    // Record metrics
+    const duration = Date.now() - start;
+    recordChartMetrics("bowtie", nodes.length, duration);
+
     return {
       nodes,
       edges,
@@ -1331,6 +1367,7 @@ export const getCompactTreeData = createServerFn({ method: "POST" })
     return compactTreeSchema.parse(data);
   })
   .handler(async ({ data }): Promise<CompactTreeResult> => {
+    const start = Date.now();
     await requireAuth("VIEWER");
 
     const { personId, generations } = data;
@@ -1447,6 +1484,10 @@ export const getCompactTreeData = createServerFn({ method: "POST" })
 
     flattenTree(root);
 
+    // Record metrics
+    const duration = Date.now() - start;
+    recordChartMetrics("compact", flatList.length, duration);
+
     return {
       root,
       flatList,
@@ -1468,6 +1509,7 @@ export const getStatistics = createServerFn({ method: "POST" })
     return statisticsSchema.parse(data);
   })
   .handler(async ({ data }): Promise<StatisticsResult> => {
+    const start = Date.now();
     await requireAuth("VIEWER");
 
     const { includeDeceased } = data;
@@ -1726,6 +1768,10 @@ export const getStatistics = createServerFn({ method: "POST" })
       oldestPerson = livingWithAge[0];
       youngestPerson = livingWithAge[livingWithAge.length - 1];
     }
+
+    // Record metrics
+    const duration = Date.now() - start;
+    recordChartMetrics("statistics", total, duration);
 
     return {
       ageDistribution,

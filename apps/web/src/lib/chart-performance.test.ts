@@ -17,7 +17,15 @@
  * - Edge cases and error handling
  */
 
-import { describe, it, expect, beforeEach, afterEach, mock, spyOn } from "bun:test";
+import {
+  describe,
+  it,
+  expect,
+  beforeEach,
+  afterEach,
+  mock,
+  spyOn,
+} from "bun:test";
 import type { ChartNode, ChartEdge } from "~/server/charts";
 import type { Position } from "./d3-utils";
 
@@ -257,7 +265,13 @@ describe("Chart Performance Utilities", () => {
       const nodeWidth = 100;
       const node1 = createSampleNode({ id: "person-1", generation: 0 });
       const node2 = createSampleNode({ id: "person-2", generation: 0 });
-      const result = mockUseNodePositions([node1, node2], 800, nodeWidth, 200, 50);
+      const result = mockUseNodePositions(
+        [node1, node2],
+        800,
+        nodeWidth,
+        200,
+        50
+      );
 
       const pos1 = result.get("person-1");
       const pos2 = result.get("person-2");
@@ -538,9 +552,21 @@ describe("Chart Performance Utilities", () => {
 
     it("should handle multiple edges", () => {
       const edges = [
-        createSampleEdge({ id: "edge-1", source: "person-1", target: "person-2" }),
-        createSampleEdge({ id: "edge-2", source: "person-2", target: "person-3" }),
-        createSampleEdge({ id: "edge-3", source: "person-4", target: "person-5" }),
+        createSampleEdge({
+          id: "edge-1",
+          source: "person-1",
+          target: "person-2",
+        }),
+        createSampleEdge({
+          id: "edge-2",
+          source: "person-2",
+          target: "person-3",
+        }),
+        createSampleEdge({
+          id: "edge-3",
+          source: "person-4",
+          target: "person-5",
+        }),
       ];
       const positions = new Map([
         ["person-1", createPosition()],
@@ -959,9 +985,7 @@ describe("Chart Performance Utilities", () => {
 
   describe("Edge Cases and Error Handling", () => {
     it("should handle nodes with no ID", () => {
-      const nodes = [
-        { ...createSampleNode(), id: "" },
-      ];
+      const nodes = [{ ...createSampleNode(), id: "" }];
       const result = mockUseNodePositions(nodes, 800, 100, 200, 50);
       expect(result.size).toBe(1);
     });

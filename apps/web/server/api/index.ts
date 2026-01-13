@@ -4,6 +4,7 @@ import authRouter from "./auth";
 import personsRouter from "./persons";
 import relationshipsRouter from "./relationships";
 import calendarRouter from "./calendar";
+import metricsRouter from "./metrics";
 import { openAPISpec } from "./openapi-spec";
 import { logger } from "@vamsa/lib/logger";
 
@@ -78,6 +79,7 @@ apiV1.route("/auth", authRouter);
 apiV1.route("/persons", personsRouter);
 apiV1.route("/relationships", relationshipsRouter);
 apiV1.route("/calendar", calendarRouter);
+apiV1.route("/metrics", metricsRouter);
 
 // ============================================
 // Error Handling

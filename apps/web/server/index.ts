@@ -7,7 +7,12 @@
  * - CORS handling (for future React Native client)
  * - Custom middleware (rate limiting, auth, etc.)
  * - Health checks and monitoring
+ * - OpenTelemetry observability (traces and metrics)
  */
+
+// Initialize OpenTelemetry before other imports (must be first)
+import { startTelemetry, stopTelemetry, getTelemetryConfig } from "./telemetry";
+await startTelemetry();
 
 import { Hono } from "hono";
 import { logger as honoLogger } from "hono/logger";
@@ -16,6 +21,7 @@ import { csrf } from "hono/csrf";
 import { secureHeaders } from "hono/secure-headers";
 import { logger, serializeError } from "@vamsa/lib/logger";
 import { etagMiddleware, getETagMetrics } from "./middleware/etag";
+import { telemetryMiddleware } from "./middleware/telemetry";
 import { initializeServerI18n } from "../src/server/i18n";
 import { serveMedia } from "./middleware/media-server";
 
@@ -144,6 +150,10 @@ app.use(
   })
 );
 
+// OpenTelemetry HTTP metrics middleware
+// Collects request duration, counts, and active connections
+app.use("*", telemetryMiddleware);
+
 // ETag caching for API responses
 // This should be applied after security headers but before route handlers
 app.use(
@@ -168,6 +178,7 @@ app.get("/health", (c) => {
     status: "healthy",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
+    version: process.env.APP_VERSION || "1.0.0",
   });
 });
 
@@ -176,6 +187,15 @@ app.get("/health/cache", (c) => {
   const metrics = getETagMetrics();
   return c.json({
     etag: metrics,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Telemetry status endpoint for monitoring
+app.get("/health/telemetry", (c) => {
+  const telemetryConfig = getTelemetryConfig();
+  return c.json({
+    telemetry: telemetryConfig,
     timestamp: new Date().toISOString(),
   });
 });
@@ -302,14 +322,16 @@ async function startServer() {
 const server = await startServer();
 
 // Graceful shutdown
-process.on("SIGINT", () => {
+process.on("SIGINT", async () => {
   logger.info("Received SIGINT, shutting down server...");
   server.stop();
+  await stopTelemetry();
   process.exit(0);
 });
 
-process.on("SIGTERM", () => {
+process.on("SIGTERM", async () => {
   logger.info("Received SIGTERM, shutting down server...");
   server.stop();
+  await stopTelemetry();
   process.exit(0);
 });

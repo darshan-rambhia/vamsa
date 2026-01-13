@@ -15,6 +15,7 @@ import {
   cleanupOldImages,
   getMediaDir,
 } from "@vamsa/lib/server";
+import { recordMediaUpload } from "../../server/metrics/application";
 
 // Get all media for a person
 export const getPersonMedia = createServerFn({ method: "GET" })
@@ -422,6 +423,7 @@ export const uploadMedia = createServerFn({ method: "POST" })
     }) => data
   )
   .handler(async ({ data }) => {
+    const uploadStart = Date.now();
     const {
       personId,
       fileName,
@@ -477,10 +479,13 @@ export const uploadMedia = createServerFn({ method: "POST" })
     let thumb400Path: string | null = null;
     let thumb800Path: string | null = null;
     let thumb1200Path: string | null = null;
+    let processingDuration = 0;
 
     if (mimeType.startsWith("image/")) {
       try {
+        const processingStart = Date.now();
         processedImage = await processUploadedImage(buffer, mediaId, mediaDir);
+        processingDuration = Date.now() - processingStart;
         webpPath = processedImage.webp.path;
         thumb400Path = processedImage.responsive[0]?.path || null;
         thumb800Path = processedImage.responsive[1]?.path || null;
@@ -535,6 +540,10 @@ export const uploadMedia = createServerFn({ method: "POST" })
         displayOrder,
       },
     });
+
+    // Record metrics
+    const uploadDuration = Date.now() - uploadStart;
+    recordMediaUpload(fileSize, uploadDuration, processingDuration, mimeType, true);
 
     return {
       id: personMedia.id,

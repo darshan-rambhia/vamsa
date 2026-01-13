@@ -12,6 +12,11 @@ import * as fs from "fs";
 import * as path from "path";
 import { logger, serializeError } from "@vamsa/lib/logger";
 import { requireAuth } from "./middleware/require-auth";
+import {
+  recordGedcomImport,
+  recordGedcomExport,
+  recordGedcomValidation,
+} from "../../server/metrics/application";
 
 export interface ValidateGedcomResult {
   valid: boolean;
@@ -61,6 +66,7 @@ export interface ExportGedZipResult {
 export const validateGedcom = createServerFn({ method: "POST" })
   .inputValidator((data: { fileName: string; fileContent: string }) => data)
   .handler(async ({ data }): Promise<ValidateGedcomResult> => {
+    const start = Date.now();
     await requireAuth("ADMIN");
 
     const { fileName, fileContent } = data;
@@ -104,6 +110,10 @@ export const validateGedcom = createServerFn({ method: "POST" })
 
       const isValid = errors.every((e) => e.severity !== "error");
 
+      // Record metrics
+      const duration = Date.now() - start;
+      recordGedcomValidation(isValid, allErrors.length, duration);
+
       return {
         valid: isValid,
         message: isValid ? "File is valid" : "File has validation issues",
@@ -114,6 +124,9 @@ export const validateGedcom = createServerFn({ method: "POST" })
         },
       };
     } catch (error) {
+      // Record failed validation
+      recordGedcomValidation(false, 1, Date.now() - start);
+
       return {
         valid: false,
         message: error instanceof Error ? error.message : "Validation failed",
@@ -125,6 +138,7 @@ export const validateGedcom = createServerFn({ method: "POST" })
 export const importGedcom = createServerFn({ method: "POST" })
   .inputValidator((data: { fileName: string; fileContent: string }) => data)
   .handler(async ({ data }): Promise<ImportGedcomResult> => {
+    const start = Date.now();
     const user = await requireAuth("ADMIN");
 
     const { fileName, fileContent } = data;
@@ -241,6 +255,16 @@ export const importGedcom = createServerFn({ method: "POST" })
         },
       });
 
+      // Record metrics
+      const duration = Date.now() - start;
+      recordGedcomImport(
+        result.people.length,
+        result.relationships.length,
+        duration,
+        mapped.errors.length,
+        fileContent.length
+      );
+
       return {
         success: true,
         message: `Successfully imported ${result.people.length} people and ${result.relationships.length} relationships`,
@@ -255,6 +279,10 @@ export const importGedcom = createServerFn({ method: "POST" })
       };
     } catch (error) {
       logger.error({ error: serializeError(error) }, "GEDCOM import error");
+
+      // Record failed import
+      recordGedcomImport(0, 0, Date.now() - start, 1);
+
       return {
         success: false,
         message: error instanceof Error ? error.message : "Import failed",
@@ -265,6 +293,7 @@ export const importGedcom = createServerFn({ method: "POST" })
 // Export GEDCOM file
 export const exportGedcom = createServerFn({ method: "GET" }).handler(
   async (): Promise<ExportGedcomResult> => {
+    const start = Date.now();
     const user = await requireAuth("ADMIN");
 
     try {
@@ -306,6 +335,10 @@ export const exportGedcom = createServerFn({ method: "GET" }).handler(
         },
       });
 
+      // Record metrics
+      const duration = Date.now() - start;
+      recordGedcomExport(people.length, relationships.length, duration);
+
       return {
         success: true,
         message: "Export successful",
@@ -325,6 +358,7 @@ export const exportGedcom = createServerFn({ method: "GET" }).handler(
 export const exportGedZip = createServerFn({ method: "GET" })
   .inputValidator((data: { includeMedia?: boolean }) => data)
   .handler(async ({ data }): Promise<ExportGedZipResult> => {
+    const start = Date.now();
     const user = await requireAuth("ADMIN");
 
     const includeMedia = data.includeMedia !== false;
@@ -443,6 +477,10 @@ export const exportGedZip = createServerFn({ method: "GET" })
           },
         },
       });
+
+      // Record metrics
+      const duration = Date.now() - start;
+      recordGedcomExport(people.length, relationships.length, duration);
 
       return {
         success: true,

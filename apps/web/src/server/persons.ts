@@ -6,6 +6,7 @@ import { logger, serializeError } from "@vamsa/lib/logger";
 import { requireAuth } from "./middleware/require-auth";
 import { createPaginationMeta } from "@vamsa/schemas";
 import { t } from "./i18n";
+import { recordSearchMetrics } from "../../server/metrics/application";
 
 // Person list input schema with pagination, search, and filters
 const personListInputSchema = z.object({
@@ -76,6 +77,7 @@ export const listPersons = createServerFn({ method: "GET" })
     return personListInputSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    const start = Date.now();
     const { page, limit, sortBy, sortOrder, search, isLiving } = data;
 
     // Build where clause
@@ -114,6 +116,12 @@ export const listPersons = createServerFn({ method: "GET" })
       skip: (page - 1) * limit,
       take: limit,
     });
+
+    // Record search metrics if search query was provided
+    if (search) {
+      const duration = Date.now() - start;
+      recordSearchMetrics(search, total, duration, "person_list");
+    }
 
     return {
       items: persons.map((p) => ({
@@ -308,6 +316,8 @@ export const deletePerson = createServerFn({ method: "POST" })
 export const searchPersons = createServerFn({ method: "GET" })
   .inputValidator((data: { query: string; excludeId?: string }) => data)
   .handler(async ({ data }) => {
+    const start = Date.now();
+
     const persons = await prisma.person.findMany({
       where: {
         AND: [
@@ -324,6 +334,10 @@ export const searchPersons = createServerFn({ method: "GET" })
       take: 10,
       orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
     });
+
+    // Record metrics
+    const duration = Date.now() - start;
+    recordSearchMetrics(data.query, persons.length, duration, "person_name");
 
     return persons.map((p) => ({
       id: p.id,
