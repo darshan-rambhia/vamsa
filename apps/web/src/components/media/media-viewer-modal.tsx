@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Badge, Button } from "@vamsa/ui/primitives";
+import { ResponsiveImage } from "../ui/responsive-image";
 
 interface MediaViewerModalProps {
   media: {
@@ -15,6 +16,10 @@ interface MediaViewerModalProps {
     width: number | null;
     height: number | null;
     uploadedAt: string;
+    webpPath?: string | null;
+    thumb400Path?: string | null;
+    thumb800Path?: string | null;
+    thumb1200Path?: string | null;
   };
   allMediaIds: string[];
   relatedEvents?: Array<{
@@ -156,9 +161,16 @@ export function MediaViewerModal({
         <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
           {/* Image viewer */}
           <div className="bg-muted/20 relative flex flex-1 items-center justify-center p-8">
-            <img
-              src={media.filePath}
+            <ResponsiveImage
+              mediaId={media.id}
               alt={media.title || "Photo"}
+              webpPath={media.webpPath}
+              thumb400Path={media.thumb400Path}
+              thumb800Path={media.thumb800Path}
+              thumb1200Path={media.thumb1200Path}
+              filePath={media.filePath}
+              priority={true}
+              sizes="(max-width: 1024px) 90vw, 1200px"
               className="max-h-full max-w-full rounded-lg object-contain shadow-lg"
             />
 

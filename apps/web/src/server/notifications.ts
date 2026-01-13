@@ -7,31 +7,8 @@ import {
   createNewMemberEmail,
   createBirthdayReminderEmail,
 } from "@vamsa/api";
-
-const TOKEN_COOKIE_NAME = "vamsa-session";
-
-/**
- * Internal helper to get current user from session
- */
-async function requireAuth() {
-  const { getCookie } = await import("@tanstack/react-start/server");
-
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const session = await prisma.session.findFirst({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error("Session expired");
-  }
-
-  return session.user;
-}
+import { logger, serializeError } from "@vamsa/lib/logger";
+import { requireAuth } from "./middleware/require-auth";
 
 /**
  * Get user's email notification preferences
@@ -111,7 +88,7 @@ export async function notifySuggestionCreated(suggestionId: string) {
     });
 
     if (!suggestion) {
-      console.error("[Notifications] Suggestion not found:", suggestionId);
+      logger.error({ suggestionId }, "Suggestion not found for notification");
       return;
     }
 
@@ -121,7 +98,7 @@ export async function notifySuggestionCreated(suggestionId: string) {
     });
 
     if (admins.length === 0) {
-      console.warn("[Notifications] No admins found to notify");
+      logger.warn("No admins found to notify");
       return;
     }
 
@@ -165,7 +142,10 @@ export async function notifySuggestionCreated(suggestionId: string) {
       }
     }
   } catch (error) {
-    console.error("[Notifications] Error notifying suggestion created:", error);
+    logger.error(
+      { error: serializeError(error) },
+      "Error notifying suggestion created"
+    );
   }
 }
 
@@ -187,7 +167,10 @@ export async function notifySuggestionUpdated(
     });
 
     if (!suggestion) {
-      console.error("[Notifications] Suggestion not found:", suggestionId);
+      logger.error(
+        { suggestionId },
+        "Suggestion not found for update notification"
+      );
       return;
     }
 
@@ -229,7 +212,10 @@ export async function notifySuggestionUpdated(
       );
     }
   } catch (error) {
-    console.error("[Notifications] Error notifying suggestion updated:", error);
+    logger.error(
+      { error: serializeError(error) },
+      "Error notifying suggestion updated"
+    );
   }
 }
 
@@ -245,7 +231,7 @@ export async function notifyNewMemberJoined(userId: string) {
     });
 
     if (!newMember) {
-      console.error("[Notifications] User not found:", userId);
+      logger.error({ userId }, "User not found for new member notification");
       return;
     }
 
@@ -259,7 +245,7 @@ export async function notifyNewMemberJoined(userId: string) {
     });
 
     if (members.length === 0) {
-      console.warn("[Notifications] No members found to notify");
+      logger.warn("No members found to notify");
       return;
     }
 
@@ -308,7 +294,10 @@ export async function notifyNewMemberJoined(userId: string) {
       }
     }
   } catch (error) {
-    console.error("[Notifications] Error notifying new member joined:", error);
+    logger.error(
+      { error: serializeError(error) },
+      "Error notifying new member joined"
+    );
   }
 }
 
@@ -356,9 +345,7 @@ export async function sendBirthdayReminders() {
     });
 
     if (!systemUser) {
-      console.warn(
-        "[Notifications] No system user found for birthday reminders"
-      );
+      logger.warn("No system user found for birthday reminders");
       return;
     }
 
@@ -397,6 +384,9 @@ export async function sendBirthdayReminders() {
       }
     }
   } catch (error) {
-    console.error("[Notifications] Error sending birthday reminders:", error);
+    logger.error(
+      { error: serializeError(error) },
+      "Error sending birthday reminders"
+    );
   }
 }

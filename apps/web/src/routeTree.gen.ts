@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthenticatedTreeRouteImport } from './routes/_authenticated/tree'
+import { Route as AuthenticatedSubscribeRouteImport } from './routes/_authenticated/subscribe'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -23,6 +24,10 @@ import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
 import { Route as AuthenticatedMapsIndexRouteImport } from './routes/_authenticated/maps/index'
 import { Route as AuthenticatedChartsIndexRouteImport } from './routes/_authenticated/charts/index'
+import { Route as AuthMicrosoftCallbackRouteImport } from './routes/auth/microsoft/callback'
+import { Route as AuthGoogleCallbackRouteImport } from './routes/auth/google/callback'
+import { Route as AuthGithubCallbackRouteImport } from './routes/auth/github/callback'
+import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
 import { Route as AuthenticatedPeopleNewRouteImport } from './routes/_authenticated/people/new'
 import { Route as AuthenticatedPeoplePersonIdRouteImport } from './routes/_authenticated/people/$personId'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
@@ -67,6 +72,11 @@ const AuthenticatedTreeRoute = AuthenticatedTreeRouteImport.update({
   path: '/tree',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedSubscribeRoute = AuthenticatedSubscribeRouteImport.update({
+  id: '/subscribe',
+  path: '/subscribe',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -103,6 +113,27 @@ const AuthenticatedChartsIndexRoute =
   AuthenticatedChartsIndexRouteImport.update({
     id: '/charts/',
     path: '/charts/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthMicrosoftCallbackRoute = AuthMicrosoftCallbackRouteImport.update({
+  id: '/auth/microsoft/callback',
+  path: '/auth/microsoft/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthGoogleCallbackRoute = AuthGoogleCallbackRouteImport.update({
+  id: '/auth/google/callback',
+  path: '/auth/google/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthGithubCallbackRoute = AuthGithubCallbackRouteImport.update({
+  id: '/auth/github/callback',
+  path: '/auth/github/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedSettingsProfileRoute =
+  AuthenticatedSettingsProfileRouteImport.update({
+    id: '/settings/profile',
+    path: '/settings/profile',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedPeopleNewRoute = AuthenticatedPeopleNewRouteImport.update({
@@ -167,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/subscribe': typeof AuthenticatedSubscribeRoute
   '/tree': typeof AuthenticatedTreeRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/backup': typeof AuthenticatedAdminBackupRoute
@@ -177,6 +209,10 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/people/new': typeof AuthenticatedPeopleNewRoute
+  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/auth/github/callback': typeof AuthGithubCallbackRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
+  '/auth/microsoft/callback': typeof AuthMicrosoftCallbackRoute
   '/charts': typeof AuthenticatedChartsIndexRoute
   '/maps': typeof AuthenticatedMapsIndexRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
@@ -191,6 +227,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/subscribe': typeof AuthenticatedSubscribeRoute
   '/tree': typeof AuthenticatedTreeRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/backup': typeof AuthenticatedAdminBackupRoute
@@ -201,6 +238,10 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AuthenticatedAdminUsersRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/people/new': typeof AuthenticatedPeopleNewRoute
+  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/auth/github/callback': typeof AuthGithubCallbackRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
+  '/auth/microsoft/callback': typeof AuthMicrosoftCallbackRoute
   '/charts': typeof AuthenticatedChartsIndexRoute
   '/maps': typeof AuthenticatedMapsIndexRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
@@ -217,6 +258,7 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/subscribe': typeof AuthenticatedSubscribeRoute
   '/_authenticated/tree': typeof AuthenticatedTreeRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/admin/backup': typeof AuthenticatedAdminBackupRoute
@@ -227,6 +269,10 @@ export interface FileRoutesById {
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
   '/_authenticated/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/_authenticated/people/new': typeof AuthenticatedPeopleNewRoute
+  '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
+  '/auth/github/callback': typeof AuthGithubCallbackRoute
+  '/auth/google/callback': typeof AuthGoogleCallbackRoute
+  '/auth/microsoft/callback': typeof AuthMicrosoftCallbackRoute
   '/_authenticated/charts/': typeof AuthenticatedChartsIndexRoute
   '/_authenticated/maps/': typeof AuthenticatedMapsIndexRoute
   '/_authenticated/people/': typeof AuthenticatedPeopleIndexRoute
@@ -243,6 +289,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/change-password'
     | '/dashboard'
+    | '/subscribe'
     | '/tree'
     | '/invite/$token'
     | '/admin/backup'
@@ -253,6 +300,10 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/people/$personId'
     | '/people/new'
+    | '/settings/profile'
+    | '/auth/github/callback'
+    | '/auth/google/callback'
+    | '/auth/microsoft/callback'
     | '/charts'
     | '/maps'
     | '/people'
@@ -267,6 +318,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/change-password'
     | '/dashboard'
+    | '/subscribe'
     | '/tree'
     | '/invite/$token'
     | '/admin/backup'
@@ -277,6 +329,10 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/people/$personId'
     | '/people/new'
+    | '/settings/profile'
+    | '/auth/github/callback'
+    | '/auth/google/callback'
+    | '/auth/microsoft/callback'
     | '/charts'
     | '/maps'
     | '/people'
@@ -292,6 +348,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/change-password'
     | '/_authenticated/dashboard'
+    | '/_authenticated/subscribe'
     | '/_authenticated/tree'
     | '/invite/$token'
     | '/_authenticated/admin/backup'
@@ -302,6 +359,10 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/users'
     | '/_authenticated/people/$personId'
     | '/_authenticated/people/new'
+    | '/_authenticated/settings/profile'
+    | '/auth/github/callback'
+    | '/auth/google/callback'
+    | '/auth/microsoft/callback'
     | '/_authenticated/charts/'
     | '/_authenticated/maps/'
     | '/_authenticated/people/'
@@ -315,6 +376,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   InviteTokenRoute: typeof InviteTokenRoute
+  AuthGithubCallbackRoute: typeof AuthGithubCallbackRoute
+  AuthGoogleCallbackRoute: typeof AuthGoogleCallbackRoute
+  AuthMicrosoftCallbackRoute: typeof AuthMicrosoftCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -368,6 +432,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTreeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/subscribe': {
+      id: '/_authenticated/subscribe'
+      path: '/subscribe'
+      fullPath: '/subscribe'
+      preLoaderRoute: typeof AuthenticatedSubscribeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -415,6 +486,34 @@ declare module '@tanstack/react-router' {
       path: '/charts'
       fullPath: '/charts'
       preLoaderRoute: typeof AuthenticatedChartsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/auth/microsoft/callback': {
+      id: '/auth/microsoft/callback'
+      path: '/auth/microsoft/callback'
+      fullPath: '/auth/microsoft/callback'
+      preLoaderRoute: typeof AuthMicrosoftCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/google/callback': {
+      id: '/auth/google/callback'
+      path: '/auth/google/callback'
+      fullPath: '/auth/google/callback'
+      preLoaderRoute: typeof AuthGoogleCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth/github/callback': {
+      id: '/auth/github/callback'
+      path: '/auth/github/callback'
+      fullPath: '/auth/github/callback'
+      preLoaderRoute: typeof AuthGithubCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/settings/profile': {
+      id: '/_authenticated/settings/profile'
+      path: '/settings/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/people/new': {
@@ -509,9 +608,11 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedSubscribeRoute: typeof AuthenticatedSubscribeRoute
   AuthenticatedTreeRoute: typeof AuthenticatedTreeRoute
   AuthenticatedPeoplePersonIdRoute: typeof AuthenticatedPeoplePersonIdRoute
   AuthenticatedPeopleNewRoute: typeof AuthenticatedPeopleNewRoute
+  AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
   AuthenticatedChartsIndexRoute: typeof AuthenticatedChartsIndexRoute
   AuthenticatedMapsIndexRoute: typeof AuthenticatedMapsIndexRoute
   AuthenticatedPeopleIndexRoute: typeof AuthenticatedPeopleIndexRoute
@@ -523,9 +624,11 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedSubscribeRoute: AuthenticatedSubscribeRoute,
   AuthenticatedTreeRoute: AuthenticatedTreeRoute,
   AuthenticatedPeoplePersonIdRoute: AuthenticatedPeoplePersonIdRoute,
   AuthenticatedPeopleNewRoute: AuthenticatedPeopleNewRoute,
+  AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
   AuthenticatedChartsIndexRoute: AuthenticatedChartsIndexRoute,
   AuthenticatedMapsIndexRoute: AuthenticatedMapsIndexRoute,
   AuthenticatedPeopleIndexRoute: AuthenticatedPeopleIndexRoute,
@@ -543,6 +646,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   InviteTokenRoute: InviteTokenRoute,
+  AuthGithubCallbackRoute: AuthGithubCallbackRoute,
+  AuthGoogleCallbackRoute: AuthGoogleCallbackRoute,
+  AuthMicrosoftCallbackRoute: AuthMicrosoftCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

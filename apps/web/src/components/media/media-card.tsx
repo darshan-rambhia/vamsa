@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Badge } from "@vamsa/ui/primitives";
+import { ResponsiveImage } from "../ui/responsive-image";
 
 interface MediaCardProps {
   media: {
@@ -11,6 +12,10 @@ interface MediaCardProps {
     thumbnailPath: string | null;
     filePath: string;
     isPrimary: boolean;
+    webpPath?: string | null;
+    thumb400Path?: string | null;
+    thumb800Path?: string | null;
+    thumb1200Path?: string | null;
   };
   onView: () => void;
   onSetPrimary?: () => void;
@@ -32,15 +37,21 @@ export function MediaCard({
       {/* Image */}
       <button
         type="button"
-        className="bg-muted h-full w-full cursor-pointer"
+        className="bg-muted h-full w-full cursor-pointer overflow-hidden"
         onClick={onView}
         aria-label={`View ${media.title || "photo"}`}
       >
         {media.thumbnailPath || media.filePath ? (
-          <img
-            src={media.thumbnailPath || media.filePath}
+          <ResponsiveImage
+            mediaId={media.mediaId}
             alt={media.title || "Photo"}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            webpPath={media.webpPath}
+            thumb400Path={media.thumb400Path}
+            thumb800Path={media.thumb800Path}
+            thumb1200Path={media.thumb1200Path}
+            filePath={media.thumbnailPath || media.filePath}
+            sizes="(max-width: 640px) 200px, (max-width: 1024px) 300px, 400px"
+            className="transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
           <div className="text-muted-foreground/50 flex h-full w-full items-center justify-center">

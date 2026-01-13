@@ -84,6 +84,7 @@ function getLanguageLabel(language: SupportedLanguage): string {
   const labels: Record<SupportedLanguage, string> = {
     en: "EN",
     hi: "हि",
+    es: "ES",
   };
   return labels[language] || "EN";
 }

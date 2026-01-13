@@ -1,47 +1,48 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
+import { z } from "zod";
 import type { Prisma } from "@vamsa/api";
 import {
   notifySuggestionCreated,
   notifySuggestionUpdated,
 } from "./notifications";
+import { requireAuth } from "./middleware/require-auth";
+import { createPaginationMeta } from "@vamsa/schemas";
 
-const TOKEN_COOKIE_NAME = "vamsa-session";
+// Suggestion list input schema with pagination and status filter
+const suggestionListInputSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(50),
+  sortOrder: z.enum(["asc", "desc"]).default("asc"),
+  status: z.enum(["PENDING", "APPROVED", "REJECTED"]).optional(),
+});
+type SuggestionListInput = z.infer<typeof suggestionListInputSchema>;
 
-// Auth helper function
-async function requireAuth(
-  requiredRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
-) {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const session = await prisma.session.findFirst({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error("Session expired");
-  }
-
-  const roleHierarchy = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
-  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
-    throw new Error(`Requires ${requiredRole} role or higher`);
-  }
-
-  return session.user;
-}
-
-// Get all suggestions
-export const getSuggestions = createServerFn({ method: "GET" }).handler(
-  async () => {
+// Get suggestions with pagination
+export const getSuggestions = createServerFn({ method: "GET" })
+  .inputValidator((data: Partial<SuggestionListInput>) => {
+    return suggestionListInputSchema.parse(data);
+  })
+  .handler(async ({ data }) => {
     await requireAuth();
 
+    const { page, limit, sortOrder, status } = data;
+
+    // Build where clause
+    const where: Prisma.SuggestionWhereInput = {};
+    if (status) {
+      where.status = status;
+    }
+
+    // Get total count
+    const total = await prisma.suggestion.count({ where });
+
+    // Get paginated results
     const suggestions = await prisma.suggestion.findMany({
-      orderBy: { submittedAt: "desc" },
+      where,
+      orderBy: { submittedAt: sortOrder === "asc" ? "asc" : "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
       include: {
         targetPerson: {
           select: { id: true, firstName: true, lastName: true },
@@ -55,22 +56,26 @@ export const getSuggestions = createServerFn({ method: "GET" }).handler(
       },
     });
 
-    return suggestions.map((s) => ({
-      id: s.id,
-      type: s.type,
-      targetPersonId: s.targetPersonId,
-      suggestedData: s.suggestedData as { [key: string]: NonNullable<unknown> },
-      reason: s.reason,
-      status: s.status,
-      submittedAt: s.submittedAt.toISOString(),
-      reviewedAt: s.reviewedAt?.toISOString() ?? null,
-      reviewNote: s.reviewNote,
-      targetPerson: s.targetPerson,
-      submittedBy: s.submittedBy,
-      reviewedBy: s.reviewedBy,
-    }));
-  }
-);
+    return {
+      items: suggestions.map((s) => ({
+        id: s.id,
+        type: s.type,
+        targetPersonId: s.targetPersonId,
+        suggestedData: s.suggestedData as {
+          [key: string]: NonNullable<unknown>;
+        },
+        reason: s.reason,
+        status: s.status,
+        submittedAt: s.submittedAt.toISOString(),
+        reviewedAt: s.reviewedAt?.toISOString() ?? null,
+        reviewNote: s.reviewNote,
+        targetPerson: s.targetPerson,
+        submittedBy: s.submittedBy,
+        reviewedBy: s.reviewedBy,
+      })),
+      pagination: createPaginationMeta(page, limit, total),
+    };
+  });
 
 // Get pending suggestions count
 export const getPendingSuggestionsCount = createServerFn({

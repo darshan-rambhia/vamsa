@@ -30,6 +30,12 @@ export const RelationshipType = {
   CHILD: "CHILD",
   SPOUSE: "SPOUSE",
   SIBLING: "SIBLING",
+  PARENT_IN_LAW: "PARENT_IN_LAW",
+  CHILD_IN_LAW: "CHILD_IN_LAW",
+  SIBLING_IN_LAW: "SIBLING_IN_LAW",
+  STEP_PARENT: "STEP_PARENT",
+  STEP_CHILD: "STEP_CHILD",
+  STEP_SIBLING: "STEP_SIBLING",
 } as const;
 
 export type RelationshipType =
@@ -83,6 +89,16 @@ export const InviteStatus = {
 
 export type InviteStatus = (typeof InviteStatus)[keyof typeof InviteStatus];
 
+export const ProfileClaimStatus = {
+  PENDING: "PENDING",
+  CLAIMED: "CLAIMED",
+  SKIPPED: "SKIPPED",
+  NA: "NA",
+} as const;
+
+export type ProfileClaimStatus =
+  (typeof ProfileClaimStatus)[keyof typeof ProfileClaimStatus];
+
 export const EventType = {
   BIRTH: "BIRTH",
   DEATH: "DEATH",
@@ -132,3 +148,32 @@ export const PersonPlaceType = {
 
 export type PersonPlaceType =
   (typeof PersonPlaceType)[keyof typeof PersonPlaceType];
+
+export const BackupStatus = {
+  PENDING: "PENDING",
+  IN_PROGRESS: "IN_PROGRESS",
+  COMPLETED: "COMPLETED",
+  FAILED: "FAILED",
+  DELETED: "DELETED",
+} as const;
+
+export type BackupStatus = (typeof BackupStatus)[keyof typeof BackupStatus];
+
+export const BackupType = {
+  DAILY: "DAILY",
+  WEEKLY: "WEEKLY",
+  MONTHLY: "MONTHLY",
+  MANUAL: "MANUAL",
+} as const;
+
+export type BackupType = (typeof BackupType)[keyof typeof BackupType];
+
+export const StorageProvider = {
+  LOCAL: "LOCAL",
+  S3: "S3",
+  R2: "R2",
+  B2: "B2",
+} as const;
+
+export type StorageProvider =
+  (typeof StorageProvider)[keyof typeof StorageProvider];

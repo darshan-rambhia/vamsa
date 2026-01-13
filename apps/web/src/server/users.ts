@@ -1,63 +1,83 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import { z } from "zod";
+import { logger } from "@vamsa/lib/logger";
+import { requireAuth } from "./middleware/require-auth";
+import type { Prisma } from "@vamsa/api";
+import { createPaginationMeta } from "@vamsa/schemas";
 
-const TOKEN_COOKIE_NAME = "vamsa-session";
-
-// Auth helper function
-async function requireAuth(
-  requiredRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
-) {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const session = await prisma.session.findFirst({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error("Session expired");
-  }
-
-  const roleHierarchy = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
-  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
-    throw new Error(`Requires ${requiredRole} role or higher`);
-  }
-
-  return session.user;
-}
-
-// Get all users
-export const getUsers = createServerFn({ method: "GET" }).handler(async () => {
-  await requireAuth("ADMIN");
-
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      isActive: true,
-      personId: true,
-      createdAt: true,
-      lastLoginAt: true,
-      person: {
-        select: { id: true, firstName: true, lastName: true },
-      },
-    },
-  });
-
-  return users.map((u) => ({
-    ...u,
-    createdAt: u.createdAt.toISOString(),
-    lastLoginAt: u.lastLoginAt?.toISOString() ?? null,
-  }));
+// User list input schema (extends pagination with search, role, and isActive filters)
+const userListInputSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(50),
+  sortOrder: z.enum(["asc", "desc"]).default("asc"),
+  search: z.string().optional(),
+  role: z.enum(["ADMIN", "MEMBER", "VIEWER"]).optional(),
+  isActive: z.boolean().optional(),
 });
+type UserListInput = z.infer<typeof userListInputSchema>;
+
+// Get users with pagination
+export const getUsers = createServerFn({ method: "GET" })
+  .inputValidator((data: Partial<UserListInput>) => {
+    return userListInputSchema.parse(data);
+  })
+  .handler(async ({ data }) => {
+    await requireAuth("ADMIN");
+
+    const { page, limit, sortOrder, search, role, isActive } = data;
+
+    // Build where clause
+    const where: Prisma.UserWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { email: { contains: search, mode: "insensitive" } },
+        { name: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    if (role) {
+      where.role = role;
+    }
+
+    if (isActive !== undefined) {
+      where.isActive = isActive;
+    }
+
+    // Get total count
+    const total = await prisma.user.count({ where });
+
+    // Get paginated results
+    const users = await prisma.user.findMany({
+      where,
+      orderBy: { createdAt: sortOrder === "asc" ? "asc" : "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        isActive: true,
+        personId: true,
+        createdAt: true,
+        lastLoginAt: true,
+        person: {
+          select: { id: true, firstName: true, lastName: true },
+        },
+      },
+    });
+
+    return {
+      items: users.map((u) => ({
+        ...u,
+        createdAt: u.createdAt.toISOString(),
+        lastLoginAt: u.lastLoginAt?.toISOString() ?? null,
+      })),
+      pagination: createPaginationMeta(page, limit, total),
+    };
+  });
 
 // Update user role schema
 const updateUserRoleSchema = z.object({
@@ -83,13 +103,13 @@ export const updateUserRole = createServerFn({ method: "POST" })
       data: { role: data.role },
     });
 
-    console.warn(
-      "[Users Server] Updated user role:",
-      data.userId,
-      "to",
-      data.role,
-      "by:",
-      currentUser.id
+    logger.info(
+      {
+        targetUserId: data.userId,
+        newRole: data.role,
+        updatedBy: currentUser.id,
+      },
+      "Updated user role"
     );
 
     return { id: updated.id, role: updated.role };
@@ -119,13 +139,13 @@ export const toggleUserActive = createServerFn({ method: "POST" })
       data: { isActive: data.isActive },
     });
 
-    console.warn(
-      "[Users Server] Updated user active status:",
-      data.userId,
-      "to",
-      data.isActive,
-      "by:",
-      currentUser.id
+    logger.info(
+      {
+        targetUserId: data.userId,
+        isActive: data.isActive,
+        updatedBy: currentUser.id,
+      },
+      "Updated user active status"
     );
 
     return { id: updated.id, isActive: updated.isActive };
@@ -178,13 +198,13 @@ export const linkUserToPerson = createServerFn({ method: "POST" })
       },
     });
 
-    console.warn(
-      "[Users Server] Linked user to person:",
-      data.userId,
-      "->",
-      data.personId,
-      "by:",
-      currentUser.id
+    logger.info(
+      {
+        targetUserId: data.userId,
+        personId: data.personId,
+        updatedBy: currentUser.id,
+      },
+      "Linked user to person"
     );
 
     return {
@@ -265,11 +285,49 @@ export const deleteUser = createServerFn({ method: "POST" })
       where: { id: data.userId },
     });
 
-    console.warn(
-      "[Users Server] Deleted user:",
-      data.userId,
-      "by:",
-      currentUser.id
+    logger.info(
+      { deletedUserId: data.userId, deletedBy: currentUser.id },
+      "Deleted user"
+    );
+
+    return { success: true };
+  });
+
+// Unlock account schema
+const unlockAccountSchema = z.object({
+  userId: z.string(),
+});
+
+// Unlock a locked user account (admin only)
+export const unlockAccount = createServerFn({ method: "POST" })
+  .inputValidator((data: z.infer<typeof unlockAccountSchema>) => {
+    return unlockAccountSchema.parse(data);
+  })
+  .handler(async ({ data }) => {
+    const currentUser = await requireAuth("ADMIN");
+
+    // Check user exists
+    const user = await prisma.user.findUnique({
+      where: { id: data.userId },
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Reset lockout fields
+    await prisma.user.update({
+      where: { id: data.userId },
+      data: {
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+        lastFailedLoginAt: null,
+      },
+    });
+
+    logger.info(
+      { unlockedUserId: data.userId, unlockedBy: currentUser.id },
+      "Unlocked user account"
     );
 
     return { success: true };

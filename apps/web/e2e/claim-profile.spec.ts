@@ -54,24 +54,27 @@ test.describe("Feature: Profile Claiming", () => {
         await expect(page.locator('a:has-text("Sign in")')).toBeVisible();
       });
 
-      await bdd.and("profiles or empty state is shown after loading", async () => {
-        await page
-          .locator("text=Loading profiles")
-          .waitFor({ state: "hidden", timeout: 5000 })
-          .catch(() => {});
-        await page.waitForTimeout(500);
+      await bdd.and(
+        "profiles or empty state is shown after loading",
+        async () => {
+          await page
+            .locator("text=Loading profiles")
+            .waitFor({ state: "hidden", timeout: 5000 })
+            .catch(() => {});
+          await page.waitForTimeout(500);
 
-        const claimProfilePage = new ClaimProfilePage(page);
-        const selectVisible = await claimProfilePage.profileSelect
-          .isVisible({ timeout: 2000 })
-          .catch(() => false);
-        const emptyState = await page
-          .locator("text=No unclaimed profiles available")
-          .isVisible({ timeout: 2000 })
-          .catch(() => false);
+          const claimProfilePage = new ClaimProfilePage(page);
+          const selectVisible = await claimProfilePage.profileSelect
+            .isVisible({ timeout: 2000 })
+            .catch(() => false);
+          const emptyState = await page
+            .locator("text=No unclaimed profiles available")
+            .isVisible({ timeout: 2000 })
+            .catch(() => false);
 
-        expect(selectVisible || emptyState).toBeTruthy();
-      });
+          expect(selectVisible || emptyState).toBeTruthy();
+        }
+      );
     });
 
     test("should validate empty form submission", async ({ page }) => {

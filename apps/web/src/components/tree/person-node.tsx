@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps, type Node } from "@xyflow/react";
-import { Avatar, cn } from "@vamsa/ui";
+import { cn } from "@vamsa/ui";
+import { AvatarImage } from "../ui/avatar-image";
 
 export interface PersonNodeData extends Record<string, unknown> {
   person: {
@@ -53,10 +54,10 @@ export function PersonNode({ data }: NodeProps<PersonNodeType>) {
             You
           </div>
         )}
-        <Avatar
+        <AvatarImage
           alt={`${person.firstName} ${person.lastName}`}
-          src={person.photoUrl || undefined}
-          fallback={initials}
+          filePath={person.photoUrl || undefined}
+          fallbackInitials={initials}
           size="lg"
           className={cn(isCurrentUser && "ring-primary ring-2")}
         />

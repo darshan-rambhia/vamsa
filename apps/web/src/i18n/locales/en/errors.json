@@ -1,0 +1,70 @@
+{
+  "auth": {
+    "invalidCredentials": "Invalid email or password",
+    "accountDisabled": "Account is disabled",
+    "accountLocked": "Account locked due to too many failed attempts. Try again in {{minutes}} minute{{plural}}.",
+    "accountLockedAfterThreshold": "Account locked due to too many failed attempts. Try again in {{minutes}} minutes.",
+    "sessionExpired": "Your session has expired",
+    "notAuthenticated": "Please log in to continue",
+    "invalidState": "Invalid state - please try again",
+    "sessionExpiredOAuth": "Session expired - please try again",
+    "invalidProvider": "Invalid provider",
+    "oauthNotConfigured": "{{provider}} OAuth is not configured",
+    "oauthUserInfoFailed": "Failed to fetch user info from {{provider}}",
+    "oauthEmailNotFound": "Could not retrieve email from {{provider}} account",
+    "oauthEmailExists": "An account with this email already exists with a different provider",
+    "passwordMismatch": "Passwords do not match",
+    "passwordTooShort": "Password must be at least 8 characters",
+    "passwordRequired": "Password is required",
+    "currentPasswordRequired": "Current password is required",
+    "nameRequired": "Name is required",
+    "profileSelectionRequired": "Please select your profile",
+    "invalidEmail": "Invalid email address"
+  },
+  "person": {
+    "notFound": "Person not found",
+    "cannotEdit": "You can only edit your own profile",
+    "cannotDelete": "Cannot delete person with relationships",
+    "deleteConfirmation": "Are you sure you want to delete this person? This action cannot be undone."
+  },
+  "validation": {
+    "required": "{{field}} is required",
+    "invalidEmail": "Invalid email address",
+    "passwordTooShort": "Password must be at least {{min}} characters",
+    "passwordMismatch": "Passwords do not match",
+    "minLength": "Must be at least {{length}} characters",
+    "maxLength": "Cannot exceed {{length}} characters",
+    "invalidUrl": "Invalid URL format"
+  },
+  "permission": {
+    "notAuthorized": "You are not authorized to perform this action",
+    "adminOnly": "This action requires administrator privileges",
+    "memberOnly": "This action requires member privileges",
+    "ownerOnly": "You can only access your own data"
+  },
+  "server": {
+    "internalError": "Internal server error. Please try again later.",
+    "databaseError": "Database error. Please try again later.",
+    "validationError": "Validation error. Please check your input.",
+    "rateLimitExceeded": "Too many requests. Please try again later.",
+    "notFound": "Resource not found",
+    "conflict": "This resource already exists",
+    "badRequest": "Invalid request. Please check your input."
+  },
+  "relationship": {
+    "notFound": "Relationship not found",
+    "cannotDelete": "Cannot delete this relationship",
+    "invalidType": "Invalid relationship type"
+  },
+  "invitation": {
+    "notFound": "Invitation not found",
+    "alreadyUsed": "This invitation has already been used",
+    "expired": "This invitation has expired",
+    "invalidToken": "Invalid invitation token"
+  },
+  "user": {
+    "notFound": "User not found",
+    "alreadyExists": "User already exists",
+    "cannotDelete": "Cannot delete this user"
+  }
+}

@@ -43,6 +43,8 @@ RUN addgroup --system --gid 1001 bunuser && \
 # Copy built application
 COPY --from=builder --chown=vamsa:bunuser /app/apps/web/dist ./apps/web/dist
 COPY --from=builder --chown=vamsa:bunuser /app/apps/web/server ./apps/web/server
+# Copy src directory for server imports (i18n, server functions, db)
+COPY --from=builder --chown=vamsa:bunuser /app/apps/web/src ./apps/web/src
 COPY --from=builder --chown=vamsa:bunuser /app/node_modules ./node_modules
 COPY --from=builder --chown=vamsa:bunuser /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=builder --chown=vamsa:bunuser /app/packages ./packages

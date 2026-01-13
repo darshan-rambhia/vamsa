@@ -35,7 +35,7 @@ import pino from "pino";
 const isDevelopment = process.env.NODE_ENV !== "production";
 
 // Check if we're in a browser environment (pino.transport is Node.js only)
-const isBrowser = typeof window !== "undefined";
+const isBrowser = typeof globalThis !== "undefined" && "window" in globalThis;
 
 // Configure logger - only use transport in Node.js development environment
 const transport =

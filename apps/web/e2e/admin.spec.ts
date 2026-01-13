@@ -50,7 +50,9 @@ test.describe("Feature: Admin Functions", () => {
       // Wait for users to load
       await Promise.race([
         page
-          .locator('[data-testid^="user-card-"], [data-user-card], table tbody tr')
+          .locator(
+            '[data-testid^="user-card-"], [data-user-card], table tbody tr'
+          )
           .first()
           .waitFor({ state: "visible", timeout: 10000 })
           .catch(() => {}),
@@ -86,7 +88,9 @@ test.describe("Feature: Admin Functions", () => {
     });
   });
 
-  test("Scenario: Admin can view role management controls", async ({ page }) => {
+  test("Scenario: Admin can view role management controls", async ({
+    page,
+  }) => {
     await bdd.given("admin has users loaded", async () => {
       const admin = new AdminPage(page);
       await admin.goto();
@@ -95,7 +99,9 @@ test.describe("Feature: Admin Functions", () => {
       // Wait for users to load
       await Promise.race([
         page
-          .locator('[data-testid^="user-card-"], [data-user-card], table tbody tr')
+          .locator(
+            '[data-testid^="user-card-"], [data-user-card], table tbody tr'
+          )
           .first()
           .waitFor({ state: "visible", timeout: 10000 })
           .catch(() => {}),
@@ -161,9 +167,7 @@ test.describe("Feature: Admin Functions", () => {
     });
   });
 
-  test("Scenario: Admin can navigate to invites section", async ({
-    page,
-  }) => {
+  test("Scenario: Admin can navigate to invites section", async ({ page }) => {
     await bdd.given("admin is on admin panel", async () => {
       const admin = new AdminPage(page);
       await admin.goto();
@@ -217,10 +221,13 @@ test.describe("Feature: Admin Functions", () => {
       await clearAuth();
     });
 
-    await bdd.when("non-admin tries to access admin panel directly", async () => {
-      await page.goto("/admin/users");
-      await page.waitForTimeout(500);
-    });
+    await bdd.when(
+      "non-admin tries to access admin panel directly",
+      async () => {
+        await page.goto("/admin/users");
+        await page.waitForTimeout(500);
+      }
+    );
 
     await bdd.then("access is restricted", async () => {
       const url = page.url();

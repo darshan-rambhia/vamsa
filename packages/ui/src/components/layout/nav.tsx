@@ -122,9 +122,7 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
             </div>
             {/* Actions in mobile menu - always show below lg breakpoint */}
             {actions && (
-              <div className="border-border border-t px-4 py-3">
-                {actions}
-              </div>
+              <div className="border-border border-t px-4 py-3">{actions}</div>
             )}
           </div>
         )}

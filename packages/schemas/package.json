@@ -20,7 +20,8 @@
   },
   "dependencies": {
     "@vamsa/lib": "workspace:*",
-    "zod": "^4.3.4"
+    "zod": "^4.3.4",
+    "zod-i18n-map": "^2.27.0"
   },
   "devDependencies": {
     "@types/bun": "^1.3.5",

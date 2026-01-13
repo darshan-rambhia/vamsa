@@ -1,45 +1,47 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import bcrypt from "bcryptjs";
+import { logger } from "@vamsa/lib/logger";
+import { requireAuth } from "./middleware/require-auth";
+import type { Prisma } from "@vamsa/api";
+import { createPaginationMeta } from "@vamsa/schemas";
 
-const TOKEN_COOKIE_NAME = "vamsa-session";
+// Invite list input schema (extends pagination with status filter)
+const inviteListInputSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(50),
+  sortOrder: z.enum(["asc", "desc"]).default("asc"),
+  status: z.enum(["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"]).optional(),
+});
+type InviteListInput = z.infer<typeof inviteListInputSchema>;
 
-// Auth helper function
-async function requireAuth(
-  requiredRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
-) {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const session = await prisma.session.findFirst({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error("Session expired");
-  }
-
-  const roleHierarchy = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
-  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
-    throw new Error(`Requires ${requiredRole} role or higher`);
-  }
-
-  return session.user;
-}
-
-// Get all invites (admin only)
-export const getInvites = createServerFn({ method: "GET" }).handler(
-  async () => {
+// Get invites with pagination (admin only)
+export const getInvites = createServerFn({ method: "GET" })
+  .inputValidator((data: Partial<InviteListInput>) => {
+    return inviteListInputSchema.parse(data);
+  })
+  .handler(async ({ data }) => {
     await requireAuth("ADMIN");
 
+    const { page, limit, sortOrder, status } = data;
+
+    // Build where clause
+    const where: Prisma.InviteWhereInput = {};
+    if (status) {
+      where.status = status;
+    }
+
+    // Get total count
+    const total = await prisma.invite.count({ where });
+
+    // Get paginated results
     const invites = await prisma.invite.findMany({
-      orderBy: { createdAt: "desc" },
+      where,
+      orderBy: { createdAt: sortOrder === "asc" ? "asc" : "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
       include: {
         person: {
           select: { id: true, firstName: true, lastName: true },
@@ -50,21 +52,23 @@ export const getInvites = createServerFn({ method: "GET" }).handler(
       },
     });
 
-    return invites.map((invite) => ({
-      id: invite.id,
-      email: invite.email,
-      role: invite.role,
-      status: invite.status,
-      token: invite.token,
-      personId: invite.personId,
-      person: invite.person,
-      invitedBy: invite.invitedBy,
-      expiresAt: invite.expiresAt.toISOString(),
-      acceptedAt: invite.acceptedAt?.toISOString() ?? null,
-      createdAt: invite.createdAt.toISOString(),
-    }));
-  }
-);
+    return {
+      items: invites.map((invite) => ({
+        id: invite.id,
+        email: invite.email,
+        role: invite.role,
+        status: invite.status,
+        token: invite.token,
+        personId: invite.personId,
+        person: invite.person,
+        invitedBy: invite.invitedBy,
+        expiresAt: invite.expiresAt.toISOString(),
+        acceptedAt: invite.acceptedAt?.toISOString() ?? null,
+        createdAt: invite.createdAt.toISOString(),
+      })),
+      pagination: createPaginationMeta(page, limit, total),
+    };
+  });
 
 // Create invite schema
 const createInviteSchema = z.object({
@@ -145,11 +149,9 @@ export const createInvite = createServerFn({ method: "POST" })
       },
     });
 
-    console.warn(
-      "[Invites Server] Created invite for:",
-      data.email,
-      "by:",
-      currentUser.id
+    logger.info(
+      { email: data.email, createdBy: currentUser.id },
+      "Created invite"
     );
 
     return {
@@ -193,11 +195,9 @@ export const revokeInvite = createServerFn({ method: "POST" })
       data: { status: "REVOKED" },
     });
 
-    console.warn(
-      "[Invites Server] Revoked invite:",
-      data.inviteId,
-      "by:",
-      currentUser.id
+    logger.info(
+      { inviteId: data.inviteId, revokedBy: currentUser.id },
+      "Revoked invite"
     );
 
     return { success: true };
@@ -327,11 +327,9 @@ export const acceptInvite = createServerFn({ method: "POST" })
       return newUser;
     });
 
-    console.warn(
-      "[Invites Server] Invite accepted:",
-      invite.id,
-      "user created:",
-      user.id
+    logger.info(
+      { inviteId: invite.id, userId: user.id },
+      "Invite accepted, user created"
     );
 
     return { success: true, userId: user.id };
@@ -374,7 +372,7 @@ export const resendInvite = createServerFn({ method: "POST" })
       },
     });
 
-    console.warn("[Invites Server] Resent invite:", data.inviteId);
+    logger.info({ inviteId: data.inviteId }, "Resent invite");
 
     return {
       success: true,

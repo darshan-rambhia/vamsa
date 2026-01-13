@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/people/")({
 function PeopleListComponent() {
   const { data: persons, isLoading } = useQuery({
     queryKey: ["persons"],
-    queryFn: () => listPersons(),
+    queryFn: () => listPersons({ data: {} }),
   });
 
   if (isLoading || !persons) {
@@ -172,7 +172,8 @@ function PeopleListComponent() {
             </table>
           </div>
           <div className="border-border text-muted-foreground border-t px-4 py-3 text-sm">
-            {persons.total} {persons.total === 1 ? "person" : "people"} in your
+            {persons.pagination.total}{" "}
+            {persons.pagination.total === 1 ? "person" : "people"} in your
             family tree
           </div>
         </Card>

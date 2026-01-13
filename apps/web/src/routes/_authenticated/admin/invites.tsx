@@ -7,11 +7,11 @@ import { CreateInviteDialog } from "~/components/admin/create-invite-dialog";
 
 export const Route = createFileRoute("/_authenticated/admin/invites")({
   loader: async () => {
-    const [invites, currentUser] = await Promise.all([
-      getInvites(),
+    const [invitesData, currentUser] = await Promise.all([
+      getInvites({ data: {} }),
       getCurrentUser(),
     ]);
-    return { invites, currentUser };
+    return { invites: invitesData.items, currentUser };
   },
   component: InvitesPage,
 });

@@ -131,7 +131,12 @@ test.describe("Feature: User Registration", () => {
       await bdd.when("user enters password that is too short", async () => {
         const registerPage = new RegisterPage(page);
         const shortPasswordEmail = `test-short-${Date.now()}@example.com`;
-        await registerPage.register("John Doe", shortPasswordEmail, "short", "short");
+        await registerPage.register(
+          "John Doe",
+          shortPasswordEmail,
+          "short",
+          "short"
+        );
       });
 
       await bdd.then("form prevents submission or shows error", async () => {
@@ -151,18 +156,21 @@ test.describe("Feature: User Registration", () => {
         await registerPage.goto();
       });
 
-      await bdd.when("user attempts to register with existing email", async () => {
-        const registerPage = new RegisterPage(page);
-        const duplicateEmail = "admin@test.vamsa.local";
-        const testPassword = "TestPassword123!";
+      await bdd.when(
+        "user attempts to register with existing email",
+        async () => {
+          const registerPage = new RegisterPage(page);
+          const duplicateEmail = "admin@test.vamsa.local";
+          const testPassword = "TestPassword123!";
 
-        await registerPage.register(
-          "Another User",
-          duplicateEmail,
-          testPassword,
-          testPassword
-        );
-      });
+          await registerPage.register(
+            "Another User",
+            duplicateEmail,
+            testPassword,
+            testPassword
+          );
+        }
+      );
 
       await bdd.then("form prevents submission or shows error", async () => {
         const isOnRegisterPage = page.url().includes("/register");
@@ -203,13 +211,16 @@ test.describe("Feature: User Registration", () => {
         await registerPage.goto();
       });
 
-      await bdd.then("registration form fields are visible on mobile", async () => {
-        const registerPage = new RegisterPage(page);
-        await expect(registerPage.nameInput).toBeVisible();
-        await expect(registerPage.emailInput).toBeVisible();
-        await expect(registerPage.passwordInput).toBeVisible();
-        await expect(registerPage.confirmPasswordInput).toBeVisible();
-      });
+      await bdd.then(
+        "registration form fields are visible on mobile",
+        async () => {
+          const registerPage = new RegisterPage(page);
+          await expect(registerPage.nameInput).toBeVisible();
+          await expect(registerPage.emailInput).toBeVisible();
+          await expect(registerPage.passwordInput).toBeVisible();
+          await expect(registerPage.confirmPasswordInput).toBeVisible();
+        }
+      );
 
       await bdd.and("form card is properly sized on mobile", async () => {
         if (isMobile) {

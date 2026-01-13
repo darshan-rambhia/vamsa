@@ -1,35 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import { z } from "zod";
-
-const TOKEN_COOKIE_NAME = "vamsa-session";
-
-// Auth helper function
-async function requireAuth(
-  requiredRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
-) {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const session = await prisma.session.findFirst({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error("Session expired");
-  }
-
-  const roleHierarchy = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
-  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
-    throw new Error(`Requires ${requiredRole} role or higher`);
-  }
-
-  return session.user;
-}
+import { logger } from "@vamsa/lib/logger";
+import { requireAuth } from "./middleware/require-auth";
 
 // Get family settings
 export const getFamilySettings = createServerFn({ method: "GET" }).handler(
@@ -70,7 +43,7 @@ const updateSettingsSchema = z.object({
 
 // Language preference schema
 const languagePreferenceSchema = z.object({
-  language: z.enum(["en", "hi"]),
+  language: z.enum(["en", "hi", "es"]),
 });
 
 // Update family settings (admin only)
@@ -81,10 +54,7 @@ export const updateFamilySettings = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const currentUser = await requireAuth("ADMIN");
 
-    console.warn(
-      "[Settings Server] Updating family settings by:",
-      currentUser.id
-    );
+    logger.info({ updatedBy: currentUser.id }, "Updating family settings");
 
     // Check if settings exist
     const existing = await prisma.familySettings.findFirst();
@@ -101,7 +71,7 @@ export const updateFamilySettings = createServerFn({ method: "POST" })
         },
       });
 
-      console.warn("[Settings Server] Settings updated:", updated.id);
+      logger.info({ settingsId: updated.id }, "Settings updated");
       return { success: true, id: updated.id };
     } else {
       // Create new settings
@@ -114,7 +84,7 @@ export const updateFamilySettings = createServerFn({ method: "POST" })
         },
       });
 
-      console.warn("[Settings Server] Settings created:", created.id);
+      logger.info({ settingsId: created.id }, "Settings created");
       return { success: true, id: created.id };
     }
   });
@@ -160,11 +130,9 @@ export const setUserLanguagePreference = createServerFn({
       },
     });
 
-    console.warn(
-      "[Settings Server] Language preference updated for user:",
-      user.id,
-      "to",
-      data.language
+    logger.info(
+      { userId: user.id, language: data.language },
+      "Language preference updated"
     );
 
     return {

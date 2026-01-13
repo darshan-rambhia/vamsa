@@ -4,3 +4,19 @@
 
 export { BackupValidator } from "./validator";
 export { ConflictResolver } from "./conflict-resolver";
+
+// Backup scheduling utilities
+export {
+  type BackupScheduleType,
+  type BackupSchedule,
+  generateCronExpression,
+  parseTimeString,
+  formatTimeString,
+  getNextScheduledTime,
+  isValidWeekday,
+  isValidMonthDay,
+  getWeekdayName,
+  describeSchedule,
+  generateBackupFilename,
+  calculateRetentionDate,
+} from "./scheduler";

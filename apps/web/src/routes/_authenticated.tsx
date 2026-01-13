@@ -7,6 +7,7 @@ import {
 import { validateSession, logout } from "~/server/auth";
 import { Nav, NavLink, Button } from "@vamsa/ui";
 import { LanguageSwitcher } from "~/components/layout/language-switcher";
+import { OIDCProfileClaimModal } from "~/components/auth/oidc-profile-claim-modal";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -38,6 +39,10 @@ function AuthenticatedLayout() {
     await logout();
     window.location.href = "/login";
   };
+
+  // Show profile claim modal for OIDC users with PENDING status
+  const showProfileClaimModal =
+    !!user?.oidcProvider && user?.profileClaimStatus === "PENDING";
 
   return (
     <div className="bg-background min-h-screen">
@@ -121,6 +126,13 @@ function AuthenticatedLayout() {
         >
           Activity
         </NavLink>
+        <NavLink
+          href="/subscribe"
+          active={pathname === "/subscribe"}
+          data-testid="nav-subscribe"
+        >
+          Subscribe
+        </NavLink>
         {user?.role === "ADMIN" && (
           <NavLink
             href="/admin"
@@ -135,6 +147,9 @@ function AuthenticatedLayout() {
       <main className="py-6 sm:py-8">
         <Outlet />
       </main>
+
+      {/* OIDC Profile Claim Modal */}
+      <OIDCProfileClaimModal open={showProfileClaimModal} />
     </div>
   );
 }

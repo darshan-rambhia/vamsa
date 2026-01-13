@@ -12,13 +12,15 @@ export const Route = createFileRoute("/_authenticated/admin/suggestions")({
 
 function SuggestionsPage() {
   const {
-    data: suggestions = [],
+    data: suggestionsData,
     isLoading,
     refetch,
   } = useQuery({
     queryKey: ["suggestions"],
-    queryFn: () => getSuggestions(),
+    queryFn: () => getSuggestions({ data: {} }),
   });
+
+  const suggestions = suggestionsData?.items ?? [];
 
   return (
     <Container>
@@ -46,7 +48,7 @@ function SuggestionsPage() {
             <p className="text-muted-foreground mt-2">Loading suggestions...</p>
           </CardContent>
         </Card>
-      ) : suggestions && suggestions.length > 0 ? (
+      ) : suggestions.length > 0 ? (
         <SuggestionsList suggestions={suggestions} onRefresh={refetch} />
       ) : (
         <Card>

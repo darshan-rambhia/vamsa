@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import type {
   ValidationResult,
@@ -7,37 +6,11 @@ import type {
   ImportPreview,
   ConflictResolutionStrategy,
 } from "@vamsa/schemas";
+import { logger, serializeError } from "@vamsa/lib/logger";
+import { requireAuth } from "./middleware/require-auth";
 
 // Re-export types for use in components
 export type { ValidationResult, ImportResult, ImportPreview };
-
-const TOKEN_COOKIE_NAME = "vamsa-session";
-
-// Auth helper function
-async function requireAuth(
-  requiredRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
-) {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const session = await prisma.session.findFirst({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error("Session expired");
-  }
-
-  const roleHierarchy = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
-  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
-    throw new Error(`Requires ${requiredRole} role or higher`);
-  }
-
-  return session.user;
-}
 
 /**
  * Validate a backup ZIP file without importing
@@ -83,7 +56,7 @@ export const validateBackup = createServerFn({ method: "POST" }).handler(
         warnings: [],
       };
     } catch (error) {
-      console.error("Backup validation error:", error);
+      logger.error({ error: serializeError(error) }, "Backup validation error");
       throw new Error(
         `Validation failed: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -138,7 +111,7 @@ export const previewImport = createServerFn({ method: "POST" }).handler(
         },
       };
     } catch (error) {
-      console.error("Import preview error:", error);
+      logger.error({ error: serializeError(error) }, "Import preview error");
       throw new Error(
         `Preview failed: ${error instanceof Error ? error.message : "Unknown error"}`
       );
@@ -221,7 +194,7 @@ export const importBackup = createServerFn({ method: "POST" }).handler(
 
       return result;
     } catch (error) {
-      console.error("Backup import error:", error);
+      logger.error({ error: serializeError(error) }, "Backup import error");
 
       // Log failed import attempt
       try {
@@ -238,7 +211,10 @@ export const importBackup = createServerFn({ method: "POST" }).handler(
           },
         });
       } catch (logError) {
-        console.error("Failed to log import error:", logError);
+        logger.error(
+          { error: serializeError(logError) },
+          "Failed to log import error"
+        );
       }
 
       throw new Error(

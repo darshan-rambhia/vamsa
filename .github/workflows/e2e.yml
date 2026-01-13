@@ -1,0 +1,250 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch: # Allow manual trigger
+
+# Cancel in-progress runs for the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-tests:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10 # Fail if tests take longer than 10 minutes
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: vamsa_test
+          POSTGRES_USER: vamsa
+          POSTGRES_PASSWORD: vamsa_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      DATABASE_URL: postgresql://vamsa:vamsa_password@localhost:5432/vamsa_test
+      NODE_ENV: test
+      CI: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      - name: Run database migrations
+        run: pnpm db:migrate:deploy
+
+      - name: Seed test database
+        run: pnpm db:seed
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Run E2E tests
+        run: pnpm test:e2e --reporter=html,json
+        env:
+          PLAYWRIGHT_WORKERS: 2 # Limit parallelism in CI
+
+      - name: Generate coverage report
+        if: always()
+        run: |
+          if [ -f apps/web/test-results/results.json ]; then
+            bun run apps/web/e2e/scripts/analyze-coverage.ts --output apps/web/test-results/coverage-report.md
+          fi
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 30
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: apps/web/test-results/
+          retention-days: 30
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: apps/web/test-results/coverage-report.md
+          retention-days: 30
+
+      - name: Comment PR with test results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const coveragePath = 'apps/web/test-results/coverage-report.md';
+
+            if (fs.existsSync(coveragePath)) {
+              const coverage = fs.readFileSync(coveragePath, 'utf8');
+
+              // Safely construct comment body without using untrusted input in templates
+              const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+              const body = `## 🎭 E2E Test Results\n\n${coverage}\n\n[View full Playwright report](${runUrl})`;
+
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.name,
+                body: body
+              });
+            }
+
+      - name: Fail on critical violations
+        if: failure()
+        run: |
+          echo "❌ E2E tests failed. Check the Playwright report for details."
+          exit 1
+
+  accessibility-check:
+    name: Accessibility Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: vamsa_test
+          POSTGRES_USER: vamsa
+          POSTGRES_PASSWORD: vamsa_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      DATABASE_URL: postgresql://vamsa:vamsa_password@localhost:5432/vamsa_test
+      NODE_ENV: test
+      CI: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Setup database
+        run: |
+          pnpm db:generate
+          pnpm db:migrate:deploy
+          pnpm db:seed
+
+      - name: Build application
+        run: pnpm build
+
+      - name: Run accessibility tests
+        run: |
+          # Run subset of tests with axe-core checks
+          npx playwright test --grep="@accessibility" --reporter=html,json
+        continue-on-error: true
+
+      - name: Upload accessibility report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: accessibility-report
+          path: apps/web/playwright-report/
+          retention-days: 30
+
+  performance-check:
+    name: Performance Benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+
+      - name: Check test execution time
+        run: |
+          echo "⏱️  Checking E2E test execution time..."
+          # Test suite should complete in < 5 minutes
+          timeout 300 pnpm test:e2e --reporter=json || {
+            echo "❌ Tests exceeded 5-minute timeout"
+            exit 1
+          }
+
+      - name: Verify test count
+        run: |
+          echo "📊 Verifying test count stays reasonable..."
+          # Count test files
+          TEST_COUNT=$(find apps/web/e2e -name "*.spec.ts" | wc -l)
+          echo "Test files: $TEST_COUNT"
+
+          if [ $TEST_COUNT -gt 20 ]; then
+            echo "⚠️  Warning: Test suite growing large ($TEST_COUNT files)"
+          fi
+
+  quality-gate:
+    name: Quality Gate
+    needs: [e2e-tests, accessibility-check]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Check quality gates
+        run: |
+          E2E_RESULT="${{ needs.e2e-tests.result }}"
+          A11Y_RESULT="${{ needs.accessibility-check.result }}"
+
+          if [[ "$E2E_RESULT" != "success" ]]; then
+            echo "❌ E2E tests failed"
+            exit 1
+          fi
+
+          if [[ "$A11Y_RESULT" == "failure" ]]; then
+            echo "⚠️  Accessibility checks found violations"
+            # Don't fail the build for accessibility issues yet
+          fi
+
+          echo "✅ All quality gates passed!"

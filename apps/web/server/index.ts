@@ -12,7 +12,12 @@
 import { Hono } from "hono";
 import { logger as honoLogger } from "hono/logger";
 import { cors } from "hono/cors";
+import { csrf } from "hono/csrf";
+import { secureHeaders } from "hono/secure-headers";
 import { logger, serializeError } from "@vamsa/lib/logger";
+import { etagMiddleware, getETagMetrics } from "./middleware/etag";
+import { initializeServerI18n } from "../src/server/i18n";
+import { serveMedia } from "./middleware/media-server";
 
 const app = new Hono();
 
@@ -55,6 +60,111 @@ app.use(
   })
 );
 
+// CSRF protection - validates Origin header for non-safe methods
+// Defense-in-depth with sameSite cookies
+app.use(
+  "*",
+  csrf({
+    origin: IS_PRODUCTION
+      ? (origin) => {
+          // In production, validate against allowed origins
+          const allowedOrigins = [
+            process.env.APP_URL || "https://vamsa.app",
+            // Add mobile app schemes when ready
+          ];
+          return allowedOrigins.some((allowed) => origin.startsWith(allowed));
+        }
+      : "*", // Allow all in development
+  })
+);
+
+// Security headers - protect against common web vulnerabilities
+app.use(
+  "*",
+  secureHeaders({
+    // HTTP Strict Transport Security
+    // In production: enforce HTTPS for 1 year with preload
+    strictTransportSecurity: IS_PRODUCTION
+      ? "max-age=31536000; includeSubDomains; preload"
+      : false,
+
+    // Prevent MIME type sniffing
+    xContentTypeOptions: "nosniff",
+
+    // Prevent clickjacking
+    xFrameOptions: "DENY",
+
+    // XSS protection (legacy, but still useful for older browsers)
+    xXssProtection: "1; mode=block",
+
+    // Control referrer information
+    referrerPolicy: "strict-origin-when-cross-origin",
+
+    // Content Security Policy
+    // Using a permissive policy to support TanStack Start's SSR/hydration
+    contentSecurityPolicy: IS_PRODUCTION
+      ? {
+          // Default: only allow same-origin resources
+          defaultSrc: ["'self'"],
+          // Scripts: self + inline (needed for hydration) + eval (needed for development)
+          scriptSrc: ["'self'", "'unsafe-inline'"],
+          // Styles: self + inline (needed for Tailwind) + Google Fonts
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            "https://fonts.googleapis.com",
+          ],
+          // Fonts: self + Google Fonts
+          fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+          // Images: self + data URIs + HTTPS (for external images)
+          imgSrc: ["'self'", "data:", "https:"],
+          // API connections: self only
+          connectSrc: ["'self'"],
+          // Frames: none (prevent embedding)
+          frameSrc: ["'none'"],
+          // Objects: none (disable plugins)
+          objectSrc: ["'none'"],
+          // Base URI: self only
+          baseUri: ["'self'"],
+          // Form actions: self only
+          formAction: ["'self'"],
+          // Upgrade insecure requests
+          upgradeInsecureRequests: [],
+        }
+      : false, // Disable CSP in development to avoid blocking hot reload
+
+    // Permissions Policy - disable unnecessary browser features
+    permissionsPolicy: {
+      camera: [],
+      microphone: [],
+      geolocation: [],
+      payment: [],
+      usb: [],
+      magnetometer: [],
+      accelerometer: [],
+      gyroscope: [],
+    },
+  })
+);
+
+// ETag caching for API responses
+// This should be applied after security headers but before route handlers
+app.use(
+  "*",
+  etagMiddleware({
+    // Use weak ETags for API responses (semantically equivalent)
+    weak: true,
+    // Fast hashing algorithm
+    algorithm: "md5",
+    // Don't apply to very small responses
+    minSize: 512,
+    // Cache control for API responses
+    cacheControl: "private, must-revalidate, max-age=0",
+    // Collect metrics in production
+    collectMetrics: IS_PRODUCTION,
+  })
+);
+
 // Health check endpoint for Docker/K8s
 app.get("/health", (c) => {
   return c.json({
@@ -64,13 +174,43 @@ app.get("/health", (c) => {
   });
 });
 
-// API routes for mobile clients
-// Future: Add mobile-specific endpoints under /api/*
+// Cache metrics endpoint for monitoring
+app.get("/health/cache", (c) => {
+  const metrics = getETagMetrics();
+  return c.json({
+    etag: metrics,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// API routes for mobile clients and REST endpoints
+// Import the API v1 router with all REST endpoints
+const { default: apiV1 } = await import("./api/index.js");
+
 const apiRouter = new Hono();
+
+// API version endpoint
 apiRouter.get("/version", (c) => c.json({ version: "1.0.0", runtime: "bun" }));
-// Add more mobile API routes here
+
+// Mount v1 API under /api/v1
+apiRouter.route("/v1", apiV1);
+
+// Root API endpoint lists available versions
+apiRouter.get("/", (c) =>
+  c.json({
+    api: "Vamsa API",
+    versions: {
+      v1: "/api/v1",
+    },
+    docs: "/api/v1/docs",
+  })
+);
 
 app.route("/api", apiRouter);
+
+// Media serving endpoint for image files
+// Serves images with appropriate caching headers and Content-Type
+app.get("/media/*", serveMedia);
 
 // ============================================
 // TanStack Start Handler
@@ -125,6 +265,15 @@ async function startServer() {
     },
     "Server configuration"
   );
+
+  // Initialize i18n for server functions
+  try {
+    await initializeServerI18n();
+    logger.info("Server-side i18n initialized");
+  } catch (error) {
+    logger.error({ error: serializeError(error) }, "Failed to initialize i18n");
+    // Don't exit, continue with default English
+  }
 
   // Setup routes with dynamic import
   await setupRoutes();

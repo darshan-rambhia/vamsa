@@ -70,7 +70,10 @@
       "Bash(timeout 180 pnpm test:e2e:*)",
       "Bash(timeout 60 pnpm typecheck:*)",
       "Bash(timeout 60 pnpm lint:*)",
-      "Bash(bd dep remove:*)"
+      "Bash(bd dep remove:*)",
+      "WebFetch(domain:github.com)",
+      "WebSearch",
+      "WebFetch(domain:www.grampsweb.org)"
     ]
   }
 }

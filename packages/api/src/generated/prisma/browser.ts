@@ -37,6 +37,16 @@ export type User = Prisma.UserModel;
  */
 export type Session = Prisma.SessionModel;
 /**
+ * Model CalendarToken
+ *
+ */
+export type CalendarToken = Prisma.CalendarTokenModel;
+/**
+ * Model OAuthState
+ *
+ */
+export type OAuthState = Prisma.OAuthStateModel;
+/**
  * Model Suggestion
  *
  */
@@ -111,3 +121,13 @@ export type PlacePersonLink = Prisma.PlacePersonLinkModel;
  *
  */
 export type EmailLog = Prisma.EmailLogModel;
+/**
+ * Model Backup
+ *
+ */
+export type Backup = Prisma.BackupModel;
+/**
+ * Model BackupSettings
+ *
+ */
+export type BackupSettings = Prisma.BackupSettingsModel;

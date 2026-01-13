@@ -50,6 +50,10 @@ export type MediaObjectMinAggregateOutputType = {
   width: number | null;
   height: number | null;
   thumbnailPath: string | null;
+  webpPath: string | null;
+  thumb400Path: string | null;
+  thumb800Path: string | null;
+  thumb1200Path: string | null;
   uploadedAt: Date | null;
   createdAt: Date | null;
   updatedAt: Date | null;
@@ -67,6 +71,10 @@ export type MediaObjectMaxAggregateOutputType = {
   width: number | null;
   height: number | null;
   thumbnailPath: string | null;
+  webpPath: string | null;
+  thumb400Path: string | null;
+  thumb800Path: string | null;
+  thumb1200Path: string | null;
   uploadedAt: Date | null;
   createdAt: Date | null;
   updatedAt: Date | null;
@@ -84,6 +92,10 @@ export type MediaObjectCountAggregateOutputType = {
   width: number;
   height: number;
   thumbnailPath: number;
+  webpPath: number;
+  thumb400Path: number;
+  thumb800Path: number;
+  thumb1200Path: number;
   uploadedAt: number;
   createdAt: number;
   updatedAt: number;
@@ -114,6 +126,10 @@ export type MediaObjectMinAggregateInputType = {
   width?: true;
   height?: true;
   thumbnailPath?: true;
+  webpPath?: true;
+  thumb400Path?: true;
+  thumb800Path?: true;
+  thumb1200Path?: true;
   uploadedAt?: true;
   createdAt?: true;
   updatedAt?: true;
@@ -131,6 +147,10 @@ export type MediaObjectMaxAggregateInputType = {
   width?: true;
   height?: true;
   thumbnailPath?: true;
+  webpPath?: true;
+  thumb400Path?: true;
+  thumb800Path?: true;
+  thumb1200Path?: true;
   uploadedAt?: true;
   createdAt?: true;
   updatedAt?: true;
@@ -148,6 +168,10 @@ export type MediaObjectCountAggregateInputType = {
   width?: true;
   height?: true;
   thumbnailPath?: true;
+  webpPath?: true;
+  thumb400Path?: true;
+  thumb800Path?: true;
+  thumb1200Path?: true;
   uploadedAt?: true;
   createdAt?: true;
   updatedAt?: true;
@@ -259,6 +283,10 @@ export type MediaObjectGroupByOutputType = {
   width: number | null;
   height: number | null;
   thumbnailPath: string | null;
+  webpPath: string | null;
+  thumb400Path: string | null;
+  thumb800Path: string | null;
+  thumb1200Path: string | null;
   uploadedAt: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -297,6 +325,10 @@ export type MediaObjectWhereInput = {
   width?: Prisma.IntNullableFilter<"MediaObject"> | number | null;
   height?: Prisma.IntNullableFilter<"MediaObject"> | number | null;
   thumbnailPath?: Prisma.StringNullableFilter<"MediaObject"> | string | null;
+  webpPath?: Prisma.StringNullableFilter<"MediaObject"> | string | null;
+  thumb400Path?: Prisma.StringNullableFilter<"MediaObject"> | string | null;
+  thumb800Path?: Prisma.StringNullableFilter<"MediaObject"> | string | null;
+  thumb1200Path?: Prisma.StringNullableFilter<"MediaObject"> | string | null;
   uploadedAt?: Prisma.DateTimeFilter<"MediaObject"> | Date | string;
   createdAt?: Prisma.DateTimeFilter<"MediaObject"> | Date | string;
   updatedAt?: Prisma.DateTimeFilter<"MediaObject"> | Date | string;
@@ -316,6 +348,10 @@ export type MediaObjectOrderByWithRelationInput = {
   width?: Prisma.SortOrderInput | Prisma.SortOrder;
   height?: Prisma.SortOrderInput | Prisma.SortOrder;
   thumbnailPath?: Prisma.SortOrderInput | Prisma.SortOrder;
+  webpPath?: Prisma.SortOrderInput | Prisma.SortOrder;
+  thumb400Path?: Prisma.SortOrderInput | Prisma.SortOrder;
+  thumb800Path?: Prisma.SortOrderInput | Prisma.SortOrder;
+  thumb1200Path?: Prisma.SortOrderInput | Prisma.SortOrder;
   uploadedAt?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   updatedAt?: Prisma.SortOrder;
@@ -339,6 +375,10 @@ export type MediaObjectWhereUniqueInput = Prisma.AtLeast<
     width?: Prisma.IntNullableFilter<"MediaObject"> | number | null;
     height?: Prisma.IntNullableFilter<"MediaObject"> | number | null;
     thumbnailPath?: Prisma.StringNullableFilter<"MediaObject"> | string | null;
+    webpPath?: Prisma.StringNullableFilter<"MediaObject"> | string | null;
+    thumb400Path?: Prisma.StringNullableFilter<"MediaObject"> | string | null;
+    thumb800Path?: Prisma.StringNullableFilter<"MediaObject"> | string | null;
+    thumb1200Path?: Prisma.StringNullableFilter<"MediaObject"> | string | null;
     uploadedAt?: Prisma.DateTimeFilter<"MediaObject"> | Date | string;
     createdAt?: Prisma.DateTimeFilter<"MediaObject"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"MediaObject"> | Date | string;
@@ -360,6 +400,10 @@ export type MediaObjectOrderByWithAggregationInput = {
   width?: Prisma.SortOrderInput | Prisma.SortOrder;
   height?: Prisma.SortOrderInput | Prisma.SortOrder;
   thumbnailPath?: Prisma.SortOrderInput | Prisma.SortOrder;
+  webpPath?: Prisma.SortOrderInput | Prisma.SortOrder;
+  thumb400Path?: Prisma.SortOrderInput | Prisma.SortOrder;
+  thumb800Path?: Prisma.SortOrderInput | Prisma.SortOrder;
+  thumb1200Path?: Prisma.SortOrderInput | Prisma.SortOrder;
   uploadedAt?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   updatedAt?: Prisma.SortOrder;
@@ -404,6 +448,22 @@ export type MediaObjectScalarWhereWithAggregatesInput = {
     | Prisma.StringNullableWithAggregatesFilter<"MediaObject">
     | string
     | null;
+  webpPath?:
+    | Prisma.StringNullableWithAggregatesFilter<"MediaObject">
+    | string
+    | null;
+  thumb400Path?:
+    | Prisma.StringNullableWithAggregatesFilter<"MediaObject">
+    | string
+    | null;
+  thumb800Path?:
+    | Prisma.StringNullableWithAggregatesFilter<"MediaObject">
+    | string
+    | null;
+  thumb1200Path?:
+    | Prisma.StringNullableWithAggregatesFilter<"MediaObject">
+    | string
+    | null;
   uploadedAt?:
     | Prisma.DateTimeWithAggregatesFilter<"MediaObject">
     | Date
@@ -430,6 +490,10 @@ export type MediaObjectCreateInput = {
   width?: number | null;
   height?: number | null;
   thumbnailPath?: string | null;
+  webpPath?: string | null;
+  thumb400Path?: string | null;
+  thumb800Path?: string | null;
+  thumb1200Path?: string | null;
   uploadedAt?: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -449,6 +513,10 @@ export type MediaObjectUncheckedCreateInput = {
   width?: number | null;
   height?: number | null;
   thumbnailPath?: string | null;
+  webpPath?: string | null;
+  thumb400Path?: string | null;
+  thumb800Path?: string | null;
+  thumb1200Path?: string | null;
   uploadedAt?: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -468,6 +536,19 @@ export type MediaObjectUpdateInput = {
   width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   thumbnailPath?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  webpPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  thumb400Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb800Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb1200Path?:
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
@@ -493,6 +574,19 @@ export type MediaObjectUncheckedUpdateInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  webpPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  thumb400Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb800Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb1200Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -512,6 +606,10 @@ export type MediaObjectCreateManyInput = {
   width?: number | null;
   height?: number | null;
   thumbnailPath?: string | null;
+  webpPath?: string | null;
+  thumb400Path?: string | null;
+  thumb800Path?: string | null;
+  thumb1200Path?: string | null;
   uploadedAt?: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -529,6 +627,19 @@ export type MediaObjectUpdateManyMutationInput = {
   width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   thumbnailPath?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  webpPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  thumb400Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb800Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb1200Path?:
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
@@ -552,6 +663,19 @@ export type MediaObjectUncheckedUpdateManyInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  webpPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  thumb400Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb800Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb1200Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -569,6 +693,10 @@ export type MediaObjectCountOrderByAggregateInput = {
   width?: Prisma.SortOrder;
   height?: Prisma.SortOrder;
   thumbnailPath?: Prisma.SortOrder;
+  webpPath?: Prisma.SortOrder;
+  thumb400Path?: Prisma.SortOrder;
+  thumb800Path?: Prisma.SortOrder;
+  thumb1200Path?: Prisma.SortOrder;
   uploadedAt?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   updatedAt?: Prisma.SortOrder;
@@ -592,6 +720,10 @@ export type MediaObjectMaxOrderByAggregateInput = {
   width?: Prisma.SortOrder;
   height?: Prisma.SortOrder;
   thumbnailPath?: Prisma.SortOrder;
+  webpPath?: Prisma.SortOrder;
+  thumb400Path?: Prisma.SortOrder;
+  thumb800Path?: Prisma.SortOrder;
+  thumb1200Path?: Prisma.SortOrder;
   uploadedAt?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   updatedAt?: Prisma.SortOrder;
@@ -609,6 +741,10 @@ export type MediaObjectMinOrderByAggregateInput = {
   width?: Prisma.SortOrder;
   height?: Prisma.SortOrder;
   thumbnailPath?: Prisma.SortOrder;
+  webpPath?: Prisma.SortOrder;
+  thumb400Path?: Prisma.SortOrder;
+  thumb800Path?: Prisma.SortOrder;
+  thumb1200Path?: Prisma.SortOrder;
   uploadedAt?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   updatedAt?: Prisma.SortOrder;
@@ -623,14 +759,6 @@ export type MediaObjectSumOrderByAggregateInput = {
 export type MediaObjectScalarRelationFilter = {
   is?: Prisma.MediaObjectWhereInput;
   isNot?: Prisma.MediaObjectWhereInput;
-};
-
-export type IntFieldUpdateOperationsInput = {
-  set?: number;
-  increment?: number;
-  decrement?: number;
-  multiply?: number;
-  divide?: number;
 };
 
 export type NullableIntFieldUpdateOperationsInput = {
@@ -705,6 +833,10 @@ export type MediaObjectCreateWithoutEventMediaInput = {
   width?: number | null;
   height?: number | null;
   thumbnailPath?: string | null;
+  webpPath?: string | null;
+  thumb400Path?: string | null;
+  thumb800Path?: string | null;
+  thumb1200Path?: string | null;
   uploadedAt?: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -723,6 +855,10 @@ export type MediaObjectUncheckedCreateWithoutEventMediaInput = {
   width?: number | null;
   height?: number | null;
   thumbnailPath?: string | null;
+  webpPath?: string | null;
+  thumb400Path?: string | null;
+  thumb800Path?: string | null;
+  thumb1200Path?: string | null;
   uploadedAt?: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -772,6 +908,19 @@ export type MediaObjectUpdateWithoutEventMediaInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  webpPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  thumb400Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb800Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb1200Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -793,6 +942,19 @@ export type MediaObjectUncheckedUpdateWithoutEventMediaInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  webpPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  thumb400Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb800Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb1200Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -811,6 +973,10 @@ export type MediaObjectCreateWithoutPersonMediaInput = {
   width?: number | null;
   height?: number | null;
   thumbnailPath?: string | null;
+  webpPath?: string | null;
+  thumb400Path?: string | null;
+  thumb800Path?: string | null;
+  thumb1200Path?: string | null;
   uploadedAt?: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -829,6 +995,10 @@ export type MediaObjectUncheckedCreateWithoutPersonMediaInput = {
   width?: number | null;
   height?: number | null;
   thumbnailPath?: string | null;
+  webpPath?: string | null;
+  thumb400Path?: string | null;
+  thumb800Path?: string | null;
+  thumb1200Path?: string | null;
   uploadedAt?: Date | string;
   createdAt?: Date | string;
   updatedAt?: Date | string;
@@ -878,6 +1048,19 @@ export type MediaObjectUpdateWithoutPersonMediaInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  webpPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  thumb400Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb800Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb1200Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
   uploadedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
@@ -896,6 +1079,19 @@ export type MediaObjectUncheckedUpdateWithoutPersonMediaInput = {
   width?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   height?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
   thumbnailPath?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  webpPath?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  thumb400Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb800Path?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  thumb1200Path?:
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
@@ -971,6 +1167,10 @@ export type MediaObjectSelect<
     width?: boolean;
     height?: boolean;
     thumbnailPath?: boolean;
+    webpPath?: boolean;
+    thumb400Path?: boolean;
+    thumb800Path?: boolean;
+    thumb1200Path?: boolean;
     uploadedAt?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
@@ -997,6 +1197,10 @@ export type MediaObjectSelectCreateManyAndReturn<
     width?: boolean;
     height?: boolean;
     thumbnailPath?: boolean;
+    webpPath?: boolean;
+    thumb400Path?: boolean;
+    thumb800Path?: boolean;
+    thumb1200Path?: boolean;
     uploadedAt?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
@@ -1020,6 +1224,10 @@ export type MediaObjectSelectUpdateManyAndReturn<
     width?: boolean;
     height?: boolean;
     thumbnailPath?: boolean;
+    webpPath?: boolean;
+    thumb400Path?: boolean;
+    thumb800Path?: boolean;
+    thumb1200Path?: boolean;
     uploadedAt?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
@@ -1039,6 +1247,10 @@ export type MediaObjectSelectScalar = {
   width?: boolean;
   height?: boolean;
   thumbnailPath?: boolean;
+  webpPath?: boolean;
+  thumb400Path?: boolean;
+  thumb800Path?: boolean;
+  thumb1200Path?: boolean;
   uploadedAt?: boolean;
   createdAt?: boolean;
   updatedAt?: boolean;
@@ -1059,6 +1271,10 @@ export type MediaObjectOmit<
   | "width"
   | "height"
   | "thumbnailPath"
+  | "webpPath"
+  | "thumb400Path"
+  | "thumb800Path"
+  | "thumb1200Path"
   | "uploadedAt"
   | "createdAt"
   | "updatedAt",
@@ -1103,6 +1319,10 @@ export type $MediaObjectPayload<
       width: number | null;
       height: number | null;
       thumbnailPath: string | null;
+      webpPath: string | null;
+      thumb400Path: string | null;
+      thumb800Path: string | null;
+      thumb1200Path: string | null;
       uploadedAt: Date;
       createdAt: Date;
       updatedAt: Date;
@@ -1734,6 +1954,10 @@ export interface MediaObjectFieldRefs {
   readonly width: Prisma.FieldRef<"MediaObject", "Int">;
   readonly height: Prisma.FieldRef<"MediaObject", "Int">;
   readonly thumbnailPath: Prisma.FieldRef<"MediaObject", "String">;
+  readonly webpPath: Prisma.FieldRef<"MediaObject", "String">;
+  readonly thumb400Path: Prisma.FieldRef<"MediaObject", "String">;
+  readonly thumb800Path: Prisma.FieldRef<"MediaObject", "String">;
+  readonly thumb1200Path: Prisma.FieldRef<"MediaObject", "String">;
   readonly uploadedAt: Prisma.FieldRef<"MediaObject", "DateTime">;
   readonly createdAt: Prisma.FieldRef<"MediaObject", "DateTime">;
   readonly updatedAt: Prisma.FieldRef<"MediaObject", "DateTime">;

@@ -117,14 +117,17 @@ test.describe("Feature: Password Management", () => {
       await changePasswordPage.goto();
     });
 
-    await bdd.when("user submits form with wrong current password", async () => {
-      const changePasswordPage = new ChangePasswordPage(page);
-      await changePasswordPage.changePassword(
-        "WrongPassword123!",
-        "NewValidPassword123!",
-        "NewValidPassword123!"
-      );
-    });
+    await bdd.when(
+      "user submits form with wrong current password",
+      async () => {
+        const changePasswordPage = new ChangePasswordPage(page);
+        await changePasswordPage.changePassword(
+          "WrongPassword123!",
+          "NewValidPassword123!",
+          "NewValidPassword123!"
+        );
+      }
+    );
 
     await bdd.then("form prevents submission or shows error", async () => {
       const isOnChangePasswordPage = page.url().includes("/change-password");

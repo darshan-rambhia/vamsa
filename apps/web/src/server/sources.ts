@@ -8,6 +8,7 @@ import {
   citationGenerateSchema,
   linkSourceToEventSchema,
 } from "@vamsa/schemas";
+import { logger, serializeError } from "@vamsa/lib/logger";
 
 // Get a single source with all details
 export const getSource = createServerFn({ method: "GET" })
@@ -696,7 +697,10 @@ export const getPersonSources = createServerFn({ method: "GET" })
 
       return groupedSources;
     } catch (error) {
-      console.error("Error fetching person sources:", error);
+      logger.error(
+        { error: serializeError(error), personId: data.id },
+        "Error fetching person sources"
+      );
       throw new Error("Failed to fetch person sources");
     }
   });

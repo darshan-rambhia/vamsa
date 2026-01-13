@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import {
   GedcomParser,
@@ -11,34 +10,8 @@ import {
 import archiver from "archiver";
 import * as fs from "fs";
 import * as path from "path";
-
-const TOKEN_COOKIE_NAME = "vamsa-session";
-
-// Auth helper function
-async function requireAuth(
-  requiredRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
-) {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const session = await prisma.session.findFirst({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error("Session expired");
-  }
-
-  const roleHierarchy = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
-  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
-    throw new Error(`Requires ${requiredRole} role or higher`);
-  }
-
-  return session.user;
-}
+import { logger, serializeError } from "@vamsa/lib/logger";
+import { requireAuth } from "./middleware/require-auth";
 
 export interface ValidateGedcomResult {
   valid: boolean;
@@ -281,7 +254,7 @@ export const importGedcom = createServerFn({ method: "POST" })
         })),
       };
     } catch (error) {
-      console.error("GEDCOM import error:", error);
+      logger.error({ error: serializeError(error) }, "GEDCOM import error");
       return {
         success: false,
         message: error instanceof Error ? error.message : "Import failed",
@@ -339,7 +312,7 @@ export const exportGedcom = createServerFn({ method: "GET" }).handler(
         gedcomContent,
       };
     } catch (error) {
-      console.error("GEDCOM export error:", error);
+      logger.error({ error: serializeError(error) }, "GEDCOM export error");
       return {
         success: false,
         message: error instanceof Error ? error.message : "Export failed",
@@ -417,7 +390,7 @@ export const exportGedZip = createServerFn({ method: "GET" })
             includedMedia.push(archivePath);
             totalMediaSize += media.fileSize;
           } else {
-            console.warn(`[GEDZip] Media file not found: ${filePath}`);
+            logger.warn({ filePath }, "Media file not found for GEDZip export");
           }
         }
       }
@@ -483,7 +456,7 @@ export const exportGedZip = createServerFn({ method: "GET" })
         },
       };
     } catch (error) {
-      console.error("GEDZip export error:", error);
+      logger.error({ error: serializeError(error) }, "GEDZip export error");
       return {
         success: false,
         message: error instanceof Error ? error.message : "Export failed",

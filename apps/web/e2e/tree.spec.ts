@@ -33,7 +33,10 @@ test.describe("Feature: Family Tree Visualization", () => {
   // SECTION 1: Tree Rendering & Layout (6 tests)
   // ==================================================
 
-  test("should render family tree page with main content", async ({ page, checkAccessibility }) => {
+  test("should render family tree page with main content", async ({
+    page,
+    checkAccessibility,
+  }) => {
     await bdd.given("user is on the tree page", async () => {
       expect(page.url()).toContain("/tree");
     });
@@ -51,12 +54,16 @@ test.describe("Feature: Family Tree Visualization", () => {
 
     await bdd.and("page meets accessibility standards", async () => {
       // Check accessibility excluding known color-contrast issues that are pre-existing
-      const violations = await checkAccessibility({ skipRules: ["color-contrast"] });
+      const violations = await checkAccessibility({
+        skipRules: ["color-contrast"],
+      });
       assertNoCriticalA11yViolations(violations, "Tree page");
     });
   });
 
-  test("should display tree content or appropriate empty state", async ({ page }) => {
+  test("should display tree content or appropriate empty state", async ({
+    page,
+  }) => {
     await bdd.given("tree page is loaded", async () => {
       const mainElement = page.locator("main").first();
       await expect(mainElement).toBeVisible();
@@ -71,7 +78,9 @@ test.describe("Feature: Family Tree Visualization", () => {
     await bdd.then("either tree nodes or message is visible", async () => {
       // Check for any content in main - nodes, text, or controls
       const mainContent = page.locator("main").first();
-      const hasText = await mainContent.evaluate((el) => el.textContent?.trim().length ?? 0);
+      const hasText = await mainContent.evaluate(
+        (el) => el.textContent?.trim().length ?? 0
+      );
       expect(hasText || 0).toBeGreaterThanOrEqual(0);
     });
 
@@ -139,19 +148,25 @@ test.describe("Feature: Family Tree Visualization", () => {
 
     await bdd.when("tree layout applies styles", async () => {
       const mainElement = page.locator("main").first();
-      const bgColor = await mainElement.evaluate((el) => window.getComputedStyle(el).backgroundColor);
+      const bgColor = await mainElement.evaluate(
+        (el) => window.getComputedStyle(el).backgroundColor
+      );
       expect(bgColor).toBeTruthy();
     });
 
     await bdd.then("tree has appropriate background", async () => {
       const mainElement = page.locator("main").first();
-      const bgColor = await mainElement.evaluate((el) => window.getComputedStyle(el).backgroundColor);
+      const bgColor = await mainElement.evaluate(
+        (el) => window.getComputedStyle(el).backgroundColor
+      );
       expect(bgColor).toBeTruthy();
     });
 
     await bdd.and("content is visible and readable", async () => {
       const mainElement = page.locator("main").first();
-      const opacity = await mainElement.evaluate((el) => window.getComputedStyle(el).opacity);
+      const opacity = await mainElement.evaluate(
+        (el) => window.getComputedStyle(el).opacity
+      );
       expect(parseFloat(opacity)).toBeGreaterThan(0);
     });
   });
@@ -230,7 +245,9 @@ test.describe("Feature: Family Tree Visualization", () => {
     });
   });
 
-  test("should handle mouse and keyboard interactions gracefully", async ({ page }) => {
+  test("should handle mouse and keyboard interactions gracefully", async ({
+    page,
+  }) => {
     await bdd.given("tree is interactive", async () => {
       const mainElement = page.locator("main").first();
       await expect(mainElement).toBeVisible();
@@ -355,7 +372,9 @@ test.describe("Feature: Family Tree Visualization", () => {
     });
 
     await bdd.when("user looks for view mode button", async () => {
-      const viewButtons = page.locator("button").filter({ hasText: /view|focused|full|show/i });
+      const viewButtons = page
+        .locator("button")
+        .filter({ hasText: /view|focused|full|show/i });
       const count = await viewButtons.count();
       expect(count >= 0).toBeTruthy();
     });
@@ -410,14 +429,19 @@ test.describe("Feature: Family Tree Visualization", () => {
 
     await bdd.and("state persists on reload", async () => {
       await page.reload();
-      await page.locator("main").first().waitFor({ state: "visible", timeout: 5000 });
+      await page
+        .locator("main")
+        .first()
+        .waitFor({ state: "visible", timeout: 5000 });
       const urlAfter = page.url();
       // URL structure should be similar
       expect(urlAfter).toContain("/tree");
     });
   });
 
-  test("should show appropriate controls based on user context", async ({ page }) => {
+  test("should show appropriate controls based on user context", async ({
+    page,
+  }) => {
     await bdd.given("user is authenticated", async () => {
       expect(page.url()).toContain("/tree");
     });
@@ -449,7 +473,9 @@ test.describe("Feature: Family Tree Visualization", () => {
     });
 
     await bdd.when("user looks for expand buttons", async () => {
-      const expandButtons = page.locator("button").filter({ hasText: /expand|more|show/i });
+      const expandButtons = page
+        .locator("button")
+        .filter({ hasText: /expand|more|show/i });
       const count = await expandButtons.count();
       expect(count >= 0).toBeTruthy();
     });
@@ -470,7 +496,9 @@ test.describe("Feature: Family Tree Visualization", () => {
     });
 
     await bdd.when("user looks for focus control", async () => {
-      const focusBtn = page.locator("button").filter({ hasText: /focus|me|center/i });
+      const focusBtn = page
+        .locator("button")
+        .filter({ hasText: /focus|me|center/i });
       const count = await focusBtn.count();
       expect(count >= 0).toBeTruthy();
     });
@@ -512,14 +540,20 @@ test.describe("Feature: Family Tree Visualization", () => {
       await expect(mainElement).toBeVisible();
     });
 
-    await bdd.when("user views tree with different expansion states", async () => {
-      await page.waitForTimeout(300);
-    });
+    await bdd.when(
+      "user views tree with different expansion states",
+      async () => {
+        await page.waitForTimeout(300);
+      }
+    );
 
-    await bdd.then("different levels are visible or hidden appropriately", async () => {
-      const mainElement = page.locator("main").first();
-      await expect(mainElement).toBeVisible();
-    });
+    await bdd.then(
+      "different levels are visible or hidden appropriately",
+      async () => {
+        const mainElement = page.locator("main").first();
+        await expect(mainElement).toBeVisible();
+      }
+    );
 
     await bdd.and("no visual corruption occurs", async () => {
       expect(page.url()).toContain("/tree");
@@ -561,7 +595,9 @@ test.describe("Feature: Family Tree Visualization", () => {
 
     await bdd.when("no family data exists", async () => {
       // Check for empty state message
-      const emptyMessages = page.locator("text=/no family|not linked|no people/i");
+      const emptyMessages = page.locator(
+        "text=/no family|not linked|no people/i"
+      );
       const count = await emptyMessages.count();
       expect(count >= 0).toBeTruthy();
     });
@@ -613,7 +649,10 @@ test.describe("Feature: Family Tree Visualization", () => {
 
     await bdd.when("person data is available", async () => {
       // Check for name text or node elements
-      const textContent = await page.locator("main").first().evaluate((el) => el.textContent);
+      const textContent = await page
+        .locator("main")
+        .first()
+        .evaluate((el) => el.textContent);
       expect(textContent).toBeTruthy();
     });
 
@@ -623,12 +662,17 @@ test.describe("Feature: Family Tree Visualization", () => {
     });
 
     await bdd.and("information is readable", async () => {
-      const textContent = await page.locator("main").first().evaluate((el) => el.textContent);
+      const textContent = await page
+        .locator("main")
+        .first()
+        .evaluate((el) => el.textContent);
       expect(textContent?.length ?? 0).toBeGreaterThanOrEqual(0);
     });
   });
 
-  test("should distinguish different person states visually", async ({ page }) => {
+  test("should distinguish different person states visually", async ({
+    page,
+  }) => {
     await bdd.given("tree has people in different states", async () => {
       const mainElement = page.locator("main").first();
       await expect(mainElement).toBeVisible();
@@ -695,9 +739,12 @@ test.describe("Feature: Family Tree Visualization", () => {
       await expect(mainElement).toBeVisible();
     });
 
-    await bdd.and("tree flows visually from ancestors to descendants", async () => {
-      expect(page.url()).toContain("/tree");
-    });
+    await bdd.and(
+      "tree flows visually from ancestors to descendants",
+      async () => {
+        expect(page.url()).toContain("/tree");
+      }
+    );
   });
 
   test("should prevent node overlap in layout", async ({ page }) => {
@@ -767,7 +814,9 @@ test.describe("Feature: Family Tree Visualization", () => {
   // SECTION 8: Additional Coverage (2 tests)
   // ==================================================
 
-  test("should maintain functionality when navigating away and back", async ({ page }) => {
+  test("should maintain functionality when navigating away and back", async ({
+    page,
+  }) => {
     await bdd.given("tree is displayed", async () => {
       const mainElement = page.locator("main").first();
       await expect(mainElement).toBeVisible();

@@ -1,36 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import { z } from "zod";
 import type { Prisma } from "@vamsa/api";
+import { logger, serializeError } from "@vamsa/lib/logger";
+import { requireAuth } from "./middleware/require-auth";
+import { createPaginationMeta } from "@vamsa/schemas";
+import { t } from "./i18n";
 
-const TOKEN_COOKIE_NAME = "vamsa-session";
-
-// Auth helper function
-async function requireAuth(
-  requiredRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
-) {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const session = await prisma.session.findFirst({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error("Session expired");
-  }
-
-  const roleHierarchy = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
-  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
-    throw new Error(`Requires ${requiredRole} role or higher`);
-  }
-
-  return session.user;
-}
+// Person list input schema with pagination, search, and filters
+const personListInputSchema = z.object({
+  page: z.number().int().min(1).default(1),
+  limit: z.number().int().min(1).max(100).default(50),
+  sortOrder: z.enum(["asc", "desc"]).default("asc"),
+  search: z.string().optional(),
+  sortBy: z
+    .enum(["lastName", "firstName", "dateOfBirth", "createdAt"])
+    .default("lastName"),
+  isLiving: z.boolean().optional(),
+});
+type PersonListInput = z.infer<typeof personListInputSchema>;
 
 // Audit log helper
 async function logAuditAction(
@@ -52,7 +40,10 @@ async function logAuditAction(
       },
     });
   } catch (error) {
-    console.error("Failed to log audit action:", error);
+    logger.error(
+      { error: serializeError(error) },
+      "Failed to log audit action"
+    );
   }
 }
 
@@ -79,11 +70,49 @@ const updatePersonSchema = createPersonSchema.partial().extend({
   id: z.string(),
 });
 
-// List all persons
-export const listPersons = createServerFn({ method: "GET" }).handler(
-  async () => {
+// List persons with pagination
+export const listPersons = createServerFn({ method: "GET" })
+  .inputValidator((data: Partial<PersonListInput>) => {
+    return personListInputSchema.parse(data);
+  })
+  .handler(async ({ data }) => {
+    const { page, limit, sortBy, sortOrder, search, isLiving } = data;
+
+    // Build where clause
+    const where: Prisma.PersonWhereInput = {};
+
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: "insensitive" } },
+        { lastName: { contains: search, mode: "insensitive" } },
+      ];
+    }
+
+    if (isLiving !== undefined) {
+      where.isLiving = isLiving;
+    }
+
+    // Build orderBy clause
+    const orderBy: Prisma.PersonOrderByWithRelationInput[] = [];
+    if (sortBy === "lastName") {
+      orderBy.push({ lastName: sortOrder }, { firstName: sortOrder });
+    } else if (sortBy === "firstName") {
+      orderBy.push({ firstName: sortOrder }, { lastName: sortOrder });
+    } else if (sortBy === "dateOfBirth") {
+      orderBy.push({ dateOfBirth: sortOrder });
+    } else if (sortBy === "createdAt") {
+      orderBy.push({ createdAt: sortOrder });
+    }
+
+    // Get total count
+    const total = await prisma.person.count({ where });
+
+    // Get paginated results
     const persons = await prisma.person.findMany({
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      where,
+      orderBy,
+      skip: (page - 1) * limit,
+      take: limit,
     });
 
     return {
@@ -107,10 +136,9 @@ export const listPersons = createServerFn({ method: "GET" }).handler(
         createdAt: p.createdAt.toISOString(),
         updatedAt: p.updatedAt.toISOString(),
       })),
-      total: persons.length,
+      pagination: createPaginationMeta(page, limit, total),
     };
-  }
-);
+  });
 
 // Get a single person by ID
 export const getPerson = createServerFn({ method: "GET" })
@@ -126,7 +154,7 @@ export const getPerson = createServerFn({ method: "GET" })
     });
 
     if (!person) {
-      throw new Error("Person not found");
+      throw new Error(await t("errors:person.notFound"));
     }
 
     // Build relationships list
@@ -220,7 +248,7 @@ export const updatePerson = createServerFn({ method: "POST" })
     });
 
     if (!existing) {
-      throw new Error("Person not found");
+      throw new Error(await t("errors:person.notFound"));
     }
 
     // Permission check: User can edit if they are an ADMIN or editing their own profile
@@ -232,7 +260,7 @@ export const updatePerson = createServerFn({ method: "POST" })
     const isAdmin = user.role === "ADMIN";
 
     if (!isOwnProfile && !isAdmin) {
-      throw new Error("You can only edit your own profile");
+      throw new Error(await t("errors:person.cannotEdit"));
     }
 
     const person = await prisma.person.update({
@@ -264,7 +292,7 @@ export const deletePerson = createServerFn({ method: "POST" })
     });
 
     if (!person) {
-      throw new Error("Person not found");
+      throw new Error(await t("errors:person.notFound"));
     }
 
     await prisma.person.delete({

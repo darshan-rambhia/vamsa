@@ -13,17 +13,30 @@ import {
   SelectValue,
 } from "@vamsa/ui";
 
+export type ChartType =
+  | "ancestor"
+  | "descendant"
+  | "hourglass"
+  | "fan"
+  | "timeline"
+  | "matrix"
+  | "bowtie"
+  | "compact"
+  | "statistics";
+
 interface ChartControlsProps {
-  chartType: "ancestor" | "descendant" | "hourglass" | "fan";
+  chartType: ChartType;
   generations: number;
   ancestorGenerations?: number;
   descendantGenerations?: number;
-  onChartTypeChange: (
-    type: "ancestor" | "descendant" | "hourglass" | "fan"
-  ) => void;
+  maxPeople?: number;
+  sortBy?: "birth" | "death" | "name";
+  onChartTypeChange: (type: ChartType) => void;
   onGenerationsChange: (generations: number) => void;
   onAncestorGenerationsChange?: (generations: number) => void;
   onDescendantGenerationsChange?: (generations: number) => void;
+  onMaxPeopleChange?: (maxPeople: number) => void;
+  onSortByChange?: (sortBy: "birth" | "death" | "name") => void;
   onExportPNG?: () => void;
   onExportSVG?: () => void;
 }
@@ -33,10 +46,14 @@ export function ChartControls({
   generations,
   ancestorGenerations = 2,
   descendantGenerations = 2,
+  maxPeople = 20,
+  sortBy = "birth",
   onChartTypeChange,
   onGenerationsChange,
   onAncestorGenerationsChange,
   onDescendantGenerationsChange,
+  onMaxPeopleChange,
+  onSortByChange,
   onExportPNG,
   onExportSVG,
 }: ChartControlsProps) {
@@ -55,6 +72,11 @@ export function ChartControls({
                 <SelectItem value="descendant">Descendant Chart</SelectItem>
                 <SelectItem value="hourglass">Hourglass Chart</SelectItem>
                 <SelectItem value="fan">Fan Chart</SelectItem>
+                <SelectItem value="timeline">Timeline Chart</SelectItem>
+                <SelectItem value="matrix">Relationship Matrix</SelectItem>
+                <SelectItem value="bowtie">Bowtie Chart</SelectItem>
+                <SelectItem value="compact">Compact Tree</SelectItem>
+                <SelectItem value="statistics">Statistics</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -94,6 +116,44 @@ export function ChartControls({
                 />
               </div>
             </>
+          ) : chartType === "timeline" ? (
+            <div className="space-y-2">
+              <Label htmlFor="sort-by">Sort By</Label>
+              <Select
+                value={sortBy}
+                onValueChange={(value) =>
+                  onSortByChange?.(value as "birth" | "death" | "name")
+                }
+              >
+                <SelectTrigger id="sort-by">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="birth">Birth Year</SelectItem>
+                  <SelectItem value="death">Death Year</SelectItem>
+                  <SelectItem value="name">Name</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          ) : chartType === "matrix" ? (
+            <div className="space-y-2">
+              <Label htmlFor="max-people">Max People ({maxPeople})</Label>
+              <Input
+                id="max-people"
+                type="range"
+                min="5"
+                max="50"
+                value={maxPeople}
+                onChange={(e) => onMaxPeopleChange?.(parseInt(e.target.value))}
+                className="w-full"
+              />
+            </div>
+          ) : chartType === "statistics" ? (
+            <div className="space-y-2">
+              <span className="text-muted-foreground text-sm">
+                Statistical analysis of all family members
+              </span>
+            </div>
           ) : (
             <div className="space-y-2">
               <Label htmlFor="generations">Generations ({generations})</Label>

@@ -10,6 +10,11 @@ import { writeFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import { randomUUID } from "crypto";
+import {
+  processUploadedImage,
+  cleanupOldImages,
+  getMediaDir,
+} from "@vamsa/lib/server";
 
 // Get all media for a person
 export const getPersonMedia = createServerFn({ method: "GET" })
@@ -43,6 +48,10 @@ export const getPersonMedia = createServerFn({ method: "GET" })
             width: true,
             height: true,
             thumbnailPath: true,
+            webpPath: true,
+            thumb400Path: true,
+            thumb800Path: true,
+            thumb1200Path: true,
             uploadedAt: true,
           },
         },
@@ -68,6 +77,10 @@ export const getPersonMedia = createServerFn({ method: "GET" })
         width: pm.media.width,
         height: pm.media.height,
         thumbnailPath: pm.media.thumbnailPath,
+        webpPath: pm.media.webpPath,
+        thumb400Path: pm.media.thumb400Path,
+        thumb800Path: pm.media.thumb800Path,
+        thumb1200Path: pm.media.thumb1200Path,
         uploadedAt: pm.media.uploadedAt.toISOString(),
         caption: pm.caption,
         isPrimary: pm.isPrimary,
@@ -122,6 +135,10 @@ export const getMediaObject = createServerFn({ method: "GET" })
       width: media.width,
       height: media.height,
       thumbnailPath: media.thumbnailPath,
+      webpPath: media.webpPath,
+      thumb400Path: media.thumb400Path,
+      thumb800Path: media.thumb800Path,
+      thumb1200Path: media.thumb1200Path,
       uploadedAt: media.uploadedAt.toISOString(),
       createdAt: media.createdAt.toISOString(),
       updatedAt: media.updatedAt.toISOString(),
@@ -160,9 +177,17 @@ export const deleteMedia = createServerFn({ method: "POST" })
       where: { id: mediaId },
     });
 
-    // TODO: Delete actual file from storage
-    // const storage = await getStorageProvider();
-    // await storage.delete(media.filePath);
+    // Clean up processed images
+    try {
+      const mediaDir = getMediaDir();
+      await cleanupOldImages(mediaId, mediaDir);
+    } catch (error) {
+      console.error(
+        "Failed to cleanup processed images:",
+        error instanceof Error ? error.message : String(error)
+      );
+      // Continue - deletion succeeded even if cleanup failed
+    }
 
     return { success: true };
   });
@@ -428,9 +453,10 @@ export const uploadMedia = createServerFn({ method: "POST" })
     const filePath = path.join(uploadDir, uniqueFileName);
     const relativePath = `/data/uploads/media/${uniqueFileName}`;
 
-    // Decode and save file
+    // Decode buffer
+    let buffer: Buffer;
     try {
-      const buffer = Buffer.from(base64Data, "base64");
+      buffer = Buffer.from(base64Data, "base64");
       await writeFile(filePath, buffer);
     } catch (error) {
       throw new Error(
@@ -440,6 +466,33 @@ export const uploadMedia = createServerFn({ method: "POST" })
 
     // Determine format from mime type
     const format = mimeType.split("/")[1]?.toUpperCase() || "UNKNOWN";
+
+    // Generate unique media ID for processing
+    const mediaId = randomUUID();
+    const mediaDir = getMediaDir();
+
+    // Process image if it's an image type
+    let processedImage = null;
+    let webpPath: string | null = null;
+    let thumb400Path: string | null = null;
+    let thumb800Path: string | null = null;
+    let thumb1200Path: string | null = null;
+
+    if (mimeType.startsWith("image/")) {
+      try {
+        processedImage = await processUploadedImage(buffer, mediaId, mediaDir);
+        webpPath = processedImage.webp.path;
+        thumb400Path = processedImage.responsive[0]?.path || null;
+        thumb800Path = processedImage.responsive[1]?.path || null;
+        thumb1200Path = processedImage.responsive[2]?.path || null;
+      } catch (error) {
+        console.error(
+          "Failed to process image:",
+          error instanceof Error ? error.message : String(error)
+        );
+        // Continue without processed images - still save original
+      }
+    }
 
     // Create media object in database
     const mediaObject = await prisma.mediaObject.create({
@@ -451,6 +504,12 @@ export const uploadMedia = createServerFn({ method: "POST" })
         title: title || fileName,
         description: description || null,
         source: source || null,
+        width: processedImage?.original.width,
+        height: processedImage?.original.height,
+        webpPath,
+        thumb400Path,
+        thumb800Path,
+        thumb1200Path,
         uploadedAt: new Date(),
       },
     });
@@ -487,6 +546,12 @@ export const uploadMedia = createServerFn({ method: "POST" })
       title: mediaObject.title,
       description: mediaObject.description,
       source: mediaObject.source,
+      width: mediaObject.width,
+      height: mediaObject.height,
+      webpPath: mediaObject.webpPath,
+      thumb400Path: mediaObject.thumb400Path,
+      thumb800Path: mediaObject.thumb800Path,
+      thumb1200Path: mediaObject.thumb1200Path,
       caption: personMedia.caption,
       isPrimary: personMedia.isPrimary,
       displayOrder: personMedia.displayOrder,

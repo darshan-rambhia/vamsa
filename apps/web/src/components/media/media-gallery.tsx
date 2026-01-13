@@ -10,6 +10,10 @@ interface MediaItem {
   filePath: string;
   isPrimary: boolean;
   displayOrder: number | null;
+  webpPath?: string | null;
+  thumb400Path?: string | null;
+  thumb800Path?: string | null;
+  thumb1200Path?: string | null;
 }
 
 interface MediaGalleryProps {

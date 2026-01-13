@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import {
   backupExportSchema,
@@ -9,34 +8,8 @@ import {
 import archiver from "archiver";
 import * as fs from "fs";
 import * as path from "path";
-
-const TOKEN_COOKIE_NAME = "vamsa-session";
-
-// Auth helper function
-async function requireAuth(
-  requiredRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
-) {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const session = await prisma.session.findFirst({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error("Session expired");
-  }
-
-  const roleHierarchy = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
-  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
-    throw new Error(`Requires ${requiredRole} role or higher`);
-  }
-
-  return session.user;
-}
+import { logger, serializeError } from "@vamsa/lib/logger";
+import { requireAuth } from "./middleware/require-auth";
 
 export interface ExportBackupResult {
   success: boolean;
@@ -201,9 +174,9 @@ export const exportBackup = createServerFn({ method: "POST" })
             archive.file(filePath, { name: `photos/${media.id}/${fileName}` });
           } catch (err) {
             // Log file addition errors but continue
-            console.error(
-              `[Backup Export] Failed to add photo ${filePath}:`,
-              err
+            logger.error(
+              { error: serializeError(err), filePath },
+              "Failed to add photo to backup"
             );
           }
         }
@@ -245,7 +218,10 @@ export const exportBackup = createServerFn({ method: "POST" })
       });
     } catch (err) {
       // Log audit error but don't fail the export
-      console.error("[Backup Export] Failed to create audit log:", err);
+      logger.error(
+        { error: serializeError(err) },
+        "Failed to create audit log for backup export"
+      );
     }
 
     return {

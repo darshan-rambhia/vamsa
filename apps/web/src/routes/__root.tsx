@@ -108,7 +108,7 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
                 {errorMessage}
               </p>
               {errorStack && (
-                <pre className="text-muted-foreground overflow-x-auto whitespace-pre-wrap font-mono text-xs">
+                <pre className="text-muted-foreground overflow-x-auto font-mono text-xs whitespace-pre-wrap">
                   {errorStack}
                 </pre>
               )}

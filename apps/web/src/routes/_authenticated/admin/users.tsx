@@ -7,11 +7,11 @@ import { AdminRouteError } from "~/components/admin/route-error";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   loader: async () => {
-    const [users, currentUser] = await Promise.all([
-      getUsers(),
+    const [usersData, currentUser] = await Promise.all([
+      getUsers({ data: {} }),
       getCurrentUser(),
     ]);
-    return { users, currentUser };
+    return { users: usersData.items, currentUser };
   },
   component: UsersPage,
   errorComponent: AdminRouteError,

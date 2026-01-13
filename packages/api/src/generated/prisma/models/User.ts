@@ -20,8 +20,18 @@ export type UserModel =
 
 export type AggregateUser = {
   _count: UserCountAggregateOutputType | null;
+  _avg: UserAvgAggregateOutputType | null;
+  _sum: UserSumAggregateOutputType | null;
   _min: UserMinAggregateOutputType | null;
   _max: UserMaxAggregateOutputType | null;
+};
+
+export type UserAvgAggregateOutputType = {
+  failedLoginAttempts: number | null;
+};
+
+export type UserSumAggregateOutputType = {
+  failedLoginAttempts: number | null;
 };
 
 export type UserMinAggregateOutputType = {
@@ -34,10 +44,18 @@ export type UserMinAggregateOutputType = {
   isActive: boolean | null;
   mustChangePassword: boolean | null;
   preferredLanguage: string | null;
+  oidcProvider: string | null;
+  oidcSubject: string | null;
+  emailVerified: boolean | null;
+  profileClaimStatus: $Enums.ProfileClaimStatus | null;
+  profileClaimedAt: Date | null;
   invitedById: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
   lastLoginAt: Date | null;
+  failedLoginAttempts: number | null;
+  lockedUntil: Date | null;
+  lastFailedLoginAt: Date | null;
 };
 
 export type UserMaxAggregateOutputType = {
@@ -50,10 +68,18 @@ export type UserMaxAggregateOutputType = {
   isActive: boolean | null;
   mustChangePassword: boolean | null;
   preferredLanguage: string | null;
+  oidcProvider: string | null;
+  oidcSubject: string | null;
+  emailVerified: boolean | null;
+  profileClaimStatus: $Enums.ProfileClaimStatus | null;
+  profileClaimedAt: Date | null;
   invitedById: string | null;
   createdAt: Date | null;
   updatedAt: Date | null;
   lastLoginAt: Date | null;
+  failedLoginAttempts: number | null;
+  lockedUntil: Date | null;
+  lastFailedLoginAt: Date | null;
 };
 
 export type UserCountAggregateOutputType = {
@@ -66,12 +92,28 @@ export type UserCountAggregateOutputType = {
   isActive: number;
   mustChangePassword: number;
   preferredLanguage: number;
+  oidcProvider: number;
+  oidcSubject: number;
+  emailVerified: number;
+  profileClaimStatus: number;
+  profileClaimedAt: number;
   invitedById: number;
   createdAt: number;
   updatedAt: number;
   lastLoginAt: number;
+  failedLoginAttempts: number;
+  lockedUntil: number;
+  lastFailedLoginAt: number;
   emailNotificationPreferences: number;
   _all: number;
+};
+
+export type UserAvgAggregateInputType = {
+  failedLoginAttempts?: true;
+};
+
+export type UserSumAggregateInputType = {
+  failedLoginAttempts?: true;
 };
 
 export type UserMinAggregateInputType = {
@@ -84,10 +126,18 @@ export type UserMinAggregateInputType = {
   isActive?: true;
   mustChangePassword?: true;
   preferredLanguage?: true;
+  oidcProvider?: true;
+  oidcSubject?: true;
+  emailVerified?: true;
+  profileClaimStatus?: true;
+  profileClaimedAt?: true;
   invitedById?: true;
   createdAt?: true;
   updatedAt?: true;
   lastLoginAt?: true;
+  failedLoginAttempts?: true;
+  lockedUntil?: true;
+  lastFailedLoginAt?: true;
 };
 
 export type UserMaxAggregateInputType = {
@@ -100,10 +150,18 @@ export type UserMaxAggregateInputType = {
   isActive?: true;
   mustChangePassword?: true;
   preferredLanguage?: true;
+  oidcProvider?: true;
+  oidcSubject?: true;
+  emailVerified?: true;
+  profileClaimStatus?: true;
+  profileClaimedAt?: true;
   invitedById?: true;
   createdAt?: true;
   updatedAt?: true;
   lastLoginAt?: true;
+  failedLoginAttempts?: true;
+  lockedUntil?: true;
+  lastFailedLoginAt?: true;
 };
 
 export type UserCountAggregateInputType = {
@@ -116,10 +174,18 @@ export type UserCountAggregateInputType = {
   isActive?: true;
   mustChangePassword?: true;
   preferredLanguage?: true;
+  oidcProvider?: true;
+  oidcSubject?: true;
+  emailVerified?: true;
+  profileClaimStatus?: true;
+  profileClaimedAt?: true;
   invitedById?: true;
   createdAt?: true;
   updatedAt?: true;
   lastLoginAt?: true;
+  failedLoginAttempts?: true;
+  lockedUntil?: true;
+  lastFailedLoginAt?: true;
   emailNotificationPreferences?: true;
   _all?: true;
 };
@@ -167,6 +233,18 @@ export type UserAggregateArgs<
   /**
    * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
    *
+   * Select which fields to average
+   **/
+  _avg?: UserAvgAggregateInputType;
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   *
+   * Select which fields to sum
+   **/
+  _sum?: UserSumAggregateInputType;
+  /**
+   * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+   *
    * Select which fields to find the minimum value
    **/
   _min?: UserMinAggregateInputType;
@@ -199,6 +277,8 @@ export type UserGroupByArgs<
   take?: number;
   skip?: number;
   _count?: UserCountAggregateInputType | true;
+  _avg?: UserAvgAggregateInputType;
+  _sum?: UserSumAggregateInputType;
   _min?: UserMinAggregateInputType;
   _max?: UserMaxAggregateInputType;
 };
@@ -213,12 +293,22 @@ export type UserGroupByOutputType = {
   isActive: boolean;
   mustChangePassword: boolean;
   preferredLanguage: string | null;
+  oidcProvider: string | null;
+  oidcSubject: string | null;
+  emailVerified: boolean;
+  profileClaimStatus: $Enums.ProfileClaimStatus;
+  profileClaimedAt: Date | null;
   invitedById: string | null;
   createdAt: Date;
   updatedAt: Date;
   lastLoginAt: Date | null;
+  failedLoginAttempts: number;
+  lockedUntil: Date | null;
+  lastFailedLoginAt: Date | null;
   emailNotificationPreferences: runtime.JsonValue | null;
   _count: UserCountAggregateOutputType | null;
+  _avg: UserAvgAggregateOutputType | null;
+  _sum: UserSumAggregateOutputType | null;
   _min: UserMinAggregateOutputType | null;
   _max: UserMaxAggregateOutputType | null;
 };
@@ -248,10 +338,28 @@ export type UserWhereInput = {
   isActive?: Prisma.BoolFilter<"User"> | boolean;
   mustChangePassword?: Prisma.BoolFilter<"User"> | boolean;
   preferredLanguage?: Prisma.StringNullableFilter<"User"> | string | null;
+  oidcProvider?: Prisma.StringNullableFilter<"User"> | string | null;
+  oidcSubject?: Prisma.StringNullableFilter<"User"> | string | null;
+  emailVerified?: Prisma.BoolFilter<"User"> | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFilter<"User">
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.DateTimeNullableFilter<"User">
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.StringNullableFilter<"User"> | string | null;
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string;
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string;
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+  failedLoginAttempts?: Prisma.IntFilter<"User"> | number;
+  lockedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+  lastFailedLoginAt?:
+    | Prisma.DateTimeNullableFilter<"User">
+    | Date
+    | string
+    | null;
   emailNotificationPreferences?: Prisma.JsonNullableFilter<"User">;
   person?: Prisma.XOR<
     Prisma.PersonNullableScalarRelationFilter,
@@ -270,6 +378,7 @@ export type UserWhereInput = {
   invites?: Prisma.InviteListRelationFilter;
   researchNotes?: Prisma.ResearchNoteListRelationFilter;
   emailLogs?: Prisma.EmailLogListRelationFilter;
+  calendarTokens?: Prisma.CalendarTokenListRelationFilter;
 };
 
 export type UserOrderByWithRelationInput = {
@@ -282,10 +391,18 @@ export type UserOrderByWithRelationInput = {
   isActive?: Prisma.SortOrder;
   mustChangePassword?: Prisma.SortOrder;
   preferredLanguage?: Prisma.SortOrderInput | Prisma.SortOrder;
+  oidcProvider?: Prisma.SortOrderInput | Prisma.SortOrder;
+  oidcSubject?: Prisma.SortOrderInput | Prisma.SortOrder;
+  emailVerified?: Prisma.SortOrder;
+  profileClaimStatus?: Prisma.SortOrder;
+  profileClaimedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
   invitedById?: Prisma.SortOrderInput | Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   updatedAt?: Prisma.SortOrder;
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+  failedLoginAttempts?: Prisma.SortOrder;
+  lockedUntil?: Prisma.SortOrderInput | Prisma.SortOrder;
+  lastFailedLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder;
   emailNotificationPreferences?: Prisma.SortOrderInput | Prisma.SortOrder;
   person?: Prisma.PersonOrderByWithRelationInput;
   invitedBy?: Prisma.UserOrderByWithRelationInput;
@@ -298,6 +415,7 @@ export type UserOrderByWithRelationInput = {
   invites?: Prisma.InviteOrderByRelationAggregateInput;
   researchNotes?: Prisma.ResearchNoteOrderByRelationAggregateInput;
   emailLogs?: Prisma.EmailLogOrderByRelationAggregateInput;
+  calendarTokens?: Prisma.CalendarTokenOrderByRelationAggregateInput;
 };
 
 export type UserWhereUniqueInput = Prisma.AtLeast<
@@ -305,6 +423,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     id?: string;
     email?: string;
     personId?: string;
+    oidcProvider_oidcSubject?: Prisma.UserOidcProviderOidcSubjectCompoundUniqueInput;
     AND?: Prisma.UserWhereInput | Prisma.UserWhereInput[];
     OR?: Prisma.UserWhereInput[];
     NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[];
@@ -314,10 +433,28 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     isActive?: Prisma.BoolFilter<"User"> | boolean;
     mustChangePassword?: Prisma.BoolFilter<"User"> | boolean;
     preferredLanguage?: Prisma.StringNullableFilter<"User"> | string | null;
+    oidcProvider?: Prisma.StringNullableFilter<"User"> | string | null;
+    oidcSubject?: Prisma.StringNullableFilter<"User"> | string | null;
+    emailVerified?: Prisma.BoolFilter<"User"> | boolean;
+    profileClaimStatus?:
+      | Prisma.EnumProfileClaimStatusFilter<"User">
+      | $Enums.ProfileClaimStatus;
+    profileClaimedAt?:
+      | Prisma.DateTimeNullableFilter<"User">
+      | Date
+      | string
+      | null;
     invitedById?: Prisma.StringNullableFilter<"User"> | string | null;
     createdAt?: Prisma.DateTimeFilter<"User"> | Date | string;
     updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string;
     lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+    failedLoginAttempts?: Prisma.IntFilter<"User"> | number;
+    lockedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+    lastFailedLoginAt?:
+      | Prisma.DateTimeNullableFilter<"User">
+      | Date
+      | string
+      | null;
     emailNotificationPreferences?: Prisma.JsonNullableFilter<"User">;
     person?: Prisma.XOR<
       Prisma.PersonNullableScalarRelationFilter,
@@ -336,8 +473,9 @@ export type UserWhereUniqueInput = Prisma.AtLeast<
     invites?: Prisma.InviteListRelationFilter;
     researchNotes?: Prisma.ResearchNoteListRelationFilter;
     emailLogs?: Prisma.EmailLogListRelationFilter;
+    calendarTokens?: Prisma.CalendarTokenListRelationFilter;
   },
-  "id" | "email" | "personId"
+  "id" | "email" | "personId" | "oidcProvider_oidcSubject"
 >;
 
 export type UserOrderByWithAggregationInput = {
@@ -350,14 +488,24 @@ export type UserOrderByWithAggregationInput = {
   isActive?: Prisma.SortOrder;
   mustChangePassword?: Prisma.SortOrder;
   preferredLanguage?: Prisma.SortOrderInput | Prisma.SortOrder;
+  oidcProvider?: Prisma.SortOrderInput | Prisma.SortOrder;
+  oidcSubject?: Prisma.SortOrderInput | Prisma.SortOrder;
+  emailVerified?: Prisma.SortOrder;
+  profileClaimStatus?: Prisma.SortOrder;
+  profileClaimedAt?: Prisma.SortOrderInput | Prisma.SortOrder;
   invitedById?: Prisma.SortOrderInput | Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   updatedAt?: Prisma.SortOrder;
   lastLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder;
+  failedLoginAttempts?: Prisma.SortOrder;
+  lockedUntil?: Prisma.SortOrderInput | Prisma.SortOrder;
+  lastFailedLoginAt?: Prisma.SortOrderInput | Prisma.SortOrder;
   emailNotificationPreferences?: Prisma.SortOrderInput | Prisma.SortOrder;
   _count?: Prisma.UserCountOrderByAggregateInput;
+  _avg?: Prisma.UserAvgOrderByAggregateInput;
   _max?: Prisma.UserMaxOrderByAggregateInput;
   _min?: Prisma.UserMinOrderByAggregateInput;
+  _sum?: Prisma.UserSumOrderByAggregateInput;
 };
 
 export type UserScalarWhereWithAggregatesInput = {
@@ -383,6 +531,23 @@ export type UserScalarWhereWithAggregatesInput = {
     | Prisma.StringNullableWithAggregatesFilter<"User">
     | string
     | null;
+  oidcProvider?:
+    | Prisma.StringNullableWithAggregatesFilter<"User">
+    | string
+    | null;
+  oidcSubject?:
+    | Prisma.StringNullableWithAggregatesFilter<"User">
+    | string
+    | null;
+  emailVerified?: Prisma.BoolWithAggregatesFilter<"User"> | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusWithAggregatesFilter<"User">
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.DateTimeNullableWithAggregatesFilter<"User">
+    | Date
+    | string
+    | null;
   invitedById?:
     | Prisma.StringNullableWithAggregatesFilter<"User">
     | string
@@ -390,6 +555,17 @@ export type UserScalarWhereWithAggregatesInput = {
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string;
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string;
   lastLoginAt?:
+    | Prisma.DateTimeNullableWithAggregatesFilter<"User">
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntWithAggregatesFilter<"User"> | number;
+  lockedUntil?:
+    | Prisma.DateTimeNullableWithAggregatesFilter<"User">
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.DateTimeNullableWithAggregatesFilter<"User">
     | Date
     | string
@@ -406,9 +582,17 @@ export type UserCreateInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -423,6 +607,7 @@ export type UserCreateInput = {
   invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateInput = {
@@ -435,10 +620,18 @@ export type UserUncheckedCreateInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -451,6 +644,7 @@ export type UserUncheckedCreateInput = {
   invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserUpdateInput = {
@@ -468,9 +662,34 @@ export type UserUpdateInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -489,6 +708,7 @@ export type UserUpdateInput = {
   invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateInput = {
@@ -507,10 +727,35 @@ export type UserUncheckedUpdateInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -527,6 +772,7 @@ export type UserUncheckedUpdateInput = {
   invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateManyInput = {
@@ -539,10 +785,18 @@ export type UserCreateManyInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -563,9 +817,34 @@ export type UserUpdateManyMutationInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -591,10 +870,35 @@ export type UserUncheckedUpdateManyInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -619,6 +923,11 @@ export type UserOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder;
 };
 
+export type UserOidcProviderOidcSubjectCompoundUniqueInput = {
+  oidcProvider: string;
+  oidcSubject: string;
+};
+
 export type UserCountOrderByAggregateInput = {
   id?: Prisma.SortOrder;
   email?: Prisma.SortOrder;
@@ -629,11 +938,23 @@ export type UserCountOrderByAggregateInput = {
   isActive?: Prisma.SortOrder;
   mustChangePassword?: Prisma.SortOrder;
   preferredLanguage?: Prisma.SortOrder;
+  oidcProvider?: Prisma.SortOrder;
+  oidcSubject?: Prisma.SortOrder;
+  emailVerified?: Prisma.SortOrder;
+  profileClaimStatus?: Prisma.SortOrder;
+  profileClaimedAt?: Prisma.SortOrder;
   invitedById?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   updatedAt?: Prisma.SortOrder;
   lastLoginAt?: Prisma.SortOrder;
+  failedLoginAttempts?: Prisma.SortOrder;
+  lockedUntil?: Prisma.SortOrder;
+  lastFailedLoginAt?: Prisma.SortOrder;
   emailNotificationPreferences?: Prisma.SortOrder;
+};
+
+export type UserAvgOrderByAggregateInput = {
+  failedLoginAttempts?: Prisma.SortOrder;
 };
 
 export type UserMaxOrderByAggregateInput = {
@@ -646,10 +967,18 @@ export type UserMaxOrderByAggregateInput = {
   isActive?: Prisma.SortOrder;
   mustChangePassword?: Prisma.SortOrder;
   preferredLanguage?: Prisma.SortOrder;
+  oidcProvider?: Prisma.SortOrder;
+  oidcSubject?: Prisma.SortOrder;
+  emailVerified?: Prisma.SortOrder;
+  profileClaimStatus?: Prisma.SortOrder;
+  profileClaimedAt?: Prisma.SortOrder;
   invitedById?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   updatedAt?: Prisma.SortOrder;
   lastLoginAt?: Prisma.SortOrder;
+  failedLoginAttempts?: Prisma.SortOrder;
+  lockedUntil?: Prisma.SortOrder;
+  lastFailedLoginAt?: Prisma.SortOrder;
 };
 
 export type UserMinOrderByAggregateInput = {
@@ -662,10 +991,22 @@ export type UserMinOrderByAggregateInput = {
   isActive?: Prisma.SortOrder;
   mustChangePassword?: Prisma.SortOrder;
   preferredLanguage?: Prisma.SortOrder;
+  oidcProvider?: Prisma.SortOrder;
+  oidcSubject?: Prisma.SortOrder;
+  emailVerified?: Prisma.SortOrder;
+  profileClaimStatus?: Prisma.SortOrder;
+  profileClaimedAt?: Prisma.SortOrder;
   invitedById?: Prisma.SortOrder;
   createdAt?: Prisma.SortOrder;
   updatedAt?: Prisma.SortOrder;
   lastLoginAt?: Prisma.SortOrder;
+  failedLoginAttempts?: Prisma.SortOrder;
+  lockedUntil?: Prisma.SortOrder;
+  lastFailedLoginAt?: Prisma.SortOrder;
+};
+
+export type UserSumOrderByAggregateInput = {
+  failedLoginAttempts?: Prisma.SortOrder;
 };
 
 export type UserScalarRelationFilter = {
@@ -800,6 +1141,18 @@ export type EnumUserRoleFieldUpdateOperationsInput = {
   set?: $Enums.UserRole;
 };
 
+export type EnumProfileClaimStatusFieldUpdateOperationsInput = {
+  set?: $Enums.ProfileClaimStatus;
+};
+
+export type IntFieldUpdateOperationsInput = {
+  set?: number;
+  increment?: number;
+  decrement?: number;
+  multiply?: number;
+  divide?: number;
+};
+
 export type UserUpdateOneWithoutInviteesNestedInput = {
   create?: Prisma.XOR<
     Prisma.UserCreateWithoutInviteesInput,
@@ -898,6 +1251,32 @@ export type UserUpdateOneRequiredWithoutSessionsNestedInput = {
       Prisma.UserUpdateWithoutSessionsInput
     >,
     Prisma.UserUncheckedUpdateWithoutSessionsInput
+  >;
+};
+
+export type UserCreateNestedOneWithoutCalendarTokensInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutCalendarTokensInput,
+    Prisma.UserUncheckedCreateWithoutCalendarTokensInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCalendarTokensInput;
+  connect?: Prisma.UserWhereUniqueInput;
+};
+
+export type UserUpdateOneRequiredWithoutCalendarTokensNestedInput = {
+  create?: Prisma.XOR<
+    Prisma.UserCreateWithoutCalendarTokensInput,
+    Prisma.UserUncheckedCreateWithoutCalendarTokensInput
+  >;
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCalendarTokensInput;
+  upsert?: Prisma.UserUpsertWithoutCalendarTokensInput;
+  connect?: Prisma.UserWhereUniqueInput;
+  update?: Prisma.XOR<
+    Prisma.XOR<
+      Prisma.UserUpdateToOneWithWhereWithoutCalendarTokensInput,
+      Prisma.UserUpdateWithoutCalendarTokensInput
+    >,
+    Prisma.UserUncheckedUpdateWithoutCalendarTokensInput
   >;
 };
 
@@ -1070,9 +1449,17 @@ export type UserCreateWithoutCreatedPeopleInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1086,6 +1473,7 @@ export type UserCreateWithoutCreatedPeopleInput = {
   invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutCreatedPeopleInput = {
@@ -1098,10 +1486,18 @@ export type UserUncheckedCreateWithoutCreatedPeopleInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1113,6 +1509,7 @@ export type UserUncheckedCreateWithoutCreatedPeopleInput = {
   invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutCreatedPeopleInput = {
@@ -1132,9 +1529,17 @@ export type UserCreateWithoutPersonInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1148,6 +1553,7 @@ export type UserCreateWithoutPersonInput = {
   invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutPersonInput = {
@@ -1159,10 +1565,18 @@ export type UserUncheckedCreateWithoutPersonInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1175,6 +1589,7 @@ export type UserUncheckedCreateWithoutPersonInput = {
   invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutPersonInput = {
@@ -1220,9 +1635,34 @@ export type UserUpdateWithoutCreatedPeopleInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -1240,6 +1680,7 @@ export type UserUpdateWithoutCreatedPeopleInput = {
   invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutCreatedPeopleInput = {
@@ -1258,10 +1699,35 @@ export type UserUncheckedUpdateWithoutCreatedPeopleInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -1277,6 +1743,7 @@ export type UserUncheckedUpdateWithoutCreatedPeopleInput = {
   invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUpsertWithoutPersonInput = {
@@ -1314,9 +1781,34 @@ export type UserUpdateWithoutPersonInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -1334,6 +1826,7 @@ export type UserUpdateWithoutPersonInput = {
   invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutPersonInput = {
@@ -1351,10 +1844,35 @@ export type UserUncheckedUpdateWithoutPersonInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -1371,6 +1889,7 @@ export type UserUncheckedUpdateWithoutPersonInput = {
   invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutInviteesInput = {
@@ -1382,9 +1901,17 @@ export type UserCreateWithoutInviteesInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1398,6 +1925,7 @@ export type UserCreateWithoutInviteesInput = {
   invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutInviteesInput = {
@@ -1410,10 +1938,18 @@ export type UserUncheckedCreateWithoutInviteesInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1425,6 +1961,7 @@ export type UserUncheckedCreateWithoutInviteesInput = {
   invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutInviteesInput = {
@@ -1444,9 +1981,17 @@ export type UserCreateWithoutInvitedByInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1460,6 +2005,7 @@ export type UserCreateWithoutInvitedByInput = {
   invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutInvitedByInput = {
@@ -1472,9 +2018,17 @@ export type UserUncheckedCreateWithoutInvitedByInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1487,6 +2041,7 @@ export type UserUncheckedCreateWithoutInvitedByInput = {
   invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutInvitedByInput = {
@@ -1539,9 +2094,34 @@ export type UserUpdateWithoutInviteesInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -1559,6 +2139,7 @@ export type UserUpdateWithoutInviteesInput = {
   invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutInviteesInput = {
@@ -1577,10 +2158,35 @@ export type UserUncheckedUpdateWithoutInviteesInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -1596,6 +2202,7 @@ export type UserUncheckedUpdateWithoutInviteesInput = {
   invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUpsertWithWhereUniqueWithoutInvitedByInput = {
@@ -1639,10 +2246,28 @@ export type UserScalarWhereInput = {
   isActive?: Prisma.BoolFilter<"User"> | boolean;
   mustChangePassword?: Prisma.BoolFilter<"User"> | boolean;
   preferredLanguage?: Prisma.StringNullableFilter<"User"> | string | null;
+  oidcProvider?: Prisma.StringNullableFilter<"User"> | string | null;
+  oidcSubject?: Prisma.StringNullableFilter<"User"> | string | null;
+  emailVerified?: Prisma.BoolFilter<"User"> | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFilter<"User">
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.DateTimeNullableFilter<"User">
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.StringNullableFilter<"User"> | string | null;
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string;
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string;
   lastLoginAt?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+  failedLoginAttempts?: Prisma.IntFilter<"User"> | number;
+  lockedUntil?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null;
+  lastFailedLoginAt?:
+    | Prisma.DateTimeNullableFilter<"User">
+    | Date
+    | string
+    | null;
   emailNotificationPreferences?: Prisma.JsonNullableFilter<"User">;
 };
 
@@ -1655,9 +2280,17 @@ export type UserCreateWithoutSessionsInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1671,6 +2304,7 @@ export type UserCreateWithoutSessionsInput = {
   invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutSessionsInput = {
@@ -1683,10 +2317,18 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1698,6 +2340,7 @@ export type UserUncheckedCreateWithoutSessionsInput = {
   invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutSessionsInput = {
@@ -1743,9 +2386,34 @@ export type UserUpdateWithoutSessionsInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -1763,6 +2431,7 @@ export type UserUpdateWithoutSessionsInput = {
   invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -1781,10 +2450,35 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -1800,6 +2494,233 @@ export type UserUncheckedUpdateWithoutSessionsInput = {
   invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
+};
+
+export type UserCreateWithoutCalendarTokensInput = {
+  id?: string;
+  email: string;
+  name?: string | null;
+  passwordHash?: string | null;
+  role?: $Enums.UserRole;
+  isActive?: boolean;
+  mustChangePassword?: boolean;
+  preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
+  emailNotificationPreferences?:
+    | Prisma.NullableJsonNullValueInput
+    | runtime.InputJsonValue;
+  person?: Prisma.PersonCreateNestedOneWithoutUserInput;
+  invitedBy?: Prisma.UserCreateNestedOneWithoutInviteesInput;
+  invitees?: Prisma.UserCreateNestedManyWithoutInvitedByInput;
+  createdPeople?: Prisma.PersonCreateNestedManyWithoutCreatedByInput;
+  submittedSuggestions?: Prisma.SuggestionCreateNestedManyWithoutSubmittedByInput;
+  reviewedSuggestions?: Prisma.SuggestionCreateNestedManyWithoutReviewedByInput;
+  auditLogs?: Prisma.AuditLogCreateNestedManyWithoutUserInput;
+  sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
+  invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
+  researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
+  emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+};
+
+export type UserUncheckedCreateWithoutCalendarTokensInput = {
+  id?: string;
+  email: string;
+  name?: string | null;
+  passwordHash?: string | null;
+  personId?: string | null;
+  role?: $Enums.UserRole;
+  isActive?: boolean;
+  mustChangePassword?: boolean;
+  preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
+  invitedById?: string | null;
+  createdAt?: Date | string;
+  updatedAt?: Date | string;
+  lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
+  emailNotificationPreferences?:
+    | Prisma.NullableJsonNullValueInput
+    | runtime.InputJsonValue;
+  invitees?: Prisma.UserUncheckedCreateNestedManyWithoutInvitedByInput;
+  createdPeople?: Prisma.PersonUncheckedCreateNestedManyWithoutCreatedByInput;
+  submittedSuggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutSubmittedByInput;
+  reviewedSuggestions?: Prisma.SuggestionUncheckedCreateNestedManyWithoutReviewedByInput;
+  auditLogs?: Prisma.AuditLogUncheckedCreateNestedManyWithoutUserInput;
+  sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
+  invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
+  researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
+  emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+};
+
+export type UserCreateOrConnectWithoutCalendarTokensInput = {
+  where: Prisma.UserWhereUniqueInput;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutCalendarTokensInput,
+    Prisma.UserUncheckedCreateWithoutCalendarTokensInput
+  >;
+};
+
+export type UserUpsertWithoutCalendarTokensInput = {
+  update: Prisma.XOR<
+    Prisma.UserUpdateWithoutCalendarTokensInput,
+    Prisma.UserUncheckedUpdateWithoutCalendarTokensInput
+  >;
+  create: Prisma.XOR<
+    Prisma.UserCreateWithoutCalendarTokensInput,
+    Prisma.UserUncheckedCreateWithoutCalendarTokensInput
+  >;
+  where?: Prisma.UserWhereInput;
+};
+
+export type UserUpdateToOneWithWhereWithoutCalendarTokensInput = {
+  where?: Prisma.UserWhereInput;
+  data: Prisma.XOR<
+    Prisma.UserUpdateWithoutCalendarTokensInput,
+    Prisma.UserUncheckedUpdateWithoutCalendarTokensInput
+  >;
+};
+
+export type UserUpdateWithoutCalendarTokensInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  passwordHash?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole;
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  preferredLanguage?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  emailNotificationPreferences?:
+    | Prisma.NullableJsonNullValueInput
+    | runtime.InputJsonValue;
+  person?: Prisma.PersonUpdateOneWithoutUserNestedInput;
+  invitedBy?: Prisma.UserUpdateOneWithoutInviteesNestedInput;
+  invitees?: Prisma.UserUpdateManyWithoutInvitedByNestedInput;
+  createdPeople?: Prisma.PersonUpdateManyWithoutCreatedByNestedInput;
+  submittedSuggestions?: Prisma.SuggestionUpdateManyWithoutSubmittedByNestedInput;
+  reviewedSuggestions?: Prisma.SuggestionUpdateManyWithoutReviewedByNestedInput;
+  auditLogs?: Prisma.AuditLogUpdateManyWithoutUserNestedInput;
+  sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
+  invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
+  researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
+  emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+};
+
+export type UserUncheckedUpdateWithoutCalendarTokensInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string;
+  email?: Prisma.StringFieldUpdateOperationsInput | string;
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  passwordHash?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  personId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  role?: Prisma.EnumUserRoleFieldUpdateOperationsInput | $Enums.UserRole;
+  isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  mustChangePassword?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  preferredLanguage?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
+  lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  emailNotificationPreferences?:
+    | Prisma.NullableJsonNullValueInput
+    | runtime.InputJsonValue;
+  invitees?: Prisma.UserUncheckedUpdateManyWithoutInvitedByNestedInput;
+  createdPeople?: Prisma.PersonUncheckedUpdateManyWithoutCreatedByNestedInput;
+  submittedSuggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutSubmittedByNestedInput;
+  reviewedSuggestions?: Prisma.SuggestionUncheckedUpdateManyWithoutReviewedByNestedInput;
+  auditLogs?: Prisma.AuditLogUncheckedUpdateManyWithoutUserNestedInput;
+  sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
+  invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
+  researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
+  emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
 };
 
 export type UserCreateWithoutSubmittedSuggestionsInput = {
@@ -1811,9 +2732,17 @@ export type UserCreateWithoutSubmittedSuggestionsInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1827,6 +2756,7 @@ export type UserCreateWithoutSubmittedSuggestionsInput = {
   invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutSubmittedSuggestionsInput = {
@@ -1839,10 +2769,18 @@ export type UserUncheckedCreateWithoutSubmittedSuggestionsInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1854,6 +2792,7 @@ export type UserUncheckedCreateWithoutSubmittedSuggestionsInput = {
   invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutSubmittedSuggestionsInput = {
@@ -1873,9 +2812,17 @@ export type UserCreateWithoutReviewedSuggestionsInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1889,6 +2836,7 @@ export type UserCreateWithoutReviewedSuggestionsInput = {
   invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutReviewedSuggestionsInput = {
@@ -1901,10 +2849,18 @@ export type UserUncheckedCreateWithoutReviewedSuggestionsInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -1916,6 +2872,7 @@ export type UserUncheckedCreateWithoutReviewedSuggestionsInput = {
   invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutReviewedSuggestionsInput = {
@@ -1961,9 +2918,34 @@ export type UserUpdateWithoutSubmittedSuggestionsInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -1981,6 +2963,7 @@ export type UserUpdateWithoutSubmittedSuggestionsInput = {
   invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutSubmittedSuggestionsInput = {
@@ -1999,10 +2982,35 @@ export type UserUncheckedUpdateWithoutSubmittedSuggestionsInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2018,6 +3026,7 @@ export type UserUncheckedUpdateWithoutSubmittedSuggestionsInput = {
   invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUpsertWithoutReviewedSuggestionsInput = {
@@ -2055,9 +3064,34 @@ export type UserUpdateWithoutReviewedSuggestionsInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2075,6 +3109,7 @@ export type UserUpdateWithoutReviewedSuggestionsInput = {
   invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutReviewedSuggestionsInput = {
@@ -2093,10 +3128,35 @@ export type UserUncheckedUpdateWithoutReviewedSuggestionsInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2112,6 +3172,7 @@ export type UserUncheckedUpdateWithoutReviewedSuggestionsInput = {
   invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutAuditLogsInput = {
@@ -2123,9 +3184,17 @@ export type UserCreateWithoutAuditLogsInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -2139,6 +3208,7 @@ export type UserCreateWithoutAuditLogsInput = {
   invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -2151,10 +3221,18 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -2166,6 +3244,7 @@ export type UserUncheckedCreateWithoutAuditLogsInput = {
   invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -2211,9 +3290,34 @@ export type UserUpdateWithoutAuditLogsInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2231,6 +3335,7 @@ export type UserUpdateWithoutAuditLogsInput = {
   invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -2249,10 +3354,35 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2268,6 +3398,7 @@ export type UserUncheckedUpdateWithoutAuditLogsInput = {
   invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutInvitesInput = {
@@ -2279,9 +3410,17 @@ export type UserCreateWithoutInvitesInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -2295,6 +3434,7 @@ export type UserCreateWithoutInvitesInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
   researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutInvitesInput = {
@@ -2307,10 +3447,18 @@ export type UserUncheckedCreateWithoutInvitesInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -2322,6 +3470,7 @@ export type UserUncheckedCreateWithoutInvitesInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
   researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
   emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutInvitesInput = {
@@ -2367,9 +3516,34 @@ export type UserUpdateWithoutInvitesInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2387,6 +3561,7 @@ export type UserUpdateWithoutInvitesInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
   researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutInvitesInput = {
@@ -2405,10 +3580,35 @@ export type UserUncheckedUpdateWithoutInvitesInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2424,6 +3624,7 @@ export type UserUncheckedUpdateWithoutInvitesInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
   researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutResearchNotesInput = {
@@ -2435,9 +3636,17 @@ export type UserCreateWithoutResearchNotesInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -2451,6 +3660,7 @@ export type UserCreateWithoutResearchNotesInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
   invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
   emailLogs?: Prisma.EmailLogCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutResearchNotesInput = {
@@ -2463,10 +3673,18 @@ export type UserUncheckedCreateWithoutResearchNotesInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -2478,6 +3696,7 @@ export type UserUncheckedCreateWithoutResearchNotesInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
   invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
   emailLogs?: Prisma.EmailLogUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutResearchNotesInput = {
@@ -2523,9 +3742,34 @@ export type UserUpdateWithoutResearchNotesInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2543,6 +3787,7 @@ export type UserUpdateWithoutResearchNotesInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
   invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
   emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutResearchNotesInput = {
@@ -2561,10 +3806,35 @@ export type UserUncheckedUpdateWithoutResearchNotesInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2580,6 +3850,7 @@ export type UserUncheckedUpdateWithoutResearchNotesInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
   invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
   emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateWithoutEmailLogsInput = {
@@ -2591,9 +3862,17 @@ export type UserCreateWithoutEmailLogsInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -2607,6 +3886,7 @@ export type UserCreateWithoutEmailLogsInput = {
   sessions?: Prisma.SessionCreateNestedManyWithoutUserInput;
   invites?: Prisma.InviteCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenCreateNestedManyWithoutUserInput;
 };
 
 export type UserUncheckedCreateWithoutEmailLogsInput = {
@@ -2619,10 +3899,18 @@ export type UserUncheckedCreateWithoutEmailLogsInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   invitedById?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -2634,6 +3922,7 @@ export type UserUncheckedCreateWithoutEmailLogsInput = {
   sessions?: Prisma.SessionUncheckedCreateNestedManyWithoutUserInput;
   invites?: Prisma.InviteUncheckedCreateNestedManyWithoutInvitedByInput;
   researchNotes?: Prisma.ResearchNoteUncheckedCreateNestedManyWithoutCreatedByInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedCreateNestedManyWithoutUserInput;
 };
 
 export type UserCreateOrConnectWithoutEmailLogsInput = {
@@ -2679,9 +3968,34 @@ export type UserUpdateWithoutEmailLogsInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2699,6 +4013,7 @@ export type UserUpdateWithoutEmailLogsInput = {
   sessions?: Prisma.SessionUpdateManyWithoutUserNestedInput;
   invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutEmailLogsInput = {
@@ -2717,10 +4032,35 @@ export type UserUncheckedUpdateWithoutEmailLogsInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   invitedById?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2736,6 +4076,7 @@ export type UserUncheckedUpdateWithoutEmailLogsInput = {
   sessions?: Prisma.SessionUncheckedUpdateManyWithoutUserNestedInput;
   invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserCreateManyInvitedByInput = {
@@ -2748,9 +4089,17 @@ export type UserCreateManyInvitedByInput = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: string | null;
+  oidcProvider?: string | null;
+  oidcSubject?: string | null;
+  emailVerified?: boolean;
+  profileClaimStatus?: $Enums.ProfileClaimStatus;
+  profileClaimedAt?: Date | string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   lastLoginAt?: Date | string | null;
+  failedLoginAttempts?: number;
+  lockedUntil?: Date | string | null;
+  lastFailedLoginAt?: Date | string | null;
   emailNotificationPreferences?:
     | Prisma.NullableJsonNullValueInput
     | runtime.InputJsonValue;
@@ -2771,9 +4120,34 @@ export type UserUpdateWithoutInvitedByInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2791,6 +4165,7 @@ export type UserUpdateWithoutInvitedByInput = {
   invites?: Prisma.InviteUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateWithoutInvitedByInput = {
@@ -2809,9 +4184,34 @@ export type UserUncheckedUpdateWithoutInvitedByInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2828,6 +4228,7 @@ export type UserUncheckedUpdateWithoutInvitedByInput = {
   invites?: Prisma.InviteUncheckedUpdateManyWithoutInvitedByNestedInput;
   researchNotes?: Prisma.ResearchNoteUncheckedUpdateManyWithoutCreatedByNestedInput;
   emailLogs?: Prisma.EmailLogUncheckedUpdateManyWithoutCreatedByNestedInput;
+  calendarTokens?: Prisma.CalendarTokenUncheckedUpdateManyWithoutUserNestedInput;
 };
 
 export type UserUncheckedUpdateManyWithoutInvitedByInput = {
@@ -2846,9 +4247,34 @@ export type UserUncheckedUpdateManyWithoutInvitedByInput = {
     | Prisma.NullableStringFieldUpdateOperationsInput
     | string
     | null;
+  oidcProvider?:
+    | Prisma.NullableStringFieldUpdateOperationsInput
+    | string
+    | null;
+  oidcSubject?: Prisma.NullableStringFieldUpdateOperationsInput | string | null;
+  emailVerified?: Prisma.BoolFieldUpdateOperationsInput | boolean;
+  profileClaimStatus?:
+    | Prisma.EnumProfileClaimStatusFieldUpdateOperationsInput
+    | $Enums.ProfileClaimStatus;
+  profileClaimedAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
   lastLoginAt?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  failedLoginAttempts?: Prisma.IntFieldUpdateOperationsInput | number;
+  lockedUntil?:
+    | Prisma.NullableDateTimeFieldUpdateOperationsInput
+    | Date
+    | string
+    | null;
+  lastFailedLoginAt?:
     | Prisma.NullableDateTimeFieldUpdateOperationsInput
     | Date
     | string
@@ -2872,6 +4298,7 @@ export type UserCountOutputType = {
   invites: number;
   researchNotes: number;
   emailLogs: number;
+  calendarTokens: number;
 };
 
 export type UserCountOutputTypeSelect<
@@ -2891,6 +4318,7 @@ export type UserCountOutputTypeSelect<
   invites?: boolean | UserCountOutputTypeCountInvitesArgs;
   researchNotes?: boolean | UserCountOutputTypeCountResearchNotesArgs;
   emailLogs?: boolean | UserCountOutputTypeCountEmailLogsArgs;
+  calendarTokens?: boolean | UserCountOutputTypeCountCalendarTokensArgs;
 };
 
 /**
@@ -2996,6 +4424,16 @@ export type UserCountOutputTypeCountEmailLogsArgs<
   where?: Prisma.EmailLogWhereInput;
 };
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountCalendarTokensArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs =
+    runtime.Types.Extensions.DefaultArgs,
+> = {
+  where?: Prisma.CalendarTokenWhereInput;
+};
+
 export type UserSelect<
   ExtArgs extends runtime.Types.Extensions.InternalArgs =
     runtime.Types.Extensions.DefaultArgs,
@@ -3010,10 +4448,18 @@ export type UserSelect<
     isActive?: boolean;
     mustChangePassword?: boolean;
     preferredLanguage?: boolean;
+    oidcProvider?: boolean;
+    oidcSubject?: boolean;
+    emailVerified?: boolean;
+    profileClaimStatus?: boolean;
+    profileClaimedAt?: boolean;
     invitedById?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
     lastLoginAt?: boolean;
+    failedLoginAttempts?: boolean;
+    lockedUntil?: boolean;
+    lastFailedLoginAt?: boolean;
     emailNotificationPreferences?: boolean;
     person?: boolean | Prisma.User$personArgs<ExtArgs>;
     invitedBy?: boolean | Prisma.User$invitedByArgs<ExtArgs>;
@@ -3030,6 +4476,7 @@ export type UserSelect<
     invites?: boolean | Prisma.User$invitesArgs<ExtArgs>;
     researchNotes?: boolean | Prisma.User$researchNotesArgs<ExtArgs>;
     emailLogs?: boolean | Prisma.User$emailLogsArgs<ExtArgs>;
+    calendarTokens?: boolean | Prisma.User$calendarTokensArgs<ExtArgs>;
     _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
   },
   ExtArgs["result"]["user"]
@@ -3049,10 +4496,18 @@ export type UserSelectCreateManyAndReturn<
     isActive?: boolean;
     mustChangePassword?: boolean;
     preferredLanguage?: boolean;
+    oidcProvider?: boolean;
+    oidcSubject?: boolean;
+    emailVerified?: boolean;
+    profileClaimStatus?: boolean;
+    profileClaimedAt?: boolean;
     invitedById?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
     lastLoginAt?: boolean;
+    failedLoginAttempts?: boolean;
+    lockedUntil?: boolean;
+    lastFailedLoginAt?: boolean;
     emailNotificationPreferences?: boolean;
     person?: boolean | Prisma.User$personArgs<ExtArgs>;
     invitedBy?: boolean | Prisma.User$invitedByArgs<ExtArgs>;
@@ -3074,10 +4529,18 @@ export type UserSelectUpdateManyAndReturn<
     isActive?: boolean;
     mustChangePassword?: boolean;
     preferredLanguage?: boolean;
+    oidcProvider?: boolean;
+    oidcSubject?: boolean;
+    emailVerified?: boolean;
+    profileClaimStatus?: boolean;
+    profileClaimedAt?: boolean;
     invitedById?: boolean;
     createdAt?: boolean;
     updatedAt?: boolean;
     lastLoginAt?: boolean;
+    failedLoginAttempts?: boolean;
+    lockedUntil?: boolean;
+    lastFailedLoginAt?: boolean;
     emailNotificationPreferences?: boolean;
     person?: boolean | Prisma.User$personArgs<ExtArgs>;
     invitedBy?: boolean | Prisma.User$invitedByArgs<ExtArgs>;
@@ -3095,10 +4558,18 @@ export type UserSelectScalar = {
   isActive?: boolean;
   mustChangePassword?: boolean;
   preferredLanguage?: boolean;
+  oidcProvider?: boolean;
+  oidcSubject?: boolean;
+  emailVerified?: boolean;
+  profileClaimStatus?: boolean;
+  profileClaimedAt?: boolean;
   invitedById?: boolean;
   createdAt?: boolean;
   updatedAt?: boolean;
   lastLoginAt?: boolean;
+  failedLoginAttempts?: boolean;
+  lockedUntil?: boolean;
+  lastFailedLoginAt?: boolean;
   emailNotificationPreferences?: boolean;
 };
 
@@ -3115,10 +4586,18 @@ export type UserOmit<
   | "isActive"
   | "mustChangePassword"
   | "preferredLanguage"
+  | "oidcProvider"
+  | "oidcSubject"
+  | "emailVerified"
+  | "profileClaimStatus"
+  | "profileClaimedAt"
   | "invitedById"
   | "createdAt"
   | "updatedAt"
   | "lastLoginAt"
+  | "failedLoginAttempts"
+  | "lockedUntil"
+  | "lastFailedLoginAt"
   | "emailNotificationPreferences",
   ExtArgs["result"]["user"]
 >;
@@ -3139,6 +4618,7 @@ export type UserInclude<
   invites?: boolean | Prisma.User$invitesArgs<ExtArgs>;
   researchNotes?: boolean | Prisma.User$researchNotesArgs<ExtArgs>;
   emailLogs?: boolean | Prisma.User$emailLogsArgs<ExtArgs>;
+  calendarTokens?: boolean | Prisma.User$calendarTokensArgs<ExtArgs>;
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>;
 };
 export type UserIncludeCreateManyAndReturn<
@@ -3173,6 +4653,7 @@ export type $UserPayload<
     invites: Prisma.$InvitePayload<ExtArgs>[];
     researchNotes: Prisma.$ResearchNotePayload<ExtArgs>[];
     emailLogs: Prisma.$EmailLogPayload<ExtArgs>[];
+    calendarTokens: Prisma.$CalendarTokenPayload<ExtArgs>[];
   };
   scalars: runtime.Types.Extensions.GetPayloadResult<
     {
@@ -3185,10 +4666,18 @@ export type $UserPayload<
       isActive: boolean;
       mustChangePassword: boolean;
       preferredLanguage: string | null;
+      oidcProvider: string | null;
+      oidcSubject: string | null;
+      emailVerified: boolean;
+      profileClaimStatus: $Enums.ProfileClaimStatus;
+      profileClaimedAt: Date | null;
       invitedById: string | null;
       createdAt: Date;
       updatedAt: Date;
       lastLoginAt: Date | null;
+      failedLoginAttempts: number;
+      lockedUntil: Date | null;
+      lastFailedLoginAt: Date | null;
       emailNotificationPreferences: runtime.JsonValue | null;
     },
     ExtArgs["result"]["user"]
@@ -3869,6 +5358,17 @@ export interface Prisma__UserClient<
       >
     | Null
   >;
+  calendarTokens<T extends Prisma.User$calendarTokensArgs<ExtArgs> = {}>(
+    args?: Prisma.Subset<T, Prisma.User$calendarTokensArgs<ExtArgs>>
+  ): Prisma.PrismaPromise<
+    | runtime.Types.Result.GetResult<
+        Prisma.$CalendarTokenPayload<ExtArgs>,
+        T,
+        "findMany",
+        GlobalOmitOptions
+      >
+    | Null
+  >;
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -3920,10 +5420,18 @@ export interface UserFieldRefs {
   readonly isActive: Prisma.FieldRef<"User", "Boolean">;
   readonly mustChangePassword: Prisma.FieldRef<"User", "Boolean">;
   readonly preferredLanguage: Prisma.FieldRef<"User", "String">;
+  readonly oidcProvider: Prisma.FieldRef<"User", "String">;
+  readonly oidcSubject: Prisma.FieldRef<"User", "String">;
+  readonly emailVerified: Prisma.FieldRef<"User", "Boolean">;
+  readonly profileClaimStatus: Prisma.FieldRef<"User", "ProfileClaimStatus">;
+  readonly profileClaimedAt: Prisma.FieldRef<"User", "DateTime">;
   readonly invitedById: Prisma.FieldRef<"User", "String">;
   readonly createdAt: Prisma.FieldRef<"User", "DateTime">;
   readonly updatedAt: Prisma.FieldRef<"User", "DateTime">;
   readonly lastLoginAt: Prisma.FieldRef<"User", "DateTime">;
+  readonly failedLoginAttempts: Prisma.FieldRef<"User", "Int">;
+  readonly lockedUntil: Prisma.FieldRef<"User", "DateTime">;
+  readonly lastFailedLoginAt: Prisma.FieldRef<"User", "DateTime">;
   readonly emailNotificationPreferences: Prisma.FieldRef<"User", "Json">;
 }
 
@@ -4682,6 +6190,37 @@ export type User$emailLogsArgs<
   take?: number;
   skip?: number;
   distinct?: Prisma.EmailLogScalarFieldEnum | Prisma.EmailLogScalarFieldEnum[];
+};
+
+/**
+ * User.calendarTokens
+ */
+export type User$calendarTokensArgs<
+  ExtArgs extends runtime.Types.Extensions.InternalArgs =
+    runtime.Types.Extensions.DefaultArgs,
+> = {
+  /**
+   * Select specific fields to fetch from the CalendarToken
+   */
+  select?: Prisma.CalendarTokenSelect<ExtArgs> | null;
+  /**
+   * Omit specific fields from the CalendarToken
+   */
+  omit?: Prisma.CalendarTokenOmit<ExtArgs> | null;
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CalendarTokenInclude<ExtArgs> | null;
+  where?: Prisma.CalendarTokenWhereInput;
+  orderBy?:
+    | Prisma.CalendarTokenOrderByWithRelationInput
+    | Prisma.CalendarTokenOrderByWithRelationInput[];
+  cursor?: Prisma.CalendarTokenWhereUniqueInput;
+  take?: number;
+  skip?: number;
+  distinct?:
+    | Prisma.CalendarTokenScalarFieldEnum
+    | Prisma.CalendarTokenScalarFieldEnum[];
 };
 
 /**

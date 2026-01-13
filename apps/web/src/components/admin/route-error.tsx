@@ -68,7 +68,7 @@ export function AdminRouteError({ error, reset }: ErrorComponentProps) {
                   {errorMessage}
                 </p>
                 {errorStack && (
-                  <pre className="text-muted-foreground mt-2 overflow-x-auto whitespace-pre-wrap font-mono text-xs">
+                  <pre className="text-muted-foreground mt-2 overflow-x-auto font-mono text-xs whitespace-pre-wrap">
                     {errorStack}
                   </pre>
                 )}

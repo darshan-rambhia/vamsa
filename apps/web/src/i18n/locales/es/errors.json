@@ -1,0 +1,70 @@
+{
+  "auth": {
+    "invalidCredentials": "Correo electrónico o contraseña no válidos",
+    "accountDisabled": "La cuenta está deshabilitada",
+    "accountLocked": "Cuenta bloqueada debido a demasiados intentos fallidos. Intente de nuevo en {{minutes}} minuto{{plural}}.",
+    "accountLockedAfterThreshold": "Cuenta bloqueada debido a demasiados intentos fallidos. Intente de nuevo en {{minutes}} minutos.",
+    "sessionExpired": "Su sesión ha caducado",
+    "notAuthenticated": "Por favor inicie sesión para continuar",
+    "invalidState": "Estado no válido - intente de nuevo",
+    "sessionExpiredOAuth": "Sesión caducada - intente de nuevo",
+    "invalidProvider": "Proveedor no válido",
+    "oauthNotConfigured": "{{provider}} OAuth no está configurado",
+    "oauthUserInfoFailed": "No se pudo obtener información del usuario de {{provider}}",
+    "oauthEmailNotFound": "No se pudo recuperar el correo electrónico de la cuenta de {{provider}}",
+    "oauthEmailExists": "Ya existe una cuenta con este correo electrónico con un proveedor diferente",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
+    "passwordRequired": "La contraseña es requerida",
+    "currentPasswordRequired": "La contraseña actual es requerida",
+    "nameRequired": "El nombre es requerido",
+    "profileSelectionRequired": "Por favor seleccione su perfil",
+    "invalidEmail": "Dirección de correo electrónico no válida"
+  },
+  "person": {
+    "notFound": "Persona no encontrada",
+    "cannotEdit": "Solo puede editar su propio perfil",
+    "cannotDelete": "No se puede eliminar a una persona con relaciones",
+    "deleteConfirmation": "¿Está seguro de que desea eliminar a esta persona? Esta acción no se puede deshacer."
+  },
+  "validation": {
+    "required": "{{field}} es requerido",
+    "invalidEmail": "Dirección de correo electrónico no válida",
+    "passwordTooShort": "La contraseña debe tener al menos {{min}} caracteres",
+    "passwordMismatch": "Las contraseñas no coinciden",
+    "minLength": "Debe tener al menos {{length}} caracteres",
+    "maxLength": "No puede exceder {{length}} caracteres",
+    "invalidUrl": "Formato de URL no válido"
+  },
+  "permission": {
+    "notAuthorized": "No está autorizado para realizar esta acción",
+    "adminOnly": "Esta acción requiere privilegios de administrador",
+    "memberOnly": "Esta acción requiere privilegios de miembro",
+    "ownerOnly": "Solo puede acceder a sus propios datos"
+  },
+  "server": {
+    "internalError": "Error interno del servidor. Por favor intente más tarde.",
+    "databaseError": "Error de base de datos. Por favor intente más tarde.",
+    "validationError": "Error de validación. Por favor verifique su entrada.",
+    "rateLimitExceeded": "Demasiadas solicitudes. Por favor intente más tarde.",
+    "notFound": "Recurso no encontrado",
+    "conflict": "Este recurso ya existe",
+    "badRequest": "Solicitud no válida. Por favor verifique su entrada."
+  },
+  "relationship": {
+    "notFound": "Relación no encontrada",
+    "cannotDelete": "No se puede eliminar esta relación",
+    "invalidType": "Tipo de relación no válido"
+  },
+  "invitation": {
+    "notFound": "Invitación no encontrada",
+    "alreadyUsed": "Esta invitación ya ha sido utilizada",
+    "expired": "Esta invitación ha caducado",
+    "invalidToken": "Token de invitación no válido"
+  },
+  "user": {
+    "notFound": "Usuario no encontrado",
+    "alreadyExists": "El usuario ya existe",
+    "cannotDelete": "No se puede eliminar este usuario"
+  }
+}

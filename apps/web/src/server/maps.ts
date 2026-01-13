@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "./db";
 import { z } from "zod";
+import { logger, serializeError } from "@vamsa/lib/logger";
 
 // Type definitions for map responses
 interface MapMarker {
@@ -178,7 +179,10 @@ export const getPlacesForMap = createServerFn({ method: "GET" })
           timeRange,
         });
       } catch (error) {
-        console.error(`Failed to format place ${place.id}:`, error);
+        logger.error(
+          { error: serializeError(error), placeId: place.id },
+          "Failed to format place"
+        );
       }
     }
 
@@ -324,7 +328,10 @@ export const getPersonLocations = createServerFn({ method: "GET" })
           })),
         });
       } catch (error) {
-        console.error(`Failed to format place ${place.id}:`, error);
+        logger.error(
+          { error: serializeError(error), placeId: place.id },
+          "Failed to format place"
+        );
       }
     }
 
@@ -458,7 +465,10 @@ export const getFamilyLocations = createServerFn({ method: "GET" })
           eventDetails,
         });
       } catch (error) {
-        console.error(`Failed to format place ${place.id}:`, error);
+        logger.error(
+          { error: serializeError(error), placeId: place.id },
+          "Failed to format place"
+        );
       }
     }
 
@@ -673,7 +683,10 @@ export const getPlaceClusters = createServerFn({ method: "GET" })
           timeRange,
         });
       } catch (error) {
-        console.error(`Failed to format place ${place.id}:`, error);
+        logger.error(
+          { error: serializeError(error), placeId: place.id },
+          "Failed to format place"
+        );
       }
     }
 

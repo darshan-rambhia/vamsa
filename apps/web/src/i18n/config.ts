@@ -1,6 +1,26 @@
 import i18n from "i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import { initReactI18next } from "react-i18next";
+
+// Import English translations
+import enCommon from "./locales/en/common.json";
+import enAuth from "./locales/en/auth.json";
+import enPeople from "./locales/en/people.json";
+import enErrors from "./locales/en/errors.json";
+
+// Import Hindi translations
+import hiCommon from "./locales/hi/common.json";
+import hiAuth from "./locales/hi/auth.json";
+import hiPeople from "./locales/hi/people.json";
+import hiErrors from "./locales/hi/errors.json";
+
+// Import Spanish translations
+import esCommon from "./locales/es/common.json";
+import esAuth from "./locales/es/auth.json";
+import esPeople from "./locales/es/people.json";
+import esErrors from "./locales/es/errors.json";
+
+// Import old monolithic translations as fallback
 import enTranslations from "./locales/en.json";
 import hiTranslations from "./locales/hi.json";
 
@@ -8,13 +28,33 @@ import hiTranslations from "./locales/hi.json";
 export const SUPPORTED_LANGUAGES = {
   en: "English",
   hi: "हिन्दी (Hindi)",
+  es: "Español (Spanish)",
 } as const;
 
 export type SupportedLanguage = keyof typeof SUPPORTED_LANGUAGES;
 
 const resources = {
-  en: { translation: enTranslations },
-  hi: { translation: hiTranslations },
+  en: {
+    translation: enTranslations,
+    common: enCommon,
+    auth: enAuth,
+    people: enPeople,
+    errors: enErrors,
+  },
+  hi: {
+    translation: hiTranslations,
+    common: hiCommon,
+    auth: hiAuth,
+    people: hiPeople,
+    errors: hiErrors,
+  },
+  es: {
+    translation: enTranslations, // Fallback to English
+    common: esCommon,
+    auth: esAuth,
+    people: esPeople,
+    errors: esErrors,
+  },
 };
 
 const isServer = typeof window === "undefined";
@@ -24,6 +64,7 @@ i18n.use(initReactI18next).init({
   resources,
   fallbackLng: "en",
   defaultNS: "translation",
+  ns: ["translation", "common", "auth", "people", "errors"],
   lng: "en", // Set default language for SSR
   interpolation: {
     escapeValue: false,
@@ -38,6 +79,7 @@ if (!isServer) {
     resources,
     fallbackLng: "en",
     defaultNS: "translation",
+    ns: ["translation", "common", "auth", "people", "errors"],
     interpolation: {
       escapeValue: false,
     },

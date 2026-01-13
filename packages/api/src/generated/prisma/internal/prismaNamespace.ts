@@ -416,6 +416,8 @@ export const ModelName = {
   Relationship: "Relationship",
   User: "User",
   Session: "Session",
+  CalendarToken: "CalendarToken",
+  OAuthState: "OAuthState",
   Suggestion: "Suggestion",
   FamilySettings: "FamilySettings",
   AuditLog: "AuditLog",
@@ -431,6 +433,8 @@ export const ModelName = {
   Place: "Place",
   PlacePersonLink: "PlacePersonLink",
   EmailLog: "EmailLog",
+  Backup: "Backup",
+  BackupSettings: "BackupSettings",
 } as const;
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName];
@@ -457,6 +461,8 @@ export type TypeMap<
       | "relationship"
       | "user"
       | "session"
+      | "calendarToken"
+      | "oAuthState"
       | "suggestion"
       | "familySettings"
       | "auditLog"
@@ -471,7 +477,9 @@ export type TypeMap<
       | "eventParticipant"
       | "place"
       | "placePersonLink"
-      | "emailLog";
+      | "emailLog"
+      | "backup"
+      | "backupSettings";
     txIsolationLevel: TransactionIsolationLevel;
   };
   model: {
@@ -775,6 +783,158 @@ export type TypeMap<
           args: Prisma.SessionCountArgs<ExtArgs>;
           result:
             | runtime.Types.Utils.Optional<Prisma.SessionCountAggregateOutputType>
+            | number;
+        };
+      };
+    };
+    CalendarToken: {
+      payload: Prisma.$CalendarTokenPayload<ExtArgs>;
+      fields: Prisma.CalendarTokenFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.CalendarTokenFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CalendarTokenPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.CalendarTokenFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CalendarTokenPayload>;
+        };
+        findFirst: {
+          args: Prisma.CalendarTokenFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CalendarTokenPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.CalendarTokenFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CalendarTokenPayload>;
+        };
+        findMany: {
+          args: Prisma.CalendarTokenFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CalendarTokenPayload>[];
+        };
+        create: {
+          args: Prisma.CalendarTokenCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CalendarTokenPayload>;
+        };
+        createMany: {
+          args: Prisma.CalendarTokenCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.CalendarTokenCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CalendarTokenPayload>[];
+        };
+        delete: {
+          args: Prisma.CalendarTokenDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CalendarTokenPayload>;
+        };
+        update: {
+          args: Prisma.CalendarTokenUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CalendarTokenPayload>;
+        };
+        deleteMany: {
+          args: Prisma.CalendarTokenDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.CalendarTokenUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.CalendarTokenUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CalendarTokenPayload>[];
+        };
+        upsert: {
+          args: Prisma.CalendarTokenUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CalendarTokenPayload>;
+        };
+        aggregate: {
+          args: Prisma.CalendarTokenAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCalendarToken>;
+        };
+        groupBy: {
+          args: Prisma.CalendarTokenGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.CalendarTokenGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.CalendarTokenCountArgs<ExtArgs>;
+          result:
+            | runtime.Types.Utils.Optional<Prisma.CalendarTokenCountAggregateOutputType>
+            | number;
+        };
+      };
+    };
+    OAuthState: {
+      payload: Prisma.$OAuthStatePayload<ExtArgs>;
+      fields: Prisma.OAuthStateFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.OAuthStateFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthStatePayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.OAuthStateFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthStatePayload>;
+        };
+        findFirst: {
+          args: Prisma.OAuthStateFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthStatePayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.OAuthStateFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthStatePayload>;
+        };
+        findMany: {
+          args: Prisma.OAuthStateFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthStatePayload>[];
+        };
+        create: {
+          args: Prisma.OAuthStateCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthStatePayload>;
+        };
+        createMany: {
+          args: Prisma.OAuthStateCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.OAuthStateCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthStatePayload>[];
+        };
+        delete: {
+          args: Prisma.OAuthStateDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthStatePayload>;
+        };
+        update: {
+          args: Prisma.OAuthStateUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthStatePayload>;
+        };
+        deleteMany: {
+          args: Prisma.OAuthStateDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.OAuthStateUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.OAuthStateUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthStatePayload>[];
+        };
+        upsert: {
+          args: Prisma.OAuthStateUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$OAuthStatePayload>;
+        };
+        aggregate: {
+          args: Prisma.OAuthStateAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateOAuthState>;
+        };
+        groupBy: {
+          args: Prisma.OAuthStateGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.OAuthStateGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.OAuthStateCountArgs<ExtArgs>;
+          result:
+            | runtime.Types.Utils.Optional<Prisma.OAuthStateCountAggregateOutputType>
             | number;
         };
       };
@@ -1919,6 +2079,158 @@ export type TypeMap<
         };
       };
     };
+    Backup: {
+      payload: Prisma.$BackupPayload<ExtArgs>;
+      fields: Prisma.BackupFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.BackupFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.BackupFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupPayload>;
+        };
+        findFirst: {
+          args: Prisma.BackupFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.BackupFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupPayload>;
+        };
+        findMany: {
+          args: Prisma.BackupFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupPayload>[];
+        };
+        create: {
+          args: Prisma.BackupCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupPayload>;
+        };
+        createMany: {
+          args: Prisma.BackupCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.BackupCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupPayload>[];
+        };
+        delete: {
+          args: Prisma.BackupDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupPayload>;
+        };
+        update: {
+          args: Prisma.BackupUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupPayload>;
+        };
+        deleteMany: {
+          args: Prisma.BackupDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.BackupUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.BackupUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupPayload>[];
+        };
+        upsert: {
+          args: Prisma.BackupUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupPayload>;
+        };
+        aggregate: {
+          args: Prisma.BackupAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBackup>;
+        };
+        groupBy: {
+          args: Prisma.BackupGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.BackupGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.BackupCountArgs<ExtArgs>;
+          result:
+            | runtime.Types.Utils.Optional<Prisma.BackupCountAggregateOutputType>
+            | number;
+        };
+      };
+    };
+    BackupSettings: {
+      payload: Prisma.$BackupSettingsPayload<ExtArgs>;
+      fields: Prisma.BackupSettingsFieldRefs;
+      operations: {
+        findUnique: {
+          args: Prisma.BackupSettingsFindUniqueArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupSettingsPayload> | null;
+        };
+        findUniqueOrThrow: {
+          args: Prisma.BackupSettingsFindUniqueOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupSettingsPayload>;
+        };
+        findFirst: {
+          args: Prisma.BackupSettingsFindFirstArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupSettingsPayload> | null;
+        };
+        findFirstOrThrow: {
+          args: Prisma.BackupSettingsFindFirstOrThrowArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupSettingsPayload>;
+        };
+        findMany: {
+          args: Prisma.BackupSettingsFindManyArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupSettingsPayload>[];
+        };
+        create: {
+          args: Prisma.BackupSettingsCreateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupSettingsPayload>;
+        };
+        createMany: {
+          args: Prisma.BackupSettingsCreateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        createManyAndReturn: {
+          args: Prisma.BackupSettingsCreateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupSettingsPayload>[];
+        };
+        delete: {
+          args: Prisma.BackupSettingsDeleteArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupSettingsPayload>;
+        };
+        update: {
+          args: Prisma.BackupSettingsUpdateArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupSettingsPayload>;
+        };
+        deleteMany: {
+          args: Prisma.BackupSettingsDeleteManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateMany: {
+          args: Prisma.BackupSettingsUpdateManyArgs<ExtArgs>;
+          result: BatchPayload;
+        };
+        updateManyAndReturn: {
+          args: Prisma.BackupSettingsUpdateManyAndReturnArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupSettingsPayload>[];
+        };
+        upsert: {
+          args: Prisma.BackupSettingsUpsertArgs<ExtArgs>;
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$BackupSettingsPayload>;
+        };
+        aggregate: {
+          args: Prisma.BackupSettingsAggregateArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.AggregateBackupSettings>;
+        };
+        groupBy: {
+          args: Prisma.BackupSettingsGroupByArgs<ExtArgs>;
+          result: runtime.Types.Utils.Optional<Prisma.BackupSettingsGroupByOutputType>[];
+        };
+        count: {
+          args: Prisma.BackupSettingsCountArgs<ExtArgs>;
+          result:
+            | runtime.Types.Utils.Optional<Prisma.BackupSettingsCountAggregateOutputType>
+            | number;
+        };
+      };
+    };
   };
 } & {
   other: {
@@ -1994,6 +2306,8 @@ export const RelationshipScalarFieldEnum = {
   marriageDate: "marriageDate",
   divorceDate: "divorceDate",
   isActive: "isActive",
+  isAutoGenerated: "isAutoGenerated",
+  sourceRelationshipId: "sourceRelationshipId",
   createdAt: "createdAt",
   updatedAt: "updatedAt",
 } as const;
@@ -2011,10 +2325,18 @@ export const UserScalarFieldEnum = {
   isActive: "isActive",
   mustChangePassword: "mustChangePassword",
   preferredLanguage: "preferredLanguage",
+  oidcProvider: "oidcProvider",
+  oidcSubject: "oidcSubject",
+  emailVerified: "emailVerified",
+  profileClaimStatus: "profileClaimStatus",
+  profileClaimedAt: "profileClaimedAt",
   invitedById: "invitedById",
   createdAt: "createdAt",
   updatedAt: "updatedAt",
   lastLoginAt: "lastLoginAt",
+  failedLoginAttempts: "failedLoginAttempts",
+  lockedUntil: "lockedUntil",
+  lastFailedLoginAt: "lastFailedLoginAt",
   emailNotificationPreferences: "emailNotificationPreferences",
 } as const;
 
@@ -2030,6 +2352,32 @@ export const SessionScalarFieldEnum = {
 
 export type SessionScalarFieldEnum =
   (typeof SessionScalarFieldEnum)[keyof typeof SessionScalarFieldEnum];
+
+export const CalendarTokenScalarFieldEnum = {
+  id: "id",
+  token: "token",
+  userId: "userId",
+  type: "type",
+  expiresAt: "expiresAt",
+  isActive: "isActive",
+  createdAt: "createdAt",
+} as const;
+
+export type CalendarTokenScalarFieldEnum =
+  (typeof CalendarTokenScalarFieldEnum)[keyof typeof CalendarTokenScalarFieldEnum];
+
+export const OAuthStateScalarFieldEnum = {
+  id: "id",
+  state: "state",
+  codeVerifier: "codeVerifier",
+  provider: "provider",
+  redirectTo: "redirectTo",
+  expiresAt: "expiresAt",
+  createdAt: "createdAt",
+} as const;
+
+export type OAuthStateScalarFieldEnum =
+  (typeof OAuthStateScalarFieldEnum)[keyof typeof OAuthStateScalarFieldEnum];
 
 export const SuggestionScalarFieldEnum = {
   id: "id",
@@ -2161,6 +2509,10 @@ export const MediaObjectScalarFieldEnum = {
   width: "width",
   height: "height",
   thumbnailPath: "thumbnailPath",
+  webpPath: "webpPath",
+  thumb400Path: "thumb400Path",
+  thumb800Path: "thumb800Path",
+  thumb1200Path: "thumb1200Path",
   uploadedAt: "uploadedAt",
   createdAt: "createdAt",
   updatedAt: "updatedAt",
@@ -2263,6 +2615,56 @@ export const EmailLogScalarFieldEnum = {
 
 export type EmailLogScalarFieldEnum =
   (typeof EmailLogScalarFieldEnum)[keyof typeof EmailLogScalarFieldEnum];
+
+export const BackupScalarFieldEnum = {
+  id: "id",
+  filename: "filename",
+  type: "type",
+  status: "status",
+  size: "size",
+  location: "location",
+  personCount: "personCount",
+  relationshipCount: "relationshipCount",
+  eventCount: "eventCount",
+  mediaCount: "mediaCount",
+  duration: "duration",
+  error: "error",
+  createdAt: "createdAt",
+  deletedAt: "deletedAt",
+} as const;
+
+export type BackupScalarFieldEnum =
+  (typeof BackupScalarFieldEnum)[keyof typeof BackupScalarFieldEnum];
+
+export const BackupSettingsScalarFieldEnum = {
+  id: "id",
+  dailyEnabled: "dailyEnabled",
+  dailyTime: "dailyTime",
+  weeklyEnabled: "weeklyEnabled",
+  weeklyDay: "weeklyDay",
+  weeklyTime: "weeklyTime",
+  monthlyEnabled: "monthlyEnabled",
+  monthlyDay: "monthlyDay",
+  monthlyTime: "monthlyTime",
+  dailyRetention: "dailyRetention",
+  weeklyRetention: "weeklyRetention",
+  monthlyRetention: "monthlyRetention",
+  storageProvider: "storageProvider",
+  storageBucket: "storageBucket",
+  storageRegion: "storageRegion",
+  storagePath: "storagePath",
+  includePhotos: "includePhotos",
+  includeAuditLogs: "includeAuditLogs",
+  compressLevel: "compressLevel",
+  notifyOnSuccess: "notifyOnSuccess",
+  notifyOnFailure: "notifyOnFailure",
+  notificationEmails: "notificationEmails",
+  createdAt: "createdAt",
+  updatedAt: "updatedAt",
+} as const;
+
+export type BackupSettingsScalarFieldEnum =
+  (typeof BackupSettingsScalarFieldEnum)[keyof typeof BackupSettingsScalarFieldEnum];
 
 export const SortOrder = {
   asc: "asc",
@@ -2416,6 +2818,34 @@ export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<
 >;
 
 /**
+ * Reference to a field of type 'ProfileClaimStatus'
+ */
+export type EnumProfileClaimStatusFieldRefInput<$PrismaModel> =
+  FieldRefInputType<$PrismaModel, "ProfileClaimStatus">;
+
+/**
+ * Reference to a field of type 'ProfileClaimStatus[]'
+ */
+export type ListEnumProfileClaimStatusFieldRefInput<$PrismaModel> =
+  FieldRefInputType<$PrismaModel, "ProfileClaimStatus[]">;
+
+/**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  "Int"
+>;
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  "Int[]"
+>;
+
+/**
  * Reference to a field of type 'SuggestionType'
  */
 export type EnumSuggestionTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
@@ -2492,22 +2922,6 @@ export type ListEnumInviteStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
 >;
 
 /**
- * Reference to a field of type 'Int'
- */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<
-  $PrismaModel,
-  "Int"
->;
-
-/**
- * Reference to a field of type 'Int[]'
- */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<
-  $PrismaModel,
-  "Int[]"
->;
-
-/**
  * Reference to a field of type 'EventType'
  */
 export type EnumEventTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
@@ -2568,6 +2982,68 @@ export type EnumPersonPlaceTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
  */
 export type ListEnumPersonPlaceTypeFieldRefInput<$PrismaModel> =
   FieldRefInputType<$PrismaModel, "PersonPlaceType[]">;
+
+/**
+ * Reference to a field of type 'BackupType'
+ */
+export type EnumBackupTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  "BackupType"
+>;
+
+/**
+ * Reference to a field of type 'BackupType[]'
+ */
+export type ListEnumBackupTypeFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  "BackupType[]"
+>;
+
+/**
+ * Reference to a field of type 'BackupStatus'
+ */
+export type EnumBackupStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  "BackupStatus"
+>;
+
+/**
+ * Reference to a field of type 'BackupStatus[]'
+ */
+export type ListEnumBackupStatusFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  "BackupStatus[]"
+>;
+
+/**
+ * Reference to a field of type 'BigInt'
+ */
+export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  "BigInt"
+>;
+
+/**
+ * Reference to a field of type 'BigInt[]'
+ */
+export type ListBigIntFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  "BigInt[]"
+>;
+
+/**
+ * Reference to a field of type 'StorageProvider'
+ */
+export type EnumStorageProviderFieldRefInput<$PrismaModel> = FieldRefInputType<
+  $PrismaModel,
+  "StorageProvider"
+>;
+
+/**
+ * Reference to a field of type 'StorageProvider[]'
+ */
+export type ListEnumStorageProviderFieldRefInput<$PrismaModel> =
+  FieldRefInputType<$PrismaModel, "StorageProvider[]">;
 
 /**
  * Batch Payload for updateMany & deleteMany & createMany
@@ -2676,6 +3152,8 @@ export type GlobalOmitConfig = {
   relationship?: Prisma.RelationshipOmit;
   user?: Prisma.UserOmit;
   session?: Prisma.SessionOmit;
+  calendarToken?: Prisma.CalendarTokenOmit;
+  oAuthState?: Prisma.OAuthStateOmit;
   suggestion?: Prisma.SuggestionOmit;
   familySettings?: Prisma.FamilySettingsOmit;
   auditLog?: Prisma.AuditLogOmit;
@@ -2691,6 +3169,8 @@ export type GlobalOmitConfig = {
   place?: Prisma.PlaceOmit;
   placePersonLink?: Prisma.PlacePersonLinkOmit;
   emailLog?: Prisma.EmailLogOmit;
+  backup?: Prisma.BackupOmit;
+  backupSettings?: Prisma.BackupSettingsOmit;
 };
 
 /* Types for Logging */

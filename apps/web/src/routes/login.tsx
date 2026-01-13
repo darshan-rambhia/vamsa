@@ -18,6 +18,7 @@ import {
   Label,
   ThemeToggle,
 } from "@vamsa/ui";
+import { SSOButtons } from "~/components/auth/sso-buttons";
 
 const searchSchema = z.object({
   registered: z.boolean().optional(),
@@ -181,6 +182,9 @@ function LoginComponent() {
             >
               {isLoading ? "Signing in..." : "Sign in"}
             </Button>
+
+            {/* SSO Buttons */}
+            <SSOButtons redirectTo="/people" disabled={isLoading} />
 
             <div className="text-center text-sm">
               <span className="text-muted-foreground">

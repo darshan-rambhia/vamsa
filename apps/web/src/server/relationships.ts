@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
 import { prisma } from "./db";
 import { z } from "zod";
 import {
@@ -7,34 +6,8 @@ import {
   type Person,
   type Relationship as LayoutRelationship,
 } from "./tree-layout";
-
-const TOKEN_COOKIE_NAME = "vamsa-session";
-
-// Auth helper function
-async function requireAuth(
-  requiredRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
-) {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
-
-  const session = await prisma.session.findFirst({
-    where: { token },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error("Session expired");
-  }
-
-  const roleHierarchy = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
-  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
-    throw new Error(`Requires ${requiredRole} role or higher`);
-  }
-
-  return session.user;
-}
+import { logger } from "@vamsa/lib/logger";
+import { requireAuth } from "./middleware/require-auth";
 
 const relationshipTypeSchema = z.enum(["PARENT", "CHILD", "SPOUSE", "SIBLING"]);
 
@@ -151,11 +124,9 @@ export const createRelationship = createServerFn({ method: "POST" })
       });
     }
 
-    console.warn(
-      "[Relationships Server] Created relationship:",
-      relationship.id,
-      "by user:",
-      user.id
+    logger.info(
+      { relationshipId: relationship.id, createdBy: user.id },
+      "Created relationship"
     );
 
     return { id: relationship.id };
@@ -213,11 +184,9 @@ export const updateRelationship = createServerFn({ method: "POST" })
       });
     }
 
-    console.warn(
-      "[Relationships Server] Updated relationship:",
-      data.id,
-      "by user:",
-      user.id
+    logger.info(
+      { relationshipId: data.id, updatedBy: user.id },
+      "Updated relationship"
     );
 
     return { id: updated.id };
@@ -256,11 +225,9 @@ export const deleteRelationship = createServerFn({ method: "POST" })
       },
     });
 
-    console.warn(
-      "[Relationships Server] Deleted relationship:",
-      data.id,
-      "by user:",
-      user.id
+    logger.info(
+      { relationshipId: data.id, deletedBy: user.id },
+      "Deleted relationship"
     );
 
     return { success: true };

@@ -61,12 +61,21 @@ test.describe("Feature: User Authentication", () => {
     test("should redirect to login when accessing protected routes", async ({
       page,
     }) => {
-      const protectedRoutes = ["/people", "/dashboard", "/admin", "/tree", "/activity"];
+      const protectedRoutes = [
+        "/people",
+        "/dashboard",
+        "/admin",
+        "/tree",
+        "/activity",
+      ];
 
       for (const route of protectedRoutes) {
-        await bdd.when(`user navigates to protected route: ${route}`, async () => {
-          await page.goto(route);
-        });
+        await bdd.when(
+          `user navigates to protected route: ${route}`,
+          async () => {
+            await page.goto(route);
+          }
+        );
 
         await bdd.then("user is redirected to login", async () => {
           await expect(page).toHaveURL(/\/login/);
@@ -142,10 +151,7 @@ test.describe("Feature: User Authentication", () => {
       });
     });
 
-    test("should maintain session on page refresh", async ({
-      page,
-      login,
-    }) => {
+    test("should maintain session on page refresh", async ({ page, login }) => {
       await bdd.given("user is logged in", async () => {
         await login(TEST_USERS.admin);
         await expect(page).toHaveURL(/\/(people|dashboard)/);
@@ -185,7 +191,10 @@ test.describe("Feature: User Authentication", () => {
       });
     });
 
-    test("should allow admin access to admin panel", async ({ page, login }) => {
+    test("should allow admin access to admin panel", async ({
+      page,
+      login,
+    }) => {
       await bdd.given("admin user is logged in", async () => {
         await login(TEST_USERS.admin);
       });

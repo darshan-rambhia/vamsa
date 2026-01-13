@@ -19,30 +19,40 @@ import {
   getDescendantChart,
   getHourglassChart,
   getFanChart,
+  getTimelineChart,
+  getRelationshipMatrix,
+  getBowtieChart,
+  getCompactTreeData,
+  getStatistics,
 } from "~/server/charts";
-import { ChartControls } from "~/components/charts/ChartControls";
+import { ChartControls, type ChartType } from "~/components/charts/ChartControls";
 import { AncestorChart } from "~/components/charts/AncestorChart";
 import { DescendantChart } from "~/components/charts/DescendantChart";
 import { HourglassChart } from "~/components/charts/HourglassChart";
 import { FanChart } from "~/components/charts/FanChart";
+import { TimelineChart } from "~/components/charts/TimelineChart";
+import { RelationshipMatrix } from "~/components/charts/RelationshipMatrix";
+import { BowtieChart } from "~/components/charts/BowtieChart";
+import { CompactTree } from "~/components/charts/CompactTree";
+import { StatisticsCharts } from "~/components/charts/StatisticsCharts";
 
 export const Route = createFileRoute("/_authenticated/charts/")({
   component: ChartsComponent,
 });
 
 function ChartsComponent() {
-  const [chartType, setChartType] = useState<
-    "ancestor" | "descendant" | "hourglass" | "fan"
-  >("ancestor");
+  const [chartType, setChartType] = useState<ChartType>("ancestor");
   const [selectedPersonId, setSelectedPersonId] = useState<string>("");
   const [generations, setGenerations] = useState(3);
   const [ancestorGenerations, setAncestorGenerations] = useState(2);
   const [descendantGenerations, setDescendantGenerations] = useState(2);
+  const [maxPeople, setMaxPeople] = useState(20);
+  const [sortBy, setSortBy] = useState<"birth" | "death" | "name">("birth");
 
   // Fetch all persons for the dropdown
   const { data: personsData, isLoading: isLoadingPersons } = useQuery({
     queryKey: ["persons"],
-    queryFn: () => listPersons(),
+    queryFn: () => listPersons({ data: {} }),
   });
 
   // Fetch chart data based on selected person and chart type
@@ -58,8 +68,30 @@ function ChartsComponent() {
       generations,
       ancestorGenerations,
       descendantGenerations,
+      maxPeople,
+      sortBy,
     ],
     queryFn: async () => {
+      // Timeline, Matrix, and Statistics don't require a person selection
+      if (chartType === "timeline") {
+        return await getTimelineChart({
+          data: { sortBy },
+        });
+      }
+
+      if (chartType === "matrix") {
+        return await getRelationshipMatrix({
+          data: { maxPeople },
+        });
+      }
+
+      if (chartType === "statistics") {
+        return await getStatistics({
+          data: { includeDeceased: true },
+        });
+      }
+
+      // Other charts require a person selection
       if (!selectedPersonId) return null;
 
       switch (chartType) {
@@ -83,11 +115,19 @@ function ChartsComponent() {
           return await getFanChart({
             data: { personId: selectedPersonId, generations },
           });
+        case "bowtie":
+          return await getBowtieChart({
+            data: { personId: selectedPersonId, generations },
+          });
+        case "compact":
+          return await getCompactTreeData({
+            data: { personId: selectedPersonId, generations },
+          });
         default:
           return null;
       }
     },
-    enabled: !!selectedPersonId,
+    enabled: chartType === "timeline" || chartType === "matrix" || chartType === "statistics" || !!selectedPersonId,
   });
 
   // Auto-select first person if none selected
@@ -199,17 +239,22 @@ function ChartsComponent() {
         generations={generations}
         ancestorGenerations={ancestorGenerations}
         descendantGenerations={descendantGenerations}
+        maxPeople={maxPeople}
+        sortBy={sortBy}
         onChartTypeChange={setChartType}
         onGenerationsChange={setGenerations}
         onAncestorGenerationsChange={setAncestorGenerations}
         onDescendantGenerationsChange={setDescendantGenerations}
+        onMaxPeopleChange={setMaxPeople}
+        onSortByChange={setSortBy}
         onExportPNG={handleExportPNG}
         onExportSVG={handleExportSVG}
       />
 
       {/* Chart Rendering Area */}
       <div className="chart-container min-h-[600px]">
-        {!selectedPersonId ? (
+        {/* Timeline, Matrix, and Statistics don't need person selection */}
+        {chartType !== "timeline" && chartType !== "matrix" && chartType !== "statistics" && !selectedPersonId ? (
           <Card className="flex h-[600px] items-center justify-center">
             <CardContent className="text-center">
               <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
@@ -270,7 +315,14 @@ function ChartsComponent() {
               </p>
             </CardContent>
           </Card>
-        ) : !chartData || chartData.nodes.length === 0 ? (
+        ) : !chartData || (
+          // Check if data is empty based on chart type
+          (chartType === "timeline" && "entries" in chartData && chartData.entries.length === 0) ||
+          (chartType === "matrix" && "people" in chartData && chartData.people.length === 0) ||
+          (chartType === "statistics" && "ageDistribution" in chartData && chartData.metadata.totalPeople === 0) ||
+          (chartType === "compact" && "flatList" in chartData && chartData.flatList.length === 0) ||
+          (!("entries" in chartData) && !("people" in chartData) && !("ageDistribution" in chartData) && !("flatList" in chartData) && "nodes" in chartData && chartData.nodes.length === 0)
+        ) ? (
           <Card className="flex h-[600px] items-center justify-center">
             <CardContent className="text-center">
               <div className="bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
@@ -292,33 +344,43 @@ function ChartsComponent() {
                 No Data Available
               </h3>
               <p className="text-muted-foreground mt-2">
-                This person has no{" "}
-                {chartType === "ancestor"
-                  ? "ancestors"
-                  : chartType === "descendant"
-                    ? "descendants"
-                    : "family members"}{" "}
-                to display
+                {chartType === "timeline"
+                  ? "No people with date information to display"
+                  : chartType === "matrix"
+                    ? "No people found for the relationship matrix"
+                    : chartType === "statistics"
+                      ? "No family members to generate statistics"
+                      : chartType === "compact"
+                        ? "No descendants found for this person"
+                        : `This person has no ${
+                            chartType === "ancestor"
+                              ? "ancestors"
+                              : chartType === "descendant"
+                                ? "descendants"
+                                : chartType === "bowtie"
+                                  ? "parental lineage"
+                                  : "family members"
+                          } to display`}
               </p>
             </CardContent>
           </Card>
         ) : (
-          <div className="h-[600px]">
-            {chartType === "ancestor" && (
+          <div className={chartType === "statistics" ? "min-h-[600px]" : "h-[600px]"}>
+            {chartType === "ancestor" && "nodes" in chartData && (
               <AncestorChart
                 nodes={chartData.nodes}
                 edges={chartData.edges}
                 onNodeClick={handleNodeClick}
               />
             )}
-            {chartType === "descendant" && (
+            {chartType === "descendant" && "nodes" in chartData && (
               <DescendantChart
                 nodes={chartData.nodes}
                 edges={chartData.edges}
                 onNodeClick={handleNodeClick}
               />
             )}
-            {chartType === "hourglass" && (
+            {chartType === "hourglass" && "nodes" in chartData && (
               <HourglassChart
                 nodes={chartData.nodes}
                 edges={chartData.edges}
@@ -326,11 +388,45 @@ function ChartsComponent() {
                 onNodeClick={handleNodeClick}
               />
             )}
-            {chartType === "fan" && (
+            {chartType === "fan" && "nodes" in chartData && (
               <FanChart
                 nodes={chartData.nodes}
                 edges={chartData.edges}
                 onNodeClick={handleNodeClick}
+              />
+            )}
+            {chartType === "timeline" && "entries" in chartData && (
+              <TimelineChart
+                entries={chartData.entries}
+                minYear={chartData.metadata.minYear}
+                maxYear={chartData.metadata.maxYear}
+                onNodeClick={handleNodeClick}
+              />
+            )}
+            {chartType === "matrix" && "people" in chartData && (
+              <RelationshipMatrix
+                people={chartData.people}
+                matrix={chartData.matrix}
+                onNodeClick={handleNodeClick}
+              />
+            )}
+            {chartType === "bowtie" && "nodes" in chartData && (
+              <BowtieChart
+                nodes={chartData.nodes as import("~/server/charts").BowtieNode[]}
+                edges={chartData.edges}
+                rootPersonId={selectedPersonId}
+                onNodeClick={handleNodeClick}
+              />
+            )}
+            {chartType === "compact" && "flatList" in chartData && (
+              <CompactTree
+                data={chartData as import("~/server/charts").CompactTreeResult}
+                onNodeClick={handleNodeClick}
+              />
+            )}
+            {chartType === "statistics" && "ageDistribution" in chartData && (
+              <StatisticsCharts
+                data={chartData as import("~/server/charts").StatisticsResult}
               />
             )}
           </div>
@@ -338,7 +434,7 @@ function ChartsComponent() {
       </div>
 
       {/* Chart Info */}
-      {chartData && chartData.nodes.length > 0 && (
+      {chartData && (
         <Card>
           <CardContent className="p-6">
             <div className="grid gap-4 sm:grid-cols-3">
@@ -355,11 +451,43 @@ function ChartsComponent() {
                 </p>
               </div>
               <div>
-                <p className="text-muted-foreground text-sm">Generations</p>
+                <p className="text-muted-foreground text-sm">
+                  {chartType === "timeline"
+                    ? "Year Range"
+                    : chartType === "matrix"
+                      ? "Relationships"
+                      : chartType === "statistics"
+                        ? "Living"
+                        : "Generations"}
+                </p>
                 <p className="font-display text-lg font-medium">
-                  {chartData.metadata.totalGenerations}
+                  {chartType === "timeline" && "minYear" in chartData.metadata
+                    ? `${chartData.metadata.minYear} - ${chartData.metadata.maxYear}`
+                    : chartType === "matrix" && "totalRelationships" in chartData.metadata
+                      ? chartData.metadata.totalRelationships
+                      : chartType === "statistics" && "livingCount" in chartData.metadata
+                        ? chartData.metadata.livingCount
+                        : "totalGenerations" in chartData.metadata
+                          ? chartData.metadata.totalGenerations
+                          : "-"}
                 </p>
               </div>
+              {chartType === "bowtie" && "paternalCount" in chartData.metadata && (
+                <>
+                  <div>
+                    <p className="text-muted-foreground text-sm">Paternal Ancestors</p>
+                    <p className="font-display text-lg font-medium">
+                      {chartData.metadata.paternalCount}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-sm">Maternal Ancestors</p>
+                    <p className="font-display text-lg font-medium">
+                      {chartData.metadata.maternalCount}
+                    </p>
+                  </div>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
