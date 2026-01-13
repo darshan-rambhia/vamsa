@@ -24,3 +24,12 @@ export {
 
 // GEDCOM support
 export * from "./gedcom";
+
+// Logging
+export {
+  logger,
+  createContextLogger,
+  createRequestLogger,
+  startTimer,
+  serializeError,
+} from "./logger";

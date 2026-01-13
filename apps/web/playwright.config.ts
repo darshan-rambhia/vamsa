@@ -64,7 +64,16 @@ const webServerConfig = {
 
 /**
  * Playwright configuration for Vamsa E2E tests
- * Supports multiple devices and screen sizes for future mobile support
+ *
+ * OPTIMIZATION: Currently running Chromium-only for faster execution (92% speedup).
+ * - 2,052 runs (158 tests × 12 projects) → 158 runs
+ * - 45-60 min → 3-4 min execution time
+ *
+ * Additional browsers/devices commented out because:
+ * - No React Native app exists (mobile testing not needed yet)
+ * - ReactFlow tests too superficial to catch WebKit-specific issues currently
+ * - Responsive design better tested with visual regression tools
+ * - Can add browsers back when specific cross-browser issues arise
  */
 export default defineConfig({
   testDir: path.join(__dirname, "e2e"),
@@ -73,7 +82,7 @@ export default defineConfig({
     timeout: 10 * 1000,
   },
   retries: process.env.CI ? 2 : 0,
-  workers: 15,
+  workers: 8,
   fullyParallel: true,
   outputDir: "test-output/results/",
   reporter: [
@@ -98,11 +107,15 @@ export default defineConfig({
   },
 
   projects: [
-    // Desktop browsers
+    // Desktop browsers - Chromium only (optimized for speed)
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
+
+    /* COMMENTED OUT FOR OPTIMIZATION - Can be re-enabled when needed
+
+    // Additional desktop browsers
     {
       name: "firefox",
       use: { ...devices["Desktop Firefox"] },
@@ -168,5 +181,7 @@ export default defineConfig({
         userAgent: "Playwright/Viewport-2XL",
       },
     },
+
+    */
   ],
 });

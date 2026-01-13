@@ -1,10 +1,9 @@
 /**
- * Change Password E2E Tests
- * Tests the change password flow, form validation, and error handling
+ * Feature: Password Management
+ * Tests password change functionality with validation and error handling
  */
-import { test, expect } from "./fixtures";
+import { test, expect, bdd } from "./fixtures";
 
-// Page Object for Change Password
 class ChangePasswordPage {
   readonly page;
   readonly form;
@@ -13,7 +12,6 @@ class ChangePasswordPage {
   readonly confirmPasswordInput;
   readonly submitButton;
   readonly errorMessage;
-  readonly mustChangeAlert;
 
   constructor(page) {
     this.page = page;
@@ -27,15 +25,11 @@ class ChangePasswordPage {
     );
     this.submitButton = page.getByTestId("change-password-submit-button");
     this.errorMessage = page.getByTestId("change-password-error");
-    this.mustChangeAlert = page.getByTestId(
-      "change-password-must-change-alert"
-    );
   }
 
   async goto() {
     await this.page.goto("/change-password");
     await this.form.waitFor({ state: "visible", timeout: 5000 });
-    // Wait for React to hydrate - the submit button should be interactive
     await this.page.waitForTimeout(500);
   }
 
@@ -58,104 +52,111 @@ class ChangePasswordPage {
   }
 }
 
-test.describe("Change Password", () => {
-  test.describe("Change Password Page", () => {
-    // Use authenticated state (default admin user)
-    // The change-password page is a protected route
-
-    test("should display change password form", async ({ page }) => {
+test.describe("Feature: Password Management", () => {
+  test("should display change password form", async ({ page }) => {
+    await bdd.given("user navigates to change password page", async () => {
       const changePasswordPage = new ChangePasswordPage(page);
       await changePasswordPage.goto();
+    });
 
-      // Check for form elements
+    await bdd.then("change password form is displayed", async () => {
+      const changePasswordPage = new ChangePasswordPage(page);
       await expect(changePasswordPage.currentPasswordInput).toBeVisible();
       await expect(changePasswordPage.newPasswordInput).toBeVisible();
       await expect(changePasswordPage.confirmPasswordInput).toBeVisible();
       await expect(changePasswordPage.submitButton).toBeVisible();
-
-      // Form should be visible
       await expect(changePasswordPage.form).toBeVisible();
     });
+  });
 
-    test("should show validation errors for empty form submission", async ({
-      page,
-    }) => {
+  test("should validate empty form submission", async ({ page }) => {
+    await bdd.given("user is on change password form", async () => {
       const changePasswordPage = new ChangePasswordPage(page);
       await changePasswordPage.goto();
-
-      // Click submit without filling form
-      await changePasswordPage.submitButton.click();
-
-      // HTML5 validation should prevent submission
-      // Check if form is still on change-password page
-      await expect(page).toHaveURL(/\/change-password/);
     });
 
-    test("should show error for password too short", async ({ page }) => {
+    await bdd.when("user submits form without filling fields", async () => {
+      const changePasswordPage = new ChangePasswordPage(page);
+      await changePasswordPage.submitButton.click();
+    });
+
+    await bdd.then("form validation prevents submission", async () => {
+      await expect(page).toHaveURL(/\/change-password/);
+    });
+  });
+
+  test("should reject password that is too short", async ({ page }) => {
+    await bdd.given("user is on change password form", async () => {
       const changePasswordPage = new ChangePasswordPage(page);
       await changePasswordPage.goto();
+    });
 
-      // Fill form with short password (less than 8 characters)
-      // Use the current password that the admin user has set up for testing
+    await bdd.when("user submits form with short password", async () => {
+      const changePasswordPage = new ChangePasswordPage(page);
       await changePasswordPage.changePassword(
         "TestAdmin123!",
         "short",
         "short"
       );
+    });
 
-      // Browser validation should prevent submission, or server should reject
-      // Either stay on change-password page or show error message
+    await bdd.then("form prevents submission or shows error", async () => {
       const isOnChangePasswordPage = page.url().includes("/change-password");
+      const changePasswordPage = new ChangePasswordPage(page);
       const hasError = await changePasswordPage.errorMessage
         .isVisible()
         .catch(() => false);
 
-      // One of these should be true - either on change-password page or error shown
       expect(isOnChangePasswordPage || hasError).toBeTruthy();
     });
+  });
 
-    test("should show error for incorrect current password", async ({
-      page,
-    }) => {
+  test("should reject incorrect current password", async ({ page }) => {
+    await bdd.given("user is on change password form", async () => {
       const changePasswordPage = new ChangePasswordPage(page);
       await changePasswordPage.goto();
+    });
 
-      // Fill form with incorrect current password
+    await bdd.when("user submits form with wrong current password", async () => {
+      const changePasswordPage = new ChangePasswordPage(page);
       await changePasswordPage.changePassword(
         "WrongPassword123!",
         "NewValidPassword123!",
         "NewValidPassword123!"
       );
+    });
 
-      // Server should reject with incorrect current password error
-      // Either stay on change-password page or show error message
+    await bdd.then("form prevents submission or shows error", async () => {
       const isOnChangePasswordPage = page.url().includes("/change-password");
+      const changePasswordPage = new ChangePasswordPage(page);
       const hasError = await changePasswordPage.errorMessage
         .isVisible()
         .catch(() => false);
 
-      // One of these should be true - either on change-password page or error shown
       expect(isOnChangePasswordPage || hasError).toBeTruthy();
     });
   });
 
-  test.describe("Change Password - Responsive", () => {
-    test("change password form should be responsive on mobile", async ({
-      page,
-      getViewportInfo,
-    }) => {
-      const { isMobile } = getViewportInfo();
+  test("should be responsive on mobile devices", async ({
+    page,
+    getViewportInfo,
+  }) => {
+    const { isMobile } = getViewportInfo();
+
+    await bdd.given("user is on change password form", async () => {
       const changePasswordPage = new ChangePasswordPage(page);
-
       await changePasswordPage.goto();
+    });
 
-      // Form elements should be visible at any viewport
+    await bdd.then("form fields are visible on mobile", async () => {
+      const changePasswordPage = new ChangePasswordPage(page);
       await expect(changePasswordPage.currentPasswordInput).toBeVisible();
       await expect(changePasswordPage.newPasswordInput).toBeVisible();
       await expect(changePasswordPage.confirmPasswordInput).toBeVisible();
       await expect(changePasswordPage.submitButton).toBeVisible();
+    });
 
-      // Card should take full width on mobile
+    await bdd.and("form card is properly sized on mobile", async () => {
       if (isMobile) {
         const card = page.locator(".max-w-md");
         const boundingBox = await card.boundingBox();

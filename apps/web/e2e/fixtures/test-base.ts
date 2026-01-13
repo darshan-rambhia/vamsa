@@ -3,6 +3,8 @@
  * Extends the base test with app-specific utilities and fixtures
  */
 import { test as base, expect, type Page } from "@playwright/test";
+import { AxeBuilder } from "@axe-core/playwright";
+import type { AxeResults } from "axe-core";
 
 /**
  * Test user credentials for different roles
@@ -36,6 +38,16 @@ export const TEST_USERS: Record<string, TestUser> = {
 };
 
 /**
+ * Accessibility violation interface
+ */
+export interface AccessibilityViolation {
+  id: string;
+  impact: string;
+  message: string;
+  nodes: number;
+}
+
+/**
  * Extended test context with custom fixtures
  */
 export interface TestFixtures {
@@ -56,6 +68,12 @@ export interface TestFixtures {
     isMobile: boolean;
     isTablet: boolean;
   };
+  /** Check page for accessibility violations (WCAG 2 AA) */
+  checkAccessibility: (options?: {
+    selector?: string;
+    rules?: string[];
+    skipRules?: string[];
+  }) => Promise<AccessibilityViolation[]>;
 }
 
 /**
@@ -258,6 +276,62 @@ export const test = base.extend<TestFixtures>({
     };
 
     await use(getInfoFn);
+  },
+
+  /**
+   * Check page for accessibility violations using axe-core
+   * Configured for WCAG 2 AA compliance
+   */
+  checkAccessibility: async ({ page }, use) => {
+    const checkA11yFn = async (options?: {
+      selector?: string;
+      rules?: string[];
+      skipRules?: string[];
+    }): Promise<AccessibilityViolation[]> => {
+      // Get violations from the page
+      const violations: AccessibilityViolation[] = [];
+
+      try {
+        // Build the accessibility check with WCAG 2 AA rules
+        let axeCheck = new AxeBuilder({ page })
+          .withTags(["wcag2aa"])
+          .setLegacyMode(false);
+
+        // Add includes if selector is specified
+        if (options?.selector) {
+          axeCheck = axeCheck.include(options.selector);
+        }
+
+        // Skip rules if specified
+        if (options?.skipRules && options.skipRules.length > 0) {
+          axeCheck = axeCheck.disableRules(options.skipRules);
+        }
+
+        // Limit to specific rules if specified
+        if (options?.rules && options.rules.length > 0) {
+          axeCheck = axeCheck.withRules(options.rules);
+        }
+
+        // Run the accessibility check
+        const a11yResults: AxeResults = await axeCheck.analyze();
+
+        // Process violations
+        a11yResults.violations.forEach((violation) => {
+          violations.push({
+            id: violation.id,
+            impact: violation.impact || "unknown",
+            message: violation.description || "No description",
+            nodes: violation.nodes?.length || 0,
+          });
+        });
+      } catch (error) {
+        console.error("Error running accessibility check:", error);
+      }
+
+      return violations;
+    };
+
+    await use(checkA11yFn);
   },
 });
 

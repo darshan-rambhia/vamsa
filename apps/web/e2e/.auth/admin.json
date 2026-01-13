@@ -2,14 +2,24 @@
   "cookies": [
     {
       "name": "vamsa-session",
-      "value": "7b6f92c709de3f074240d02ed405896c64f4dbe9640543f2ca73cc24b112e4ec",
+      "value": "9f31e48ca673bf27bdbf65ac4dce5aabc625830a82e7cd283067beee3f910cca",
       "domain": "localhost",
       "path": "/",
-      "expires": 1770730838.619663,
+      "expires": 1770762092.356606,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"
     }
   ],
-  "origins": []
+  "origins": [
+    {
+      "origin": "http://localhost:3000",
+      "localStorage": [
+        {
+          "name": "i18nextLng",
+          "value": "en"
+        }
+      ]
+    }
+  ]
 }

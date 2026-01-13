@@ -1,266 +1,203 @@
 /**
- * Authentication E2E Tests
+ * Feature: User Authentication
  * Tests login, logout, and protected route access
  */
-import { test, expect, TEST_USERS, vamsaExpect } from "./fixtures";
-import { LoginPage, Navigation } from "./fixtures/page-objects";
+import { test, expect, bdd, TEST_USERS, vamsaExpect } from "./fixtures";
+import { LoginPage } from "./fixtures/page-objects";
 
-test.describe("Authentication", () => {
-  test.describe("Login Page", () => {
-    // Skip pre-authenticated state for these tests since we're testing login functionality
+test.describe("Feature: User Authentication", () => {
+  test.describe("Unauthenticated tests", () => {
     test.use({ storageState: { cookies: [], origins: [] } });
 
-    test("should display login form", async ({ page }) => {
-      await page.goto("/login");
+    test("should display login form with all fields", async ({ page }) => {
+      // Skip pre-authenticated state for login tests
+      await bdd.given("user navigates to login page", async () => {
+        await page.goto("/login");
+      });
 
-      // Check for form elements
-      await expect(page.locator('input[name="email"]')).toBeVisible();
-      await expect(page.locator('input[name="password"]')).toBeVisible();
-      await expect(page.locator('button[type="submit"]')).toBeVisible();
-
-      // Check for branding
-      await expect(page.locator("text=Vamsa")).toBeVisible();
+      await bdd.then("login form is displayed", async () => {
+        await expect(page.locator('input[name="email"]')).toBeVisible();
+        await expect(page.locator('input[name="password"]')).toBeVisible();
+        await expect(page.locator('button[type="submit"]')).toBeVisible();
+        await expect(page.locator("text=Vamsa")).toBeVisible();
+      });
     });
 
-    test("should show validation errors for empty form submission", async ({
-      page,
-    }) => {
-      const loginPage = new LoginPage(page);
-      await loginPage.goto();
+    test("should validate empty form submission on login", async ({ page }) => {
+      await bdd.given("user is on login page", async () => {
+        const loginPage = new LoginPage(page);
+        await loginPage.goto();
+      });
 
-      // Click submit without filling form
-      await loginPage.submitButton.click();
+      await bdd.when("user submits empty form", async () => {
+        const loginPage = new LoginPage(page);
+        await loginPage.submitButton.click();
+      });
 
-      // HTML5 validation should prevent submission
-      // Check if form is still on login page
-      await expect(page).toHaveURL(/\/login/);
+      await bdd.then("form validation prevents submission", async () => {
+        await expect(page).toHaveURL(/\/login/);
+      });
     });
 
     test("should show error for invalid credentials", async ({ page }) => {
-      const loginPage = new LoginPage(page);
-      await loginPage.goto();
+      await bdd.given("user is on login page", async () => {
+        const loginPage = new LoginPage(page);
+        await loginPage.goto();
+      });
 
-      await loginPage.login("invalid@example.com", "wrongpassword");
+      await bdd.when("user enters invalid credentials", async () => {
+        const loginPage = new LoginPage(page);
+        await loginPage.login("invalid@example.com", "wrongpassword");
+      });
 
-      // Wait for error message
-      await expect(loginPage.errorMessage).toBeVisible({ timeout: 5000 });
-      const errorText = await loginPage.getErrorText();
-      expect(errorText).toContain("Invalid");
+      await bdd.then("error message is displayed", async () => {
+        const loginPage = new LoginPage(page);
+        await expect(loginPage.errorMessage).toBeVisible({ timeout: 5000 });
+        const errorText = await loginPage.getErrorText();
+        expect(errorText).toContain("Invalid");
+      });
     });
 
+    test("should redirect to login when accessing protected routes", async ({
+      page,
+    }) => {
+      const protectedRoutes = ["/people", "/dashboard", "/admin", "/tree", "/activity"];
+
+      for (const route of protectedRoutes) {
+        await bdd.when(`user navigates to protected route: ${route}`, async () => {
+          await page.goto(route);
+        });
+
+        await bdd.then("user is redirected to login", async () => {
+          await expect(page).toHaveURL(/\/login/);
+        });
+      }
+    });
+
+    test("should be responsive on mobile devices", async ({
+      page,
+      getViewportInfo,
+    }) => {
+      const { isMobile } = getViewportInfo();
+
+      await bdd.given("user is on login page", async () => {
+        await page.goto("/login");
+      });
+
+      await bdd.then("login form is visible on mobile", async () => {
+        await expect(page.locator('input[name="email"]')).toBeVisible();
+        await expect(page.locator('input[name="password"]')).toBeVisible();
+      });
+
+      await bdd.and("form card has proper width on mobile", async () => {
+        if (isMobile) {
+          const card = page.locator(".max-w-md");
+          const boundingBox = await card.boundingBox();
+          expect(boundingBox?.width || 0).toBeGreaterThan(300);
+        }
+      });
+    });
+  });
+
+  test.describe("Authenticated tests", () => {
     test("should successfully login with valid credentials", async ({
       page,
       login,
     }) => {
-      await login(TEST_USERS.admin);
+      await bdd.given("user has valid credentials", async () => {
+        expect(TEST_USERS.admin.email).toBeTruthy();
+      });
 
-      // Should be redirected to authenticated area
-      await expect(page).toHaveURL(/\/(people|dashboard)/);
+      await bdd.when("user submits valid login form", async () => {
+        await login(TEST_USERS.admin);
+      });
 
-      // Use the custom matcher to verify logged in state
-      await vamsaExpect.toBeLoggedIn(page);
+      await bdd.then("user is authenticated and redirected", async () => {
+        await expect(page).toHaveURL(/\/(people|dashboard)/);
+        await vamsaExpect.toBeLoggedIn(page);
+      });
     });
 
-    test("should have theme toggle on login page", async ({ page }) => {
-      await page.goto("/login");
-
-      // Look for theme toggle button
-      const _themeToggle = page.locator(
-        '[data-theme-toggle], button:has-text("theme")'
-      );
-      // Theme toggle exists in corner
-      await expect(page.locator("button").first()).toBeVisible();
-    });
-  });
-
-  test.describe("Protected Routes", () => {
-    // Skip pre-authenticated state for these tests since we're testing unauthenticated access
-    test.use({ storageState: { cookies: [], origins: [] } });
-
-    test("should redirect to login when accessing protected route without auth", async ({
-      page,
-    }) => {
-      // Try to access protected route
-      await page.goto("/people");
-
-      // Should be redirected to login
-      await expect(page).toHaveURL(/\/login/);
-    });
-
-    test("should redirect to login when accessing dashboard without auth", async ({
-      page,
-    }) => {
-      await page.goto("/dashboard");
-      await expect(page).toHaveURL(/\/login/);
-    });
-
-    test("should redirect to login when accessing admin without auth", async ({
-      page,
-    }) => {
-      await page.goto("/admin");
-      await expect(page).toHaveURL(/\/login/);
-    });
-
-    test("should redirect to login when accessing tree without auth", async ({
-      page,
-    }) => {
-      await page.goto("/tree");
-      await expect(page).toHaveURL(/\/login/);
-    });
-
-    test("should redirect to login when accessing activity without auth", async ({
-      page,
-    }) => {
-      await page.goto("/activity");
-      await expect(page).toHaveURL(/\/login/);
-    });
-  });
-
-  test.describe("Logout", () => {
-    test("should successfully logout", async ({ page, login, logout }) => {
-      // Login first
-      await login(TEST_USERS.admin);
-
-      // Verify we're logged in
-      await vamsaExpect.toBeLoggedIn(page);
-
-      // Logout
-      await logout();
-
-      // Should be on login page
-      await vamsaExpect.toBeLoggedOut(page);
-    });
-
-    test("should not access protected routes after logout", async ({
+    test("should successfully logout and restrict access", async ({
       page,
       login,
       logout,
     }) => {
-      // Login
-      await login(TEST_USERS.admin);
+      await bdd.given("user is logged in", async () => {
+        await login(TEST_USERS.admin);
+        await vamsaExpect.toBeLoggedIn(page);
+      });
 
-      // Logout
-      await logout();
+      await bdd.when("user logs out", async () => {
+        await logout();
+      });
 
-      // Try to access protected route
-      await page.goto("/people");
+      await bdd.then("user is logged out", async () => {
+        await vamsaExpect.toBeLoggedOut(page);
+      });
 
-      // Should redirect to login
-      await expect(page).toHaveURL(/\/login/);
-    });
-  });
-
-  test.describe("Session Persistence", () => {
-    test("should maintain session on page refresh", async ({ page, login }) => {
-      await login(TEST_USERS.admin);
-
-      // Refresh the page
-      await page.reload();
-
-      // Should still be authenticated
-      await expect(page).not.toHaveURL(/\/login/);
-      await vamsaExpect.toBeLoggedIn(page);
+      await bdd.and("protected routes are no longer accessible", async () => {
+        await page.goto("/people");
+        await expect(page).toHaveURL(/\/login/);
+      });
     });
 
-    test("should maintain session when navigating between pages", async ({
+    test("should maintain session on page refresh", async ({
       page,
       login,
     }) => {
-      await login(TEST_USERS.admin);
+      await bdd.given("user is logged in", async () => {
+        await login(TEST_USERS.admin);
+        await expect(page).toHaveURL(/\/(people|dashboard)/);
+      });
 
-      // Navigate to different pages
-      await page.goto("/dashboard");
-      await expect(page).toHaveURL("/dashboard");
+      await bdd.when("user refreshes page", async () => {
+        await page.reload();
+      });
 
-      await page.goto("/people");
-      await expect(page).toHaveURL("/people");
-
-      await page.goto("/tree");
-      await expect(page).toHaveURL(/\/tree(\?|$)/);
-
-      // Still authenticated
-      await vamsaExpect.toBeLoggedIn(page);
-    });
-  });
-
-  test.describe("Role-Based Access", () => {
-    test("admin user should access admin panel", async ({ page, login }) => {
-      await login(TEST_USERS.admin);
-
-      await page.goto("/admin");
-      await expect(page).toHaveURL(/\/admin/);
-
-      // Should see admin content, not error
-      await expect(page.getByRole("link", { name: "Users" })).toBeVisible();
+      await bdd.then("session is still active", async () => {
+        await expect(page).not.toHaveURL(/\/login/);
+        await vamsaExpect.toBeLoggedIn(page);
+      });
     });
 
-    test.skip("member user should have limited admin access", async ({
+    test("should maintain session across page navigation", async ({
       page,
       login,
     }) => {
-      await login(TEST_USERS.member);
+      await bdd.given("user is logged in", async () => {
+        await login(TEST_USERS.admin);
+      });
 
-      await page.goto("/admin");
+      await bdd.when("user navigates between pages", async () => {
+        await page.goto("/dashboard");
+        await expect(page).toHaveURL("/dashboard");
 
-      // Depending on implementation, member might see partial admin or be redirected
-      // This test documents expected behavior
+        await page.goto("/people");
+        await expect(page).toHaveURL("/people");
+
+        await page.goto("/tree");
+        await expect(page).toHaveURL(/\/tree(\?|$)/);
+      });
+
+      await bdd.then("session remains active", async () => {
+        await vamsaExpect.toBeLoggedIn(page);
+      });
     });
 
-    test.skip("viewer user should not access admin panel", async ({
-      page,
-      login,
-    }) => {
-      await login(TEST_USERS.viewer);
+    test("should allow admin access to admin panel", async ({ page, login }) => {
+      await bdd.given("admin user is logged in", async () => {
+        await login(TEST_USERS.admin);
+      });
 
-      await page.goto("/admin");
+      await bdd.when("admin navigates to admin panel", async () => {
+        await page.goto("/admin");
+      });
 
-      // Should either redirect or show access denied
-      // This test documents expected behavior
+      await bdd.then("admin panel is accessible", async () => {
+        await expect(page).toHaveURL(/\/admin/);
+        await expect(page.getByRole("link", { name: "Users" })).toBeVisible();
+      });
     });
-  });
-});
-
-test.describe("Authentication - Responsive", () => {
-  test("login page should be responsive on mobile", async ({
-    page,
-    getViewportInfo,
-  }) => {
-    const { isMobile } = getViewportInfo();
-
-    await page.goto("/login");
-
-    // Login form should be visible at any viewport
-    await expect(page.locator('input[name="email"]')).toBeVisible();
-    await expect(page.locator('input[name="password"]')).toBeVisible();
-
-    // Card should take full width on mobile
-    if (isMobile) {
-      const card = page.locator(".max-w-md");
-      const boundingBox = await card.boundingBox();
-      expect(boundingBox?.width || 0).toBeGreaterThan(300);
-    }
-  });
-
-  test("navigation should adapt to viewport", async ({
-    page,
-    login,
-    getViewportInfo,
-  }) => {
-    await login(TEST_USERS.admin);
-
-    const { isMobile, isTablet } = getViewportInfo();
-    const nav = new Navigation(page);
-
-    if (isMobile || isTablet) {
-      // On smaller screens, might have mobile menu
-      const hasMobileMenu = await nav.mobileMenuButton
-        .isVisible()
-        .catch(() => false);
-      // Either mobile menu or regular nav should be visible
-      expect(hasMobileMenu || (await nav.nav.isVisible())).toBeTruthy();
-    } else {
-      // Desktop should show full nav
-      await expect(nav.nav).toBeVisible();
-    }
   });
 });

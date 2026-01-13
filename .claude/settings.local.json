@@ -69,7 +69,8 @@
       "Bash(timeout 300 pnpm test:*)",
       "Bash(timeout 180 pnpm test:e2e:*)",
       "Bash(timeout 60 pnpm typecheck:*)",
-      "Bash(timeout 60 pnpm lint:*)"
+      "Bash(timeout 60 pnpm lint:*)",
+      "Bash(bd dep remove:*)"
     ]
   }
 }

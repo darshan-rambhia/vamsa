@@ -3,3 +3,4 @@
  */
 export * from "./test-base";
 export * from "./page-objects";
+export * from "./accessibility";
