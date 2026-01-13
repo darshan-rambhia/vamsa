@@ -270,7 +270,9 @@ export function FanChart({ nodes, edges, onNodeClick }: FanChartProps) {
         .attr("r", 4)
         .style(
           "fill",
-          node.isLiving ? "var(--color-primary)" : "var(--color-muted-foreground)"
+          node.isLiving
+            ? "var(--color-primary)"
+            : "var(--color-muted-foreground)"
         );
     });
 

@@ -3,6 +3,7 @@ import { Container, PageHeader, Card, CardContent } from "@vamsa/ui";
 import { getUsers } from "~/server/users";
 import { getCurrentUser } from "~/server/auth";
 import { UsersTable } from "~/components/admin/users-table";
+import { AdminRouteError } from "~/components/admin/route-error";
 
 export const Route = createFileRoute("/_authenticated/admin/users")({
   loader: async () => {
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
     return { users, currentUser };
   },
   component: UsersPage,
+  errorComponent: AdminRouteError,
 });
 
 function UsersPage() {

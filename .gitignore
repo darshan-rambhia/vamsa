@@ -15,6 +15,7 @@ test-output
 coverage
 playwright-report
 test-results
+.playwright-mcp
 
 # Misc
 .DS_Store
@@ -57,3 +58,4 @@ yarn.lock
 .vscode
 
 !.claude
+!CLAUDE.md

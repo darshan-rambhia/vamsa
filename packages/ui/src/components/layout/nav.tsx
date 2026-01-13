@@ -36,9 +36,9 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
                 Vamsa
               </span>
             )}
-            {/* Desktop nav links */}
+            {/* Desktop nav links - only show at lg (1024px+) to leave room for actions */}
             {children && (
-              <div className="hidden items-center gap-1 md:flex">
+              <div className="hidden items-center gap-1 lg:flex">
                 {children}
               </div>
             )}
@@ -46,18 +46,18 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
 
           {/* Right side actions */}
           <div className="flex items-center gap-2 sm:gap-3">
-            {/* Desktop actions */}
-            <div className="hidden sm:flex sm:items-center sm:gap-3">
+            {/* Desktop actions - only show at lg (1024px+) with nav links */}
+            <div className="hidden lg:flex lg:items-center lg:gap-3">
               {actions}
             </div>
             <ThemeToggle size="sm" />
-            {/* Mobile menu button */}
+            {/* Mobile/tablet menu button - visible below lg breakpoint */}
             {children && (
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                 className={cn(
-                  "inline-flex items-center justify-center md:hidden",
+                  "inline-flex items-center justify-center lg:hidden",
                   "h-9 w-9 rounded-md",
                   "text-muted-foreground hover:text-foreground",
                   "hover:bg-accent",
@@ -101,9 +101,9 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
           </div>
         </div>
 
-        {/* Mobile menu dropdown */}
+        {/* Mobile/tablet menu dropdown - visible below lg breakpoint */}
         {children && mobileMenuOpen && (
-          <div className="border-border bg-background border-t md:hidden">
+          <div className="border-border bg-background border-t lg:hidden">
             <div className="space-y-1 px-4 py-3">
               {React.Children.map(children, (child) => {
                 if (React.isValidElement(child)) {
@@ -120,9 +120,9 @@ const Nav = React.forwardRef<HTMLElement, NavProps>(
                 return child;
               })}
             </div>
-            {/* Mobile actions */}
+            {/* Actions in mobile menu - always show below lg breakpoint */}
             {actions && (
-              <div className="border-border border-t px-4 py-3 sm:hidden">
+              <div className="border-border border-t px-4 py-3">
                 {actions}
               </div>
             )}

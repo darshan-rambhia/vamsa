@@ -30,7 +30,7 @@ export function EventTimeline({ events, onEventClick }: EventTimelineProps) {
   return (
     <div className="relative space-y-6 pl-8 sm:pl-12">
       {/* Vertical line */}
-      <div className="bg-border absolute left-3 top-0 h-full w-0.5 sm:left-5" />
+      <div className="bg-border absolute top-0 left-3 h-full w-0.5 sm:left-5" />
 
       {events.map((event) => {
         const eventTypeConfig = getEventTypeConfig(event.type);
@@ -51,7 +51,7 @@ export function EventTimeline({ events, onEventClick }: EventTimelineProps) {
           >
             {/* Timeline dot */}
             <div
-              className={`border-background absolute -left-8 top-1 flex h-6 w-6 items-center justify-center rounded-full border-4 sm:-left-12 ${eventTypeConfig.dotClass}`}
+              className={`border-background absolute top-1 -left-8 flex h-6 w-6 items-center justify-center rounded-full border-4 sm:-left-12 ${eventTypeConfig.dotClass}`}
             />
 
             {/* Event content */}

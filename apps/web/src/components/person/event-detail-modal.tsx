@@ -274,7 +274,7 @@ export function EventDetailModal({
                 <div className="text-muted-foreground mb-2 text-sm">
                   Description
                 </div>
-                <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+                <p className="text-foreground leading-relaxed whitespace-pre-wrap">
                   {event.description}
                 </p>
               </div>

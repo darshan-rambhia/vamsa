@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Install pnpm (still using pnpm for monorepo management)
 RUN apk add --no-cache curl
-RUN curl -fsSL https://get.pnpm.io/install.sh | sh -
+RUN curl -fsSL https://get.pnpm.io/install.sh | ENV="$HOME/.shrc" SHELL="$(which sh)" sh -
 ENV PNPM_HOME=/root/.local/share/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 
@@ -32,7 +32,7 @@ WORKDIR /app
 
 # Install pnpm for production
 RUN apk add --no-cache curl
-RUN curl -fsSL https://get.pnpm.io/install.sh | sh -
+RUN curl -fsSL https://get.pnpm.io/install.sh | ENV="$HOME/.shrc" SHELL="$(which sh)" sh -
 ENV PNPM_HOME=/root/.local/share/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 

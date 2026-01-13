@@ -787,7 +787,7 @@ async function main() {
       data: {
         name: "Mumbai",
         placeType: "CITY",
-        latitude: 19.0760,
+        latitude: 19.076,
         longitude: 72.8777,
         description: "Financial capital of India",
         parentId: placeMap.maharashtra.id,
@@ -837,7 +837,7 @@ async function main() {
       data: {
         name: "Hyderabad",
         placeType: "CITY",
-        latitude: 17.3850,
+        latitude: 17.385,
         longitude: 78.4867,
         description: "Tech city and Pearl of the South",
         parentId: placeMap.telangana.id,
@@ -1063,7 +1063,8 @@ async function main() {
         date: new Date("1956-06-15"),
         place: "Jaipur, Rajasthan",
         placeId: cities[0].id,
-        description: "Rajendra graduates with degree in Mathematics from University of Rajasthan",
+        description:
+          "Rajendra graduates with degree in Mathematics from University of Rajasthan",
       },
     }),
     prisma.event.create({
@@ -1305,7 +1306,8 @@ async function main() {
         date: new Date("2014-02-14"),
         place: "Bangalore, Karnataka",
         placeId: cities[5].id,
-        description: "Marriage of Arjun Sharma and Neha Gupta - Valentine's Day Wedding",
+        description:
+          "Marriage of Arjun Sharma and Neha Gupta - Valentine's Day Wedding",
       },
     }),
     prisma.event.create({
@@ -1814,9 +1816,21 @@ async function main() {
     grandmaRekha,
     "Sanjay Patel and Rekha Mehta"
   );
-  await addMarriageParticipants(parentArjun, parentNeha, "Arjun Sharma and Neha Gupta");
-  await addMarriageParticipants(parentMeera, parentRohan, "Meera Sharma and Rohan Verma");
-  await addMarriageParticipants(parentRahul, parentAnanya, "Rahul Sharma and Ananya Singh");
+  await addMarriageParticipants(
+    parentArjun,
+    parentNeha,
+    "Arjun Sharma and Neha Gupta"
+  );
+  await addMarriageParticipants(
+    parentMeera,
+    parentRohan,
+    "Meera Sharma and Rohan Verma"
+  );
+  await addMarriageParticipants(
+    parentRahul,
+    parentAnanya,
+    "Rahul Sharma and Ananya Singh"
+  );
   await addMarriageParticipants(
     parentAditya,
     parentKavya,
@@ -1915,7 +1929,9 @@ async function main() {
     },
   });
 
-  logger.info("Created place-person links for 6 people showing migration patterns.");
+  logger.info(
+    "Created place-person links for 6 people showing migration patterns."
+  );
 
   // ========== CREATE RESEARCH NOTES ==========
   logger.info("Creating research notes...");
@@ -1926,7 +1942,8 @@ async function main() {
         sourceId: sources[0].id,
         personId: ggGrandpaHari.id,
         eventType: "BIRTH",
-        findings: "Hari Sharma was born on March 15, 1905 in Jaipur, Rajasthan. Document verified with municipal records.",
+        findings:
+          "Hari Sharma was born on March 15, 1905 in Jaipur, Rajasthan. Document verified with municipal records.",
         methodology: "Primary source verification",
         conclusionReliability: "HIGH",
       },
@@ -1936,7 +1953,8 @@ async function main() {
         sourceId: sources[1].id,
         personId: ggGrandpaHari.id,
         eventType: "MARRIAGE",
-        findings: "Marriage registration shows union with Savitri Verma on May 15, 1930.",
+        findings:
+          "Marriage registration shows union with Savitri Verma on May 15, 1930.",
         methodology: "Government record verification",
         conclusionReliability: "HIGH",
       },
@@ -1946,7 +1964,8 @@ async function main() {
         sourceId: sources[2].id,
         personId: ggGrandpaHari.id,
         eventType: "CUSTOM",
-        findings: "1951 Census shows Hari as head of household in Jaipur with 2 children.",
+        findings:
+          "1951 Census shows Hari as head of household in Jaipur with 2 children.",
         methodology: "Census record analysis",
         conclusionReliability: "MEDIUM",
       },
@@ -1956,7 +1975,8 @@ async function main() {
         sourceId: sources[5].id,
         personId: gGrandpaRajendra.id,
         eventType: "GRADUATION",
-        findings: "Academic records confirm Rajendra's degree in Mathematics from University of Rajasthan in 1956.",
+        findings:
+          "Academic records confirm Rajendra's degree in Mathematics from University of Rajasthan in 1956.",
         methodology: "Direct university records",
         conclusionReliability: "HIGH",
       },
@@ -1966,7 +1986,8 @@ async function main() {
         sourceId: sources[3].id,
         personId: gGrandmaKamla.id,
         eventType: "CUSTOM",
-        findings: "Family photo archive from 1970s shows Kamla with her children in Jaipur.",
+        findings:
+          "Family photo archive from 1970s shows Kamla with her children in Jaipur.",
         methodology: "Photographic analysis",
         conclusionReliability: "MEDIUM",
       },
@@ -1976,7 +1997,8 @@ async function main() {
         sourceId: sources[4].id,
         personId: ggGrandmaSavitri.id,
         eventType: "DEATH",
-        findings: "Death certificate confirms Savitri passed away on November 10, 1985 in Jodhpur at age 75.",
+        findings:
+          "Death certificate confirms Savitri passed away on November 10, 1985 in Jodhpur at age 75.",
         methodology: "Government record verification",
         conclusionReliability: "HIGH",
       },
@@ -1986,7 +2008,8 @@ async function main() {
         sourceId: sources[6].id,
         personId: gGrandpaMohan.id,
         eventType: "CUSTOM",
-        findings: "Property records show Mohan owned textile manufacturing units in Ahmedabad from 1960s onwards.",
+        findings:
+          "Property records show Mohan owned textile manufacturing units in Ahmedabad from 1960s onwards.",
         methodology: "Municipal land registry review",
         conclusionReliability: "HIGH",
       },
@@ -1996,7 +2019,8 @@ async function main() {
         sourceId: sources[11].id,
         personId: grandpaVikram.id,
         eventType: "CUSTOM",
-        findings: "Infosys employment records confirm Vikram joined in 1985 and held various senior positions.",
+        findings:
+          "Infosys employment records confirm Vikram joined in 1985 and held various senior positions.",
         methodology: "Corporate HR records",
         conclusionReliability: "HIGH",
       },
@@ -2006,7 +2030,8 @@ async function main() {
         sourceId: sources[12].id,
         personId: grandpaVikram.id,
         eventType: "MARRIAGE",
-        findings: "Marriage certificate shows Vikram married Priya Patel on December 15, 1985 in Bangalore.",
+        findings:
+          "Marriage certificate shows Vikram married Priya Patel on December 15, 1985 in Bangalore.",
         methodology: "Government marriage registration",
         conclusionReliability: "HIGH",
       },
@@ -2016,14 +2041,17 @@ async function main() {
         sourceId: sources[9].id,
         personId: gGrandpaRajendra.id,
         eventType: "CUSTOM",
-        findings: "Medical records from Jaipur Medical College show Rajendra's health history and final hospitalization.",
+        findings:
+          "Medical records from Jaipur Medical College show Rajendra's health history and final hospitalization.",
         methodology: "Medical institution records",
         conclusionReliability: "MEDIUM",
       },
     }),
   ]);
 
-  logger.info("Created 10 research notes linking sources to people and events.");
+  logger.info(
+    "Created 10 research notes linking sources to people and events."
+  );
 
   // ========== CREATE MEDIA OBJECTS ==========
   logger.info("Creating media objects for photo gallery...");
@@ -2036,7 +2064,8 @@ async function main() {
         mimeType: "image/jpeg",
         fileSize: 245000,
         title: "Family Gathering - 1970s",
-        description: "Sharma family group photo from Jaipur, showing 3 generations",
+        description:
+          "Sharma family group photo from Jaipur, showing 3 generations",
         source: "Family Archive",
         width: 1200,
         height: 800,
@@ -2062,7 +2091,8 @@ async function main() {
         mimeType: "image/jpeg",
         fileSize: 210000,
         title: "Businessman Mohan Patel",
-        description: "Portrait of Mohan Patel at his textile business in Ahmedabad",
+        description:
+          "Portrait of Mohan Patel at his textile business in Ahmedabad",
         source: "Family Collection",
         width: 800,
         height: 600,
@@ -2075,7 +2105,8 @@ async function main() {
         mimeType: "image/jpeg",
         fileSize: 520000,
         title: "Vikram & Priya Wedding",
-        description: "Wedding day photo of Vikram Sharma and Priya Patel, December 1985",
+        description:
+          "Wedding day photo of Vikram Sharma and Priya Patel, December 1985",
         source: "Wedding Collection",
         width: 1600,
         height: 1200,
@@ -2088,7 +2119,8 @@ async function main() {
         mimeType: "image/jpeg",
         fileSize: 580000,
         title: "Arjun & Neha Wedding",
-        description: "Valentine's Day wedding photo of Arjun Sharma and Neha Gupta, February 2014",
+        description:
+          "Valentine's Day wedding photo of Arjun Sharma and Neha Gupta, February 2014",
         source: "Professional Photography",
         width: 1600,
         height: 1200,
@@ -2114,7 +2146,8 @@ async function main() {
         mimeType: "image/jpeg",
         fileSize: 620000,
         title: "Five Generations Reunion",
-        description: "Rare photo with 5 generations of the Sharma-Patel families",
+        description:
+          "Rare photo with 5 generations of the Sharma-Patel families",
         source: "Family Archive",
         width: 2000,
         height: 1500,
@@ -2127,7 +2160,8 @@ async function main() {
         mimeType: "image/jpeg",
         fileSize: 290000,
         title: "Hari & Savitri Young",
-        description: "Early portrait of Hari and Savitri Sharma in their youth, 1930s",
+        description:
+          "Early portrait of Hari and Savitri Sharma in their youth, 1930s",
         source: "Family Archive",
         width: 800,
         height: 1000,
@@ -2140,7 +2174,8 @@ async function main() {
         mimeType: "image/jpeg",
         fileSize: 510000,
         title: "Meera & Rohan Wedding",
-        description: "Wedding photo of Meera Sharma and Rohan Verma, November 2015",
+        description:
+          "Wedding photo of Meera Sharma and Rohan Verma, November 2015",
         source: "Professional Photography",
         width: 1600,
         height: 1200,
@@ -2153,7 +2188,8 @@ async function main() {
         mimeType: "image/jpeg",
         fileSize: 450000,
         title: "Family Event - 2020",
-        description: "Family gathering at Jaipur during Diwali celebrations, 2020",
+        description:
+          "Family gathering at Jaipur during Diwali celebrations, 2020",
         source: "Family Collection",
         width: 1400,
         height: 1000,
@@ -2351,7 +2387,10 @@ async function main() {
     },
   });
 
-  logger.info({ email: adminEmail }, "Admin user created (linked to Arjun Sharma)");
+  logger.info(
+    { email: adminEmail },
+    "Admin user created (linked to Arjun Sharma)"
+  );
 
   // Create test users for E2E tests - link them to persons in the family tree
   // Note: Each person can only be linked to one user (unique constraint on personId)
@@ -2392,7 +2431,10 @@ async function main() {
         personId: user.personId, // Link to the person
       },
     });
-    logger.info({ email: user.email, userId: createdUser.id }, "Test user created");
+    logger.info(
+      { email: user.email, userId: createdUser.id },
+      "Test user created"
+    );
   }
 
   // Verify test users were created
@@ -2409,24 +2451,31 @@ async function main() {
   logger.info("========================================");
   logger.info("SEED COMPLETED SUCCESSFULLY!");
   logger.info("========================================");
-  logger.info({ email: adminEmail, password: adminPassword }, "Admin credentials");
+  logger.info(
+    { email: adminEmail, password: adminPassword },
+    "Admin credentials"
+  );
   logger.info("========================================");
   logger.info("FAMILY TREE DATA:");
   logger.info("- 30 people across 5 generations");
-  logger.info(
-    "- Gen 1: Hari & Savitri Sharma, Ratan & Kusuma Patel"
-  );
+  logger.info("- Gen 1: Hari & Savitri Sharma, Ratan & Kusuma Patel");
   logger.info("- Gen 2: Rajendra & Kamla, Mohan & Lakshmi");
   logger.info("- Gen 3: Vikram & Priya, Ajay & Sunita, Sanjay & Rekha");
   logger.info(
     "- Gen 4: Arjun (ADMIN) & Neha, Meera & Rohan, Rahul & Ananya, Aditya & Kavya"
   );
   logger.info("- Gen 5: Aarav, Isha, Vihaan, Sara, Kabir, Riya, Aryan, Mira");
-  logger.info("- Diverse professions: Software Engineer, Surgeon, Designer, Teacher, etc");
+  logger.info(
+    "- Diverse professions: Software Engineer, Surgeon, Designer, Teacher, etc"
+  );
   logger.info("========================================");
   logger.info("GEOGRAPHIC DATA FOR MAPS:");
-  logger.info("- 21 places total (1 country, 9 states, 11 cities with coordinates)");
-  logger.info("- Cities: Jaipur, Jodhpur, Ahmedabad, Surat, Mumbai, Bangalore, Chennai, Agra, Lucknow, Hyderabad, Kolkata");
+  logger.info(
+    "- 21 places total (1 country, 9 states, 11 cities with coordinates)"
+  );
+  logger.info(
+    "- Cities: Jaipur, Jodhpur, Ahmedabad, Surat, Mumbai, Bangalore, Chennai, Agra, Lucknow, Hyderabad, Kolkata"
+  );
   logger.info("- All with latitude/longitude for map visualization");
   logger.info("- 6 people linked to places showing migration patterns");
   logger.info(
@@ -2435,20 +2484,26 @@ async function main() {
   logger.info("========================================");
   logger.info("TIMELINE EVENTS:");
   logger.info("- 71 events spanning 1900s-2020s");
-  logger.info("- Event types: BIRTH (16), DEATH (5), MARRIAGE (8), GRADUATION (10), CUSTOM (16)");
+  logger.info(
+    "- Event types: BIRTH (16), DEATH (5), MARRIAGE (8), GRADUATION (10), CUSTOM (16)"
+  );
   logger.info("- Career milestones: promotions, business start, role changes");
   logger.info("- All events linked to place records with descriptions");
   logger.info("- 8 marriage events with multi-person participants");
   logger.info("========================================");
   logger.info("RESEARCH DATA:");
-  logger.info("- 13 source documents (birth/death certs, marriage records, census, medical, property, employment, photos)");
+  logger.info(
+    "- 13 source documents (birth/death certs, marriage records, census, medical, property, employment, photos)"
+  );
   logger.info("- 10 research notes linking sources to people and events");
   logger.info("- Confidence levels: HIGH (10), MEDIUM (5), LOW (1)");
   logger.info("========================================");
   logger.info("MEDIA OBJECTS:");
   logger.info("- 10 photo placeholders for family album");
   logger.info("- 18 person-media links with captions and display order");
-  logger.info("- Sample photos: weddings, family gatherings, portraits, reunions, events");
+  logger.info(
+    "- Sample photos: weddings, family gatherings, portraits, reunions, events"
+  );
   logger.info("========================================");
 }
 

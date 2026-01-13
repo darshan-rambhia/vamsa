@@ -90,7 +90,7 @@ export function OverviewTab({ person }: OverviewTabProps) {
         <Card>
           <CardContent className="py-6">
             <h3 className="font-display text-foreground mb-4 text-lg">About</h3>
-            <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+            <p className="text-foreground leading-relaxed whitespace-pre-wrap">
               {person.bio}
             </p>
           </CardContent>

@@ -63,7 +63,7 @@ function InviteAcceptPage() {
   if (!loaderData.valid || !loaderData.invite) {
     return (
       <div className="bg-background relative flex min-h-screen flex-col items-center justify-center px-4">
-        <div className="absolute right-6 top-6">
+        <div className="absolute top-6 right-6">
           <ThemeToggle />
         </div>
 
@@ -101,14 +101,14 @@ function InviteAcceptPage() {
 
   return (
     <div className="bg-background relative flex min-h-screen flex-col items-center justify-center px-4">
-      <div className="absolute right-6 top-6">
+      <div className="absolute top-6 right-6">
         <ThemeToggle />
       </div>
 
       {/* Decorative background pattern */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="bg-primary/5 absolute -left-1/4 -top-1/4 h-1/2 w-1/2 rounded-full blur-3xl" />
-        <div className="bg-secondary/5 absolute -bottom-1/4 -right-1/4 h-1/2 w-1/2 rounded-full blur-3xl" />
+        <div className="bg-primary/5 absolute -top-1/4 -left-1/4 h-1/2 w-1/2 rounded-full blur-3xl" />
+        <div className="bg-secondary/5 absolute -right-1/4 -bottom-1/4 h-1/2 w-1/2 rounded-full blur-3xl" />
       </div>
 
       <Card className="animate-fade-in relative w-full max-w-md">

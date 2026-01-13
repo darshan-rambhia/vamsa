@@ -252,7 +252,7 @@ export function UsersTable({
                   </svg>
                 </Button>
                 {openMenu === user.id && (
-                  <div className="bg-popover border-border absolute right-0 top-full z-50 mt-1 w-48 rounded-md border shadow-lg">
+                  <div className="bg-popover border-border absolute top-full right-0 z-50 mt-1 w-48 rounded-md border shadow-lg">
                     <div className="p-1">
                       <p className="text-muted-foreground px-2 py-1.5 text-xs font-medium">
                         Change Role

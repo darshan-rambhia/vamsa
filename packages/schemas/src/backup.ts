@@ -109,6 +109,33 @@ export const backupValidationPreviewSchema = z.object({
   }),
 });
 
+// Import preview schema
+export const importPreviewSchema = z.object({
+  conflicts: z.array(conflictSchema),
+  statistics: z.object({
+    totalConflicts: z.number(),
+    conflictsByType: z.record(z.string(), z.number()),
+    conflictsBySeverity: z.record(z.string(), z.number()),
+    newItems: z.object({
+      people: z.number(),
+      relationships: z.number(),
+      users: z.number(),
+      suggestions: z.number(),
+      photos: z.number(),
+    }),
+    existingItems: z.object({
+      people: z.number(),
+      relationships: z.number(),
+      users: z.number(),
+      suggestions: z.number(),
+    }),
+  }),
+  estimatedDuration: z.object({
+    minSeconds: z.number(),
+    maxSeconds: z.number(),
+  }),
+});
+
 export type BackupExportInput = z.infer<typeof backupExportSchema>;
 export type BackupMetadata = z.infer<typeof backupMetadataSchema>;
 export type ConflictResolutionStrategy = z.infer<
@@ -121,3 +148,4 @@ export type ImportResult = z.infer<typeof importResultSchema>;
 export type BackupValidationPreview = z.infer<
   typeof backupValidationPreviewSchema
 >;
+export type ImportPreview = z.infer<typeof importPreviewSchema>;

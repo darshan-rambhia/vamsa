@@ -36,16 +36,16 @@ export function PersonNode({ data }: NodeProps<PersonNodeType>) {
         type="target"
         position={Position.Top}
         className={cn(
-          "h-3! w-3! border-2! border-white! bg-primary!",
+          "bg-primary! h-3! w-3! border-2! border-white!",
           hasHiddenParents && "h-4! w-4! bg-amber-500!"
         )}
       />
       <div
         className={cn(
-          "min-w-50 bg-card hover:border-primary/50 flex cursor-pointer flex-col items-center rounded-xl border-2 px-4 py-4 shadow-md transition-all hover:shadow-lg",
+          "bg-card hover:border-primary/50 flex min-w-50 cursor-pointer flex-col items-center rounded-xl border-2 px-4 py-4 shadow-md transition-all hover:shadow-lg",
           !person.isLiving && "bg-muted/50 border-muted",
           isCurrentUser &&
-            "border-primary border-3 ring-primary/30 bg-primary/5 ring-2"
+            "border-primary ring-primary/30 bg-primary/5 border-3 ring-2"
         )}
       >
         {isCurrentUser && (
@@ -61,10 +61,10 @@ export function PersonNode({ data }: NodeProps<PersonNodeType>) {
           className={cn(isCurrentUser && "ring-primary ring-2")}
         />
         <div className="mt-3 text-center">
-          <p className="text-foreground text-base font-semibold leading-tight">
+          <p className="text-foreground text-base leading-tight font-semibold">
             {person.firstName}
           </p>
-          <p className="text-foreground text-base font-semibold leading-tight">
+          <p className="text-foreground text-base leading-tight font-semibold">
             {person.lastName}
           </p>
           {!person.isLiving && (
@@ -78,7 +78,7 @@ export function PersonNode({ data }: NodeProps<PersonNodeType>) {
         type="source"
         position={Position.Bottom}
         className={cn(
-          "h-3! w-3! border-2! border-white! bg-primary!",
+          "bg-primary! h-3! w-3! border-2! border-white!",
           hasHiddenChildren && "h-4! w-4! bg-amber-500!"
         )}
       />
@@ -88,7 +88,7 @@ export function PersonNode({ data }: NodeProps<PersonNodeType>) {
         id="spouse-right"
         position={Position.Right}
         className={cn(
-          "h-2! w-2! border-2! border-white! bg-primary/50!",
+          "bg-primary/50! h-2! w-2! border-2! border-white!",
           hasHiddenSpouses && "h-3! w-3! bg-amber-500!"
         )}
       />
@@ -98,7 +98,7 @@ export function PersonNode({ data }: NodeProps<PersonNodeType>) {
         id="spouse-left"
         position={Position.Left}
         className={cn(
-          "h-2! w-2! border-2! border-white! bg-primary/50!",
+          "bg-primary/50! h-2! w-2! border-2! border-white!",
           hasHiddenSpouses && "h-3! w-3! bg-amber-500!"
         )}
       />

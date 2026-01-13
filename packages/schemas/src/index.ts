@@ -64,6 +64,7 @@ export {
   validationResultSchema,
   importResultSchema,
   backupValidationPreviewSchema,
+  importPreviewSchema,
   type BackupExportInput,
   type BackupMetadata,
   type ConflictResolutionStrategy,
@@ -72,6 +73,7 @@ export {
   type ValidationResult,
   type ImportResult,
   type BackupValidationPreview,
+  type ImportPreview,
 } from "./backup";
 
 // Event schemas

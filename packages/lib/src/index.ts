@@ -33,3 +33,6 @@ export {
   startTimer,
   serializeError,
 } from "./logger";
+
+// Backup utilities (re-exported from backup/index.ts)
+export * from "./backup/index";

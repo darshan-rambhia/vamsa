@@ -111,7 +111,7 @@ export function CitationGenerator({ sourceId }: CitationGeneratorProps) {
               </svg>
             </div>
           ) : (
-            <p className="text-foreground whitespace-pre-wrap font-serif text-sm leading-relaxed">
+            <p className="text-foreground font-serif text-sm leading-relaxed whitespace-pre-wrap">
               {data?.citation || "No citation available"}
             </p>
           )}

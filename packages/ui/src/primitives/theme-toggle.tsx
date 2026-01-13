@@ -64,7 +64,7 @@ const ThemeToggle = React.forwardRef<HTMLButtonElement, ThemeToggleProps>(
           "border-border bg-background border-2",
           "transition-all duration-200 ease-out",
           "hover:bg-accent hover:border-primary/30",
-          "focus-visible:ring-ring focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+          "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none",
           sizeClasses,
           className
         )}

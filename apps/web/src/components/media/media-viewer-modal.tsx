@@ -166,7 +166,7 @@ export function MediaViewerModal({
             {onNavigate && hasPrev && (
               <button
                 onClick={() => onNavigate(allMediaIds[currentIndex - 1])}
-                className="border-border bg-card hover:border-primary hover:bg-primary/10 absolute left-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border-2 shadow-lg transition-all"
+                className="border-border bg-card hover:border-primary hover:bg-primary/10 absolute top-1/2 left-4 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border-2 shadow-lg transition-all"
               >
                 <svg
                   className="h-6 w-6"
@@ -186,7 +186,7 @@ export function MediaViewerModal({
             {onNavigate && hasNext && (
               <button
                 onClick={() => onNavigate(allMediaIds[currentIndex + 1])}
-                className="border-border bg-card hover:border-primary hover:bg-primary/10 absolute right-4 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border-2 shadow-lg transition-all"
+                className="border-border bg-card hover:border-primary hover:bg-primary/10 absolute top-1/2 right-4 flex h-12 w-12 -translate-y-1/2 items-center justify-center rounded-full border-2 shadow-lg transition-all"
               >
                 <svg
                   className="h-6 w-6"
@@ -206,14 +206,14 @@ export function MediaViewerModal({
           </div>
 
           {/* Metadata sidebar */}
-          <div className="border-border w-full shrink-0 space-y-6 overflow-y-auto border-t p-6 lg:w-80 lg:border-l lg:border-t-0">
+          <div className="border-border w-full shrink-0 space-y-6 overflow-y-auto border-t p-6 lg:w-80 lg:border-t-0 lg:border-l">
             {/* Description */}
             {media.description && (
               <div>
                 <span className="text-muted-foreground mb-2 block text-sm font-medium">
                   Description
                 </span>
-                <p className="text-foreground whitespace-pre-wrap text-sm leading-relaxed">
+                <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
                   {media.description}
                 </p>
               </div>
@@ -290,7 +290,7 @@ export function MediaViewerModal({
 
       {/* Delete confirmation dialog */}
       {showDeleteConfirm && (
-        <div className="z-60 fixed inset-0 flex items-center justify-center">
+        <div className="fixed inset-0 z-60 flex items-center justify-center">
           <button
             type="button"
             className="bg-background/80 absolute inset-0 backdrop-blur-sm"

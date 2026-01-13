@@ -34,19 +34,23 @@ import pino from "pino";
 // Determine if we're in development based on NODE_ENV
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-// Configure logger
-const transport = isDevelopment
-  ? pino.transport({
-      target: "pino-pretty",
-      options: {
-        colorize: true,
-        singleLine: false,
-        translateTime: "SYS:standard",
-        ignore: "pid,hostname",
-        messageFormat: "{levelLabel} {msg}",
-      },
-    })
-  : undefined;
+// Check if we're in a browser environment (pino.transport is Node.js only)
+const isBrowser = typeof window !== "undefined";
+
+// Configure logger - only use transport in Node.js development environment
+const transport =
+  isDevelopment && !isBrowser && typeof pino.transport === "function"
+    ? pino.transport({
+        target: "pino-pretty",
+        options: {
+          colorize: true,
+          singleLine: false,
+          translateTime: "SYS:standard",
+          ignore: "pid,hostname",
+          messageFormat: "{levelLabel} {msg}",
+        },
+      })
+    : undefined;
 
 export const logger = pino(
   {

@@ -62,7 +62,7 @@ function ActivityComponent() {
           ) : (
             <div className="relative">
               {/* Timeline line */}
-              <div className="bg-border absolute bottom-0 left-5 top-0 w-px" />
+              <div className="bg-border absolute top-0 bottom-0 left-5 w-px" />
 
               <div className="space-y-6">
                 {activity.map((item, index) => (

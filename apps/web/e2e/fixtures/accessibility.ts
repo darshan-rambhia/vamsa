@@ -24,7 +24,9 @@ export function assertNoA11yViolations(
   expect(
     violations.length,
     `${testName ? `[${testName}] ` : ""}Expected no accessibility violations but found ${violations.length}${
-      criticalViolations.length > 0 ? ` (${criticalViolations.length} critical)` : ""
+      criticalViolations.length > 0
+        ? ` (${criticalViolations.length} critical)`
+        : ""
     }\n\nViolations:\n${violations
       .map((v) => `- ${v.id} (${v.impact}): ${v.message} (${v.nodes} nodes)`)
       .join("\n")}`
@@ -133,8 +135,10 @@ export function getA11ySummary(violations: AccessibilityViolation[]): string {
   const summary = Object.entries(byImpact)
     .sort((a, b) => {
       const order = { critical: 0, serious: 1, moderate: 2, minor: 3 };
-      return (order[a[0] as keyof typeof order] ?? 4) -
-        (order[b[0] as keyof typeof order] ?? 4);
+      return (
+        (order[a[0] as keyof typeof order] ?? 4) -
+        (order[b[0] as keyof typeof order] ?? 4)
+      );
     })
     .map(([impact, count]) => `${count} ${impact}`)
     .join(", ");

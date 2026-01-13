@@ -73,7 +73,7 @@ describe("backupExportSchema", () => {
 
     it("should accept mid-range auditLogDays", () => {
       const values = [7, 30, 60, 90, 180];
-      values.forEach(val => {
+      values.forEach((val) => {
         const input = { auditLogDays: val };
         const parsed = backupExportSchema.parse(input);
         expect(parsed.auditLogDays).toBe(val);
@@ -357,7 +357,7 @@ describe("backupMetadataSchema", () => {
     it("should accept any semantic version string", () => {
       const versions = ["1.0.0", "2.1.3", "0.5.0"];
 
-      versions.forEach(version => {
+      versions.forEach((version) => {
         const metadata = {
           version,
           exportedAt: new Date().toISOString(),

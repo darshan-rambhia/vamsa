@@ -139,7 +139,7 @@ function PeopleListComponent() {
                     </td>
                     <td className="hidden px-4 py-3 md:table-cell">
                       {person.profession ? (
-                        <span className="text-muted-foreground max-w-50 block truncate text-sm">
+                        <span className="text-muted-foreground block max-w-50 truncate text-sm">
                           {person.profession}
                         </span>
                       ) : (

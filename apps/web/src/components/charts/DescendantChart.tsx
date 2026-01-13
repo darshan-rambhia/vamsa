@@ -132,7 +132,10 @@ export function DescendantChart({
         .attr("width", nodeWidth)
         .attr("height", nodeHeight)
         .attr("rx", 8)
-        .style("fill", node.isLiving ? "var(--color-card)" : "var(--color-muted)")
+        .style(
+          "fill",
+          node.isLiving ? "var(--color-card)" : "var(--color-muted)"
+        )
         .style(
           "stroke",
           node.isLiving ? "var(--color-primary)" : "var(--color-border)"
@@ -197,7 +200,9 @@ export function DescendantChart({
         .attr("r", 4)
         .style(
           "fill",
-          node.isLiving ? "var(--color-primary)" : "var(--color-muted-foreground)"
+          node.isLiving
+            ? "var(--color-primary)"
+            : "var(--color-muted-foreground)"
         );
     });
 

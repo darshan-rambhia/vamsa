@@ -9,6 +9,7 @@ The tree page was experiencing 60-second SSR timeouts, but E2E tests passed. Her
 **Test Location**: `apps/web/e2e/admin.spec.ts:510-620`
 
 #### Problem 1: Lenient Timeouts
+
 ```typescript
 // Line 522: Only waits 10 seconds, but SSR timeout is 60 seconds
 .waitFor({ state: "visible", timeout: 10000 })
@@ -17,6 +18,7 @@ The tree page was experiencing 60-second SSR timeouts, but E2E tests passed. Her
 The test gives up after 10 seconds, but the actual SSR timeout is 60 seconds. The page might show a loading spinner within 10 seconds, making the test pass even though it will eventually timeout.
 
 #### Problem 2: Fallback Chains Hide Failures
+
 ```typescript
 // Lines 518-534: Race condition with lenient fallbacks
 await Promise.race([
@@ -31,6 +33,7 @@ await expect(page.locator("main").first()).toBeVisible();
 If the tree fails to load, the test falls back to checking if the main element is visible. Since the main element loads during SSR (before the timeout), this passes!
 
 #### Problem 3: Always-Passing Assertion
+
 ```typescript
 // Line 572: This ALWAYS passes!
 expect(hasTree || isEmpty || true).toBeTruthy();
@@ -55,7 +58,7 @@ test.describe("Family Tree", () => {
       // Wait for tree to render (not just loading spinner)
       await page.waitForSelector('[role="application"]', {
         state: "visible",
-        timeout: 5000 // Stricter timeout
+        timeout: 5000, // Stricter timeout
       });
 
       const loadTime = Date.now() - startTime;
@@ -64,8 +67,8 @@ test.describe("Family Tree", () => {
 
     test("should not show SSR timeout errors", async ({ page }) => {
       const errors: string[] = [];
-      page.on('console', msg => {
-        if (msg.type() === 'error') {
+      page.on("console", (msg) => {
+        if (msg.type() === "error") {
           errors.push(msg.text());
         }
       });
@@ -73,21 +76,21 @@ test.describe("Family Tree", () => {
       await page.goto("/tree?view=focused");
 
       // Verify no SSR stream timeout errors
-      expect(errors.some(e => e.includes('SSR stream'))).toBe(false);
-      expect(errors.some(e => e.includes('ECONNRESET'))).toBe(false);
+      expect(errors.some((e) => e.includes("SSR stream"))).toBe(false);
+      expect(errors.some((e) => e.includes("ECONNRESET"))).toBe(false);
     });
 
     test("should render tree nodes within 3 seconds", async ({ page }) => {
       await page.goto("/tree?view=focused");
 
       // Wait for actual tree nodes, not just the container
-      await page.waitForSelector('[data-id]', {
+      await page.waitForSelector("[data-id]", {
         state: "visible",
-        timeout: 3000
+        timeout: 3000,
       });
 
       // Verify at least one person node is rendered
-      const nodes = await page.locator('[data-id]').count();
+      const nodes = await page.locator("[data-id]").count();
       expect(nodes).toBeGreaterThan(0);
     });
   });
@@ -143,9 +146,10 @@ await expect(tree.or(emptyState)).toBeVisible({ timeout: 5000 });
 ```typescript
 test("should monitor page load performance", async ({ page }) => {
   const metrics = await page.evaluate(() => {
-    const perfData = performance.getEntriesByType('navigation')[0];
+    const perfData = performance.getEntriesByType("navigation")[0];
     return {
-      domContentLoaded: perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart,
+      domContentLoaded:
+        perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart,
       loadComplete: perfData.loadEventEnd - perfData.loadEventStart,
     };
   });
@@ -160,17 +164,19 @@ test("should monitor page load performance", async ({ page }) => {
 Test that critical user flows complete successfully:
 
 ```typescript
-test("complete user flow: login -> people -> tree -> person detail", async ({ page }) => {
+test("complete user flow: login -> people -> tree -> person detail", async ({
+  page,
+}) => {
   await page.goto("/login");
   // Login
-  await page.fill('input[type="email"]', 'admin@test.vamsa.local');
-  await page.fill('input[type="password"]', 'test');
+  await page.fill('input[type="email"]', "admin@test.vamsa.local");
+  await page.fill('input[type="password"]', "test");
   await page.click('button[type="submit"]');
 
   // Navigate to people
   await page.click('a[href="/people"]');
   await expect(page).toHaveURL(/\/people/);
-  await page.waitForSelector('table', { timeout: 3000 });
+  await page.waitForSelector("table", { timeout: 3000 });
 
   // Navigate to tree
   await page.click('a[href="/tree"]');
@@ -178,7 +184,7 @@ test("complete user flow: login -> people -> tree -> person detail", async ({ pa
   await page.waitForSelector('[role="application"]', { timeout: 3000 });
 
   // Click a person node
-  await page.click('[data-id]');
+  await page.click("[data-id]");
   await expect(page).toHaveURL(/\/people\/.+/);
 });
 ```
@@ -186,6 +192,7 @@ test("complete user flow: login -> people -> tree -> person detail", async ({ pa
 ### Summary
 
 The E2E tests were too lenient with:
+
 1. **Timeouts**: 10s timeout when page actually takes 60s to fail
 2. **Fallbacks**: Tests fall back to checking basic elements instead of actual tree
 3. **Assertions**: Always-passing assertions (`|| true`)

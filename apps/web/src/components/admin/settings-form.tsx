@@ -158,7 +158,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             <div className="space-y-1">
               <Label
                 htmlFor="allowSelfRegistration"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Allow self-registration
               </Label>
@@ -184,7 +184,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             <div className="space-y-1">
               <Label
                 htmlFor="requireApprovalForEdits"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
                 Require approval for edits
               </Label>

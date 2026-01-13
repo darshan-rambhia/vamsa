@@ -1,10 +1,13 @@
 /// <reference types="vite/client" />
+import { useState } from "react";
 import {
   HeadContent,
   Link,
   Outlet,
   Scripts,
   createRootRoute,
+  useRouter,
+  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider } from "react-i18next";
@@ -34,8 +37,92 @@ function NotFound() {
   );
 }
 
+function RootErrorComponent({ error, reset }: ErrorComponentProps) {
+  const [showDetails, setShowDetails] = useState(false);
+  const router = useRouter();
+  const isDev = import.meta.env.DEV;
+
+  const errorMessage =
+    error instanceof Error ? error.message : "An unexpected error occurred";
+  const errorStack = error instanceof Error ? error.stack : undefined;
+
+  const handleRetry = () => {
+    reset();
+    router.invalidate();
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
+      <div className="text-center">
+        <div className="bg-destructive/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+          <svg
+            className="text-destructive h-8 w-8"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        </div>
+        <h1 className="font-display text-2xl font-semibold">
+          Something went wrong
+        </h1>
+        <p className="text-muted-foreground mt-2 max-w-md">
+          We encountered an unexpected error. Please try again or return to the
+          home page.
+        </p>
+      </div>
+
+      <div className="flex gap-3">
+        <button
+          onClick={handleRetry}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
+        >
+          Try Again
+        </button>
+        <Link
+          to="/"
+          className="border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md border px-4 py-2 text-sm font-medium transition-colors"
+        >
+          Go Home
+        </Link>
+      </div>
+
+      {isDev && (
+        <div className="w-full max-w-2xl">
+          <button
+            onClick={() => setShowDetails(!showDetails)}
+            className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
+          >
+            {showDetails ? "Hide" : "Show"} technical details
+          </button>
+
+          {showDetails && (
+            <div className="bg-muted/50 mt-3 overflow-auto rounded-lg border p-4">
+              <p className="text-destructive mb-2 font-mono text-sm font-medium">
+                {errorMessage}
+              </p>
+              {errorStack && (
+                <pre className="text-muted-foreground overflow-x-auto whitespace-pre-wrap font-mono text-xs">
+                  {errorStack}
+                </pre>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export const Route = createRootRoute({
   notFoundComponent: NotFound,
+  errorComponent: RootErrorComponent,
   head: () => ({
     meta: [
       {

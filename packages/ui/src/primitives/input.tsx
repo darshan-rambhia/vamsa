@@ -12,7 +12,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
           // Placeholder - muted bark brown
           "placeholder:text-muted-foreground",
           // Focus state - forest green accent
-          "focus-visible:border-primary focus-visible:ring-primary/20 focus-visible:outline-none focus-visible:ring-2",
+          "focus-visible:border-primary focus-visible:ring-primary/20 focus-visible:ring-2 focus-visible:outline-none",
           // Hover state
           "hover:border-primary/50",
           // Transition

@@ -78,7 +78,7 @@ export function SourceDetailModal({
               <h4 className="text-muted-foreground mb-1 text-sm font-medium">
                 Description
               </h4>
-              <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+              <p className="text-foreground leading-relaxed whitespace-pre-wrap">
                 {source.description}
               </p>
             </div>
@@ -90,7 +90,7 @@ export function SourceDetailModal({
               <h4 className="text-muted-foreground mb-1 text-sm font-medium">
                 Notes
               </h4>
-              <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+              <p className="text-foreground leading-relaxed whitespace-pre-wrap">
                 {source.notes}
               </p>
             </div>

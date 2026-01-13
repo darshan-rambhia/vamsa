@@ -72,7 +72,7 @@ export function PlaceSearch({
           className="pr-10"
         />
         {isLoading && (
-          <div className="absolute right-3 top-1/2 -translate-y-1/2">
+          <div className="absolute top-1/2 right-3 -translate-y-1/2">
             <svg
               className="text-muted-foreground h-4 w-4 animate-spin"
               fill="none"

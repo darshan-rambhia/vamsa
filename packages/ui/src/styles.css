@@ -150,7 +150,7 @@
 
   /* Refined focus styles */
   :focus-visible {
-    @apply ring-ring ring-offset-background outline-none ring-2 ring-offset-2;
+    @apply ring-ring ring-offset-background ring-2 ring-offset-2 outline-none;
   }
 
   /* Selection color */

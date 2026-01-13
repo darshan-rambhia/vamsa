@@ -146,7 +146,7 @@ export function PlaceDetailModal({ placeId, onClose }: PlaceDetailModalProps) {
               <p className="text-muted-foreground mb-2 text-sm font-medium">
                 Description
               </p>
-              <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+              <p className="text-foreground leading-relaxed whitespace-pre-wrap">
                 {place.description}
               </p>
             </div>

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Use legacy config file for proper content path scanning */
+@config "../tailwind.config.ts";
+
 /* ============================================
    VAMSA DESIGN SYSTEM
    Editorial + Earth Tones - Tailwind CSS v4

@@ -57,61 +57,68 @@ export const exportBackup = createServerFn({ method: "POST" })
     auditLogCutoff.setDate(auditLogCutoff.getDate() - data.auditLogDays);
 
     // Gather all data in parallel for performance
-    const [people, relationships, users, suggestions, settings, auditLogs, mediaObjects] =
-      await Promise.all([
-        // People ordered by name
-        prisma.person.findMany({
-          orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-        }),
+    const [
+      people,
+      relationships,
+      users,
+      suggestions,
+      settings,
+      auditLogs,
+      mediaObjects,
+    ] = await Promise.all([
+      // People ordered by name
+      prisma.person.findMany({
+        orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+      }),
 
-        // Relationships by creation
-        prisma.relationship.findMany({
-          orderBy: { createdAt: "asc" },
-        }),
+      // Relationships by creation
+      prisma.relationship.findMany({
+        orderBy: { createdAt: "asc" },
+      }),
 
-        // Users WITHOUT password hashes (SECURITY)
-        prisma.user.findMany({
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            personId: true,
-            role: true,
-            isActive: true,
-            mustChangePassword: true,
-            invitedById: true,
-            createdAt: true,
-            updatedAt: true,
-            lastLoginAt: true,
-            preferredLanguage: true,
-            // password excluded for security
-          },
-          orderBy: { createdAt: "asc" },
-        }),
+      // Users WITHOUT password hashes (SECURITY)
+      prisma.user.findMany({
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          personId: true,
+          role: true,
+          isActive: true,
+          mustChangePassword: true,
+          invitedById: true,
+          createdAt: true,
+          updatedAt: true,
+          lastLoginAt: true,
+          preferredLanguage: true,
+          // password excluded for security
+        },
+        orderBy: { createdAt: "asc" },
+      }),
 
-        // Suggestions
-        prisma.suggestion.findMany({
-          orderBy: { submittedAt: "desc" },
-        }),
+      // Suggestions
+      prisma.suggestion.findMany({
+        orderBy: { submittedAt: "desc" },
+      }),
 
-        // Family settings
-        prisma.familySettings.findFirst(),
+      // Family settings
+      prisma.familySettings.findFirst(),
 
-        // Audit logs (filtered)
-        data.includeAuditLogs
-          ? prisma.auditLog.findMany({
-              where: { createdAt: { gte: auditLogCutoff } },
-              orderBy: { createdAt: "desc" },
-            })
-          : [],
+      // Audit logs (filtered)
+      data.includeAuditLogs
+        ? prisma.auditLog.findMany({
+            where: { createdAt: { gte: auditLogCutoff } },
+            orderBy: { createdAt: "desc" },
+          })
+        : [],
 
-        // Media objects for photo collection
-        data.includePhotos
-          ? prisma.mediaObject.findMany({
-              orderBy: { uploadedAt: "asc" },
-            })
-          : [],
-      ]);
+      // Media objects for photo collection
+      data.includePhotos
+        ? prisma.mediaObject.findMany({
+            orderBy: { uploadedAt: "asc" },
+          })
+        : [],
+    ]);
 
     // Create metadata
     const metadata: BackupMetadata = {

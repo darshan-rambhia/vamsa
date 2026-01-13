@@ -63,7 +63,7 @@ export function MediaCard({
 
       {/* Title overlay on hover */}
       {media.title && (
-        <div className="bg-linear-to-t pointer-events-none absolute inset-x-0 bottom-0 from-black/60 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-linear-to-t from-black/60 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
           <p className="line-clamp-2 text-sm font-medium text-white">
             {media.title}
           </p>
@@ -72,7 +72,7 @@ export function MediaCard({
 
       {/* Primary badge */}
       {media.isPrimary && (
-        <div className="absolute left-2 top-2">
+        <div className="absolute top-2 left-2">
           <Badge className="bg-primary/90 text-primary-foreground border-0">
             Primary
           </Badge>
@@ -81,14 +81,14 @@ export function MediaCard({
 
       {/* Menu button */}
       {(onSetPrimary || onEdit || onDelete) && (
-        <div className="absolute right-2 top-2">
+        <div className="absolute top-2 right-2">
           <div className="relative">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowMenu(!showMenu);
               }}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 hover:bg-black/70 group-hover:opacity-100"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white opacity-0 backdrop-blur-sm transition-opacity duration-200 group-hover:opacity-100 hover:bg-black/70"
             >
               <svg
                 className="h-5 w-5"
@@ -124,7 +124,7 @@ export function MediaCard({
                   }}
                   aria-label="Close menu"
                 />
-                <div className="border-border bg-card absolute right-0 top-10 z-20 min-w-40 rounded-lg border-2 shadow-lg">
+                <div className="border-border bg-card absolute top-10 right-0 z-20 min-w-40 rounded-lg border-2 shadow-lg">
                   {onSetPrimary && !media.isPrimary && (
                     <button
                       onClick={(e) => {
