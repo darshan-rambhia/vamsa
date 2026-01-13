@@ -8,6 +8,11 @@ coveragePathIgnorePatterns = [
   "**/*.spec.tsx"
 ]
 
+# Only run unit tests, exclude E2E tests
+testPathIgnorePatterns = [
+  "**/e2e/**"
+]
+
 # Coverage thresholds to maintain code quality
 [test.coverageThreshold]
 lines = 95

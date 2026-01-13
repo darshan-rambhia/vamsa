@@ -5,7 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-runtime-f9f1e1?logo=bun)](https://bun.sh/)
 [![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma)](https://www.prisma.io/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?logo=postgresql)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-336791?logo=postgresql)](https://www.postgresql.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
 > _Sanskrit: वंश (vaṃśa) - "bamboo; family tree; lineage"_
@@ -28,7 +28,7 @@ A modern web application for managing family genealogy with server-side renderin
 
 - **Framework**: TanStack Start (React + Vite via Vinxi)
 - **Backend API**: TanStack React Start server functions
-- **Database**: PostgreSQL 16 with Prisma ORM
+- **Database**: PostgreSQL 18 with Prisma ORM
 - **Runtime**: Bun
 - **Monorepo**: pnpm workspaces + Turborepo
 - **UI**: Tailwind CSS + shadcn/ui components
@@ -71,13 +71,13 @@ bun install
 # Configure environment
 cp .env.example .env
 
-# Start PostgreSQL (if not using Docker)
+# Start PostgreSQL 18 (if not using Docker Compose)
 docker run -d --name vamsa-postgres \
   -e POSTGRES_USER=vamsa \
   -e POSTGRES_PASSWORD=vamsa \
   -e POSTGRES_DB=vamsa \
   -p 5432:5432 \
-  postgres:16-alpine
+  postgres:18-alpine
 
 # Set DATABASE_URL in .env
 # DATABASE_URL="postgresql://vamsa:vamsa@localhost:5432/vamsa"

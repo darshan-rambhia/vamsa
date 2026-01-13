@@ -283,7 +283,9 @@ describe("Calendar Server Functions", () => {
     });
 
     it("should handle long expiry of 10 years", () => {
-      const tenYearsFromNow = new Date(Date.now() + 365 * 10 * 24 * 60 * 60 * 1000);
+      const tenYearsFromNow = new Date(
+        Date.now() + 365 * 10 * 24 * 60 * 60 * 1000
+      );
 
       expect(tenYearsFromNow.getTime()).toBeGreaterThan(Date.now());
     });

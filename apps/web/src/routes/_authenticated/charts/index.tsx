@@ -25,7 +25,10 @@ import {
   getCompactTreeData,
   getStatistics,
 } from "~/server/charts";
-import { ChartControls, type ChartType } from "~/components/charts/ChartControls";
+import {
+  ChartControls,
+  type ChartType,
+} from "~/components/charts/ChartControls";
 import { AncestorChart } from "~/components/charts/AncestorChart";
 import { DescendantChart } from "~/components/charts/DescendantChart";
 import { HourglassChart } from "~/components/charts/HourglassChart";
@@ -35,6 +38,7 @@ import { RelationshipMatrix } from "~/components/charts/RelationshipMatrix";
 import { BowtieChart } from "~/components/charts/BowtieChart";
 import { CompactTree } from "~/components/charts/CompactTree";
 import { StatisticsCharts } from "~/components/charts/StatisticsCharts";
+import { exportToPDF, exportToPNG, exportToSVG } from "~/lib/chart-export";
 
 export const Route = createFileRoute("/_authenticated/charts/")({
   component: ChartsComponent,
@@ -127,7 +131,11 @@ function ChartsComponent() {
           return null;
       }
     },
-    enabled: chartType === "timeline" || chartType === "matrix" || chartType === "statistics" || !!selectedPersonId,
+    enabled:
+      chartType === "timeline" ||
+      chartType === "matrix" ||
+      chartType === "statistics" ||
+      !!selectedPersonId,
   });
 
   // Auto-select first person if none selected
@@ -141,55 +149,66 @@ function ChartsComponent() {
     setSelectedPersonId(nodeId);
   };
 
+  const getChartTitle = () => {
+    const typeNames: Record<ChartType, string> = {
+      ancestor: "Ancestor Chart",
+      descendant: "Descendant Chart",
+      hourglass: "Hourglass Chart",
+      fan: "Fan Chart",
+      timeline: "Timeline Chart",
+      matrix: "Relationship Matrix",
+      bowtie: "Bowtie Chart",
+      compact: "Compact Tree",
+      statistics: "Statistics",
+    };
+    return typeNames[chartType];
+  };
+
+  const handleExportPDF = async () => {
+    const svg = document.querySelector(".chart-container svg");
+    if (!svg) return;
+
+    try {
+      // Determine if chart is wide (should use landscape orientation)
+      const bbox = (svg as SVGGraphicsElement).getBBox();
+      const isWideChart = bbox.width > bbox.height * 1.2;
+
+      await exportToPDF(svg as SVGElement, {
+        title: getChartTitle(),
+        orientation: isWideChart ? "landscape" : "portrait",
+        includeMetadata: true,
+        scale: 1,
+      });
+    } catch (error) {
+      console.error("Failed to export PDF:", error);
+      alert("Failed to export chart as PDF. Please try again.");
+    }
+  };
+
   const handleExportPNG = () => {
     const svg = document.querySelector(".chart-container svg");
     if (!svg) return;
 
-    // Create a canvas element
-    const canvas = document.createElement("canvas");
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    // Get SVG dimensions
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const svgBlob = new Blob([svgData], {
-      type: "image/svg+xml;charset=utf-8",
-    });
-    const url = URL.createObjectURL(svgBlob);
-
-    const img = new Image();
-    img.onload = () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
-      ctx.drawImage(img, 0, 0);
-
-      canvas.toBlob((blob) => {
-        if (!blob) return;
-        const link = document.createElement("a");
-        link.download = `vamsa-${chartType}-chart.png`;
-        link.href = URL.createObjectURL(blob);
-        link.click();
-        URL.revokeObjectURL(url);
-      });
-    };
-    img.src = url;
+    try {
+      const filename = `vamsa-${chartType}-chart-${new Date().toISOString().split("T")[0]}.png`;
+      exportToPNG(svg as SVGElement, filename, 2);
+    } catch (error) {
+      console.error("Failed to export PNG:", error);
+      alert("Failed to export chart as PNG. Please try again.");
+    }
   };
 
   const handleExportSVG = () => {
     const svg = document.querySelector(".chart-container svg");
     if (!svg) return;
 
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const svgBlob = new Blob([svgData], {
-      type: "image/svg+xml;charset=utf-8",
-    });
-    const url = URL.createObjectURL(svgBlob);
-
-    const link = document.createElement("a");
-    link.download = `vamsa-${chartType}-chart.svg`;
-    link.href = url;
-    link.click();
-    URL.revokeObjectURL(url);
+    try {
+      const filename = `vamsa-${chartType}-chart-${new Date().toISOString().split("T")[0]}.svg`;
+      exportToSVG(svg as SVGElement, filename);
+    } catch (error) {
+      console.error("Failed to export SVG:", error);
+      alert("Failed to export chart as SVG. Please try again.");
+    }
   };
 
   return (
@@ -247,6 +266,7 @@ function ChartsComponent() {
         onDescendantGenerationsChange={setDescendantGenerations}
         onMaxPeopleChange={setMaxPeople}
         onSortByChange={setSortBy}
+        onExportPDF={handleExportPDF}
         onExportPNG={handleExportPNG}
         onExportSVG={handleExportSVG}
       />
@@ -254,7 +274,10 @@ function ChartsComponent() {
       {/* Chart Rendering Area */}
       <div className="chart-container min-h-[600px]">
         {/* Timeline, Matrix, and Statistics don't need person selection */}
-        {chartType !== "timeline" && chartType !== "matrix" && chartType !== "statistics" && !selectedPersonId ? (
+        {chartType !== "timeline" &&
+        chartType !== "matrix" &&
+        chartType !== "statistics" &&
+        !selectedPersonId ? (
           <Card className="flex h-[600px] items-center justify-center">
             <CardContent className="text-center">
               <div className="bg-primary/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
@@ -315,14 +338,26 @@ function ChartsComponent() {
               </p>
             </CardContent>
           </Card>
-        ) : !chartData || (
+        ) : !chartData ||
           // Check if data is empty based on chart type
-          (chartType === "timeline" && "entries" in chartData && chartData.entries.length === 0) ||
-          (chartType === "matrix" && "people" in chartData && chartData.people.length === 0) ||
-          (chartType === "statistics" && "ageDistribution" in chartData && chartData.metadata.totalPeople === 0) ||
-          (chartType === "compact" && "flatList" in chartData && chartData.flatList.length === 0) ||
-          (!("entries" in chartData) && !("people" in chartData) && !("ageDistribution" in chartData) && !("flatList" in chartData) && "nodes" in chartData && chartData.nodes.length === 0)
-        ) ? (
+          (chartType === "timeline" &&
+            "entries" in chartData &&
+            chartData.entries.length === 0) ||
+          (chartType === "matrix" &&
+            "people" in chartData &&
+            chartData.people.length === 0) ||
+          (chartType === "statistics" &&
+            "ageDistribution" in chartData &&
+            chartData.metadata.totalPeople === 0) ||
+          (chartType === "compact" &&
+            "flatList" in chartData &&
+            chartData.flatList.length === 0) ||
+          (!("entries" in chartData) &&
+            !("people" in chartData) &&
+            !("ageDistribution" in chartData) &&
+            !("flatList" in chartData) &&
+            "nodes" in chartData &&
+            chartData.nodes.length === 0) ? (
           <Card className="flex h-[600px] items-center justify-center">
             <CardContent className="text-center">
               <div className="bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
@@ -365,7 +400,11 @@ function ChartsComponent() {
             </CardContent>
           </Card>
         ) : (
-          <div className={chartType === "statistics" ? "min-h-[600px]" : "h-[600px]"}>
+          <div
+            className={
+              chartType === "statistics" ? "min-h-[600px]" : "h-[600px]"
+            }
+          >
             {chartType === "ancestor" && "nodes" in chartData && (
               <AncestorChart
                 nodes={chartData.nodes}
@@ -412,7 +451,9 @@ function ChartsComponent() {
             )}
             {chartType === "bowtie" && "nodes" in chartData && (
               <BowtieChart
-                nodes={chartData.nodes as import("~/server/charts").BowtieNode[]}
+                nodes={
+                  chartData.nodes as import("~/server/charts").BowtieNode[]
+                }
                 edges={chartData.edges}
                 rootPersonId={selectedPersonId}
                 onNodeClick={handleNodeClick}
@@ -463,31 +504,38 @@ function ChartsComponent() {
                 <p className="font-display text-lg font-medium">
                   {chartType === "timeline" && "minYear" in chartData.metadata
                     ? `${chartData.metadata.minYear} - ${chartData.metadata.maxYear}`
-                    : chartType === "matrix" && "totalRelationships" in chartData.metadata
+                    : chartType === "matrix" &&
+                        "totalRelationships" in chartData.metadata
                       ? chartData.metadata.totalRelationships
-                      : chartType === "statistics" && "livingCount" in chartData.metadata
+                      : chartType === "statistics" &&
+                          "livingCount" in chartData.metadata
                         ? chartData.metadata.livingCount
                         : "totalGenerations" in chartData.metadata
                           ? chartData.metadata.totalGenerations
                           : "-"}
                 </p>
               </div>
-              {chartType === "bowtie" && "paternalCount" in chartData.metadata && (
-                <>
-                  <div>
-                    <p className="text-muted-foreground text-sm">Paternal Ancestors</p>
-                    <p className="font-display text-lg font-medium">
-                      {chartData.metadata.paternalCount}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-sm">Maternal Ancestors</p>
-                    <p className="font-display text-lg font-medium">
-                      {chartData.metadata.maternalCount}
-                    </p>
-                  </div>
-                </>
-              )}
+              {chartType === "bowtie" &&
+                "paternalCount" in chartData.metadata && (
+                  <>
+                    <div>
+                      <p className="text-muted-foreground text-sm">
+                        Paternal Ancestors
+                      </p>
+                      <p className="font-display text-lg font-medium">
+                        {chartData.metadata.paternalCount}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-sm">
+                        Maternal Ancestors
+                      </p>
+                      <p className="font-display text-lg font-medium">
+                        {chartData.metadata.maternalCount}
+                      </p>
+                    </div>
+                  </>
+                )}
             </div>
           </CardContent>
         </Card>

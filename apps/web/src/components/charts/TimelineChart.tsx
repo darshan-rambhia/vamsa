@@ -28,7 +28,10 @@ export function TimelineChart({
     const width = container.clientWidth;
     const rowHeight = 40;
     const margin = { top: 60, right: 40, bottom: 40, left: 200 };
-    const height = Math.max(400, margin.top + entries.length * rowHeight + margin.bottom);
+    const height = Math.max(
+      400,
+      margin.top + entries.length * rowHeight + margin.bottom
+    );
 
     // Clear previous chart
     d3.select(svgRef.current).selectAll("*").remove();
@@ -136,7 +139,7 @@ export function TimelineChart({
       const startYear = entry.birthYear ?? minYear;
       const endYear = entry.isLiving
         ? currentYear
-        : entry.deathYear ?? startYear + 1;
+        : (entry.deathYear ?? startYear + 1);
 
       // Only draw bar if we have valid year data
       if (entry.birthYear !== null) {
@@ -222,7 +225,14 @@ export function TimelineChart({
             ? `${entry.birthYear} - ${entry.deathYear}`
             : `b. ${entry.birthYear}`;
 
-        const barWidth = Math.max(4, xScale(entry.isLiving ? currentYear : entry.deathYear ?? entry.birthYear + 1) - xScale(entry.birthYear));
+        const barWidth = Math.max(
+          4,
+          xScale(
+            entry.isLiving
+              ? currentYear
+              : (entry.deathYear ?? entry.birthYear + 1)
+          ) - xScale(entry.birthYear)
+        );
 
         // Only show year text if bar is wide enough
         if (barWidth > 80) {
@@ -277,9 +287,7 @@ export function TimelineChart({
         height / (bounds.height + 40),
         1
       );
-      const transform = d3.zoomIdentity
-        .translate(20, 20)
-        .scale(scale);
+      const transform = d3.zoomIdentity.translate(20, 20).scale(scale);
 
       svg.transition().duration(750).call(zoom.transform, transform);
     }

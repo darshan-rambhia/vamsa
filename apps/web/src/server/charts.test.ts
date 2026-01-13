@@ -99,9 +99,7 @@ describe("Chart Server Functions", () => {
           firstName: p.firstName,
           lastName: p.lastName,
           birthYear: p.dateOfBirth ? p.dateOfBirth.getFullYear() : null,
-          deathYear: p.dateOfPassing
-            ? p.dateOfPassing.getFullYear()
-            : null,
+          deathYear: p.dateOfPassing ? p.dateOfPassing.getFullYear() : null,
           isLiving: p.isLiving,
           gender: p.gender,
           photoUrl: p.photoUrl,
@@ -120,9 +118,7 @@ describe("Chart Server Functions", () => {
           firstName: p.firstName,
           lastName: p.lastName,
           birthYear: p.dateOfBirth ? p.dateOfBirth.getFullYear() : null,
-          deathYear: p.dateOfPassing
-            ? p.dateOfPassing.getFullYear()
-            : null,
+          deathYear: p.dateOfPassing ? p.dateOfPassing.getFullYear() : null,
           isLiving: p.isLiving,
           gender: p.gender,
           photoUrl: p.photoUrl,
@@ -151,9 +147,7 @@ describe("Chart Server Functions", () => {
           firstName: p.firstName,
           lastName: p.lastName,
           birthYear: p.dateOfBirth ? p.dateOfBirth.getFullYear() : null,
-          deathYear: p.dateOfPassing
-            ? p.dateOfPassing.getFullYear()
-            : null,
+          deathYear: p.dateOfPassing ? p.dateOfPassing.getFullYear() : null,
           isLiving: p.isLiving,
           gender: p.gender,
           photoUrl: p.photoUrl,
@@ -350,14 +344,12 @@ describe("Chart Server Functions", () => {
 
   describe("getRelationshipMatrix", () => {
     it("should create matrix with all people", () => {
-      const people: MatrixPerson[] = mockPersons
-        .slice(0, 3)
-        .map((p) => ({
-          id: p.id,
-          firstName: p.firstName,
-          lastName: p.lastName,
-          gender: p.gender,
-        }));
+      const people: MatrixPerson[] = mockPersons.slice(0, 3).map((p) => ({
+        id: p.id,
+        firstName: p.firstName,
+        lastName: p.lastName,
+        gender: p.gender,
+      }));
 
       expect(people.length).toBe(3);
     });
@@ -374,8 +366,7 @@ describe("Chart Server Functions", () => {
           matrix.push({
             personId: person.id,
             relatedPersonId: relatedPerson.id,
-            relationshipType:
-              person.id === relatedPerson.id ? "SELF" : null,
+            relationshipType: person.id === relatedPerson.id ? "SELF" : null,
             strength: person.id === relatedPerson.id ? 1 : 0,
           });
         }
@@ -398,8 +389,7 @@ describe("Chart Server Functions", () => {
           matrix.push({
             personId: person.id,
             relatedPersonId: relatedPerson.id,
-            relationshipType:
-              person.id === relatedPerson.id ? "SELF" : null,
+            relationshipType: person.id === relatedPerson.id ? "SELF" : null,
             strength: person.id === relatedPerson.id ? 1 : 0,
           });
         }
@@ -427,8 +417,7 @@ describe("Chart Server Functions", () => {
           matrix.push({
             personId: person.id,
             relatedPersonId: relatedPerson.id,
-            relationshipType:
-              person.id === relatedPerson.id ? "SELF" : relType,
+            relationshipType: person.id === relatedPerson.id ? "SELF" : relType,
             strength: relType ? 1 : 0,
           });
         }
@@ -1679,7 +1668,11 @@ describe("Chart Server Functions", () => {
       }
 
       const person = mockPersons[4]; // Charlie has no birth date
-      const age = calculateAge(person.dateOfBirth, person.dateOfPassing, person.isLiving);
+      const age = calculateAge(
+        person.dateOfBirth,
+        person.dateOfPassing,
+        person.isLiving
+      );
       expect(age).toBeNull();
     });
 

@@ -129,9 +129,12 @@ export async function serveMedia(c: Context): Promise<Response> {
 
     // Check If-None-Match header for 304 Not Modified
     if (c.req.header("if-none-match") === etag) {
-      return c.text("", 304, {
-        ETag: etag,
-        "Cache-Control": "public, max-age=31536000", // 1 year for immutable assets
+      return new Response(null, {
+        status: 304,
+        headers: {
+          ETag: etag,
+          "Cache-Control": "public, max-age=31536000", // 1 year for immutable assets
+        },
       });
     }
 

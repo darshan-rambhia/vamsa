@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import {
-  Input,
-  Button,
-  Badge,
-} from "@vamsa/ui";
+import { Input, Button, Badge } from "@vamsa/ui";
 import type { CompactTreeResult } from "~/server/charts";
 
 interface CompactTreeProps {
@@ -350,14 +346,14 @@ export function CompactTree({ data, onNodeClick }: CompactTreeProps) {
                   <div
                     key={node.id}
                     role="treeitem"
-                    aria-expanded={node.hasChildren ? node.isExpanded : undefined}
+                    aria-expanded={
+                      node.hasChildren ? node.isExpanded : undefined
+                    }
                     aria-level={node.depth + 1}
                     aria-selected={isFocused}
                     tabIndex={isFocused ? 0 : -1}
                     className={`flex h-12 cursor-pointer items-center gap-2 px-4 transition-colors ${
-                      isFocused
-                        ? "bg-accent"
-                        : "hover:bg-muted/50"
+                      isFocused ? "bg-accent" : "hover:bg-muted/50"
                     }`}
                     style={{ paddingLeft: 16 + node.depth * INDENT_SIZE }}
                     onClick={() => onNodeClick?.(node.id)}
@@ -372,9 +368,7 @@ export function CompactTree({ data, onNodeClick }: CompactTreeProps) {
                     <button
                       type="button"
                       className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded transition-colors ${
-                        node.hasChildren
-                          ? "hover:bg-muted"
-                          : "invisible"
+                        node.hasChildren ? "hover:bg-muted" : "invisible"
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -406,9 +400,7 @@ export function CompactTree({ data, onNodeClick }: CompactTreeProps) {
                     {/* Living indicator */}
                     <div
                       className={`h-2 w-2 flex-shrink-0 rounded-full ${
-                        node.isLiving
-                          ? "bg-primary"
-                          : "bg-muted-foreground"
+                        node.isLiving ? "bg-primary" : "bg-muted-foreground"
                       }`}
                     />
 
@@ -429,7 +421,8 @@ export function CompactTree({ data, onNodeClick }: CompactTreeProps) {
                     {/* Spouse count */}
                     {node.spouseCount > 0 && (
                       <Badge variant="secondary" className="flex-shrink-0">
-                        {node.spouseCount} spouse{node.spouseCount > 1 ? "s" : ""}
+                        {node.spouseCount} spouse
+                        {node.spouseCount > 1 ? "s" : ""}
                       </Badge>
                     )}
 
@@ -441,10 +434,7 @@ export function CompactTree({ data, onNodeClick }: CompactTreeProps) {
                     </span>
 
                     {/* Generation */}
-                    <Badge
-                      variant="outline"
-                      className="flex-shrink-0 text-xs"
-                    >
+                    <Badge variant="outline" className="flex-shrink-0 text-xs">
                       {getGenerationLabel(node.generation)}
                     </Badge>
                   </div>
@@ -458,8 +448,8 @@ export function CompactTree({ data, onNodeClick }: CompactTreeProps) {
       {/* Footer */}
       <div className="text-muted-foreground flex items-center justify-between border-t p-3 text-sm">
         <div>
-          <span className="font-medium">{data.metadata.totalPeople}</span> people
-          across{" "}
+          <span className="font-medium">{data.metadata.totalPeople}</span>{" "}
+          people across{" "}
           <span className="font-medium">{data.metadata.totalGenerations}</span>{" "}
           generations
         </div>

@@ -170,11 +170,17 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                   />
                   <XAxis
                     dataKey="bracket"
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    tick={{
+                      fill: "hsl(var(--muted-foreground))",
+                      fontSize: 12,
+                    }}
                     axisLine={{ stroke: "hsl(var(--border))" }}
                   />
                   <YAxis
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    tick={{
+                      fill: "hsl(var(--muted-foreground))",
+                      fontSize: 12,
+                    }}
                     axisLine={{ stroke: "hsl(var(--border))" }}
                   />
                   <Tooltip contentStyle={tooltipStyle} />
@@ -188,9 +194,7 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
               </ResponsiveContainer>
             ) : (
               <div className="flex h-[300px] items-center justify-center">
-                <p className="text-muted-foreground">
-                  No age data available
-                </p>
+                <p className="text-muted-foreground">No age data available</p>
               </div>
             )}
           </CardContent>
@@ -218,7 +222,10 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                     {genderData.map((entry, index) => (
                       <Cell
                         key={`cell-${index}`}
-                        fill={GENDER_COLORS[entry.gender] || COLORS[index % COLORS.length]}
+                        fill={
+                          GENDER_COLORS[entry.gender] ||
+                          COLORS[index % COLORS.length]
+                        }
                       />
                     ))}
                   </Pie>
@@ -251,12 +258,18 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                   />
                   <XAxis
                     dataKey="generation"
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    tick={{
+                      fill: "hsl(var(--muted-foreground))",
+                      fontSize: 12,
+                    }}
                     axisLine={{ stroke: "hsl(var(--border))" }}
                     tickFormatter={(value) => `Gen ${value}`}
                   />
                   <YAxis
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    tick={{
+                      fill: "hsl(var(--muted-foreground))",
+                      fontSize: 12,
+                    }}
                     axisLine={{ stroke: "hsl(var(--border))" }}
                   />
                   <Tooltip contentStyle={tooltipStyle} />
@@ -309,13 +322,19 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                   />
                   <XAxis
                     type="number"
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    tick={{
+                      fill: "hsl(var(--muted-foreground))",
+                      fontSize: 12,
+                    }}
                     axisLine={{ stroke: "hsl(var(--border))" }}
                   />
                   <YAxis
                     dataKey="surname"
                     type="category"
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    tick={{
+                      fill: "hsl(var(--muted-foreground))",
+                      fontSize: 12,
+                    }}
                     axisLine={{ stroke: "hsl(var(--border))" }}
                     width={100}
                   />
@@ -323,7 +342,10 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                     contentStyle={tooltipStyle}
                     formatter={(value, _name, props) => {
                       const payload = props.payload as { percentage?: number };
-                      return [`${value} (${payload.percentage ?? 0}%)`, "Count"];
+                      return [
+                        `${value} (${payload.percentage ?? 0}%)`,
+                        "Count",
+                      ];
                     }}
                   />
                   <Bar
@@ -352,23 +374,26 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
           <CardContent>
             {geographicDistribution.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart
-                  data={geographicDistribution}
-                  layout="vertical"
-                >
+                <BarChart data={geographicDistribution} layout="vertical">
                   <CartesianGrid
                     strokeDasharray="3 3"
                     stroke="hsl(var(--border))"
                   />
                   <XAxis
                     type="number"
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    tick={{
+                      fill: "hsl(var(--muted-foreground))",
+                      fontSize: 12,
+                    }}
                     axisLine={{ stroke: "hsl(var(--border))" }}
                   />
                   <YAxis
                     dataKey="location"
                     type="category"
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                    tick={{
+                      fill: "hsl(var(--muted-foreground))",
+                      fontSize: 11,
+                    }}
                     axisLine={{ stroke: "hsl(var(--border))" }}
                     width={120}
                   />
@@ -376,7 +401,10 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                     contentStyle={tooltipStyle}
                     formatter={(value, _name, props) => {
                       const payload = props.payload as { percentage?: number };
-                      return [`${value} (${payload.percentage ?? 0}%)`, "Count"];
+                      return [
+                        `${value} (${payload.percentage ?? 0}%)`,
+                        "Count",
+                      ];
                     }}
                   />
                   <Bar
@@ -412,11 +440,17 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                   />
                   <XAxis
                     dataKey="decade"
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    tick={{
+                      fill: "hsl(var(--muted-foreground))",
+                      fontSize: 12,
+                    }}
                     axisLine={{ stroke: "hsl(var(--border))" }}
                   />
                   <YAxis
-                    tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+                    tick={{
+                      fill: "hsl(var(--muted-foreground))",
+                      fontSize: 12,
+                    }}
                     axisLine={{ stroke: "hsl(var(--border))" }}
                     domain={[0, 100]}
                     label={{
@@ -430,7 +464,10 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                     contentStyle={tooltipStyle}
                     formatter={(value, _name, props) => {
                       const payload = props.payload as { sampleSize?: number };
-                      return [`${value} years (n=${payload.sampleSize ?? 0})`, "Average Lifespan"];
+                      return [
+                        `${value} years (n=${payload.sampleSize ?? 0})`,
+                        "Average Lifespan",
+                      ];
                     }}
                   />
                   <Line
@@ -447,7 +484,8 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
             ) : (
               <div className="flex h-[300px] items-center justify-center">
                 <p className="text-muted-foreground">
-                  No lifespan data available (requires deceased members with birth and death dates)
+                  No lifespan data available (requires deceased members with
+                  birth and death dates)
                 </p>
               </div>
             )}

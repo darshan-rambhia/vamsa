@@ -102,36 +102,33 @@ app.use(
 
     // Content Security Policy
     // Using a permissive policy to support TanStack Start's SSR/hydration
-    contentSecurityPolicy: IS_PRODUCTION
-      ? {
-          // Default: only allow same-origin resources
-          defaultSrc: ["'self'"],
-          // Scripts: self + inline (needed for hydration) + eval (needed for development)
-          scriptSrc: ["'self'", "'unsafe-inline'"],
-          // Styles: self + inline (needed for Tailwind) + Google Fonts
-          styleSrc: [
-            "'self'",
-            "'unsafe-inline'",
-            "https://fonts.googleapis.com",
-          ],
-          // Fonts: self + Google Fonts
-          fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
-          // Images: self + data URIs + HTTPS (for external images)
-          imgSrc: ["'self'", "data:", "https:"],
-          // API connections: self only
-          connectSrc: ["'self'"],
-          // Frames: none (prevent embedding)
-          frameSrc: ["'none'"],
-          // Objects: none (disable plugins)
-          objectSrc: ["'none'"],
-          // Base URI: self only
-          baseUri: ["'self'"],
-          // Form actions: self only
-          formAction: ["'self'"],
-          // Upgrade insecure requests
-          upgradeInsecureRequests: [],
-        }
-      : false, // Disable CSP in development to avoid blocking hot reload
+    // Only apply in production to avoid blocking hot reload in development
+    ...(IS_PRODUCTION && {
+      contentSecurityPolicy: {
+        // Default: only allow same-origin resources
+        defaultSrc: ["'self'"],
+        // Scripts: self + inline (needed for hydration) + eval (needed for development)
+        scriptSrc: ["'self'", "'unsafe-inline'"],
+        // Styles: self + inline (needed for Tailwind) + Google Fonts
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        // Fonts: self + Google Fonts
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        // Images: self + data URIs + HTTPS (for external images)
+        imgSrc: ["'self'", "data:", "https:"],
+        // API connections: self only
+        connectSrc: ["'self'"],
+        // Frames: none (prevent embedding)
+        frameSrc: ["'none'"],
+        // Objects: none (disable plugins)
+        objectSrc: ["'none'"],
+        // Base URI: self only
+        baseUri: ["'self'"],
+        // Form actions: self only
+        formAction: ["'self'"],
+        // Upgrade insecure requests
+        upgradeInsecureRequests: [],
+      },
+    }),
 
     // Permissions Policy - disable unnecessary browser features
     permissionsPolicy: {

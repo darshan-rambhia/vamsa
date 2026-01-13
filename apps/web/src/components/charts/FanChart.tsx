@@ -1,301 +1,281 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, memo, useMemo } from "react";
 import * as d3 from "d3";
 import type { ChartNode, ChartEdge } from "~/server/charts";
+import {
+  setupSVGContainer,
+  createZoomBehavior,
+  groupByGeneration,
+  renderCircleNode,
+  fitToContainer,
+} from "~/lib/d3-utils";
+import {
+  useDebouncedZoom,
+  useChartLoadingState,
+  usePerformanceMonitor,
+} from "~/lib/chart-performance";
+import { ChartTooltip } from "./ChartTooltip";
+import { ChartSkeleton } from "./ChartSkeleton";
+import { useNavigate } from "@tanstack/react-router";
 
 interface FanChartProps {
   nodes: ChartNode[];
   edges: ChartEdge[];
   onNodeClick?: (nodeId: string) => void;
+  rootPersonId?: string;
 }
 
-export function FanChart({ nodes, edges, onNodeClick }: FanChartProps) {
+function FanChartComponent({
+  nodes,
+  edges,
+  onNodeClick,
+  rootPersonId,
+}: FanChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const [isRendering, setIsRendering] = useState(true);
+
+  // Tooltip state
+  const [tooltip, setTooltip] = useState<{
+    node: ChartNode;
+    position: { x: number; y: number };
+  } | null>(null);
+
+  // Performance monitoring
+  usePerformanceMonitor("FanChart", false);
+
+  // Loading state
+  const loadingState = useChartLoadingState(nodes.length);
+
+  // Debounced zoom handler
+  const debouncedZoomHandler = useDebouncedZoom(() => {
+    // Optional: Handle zoom events if needed
+  }, 16);
+
+  // Memoize layout parameters
+  const layoutParams = useMemo(
+    () => ({
+      innerRadius: 80,
+      radiusStep: 100,
+      nodeRadius: 35,
+      margin: { top: 40, right: 40, bottom: 40, left: 40 },
+    }),
+    []
+  );
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current || nodes.length === 0) return;
 
-    const container = containerRef.current;
-    const width = container.clientWidth;
-    const height = Math.max(600, width);
+    const startTime = performance.now();
+    setIsRendering(true);
 
-    // Clear previous chart
-    d3.select(svgRef.current).selectAll("*").remove();
+    const timeoutId = setTimeout(() => {
+      const container = containerRef.current;
+      if (!container || !svgRef.current) return;
 
-    const svg = d3
-      .select(svgRef.current)
-      .attr("width", width)
-      .attr("height", height)
-      .attr("viewBox", [0, 0, width, height]);
+      const width = container.clientWidth;
+      const height = Math.max(600, width);
 
-    // Create zoom behavior
-    const g = svg.append("g");
+      // Setup SVG container
+      const setup = setupSVGContainer(svgRef, width, height);
+      if (!setup) return;
 
-    const zoom = d3
-      .zoom<SVGSVGElement, unknown>()
-      .scaleExtent([0.1, 4])
-      .on("zoom", (event) => {
-        g.attr("transform", event.transform.toString());
+      const { svg, g } = setup;
+
+      // Create zoom behavior with debounced handler
+      const zoom = createZoomBehavior(svg, g, [0.1, 4], debouncedZoomHandler);
+
+      // Center point
+      const centerX = width / 2;
+      const centerY = height / 2;
+
+      // Use memoized layout parameters
+      const { innerRadius, radiusStep, nodeRadius, margin } = layoutParams;
+
+      // Group nodes by generation
+      const generations = groupByGeneration(nodes);
+
+      const maxGen = Math.max(...Array.from(generations.keys()));
+
+      // Calculate positions in radial layout
+      const nodePositions = new Map<
+        string,
+        { x: number; y: number; angle: number; radius: number }
+      >();
+
+      generations.forEach((genNodes, gen) => {
+        const radius = gen === 0 ? 0 : innerRadius + gen * radiusStep;
+        const angleStep = gen === 0 ? 0 : (2 * Math.PI) / genNodes.length;
+
+        genNodes.forEach((node, index) => {
+          if (gen === 0) {
+            // Root node at center
+            nodePositions.set(node.id, {
+              x: centerX,
+              y: centerY,
+              angle: 0,
+              radius: 0,
+            });
+          } else {
+            // Calculate angle - start from top and go clockwise
+            const angle = -Math.PI / 2 + index * angleStep;
+            const x = centerX + radius * Math.cos(angle);
+            const y = centerY + radius * Math.sin(angle);
+
+            nodePositions.set(node.id, { x, y, angle, radius });
+          }
+        });
       });
 
-    svg.call(zoom);
+      // Draw generation circles (guides)
+      const guidesGroup = g
+        .append("g")
+        .attr("class", "guides")
+        .attr("opacity", 0.1);
 
-    // Center point
-    const centerX = width / 2;
-    const centerY = height / 2;
-
-    // Radial layout parameters
-    const innerRadius = 80;
-    const radiusStep = 100;
-    const nodeRadius = 35;
-
-    // Group nodes by generation
-    const generations = new Map<number, ChartNode[]>();
-    nodes.forEach((node) => {
-      const gen = node.generation ?? 0;
-      if (!generations.has(gen)) {
-        generations.set(gen, []);
-      }
-      generations.get(gen)!.push(node);
-    });
-
-    const maxGen = Math.max(...Array.from(generations.keys()));
-
-    // Calculate positions in radial layout
-    const nodePositions = new Map<
-      string,
-      { x: number; y: number; angle: number; radius: number }
-    >();
-
-    generations.forEach((genNodes, gen) => {
-      const radius = gen === 0 ? 0 : innerRadius + gen * radiusStep;
-      const angleStep = gen === 0 ? 0 : (2 * Math.PI) / genNodes.length;
-
-      genNodes.forEach((node, index) => {
-        if (gen === 0) {
-          // Root node at center
-          nodePositions.set(node.id, {
-            x: centerX,
-            y: centerY,
-            angle: 0,
-            radius: 0,
-          });
-        } else {
-          // Calculate angle - start from top and go clockwise
-          const angle = -Math.PI / 2 + index * angleStep;
-          const x = centerX + radius * Math.cos(angle);
-          const y = centerY + radius * Math.sin(angle);
-
-          nodePositions.set(node.id, { x, y, angle, radius });
-        }
-      });
-    });
-
-    // Draw generation circles (guides)
-    const guidesGroup = g
-      .append("g")
-      .attr("class", "guides")
-      .attr("opacity", 0.1);
-
-    for (let gen = 1; gen <= maxGen; gen++) {
-      const radius = innerRadius + gen * radiusStep;
-      guidesGroup
-        .append("circle")
-        .attr("cx", centerX)
-        .attr("cy", centerY)
-        .attr("r", radius)
-        .attr("fill", "none")
-        .style("stroke", "var(--color-border)")
-        .style("stroke-width", "1px")
-        .style("stroke-dasharray", "5,5");
-    }
-
-    // Draw edges as curved paths
-    const edgeGroup = g.append("g").attr("class", "edges");
-
-    edges.forEach((edge) => {
-      const source = nodePositions.get(edge.source);
-      const target = nodePositions.get(edge.target);
-
-      if (!source || !target) return;
-
-      if (edge.type === "parent-child") {
-        // Radial connection from inner to outer
-        const path = d3.path();
-        path.moveTo(source.x, source.y);
-        path.lineTo(target.x, target.y);
-
-        edgeGroup
-          .append("path")
-          .attr("d", path.toString())
+      for (let gen = 1; gen <= maxGen; gen++) {
+        const radius = innerRadius + gen * radiusStep;
+        guidesGroup
+          .append("circle")
+          .attr("cx", centerX)
+          .attr("cy", centerY)
+          .attr("r", radius)
+          .attr("fill", "none")
           .style("stroke", "var(--color-border)")
-          .style("stroke-width", "2px")
-          .style("fill", "none");
-      } else if (edge.type === "spouse") {
-        // Arc connection along the same generation circle
-        if (source.radius === target.radius && source.radius > 0) {
-          const radius = source.radius;
-          const startAngle = Math.atan2(source.y - centerY, source.x - centerX);
-          const endAngle = Math.atan2(target.y - centerY, target.x - centerX);
+          .style("stroke-width", "1px")
+          .style("stroke-dasharray", "5,5");
+      }
 
-          const arc = d3
-            .arc()
-            .innerRadius(radius)
-            .outerRadius(radius)
-            .startAngle(startAngle)
-            .endAngle(endAngle);
+      // Draw edges as curved paths
+      const edgeGroup = g.append("g").attr("class", "edges");
+
+      edges.forEach((edge) => {
+        const source = nodePositions.get(edge.source);
+        const target = nodePositions.get(edge.target);
+
+        if (!source || !target) return;
+
+        if (edge.type === "parent-child") {
+          // Radial connection from inner to outer
+          const path = d3.path();
+          path.moveTo(source.x, source.y);
+          path.lineTo(target.x, target.y);
 
           edgeGroup
             .append("path")
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .attr("d", arc({ startAngle, endAngle } as any))
-            .attr("transform", `translate(${centerX}, ${centerY})`)
-            .style("stroke", "var(--color-primary)")
+            .attr("d", path.toString())
+            .style("stroke", "var(--color-border)")
             .style("stroke-width", "2px")
-            .style("stroke-dasharray", "5,5")
             .style("fill", "none");
-        }
-      }
-    });
-
-    // Draw nodes
-    const nodeGroup = g.append("g").attr("class", "nodes");
-
-    nodes.forEach((node) => {
-      const pos = nodePositions.get(node.id);
-      if (!pos) return;
-
-      const isRoot = (node.generation ?? 0) === 0;
-
-      const nodeG = nodeGroup
-        .append("g")
-        .attr("class", "node")
-        .attr("transform", `translate(${pos.x}, ${pos.y})`)
-        .style("cursor", "pointer")
-        .on("click", () => onNodeClick?.(node.id));
-
-      // Node circle
-      nodeG
-        .append("circle")
-        .attr("r", nodeRadius)
-        .style(
-          "fill",
-          isRoot
-            ? "color-mix(in oklch, var(--color-primary) 20%, transparent)"
-            : node.isLiving
-              ? "var(--color-card)"
-              : "var(--color-muted)"
-        )
-        .style(
-          "stroke",
-          isRoot
-            ? "var(--color-primary)"
-            : node.isLiving
-              ? "var(--color-primary)"
-              : "var(--color-border)"
-        )
-        .style("stroke-width", isRoot ? "3px" : "2px")
-        .on("mouseenter", function () {
-          d3.select(this)
-            .transition()
-            .duration(200)
-            .attr("r", nodeRadius + 5)
-            .style("fill", "var(--color-accent)");
-        })
-        .on("mouseleave", function () {
-          d3.select(this)
-            .transition()
-            .duration(200)
-            .attr("r", nodeRadius)
-            .style(
-              "fill",
-              isRoot
-                ? "color-mix(in oklch, var(--color-primary) 20%, transparent)"
-                : node.isLiving
-                  ? "var(--color-card)"
-                  : "var(--color-muted)"
+        } else if (edge.type === "spouse") {
+          // Arc connection along the same generation circle
+          if (source.radius === target.radius && source.radius > 0) {
+            const radius = source.radius;
+            const startAngle = Math.atan2(
+              source.y - centerY,
+              source.x - centerX
             );
+            const endAngle = Math.atan2(target.y - centerY, target.x - centerX);
+
+            const arc = d3
+              .arc()
+              .innerRadius(radius)
+              .outerRadius(radius)
+              .startAngle(startAngle)
+              .endAngle(endAngle);
+
+            edgeGroup
+              .append("path")
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("d", arc({ startAngle, endAngle } as any))
+              .attr("transform", `translate(${centerX}, ${centerY})`)
+              .style("stroke", "var(--color-primary)")
+              .style("stroke-width", "2px")
+              .style("stroke-dasharray", "5,5")
+              .style("fill", "none");
+          }
+        }
+      });
+
+      // Draw nodes
+      const nodeGroup = g.append("g").attr("class", "nodes");
+
+      nodes.forEach((node) => {
+        const pos = nodePositions.get(node.id);
+        if (!pos) return;
+
+        const isRoot = (node.generation ?? 0) === 0;
+
+        const nodeG = nodeGroup
+          .append("g")
+          .attr("class", "node")
+          .attr("transform", `translate(${pos.x}, ${pos.y})`)
+          .style("cursor", "pointer")
+          .on("click", () => onNodeClick?.(node.id))
+          .on("mouseover", () => {
+            const rect = svgRef.current?.getBoundingClientRect();
+            if (rect) {
+              setTooltip({
+                node,
+                position: {
+                  x: rect.left + pos.x,
+                  y: rect.top + pos.y,
+                },
+              });
+            }
+          })
+          .on("mouseout", () => {
+            setTooltip(null);
+          });
+
+        renderCircleNode(nodeG, node, {
+          radius: nodeRadius,
+          isRoot,
         });
+      });
 
-      // Name text - split into two lines for better fit
-      const firstName =
-        node.firstName.length > 12
-          ? node.firstName.substring(0, 10) + "..."
-          : node.firstName;
-      const lastName =
-        node.lastName.length > 12
-          ? node.lastName.substring(0, 10) + "..."
-          : node.lastName;
+      // Initial zoom to fit
+      fitToContainer(svg, g, zoom, width, height, margin);
 
-      nodeG
-        .append("text")
-        .attr("x", 0)
-        .attr("y", -4)
-        .attr("text-anchor", "middle")
-        .style("fill", "var(--color-foreground)")
-        .style("font-size", "11px")
-        .style("font-weight", isRoot ? "700" : "600")
-        .text(firstName);
-
-      nodeG
-        .append("text")
-        .attr("x", 0)
-        .attr("y", 8)
-        .attr("text-anchor", "middle")
-        .style("fill", "var(--color-foreground)")
-        .style("font-size", "11px")
-        .style("font-weight", isRoot ? "700" : "600")
-        .text(lastName);
-
-      // Birth year (outside the circle)
-      if (node.dateOfBirth) {
-        const year = new Date(node.dateOfBirth).getFullYear();
-        nodeG
-          .append("text")
-          .attr("x", 0)
-          .attr("y", nodeRadius + 15)
-          .attr("text-anchor", "middle")
-          .style("fill", "var(--color-muted-foreground)")
-          .style("font-size", "10px")
-          .text(year.toString());
+      // Mark rendering complete
+      const endTime = performance.now();
+      const renderTime = endTime - startTime;
+      if (process.env.NODE_ENV === "development") {
+        // eslint-disable-next-line no-console
+        console.log(
+          `[Performance] FanChart rendered ${nodes.length} nodes in ${renderTime.toFixed(2)}ms`
+        );
       }
+      setIsRendering(false);
+    }, 0);
 
-      // Living indicator
-      nodeG
-        .append("circle")
-        .attr("cx", nodeRadius - 10)
-        .attr("cy", -nodeRadius + 10)
-        .attr("r", 4)
-        .style(
-          "fill",
-          node.isLiving
-            ? "var(--color-primary)"
-            : "var(--color-muted-foreground)"
-        );
-    });
+    return () => clearTimeout(timeoutId);
+  }, [nodes, edges, onNodeClick, layoutParams, debouncedZoomHandler]);
 
-    // Initial zoom to fit
-    const bounds = g.node()?.getBBox();
-    if (bounds) {
-      const padding = 40;
-      const scale = Math.min(
-        width / (bounds.width + padding * 2),
-        height / (bounds.height + padding * 2),
-        1
-      );
-      const transform = d3.zoomIdentity
-        .translate(width / 2, height / 2)
-        .scale(scale)
-        .translate(
-          -(bounds.x + bounds.width / 2),
-          -(bounds.y + bounds.height / 2)
-        );
+  const handleViewProfile = (nodeId: string) => {
+    navigate({ to: "/people/$personId", params: { personId: nodeId } });
+    setTooltip(null);
+  };
 
-      svg.transition().duration(750).call(zoom.transform, transform);
-    }
-  }, [nodes, edges, onNodeClick]);
+  const handleSetAsCenter = (nodeId: string) => {
+    onNodeClick?.(nodeId);
+    setTooltip(null);
+  };
+
+  // Use first node as root if not provided
+  const effectiveRootId = rootPersonId || nodes[0]?.id;
+
+  // Show loading skeleton for large datasets
+  if (isRendering && loadingState.isLoading) {
+    return (
+      <ChartSkeleton
+        message={loadingState.message || undefined}
+        estimatedTime={loadingState.estimatedTime}
+      />
+    );
+  }
 
   return (
     <div
@@ -303,6 +283,25 @@ export function FanChart({ nodes, edges, onNodeClick }: FanChartProps) {
       className="bg-card relative h-full w-full overflow-hidden rounded-lg border"
     >
       <svg ref={svgRef} className="h-full w-full" />
+
+      {/* Tooltip */}
+      {tooltip && effectiveRootId && (
+        <ChartTooltip
+          node={tooltip.node}
+          position={tooltip.position}
+          rootPersonId={effectiveRootId}
+          onSetAsCenter={handleSetAsCenter}
+          onViewProfile={handleViewProfile}
+          relationshipLabel={
+            tooltip.node.generation
+              ? `Generation ${tooltip.node.generation}`
+              : undefined
+          }
+        />
+      )}
     </div>
   );
 }
+
+// Export memoized version to prevent unnecessary re-renders
+export const FanChart = memo(FanChartComponent);

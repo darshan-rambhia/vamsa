@@ -258,8 +258,8 @@ export function SubscriptionInstructions() {
             </li>
             <li className="list-disc">
               <strong>RSS Reader Apps:</strong> Most apps have an &quot;Add
-              Feed&quot; or &quot;Subscribe&quot; button where you can paste
-              the URL
+              Feed&quot; or &quot;Subscribe&quot; button where you can paste the
+              URL
             </li>
             <li className="list-disc">
               <strong>Browser Extensions:</strong> Extensions like Feedbro

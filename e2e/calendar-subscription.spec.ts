@@ -25,9 +25,7 @@ test.describe("Calendar Subscription Page", () => {
     });
 
     test("should display description", async ({ page }) => {
-      const description = page.getByText(
-        /subscribe to family calendars/i
-      );
+      const description = page.getByText(/subscribe to family calendars/i);
       await expect(description).toBeVisible();
     });
 
@@ -65,7 +63,9 @@ test.describe("Calendar Subscription Page", () => {
       expect(value).toBe("all");
     });
 
-    test("should allow selecting different calendar types", async ({ page }) => {
+    test("should allow selecting different calendar types", async ({
+      page,
+    }) => {
       const select = page.locator("#calendar-type");
 
       const types = ["all", "birthdays", "anniversaries", "events"];
@@ -144,9 +144,11 @@ test.describe("Calendar Subscription Page", () => {
 
       await generateButton.click();
 
-      const copyButton = page.getByRole("button", {
-        name: /copy/i,
-      }).first();
+      const copyButton = page
+        .getByRole("button", {
+          name: /copy/i,
+        })
+        .first();
 
       await expect(copyButton).toBeVisible({ timeout: 5000 });
     });
@@ -161,9 +163,11 @@ test.describe("Calendar Subscription Page", () => {
 
       await generateButton.click();
 
-      const copyButton = page.getByRole("button", {
-        name: /copy/i,
-      }).first();
+      const copyButton = page
+        .getByRole("button", {
+          name: /copy/i,
+        })
+        .first();
 
       await copyButton.click({ timeout: 5000 });
 
@@ -176,9 +180,11 @@ test.describe("Calendar Subscription Page", () => {
     test("should copy birthday calendar URL", async ({ page, context }) => {
       await context.grantPermissions(["clipboard-read", "clipboard-write"]);
 
-      const copyButton = page.getByRole("button", {
-        name: /copy/i,
-      }).nth(1); // Second copy button
+      const copyButton = page
+        .getByRole("button", {
+          name: /copy/i,
+        })
+        .nth(1); // Second copy button
 
       await copyButton.click();
 
@@ -232,7 +238,10 @@ test.describe("Calendar Subscription Page", () => {
       });
     });
 
-    test("should reset copied indicator after 2 seconds", async ({ page, context }) => {
+    test("should reset copied indicator after 2 seconds", async ({
+      page,
+      context,
+    }) => {
       await context.grantPermissions(["clipboard-read", "clipboard-write"]);
 
       const generateButton = page.getByRole("button", {
@@ -241,9 +250,11 @@ test.describe("Calendar Subscription Page", () => {
 
       await generateButton.click();
 
-      const copyButton = page.getByRole("button", {
-        name: /copy/i,
-      }).first();
+      const copyButton = page
+        .getByRole("button", {
+          name: /copy/i,
+        })
+        .first();
 
       await copyButton.click({ timeout: 5000 });
 
@@ -263,8 +274,8 @@ test.describe("Calendar Subscription Page", () => {
       await birthdayInput.click();
 
       // Verify input is selected for copy
-      const selected = await birthdayInput.evaluate((el: HTMLInputElement) =>
-        el.value
+      const selected = await birthdayInput.evaluate(
+        (el: HTMLInputElement) => el.value
       );
       expect(selected).toBeTruthy();
     });
@@ -575,7 +586,9 @@ test.describe("Calendar Subscription Page", () => {
   });
 
   test.describe("Form Validation", () => {
-    test("should disable generate button while generating", async ({ page }) => {
+    test("should disable generate button while generating", async ({
+      page,
+    }) => {
       const button = page.getByRole("button", {
         name: /generate new token/i,
       });
@@ -606,7 +619,9 @@ test.describe("Calendar Subscription Page", () => {
   });
 
   test.describe("Data Persistence", () => {
-    test("should persist active tokens across page reload", async ({ page }) => {
+    test("should persist active tokens across page reload", async ({
+      page,
+    }) => {
       const generateButton = page.getByRole("button", {
         name: /generate new token/i,
       });
@@ -623,9 +638,11 @@ test.describe("Calendar Subscription Page", () => {
       await page.reload();
 
       // Wait for page to load
-      await expect(page.getByRole("heading", {
-        name: /calendar subscriptions/i,
-      })).toBeVisible();
+      await expect(
+        page.getByRole("heading", {
+          name: /calendar subscriptions/i,
+        })
+      ).toBeVisible();
 
       // Token might still be there (depends on server response time)
       const activeTokensAfter = page.getByText(/active tokens/i);

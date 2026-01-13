@@ -960,10 +960,7 @@ export const getTimelineChart = createServerFn({ method: "POST" })
     // Fetch all persons with dates
     const persons = await prisma.person.findMany({
       where: {
-        OR: [
-          { dateOfBirth: { not: null } },
-          { dateOfPassing: { not: null } },
-        ],
+        OR: [{ dateOfBirth: { not: null } }, { dateOfPassing: { not: null } }],
       },
     });
 
@@ -973,9 +970,7 @@ export const getTimelineChart = createServerFn({ method: "POST" })
         id: person.id,
         firstName: person.firstName,
         lastName: person.lastName,
-        birthYear: person.dateOfBirth
-          ? person.dateOfBirth.getFullYear()
-          : null,
+        birthYear: person.dateOfBirth ? person.dateOfBirth.getFullYear() : null,
         deathYear: person.dateOfPassing
           ? person.dateOfPassing.getFullYear()
           : null,
@@ -1016,7 +1011,8 @@ export const getTimelineChart = createServerFn({ method: "POST" })
     );
     const currentYear = new Date().getFullYear();
     const minYear = years.length > 0 ? Math.min(...years) : currentYear - 100;
-    const maxYear = years.length > 0 ? Math.max(...years, currentYear) : currentYear;
+    const maxYear =
+      years.length > 0 ? Math.max(...years, currentYear) : currentYear;
 
     return {
       entries,
@@ -1644,10 +1640,7 @@ export const getStatistics = createServerFn({ method: "POST" })
         // Normalize location (trim and title case)
         const location = p.birthPlace.trim();
         if (location) {
-          locationCounts.set(
-            location,
-            (locationCounts.get(location) || 0) + 1
-          );
+          locationCounts.set(location, (locationCounts.get(location) || 0) + 1);
         }
       }
     });
@@ -1689,8 +1682,7 @@ export const getStatistics = createServerFn({ method: "POST" })
       if (!p.isLiving && p.dateOfBirth && p.dateOfPassing) {
         const lifespan = calculateAge(p.dateOfBirth, p.dateOfPassing, false);
         if (lifespan !== null && lifespan > 0) {
-          const birthDecade =
-            Math.floor(p.dateOfBirth.getFullYear() / 10) * 10;
+          const birthDecade = Math.floor(p.dateOfBirth.getFullYear() / 10) * 10;
           const decadeLabel = `${birthDecade}s`;
           if (!decadeLifespans.has(decadeLabel)) {
             decadeLifespans.set(decadeLabel, []);

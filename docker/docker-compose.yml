@@ -1,15 +1,47 @@
 version: "3.8"
+name: vamsa-app
 
 services:
   # PostgreSQL Database
   db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: vamsa-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-vamsa}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-vamsa_dev_password}
       POSTGRES_DB: ${DB_NAME:-vamsa}
+      # PostgreSQL 18 initialization arguments
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
+    # PostgreSQL 18 optimizations
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=100"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "effective_cache_size=768MB"
+      - "-c"
+      - "maintenance_work_mem=64MB"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "wal_buffers=16MB"
+      - "-c"
+      - "default_statistics_target=100"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "effective_io_concurrency=200"
+      - "-c"
+      - "work_mem=4MB"
+      - "-c"
+      - "huge_pages=off"
+      - "-c"
+      - "min_wal_size=1GB"
+      - "-c"
+      - "max_wal_size=4GB"
     ports:
       - "${DB_PORT:-5432}:5432"
     volumes:

@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider } from "react-i18next";
 import i18n from "~/i18n/config";
 import appCss from "~/styles.css?url";
+import printCss from "~/styles/print.css?url";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -160,6 +161,11 @@ export const Route = createRootRoute({
       {
         rel: "stylesheet",
         href: appCss,
+      },
+      // Print styles
+      {
+        rel: "stylesheet",
+        href: printCss,
       },
     ],
   }),

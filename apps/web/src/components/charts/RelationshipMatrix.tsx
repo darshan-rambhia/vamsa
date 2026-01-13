@@ -55,9 +55,17 @@ export function RelationshipMatrix({
     const cellSize = 40;
     const labelWidth = 150;
     const labelHeight = 100;
-    const margin = { top: labelHeight, right: 40, bottom: 40, left: labelWidth };
+    const margin = {
+      top: labelHeight,
+      right: 40,
+      bottom: 40,
+      left: labelWidth,
+    };
     const gridSize = people.length * cellSize;
-    const width = Math.max(container.clientWidth, margin.left + gridSize + margin.right);
+    const width = Math.max(
+      container.clientWidth,
+      margin.left + gridSize + margin.right
+    );
     const height = margin.top + gridSize + margin.bottom;
 
     // Clear previous chart
@@ -120,10 +128,7 @@ export function RelationshipMatrix({
           .style("opacity", cell?.relationshipType ? 0.7 : 0.3)
           .on("mouseenter", function () {
             if (cell?.relationshipType) {
-              d3.select(this)
-                .transition()
-                .duration(200)
-                .style("opacity", 1);
+              d3.select(this).transition().duration(200).style("opacity", 1);
             }
           })
           .on("mouseleave", function () {
@@ -247,9 +252,7 @@ export function RelationshipMatrix({
         availableHeight / (bounds.height + 40),
         1
       );
-      const transform = d3.zoomIdentity
-        .translate(20, 20)
-        .scale(scale);
+      const transform = d3.zoomIdentity.translate(20, 20).scale(scale);
 
       svg.transition().duration(750).call(zoom.transform, transform);
     }
@@ -262,8 +265,8 @@ export function RelationshipMatrix({
     >
       <svg ref={svgRef} className="h-full w-full" />
       {/* Legend */}
-      <div className="absolute bottom-4 right-4 rounded-lg border bg-card/90 p-3 backdrop-blur-sm">
-        <p className="mb-2 text-xs font-semibold text-foreground">
+      <div className="bg-card/90 absolute right-4 bottom-4 rounded-lg border p-3 backdrop-blur-sm">
+        <p className="text-foreground mb-2 text-xs font-semibold">
           Relationship Legend
         </p>
         <div className="grid grid-cols-2 gap-1 text-[10px]">

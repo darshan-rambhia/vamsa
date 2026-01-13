@@ -36,7 +36,7 @@ const mockIcal = mock(() => mockCalendar);
 // Mock RSS
 const mockRssInstance = {
   item: mock(),
-  xml: mock(() => "<?xml version=\"1.0\"?><rss></rss>"),
+  xml: mock(() => '<?xml version="1.0"?><rss></rss>'),
 };
 
 const MockRSS = function () {
@@ -187,9 +187,7 @@ describe("Calendar API Endpoints", () => {
     });
 
     it("should handle people without birthdays", async () => {
-      const people = [
-        { ...mockPerson, dateOfBirth: null },
-      ];
+      const people = [{ ...mockPerson, dateOfBirth: null }];
 
       mockPrisma.person.findMany.mock.resolveValueOnce(people);
 
@@ -294,14 +292,18 @@ describe("Calendar API Endpoints", () => {
     });
 
     it("should include wedding anniversaries", async () => {
-      mockPrisma.relationship.findMany.mock.resolveValueOnce([mockRelationship]);
+      mockPrisma.relationship.findMany.mock.resolveValueOnce([
+        mockRelationship,
+      ]);
       mockPrisma.person.findMany.mock.resolveValueOnce([]);
 
       expect(mockPrisma.relationship.findMany.mock.calls.length).toBe(0);
     });
 
     it("should calculate years married correctly", async () => {
-      mockPrisma.relationship.findMany.mock.resolveValueOnce([mockRelationship]);
+      mockPrisma.relationship.findMany.mock.resolveValueOnce([
+        mockRelationship,
+      ]);
       mockPrisma.person.findMany.mock.resolveValueOnce([]);
 
       // Verify years married calculation
@@ -345,7 +347,9 @@ describe("Calendar API Endpoints", () => {
     });
 
     it("should set yearly recurring for anniversaries", async () => {
-      mockPrisma.relationship.findMany.mock.resolveValueOnce([mockRelationship]);
+      mockPrisma.relationship.findMany.mock.resolveValueOnce([
+        mockRelationship,
+      ]);
       mockPrisma.person.findMany.mock.resolveValueOnce([]);
 
       expect(mockCalendar.createEvent.mock.calls.length).toBe(0);
@@ -690,7 +694,9 @@ describe("Calendar API Endpoints", () => {
   describe("Error handling", () => {
     it("should handle calendar creation errors gracefully", async () => {
       mockPrisma.person.findMany.mock.resolveValueOnce([mockPerson]);
-      mockCalendar.createEvent.mock.rejectValueOnce(new Error("Calendar error"));
+      mockCalendar.createEvent.mock.rejectValueOnce(
+        new Error("Calendar error")
+      );
 
       expect(mockCalendar.createEvent.mock.calls.length).toBe(0);
     });
@@ -721,9 +727,7 @@ describe("Calendar API Endpoints", () => {
     });
 
     it("should log errors appropriately", async () => {
-      mockPrisma.person.findMany.mock.rejectValueOnce(
-        new Error("Test error")
-      );
+      mockPrisma.person.findMany.mock.rejectValueOnce(new Error("Test error"));
 
       expect(mockPrisma.person.findMany.mock.calls.length).toBe(0);
     });
