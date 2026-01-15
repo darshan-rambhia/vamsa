@@ -38,7 +38,9 @@ const VERTICAL_SPACING = 120;
 /**
  * Groups nodes by generation and sorts siblings by birth date
  */
-function groupAndSortByGeneration(nodes: ChartNode[]): Map<number, ChartNode[]> {
+function groupAndSortByGeneration(
+  nodes: ChartNode[]
+): Map<number, ChartNode[]> {
   const generations = new Map<number, ChartNode[]>();
 
   nodes.forEach((node) => {
@@ -85,7 +87,9 @@ function calculateTreeLayout(
   const sortedGens = Array.from(generations.keys()).sort((a, b) => a - b);
 
   // Find the middle generation (typically 0)
-  const midGen = sortedGens.find((g) => g === 0) ?? sortedGens[Math.floor(sortedGens.length / 2)];
+  const midGen =
+    sortedGens.find((g) => g === 0) ??
+    sortedGens[Math.floor(sortedGens.length / 2)];
 
   sortedGens.forEach((gen) => {
     const genNodes = generations.get(gen)!;
@@ -295,7 +299,14 @@ function TreeChartComponent({
     }, 0);
 
     return () => clearTimeout(timeoutId);
-  }, [nodes, edges, onNodeClick, rootPersonId, layoutParams, debouncedZoomHandler]);
+  }, [
+    nodes,
+    edges,
+    onNodeClick,
+    rootPersonId,
+    layoutParams,
+    debouncedZoomHandler,
+  ]);
 
   useEffect(() => {
     if (resetSignal !== undefined && resetViewRef.current) {

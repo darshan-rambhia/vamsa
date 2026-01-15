@@ -5,7 +5,9 @@ interface ErrorBoundaryProps {
   /** Children to render */
   children: ReactNode;
   /** Fallback UI to render on error - if not provided, ErrorCard is used */
-  fallback?: ReactNode | ((props: { error: Error; reset: () => void }) => ReactNode);
+  fallback?:
+    | ReactNode
+    | ((props: { error: Error; reset: () => void }) => ReactNode);
   /** Called when an error is caught */
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
   /** Props to pass to the default ErrorCard fallback */

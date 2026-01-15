@@ -13,6 +13,7 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 **CRITICAL:** Before writing E2E tests, read `.claude/skills/vamsa-e2e-testing.md`.
 
 Key principles:
+
 - **User workflow-focused**: Test complete user journeys, not isolated components
 - **BDD structure required**: Every test uses Given-When-Then via `bdd` helper
 - **Test IDs over CSS**: Use `getByTestId()` not brittle selectors

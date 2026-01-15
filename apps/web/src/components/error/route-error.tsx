@@ -1,4 +1,8 @@
-import { useRouter, type ErrorComponentProps, Link } from "@tanstack/react-router";
+import {
+  useRouter,
+  type ErrorComponentProps,
+  Link,
+} from "@tanstack/react-router";
 import { Button, Container } from "@vamsa/ui";
 import { ErrorCard } from "./error-card";
 import { Home } from "lucide-react";
@@ -25,7 +29,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
         actions={
           <Button variant="outline" asChild>
             <Link to="/dashboard">
-              <Home className="h-4 w-4 mr-2" />
+              <Home className="mr-2 h-4 w-4" />
               Go to Dashboard
             </Link>
           </Button>

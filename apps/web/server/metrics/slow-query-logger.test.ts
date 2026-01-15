@@ -214,8 +214,12 @@ describe("Slow Query Logger", () => {
       const sanitized = sanitizeQueryParams(params);
 
       expect(sanitized).toBeDefined();
-      expect((sanitized?.where as Record<string, string>)?.password).toBe("[REDACTED]");
-      expect((sanitized?.where as Record<string, string>)?.email).toBe("test@example.com");
+      expect((sanitized?.where as Record<string, string>)?.password).toBe(
+        "[REDACTED]"
+      );
+      expect((sanitized?.where as Record<string, string>)?.email).toBe(
+        "test@example.com"
+      );
     });
 
     test("redacts passwordHash fields", () => {
@@ -226,7 +230,9 @@ describe("Slow Query Logger", () => {
       const sanitized = sanitizeQueryParams(params);
 
       expect(sanitized).toBeDefined();
-      expect((sanitized?.where as Record<string, string>)?.passwordHash).toBe("[REDACTED]");
+      expect((sanitized?.where as Record<string, string>)?.passwordHash).toBe(
+        "[REDACTED]"
+      );
     });
 
     test("truncates long strings", () => {
@@ -251,7 +257,12 @@ describe("Slow Query Logger", () => {
       const sanitized = sanitizeQueryParams(params);
 
       expect(sanitized).toBeDefined();
-      const inArray = ((sanitized?.where as Record<string, unknown>)?.id as Record<string, unknown>)?.in as unknown[];
+      const inArray = (
+        (sanitized?.where as Record<string, unknown>)?.id as Record<
+          string,
+          unknown
+        >
+      )?.in as unknown[];
       expect(inArray?.length).toBe(6); // 5 items + "...and X more"
     });
 

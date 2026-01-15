@@ -195,7 +195,7 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-[300px] items-center justify-center">
+              <div className="flex h-75 items-center justify-center">
                 <p className="text-muted-foreground">No age data available</p>
               </div>
             )}
@@ -236,7 +236,7 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-[300px] items-center justify-center">
+              <div className="flex h-75 items-center justify-center">
                 <p className="text-muted-foreground">
                   No gender data available
                 </p>
@@ -297,7 +297,7 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-[300px] items-center justify-center">
+              <div className="flex h-75 items-center justify-center">
                 <p className="text-muted-foreground">
                   No generation data available
                 </p>
@@ -359,7 +359,7 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-[300px] items-center justify-center">
+              <div className="flex h-75 items-center justify-center">
                 <p className="text-muted-foreground">
                   No surname data available
                 </p>
@@ -418,7 +418,7 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-[300px] items-center justify-center">
+              <div className="flex h-75 items-center justify-center">
                 <p className="text-muted-foreground">
                   No location data available
                 </p>
@@ -484,7 +484,7 @@ export function StatisticsCharts({ data }: StatisticsChartsProps) {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-[300px] items-center justify-center">
+              <div className="flex h-75 items-center justify-center">
                 <p className="text-muted-foreground">
                   No lifespan data available (requires deceased members with
                   birth and death dates)

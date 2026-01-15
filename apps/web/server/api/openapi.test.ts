@@ -57,11 +57,15 @@ describe("Auto-Generated OpenAPI Specification", () => {
     expect(Array.isArray(spec.servers)).toBe(true);
     expect(spec.servers.length).toBeGreaterThan(0);
 
-    const devServer = spec.servers.find((s: any) => s.description === "Development server");
+    const devServer = spec.servers.find(
+      (s: any) => s.description === "Development server"
+    );
     expect(devServer).toBeDefined();
     expect(devServer.url).toContain("localhost");
 
-    const prodServer = spec.servers.find((s: any) => s.description === "Production server");
+    const prodServer = spec.servers.find(
+      (s: any) => s.description === "Production server"
+    );
     expect(prodServer).toBeDefined();
     expect(prodServer.url).toContain("vamsa.app");
   });
@@ -221,7 +225,9 @@ describe("Persons Endpoints Documentation", () => {
     expect(pageParam.in).toBe("query");
     expect(pageParam.required).not.toBe(true); // Has default
 
-    const sortByParam = listRoute.parameters.find((p: any) => p.name === "sortBy");
+    const sortByParam = listRoute.parameters.find(
+      (p: any) => p.name === "sortBy"
+    );
     expect(sortByParam).toBeDefined();
     expect(sortByParam.schema.enum).toBeDefined();
     expect(sortByParam.schema.enum).toContain("lastName");
@@ -310,7 +316,9 @@ describe("Relationships Endpoints Documentation", () => {
     const spec = await res.json();
 
     const listRoute = spec.paths["/relationships"].get;
-    const personIdParam = listRoute.parameters.find((p: any) => p.name === "personId");
+    const personIdParam = listRoute.parameters.find(
+      (p: any) => p.name === "personId"
+    );
     expect(personIdParam).toBeDefined();
     expect(personIdParam.in).toBe("query");
   });
@@ -556,10 +564,14 @@ describe("Calendar Endpoints Documentation", () => {
     const spec = await res.json();
 
     const rssRoute = spec.paths["/calendar/rss.xml"].get;
-    expect(rssRoute.responses["200"].content["application/rss+xml"]).toBeDefined();
+    expect(
+      rssRoute.responses["200"].content["application/rss+xml"]
+    ).toBeDefined();
 
     const birthdaysRoute = spec.paths["/calendar/birthdays.ics"].get;
-    expect(birthdaysRoute.responses["200"].content["text/calendar"]).toBeDefined();
+    expect(
+      birthdaysRoute.responses["200"].content["text/calendar"]
+    ).toBeDefined();
   });
 });
 
@@ -721,7 +733,9 @@ describe("OpenAPI Specification Completeness", () => {
 
   test("all endpoints have summaries and descriptions", async () => {
     const res = await apiV1.request("/openapi.json");
-    const spec = (await res.json()) as { paths: Record<string, Record<string, unknown>> };
+    const spec = (await res.json()) as {
+      paths: Record<string, Record<string, unknown>>;
+    };
 
     for (const [path, pathItem] of Object.entries(spec.paths)) {
       for (const [method, operation] of Object.entries(pathItem)) {
@@ -739,7 +753,9 @@ describe("OpenAPI Specification Completeness", () => {
 
   test("all endpoints have operationIds", async () => {
     const res = await apiV1.request("/openapi.json");
-    const spec = (await res.json()) as { paths: Record<string, Record<string, unknown>> };
+    const spec = (await res.json()) as {
+      paths: Record<string, Record<string, unknown>>;
+    };
 
     const operationIds = new Set<string>();
     for (const [path, pathItem] of Object.entries(spec.paths)) {
@@ -758,7 +774,9 @@ describe("OpenAPI Specification Completeness", () => {
 
   test("response schemas are defined for success responses", async () => {
     const res = await apiV1.request("/openapi.json");
-    const spec = (await res.json()) as { paths: Record<string, Record<string, unknown>> };
+    const spec = (await res.json()) as {
+      paths: Record<string, Record<string, unknown>>;
+    };
 
     let successResponseCount = 0;
     for (const [path, pathItem] of Object.entries(spec.paths)) {
@@ -770,7 +788,9 @@ describe("OpenAPI Specification Completeness", () => {
           const response200 = op.responses["200"];
           if (response200.content && response200.content["application/json"]) {
             // Schema should be defined
-            expect(response200.content["application/json"].schema).toBeDefined();
+            expect(
+              response200.content["application/json"].schema
+            ).toBeDefined();
           }
         }
       }

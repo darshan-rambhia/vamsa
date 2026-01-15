@@ -193,7 +193,11 @@ function AuthenticatedLayout() {
         </NavLink>
         <NavLink
           href="/visualize"
-          active={pathname === "/visualize" || pathname === "/tree" || pathname.startsWith("/charts")}
+          active={
+            pathname === "/visualize" ||
+            pathname === "/tree" ||
+            pathname.startsWith("/charts")
+          }
           data-testid="nav-visualize"
         >
           Visualizations

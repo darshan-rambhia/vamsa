@@ -345,7 +345,8 @@ describe("Backup Page Component", () => {
     it("should display page description", () => {
       // When: Page loads
       // Then: Show description
-      const description = "Import and export your family tree data, manage automated backups";
+      const description =
+        "Import and export your family tree data, manage automated backups";
       expect(description).toBeTruthy();
     });
 

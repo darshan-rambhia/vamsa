@@ -14,32 +14,36 @@ import { logger } from "@vamsa/lib/logger";
 const authRouter = new OpenAPIHono();
 
 // Response schema for auth endpoints
-const authSuccessSchema = z.object({
-  user: z.object({
-    id: z.string().openapi({
-      description: "User ID",
-      example: "user_123",
+const authSuccessSchema = z
+  .object({
+    user: z
+      .object({
+        id: z.string().openapi({
+          description: "User ID",
+          example: "user_123",
+        }),
+        email: z.string().email().openapi({
+          description: "User email address",
+          example: "user@example.com",
+        }),
+        name: z.string().nullable().openapi({
+          description: "User display name",
+          example: "John Doe",
+        }),
+        role: z.string().openapi({
+          description: "User role",
+          example: "MEMBER",
+        }),
+      })
+      .openapi({
+        description: "Authenticated user information",
+      }),
+    token: z.string().openapi({
+      description: "Session token",
+      example: "eyJhbGciOiJIUzI1NiIs...",
     }),
-    email: z.string().email().openapi({
-      description: "User email address",
-      example: "user@example.com",
-    }),
-    name: z.string().nullable().openapi({
-      description: "User display name",
-      example: "John Doe",
-    }),
-    role: z.string().openapi({
-      description: "User role",
-      example: "MEMBER",
-    }),
-  }).openapi({
-    description: "Authenticated user information",
-  }),
-  token: z.string().openapi({
-    description: "Session token",
-    example: "eyJhbGciOiJIUzI1NiIs...",
-  }),
-}).openapi('AuthSuccessResponse');
+  })
+  .openapi("AuthSuccessResponse");
 
 /**
  * POST /api/v1/auth/login
@@ -111,10 +115,7 @@ authRouter.openapi(loginRoute, async (c) => {
     const result = await serverLogin({ data: { email, password } });
 
     if (!result || typeof result !== "object" || "error" in result) {
-      return c.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      return c.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
     // Server function returns { success, user } - token is set as cookie by server function

@@ -50,13 +50,18 @@ export function ErrorCard({
           className
         )}
       >
-        <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-        <p className="text-sm text-amber-700 dark:text-amber-300 flex-1">
+        <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
+        <p className="flex-1 text-sm text-amber-700 dark:text-amber-300">
           {message}
         </p>
         {showRetry && onRetry && (
-          <Button variant="ghost" size="sm" onClick={onRetry} className="shrink-0">
-            <RefreshCw className="h-3 w-3 mr-1" />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRetry}
+            className="shrink-0"
+          >
+            <RefreshCw className="mr-1 h-3 w-3" />
             Retry
           </Button>
         )}
@@ -69,17 +74,17 @@ export function ErrorCard({
       <Card className={cn("border-destructive/20", className)}>
         <CardContent className="py-6">
           <div className="flex items-start gap-4">
-            <div className="bg-destructive/10 flex h-10 w-10 items-center justify-center rounded-full shrink-0">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
+            <div className="bg-destructive/10 flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+              <AlertTriangle className="text-destructive h-5 w-5" />
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-medium text-foreground">{title}</h3>
-              <p className="text-sm text-muted-foreground mt-1">{message}</p>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-foreground font-medium">{title}</h3>
+              <p className="text-muted-foreground mt-1 text-sm">{message}</p>
               {(showRetry && onRetry) || actions ? (
-                <div className="flex items-center gap-2 mt-3">
+                <div className="mt-3 flex items-center gap-2">
                   {showRetry && onRetry && (
                     <Button variant="outline" size="sm" onClick={onRetry}>
-                      <RefreshCw className="h-3 w-3 mr-1.5" />
+                      <RefreshCw className="mr-1.5 h-3 w-3" />
                       Try Again
                     </Button>
                   )}
@@ -90,10 +95,10 @@ export function ErrorCard({
           </div>
 
           {isDev && errorMessage && (
-            <div className="mt-4 pt-4 border-t">
+            <div className="mt-4 border-t pt-4">
               <button
                 onClick={() => setShowDetails(!showDetails)}
-                className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+                className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs"
               >
                 {showDetails ? (
                   <ChevronUp className="h-3 w-3" />
@@ -103,12 +108,12 @@ export function ErrorCard({
                 Technical details
               </button>
               {showDetails && (
-                <div className="mt-2 bg-muted/50 rounded p-3 overflow-auto">
+                <div className="bg-muted/50 mt-2 overflow-auto rounded p-3">
                   <p className="text-destructive font-mono text-xs">
                     {errorMessage}
                   </p>
                   {errorStack && (
-                    <pre className="text-muted-foreground font-mono text-xs mt-2 whitespace-pre-wrap">
+                    <pre className="text-muted-foreground mt-2 font-mono text-xs whitespace-pre-wrap">
                       {errorStack}
                     </pre>
                   )}
@@ -126,16 +131,16 @@ export function ErrorCard({
     <Card className={cn("border-destructive/20", className)}>
       <CardContent className="flex flex-col items-center py-12 text-center">
         <div className="bg-destructive/10 mb-4 flex h-14 w-14 items-center justify-center rounded-full">
-          <AlertTriangle className="h-7 w-7 text-destructive" />
+          <AlertTriangle className="text-destructive h-7 w-7" />
         </div>
         <h2 className="font-display text-xl font-semibold">{title}</h2>
         <p className="text-muted-foreground mt-2 max-w-md text-sm">{message}</p>
 
         {(showRetry && onRetry) || actions ? (
-          <div className="flex items-center gap-3 mt-6">
+          <div className="mt-6 flex items-center gap-3">
             {showRetry && onRetry && (
               <Button onClick={onRetry}>
-                <RefreshCw className="h-4 w-4 mr-2" />
+                <RefreshCw className="mr-2 h-4 w-4" />
                 Try Again
               </Button>
             )}
@@ -147,7 +152,7 @@ export function ErrorCard({
           <div className="mt-8 w-full max-w-lg text-left">
             <button
               onClick={() => setShowDetails(!showDetails)}
-              className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
+              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs"
             >
               {showDetails ? (
                 <ChevronUp className="h-3 w-3" />
@@ -157,12 +162,12 @@ export function ErrorCard({
               Technical details
             </button>
             {showDetails && (
-              <div className="mt-2 bg-muted/50 rounded-lg border p-4 overflow-auto">
+              <div className="bg-muted/50 mt-2 overflow-auto rounded-lg border p-4">
                 <p className="text-destructive font-mono text-sm font-medium">
                   {errorMessage}
                 </p>
                 {errorStack && (
-                  <pre className="text-muted-foreground font-mono text-xs mt-2 whitespace-pre-wrap">
+                  <pre className="text-muted-foreground mt-2 font-mono text-xs whitespace-pre-wrap">
                     {errorStack}
                   </pre>
                 )}

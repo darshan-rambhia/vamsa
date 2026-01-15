@@ -19,6 +19,7 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 - **Organic**: Earth tones (forest greens, warm creams), natural warmth, feels alive not sterile
 
 ### Key Principles
+
 - **Typography**: Fraunces (display), Source Sans 3 (body), JetBrains Mono (mono)
 - **Colors**: OKLch earth tones - forest greens, warm creams. Use CSS variables, never hardcode.
 - **Spacing**: 4px grid system

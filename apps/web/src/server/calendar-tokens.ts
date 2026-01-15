@@ -156,9 +156,7 @@ export const deleteCalendarToken = createServerFn({ method: "POST" })
 
     // Only allow deletion of revoked (inactive) tokens
     if (existingToken.isActive) {
-      throw new Error(
-        "Cannot delete an active token. Please revoke it first."
-      );
+      throw new Error("Cannot delete an active token. Please revoke it first.");
     }
 
     // Permanently delete the token

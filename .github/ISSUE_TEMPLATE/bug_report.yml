@@ -1,0 +1,66 @@
+name: Bug report
+description: Create a report to help us improve
+labels: [bug]
+title: "bug: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: summary
+    attributes:
+      label: Summary
+      description: Briefly describe the bug.
+      placeholder: The page crashes when adding a new relationship...
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: Provide clear steps.
+      placeholder: |
+        1. Go to ...
+        2. Click on ...
+        3. Scroll down to ...
+        4. See error ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      placeholder: It should...
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      placeholder: It actually...
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: OS, browser (if applicable), Bun version, Node version
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Paste any relevant logs or screenshots.
+      placeholder: |
+        ```
+        stack trace
+        ```
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues
+          required: true
+        - label: This is not a security vulnerability (use SECURITY.md for that)
+          required: true

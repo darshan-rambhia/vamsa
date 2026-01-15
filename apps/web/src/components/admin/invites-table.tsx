@@ -317,8 +317,9 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
                                     Are you sure you want to permanently delete
-                                    this invite for <strong>{invite.email}</strong>?
-                                    This action cannot be undone.
+                                    this invite for{" "}
+                                    <strong>{invite.email}</strong>? This action
+                                    cannot be undone.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

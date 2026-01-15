@@ -173,14 +173,16 @@ const birthdaysRoute = createRoute({
   description: "iCalendar format with family member birthdays",
   operationId: "getBirthdayCalendar",
   request: {
-    query: z.object({
-      token: z.string().optional().openapi({
-        description: "Optional calendar token for validation",
-        example: "token_123",
+    query: z
+      .object({
+        token: z.string().optional().openapi({
+          description: "Optional calendar token for validation",
+          example: "token_123",
+        }),
+      })
+      .openapi({
+        description: "Query parameters for calendar endpoint",
       }),
-    }).openapi({
-      description: "Query parameters for calendar endpoint",
-    }),
   },
   responses: {
     200: {
@@ -311,14 +313,16 @@ const anniversariesRoute = createRoute({
   description: "iCalendar format with wedding and memorial dates",
   operationId: "getAnniversaryCalendar",
   request: {
-    query: z.object({
-      token: z.string().optional().openapi({
-        description: "Optional calendar token for validation",
-        example: "token_123",
+    query: z
+      .object({
+        token: z.string().optional().openapi({
+          description: "Optional calendar token for validation",
+          example: "token_123",
+        }),
+      })
+      .openapi({
+        description: "Query parameters for calendar endpoint",
       }),
-    }).openapi({
-      description: "Query parameters for calendar endpoint",
-    }),
   },
   responses: {
     200: {
@@ -503,17 +507,20 @@ const eventsRoute = createRoute({
   path: "/events.ics",
   tags: ["Calendar"],
   summary: "Get family events calendar",
-  description: "iCalendar format with births, deaths, marriages, and other events",
+  description:
+    "iCalendar format with births, deaths, marriages, and other events",
   operationId: "getEventsCalendar",
   request: {
-    query: z.object({
-      token: z.string().optional().openapi({
-        description: "Optional calendar token for validation",
-        example: "token_123",
+    query: z
+      .object({
+        token: z.string().optional().openapi({
+          description: "Optional calendar token for validation",
+          example: "token_123",
+        }),
+      })
+      .openapi({
+        description: "Query parameters for calendar endpoint",
       }),
-    }).openapi({
-      description: "Query parameters for calendar endpoint",
-    }),
   },
   responses: {
     200: {

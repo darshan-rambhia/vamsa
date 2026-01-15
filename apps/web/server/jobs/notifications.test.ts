@@ -9,7 +9,10 @@
 
 import { describe, it, expect, mock } from "bun:test";
 import { sendBackupNotification } from "./notifications";
-import type { NotificationType, BackupNotificationInput } from "./notifications";
+import type {
+  NotificationType,
+  BackupNotificationInput,
+} from "./notifications";
 
 // Mock logger
 mock.module("@vamsa/lib/logger", () => ({

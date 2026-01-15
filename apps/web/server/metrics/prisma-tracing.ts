@@ -32,7 +32,9 @@ interface PrismaMiddlewareParams {
 /**
  * Prisma middleware next function type
  */
-type PrismaMiddlewareNext = (params: PrismaMiddlewareParams) => Promise<unknown>;
+type PrismaMiddlewareNext = (
+  params: PrismaMiddlewareParams
+) => Promise<unknown>;
 
 /**
  * Create a Prisma middleware that adds OpenTelemetry tracing to all queries
@@ -89,8 +91,14 @@ export function createPrismaTracingMiddleware() {
             span.recordException(error);
 
             // Add Prisma error code if available
-            if ("code" in error && typeof (error as { code: unknown }).code === "string") {
-              span.setAttribute("db.prisma.error_code", (error as { code: string }).code);
+            if (
+              "code" in error &&
+              typeof (error as { code: unknown }).code === "string"
+            ) {
+              span.setAttribute(
+                "db.prisma.error_code",
+                (error as { code: string }).code
+              );
             }
           }
 

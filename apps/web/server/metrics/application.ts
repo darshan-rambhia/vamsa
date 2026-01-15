@@ -465,7 +465,10 @@ export function recordGedcomValidation(
   };
 
   // Record validation duration
-  gedcomImportDuration.record(durationMs, { ...attributes, operation: "validate" });
+  gedcomImportDuration.record(durationMs, {
+    ...attributes,
+    operation: "validate",
+  });
   gedcomOperationCount.add(1, { operation: "validate", ...attributes });
 
   if (errorCount > 0) {

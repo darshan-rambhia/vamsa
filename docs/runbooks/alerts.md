@@ -33,6 +33,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: Error rate >5% for 5 minutes
 
 #### Symptoms
+
 - Users experiencing 500 errors
 - Application appears broken or unresponsive
 - API calls failing
@@ -40,11 +41,13 @@ This document provides response procedures for each alert defined in the Vamsa m
 #### Investigation Steps
 
 1. **Check recent deployments**
+
    ```bash
    git log --oneline -10
    ```
 
 2. **Check application logs**
+
    ```bash
    docker logs vamsa-app --tail 100
    # Or in development:
@@ -57,6 +60,7 @@ This document provides response procedures for each alert defined in the Vamsa m
    - Look at "Error Rate by Endpoint" panel
 
 4. **Check database connectivity**
+
    ```bash
    docker exec vamsa-postgres pg_isready
    ```
@@ -69,12 +73,14 @@ This document provides response procedures for each alert defined in the Vamsa m
 #### Resolution
 
 1. **If deployment-related**: Roll back to previous version
+
    ```bash
    git revert HEAD
    pnpm build && pnpm start
    ```
 
 2. **If database issue**: Restart database connection
+
    ```bash
    docker restart vamsa-postgres
    ```
@@ -93,6 +99,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: P95 latency >1000ms for 5 minutes
 
 #### Symptoms
+
 - Pages load slowly
 - API responses take several seconds
 - Users report slowness
@@ -104,6 +111,7 @@ This document provides response procedures for each alert defined in the Vamsa m
    - Look for endpoints with high P95 latency
 
 2. **Check database query performance**
+
    ```sql
    -- Check for long-running queries
    SELECT pid, now() - pg_stat_activity.query_start AS duration, query
@@ -113,6 +121,7 @@ This document provides response procedures for each alert defined in the Vamsa m
    ```
 
 3. **Check application resource usage**
+
    ```bash
    docker stats vamsa-app
    ```
@@ -137,6 +146,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: Request rate >3x normal for 10 minutes
 
 #### Symptoms
+
 - Unusually high traffic
 - Possible bot activity or DDoS
 - Server load increasing
@@ -174,6 +184,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: >0.5 slow queries/sec (>500ms each) for 5 minutes
 
 #### Symptoms
+
 - Application feels sluggish
 - Database CPU high
 - Query timeouts
@@ -181,6 +192,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 #### Investigation Steps
 
 1. **Identify slow queries**
+
    ```sql
    SELECT query, calls, total_time, mean_time
    FROM pg_stat_statements
@@ -189,6 +201,7 @@ This document provides response procedures for each alert defined in the Vamsa m
    ```
 
 2. **Check for missing indexes**
+
    ```sql
    SELECT schemaname, tablename, indexrelname, idx_scan
    FROM pg_stat_user_indexes
@@ -203,6 +216,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 #### Resolution
 
 1. **Add missing indexes**
+
    ```prisma
    @@index([fieldName])
    ```
@@ -226,6 +240,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: Error rate >1% for 5 minutes
 
 #### Symptoms
+
 - Database queries failing
 - Application errors
 - Data not saving
@@ -233,11 +248,13 @@ This document provides response procedures for each alert defined in the Vamsa m
 #### Investigation Steps
 
 1. **Check PostgreSQL logs**
+
    ```bash
    docker logs vamsa-postgres --tail 100
    ```
 
 2. **Check connection pool status**
+
    ```sql
    SELECT count(*) FROM pg_stat_activity;
    ```
@@ -263,17 +280,20 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: P95 query time >500ms for 10 minutes
 
 #### Symptoms
+
 - All database operations slow
 - Not just specific queries
 
 #### Investigation Steps
 
 1. **Check database server resources**
+
    ```bash
    docker stats vamsa-postgres
    ```
 
 2. **Check for table bloat**
+
    ```sql
    SELECT schemaname, tablename,
           pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename))
@@ -305,6 +325,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: >0.1 chart render errors/sec for 5 minutes
 
 #### Symptoms
+
 - Family tree charts not displaying
 - JavaScript errors in browser console
 - Blank chart areas
@@ -332,6 +353,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: >50% zero-result searches for 10 minutes
 
 #### Symptoms
+
 - Users not finding expected results
 - Search feels broken
 
@@ -360,6 +382,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: >1 GEDCOM error/sec for 5 minutes
 
 #### Symptoms
+
 - GEDCOM imports failing
 - Partial data imports
 - Error messages during upload
@@ -385,12 +408,14 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: No active users for 30 minutes
 
 #### Symptoms
+
 - No user activity
 - Application might be inaccessible
 
 #### Investigation Steps
 
 1. **Check application health**
+
    ```bash
    curl http://localhost:3000/api/health
    ```
@@ -419,6 +444,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: Target unreachable for 5 minutes
 
 #### Symptoms
+
 - Metrics collection stopped
 - Gaps in Grafana dashboards
 - Alerting may be affected
@@ -438,6 +464,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 #### Resolution
 
 1. **Restart failed service**
+
    ```bash
    docker restart <service-name>
    ```
@@ -454,6 +481,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: No metrics received for 10 minutes
 
 #### Symptoms
+
 - No new metrics in Prometheus
 - Application metrics stale
 - Traces not appearing
@@ -461,6 +489,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 #### Investigation Steps
 
 1. **Check OTEL Collector logs**
+
    ```bash
    docker logs vamsa-otel-collector
    ```
@@ -477,6 +506,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 #### Resolution
 
 1. **Restart OTEL Collector**
+
    ```bash
    docker restart vamsa-otel-collector
    ```
@@ -493,6 +523,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 **Condition**: No Alertmanager connected for 5 minutes
 
 #### Symptoms
+
 - Alerts not being sent
 - Slack/email notifications stopped
 - Prometheus shows 0 Alertmanagers
@@ -500,6 +531,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 #### Investigation Steps
 
 1. **Check Alertmanager status**
+
    ```bash
    docker ps | grep alertmanager
    docker logs vamsa-alertmanager
@@ -515,6 +547,7 @@ This document provides response procedures for each alert defined in the Vamsa m
 #### Resolution
 
 1. **Restart Alertmanager**
+
    ```bash
    docker restart vamsa-alertmanager
    ```

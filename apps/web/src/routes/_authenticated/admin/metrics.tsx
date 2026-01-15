@@ -18,7 +18,16 @@ import { getMetricsSnapshot, getPrometheusStatus } from "~/server/metrics";
 import { getCurrentUser } from "~/server/auth";
 import { getFamilySettings, updateFamilySettings } from "~/server/settings";
 import { AdminRouteError } from "~/components/admin/route-error";
-import { Activity, Database, Users, TrendingUp, ExternalLink, AlertCircle, RefreshCw, Settings } from "lucide-react";
+import {
+  Activity,
+  Database,
+  Users,
+  TrendingUp,
+  ExternalLink,
+  AlertCircle,
+  RefreshCw,
+  Settings,
+} from "lucide-react";
 import { cn } from "@vamsa/ui";
 
 export const Route = createFileRoute("/_authenticated/admin/metrics")({
@@ -74,7 +83,7 @@ function MetricsPage() {
 
   return (
     <Container>
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <PageHeader
           title="System Metrics"
           description="Real-time application performance monitoring"
@@ -98,16 +107,18 @@ function MetricsPage() {
                   : "OFFLINE"}
             </Badge>
             {dataUpdatedAt && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground text-xs">
                 Updated {new Date(dataUpdatedAt).toLocaleTimeString()}
               </span>
             )}
             <button
               onClick={() => refetch()}
-              className="p-1 rounded hover:bg-muted"
+              className="hover:bg-muted rounded p-1"
               title="Refresh metrics"
             >
-              <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+              <RefreshCw
+                className={cn("h-4 w-4", isLoading && "animate-spin")}
+              />
             </button>
           </div>
         )}
@@ -122,13 +133,13 @@ function MetricsPage() {
       />
 
       {error && prometheusStatus.available && (
-        <Card className="mb-6 border-destructive/50">
+        <Card className="border-destructive/50 mb-6">
           <CardContent className="py-6">
             <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-destructive" />
+              <AlertCircle className="text-destructive h-5 w-5" />
               <div>
                 <p className="font-medium">Failed to Load Metrics</p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   {error instanceof Error ? error.message : "Unknown error"}
                 </p>
               </div>
@@ -141,215 +152,231 @@ function MetricsPage() {
       {!prometheusStatus.available ? (
         <Card className="border-amber-500/30 bg-amber-500/5">
           <CardContent className="py-12 text-center">
-            <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
-            <p className="font-medium text-lg">Metrics Not Available</p>
-            <p className="text-sm text-muted-foreground mt-2 max-w-md mx-auto">
+            <AlertCircle className="mx-auto mb-4 h-12 w-12 text-amber-500" />
+            <p className="text-lg font-medium">Metrics Not Available</p>
+            <p className="text-muted-foreground mx-auto mt-2 max-w-md text-sm">
               Configure your Prometheus/metrics API URL above, or start the
               observability stack with:
             </p>
-            <code className="bg-muted px-3 py-2 rounded mt-4 inline-block text-sm">
+            <code className="bg-muted mt-4 inline-block rounded px-3 py-2 text-sm">
               docker compose -f docker/docker-compose.observability.yml up -d
             </code>
           </CardContent>
         </Card>
       ) : (
-
-      <div className="space-y-6">
-        {/* HTTP Metrics */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              <CardTitle>HTTP Performance</CardTitle>
-            </div>
-            <CardDescription>Request rate, latency, and errors</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <MetricCard
-                label="Request Rate"
-                value={formatRate(metrics?.http.requestRate)}
-                unit="req/s"
-                loading={isLoading}
-                trend={getTrend(metrics?.http.requestRate, 10, "high")}
-              />
-              <MetricCard
-                label="Error Rate"
-                value={formatRate(metrics?.http.errorRate)}
-                unit="err/s"
-                loading={isLoading}
-                trend={getTrend(metrics?.http.errorRate, 0.5, "warning", 0.1)}
-              />
-              <MetricCard
-                label="P95 Latency"
-                value={formatMs(metrics?.http.p95Latency)}
-                unit="ms"
-                loading={isLoading}
-                trend={getTrend(metrics?.http.p95Latency, 500, "warning", 200)}
-              />
-              <MetricCard
-                label="Active Connections"
-                value={formatNumber(metrics?.http.activeConnections)}
-                unit=""
-                loading={isLoading}
-                trend="normal"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Database Metrics */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Database className="h-5 w-5 text-primary" />
-              <CardTitle>Database Performance</CardTitle>
-            </div>
-            <CardDescription>
-              Query performance and slow query detection
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <MetricCard
-                label="Query Rate"
-                value={formatRate(metrics?.database.queryRate)}
-                unit="q/s"
-                loading={isLoading}
-                trend="normal"
-              />
-              <MetricCard
-                label="Slow Queries"
-                value={formatNumber(metrics?.database.slowQueryCount)}
-                unit=""
-                loading={isLoading}
-                trend={getTrend(metrics?.database.slowQueryCount, 10, "warning", 1)}
-              />
-              <MetricCard
-                label="P95 Query Time"
-                value={formatMs(metrics?.database.p95QueryTime)}
-                unit="ms"
-                loading={isLoading}
-                trend={getTrend(metrics?.database.p95QueryTime, 100, "warning", 50)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Application Metrics */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
-              <CardTitle>User Activity</CardTitle>
-            </div>
-            <CardDescription>Active users and feature usage</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <MetricCard
-                label="Active Users"
-                value={formatNumber(metrics?.application.activeUsers)}
-                unit=""
-                loading={isLoading}
-                trend="normal"
-              />
-              <MetricCard
-                label="Search Queries"
-                value={formatRate(metrics?.application.searchQueries)}
-                unit="/s"
-                loading={isLoading}
-                trend="normal"
-              />
-            </div>
-
-            {metrics?.application.chartViews &&
-              Object.keys(metrics.application.chartViews).length > 0 && (
-                <div>
-                  <h4 className="font-medium mb-3 text-sm">
-                    Chart Views (5m rate)
-                  </h4>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                    {Object.entries(metrics.application.chartViews).map(
-                      ([type, count]) => (
-                        <div
-                          key={type}
-                          className="flex justify-between items-center p-2 rounded-md bg-muted/50"
-                        >
-                          <span className="text-sm capitalize">{type}</span>
-                          <Badge variant="secondary">
-                            {formatRate(count)}/s
-                          </Badge>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-              )}
-          </CardContent>
-        </Card>
-
-        {/* Link to Grafana */}
-        <Card>
-          <CardContent className="py-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  <h3 className="font-medium">Advanced Monitoring</h3>
-                </div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  View detailed dashboards, historical data, and alerts in
-                  Grafana
-                </p>
+        <div className="space-y-6">
+          {/* HTTP Metrics */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Activity className="text-primary h-5 w-5" />
+                <CardTitle>HTTP Performance</CardTitle>
               </div>
-              <a
-                href={prometheusStatus.grafanaUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-              >
-                <ExternalLink className="h-4 w-4" />
-                Open Grafana
-              </a>
-            </div>
-          </CardContent>
-        </Card>
+              <CardDescription>
+                Request rate, latency, and errors
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <MetricCard
+                  label="Request Rate"
+                  value={formatRate(metrics?.http.requestRate)}
+                  unit="req/s"
+                  loading={isLoading}
+                  trend={getTrend(metrics?.http.requestRate, 10, "high")}
+                />
+                <MetricCard
+                  label="Error Rate"
+                  value={formatRate(metrics?.http.errorRate)}
+                  unit="err/s"
+                  loading={isLoading}
+                  trend={getTrend(metrics?.http.errorRate, 0.5, "warning", 0.1)}
+                />
+                <MetricCard
+                  label="P95 Latency"
+                  value={formatMs(metrics?.http.p95Latency)}
+                  unit="ms"
+                  loading={isLoading}
+                  trend={getTrend(
+                    metrics?.http.p95Latency,
+                    500,
+                    "warning",
+                    200
+                  )}
+                />
+                <MetricCard
+                  label="Active Connections"
+                  value={formatNumber(metrics?.http.activeConnections)}
+                  unit=""
+                  loading={isLoading}
+                  trend="normal"
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-        {/* Available Dashboards */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Dashboards</CardTitle>
-            <CardDescription>
-              Pre-configured Grafana dashboards for monitoring
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <DashboardLink
-                name="Application Overview"
-                description="Request rates, latency percentiles, error tracking"
-                href={`${prometheusStatus.grafanaUrl}/d/vamsa-app-overview`}
-              />
-              <DashboardLink
-                name="Database Performance"
-                description="Query duration, slow queries, Prisma metrics"
-                href={`${prometheusStatus.grafanaUrl}/d/vamsa-db-perf`}
-              />
-              <DashboardLink
-                name="Feature Performance"
-                description="Charts, search, relationships, GEDCOM, media"
-                href={`${prometheusStatus.grafanaUrl}/d/vamsa-feature-perf`}
-              />
-              <DashboardLink
-                name="User Activity"
-                description="Active users, sessions, feature adoption"
-                href={`${prometheusStatus.grafanaUrl}/d/vamsa-user-activity`}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          {/* Database Metrics */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Database className="text-primary h-5 w-5" />
+                <CardTitle>Database Performance</CardTitle>
+              </div>
+              <CardDescription>
+                Query performance and slow query detection
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+                <MetricCard
+                  label="Query Rate"
+                  value={formatRate(metrics?.database.queryRate)}
+                  unit="q/s"
+                  loading={isLoading}
+                  trend="normal"
+                />
+                <MetricCard
+                  label="Slow Queries"
+                  value={formatNumber(metrics?.database.slowQueryCount)}
+                  unit=""
+                  loading={isLoading}
+                  trend={getTrend(
+                    metrics?.database.slowQueryCount,
+                    10,
+                    "warning",
+                    1
+                  )}
+                />
+                <MetricCard
+                  label="P95 Query Time"
+                  value={formatMs(metrics?.database.p95QueryTime)}
+                  unit="ms"
+                  loading={isLoading}
+                  trend={getTrend(
+                    metrics?.database.p95QueryTime,
+                    100,
+                    "warning",
+                    50
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Application Metrics */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Users className="text-primary h-5 w-5" />
+                <CardTitle>User Activity</CardTitle>
+              </div>
+              <CardDescription>Active users and feature usage</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <MetricCard
+                  label="Active Users"
+                  value={formatNumber(metrics?.application.activeUsers)}
+                  unit=""
+                  loading={isLoading}
+                  trend="normal"
+                />
+                <MetricCard
+                  label="Search Queries"
+                  value={formatRate(metrics?.application.searchQueries)}
+                  unit="/s"
+                  loading={isLoading}
+                  trend="normal"
+                />
+              </div>
+
+              {metrics?.application.chartViews &&
+                Object.keys(metrics.application.chartViews).length > 0 && (
+                  <div>
+                    <h4 className="mb-3 text-sm font-medium">
+                      Chart Views (5m rate)
+                    </h4>
+                    <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                      {Object.entries(metrics.application.chartViews).map(
+                        ([type, count]) => (
+                          <div
+                            key={type}
+                            className="bg-muted/50 flex items-center justify-between rounded-md p-2"
+                          >
+                            <span className="text-sm capitalize">{type}</span>
+                            <Badge variant="secondary">
+                              {formatRate(count)}/s
+                            </Badge>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+            </CardContent>
+          </Card>
+
+          {/* Link to Grafana */}
+          <Card>
+            <CardContent className="py-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="text-primary h-5 w-5" />
+                    <h3 className="font-medium">Advanced Monitoring</h3>
+                  </div>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    View detailed dashboards, historical data, and alerts in
+                    Grafana
+                  </p>
+                </div>
+                <a
+                  href={prometheusStatus.grafanaUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 transition-colors"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Open Grafana
+                </a>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Available Dashboards */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Available Dashboards</CardTitle>
+              <CardDescription>
+                Pre-configured Grafana dashboards for monitoring
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <DashboardLink
+                  name="Application Overview"
+                  description="Request rates, latency percentiles, error tracking"
+                  href={`${prometheusStatus.grafanaUrl}/d/vamsa-app-overview`}
+                />
+                <DashboardLink
+                  name="Database Performance"
+                  description="Query duration, slow queries, Prisma metrics"
+                  href={`${prometheusStatus.grafanaUrl}/d/vamsa-db-perf`}
+                />
+                <DashboardLink
+                  name="Feature Performance"
+                  description="Charts, search, relationships, GEDCOM, media"
+                  href={`${prometheusStatus.grafanaUrl}/d/vamsa-feature-perf`}
+                />
+                <DashboardLink
+                  name="User Activity"
+                  description="Active users, sessions, feature adoption"
+                  href={`${prometheusStatus.grafanaUrl}/d/vamsa-user-activity`}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </Container>
   );
@@ -418,7 +445,7 @@ function MetricsConfigCard({
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-primary" />
+            <Settings className="text-primary h-5 w-5" />
             <CardTitle>Metrics Configuration</CardTitle>
           </div>
           <div className="flex items-center gap-2">
@@ -491,11 +518,11 @@ function MetricsConfigCard({
 
           {!prometheusAvailable && (
             <div className="bg-muted/50 rounded-lg p-4">
-              <p className="text-sm font-medium mb-2">Quick Start</p>
-              <p className="text-sm text-muted-foreground mb-2">
+              <p className="mb-2 text-sm font-medium">Quick Start</p>
+              <p className="text-muted-foreground mb-2 text-sm">
                 Start the observability stack locally:
               </p>
-              <code className="bg-background px-3 py-2 rounded block text-sm">
+              <code className="bg-background block rounded px-3 py-2 text-sm">
                 docker compose -f docker/docker-compose.observability.yml up -d
               </code>
             </div>
@@ -536,13 +563,13 @@ function MetricCard({ label, value, unit, loading, trend }: MetricCardProps) {
 
   return (
     <div className="space-y-1">
-      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-muted-foreground text-sm">{label}</p>
       {loading ? (
-        <div className="h-8 w-20 bg-muted animate-pulse rounded" />
+        <div className="bg-muted h-8 w-20 animate-pulse rounded" />
       ) : (
         <p className={cn("text-2xl font-bold tabular-nums", getTrendColor())}>
           {value}
-          {unit && <span className="text-base font-normal ml-1">{unit}</span>}
+          {unit && <span className="ml-1 text-base font-normal">{unit}</span>}
         </p>
       )}
     </div>
@@ -561,14 +588,14 @@ function DashboardLink({ name, description, href }: DashboardLinkProps) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="flex items-start gap-3 p-3 rounded-lg border hover:bg-muted/50 transition-colors group"
+      className="hover:bg-muted/50 group flex items-start gap-3 rounded-lg border p-3 transition-colors"
     >
-      <TrendingUp className="h-5 w-5 text-muted-foreground group-hover:text-primary mt-0.5" />
+      <TrendingUp className="text-muted-foreground group-hover:text-primary mt-0.5 h-5 w-5" />
       <div className="flex-1">
-        <h4 className="font-medium group-hover:text-primary">{name}</h4>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <h4 className="group-hover:text-primary font-medium">{name}</h4>
+        <p className="text-muted-foreground text-sm">{description}</p>
       </div>
-      <ExternalLink className="h-4 w-4 text-muted-foreground" />
+      <ExternalLink className="text-muted-foreground h-4 w-4" />
     </a>
   );
 }

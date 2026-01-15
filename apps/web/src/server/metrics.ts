@@ -43,7 +43,10 @@ async function queryPrometheus(query: string): Promise<number> {
     });
 
     if (!response.ok) {
-      logger.warn({ status: response.status, query }, "Prometheus query failed");
+      logger.warn(
+        { status: response.status, query },
+        "Prometheus query failed"
+      );
       return 0;
     }
 
@@ -168,7 +171,9 @@ export const getMetricsSnapshot = createServerFn({ method: "GET" }).handler(
     ] = await Promise.all([
       // HTTP metrics
       queryPrometheus("sum(rate(vamsa_http_request_count[1m]))"),
-      queryPrometheus('sum(rate(vamsa_http_request_count{status_code=~"5.."}[1m]))'),
+      queryPrometheus(
+        'sum(rate(vamsa_http_request_count{status_code=~"5.."}[1m]))'
+      ),
       queryPrometheus(
         "histogram_quantile(0.95, sum(rate(vamsa_http_request_duration_ms_bucket[1m])) by (le))"
       ),
@@ -253,7 +258,9 @@ export const getPrometheusStatus = createServerFn({ method: "GET" }).handler(
       url: metricsApiUrl,
       grafanaUrl,
       // Indicate if using custom URLs
-      usingCustomUrls: !!(settings?.metricsDashboardUrl || settings?.metricsApiUrl),
+      usingCustomUrls: !!(
+        settings?.metricsDashboardUrl || settings?.metricsApiUrl
+      ),
     };
   }
 );

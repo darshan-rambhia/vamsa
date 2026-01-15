@@ -35,7 +35,9 @@ test.describe("Error Handling", () => {
       await expect(page.getByTestId("healthy-component")).not.toBeVisible();
 
       // An error card should appear in the boundary container
-      const errorBoundaryContainer = page.getByTestId("error-boundary-container");
+      const errorBoundaryContainer = page.getByTestId(
+        "error-boundary-container"
+      );
       await expect(
         errorBoundaryContainer.getByText("This section encountered an error")
       ).toBeVisible();
@@ -70,8 +72,12 @@ test.describe("Error Handling", () => {
       await expect(page.getByText("Page not found")).toBeVisible();
 
       // Should have navigation options
-      await expect(page.getByRole("link", { name: /go to homepage/i })).toBeVisible();
-      await expect(page.getByRole("link", { name: /search people/i })).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: /go to homepage/i })
+      ).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: /search people/i })
+      ).toBeVisible();
 
       // Should show the Vamsa logo/header
       await expect(page.getByText("Vamsa")).toBeVisible();

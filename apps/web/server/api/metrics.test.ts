@@ -42,7 +42,9 @@ describe("Metrics API", () => {
   });
 
   it("DELETE /api/v1/metrics/slow-queries clears slow queries", async () => {
-    const res = await apiV1.request("/metrics/slow-queries", { method: "DELETE" });
+    const res = await apiV1.request("/metrics/slow-queries", {
+      method: "DELETE",
+    });
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body.success).toBe(true);

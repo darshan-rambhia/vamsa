@@ -418,7 +418,9 @@ describe("Calendar Token Tests", () => {
           where: { userId: testUser.id },
         });
 
-        expect(userTokens.every((t: any) => t.userId === testUser.id)).toBe(true);
+        expect(userTokens.every((t: any) => t.userId === testUser.id)).toBe(
+          true
+        );
 
         await cleanupTestData(user2.id);
       });
@@ -569,7 +571,10 @@ describe("Calendar Token Tests", () => {
 
         const newToken = await rotateToken(oldToken.id);
 
-        const daysUntilExpiry = differenceInDays(newToken.expiresAt, new Date());
+        const daysUntilExpiry = differenceInDays(
+          newToken.expiresAt,
+          new Date()
+        );
 
         // Should be approximately 365 days (allow some drift)
         expect(daysUntilExpiry).toBeGreaterThanOrEqual(360);
@@ -605,7 +610,10 @@ describe("Calendar Token Tests", () => {
           where: { id: oldToken.id },
         });
 
-        const daysUntilExpiry = differenceInDays(updated!.expiresAt, new Date());
+        const daysUntilExpiry = differenceInDays(
+          updated!.expiresAt,
+          new Date()
+        );
 
         // Should be approximately 30 days
         expect(daysUntilExpiry).toBeGreaterThanOrEqual(29);
@@ -705,13 +713,13 @@ describe("Calendar Token Tests", () => {
     describe("enforceRotationPolicy", () => {
       it("should auto-rotate old annual tokens", async () => {
         const oldToken = await createTokenWithAge(testUser.id, 400, {
-            rotationPolicy: "annual",
+          rotationPolicy: "annual",
         });
 
         await enforceRotationPolicy(testUser.id, "annual_check");
 
         const rotated = await prisma.calendarToken.findFirst({
-            where: { rotatedFrom: oldToken.id },
+          where: { rotatedFrom: oldToken.id },
         });
 
         expect(rotated).toBeTruthy();
@@ -720,13 +728,13 @@ describe("Calendar Token Tests", () => {
 
       it("should not rotate recent annual tokens", async () => {
         const recentToken = await createTokenWithAge(testUser.id, 100, {
-            rotationPolicy: "annual",
+          rotationPolicy: "annual",
         });
 
         await enforceRotationPolicy(testUser.id, "annual_check");
 
         const rotated = await prisma.calendarToken.findFirst({
-            where: { rotatedFrom: recentToken.id },
+          where: { rotatedFrom: recentToken.id },
         });
 
         expect(rotated).toBeNull();
@@ -734,13 +742,13 @@ describe("Calendar Token Tests", () => {
 
       it("should rotate tokens on password change", async () => {
         const token = await createValidToken(testUser.id, {
-            rotationPolicy: "on_password_change",
+          rotationPolicy: "on_password_change",
         });
 
         await enforceRotationPolicy(testUser.id, "password_change");
 
         const rotated = await prisma.calendarToken.findFirst({
-            where: { rotatedFrom: token.id },
+          where: { rotatedFrom: token.id },
         });
 
         expect(rotated).toBeTruthy();
@@ -748,14 +756,14 @@ describe("Calendar Token Tests", () => {
 
       it("should not rotate manual tokens automatically", async () => {
         const token = await createTokenWithAge(testUser.id, 400, {
-            rotationPolicy: "manual",
+          rotationPolicy: "manual",
         });
 
         await enforceRotationPolicy(testUser.id, "annual_check");
         await enforceRotationPolicy(testUser.id, "password_change");
 
         const rotated = await prisma.calendarToken.findFirst({
-            where: { rotatedFrom: token.id },
+          where: { rotatedFrom: token.id },
         });
 
         expect(rotated).toBeNull();

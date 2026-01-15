@@ -240,7 +240,9 @@ export const exportBackup = createServerFn({ method: "POST" })
 
 // List backups with pagination
 export const listBackups = createServerFn({ method: "POST" })
-  .inputValidator((data: ListBackupsInput) => listBackupsInputSchema.parse(data))
+  .inputValidator((data: ListBackupsInput) =>
+    listBackupsInputSchema.parse(data)
+  )
   .handler(async ({ data }) => {
     await requireAuth("ADMIN");
 
@@ -327,7 +329,8 @@ export const verifyBackup = createServerFn({ method: "POST" })
 
     // Placeholder verification logic
     // In a real implementation, this would check file integrity
-    const isValid = backup.status === "COMPLETED" && backup.size && backup.size > 0n;
+    const isValid =
+      backup.status === "COMPLETED" && backup.size && backup.size > 0n;
 
     return {
       success: true,

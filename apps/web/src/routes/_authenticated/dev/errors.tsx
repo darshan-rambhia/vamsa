@@ -38,7 +38,7 @@ function ErrorShowcase() {
 
       {/* Warning banner */}
       <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-500/5 p-4">
-        <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0" />
+        <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
         <p className="text-sm text-amber-700 dark:text-amber-300">
           This page is for development and testing purposes only. It showcases
           all error component variants and allows testing error boundaries.
@@ -47,11 +47,13 @@ function ErrorShowcase() {
 
       {/* ErrorCard Variants */}
       <section className="space-y-6">
-        <h2 className="font-display text-xl font-semibold">ErrorCard Variants</h2>
+        <h2 className="font-display text-xl font-semibold">
+          ErrorCard Variants
+        </h2>
 
         {/* Default variant */}
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">
+          <h3 className="text-muted-foreground text-sm font-medium">
             Default (Large Centered)
           </h3>
           <ErrorCard
@@ -65,7 +67,7 @@ function ErrorShowcase() {
 
         {/* Compact variant */}
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">
+          <h3 className="text-muted-foreground text-sm font-medium">
             Compact (Horizontal Layout)
           </h3>
           <ErrorCard
@@ -80,7 +82,7 @@ function ErrorShowcase() {
 
         {/* Minimal variant */}
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">
+          <h3 className="text-muted-foreground text-sm font-medium">
             Minimal (Warning Bar)
           </h3>
           <ErrorCard
@@ -93,7 +95,7 @@ function ErrorShowcase() {
 
         {/* Without retry button */}
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">
+          <h3 className="text-muted-foreground text-sm font-medium">
             Without Retry Button
           </h3>
           <ErrorCard
@@ -107,7 +109,7 @@ function ErrorShowcase() {
 
         {/* With custom actions */}
         <div className="space-y-2">
-          <h3 className="text-sm font-medium text-muted-foreground">
+          <h3 className="text-muted-foreground text-sm font-medium">
             With Custom Actions
           </h3>
           <ErrorCard
@@ -140,8 +142,9 @@ function ErrorShowcase() {
           <CardHeader>
             <CardTitle>Live Error Boundary Test</CardTitle>
             <CardDescription>
-              Click the button below to trigger an error inside the ErrorBoundary.
-              The error should be caught and displayed inline without crashing the page.
+              Click the button below to trigger an error inside the
+              ErrorBoundary. The error should be caught and displayed inline
+              without crashing the page.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -166,10 +169,10 @@ function ErrorShowcase() {
             </div>
 
             <div
-              className="rounded-lg border-2 border-dashed border-muted p-4"
+              className="border-muted rounded-lg border-2 border-dashed p-4"
               data-testid="error-boundary-container"
             >
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-muted-foreground mb-4 text-sm">
                 Error boundary content area:
               </p>
               <ErrorBoundary key={boundaryKey}>
@@ -182,14 +185,16 @@ function ErrorShowcase() {
 
       {/* Error States Reference */}
       <section className="space-y-6">
-        <h2 className="font-display text-xl font-semibold">Error States Reference</h2>
+        <h2 className="font-display text-xl font-semibold">
+          Error States Reference
+        </h2>
 
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Route-Level Errors</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
+            <CardContent className="text-muted-foreground text-sm">
               <p>
                 When a route fails to load, the <code>RouteError</code> or{" "}
                 <code>CompactRouteError</code> component is displayed. These
@@ -203,9 +208,11 @@ function ErrorShowcase() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Component-Level Errors</CardTitle>
+              <CardTitle className="text-base">
+                Component-Level Errors
+              </CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
+            <CardContent className="text-muted-foreground text-sm">
               <p>
                 Wrap components in <code>&lt;ErrorBoundary&gt;</code> to catch
                 errors locally. The component shows an error card while the rest
@@ -221,7 +228,7 @@ function ErrorShowcase() {
             <CardHeader>
               <CardTitle className="text-base">Root-Level Errors</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
+            <CardContent className="text-muted-foreground text-sm">
               <p>
                 Uncaught errors bubble up to <code>RootErrorComponent</code> in{" "}
                 <code>__root.tsx</code>. This shows a full-page error with a
@@ -235,14 +242,17 @@ function ErrorShowcase() {
             <CardHeader>
               <CardTitle className="text-base">404 Not Found</CardTitle>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
+            <CardContent className="text-muted-foreground text-sm">
               <p>
                 When a route doesn't exist, the <code>NotFound</code> component
                 displays a themed 404 page with navigation options.
               </p>
               <p className="mt-2">
                 Test by visiting:{" "}
-                <a href="/this-page-does-not-exist" className="text-primary hover:underline">
+                <a
+                  href="/this-page-does-not-exist"
+                  className="text-primary hover:underline"
+                >
                   /this-page-does-not-exist
                 </a>
               </p>
@@ -267,7 +277,7 @@ function ErrorTriggerComponent({ shouldError }: { shouldError: boolean }) {
 
   return (
     <div
-      className="rounded-lg bg-green-500/10 border border-green-500/30 p-4"
+      className="rounded-lg border border-green-500/30 bg-green-500/10 p-4"
       data-testid="healthy-component"
     >
       <p className="text-sm text-green-700 dark:text-green-300">

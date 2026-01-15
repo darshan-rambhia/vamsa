@@ -15,7 +15,10 @@ import {
   Button,
 } from "@vamsa/ui";
 import { PersonSelector } from "~/components/charts/PersonSelector";
-import { ChartStatsPanel, type ChartMetadata } from "~/components/charts/ChartStatsPanel";
+import {
+  ChartStatsPanel,
+  type ChartMetadata,
+} from "~/components/charts/ChartStatsPanel";
 import { ChartLegend } from "~/components/charts/ChartLegend";
 import { type ChartType } from "~/components/charts/ChartControls";
 

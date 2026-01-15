@@ -160,45 +160,45 @@ export const getRecentActivity = createServerFn({ method: "GET" })
   });
 
 // Get available filter options
-export const getActivityFilterOptions = createServerFn({ method: "GET" }).handler(
-  async () => {
-    // Get distinct action types and entity types from audit logs
-    const [actionTypes, entityTypes, users] = await Promise.all([
-      prisma.auditLog.groupBy({
-        by: ["action"],
-        _count: true,
-      }),
-      prisma.auditLog.groupBy({
-        by: ["entityType"],
-        _count: true,
-      }),
-      prisma.user.findMany({
-        select: { id: true, name: true },
-        where: {
-          auditLogs: { some: {} },
-        },
-        orderBy: { name: "asc" },
-      }),
-    ]);
+export const getActivityFilterOptions = createServerFn({
+  method: "GET",
+}).handler(async () => {
+  // Get distinct action types and entity types from audit logs
+  const [actionTypes, entityTypes, users] = await Promise.all([
+    prisma.auditLog.groupBy({
+      by: ["action"],
+      _count: true,
+    }),
+    prisma.auditLog.groupBy({
+      by: ["entityType"],
+      _count: true,
+    }),
+    prisma.user.findMany({
+      select: { id: true, name: true },
+      where: {
+        auditLogs: { some: {} },
+      },
+      orderBy: { name: "asc" },
+    }),
+  ]);
 
-    return {
-      actionTypes: actionTypes.map((a) => ({
-        value: a.action,
-        label: formatActionType(a.action),
-        count: a._count,
-      })),
-      entityTypes: entityTypes.map((e) => ({
-        value: e.entityType,
-        label: formatEntityType(e.entityType),
-        count: e._count,
-      })),
-      users: users.map((u) => ({
-        value: u.id,
-        label: u.name ?? "Unknown",
-      })),
-    };
-  }
-);
+  return {
+    actionTypes: actionTypes.map((a) => ({
+      value: a.action,
+      label: formatActionType(a.action),
+      count: a._count,
+    })),
+    entityTypes: entityTypes.map((e) => ({
+      value: e.entityType,
+      label: formatEntityType(e.entityType),
+      count: e._count,
+    })),
+    users: users.map((u) => ({
+      value: u.id,
+      label: u.name ?? "Unknown",
+    })),
+  };
+});
 
 // Helper to format action type for display
 function formatActionType(action: string): string {
@@ -227,7 +227,10 @@ function formatEntityType(entityType: string): string {
     BACKUP: "Backup",
     MEDIA: "Media",
   };
-  return labels[entityType] ?? entityType.charAt(0) + entityType.slice(1).toLowerCase();
+  return (
+    labels[entityType] ??
+    entityType.charAt(0) + entityType.slice(1).toLowerCase()
+  );
 }
 
 function getActivityDescription(

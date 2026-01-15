@@ -219,13 +219,27 @@ NODE_ENV=production
 
 ## Contributing
 
-Contributions welcome! Please:
+New to the project? Start a friendly conversation in [GitHub Discussions](https://github.com/darshan-rambhia/vamsa/discussions) and we’ll help you find a good first issue.
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for detailed information on:
+
+- Development setup and workflow
+- Testing guidelines (unit, E2E, accessibility)
+- Code style and commit conventions
+- Database migration process
+- Docker development
+- Pull request process
+
+For quick contributions, you can:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'feat: add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Make your changes with tests
+4. Commit using [Conventional Commits](https://www.conventionalcommits.org/) (`git commit -m 'feat: add amazing feature'`)
+5. Push to your fork (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
+
+For more details, read the full [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

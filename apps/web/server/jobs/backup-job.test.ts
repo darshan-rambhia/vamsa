@@ -572,7 +572,9 @@ describe("Backup Job", () => {
         { id: "b4", status: "IN_PROGRESS" },
       ];
 
-      const completedBackups = allBackups.filter((b) => b.status === "COMPLETED");
+      const completedBackups = allBackups.filter(
+        (b) => b.status === "COMPLETED"
+      );
 
       expect(completedBackups).toHaveLength(2);
     });

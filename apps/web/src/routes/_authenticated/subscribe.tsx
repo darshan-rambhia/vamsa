@@ -40,9 +40,7 @@ function SubscribeComponent() {
   });
 
   const generateMutation = useMutation({
-    mutationFn: (params: {
-      name?: string;
-    }) =>
+    mutationFn: (params: { name?: string }) =>
       generateCalendarToken({
         data: { name: params.name || undefined, expiryDays: 365 },
       }),
@@ -210,7 +208,9 @@ function SubscribeComponent() {
             {/* Revoked Tokens List */}
             {revokedTokens.length > 0 && (
               <div className="space-y-2">
-                <p className="text-muted-foreground text-sm font-medium">Revoked Tokens</p>
+                <p className="text-muted-foreground text-sm font-medium">
+                  Revoked Tokens
+                </p>
                 <div className="space-y-2">
                   {revokedTokens.map((token) => (
                     <div
@@ -221,9 +221,7 @@ function SubscribeComponent() {
                         <p className="text-muted-foreground text-sm font-medium">
                           {token.name || "Calendar Token"}
                         </p>
-                        <p className="text-muted-foreground text-xs">
-                          Revoked
-                        </p>
+                        <p className="text-muted-foreground text-xs">Revoked</p>
                       </div>
                       <Button
                         variant="destructive"
@@ -304,8 +302,8 @@ function SubscribeComponent() {
             )}
 
             {!activeTokenValue && (
-              <div className="border-amber-500/30 bg-amber-500/10 rounded-lg border-2 p-3">
-                <p className="text-amber-700 dark:text-amber-400 text-sm">
+              <div className="rounded-lg border-2 border-amber-500/30 bg-amber-500/10 p-3">
+                <p className="text-sm text-amber-700 dark:text-amber-400">
                   <strong>No token selected.</strong> Generate a new token or
                   select an existing one to get authenticated calendar URLs.
                 </p>

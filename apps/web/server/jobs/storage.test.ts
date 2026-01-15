@@ -88,9 +88,7 @@ describe("Cloud Storage Integration", () => {
         bucket: "backups",
       };
 
-      const key = config.prefix
-        ? `${config.prefix}/${filename}`
-        : filename;
+      const key = config.prefix ? `${config.prefix}/${filename}` : filename;
 
       expect(key).toBe(filename);
     });
@@ -102,9 +100,7 @@ describe("Cloud Storage Integration", () => {
         prefix: "backups/2024",
       };
 
-      const key = config.prefix
-        ? `${config.prefix}/${filename}`
-        : filename;
+      const key = config.prefix ? `${config.prefix}/${filename}` : filename;
 
       expect(key).toBe("backups/2024/vamsa-backup-daily-2024-01-15.zip");
     });
@@ -116,9 +112,7 @@ describe("Cloud Storage Integration", () => {
         prefix: "company/vamsa/daily",
       };
 
-      const key = config.prefix
-        ? `${config.prefix}/${filename}`
-        : filename;
+      const key = config.prefix ? `${config.prefix}/${filename}` : filename;
 
       expect(key).toBe("company/vamsa/daily/backup.zip");
     });
@@ -218,9 +212,7 @@ describe("Cloud Storage Integration", () => {
         prefix: "backups/2024",
       };
 
-      const key = config.prefix
-        ? `${config.prefix}/${filename}`
-        : filename;
+      const key = config.prefix ? `${config.prefix}/${filename}` : filename;
 
       expect(key).toBe("backups/2024/vamsa-backup-daily-2024-01-15.zip");
     });
@@ -231,9 +223,7 @@ describe("Cloud Storage Integration", () => {
         bucket: "backups",
       };
 
-      const key = config.prefix
-        ? `${config.prefix}/${filename}`
-        : filename;
+      const key = config.prefix ? `${config.prefix}/${filename}` : filename;
 
       expect(key).toBe("backup.zip");
     });
@@ -263,9 +253,7 @@ describe("Cloud Storage Integration", () => {
         prefix: "org/company/team/project/vamsa/daily",
       };
 
-      const key = config.prefix
-        ? `${config.prefix}/${filename}`
-        : filename;
+      const key = config.prefix ? `${config.prefix}/${filename}` : filename;
 
       expect(key).toContain("org/company");
       expect(key).toContain("backup.zip");
@@ -332,12 +320,7 @@ describe("Cloud Storage Integration", () => {
     });
 
     it("should handle region variations", () => {
-      const regions = [
-        "us-east-1",
-        "eu-west-1",
-        "ap-southeast-1",
-        "auto",
-      ];
+      const regions = ["us-east-1", "eu-west-1", "ap-southeast-1", "auto"];
 
       expect(regions).toContain("auto");
       expect(regions.length).toBeGreaterThan(0);
@@ -347,9 +330,7 @@ describe("Cloud Storage Integration", () => {
   describe("Error Handling", () => {
     it("should throw for unsupported provider on upload", () => {
       const shouldThrow = () => {
-        throw new Error(
-          "Unsupported storage provider: UNKNOWN"
-        );
+        throw new Error("Unsupported storage provider: UNKNOWN");
       };
 
       expect(shouldThrow).toThrow();
@@ -357,9 +338,7 @@ describe("Cloud Storage Integration", () => {
 
     it("should throw for unsupported provider on delete", () => {
       const shouldThrow = () => {
-        throw new Error(
-          "Unsupported storage provider: UNKNOWN"
-        );
+        throw new Error("Unsupported storage provider: UNKNOWN");
       };
 
       expect(shouldThrow).toThrow();

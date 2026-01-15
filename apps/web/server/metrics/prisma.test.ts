@@ -76,7 +76,12 @@ describe("Prisma Metrics", () => {
     test("handles slow queries without error", () => {
       expect(() => {
         // Query exceeding slow threshold
-        recordPrismaQuery("Person", "findMany", SLOW_QUERY_THRESHOLD_MS + 500, true);
+        recordPrismaQuery(
+          "Person",
+          "findMany",
+          SLOW_QUERY_THRESHOLD_MS + 500,
+          true
+        );
       }).not.toThrow();
     });
 

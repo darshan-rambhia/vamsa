@@ -14,7 +14,14 @@ import { I18nextProvider } from "react-i18next";
 import i18n from "~/i18n/config";
 import appCss from "~/styles.css?url";
 import printCss from "~/styles/print.css?url";
-import { AlertTriangle, Home, RefreshCw, Search, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  AlertTriangle,
+  Home,
+  RefreshCw,
+  Search,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -61,7 +68,7 @@ function NotFound() {
       <main className="flex flex-col items-center justify-center px-4 py-24 sm:py-32">
         <div className="text-center">
           {/* Decorative 404 */}
-          <p className="font-display text-primary/20 text-[120px] font-bold leading-none sm:text-[180px]">
+          <p className="font-display text-primary/20 text-[120px] leading-none font-bold sm:text-[180px]">
             404
           </p>
 
@@ -145,7 +152,7 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
       <main className="flex flex-col items-center justify-center px-4 py-16 sm:py-24">
         <div className="w-full max-w-lg">
           {/* Error card */}
-          <div className="border-destructive/20 rounded-xl border-2 bg-card p-8 shadow-sm">
+          <div className="border-destructive/20 bg-card rounded-xl border-2 p-8 shadow-sm">
             <div className="flex flex-col items-center text-center">
               <div className="bg-destructive/10 mb-5 flex h-16 w-16 items-center justify-center rounded-full">
                 <AlertTriangle className="text-destructive h-8 w-8" />
@@ -155,8 +162,8 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
                 Something went wrong
               </h1>
               <p className="text-muted-foreground mt-2 max-w-sm">
-                We encountered an unexpected error. Please try again or return to
-                the home page.
+                We encountered an unexpected error. Please try again or return
+                to the home page.
               </p>
 
               <div className="mt-6 flex gap-3">

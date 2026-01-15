@@ -26,17 +26,20 @@ The three pillars work together: professional quality + minimal restraint + orga
 **Vamsa must be accessible to all users.** This is not optional - it's a core quality requirement.
 
 **WCAG 2.1 AA Compliance:**
+
 - All text must meet minimum contrast ratios (4.5:1 for normal text, 3:1 for large text)
 - Interactive elements need 3:1 contrast against backgrounds
 - Don't rely on color alone to convey information (add icons, text, or patterns)
 
 **Keyboard Navigation:**
+
 - All interactive elements must be keyboard accessible
 - Logical tab order that follows visual layout
 - Visible focus indicators on all focusable elements
 - No keyboard traps - users can always tab away
 
 **Focus States:**
+
 ```css
 /* Vamsa's focus style - always visible, never removed */
 :focus-visible {
@@ -46,9 +49,11 @@ The three pillars work together: professional quality + minimal restraint + orga
     0 0 0 4px var(--color-background);
 }
 ```
+
 Never use `outline: none` without providing an alternative focus indicator.
 
 **Semantic HTML:**
+
 - Use correct heading hierarchy (h1 → h2 → h3, no skipping)
 - Use `<button>` for actions, `<a>` for navigation
 - Use `<nav>`, `<main>`, `<aside>`, `<header>`, `<footer>` landmarks
@@ -56,6 +61,7 @@ Never use `outline: none` without providing an alternative focus indicator.
 - Tables use `<table>` with proper `<th>` headers
 
 **Screen Reader Support:**
+
 - Images need meaningful `alt` text (or `alt=""` if decorative)
 - Icons need `aria-label` or accompanying text
 - Dynamic content updates use `aria-live` regions
@@ -63,6 +69,7 @@ Never use `outline: none` without providing an alternative focus indicator.
 - Error messages are announced and linked to inputs
 
 **ARIA When Needed:**
+
 ```tsx
 // Good - semantic HTML first
 <button onClick={onClose}>Close</button>
@@ -79,6 +86,7 @@ Never use `outline: none` without providing an alternative focus indicator.
 ```
 
 **Motion & Vestibular:**
+
 - Respect `prefers-reduced-motion` for users sensitive to animation
 - No auto-playing animations that can't be paused
 - Avoid parallax and excessive motion
@@ -93,6 +101,7 @@ Never use `outline: none` without providing an alternative focus indicator.
 ```
 
 **Testing Checklist:**
+
 - [ ] Can navigate entire UI with keyboard only
 - [ ] Focus indicator visible on all interactive elements
 - [ ] Screen reader announces content logically
@@ -105,28 +114,31 @@ Never use `outline: none` without providing an alternative focus indicator.
 Vamsa uses an **OKLch color system** with earth-tone warmth. These values are defined in `apps/web/src/styles.css` - reference them, don't reinvent.
 
 **Light Mode Palette:**
+
 ```css
---color-background: oklch(0.98 0.01 80);     /* Warm cream */
---color-foreground: oklch(0.22 0.05 145);    /* Deep forest text */
---color-card: oklch(0.95 0.02 80);           /* Light parchment */
---color-primary: oklch(0.38 0.12 145);       /* Forest green - main accent */
---color-secondary: oklch(0.52 0.1 145);      /* Moss green - softer accent */
---color-muted: oklch(0.95 0.02 80);          /* Warm gray backgrounds */
+--color-background: oklch(0.98 0.01 80); /* Warm cream */
+--color-foreground: oklch(0.22 0.05 145); /* Deep forest text */
+--color-card: oklch(0.95 0.02 80); /* Light parchment */
+--color-primary: oklch(0.38 0.12 145); /* Forest green - main accent */
+--color-secondary: oklch(0.52 0.1 145); /* Moss green - softer accent */
+--color-muted: oklch(0.95 0.02 80); /* Warm gray backgrounds */
 --color-muted-foreground: oklch(0.38 0.06 40); /* Muted text */
---color-destructive: oklch(0.5 0.18 25);     /* Autumn red */
---color-border: oklch(0.85 0.02 60);         /* Subtle warm border */
+--color-destructive: oklch(0.5 0.18 25); /* Autumn red */
+--color-border: oklch(0.85 0.02 60); /* Subtle warm border */
 ```
 
 **Dark Mode Palette:**
+
 ```css
---color-background: oklch(0.15 0.03 145);    /* Deep forest */
---color-foreground: oklch(0.94 0.02 145);    /* Light cream text */
---color-card: oklch(0.18 0.03 145);          /* Dark green-tinted card */
---color-primary: oklch(0.58 0.08 145);       /* Lighter green */
---color-border: oklch(0.28 0.03 145);        /* Subtle dark border */
+--color-background: oklch(0.15 0.03 145); /* Deep forest */
+--color-foreground: oklch(0.94 0.02 145); /* Light cream text */
+--color-card: oklch(0.18 0.03 145); /* Dark green-tinted card */
+--color-primary: oklch(0.58 0.08 145); /* Lighter green */
+--color-border: oklch(0.28 0.03 145); /* Subtle dark border */
 ```
 
 **Color Rules:**
+
 - Use CSS variables (e.g., `bg-primary`, `text-muted-foreground`) - never hardcode colors
 - The green hue (145) anchors the palette - it represents growth, family trees, nature
 - Destructive actions use warm autumn red, not harsh pure red
@@ -137,18 +149,21 @@ Vamsa uses an **OKLch color system** with earth-tone warmth. These values are de
 Vamsa's typography creates the editorial feel. Use exactly these:
 
 **Font Stack:**
+
 - **Display/Headlines**: `font-display` → Fraunces (Georgia fallback) - literary serif
 - **Body**: `font-body` → Source Sans 3 (system-ui fallback) - readable humanist sans
 - **Mono/Data**: `font-mono` → JetBrains Mono - for IDs, dates, technical data
 
 **Heading Scale:**
+
 ```css
-h1: clamp(2.5rem, 5vw, 4rem);   /* Hero headlines - fluid */
+h1: clamp(2.5rem, 5vw, 4rem); /* Hero headlines - fluid */
 h2: clamp(1.75rem, 3.5vw, 2.5rem);
 h3: clamp(1.25rem, 2.5vw, 1.75rem);
 ```
 
 **Typography Rules:**
+
 - Headlines use `letter-spacing: -0.02em` for editorial tightness
 - Headlines use `line-height: 1.2` for compact elegance
 - Body text uses default line-height for readability
@@ -156,6 +171,7 @@ h3: clamp(1.25rem, 2.5vw, 1.75rem);
 - Monospace for: dates, IDs, GEDCOM codes, generation numbers
 
 **Example Implementation:**
+
 ```tsx
 // Good - using semantic classes
 <h1 className="font-display text-foreground">The Anderson Family</h1>
@@ -175,6 +191,7 @@ These are non-negotiable quality standards.
 ### The 4px Grid
 
 All spacing uses a 4px base:
+
 - `4px` (1) - micro spacing (icon gaps)
 - `8px` (2) - tight spacing (within components)
 - `12px` (3) - standard spacing (between related elements)
@@ -200,6 +217,7 @@ TLBR must match. Cards, buttons, containers - keep it balanced.
 ### Border Radius System
 
 Vamsa uses a soft-but-not-rounded approach:
+
 - `rounded-sm` (0.25rem) - inputs, small elements
 - `rounded-md` (0.5rem) - buttons, badges
 - `rounded-lg` (0.75rem) - cards, containers
@@ -224,6 +242,7 @@ Vamsa uses **warm borders as primary definition** with subtle shadow enhancement
 ```
 
 **Depth Rules:**
+
 - Cards use 2px borders (thicker than typical - editorial choice)
 - Shadows enhance on hover, not at rest
 - Dark mode relies more on borders, less on shadows
@@ -239,6 +258,7 @@ Subtle, respectful motion - nothing bouncy or playful:
 ```
 
 **Animation Classes:**
+
 - `.transition-fast` - micro-interactions (buttons, toggles)
 - `.transition-smooth` - larger transitions (cards, modals)
 - `.hover-lift` - subtle 2px lift on hover
@@ -246,6 +266,7 @@ Subtle, respectful motion - nothing bouncy or playful:
 - `.stagger-children` - cascading entrance animations
 
 **Never:**
+
 - Spring/bouncy animations
 - Durations over 400ms
 - Jarring scale changes (max 0.98-1.02)
@@ -262,7 +283,7 @@ Person cards are the atomic unit of Vamsa. They must feel substantial but not he
 
 ```tsx
 // Person card pattern
-<Card className="p-4 hover:shadow-lg hover:border-primary/20 transition-smooth">
+<Card className="hover:border-primary/20 transition-smooth p-4 hover:shadow-lg">
   <div className="flex items-start gap-4">
     <Avatar className="h-12 w-12">
       <AvatarImage src={person.photoUrl} />
@@ -270,9 +291,9 @@ Person cards are the atomic unit of Vamsa. They must feel substantial but not he
         {getInitials(person.name)}
       </AvatarFallback>
     </Avatar>
-    <div className="flex-1 min-w-0">
-      <h3 className="font-display font-medium truncate">{person.name}</h3>
-      <p className="text-sm text-muted-foreground">
+    <div className="min-w-0 flex-1">
+      <h3 className="font-display truncate font-medium">{person.name}</h3>
+      <p className="text-muted-foreground text-sm">
         {formatLifespan(person.birthDate, person.deathDate)}
       </p>
     </div>
@@ -281,6 +302,7 @@ Person cards are the atomic unit of Vamsa. They must feel substantial but not he
 ```
 
 **Person Card Rules:**
+
 - Avatar always present (initials fallback)
 - Name in `font-display` for editorial feel
 - Lifespan dates in muted text
@@ -295,24 +317,24 @@ Tree nodes have specific color coding:
 // Node colors by status
 const nodeColors = {
   living: {
-    border: '#4A7C4E',      // Moss green
-    background: '#f0fdf4',  // Light green tint
+    border: "#4A7C4E", // Moss green
+    background: "#f0fdf4", // Light green tint
   },
   deceased: {
-    border: '#9CA3AF',      // Gray
-    background: '#f9fafb',  // Light gray
+    border: "#9CA3AF", // Gray
+    background: "#f9fafb", // Light gray
   },
   currentUser: {
-    border: 'var(--color-primary)',
-    ring: true,             // Add ring effect
+    border: "var(--color-primary)",
+    ring: true, // Add ring effect
   },
 };
 
 // Connection colors
 const edgeColors = {
-  spouse: '#4A7C4E',        // Green - solid or dotted if divorced
-  parentChild: '#9CA3AF',   // Gray with arrow
-  hidden: '#FFA500',        // Amber indicator
+  spouse: "#4A7C4E", // Green - solid or dotted if divorced
+  parentChild: "#9CA3AF", // Gray with arrow
+  hidden: "#FFA500", // Amber indicator
 };
 ```
 
@@ -338,24 +360,34 @@ Genealogy is data-heavy. Use these patterns:
 
 ```tsx
 // Detail row pattern (for person profiles)
-function DetailRow({ label, value }: { label: string; value: React.ReactNode }) {
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: React.ReactNode;
+}) {
   return (
-    <div className="flex justify-between py-2 border-b border-border last:border-0">
+    <div className="border-border flex justify-between border-b py-2 last:border-0">
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-medium text-right">{value || '—'}</dd>
+      <dd className="text-right font-medium">{value || "—"}</dd>
     </div>
   );
 }
 
 // Usage
 <dl className="space-y-0">
-  <DetailRow label="Birth Date" value={<span className="font-mono">{birthDate}</span>} />
+  <DetailRow
+    label="Birth Date"
+    value={<span className="font-mono">{birthDate}</span>}
+  />
   <DetailRow label="Birth Place" value={birthPlace} />
   <DetailRow label="Occupation" value={occupation} />
-</dl>
+</dl>;
 ```
 
 **Data Rules:**
+
 - Dates always in `font-mono`
 - Missing data shows em-dash (—), not "N/A" or empty
 - IDs and codes in `font-mono`
@@ -367,10 +399,10 @@ Family events need chronological clarity:
 
 ```tsx
 // Timeline event pattern
-<div className="relative pl-8 pb-6 border-l-2 border-primary/30 last:pb-0">
-  <div className="absolute left-[-5px] top-0 h-2.5 w-2.5 rounded-full bg-primary" />
-  <time className="text-sm font-mono text-muted-foreground">{date}</time>
-  <h4 className="font-medium mt-1">{event.title}</h4>
+<div className="border-primary/30 relative border-l-2 pb-6 pl-8 last:pb-0">
+  <div className="bg-primary absolute top-0 left-[-5px] h-2.5 w-2.5 rounded-full" />
+  <time className="text-muted-foreground font-mono text-sm">{date}</time>
+  <h4 className="mt-1 font-medium">{event.title}</h4>
   <p className="text-muted-foreground">{event.description}</p>
 </div>
 ```
@@ -494,9 +526,7 @@ Cards are the main container. Vary internal layout, not surface treatment:
     <p className="text-muted-foreground mt-2">{pageDescription}</p>
   </header>
 
-  <main className="space-y-8">
-    {/* Page content */}
-  </main>
+  <main className="space-y-8">{/* Page content */}</main>
 </div>
 ```
 
@@ -521,8 +551,10 @@ Every page needs grounding:
 
 ```tsx
 // Breadcrumbs
-<nav className="text-sm text-muted-foreground mb-6">
-  <Link href="/tree" className="hover:text-foreground">Family Tree</Link>
+<nav className="text-muted-foreground mb-6 text-sm">
+  <Link href="/tree" className="hover:text-foreground">
+    Family Tree
+  </Link>
   <span className="mx-2">/</span>
   <span className="text-foreground">{person.name}</span>
 </nav>
@@ -535,12 +567,14 @@ Every page needs grounding:
 Dark mode is green-tinted, not pure gray. The forest theme carries through:
 
 **Key differences:**
+
 - Backgrounds shift to deep forest greens, not neutral grays
 - Borders become more important (shadows less visible)
 - Primary green lightens for better contrast
 - Cards subtly lift from background via lighter green tint
 
 **Testing:**
+
 - Always test both modes before completing
 - Use `class="dark"` on a parent element to test
 - Check that all text has sufficient contrast
@@ -550,6 +584,7 @@ Dark mode is green-tinted, not pure gray. The forest theme carries through:
 ## Anti-Patterns
 
 ### Never Do This
+
 - Hardcode colors instead of CSS variables
 - Use `rounded-full` on cards or containers
 - Apply pure gray backgrounds (always warm-tint)
@@ -565,6 +600,7 @@ Dark mode is green-tinted, not pure gray. The forest theme carries through:
 - Rely on color alone to convey meaning
 
 ### Always Ask
+
 - "Is this professional enough for enterprise use?"
 - "Can I remove anything without losing function?" (minimalistic)
 - "Does this feel warm and organic, not cold and clinical?"
@@ -580,6 +616,7 @@ Dark mode is green-tinted, not pure gray. The forest theme carries through:
 ## Reference Files
 
 When implementing, reference these files:
+
 - `apps/web/src/styles.css` - Complete design system tokens
 - `apps/web/tailwind.config.ts` - Tailwind configuration
 - `packages/ui/src/primitives/` - shadcn/ui component library

@@ -256,4 +256,3 @@ export const getFamilyTree = createServerFn({ method: "GET" }).handler(
     };
   }
 );
-

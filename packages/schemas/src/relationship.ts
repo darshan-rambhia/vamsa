@@ -21,16 +21,18 @@ const dateSchema = z
     description: "Date in ISO format (YYYY-MM-DD) or Date object",
   });
 
-export const relationshipCreateSchema = z.object({
-  personId: z.string().min(1, "Person is required"),
-  relatedPersonId: z.string().min(1, "Related person is required"),
-  type: relationshipTypeEnum,
-  marriageDate: dateSchema.optional().nullable(),
-  divorceDate: dateSchema.optional().nullable(),
-  isActive: z.boolean().optional().default(true),
-}).openapi({
-  description: "Relationship creation data",
-});
+export const relationshipCreateSchema = z
+  .object({
+    personId: z.string().min(1, "Person is required"),
+    relatedPersonId: z.string().min(1, "Related person is required"),
+    type: relationshipTypeEnum,
+    marriageDate: dateSchema.optional().nullable(),
+    divorceDate: dateSchema.optional().nullable(),
+    isActive: z.boolean().optional().default(true),
+  })
+  .openapi({
+    description: "Relationship creation data",
+  });
 
 export const relationshipUpdateSchema = relationshipCreateSchema.partial();
 

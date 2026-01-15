@@ -111,11 +111,21 @@ test("should successfully create a new person", async ({ page }) => {
 ```typescript
 import { bdd } from "../helpers/bdd-helpers";
 
-bdd.given("description", async () => { /* preconditions */ });
-bdd.when("description", async () => { /* user action */ });
-bdd.then("description", async () => { /* assertions */ });
-bdd.and("description", async () => { /* additional step */ });
-bdd.but("description", async () => { /* exception case */ });
+bdd.given("description", async () => {
+  /* preconditions */
+});
+bdd.when("description", async () => {
+  /* user action */
+});
+bdd.then("description", async () => {
+  /* assertions */
+});
+bdd.and("description", async () => {
+  /* additional step */
+});
+bdd.but("description", async () => {
+  /* exception case */
+});
 ```
 
 ### Step Description Guidelines
@@ -269,6 +279,7 @@ test("should show error for invalid credentials", async ({ page }) => {
 ### Existing Page Objects
 
 Located in `e2e/pages/`:
+
 - `LoginPage` - Authentication UI
 - `Navigation` - Global nav (handles desktop/mobile)
 - `PeopleListPage` - Search, filtering, person selection
@@ -374,11 +385,11 @@ import { test, expect } from "../fixtures/test-base";
 
 test("example", async ({
   page,
-  login,              // (user?: TestUser) => Promise<void>
-  logout,             // () => Promise<void>
-  clearAuth,          // () => Promise<void>
-  isAuthenticated,    // () => Promise<boolean>
-  getViewportInfo,    // () => { width, height, isMobile, isTablet }
+  login, // (user?: TestUser) => Promise<void>
+  logout, // () => Promise<void>
+  clearAuth, // () => Promise<void>
+  isAuthenticated, // () => Promise<boolean>
+  getViewportInfo, // () => { width, height, isMobile, isTablet }
   checkAccessibility, // (options?) => Promise<AccessibilityViolation[]>
 }) => {
   // Use fixtures as needed
@@ -404,12 +415,15 @@ await vamsaExpect.toBeLoggedOut(page);
 ### Accessibility Testing
 
 ```typescript
-test("should have no accessibility violations", async ({ page, checkAccessibility }) => {
+test("should have no accessibility violations", async ({
+  page,
+  checkAccessibility,
+}) => {
   await page.goto("/people");
 
   await bdd.then("page is accessible", async () => {
     const violations = await checkAccessibility();
-    expect(violations.filter(v => v.impact === "critical")).toHaveLength(0);
+    expect(violations.filter((v) => v.impact === "critical")).toHaveLength(0);
   });
 });
 ```
@@ -437,10 +451,16 @@ await page.getByTestId("submit-button").click();
 ```typescript
 // ❌ BAD - Fallback hides failures
 await Promise.race([
-  page.locator("[data-tree]").waitFor().catch(() => {}),
-  page.locator("main").waitFor().catch(() => {}),  // Always passes!
+  page
+    .locator("[data-tree]")
+    .waitFor()
+    .catch(() => {}),
+  page
+    .locator("main")
+    .waitFor()
+    .catch(() => {}), // Always passes!
 ]);
-await expect(page.locator("main")).toBeVisible();  // Always passes!
+await expect(page.locator("main")).toBeVisible(); // Always passes!
 
 // ✅ GOOD - Strict assertion on actual content
 const tree = page.locator("[data-tree]");
@@ -540,16 +560,16 @@ test.describe("Feature Name", () => {
 
 ```typescript
 // ✅ GOOD - Descriptive, user-centric
-test("should display error message when email is invalid")
-test("should redirect to login when session expires")
-test("should create person and show success toast")
-test("should allow admin to delete member")
+test("should display error message when email is invalid");
+test("should redirect to login when session expires");
+test("should create person and show success toast");
+test("should allow admin to delete member");
 
 // ❌ BAD - Vague, technical
-test("test form validation")
-test("check redirect")
-test("person CRUD")
-test("admin permissions")
+test("test form validation");
+test("check redirect");
+test("person CRUD");
+test("admin permissions");
 ```
 
 ### Testing Error States
@@ -565,8 +585,12 @@ test("should display validation errors for invalid input", async ({ page }) => {
   });
 
   await bdd.then("validation errors are displayed", async () => {
-    await expect(page.getByTestId("firstName-error")).toContainText("First name is required");
-    await expect(page.getByTestId("lastName-error")).toContainText("Last name is required");
+    await expect(page.getByTestId("firstName-error")).toContainText(
+      "First name is required"
+    );
+    await expect(page.getByTestId("lastName-error")).toContainText(
+      "Last name is required"
+    );
   });
 });
 ```
@@ -581,7 +605,9 @@ test.describe("Protected Routes", () => {
   const protectedRoutes = ["/people", "/dashboard", "/admin", "/tree"];
 
   for (const route of protectedRoutes) {
-    test(`should redirect ${route} to login when not authenticated`, async ({ page }) => {
+    test(`should redirect ${route} to login when not authenticated`, async ({
+      page,
+    }) => {
       await bdd.when(`user navigates to ${route}`, async () => {
         await page.goto(route);
       });

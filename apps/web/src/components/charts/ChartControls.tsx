@@ -50,14 +50,12 @@ export interface ChartControlsProps {
 
 export function ChartControls({
   chartType,
-  generations,
   ancestorGenerations = 2,
   descendantGenerations = 2,
   maxPeople = 20,
   sortBy = "birth",
   hideChartTypeSelector = false,
   onChartTypeChange,
-  onGenerationsChange,
   onAncestorGenerationsChange,
   onDescendantGenerationsChange,
   onMaxPeopleChange,
@@ -98,7 +96,7 @@ export function ChartControls({
               <div className="space-y-2">
                 <Label htmlFor="chart-type">Chart Type</Label>
                 <Select value={chartType} onValueChange={onChartTypeChange}>
-                  <SelectTrigger id="chart-type" className="w-[180px]">
+                  <SelectTrigger id="chart-type" className="w-45">
                     <SelectValue placeholder="Select chart type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -165,7 +163,7 @@ export function ChartControls({
                     onSortByChange?.(value as "birth" | "death" | "name")
                   }
                 >
-                  <SelectTrigger id="sort-by" className="w-[160px]">
+                  <SelectTrigger id="sort-by" className="w-40">
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
@@ -256,25 +254,25 @@ export function ChartControls({
                 <div className="bg-popover border-border absolute right-0 z-20 mt-2 w-44 rounded-md border shadow-lg">
                   <div className="flex flex-col py-2 text-sm">
                     <button
-                      className="hover:bg-muted text-left px-3 py-2"
+                      className="hover:bg-muted px-3 py-2 text-left"
                       onClick={() => handleExportClick(onExportPDF)}
                     >
                       Export PDF
                     </button>
                     <button
-                      className="hover:bg-muted text-left px-3 py-2"
+                      className="hover:bg-muted px-3 py-2 text-left"
                       onClick={() => handleExportClick(onExportPNG)}
                     >
                       Export PNG (2x)
                     </button>
                     <button
-                      className="hover:bg-muted text-left px-3 py-2"
+                      className="hover:bg-muted px-3 py-2 text-left"
                       onClick={() => handleExportClick(onExportSVG)}
                     >
                       Export SVG
                     </button>
                     <button
-                      className="hover:bg-muted text-left px-3 py-2"
+                      className="hover:bg-muted px-3 py-2 text-left"
                       onClick={() => handleExportClick(handlePrint)}
                     >
                       Print

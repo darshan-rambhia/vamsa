@@ -23,10 +23,7 @@ import {
   getPrismaErrorType,
   SLOW_QUERY_THRESHOLD_MS,
 } from "./metrics/prisma";
-import {
-  logSlowQuery,
-  sanitizeQueryParams,
-} from "./metrics/slow-query-logger";
+import { logSlowQuery, sanitizeQueryParams } from "./metrics/slow-query-logger";
 
 // Create a tracer for Prisma operations
 const tracer = trace.getTracer("prisma", "1.0.0");
@@ -76,7 +73,8 @@ export const db = prisma.$extends({
               // Mark span as error
               span.setStatus({
                 code: SpanStatusCode.ERROR,
-                message: error instanceof Error ? error.message : "Unknown error",
+                message:
+                  error instanceof Error ? error.message : "Unknown error",
               });
 
               // Record the exception
@@ -84,8 +82,14 @@ export const db = prisma.$extends({
                 span.recordException(error);
 
                 // Add Prisma error code if available
-                if ("code" in error && typeof (error as { code: unknown }).code === "string") {
-                  span.setAttribute("db.prisma.error_code", (error as { code: string }).code);
+                if (
+                  "code" in error &&
+                  typeof (error as { code: unknown }).code === "string"
+                ) {
+                  span.setAttribute(
+                    "db.prisma.error_code",
+                    (error as { code: string }).code
+                  );
                 }
               }
 
@@ -103,7 +107,13 @@ export const db = prisma.$extends({
               }
 
               // Record metrics
-              recordPrismaQuery(model, operation, duration, success, resultCount);
+              recordPrismaQuery(
+                model,
+                operation,
+                duration,
+                success,
+                resultCount
+              );
 
               // Log slow queries
               if (duration > SLOW_QUERY_THRESHOLD_MS) {

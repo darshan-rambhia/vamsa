@@ -290,9 +290,7 @@ describe("application metrics", () => {
 
     test("normalizes paths with UUIDs", () => {
       expect(() => {
-        recordFeatureUsage(
-          "/api/persons/550e8400-e29b-41d4-a716-446655440000"
-        );
+        recordFeatureUsage("/api/persons/550e8400-e29b-41d4-a716-446655440000");
       }).not.toThrow();
     });
 

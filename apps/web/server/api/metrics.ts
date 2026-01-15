@@ -12,101 +12,111 @@ import {
 const metricsRouter = new OpenAPIHono();
 
 // Response schemas for metrics
-const slowQuerySchema = z.object({
-  query: z.string().openapi({
-    description: "SQL query string",
-    example: "SELECT * FROM person WHERE id = $1",
-  }),
-  duration: z.number().openapi({
-    description: "Query duration in milliseconds",
-    example: 150,
-  }),
-  timestamp: z.string().openapi({
-    description: "Query timestamp",
-    example: "2024-01-14T10:00:00Z",
-  }),
-}).openapi('SlowQuery');
+const slowQuerySchema = z
+  .object({
+    query: z.string().openapi({
+      description: "SQL query string",
+      example: "SELECT * FROM person WHERE id = $1",
+    }),
+    duration: z.number().openapi({
+      description: "Query duration in milliseconds",
+      example: 150,
+    }),
+    timestamp: z.string().openapi({
+      description: "Query timestamp",
+      example: "2024-01-14T10:00:00Z",
+    }),
+  })
+  .openapi("SlowQuery");
 
-const slowQueryListSchema = z.object({
-  count: z.number().openapi({
-    description: "Number of slow queries in this response",
-    example: 5,
-  }),
-  threshold_ms: z.number().openapi({
-    description: "Threshold for what is considered slow",
-    example: 100,
-  }),
-  queries: z.array(slowQuerySchema).openapi({
-    description: "Array of slow queries",
-  }),
-}).openapi('SlowQueryList');
+const slowQueryListSchema = z
+  .object({
+    count: z.number().openapi({
+      description: "Number of slow queries in this response",
+      example: 5,
+    }),
+    threshold_ms: z.number().openapi({
+      description: "Threshold for what is considered slow",
+      example: 100,
+    }),
+    queries: z.array(slowQuerySchema).openapi({
+      description: "Array of slow queries",
+    }),
+  })
+  .openapi("SlowQueryList");
 
-const slowQueryStatsSchema = z.object({
-  totalCount: z.number().openapi({
-    description: "Total number of slow queries",
-    example: 42,
-  }),
-  averageDuration: z.number().openapi({
-    description: "Average duration of slow queries",
-    example: 125,
-  }),
-  maxDuration: z.number().openapi({
-    description: "Maximum duration observed",
-    example: 523,
-  }),
-  byModel: z.record(z.string(), z.number()).openapi({
-    description: "Count of slow queries by Prisma model",
-    example: { Person: 15, Event: 10 },
-  }),
-  byOperation: z.record(z.string(), z.number()).openapi({
-    description: "Count of slow queries by Prisma operation",
-    example: { findMany: 20, findUnique: 10 },
-  }),
-  threshold_ms: z.number().openapi({
-    description: "Threshold for what is considered slow",
-    example: 100,
-  }),
-}).openapi('SlowQueryStats');
+const slowQueryStatsSchema = z
+  .object({
+    totalCount: z.number().openapi({
+      description: "Total number of slow queries",
+      example: 42,
+    }),
+    averageDuration: z.number().openapi({
+      description: "Average duration of slow queries",
+      example: 125,
+    }),
+    maxDuration: z.number().openapi({
+      description: "Maximum duration observed",
+      example: 523,
+    }),
+    byModel: z.record(z.string(), z.number()).openapi({
+      description: "Count of slow queries by Prisma model",
+      example: { Person: 15, Event: 10 },
+    }),
+    byOperation: z.record(z.string(), z.number()).openapi({
+      description: "Count of slow queries by Prisma operation",
+      example: { findMany: 20, findUnique: 10 },
+    }),
+    threshold_ms: z.number().openapi({
+      description: "Threshold for what is considered slow",
+      example: 100,
+    }),
+  })
+  .openapi("SlowQueryStats");
 
-const poolStatsSchema = z.object({
-  totalConnections: z.number().optional().openapi({
-    description: "Total connections in pool",
-    example: 10,
-  }),
-  idleConnections: z.number().optional().openapi({
-    description: "Idle connections available",
-    example: 5,
-  }),
-  waitingRequests: z.number().optional().openapi({
-    description: "Requests waiting for connection",
-    example: 0,
-  }),
-}).openapi('PoolStats');
+const poolStatsSchema = z
+  .object({
+    totalConnections: z.number().optional().openapi({
+      description: "Total connections in pool",
+      example: 10,
+    }),
+    idleConnections: z.number().optional().openapi({
+      description: "Idle connections available",
+      example: 5,
+    }),
+    waitingRequests: z.number().optional().openapi({
+      description: "Requests waiting for connection",
+      example: 0,
+    }),
+  })
+  .openapi("PoolStats");
 
-const dbHealthSchema = z.object({
-  status: z.enum(['healthy', 'unhealthy']).openapi({
-    description: "Database health status",
-    example: "healthy",
-  }),
-  database: z.enum(['connected', 'disconnected']).openapi({
-    description: "Database connection status",
-    example: "connected",
-  }),
-  pool: poolStatsSchema.openapi({
-    description: "Connection pool statistics",
-  }),
-  latency_ms: z.number().openapi({
-    description: "Query latency in milliseconds",
-    example: 5,
-  }),
-  timestamp: z.string().openapi({
-    description: "Health check timestamp",
-    example: "2024-01-14T10:00:00Z",
-  }),
-  error: z.string().optional().openapi({
-    description: "Error message if unhealthy",
-  }),
-}).openapi('DBHealth');
+const dbHealthSchema = z
+  .object({
+    status: z.enum(["healthy", "unhealthy"]).openapi({
+      description: "Database health status",
+      example: "healthy",
+    }),
+    database: z.enum(["connected", "disconnected"]).openapi({
+      description: "Database connection status",
+      example: "connected",
+    }),
+    pool: poolStatsSchema.openapi({
+      description: "Connection pool statistics",
+    }),
+    latency_ms: z.number().openapi({
+      description: "Query latency in milliseconds",
+      example: 5,
+    }),
+    timestamp: z.string().openapi({
+      description: "Health check timestamp",
+      example: "2024-01-14T10:00:00Z",
+    }),
+    error: z.string().optional().openapi({
+      description: "Error message if unhealthy",
+    }),
+  })
+  .openapi("DBHealth");
 
 /**
  * GET /api/v1/metrics/slow-queries
@@ -117,17 +127,20 @@ const slowQueriesRoute = createRoute({
   path: "/slow-queries",
   tags: ["Metrics"],
   summary: "Get recent slow queries",
-  description: "Retrieve recent slow queries from in-memory buffer for admin monitoring",
+  description:
+    "Retrieve recent slow queries from in-memory buffer for admin monitoring",
   operationId: "getSlowQueries",
   request: {
-    query: z.object({
-      limit: z.coerce.number().int().min(1).max(100).default(20).openapi({
-        description: "Maximum number of queries to return",
-        example: 20,
+    query: z
+      .object({
+        limit: z.coerce.number().int().min(1).max(100).default(20).openapi({
+          description: "Maximum number of queries to return",
+          example: 20,
+        }),
+      })
+      .openapi({
+        description: "Query parameters for slow queries endpoint",
       }),
-    }).openapi({
-      description: "Query parameters for slow queries endpoint",
-    }),
   },
   responses: {
     200: {
@@ -161,10 +174,7 @@ metricsRouter.openapi(slowQueriesRoute, (c) => {
     });
   } catch (error) {
     logger.error({ error }, "Error fetching slow queries");
-    return c.json(
-      { error: "Failed to fetch slow queries" },
-      { status: 500 }
-    );
+    return c.json({ error: "Failed to fetch slow queries" }, { status: 500 });
   }
 });
 
@@ -177,7 +187,8 @@ const slowQueryStatsRoute = createRoute({
   path: "/slow-queries/stats",
   tags: ["Metrics"],
   summary: "Get slow query statistics",
-  description: "Get aggregate statistics about slow queries including averages and breakdowns",
+  description:
+    "Get aggregate statistics about slow queries including averages and breakdowns",
   operationId: "getSlowQueryStats",
   responses: {
     200: {
@@ -225,23 +236,26 @@ const clearSlowQueriesRoute = createRoute({
   path: "/slow-queries",
   tags: ["Metrics"],
   summary: "Clear slow query buffer",
-  description: "Clear the slow query buffer for testing or after reviewing issues",
+  description:
+    "Clear the slow query buffer for testing or after reviewing issues",
   operationId: "clearSlowQueries",
   responses: {
     200: {
       description: "Slow query buffer cleared successfully",
       content: {
         "application/json": {
-          schema: z.object({
-            success: z.boolean().openapi({
-              description: "Whether the operation was successful",
-              example: true,
-            }),
-            cleared_count: z.number().openapi({
-              description: "Number of queries that were cleared",
-              example: 15,
-            }),
-          }).openapi('ClearSlowQueriesResponse'),
+          schema: z
+            .object({
+              success: z.boolean().openapi({
+                description: "Whether the operation was successful",
+                example: true,
+              }),
+              cleared_count: z.number().openapi({
+                description: "Number of queries that were cleared",
+                example: 15,
+              }),
+            })
+            .openapi("ClearSlowQueriesResponse"),
         },
       },
     },
@@ -269,10 +283,7 @@ metricsRouter.openapi(clearSlowQueriesRoute, (c) => {
     });
   } catch (error) {
     logger.error({ error }, "Error clearing slow queries");
-    return c.json(
-      { error: "Failed to clear slow queries" },
-      { status: 500 }
-    );
+    return c.json({ error: "Failed to clear slow queries" }, { status: 500 });
   }
 });
 
@@ -364,13 +375,15 @@ const dbPoolRoute = createRoute({
       description: "Pool statistics retrieved successfully",
       content: {
         "application/json": {
-          schema: z.object({
-            pool: poolStatsSchema,
-            timestamp: z.string().openapi({
-              description: "Timestamp of the stats",
-              example: "2024-01-14T10:00:00Z",
-            }),
-          }).openapi('PoolStatsResponse'),
+          schema: z
+            .object({
+              pool: poolStatsSchema,
+              timestamp: z.string().openapi({
+                description: "Timestamp of the stats",
+                example: "2024-01-14T10:00:00Z",
+              }),
+            })
+            .openapi("PoolStatsResponse"),
         },
       },
     },

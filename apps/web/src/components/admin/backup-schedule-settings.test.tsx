@@ -246,7 +246,11 @@ describe("BackupScheduleSettings Component", () => {
     });
 
     it("should have proper retention labels", () => {
-      const labels = ["Retention (days)", "Retention (weeks)", "Retention (months)"];
+      const labels = [
+        "Retention (days)",
+        "Retention (weeks)",
+        "Retention (months)",
+      ];
       expect(labels).toContain("Retention (days)");
       expect(labels).toContain("Retention (weeks)");
       expect(labels).toContain("Retention (months)");

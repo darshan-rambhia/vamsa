@@ -12,7 +12,10 @@
  */
 
 // Main middleware
-export { createPrismaPerformanceMiddleware, isSlowQuery } from "./prisma-middleware";
+export {
+  createPrismaPerformanceMiddleware,
+  isSlowQuery,
+} from "./prisma-middleware";
 
 // Prisma metrics recording functions
 export {

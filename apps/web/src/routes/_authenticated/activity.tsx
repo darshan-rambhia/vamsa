@@ -1,8 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo } from "react";
-import { getRecentActivity, getActivityFilterOptions } from "~/server/dashboard";
-import { Container, PageHeader, Card, CardContent, Avatar, Badge } from "@vamsa/ui";
+import {
+  getRecentActivity,
+  getActivityFilterOptions,
+} from "~/server/dashboard";
+import {
+  Container,
+  PageHeader,
+  Card,
+  CardContent,
+  Avatar,
+  Badge,
+} from "@vamsa/ui";
 import {
   ActivityFilterPanel,
   type ActivityFilters,
@@ -40,8 +50,10 @@ function ActivityComponent() {
           limit: 100,
           dateFrom: filters.dateFrom,
           dateTo: filters.dateTo,
-          actionTypes: filters.actionTypes.length > 0 ? filters.actionTypes : undefined,
-          entityTypes: filters.entityTypes.length > 0 ? filters.entityTypes : undefined,
+          actionTypes:
+            filters.actionTypes.length > 0 ? filters.actionTypes : undefined,
+          entityTypes:
+            filters.entityTypes.length > 0 ? filters.entityTypes : undefined,
           userId: filters.userId,
           searchQuery: filters.searchQuery || undefined,
         },
@@ -83,7 +95,8 @@ function ActivityComponent() {
           </span>
           {activeFilterCount > 0 && (
             <Badge variant="secondary" className="text-xs">
-              {activeFilterCount} {activeFilterCount === 1 ? "filter" : "filters"} active
+              {activeFilterCount}{" "}
+              {activeFilterCount === 1 ? "filter" : "filters"} active
             </Badge>
           )}
         </div>

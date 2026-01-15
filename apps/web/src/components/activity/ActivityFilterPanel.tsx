@@ -59,7 +59,9 @@ export function ActivityFilterPanel({
   isLoading = false,
 }: ActivityFilterPanelProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [selectedDatePreset, setSelectedDatePreset] = useState<number | null>(7);
+  const [selectedDatePreset, setSelectedDatePreset] = useState<number | null>(
+    7
+  );
 
   // Count active filters
   const activeFilterCount =
@@ -125,9 +127,9 @@ export function ActivityFilterPanel({
         {/* Collapsed Header */}
         <div className="flex items-center justify-between gap-4">
           {/* Search box - always visible */}
-          <div className="relative flex-1 max-w-md">
+          <div className="relative max-w-md flex-1">
             <svg
-              className="text-muted-foreground absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2"
+              className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -158,7 +160,7 @@ export function ActivityFilterPanel({
             className="shrink-0"
           >
             <svg
-              className={cn("h-4 w-4 mr-2", isExpanded && "rotate-180")}
+              className={cn("mr-2 h-4 w-4", isExpanded && "rotate-180")}
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -201,7 +203,9 @@ export function ActivityFilterPanel({
                 {datePresets.map((preset) => (
                   <Button
                     key={preset.days}
-                    variant={selectedDatePreset === preset.days ? "default" : "outline"}
+                    variant={
+                      selectedDatePreset === preset.days ? "default" : "outline"
+                    }
                     size="sm"
                     onClick={() => handleDatePreset(preset.days)}
                   >

@@ -543,7 +543,13 @@ export const uploadMedia = createServerFn({ method: "POST" })
 
     // Record metrics
     const uploadDuration = Date.now() - uploadStart;
-    recordMediaUpload(fileSize, uploadDuration, processingDuration, mimeType, true);
+    recordMediaUpload(
+      fileSize,
+      uploadDuration,
+      processingDuration,
+      mimeType,
+      true
+    );
 
     return {
       id: personMedia.id,

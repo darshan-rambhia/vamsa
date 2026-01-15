@@ -65,7 +65,7 @@ export function ChartEmptyState({
 }: ChartEmptyStateProps) {
   return (
     <ChartContainer className="flex items-center justify-center">
-      <div className="text-center p-6 max-w-md">
+      <div className="max-w-md p-6 text-center">
         {icon && (
           <div className="bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
             {icon}
@@ -88,7 +88,9 @@ interface ChartLoadingStateProps {
   message?: string;
 }
 
-export function ChartLoadingState({ message = "Generating chart..." }: ChartLoadingStateProps) {
+export function ChartLoadingState({
+  message = "Generating chart...",
+}: ChartLoadingStateProps) {
   return (
     <ChartContainer className="flex items-center justify-center">
       <div className="text-center">
@@ -115,7 +117,7 @@ export function ChartErrorState({
 }: ChartErrorStateProps) {
   return (
     <ChartContainer className="flex items-center justify-center">
-      <div className="text-center p-6 max-w-md">
+      <div className="max-w-md p-6 text-center">
         <div className="bg-destructive/10 text-destructive mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
           <svg
             className="h-8 w-8"

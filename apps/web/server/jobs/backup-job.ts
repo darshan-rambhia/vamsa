@@ -96,7 +96,7 @@ export async function performBackup(type: BackupType): Promise<string> {
             take: 10000, // Limit for monthly
           })
         : Promise.resolve([]),
-      settings?.includePhotos ?? true
+      (settings?.includePhotos ?? true)
         ? prisma.mediaObject.findMany({
             orderBy: { uploadedAt: "asc" },
           })
@@ -220,10 +220,7 @@ export async function performBackup(type: BackupType): Promise<string> {
     // Save locally first
     const localPath = path.join(BACKUP_DIR, filename);
     await fs.writeFile(localPath, zipBuffer);
-    logger.info(
-      { localPath, size: zipBuffer.length },
-      "Backup saved locally"
-    );
+    logger.info({ localPath, size: zipBuffer.length }, "Backup saved locally");
 
     // Upload to cloud storage if configured
     if (settings?.storageProvider && settings.storageProvider !== "LOCAL") {
@@ -329,10 +326,7 @@ export async function performBackup(type: BackupType): Promise<string> {
       }
     }
 
-    logger.error(
-      { error: serializeError(error), filename },
-      "Backup failed"
-    );
+    logger.error({ error: serializeError(error), filename }, "Backup failed");
     throw error;
   }
 }
@@ -372,10 +366,7 @@ async function rotateBackups(
     logger.info({ filename: backupToDelete.filename }, "Deleting old backup");
 
     // Delete from cloud storage
-    if (
-      backupToDelete.location !== "LOCAL" &&
-      settings.storageBucket
-    ) {
+    if (backupToDelete.location !== "LOCAL" && settings.storageBucket) {
       try {
         await deleteFromStorage(
           backupToDelete.location as StorageProvider,
@@ -410,9 +401,6 @@ async function rotateBackups(
   }
 
   if (backupsToDelete.length > 0) {
-    logger.info(
-      { count: backupsToDelete.length, type },
-      "Rotated old backups"
-    );
+    logger.info({ count: backupsToDelete.length, type }, "Rotated old backups");
   }
 }

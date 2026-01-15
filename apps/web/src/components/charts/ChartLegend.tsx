@@ -24,16 +24,66 @@ interface LegendConfig {
  * - statistics: No legend (Recharts has built-in legends)
  */
 const legendConfigs: Record<ChartType, LegendConfig> = {
-  tree: { showNodeLegend: true, showEdgeLegend: true, showTimelineLegend: false, showBowtieLegend: false },
-  ancestor: { showNodeLegend: true, showEdgeLegend: true, showTimelineLegend: false, showBowtieLegend: false },
-  descendant: { showNodeLegend: true, showEdgeLegend: true, showTimelineLegend: false, showBowtieLegend: false },
-  hourglass: { showNodeLegend: true, showEdgeLegend: true, showTimelineLegend: false, showBowtieLegend: false },
-  fan: { showNodeLegend: true, showEdgeLegend: true, showTimelineLegend: false, showBowtieLegend: false },
-  compact: { showNodeLegend: true, showEdgeLegend: true, showTimelineLegend: false, showBowtieLegend: false },
-  timeline: { showNodeLegend: false, showEdgeLegend: false, showTimelineLegend: true, showBowtieLegend: false },
-  matrix: { showNodeLegend: false, showEdgeLegend: false, showTimelineLegend: false, showBowtieLegend: false }, // Built-in legend
-  bowtie: { showNodeLegend: true, showEdgeLegend: true, showTimelineLegend: false, showBowtieLegend: true },
-  statistics: { showNodeLegend: false, showEdgeLegend: false, showTimelineLegend: false, showBowtieLegend: false }, // Recharts legends
+  tree: {
+    showNodeLegend: true,
+    showEdgeLegend: true,
+    showTimelineLegend: false,
+    showBowtieLegend: false,
+  },
+  ancestor: {
+    showNodeLegend: true,
+    showEdgeLegend: true,
+    showTimelineLegend: false,
+    showBowtieLegend: false,
+  },
+  descendant: {
+    showNodeLegend: true,
+    showEdgeLegend: true,
+    showTimelineLegend: false,
+    showBowtieLegend: false,
+  },
+  hourglass: {
+    showNodeLegend: true,
+    showEdgeLegend: true,
+    showTimelineLegend: false,
+    showBowtieLegend: false,
+  },
+  fan: {
+    showNodeLegend: true,
+    showEdgeLegend: true,
+    showTimelineLegend: false,
+    showBowtieLegend: false,
+  },
+  compact: {
+    showNodeLegend: true,
+    showEdgeLegend: true,
+    showTimelineLegend: false,
+    showBowtieLegend: false,
+  },
+  timeline: {
+    showNodeLegend: false,
+    showEdgeLegend: false,
+    showTimelineLegend: true,
+    showBowtieLegend: false,
+  },
+  matrix: {
+    showNodeLegend: false,
+    showEdgeLegend: false,
+    showTimelineLegend: false,
+    showBowtieLegend: false,
+  }, // Built-in legend
+  bowtie: {
+    showNodeLegend: true,
+    showEdgeLegend: true,
+    showTimelineLegend: false,
+    showBowtieLegend: true,
+  },
+  statistics: {
+    showNodeLegend: false,
+    showEdgeLegend: false,
+    showTimelineLegend: false,
+    showBowtieLegend: false,
+  }, // Recharts legends
 };
 
 interface ChartLegendProps {

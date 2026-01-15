@@ -185,27 +185,35 @@ describe("Persons Endpoint Validation", () => {
     });
 
     test("rejects invalid sortBy value", async () => {
-      const res = await apiV1.request("/persons?page=1&limit=10&sortBy=invalid");
+      const res = await apiV1.request(
+        "/persons?page=1&limit=10&sortBy=invalid"
+      );
       expect([400, 401, 403]).toContain(res.status);
     });
 
     test("accepts valid sortBy values", async () => {
       const validSortBy = ["lastName", "firstName", "dateOfBirth", "createdAt"];
       for (const sortBy of validSortBy) {
-        const res = await apiV1.request(`/persons?page=1&limit=10&sortBy=${sortBy}`);
+        const res = await apiV1.request(
+          `/persons?page=1&limit=10&sortBy=${sortBy}`
+        );
         // May return 500 due to auth context not available in test environment
         expect([200, 401, 403, 500]).toContain(res.status);
       }
     });
 
     test("rejects invalid sortOrder value", async () => {
-      const res = await apiV1.request("/persons?page=1&limit=10&sortOrder=invalid");
+      const res = await apiV1.request(
+        "/persons?page=1&limit=10&sortOrder=invalid"
+      );
       expect([400, 401, 403]).toContain(res.status);
     });
 
     test("accepts valid sortOrder values", async () => {
       for (const sortOrder of ["asc", "desc"]) {
-        const res = await apiV1.request(`/persons?page=1&limit=10&sortOrder=${sortOrder}`);
+        const res = await apiV1.request(
+          `/persons?page=1&limit=10&sortOrder=${sortOrder}`
+        );
         // May return 500 due to auth context not available in test environment
         expect([200, 401, 403, 500]).toContain(res.status);
       }
@@ -407,14 +415,18 @@ describe("Relationships Endpoint Validation", () => {
       const validUUID = "550e8400-e29b-41d4-a716-446655440000";
       const types = ["PARENT", "CHILD", "SPOUSE", "SIBLING"];
       for (const type of types) {
-        const res = await apiV1.request(`/relationships?personId=${validUUID}&type=${type}`);
+        const res = await apiV1.request(
+          `/relationships?personId=${validUUID}&type=${type}`
+        );
         expect([200, 400, 401, 403]).toContain(res.status);
       }
     });
 
     test("rejects invalid relationship type", async () => {
       const validUUID = "550e8400-e29b-41d4-a716-446655440000";
-      const res = await apiV1.request(`/relationships?personId=${validUUID}&type=INVALID`);
+      const res = await apiV1.request(
+        `/relationships?personId=${validUUID}&type=INVALID`
+      );
       expect([400, 401, 403]).toContain(res.status);
     });
 

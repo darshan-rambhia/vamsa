@@ -167,7 +167,10 @@ export function recordPrismaError(
 export function getPrismaErrorType(error: unknown): string {
   if (error instanceof Error) {
     // Prisma Client Known Request Error (has error code like P2002)
-    if ("code" in error && typeof (error as { code: unknown }).code === "string") {
+    if (
+      "code" in error &&
+      typeof (error as { code: unknown }).code === "string"
+    ) {
       return (error as { code: string }).code;
     }
     // Use the error name as fallback

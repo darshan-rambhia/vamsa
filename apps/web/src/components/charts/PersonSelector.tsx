@@ -69,7 +69,8 @@ export function PersonSelector({
 
     const query = searchQuery.toLowerCase();
     return persons.filter((person) => {
-      const fullName = `${person.firstName || ""} ${person.lastName || ""}`.toLowerCase();
+      const fullName =
+        `${person.firstName || ""} ${person.lastName || ""}`.toLowerCase();
       return fullName.includes(query);
     });
   }, [persons, searchQuery]);
@@ -82,7 +83,9 @@ export function PersonSelector({
   // Scroll highlighted item into view
   useEffect(() => {
     if (isOpen && listRef.current) {
-      const highlightedElement = listRef.current.children[highlightedIndex] as HTMLElement;
+      const highlightedElement = listRef.current.children[
+        highlightedIndex
+      ] as HTMLElement;
       if (highlightedElement) {
         highlightedElement.scrollIntoView({ block: "nearest" });
       }
@@ -183,7 +186,13 @@ export function PersonSelector({
           ref={inputRef}
           id="person-selector"
           type="text"
-          placeholder={isOpen ? placeholder : (selectedPerson ? getDisplayName(selectedPerson) : placeholder)}
+          placeholder={
+            isOpen
+              ? placeholder
+              : selectedPerson
+                ? getDisplayName(selectedPerson)
+                : placeholder
+          }
           value={searchQuery}
           onChange={(e) => {
             setSearchQuery(e.target.value);
@@ -205,7 +214,7 @@ export function PersonSelector({
             type="button"
             variant="ghost"
             size="sm"
-            className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0"
+            className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 p-0"
             onClick={() => {
               setSearchQuery("");
               setIsOpen(true);
@@ -251,7 +260,8 @@ export function PersonSelector({
                 className={cn(
                   "flex cursor-pointer items-center gap-2 px-3 py-2 text-sm",
                   "hover:bg-accent hover:text-accent-foreground",
-                  index === highlightedIndex && "bg-accent text-accent-foreground",
+                  index === highlightedIndex &&
+                    "bg-accent text-accent-foreground",
                   person.id === selectedPersonId && "font-medium"
                 )}
                 onClick={() => handleSelect(person.id)}

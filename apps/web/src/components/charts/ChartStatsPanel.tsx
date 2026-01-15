@@ -201,8 +201,15 @@ export function ChartStatsPanel({ chartType, metadata }: ChartStatsPanelProps) {
     stats.push({ label: "Generations", value: metadata.totalGenerations });
   }
 
-  if (config.showYearRange && metadata.minYear !== undefined && metadata.maxYear !== undefined) {
-    stats.push({ label: "Year Range", value: `${metadata.minYear} - ${metadata.maxYear}` });
+  if (
+    config.showYearRange &&
+    metadata.minYear !== undefined &&
+    metadata.maxYear !== undefined
+  ) {
+    stats.push({
+      label: "Year Range",
+      value: `${metadata.minYear} - ${metadata.maxYear}`,
+    });
   }
 
   if (config.showRelationships && metadata.totalRelationships !== undefined) {
@@ -229,8 +236,14 @@ export function ChartStatsPanel({ chartType, metadata }: ChartStatsPanelProps) {
           {/* Bowtie-specific stats */}
           {config.showBowtieCounts && metadata.paternalCount !== undefined && (
             <>
-              <StatItem label="Paternal Ancestors" value={metadata.paternalCount} />
-              <StatItem label="Maternal Ancestors" value={metadata.maternalCount ?? 0} />
+              <StatItem
+                label="Paternal Ancestors"
+                value={metadata.paternalCount}
+              />
+              <StatItem
+                label="Maternal Ancestors"
+                value={metadata.maternalCount ?? 0}
+              />
             </>
           )}
         </div>

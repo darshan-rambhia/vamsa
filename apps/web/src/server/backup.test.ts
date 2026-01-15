@@ -276,7 +276,7 @@ describe("Backup Server Functions", () => {
     });
 
     it("should handle empty backup list", () => {
-      const backups: typeof mockBackup[] = [];
+      const backups: (typeof mockBackup)[] = [];
       expect(backups).toHaveLength(0);
     });
 
@@ -350,9 +350,21 @@ describe("Backup Server Functions", () => {
       // When: Verifying latest backup
       // Then: Find most recent COMPLETED backup
       const backups = [
-        { id: "b1", status: "COMPLETED" as const, createdAt: new Date("2024-01-15") },
-        { id: "b2", status: "COMPLETED" as const, createdAt: new Date("2024-01-14") },
-        { id: "b3", status: "FAILED" as const, createdAt: new Date("2024-01-13") },
+        {
+          id: "b1",
+          status: "COMPLETED" as const,
+          createdAt: new Date("2024-01-15"),
+        },
+        {
+          id: "b2",
+          status: "COMPLETED" as const,
+          createdAt: new Date("2024-01-14"),
+        },
+        {
+          id: "b3",
+          status: "FAILED" as const,
+          createdAt: new Date("2024-01-13"),
+        },
       ];
 
       const completed = backups.filter((b) => b.status === "COMPLETED");
@@ -562,11 +574,7 @@ describe("Backup Server Functions", () => {
 
     it("should audit all backup operations", () => {
       // Each operation should create audit log
-      const operations = [
-        "CREATE",
-        "UPDATE",
-        "DELETE",
-      ];
+      const operations = ["CREATE", "UPDATE", "DELETE"];
 
       expect(operations).toContain("CREATE");
       expect(operations).toContain("UPDATE");

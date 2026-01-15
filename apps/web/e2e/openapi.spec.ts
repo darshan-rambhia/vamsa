@@ -99,7 +99,9 @@ test.describe("Endpoint Parameter Support", () => {
     request,
   }) => {
     // Test with multiple parameters
-    const response = await request.get("/metrics/slow-queries?limit=5&offset=0");
+    const response = await request.get(
+      "/metrics/slow-queries?limit=5&offset=0"
+    );
     expect(response).toBeDefined();
   });
 });

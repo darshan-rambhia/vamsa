@@ -53,7 +53,9 @@ test.describe("API Endpoint Tags in Swagger UI", () => {
     await page.waitForSelector(".opblock-tag-section", { timeout: 10000 });
 
     // Find Authentication tag
-    const authTag = page.locator('div:has(.opblock-tag-section):has-text("Authentication")');
+    const authTag = page.locator(
+      'div:has(.opblock-tag-section):has-text("Authentication")'
+    );
     await expect(authTag.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -62,7 +64,9 @@ test.describe("API Endpoint Tags in Swagger UI", () => {
 
     await page.waitForSelector(".opblock-tag-section", { timeout: 10000 });
 
-    const personsTag = page.locator('div:has(.opblock-tag-section):has-text("Persons")');
+    const personsTag = page.locator(
+      'div:has(.opblock-tag-section):has-text("Persons")'
+    );
     await expect(personsTag.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -71,7 +75,9 @@ test.describe("API Endpoint Tags in Swagger UI", () => {
 
     await page.waitForSelector(".opblock-tag-section", { timeout: 10000 });
 
-    const relTag = page.locator('div:has(.opblock-tag-section):has-text("Relationships")');
+    const relTag = page.locator(
+      'div:has(.opblock-tag-section):has-text("Relationships")'
+    );
     await expect(relTag.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -80,7 +86,9 @@ test.describe("API Endpoint Tags in Swagger UI", () => {
 
     await page.waitForSelector(".opblock-tag-section", { timeout: 10000 });
 
-    const calendarTag = page.locator('div:has(.opblock-tag-section):has-text("Calendar")');
+    const calendarTag = page.locator(
+      'div:has(.opblock-tag-section):has-text("Calendar")'
+    );
     await expect(calendarTag.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -89,7 +97,9 @@ test.describe("API Endpoint Tags in Swagger UI", () => {
 
     await page.waitForSelector(".opblock-tag-section", { timeout: 10000 });
 
-    const metricsTag = page.locator('div:has(.opblock-tag-section):has-text("Metrics")');
+    const metricsTag = page.locator(
+      'div:has(.opblock-tag-section):has-text("Metrics")'
+    );
     await expect(metricsTag.first()).toBeVisible({ timeout: 5000 });
   });
 });
@@ -99,39 +109,51 @@ test.describe("Authentication Endpoint Details in Swagger UI", () => {
     await page.goto("/api/v1/docs");
 
     // Look for the login endpoint
-    const loginEndpoint = page.locator('div.opblock-post:has-text("/auth/login")');
+    const loginEndpoint = page.locator(
+      'div.opblock-post:has-text("/auth/login")'
+    );
     await expect(loginEndpoint.first()).toBeVisible({ timeout: 5000 });
   });
 
   test("shows register endpoint POST /auth/register", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const registerEndpoint = page.locator('div.opblock-post:has-text("/auth/register")');
+    const registerEndpoint = page.locator(
+      'div.opblock-post:has-text("/auth/register")'
+    );
     await expect(registerEndpoint.first()).toBeVisible({ timeout: 5000 });
   });
 
   test("shows logout endpoint POST /auth/logout", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const logoutEndpoint = page.locator('div.opblock-post:has-text("/auth/logout")');
+    const logoutEndpoint = page.locator(
+      'div.opblock-post:has-text("/auth/logout")'
+    );
     await expect(logoutEndpoint.first()).toBeVisible({ timeout: 5000 });
   });
 
   test("login endpoint shows request schema", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const loginEndpoint = page.locator('div.opblock-post:has-text("/auth/login")').first();
+    const loginEndpoint = page
+      .locator('div.opblock-post:has-text("/auth/login")')
+      .first();
     await loginEndpoint.click();
 
     // Look for request body schema
     await expect(page.locator('text="email"')).toBeVisible({ timeout: 5000 });
-    await expect(page.locator('text="password"')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('text="password"')).toBeVisible({
+      timeout: 5000,
+    });
   });
 
   test("login endpoint shows response codes", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const loginEndpoint = page.locator('div.opblock-post:has-text("/auth/login")').first();
+    const loginEndpoint = page
+      .locator('div.opblock-post:has-text("/auth/login")')
+      .first();
     await loginEndpoint.click();
 
     // Look for response codes
@@ -145,42 +167,56 @@ test.describe("Persons Endpoint Details in Swagger UI", () => {
   test("shows list persons endpoint GET /persons", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const listEndpoint = page.locator('div.opblock-get:has-text("/persons")').first();
+    const listEndpoint = page
+      .locator('div.opblock-get:has-text("/persons")')
+      .first();
     await expect(listEndpoint).toBeVisible({ timeout: 5000 });
   });
 
   test("shows create person endpoint POST /persons", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const createEndpoint = page.locator('div.opblock-post:has-text("/persons")').first();
+    const createEndpoint = page
+      .locator('div.opblock-post:has-text("/persons")')
+      .first();
     await expect(createEndpoint).toBeVisible({ timeout: 5000 });
   });
 
   test("shows get person endpoint GET /persons/{id}", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const getEndpoint = page.locator('div.opblock-get:has-text("/persons/{id}")').first();
+    const getEndpoint = page
+      .locator('div.opblock-get:has-text("/persons/{id}")')
+      .first();
     await expect(getEndpoint).toBeVisible({ timeout: 5000 });
   });
 
   test("shows update person endpoint PUT /persons/{id}", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const updateEndpoint = page.locator('div.opblock-put:has-text("/persons/{id}")').first();
+    const updateEndpoint = page
+      .locator('div.opblock-put:has-text("/persons/{id}")')
+      .first();
     await expect(updateEndpoint).toBeVisible({ timeout: 5000 });
   });
 
-  test("shows delete person endpoint DELETE /persons/{id}", async ({ page }) => {
+  test("shows delete person endpoint DELETE /persons/{id}", async ({
+    page,
+  }) => {
     await page.goto("/api/v1/docs");
 
-    const deleteEndpoint = page.locator('div.opblock-delete:has-text("/persons/{id}")').first();
+    const deleteEndpoint = page
+      .locator('div.opblock-delete:has-text("/persons/{id}")')
+      .first();
     await expect(deleteEndpoint).toBeVisible({ timeout: 5000 });
   });
 
   test("list persons endpoint shows query parameters", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const listEndpoint = page.locator('div.opblock-get:has-text("/persons")').first();
+    const listEndpoint = page
+      .locator('div.opblock-get:has-text("/persons")')
+      .first();
     await listEndpoint.click();
 
     // Look for query parameters
@@ -191,41 +227,61 @@ test.describe("Persons Endpoint Details in Swagger UI", () => {
 });
 
 test.describe("Relationships Endpoint Details in Swagger UI", () => {
-  test("shows list relationships endpoint GET /relationships", async ({ page }) => {
+  test("shows list relationships endpoint GET /relationships", async ({
+    page,
+  }) => {
     await page.goto("/api/v1/docs");
 
-    const listEndpoint = page.locator('div.opblock-get:has-text("/relationships")').first();
+    const listEndpoint = page
+      .locator('div.opblock-get:has-text("/relationships")')
+      .first();
     await expect(listEndpoint).toBeVisible({ timeout: 5000 });
   });
 
-  test("shows create relationship endpoint POST /relationships", async ({ page }) => {
+  test("shows create relationship endpoint POST /relationships", async ({
+    page,
+  }) => {
     await page.goto("/api/v1/docs");
 
-    const createEndpoint = page.locator('div.opblock-post:has-text("/relationships")').first();
+    const createEndpoint = page
+      .locator('div.opblock-post:has-text("/relationships")')
+      .first();
     await expect(createEndpoint).toBeVisible({ timeout: 5000 });
   });
 
-  test("shows get relationship returns 501 Not Implemented", async ({ page }) => {
+  test("shows get relationship returns 501 Not Implemented", async ({
+    page,
+  }) => {
     await page.goto("/api/v1/docs");
 
-    const getEndpoint = page.locator('div.opblock-get:has-text("/relationships/{id}")').first();
+    const getEndpoint = page
+      .locator('div.opblock-get:has-text("/relationships/{id}")')
+      .first();
     await getEndpoint.click();
 
     // Look for 501 response
     await expect(page.locator('text="501"')).toBeVisible({ timeout: 5000 });
   });
 
-  test("shows update relationship endpoint PUT /relationships/{id}", async ({ page }) => {
+  test("shows update relationship endpoint PUT /relationships/{id}", async ({
+    page,
+  }) => {
     await page.goto("/api/v1/docs");
 
-    const updateEndpoint = page.locator('div.opblock-put:has-text("/relationships/{id}")').first();
+    const updateEndpoint = page
+      .locator('div.opblock-put:has-text("/relationships/{id}")')
+      .first();
     await expect(updateEndpoint).toBeVisible({ timeout: 5000 });
   });
 
-  test("shows delete relationship endpoint DELETE /relationships/{id}", async ({ page }) => {
+  test("shows delete relationship endpoint DELETE /relationships/{id}", async ({
+    page,
+  }) => {
     await page.goto("/api/v1/docs");
 
-    const deleteEndpoint = page.locator('div.opblock-delete:has-text("/relationships/{id}")').first();
+    const deleteEndpoint = page
+      .locator('div.opblock-delete:has-text("/relationships/{id}")')
+      .first();
     await expect(deleteEndpoint).toBeVisible({ timeout: 5000 });
   });
 });
@@ -234,7 +290,9 @@ test.describe("Swagger UI Interactive Features", () => {
   test("can expand and collapse endpoint details", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const loginEndpoint = page.locator('div.opblock-post:has-text("/auth/login")').first();
+    const loginEndpoint = page
+      .locator('div.opblock-post:has-text("/auth/login")')
+      .first();
 
     // Initially might be collapsed, click to expand
     await loginEndpoint.click();
@@ -247,7 +305,9 @@ test.describe("Swagger UI Interactive Features", () => {
   test("displays endpoint operation IDs", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const loginEndpoint = page.locator('div.opblock-post:has-text("/auth/login")').first();
+    const loginEndpoint = page
+      .locator('div.opblock-post:has-text("/auth/login")')
+      .first();
     await loginEndpoint.click();
 
     // Look for operation ID
@@ -258,7 +318,9 @@ test.describe("Swagger UI Interactive Features", () => {
   test("shows request/response schemas", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const loginEndpoint = page.locator('div.opblock-post:has-text("/auth/login")').first();
+    const loginEndpoint = page
+      .locator('div.opblock-post:has-text("/auth/login")')
+      .first();
     await loginEndpoint.click();
 
     // Request body should show schema properties
@@ -271,7 +333,9 @@ test.describe("Swagger UI Interactive Features", () => {
   test("shows response descriptions", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const loginEndpoint = page.locator('div.opblock-post:has-text("/auth/login")').first();
+    const loginEndpoint = page
+      .locator('div.opblock-post:has-text("/auth/login")')
+      .first();
     await loginEndpoint.click();
 
     // Should show response descriptions
@@ -360,7 +424,9 @@ test.describe("Error Documentation in OpenAPI", () => {
     expect(error400.description).toContain("Validation error");
   });
 
-  test("404 Not Found is documented for resource endpoints", async ({ request }) => {
+  test("404 Not Found is documented for resource endpoints", async ({
+    request,
+  }) => {
     const response = await request.get("/api/v1/openapi.json");
     const spec = await response.json();
 
@@ -411,7 +477,9 @@ test.describe("Parameter Documentation in OpenAPI", () => {
     const spec = await response.json();
 
     const listRoute = spec.paths["/persons"].get;
-    const sortByParam = listRoute.parameters.find((p: any) => p.name === "sortBy");
+    const sortByParam = listRoute.parameters.find(
+      (p: any) => p.name === "sortBy"
+    );
     expect(sortByParam.schema.enum).toBeDefined();
     expect(Array.isArray(sortByParam.schema.enum)).toBe(true);
   });
@@ -439,7 +507,9 @@ test.describe("Request Body Documentation", () => {
     expect(schema.properties.password).toBeDefined();
   });
 
-  test("create person endpoint documents person fields", async ({ request }) => {
+  test("create person endpoint documents person fields", async ({
+    request,
+  }) => {
     const response = await request.get("/api/v1/openapi.json");
     const spec = await response.json();
 
@@ -521,7 +591,9 @@ test.describe("Calendar and Metrics Endpoints in Swagger", () => {
 
     await page.waitForSelector(".opblock-tag-section", { timeout: 10000 });
 
-    const calendarTag = page.locator('div:has(.opblock-tag-section):has-text("Calendar")');
+    const calendarTag = page.locator(
+      'div:has(.opblock-tag-section):has-text("Calendar")'
+    );
     await expect(calendarTag.first()).toBeVisible({ timeout: 5000 });
   });
 
@@ -530,24 +602,34 @@ test.describe("Calendar and Metrics Endpoints in Swagger", () => {
 
     await page.waitForSelector(".opblock-tag-section", { timeout: 10000 });
 
-    const metricsTag = page.locator('div:has(.opblock-tag-section):has-text("Metrics")');
+    const metricsTag = page.locator(
+      'div:has(.opblock-tag-section):has-text("Metrics")'
+    );
     await expect(metricsTag.first()).toBeVisible({ timeout: 5000 });
   });
 
-  test("RSS feed endpoint is documented with proper content type", async ({ request }) => {
+  test("RSS feed endpoint is documented with proper content type", async ({
+    request,
+  }) => {
     const response = await request.get("/api/v1/openapi.json");
     const spec = await response.json();
 
     const rssRoute = spec.paths["/calendar/rss.xml"].get;
-    expect(rssRoute.responses["200"].content["application/rss+xml"]).toBeDefined();
+    expect(
+      rssRoute.responses["200"].content["application/rss+xml"]
+    ).toBeDefined();
   });
 
-  test("iCalendar endpoints are documented with text/calendar content type", async ({ request }) => {
+  test("iCalendar endpoints are documented with text/calendar content type", async ({
+    request,
+  }) => {
     const response = await request.get("/api/v1/openapi.json");
     const spec = await response.json();
 
     const birthdaysRoute = spec.paths["/calendar/birthdays.ics"].get;
-    expect(birthdaysRoute.responses["200"].content["text/calendar"]).toBeDefined();
+    expect(
+      birthdaysRoute.responses["200"].content["text/calendar"]
+    ).toBeDefined();
   });
 });
 
@@ -556,7 +638,9 @@ test.describe("Swagger UI Search and Navigation", () => {
     await page.goto("/api/v1/docs");
 
     // Look for search box
-    const searchBox = page.locator('input[type="search"], input[placeholder*="Search"]').first();
+    const searchBox = page
+      .locator('input[type="search"], input[placeholder*="Search"]')
+      .first();
     if (await searchBox.isVisible({ timeout: 2000 }).catch(() => false)) {
       await searchBox.fill("/persons");
       await page.waitForTimeout(500);
@@ -569,7 +653,9 @@ test.describe("Swagger UI Search and Navigation", () => {
   test("can filter endpoints by tag", async ({ page }) => {
     await page.goto("/api/v1/docs");
 
-    const authTag = page.locator('div:has(.opblock-tag-section):has-text("Authentication")').first();
+    const authTag = page
+      .locator('div:has(.opblock-tag-section):has-text("Authentication")')
+      .first();
     await authTag.click();
 
     // Click should expand/collapse the authentication section

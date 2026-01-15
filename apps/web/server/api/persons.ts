@@ -17,68 +17,70 @@ import { logger } from "@vamsa/lib/logger";
 const personsRouter = new OpenAPIHono();
 
 // Response schema for person
-const personSchema = z.object({
-  id: z.string().openapi({
-    description: "Person ID",
-    example: "person_123",
-  }),
-  firstName: z.string().openapi({
-    description: "Person's first name",
-    example: "John",
-  }),
-  lastName: z.string().openapi({
-    description: "Person's last name",
-    example: "Doe",
-  }),
-  maidenName: z.string().nullable().optional().openapi({
-    description: "Person's maiden name if applicable",
-    example: "Smith",
-  }),
-  dateOfBirth: z.string().nullable().optional().openapi({
-    description: "Date of birth in ISO format",
-    example: "1980-01-15",
-  }),
-  dateOfPassing: z.string().nullable().optional().openapi({
-    description: "Date of death in ISO format",
-    example: "2020-05-20",
-  }),
-  birthPlace: z.string().nullable().optional().openapi({
-    description: "Place of birth",
-    example: "New York, NY",
-  }),
-  gender: z.string().nullable().optional().openapi({
-    description: "Person's gender",
-    example: "MALE",
-  }),
-  bio: z.string().nullable().optional().openapi({
-    description: "Person's biography",
-    example: "A brief bio...",
-  }),
-  email: z.string().nullable().optional().openapi({
-    description: "Email address",
-    example: "john@example.com",
-  }),
-  phone: z.string().nullable().optional().openapi({
-    description: "Phone number",
-    example: "+1-555-0123",
-  }),
-  profession: z.string().nullable().optional().openapi({
-    description: "Person's profession",
-    example: "Engineer",
-  }),
-  isLiving: z.boolean().openapi({
-    description: "Whether person is currently living",
-    example: true,
-  }),
-  createdAt: z.string().openapi({
-    description: "Creation timestamp",
-    example: "2024-01-14T10:00:00Z",
-  }),
-  updatedAt: z.string().openapi({
-    description: "Last update timestamp",
-    example: "2024-01-14T15:30:00Z",
-  }),
-}).openapi('Person');
+const personSchema = z
+  .object({
+    id: z.string().openapi({
+      description: "Person ID",
+      example: "person_123",
+    }),
+    firstName: z.string().openapi({
+      description: "Person's first name",
+      example: "John",
+    }),
+    lastName: z.string().openapi({
+      description: "Person's last name",
+      example: "Doe",
+    }),
+    maidenName: z.string().nullable().optional().openapi({
+      description: "Person's maiden name if applicable",
+      example: "Smith",
+    }),
+    dateOfBirth: z.string().nullable().optional().openapi({
+      description: "Date of birth in ISO format",
+      example: "1980-01-15",
+    }),
+    dateOfPassing: z.string().nullable().optional().openapi({
+      description: "Date of death in ISO format",
+      example: "2020-05-20",
+    }),
+    birthPlace: z.string().nullable().optional().openapi({
+      description: "Place of birth",
+      example: "New York, NY",
+    }),
+    gender: z.string().nullable().optional().openapi({
+      description: "Person's gender",
+      example: "MALE",
+    }),
+    bio: z.string().nullable().optional().openapi({
+      description: "Person's biography",
+      example: "A brief bio...",
+    }),
+    email: z.string().nullable().optional().openapi({
+      description: "Email address",
+      example: "john@example.com",
+    }),
+    phone: z.string().nullable().optional().openapi({
+      description: "Phone number",
+      example: "+1-555-0123",
+    }),
+    profession: z.string().nullable().optional().openapi({
+      description: "Person's profession",
+      example: "Engineer",
+    }),
+    isLiving: z.boolean().openapi({
+      description: "Whether person is currently living",
+      example: true,
+    }),
+    createdAt: z.string().openapi({
+      description: "Creation timestamp",
+      example: "2024-01-14T10:00:00Z",
+    }),
+    updatedAt: z.string().openapi({
+      description: "Last update timestamp",
+      example: "2024-01-14T15:30:00Z",
+    }),
+  })
+  .openapi("Person");
 
 const personUpdateSchema = personCreateSchema.partial();
 
@@ -94,34 +96,39 @@ const listPersonsRoute = createRoute({
   description: "Get paginated list of persons with optional filtering",
   operationId: "listPersons",
   request: {
-    query: z.object({
-      page: z.coerce.number().int().min(1).default(1).openapi({
-        description: "Page number (1-indexed)",
-        example: 1,
+    query: z
+      .object({
+        page: z.coerce.number().int().min(1).default(1).openapi({
+          description: "Page number (1-indexed)",
+          example: 1,
+        }),
+        limit: z.coerce.number().int().min(1).max(100).default(50).openapi({
+          description: "Items per page (max 100)",
+          example: 50,
+        }),
+        search: z.string().optional().openapi({
+          description: "Search term for name",
+          example: "John",
+        }),
+        sortBy: z
+          .enum(["lastName", "firstName", "dateOfBirth", "createdAt"])
+          .default("lastName")
+          .openapi({
+            description: "Field to sort by",
+            example: "lastName",
+          }),
+        sortOrder: z.enum(["asc", "desc"]).default("asc").openapi({
+          description: "Sort order",
+          example: "asc",
+        }),
+        isLiving: z.coerce.boolean().optional().openapi({
+          description: "Filter by living status",
+          example: true,
+        }),
+      })
+      .openapi({
+        description: "Query parameters for listing persons",
       }),
-      limit: z.coerce.number().int().min(1).max(100).default(50).openapi({
-        description: "Items per page (max 100)",
-        example: 50,
-      }),
-      search: z.string().optional().openapi({
-        description: "Search term for name",
-        example: "John",
-      }),
-      sortBy: z.enum(["lastName", "firstName", "dateOfBirth", "createdAt"]).default("lastName").openapi({
-        description: "Field to sort by",
-        example: "lastName",
-      }),
-      sortOrder: z.enum(["asc", "desc"]).default("asc").openapi({
-        description: "Sort order",
-        example: "asc",
-      }),
-      isLiving: z.coerce.boolean().optional().openapi({
-        description: "Filter by living status",
-        example: true,
-      }),
-    }).openapi({
-      description: "Query parameters for listing persons",
-    }),
   },
   responses: {
     200: {
@@ -153,7 +160,8 @@ const listPersonsRoute = createRoute({
 
 personsRouter.openapi(listPersonsRoute, async (c) => {
   try {
-    const { page, limit, search, sortBy, sortOrder, isLiving } = c.req.valid("query");
+    const { page, limit, search, sortBy, sortOrder, isLiving } =
+      c.req.valid("query");
 
     if (page < 1 || limit < 1 || limit > 100) {
       return c.json(
@@ -289,14 +297,16 @@ const getPersonRoute = createRoute({
   description: "Retrieve a specific person's details",
   operationId: "getPerson",
   request: {
-    params: z.object({
-      id: z.string().openapi({
-        description: "Person ID",
-        example: "person_123",
+    params: z
+      .object({
+        id: z.string().openapi({
+          description: "Person ID",
+          example: "person_123",
+        }),
+      })
+      .openapi({
+        description: "Path parameters for person endpoint",
       }),
-    }).openapi({
-      description: "Path parameters for person endpoint",
-    }),
   },
   responses: {
     200: {
@@ -371,14 +381,16 @@ const updatePersonRoute = createRoute({
   description: "Update person details",
   operationId: "updatePerson",
   request: {
-    params: z.object({
-      id: z.string().openapi({
-        description: "Person ID",
-        example: "person_123",
+    params: z
+      .object({
+        id: z.string().openapi({
+          description: "Person ID",
+          example: "person_123",
+        }),
+      })
+      .openapi({
+        description: "Path parameters for person endpoint",
       }),
-    }).openapi({
-      description: "Path parameters for person endpoint",
-    }),
     body: {
       required: true,
       content: {
@@ -491,14 +503,16 @@ const deletePersonRoute = createRoute({
   description: "Remove a person from the family tree",
   operationId: "deletePerson",
   request: {
-    params: z.object({
-      id: z.string().openapi({
-        description: "Person ID",
-        example: "person_123",
+    params: z
+      .object({
+        id: z.string().openapi({
+          description: "Person ID",
+          example: "person_123",
+        }),
+      })
+      .openapi({
+        description: "Path parameters for person endpoint",
       }),
-    }).openapi({
-      description: "Path parameters for person endpoint",
-    }),
   },
   responses: {
     204: {

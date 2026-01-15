@@ -26,7 +26,9 @@ export async function initBackupScheduler(): Promise<void> {
 
     const settings = await prisma.backupSettings.findFirst();
     if (!settings) {
-      logger.info("No backup settings found, skipping scheduler initialization");
+      logger.info(
+        "No backup settings found, skipping scheduler initialization"
+      );
       return;
     }
 
@@ -49,7 +51,10 @@ export async function initBackupScheduler(): Promise<void> {
           }
         });
         scheduledJobs.set(jobKey, dailyJob);
-        logger.info({ cron: cronExpression, job: jobKey }, "Scheduled daily backup");
+        logger.info(
+          { cron: cronExpression, job: jobKey },
+          "Scheduled daily backup"
+        );
       } catch (error) {
         logger.error(
           { error: serializeError(error), job: jobKey },
@@ -78,7 +83,10 @@ export async function initBackupScheduler(): Promise<void> {
           }
         });
         scheduledJobs.set(jobKey, weeklyJob);
-        logger.info({ cron: cronExpression, job: jobKey }, "Scheduled weekly backup");
+        logger.info(
+          { cron: cronExpression, job: jobKey },
+          "Scheduled weekly backup"
+        );
       } catch (error) {
         logger.error(
           { error: serializeError(error), job: jobKey },
@@ -107,7 +115,10 @@ export async function initBackupScheduler(): Promise<void> {
           }
         });
         scheduledJobs.set(jobKey, monthlyJob);
-        logger.info({ cron: cronExpression, job: jobKey }, "Scheduled monthly backup");
+        logger.info(
+          { cron: cronExpression, job: jobKey },
+          "Scheduled monthly backup"
+        );
       } catch (error) {
         logger.error(
           { error: serializeError(error), job: jobKey },

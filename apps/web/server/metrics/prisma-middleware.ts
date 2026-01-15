@@ -43,7 +43,9 @@ interface PrismaMiddlewareParams {
 /**
  * Prisma middleware next function type
  */
-type PrismaMiddlewareNext = (params: PrismaMiddlewareParams) => Promise<unknown>;
+type PrismaMiddlewareNext = (
+  params: PrismaMiddlewareParams
+) => Promise<unknown>;
 
 /**
  * Create a comprehensive Prisma performance middleware

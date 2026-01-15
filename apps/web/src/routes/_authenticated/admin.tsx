@@ -53,7 +53,7 @@ function AdminLayout() {
               to={item.href}
               className={cn(
                 "px-4 py-3 text-sm font-medium transition-colors",
-                "-mb-0.5 border-b-2 flex items-center gap-2",
+                "-mb-0.5 flex items-center gap-2 border-b-2",
                 isActive
                   ? "border-primary text-primary"
                   : "text-muted-foreground hover:text-foreground hover:border-border border-transparent"
@@ -61,7 +61,7 @@ function AdminLayout() {
             >
               {item.label}
               {item.badge && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0">
+                <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
                   {item.badge}
                 </Badge>
               )}

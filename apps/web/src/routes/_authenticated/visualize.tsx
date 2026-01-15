@@ -165,10 +165,10 @@ function VisualizeComponent() {
       />
 
       <Card>
-        <CardContent className="flex flex-col gap-2 p-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+        <CardContent className="text-muted-foreground flex flex-col gap-2 p-4 text-sm sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
             <svg
-              className="text-primary mt-0.5 h-5 w-5 flex-shrink-0"
+              className="text-primary mt-0.5 h-5 w-5 shrink-0"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -181,11 +181,16 @@ function VisualizeComponent() {
               />
             </svg>
             <div>
-              <p className="font-medium text-foreground">Tips</p>
-              <p>Drag to pan, scroll or pinch to zoom, and click a node for details. Use Reset view to refit the chart.</p>
+              <p className="text-foreground font-medium">Tips</p>
+              <p>
+                Drag to pan, scroll or pinch to zoom, and click a node for
+                details. Use Reset view to refit the chart.
+              </p>
             </div>
           </div>
-          <div className="text-xs text-muted-foreground">Need more room? Charts grow to ~60% of your viewport height.</div>
+          <div className="text-muted-foreground text-xs">
+            Need more room? Charts grow to ~60% of your viewport height.
+          </div>
         </CardContent>
       </Card>
 
@@ -202,7 +207,7 @@ function VisualizeComponent() {
                   handleTypeChange(value as VisualizationType)
                 }
               >
-                <SelectTrigger id="viz-type" className="w-[200px]">
+                <SelectTrigger id="viz-type" className="w-50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -544,7 +549,11 @@ function ChartVisualization({
         ) : error ? (
           <ChartErrorState
             title="Error Loading Chart"
-            message={error instanceof Error ? error.message : "An unknown error occurred"}
+            message={
+              error instanceof Error
+                ? error.message
+                : "An unknown error occurred"
+            }
             retry={() => void refetch()}
           />
         ) : !chartData ||
@@ -606,7 +615,9 @@ function ChartVisualization({
           />
         ) : (
           <ChartContainer
-            heightClass={chartType === "statistics" ? "min-h-[600px]" : "h-[600px]"}
+            heightClass={
+              chartType === "statistics" ? "min-h-[600px]" : "h-[600px]"
+            }
             className="p-0"
           >
             {chartType === "tree" &&

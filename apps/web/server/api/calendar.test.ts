@@ -29,7 +29,6 @@ describe("Calendar API", () => {
   });
 });
 
-
 // Test data
 const mockPerson = {
   id: "person-1",
@@ -123,7 +122,7 @@ describe("Calendar API Endpoints", () => {
         { ...mockPerson, id: "person-2", firstName: "Jane" },
       ];
       expect(people.length).toBe(2);
-      expect(people.every(p => p.dateOfBirth !== null)).toBe(true);
+      expect(people.every((p) => p.dateOfBirth !== null)).toBe(true);
     });
 
     it("should handle people without birthdays", () => {
@@ -193,7 +192,7 @@ describe("Calendar API Endpoints", () => {
     });
 
     it("should handle empty person list", () => {
-      const people: typeof mockPerson[] = [];
+      const people: (typeof mockPerson)[] = [];
       expect(people.length).toBe(0);
     });
   });
@@ -256,7 +255,8 @@ describe("Calendar API Endpoints", () => {
         ...mockPerson,
         dateOfPassing: new Date("2010-03-20"),
       };
-      const yearsSince = new Date().getFullYear() - deceasedPerson.dateOfPassing.getFullYear();
+      const yearsSince =
+        new Date().getFullYear() - deceasedPerson.dateOfPassing.getFullYear();
       expect(yearsSince).toBeGreaterThan(0);
     });
   });
@@ -396,7 +396,7 @@ describe("Calendar API Endpoints", () => {
     });
 
     it("should handle empty audit log", () => {
-      const logs: typeof mockAuditLog[] = [];
+      const logs: (typeof mockAuditLog)[] = [];
       expect(logs.length).toBe(0);
     });
 
@@ -427,8 +427,9 @@ describe("Calendar API Endpoints", () => {
     });
 
     it("should validate token when provided", () => {
-      const isValid = mockCalendarToken.isActive &&
-                      mockCalendarToken.expiresAt.getTime() > Date.now();
+      const isValid =
+        mockCalendarToken.isActive &&
+        mockCalendarToken.expiresAt.getTime() > Date.now();
       expect(isValid).toBe(true);
     });
 

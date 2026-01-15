@@ -15,40 +15,42 @@ import { logger } from "@vamsa/lib/logger";
 const relationshipsRouter = new OpenAPIHono();
 
 // Response schema for relationship
-const relationshipSchema = z.object({
-  id: z.string().openapi({
-    description: "Relationship ID",
-    example: "rel_123",
-  }),
-  personId: z.string().openapi({
-    description: "Primary person ID",
-    example: "person_123",
-  }),
-  relatedPersonId: z.string().openapi({
-    description: "Related person ID",
-    example: "person_456",
-  }),
-  type: z.enum(["PARENT", "CHILD", "SPOUSE", "SIBLING"]).openapi({
-    description: "Type of relationship",
-    example: "PARENT",
-  }),
-  marriageDate: z.string().nullable().optional().openapi({
-    description: "Marriage date for SPOUSE relationships",
-    example: "2010-06-15",
-  }),
-  divorceDate: z.string().nullable().optional().openapi({
-    description: "Divorce date if applicable",
-    example: "2015-03-20",
-  }),
-  createdAt: z.string().openapi({
-    description: "Creation timestamp",
-    example: "2024-01-14T10:00:00Z",
-  }),
-  updatedAt: z.string().openapi({
-    description: "Last update timestamp",
-    example: "2024-01-14T15:30:00Z",
-  }),
-}).openapi('Relationship');
+const relationshipSchema = z
+  .object({
+    id: z.string().openapi({
+      description: "Relationship ID",
+      example: "rel_123",
+    }),
+    personId: z.string().openapi({
+      description: "Primary person ID",
+      example: "person_123",
+    }),
+    relatedPersonId: z.string().openapi({
+      description: "Related person ID",
+      example: "person_456",
+    }),
+    type: z.enum(["PARENT", "CHILD", "SPOUSE", "SIBLING"]).openapi({
+      description: "Type of relationship",
+      example: "PARENT",
+    }),
+    marriageDate: z.string().nullable().optional().openapi({
+      description: "Marriage date for SPOUSE relationships",
+      example: "2010-06-15",
+    }),
+    divorceDate: z.string().nullable().optional().openapi({
+      description: "Divorce date if applicable",
+      example: "2015-03-20",
+    }),
+    createdAt: z.string().openapi({
+      description: "Creation timestamp",
+      example: "2024-01-14T10:00:00Z",
+    }),
+    updatedAt: z.string().openapi({
+      description: "Last update timestamp",
+      example: "2024-01-14T15:30:00Z",
+    }),
+  })
+  .openapi("Relationship");
 
 const relationshipUpdateSchema = z.object({
   marriageDate: z.string().optional().nullable().openapi({
@@ -73,26 +75,31 @@ const listRelationshipsRoute = createRoute({
   description: "Get relationships for a person with optional filtering",
   operationId: "listRelationships",
   request: {
-    query: z.object({
-      personId: z.string().optional().openapi({
-        description: "Filter by person ID",
-        example: "person_123",
+    query: z
+      .object({
+        personId: z.string().optional().openapi({
+          description: "Filter by person ID",
+          example: "person_123",
+        }),
+        type: z
+          .enum(["PARENT", "CHILD", "SPOUSE", "SIBLING"])
+          .optional()
+          .openapi({
+            description: "Filter by relationship type",
+            example: "PARENT",
+          }),
+        page: z.coerce.number().int().min(1).default(1).openapi({
+          description: "Page number (1-indexed)",
+          example: 1,
+        }),
+        limit: z.coerce.number().int().min(1).max(100).default(50).openapi({
+          description: "Items per page (max 100)",
+          example: 50,
+        }),
+      })
+      .openapi({
+        description: "Query parameters for listing relationships",
       }),
-      type: z.enum(["PARENT", "CHILD", "SPOUSE", "SIBLING"]).optional().openapi({
-        description: "Filter by relationship type",
-        example: "PARENT",
-      }),
-      page: z.coerce.number().int().min(1).default(1).openapi({
-        description: "Page number (1-indexed)",
-        example: 1,
-      }),
-      limit: z.coerce.number().int().min(1).max(100).default(50).openapi({
-        description: "Items per page (max 100)",
-        example: 50,
-      }),
-    }).openapi({
-      description: "Query parameters for listing relationships",
-    }),
   },
   responses: {
     200: {
@@ -297,14 +304,16 @@ const getRelationshipRoute = createRoute({
   description: "Retrieve a specific relationship's details",
   operationId: "getRelationship",
   request: {
-    params: z.object({
-      id: z.string().openapi({
-        description: "Relationship ID",
-        example: "rel_123",
+    params: z
+      .object({
+        id: z.string().openapi({
+          description: "Relationship ID",
+          example: "rel_123",
+        }),
+      })
+      .openapi({
+        description: "Path parameters for relationship endpoint",
       }),
-    }).openapi({
-      description: "Path parameters for relationship endpoint",
-    }),
   },
   responses: {
     200: {
@@ -340,7 +349,8 @@ const getRelationshipRoute = createRoute({
       },
     },
     501: {
-      description: "Not Implemented - Get individual relationship not yet supported",
+      description:
+        "Not Implemented - Get individual relationship not yet supported",
       content: {
         "application/json": {
           schema: errorResponseSchema,
@@ -355,19 +365,13 @@ relationshipsRouter.openapi(getRelationshipRoute, async (c) => {
     const { id } = c.req.valid("param");
 
     if (!id) {
-      return c.json(
-        { error: "Relationship ID is required" },
-        { status: 400 }
-      );
+      return c.json({ error: "Relationship ID is required" }, { status: 400 });
     }
 
     return c.json({ error: "Not implemented" }, { status: 501 });
   } catch (error) {
     logger.error({ error }, "Error getting relationship");
-    return c.json(
-      { error: "Failed to get relationship" },
-      { status: 500 }
-    );
+    return c.json({ error: "Failed to get relationship" }, { status: 500 });
   }
 });
 
@@ -383,14 +387,16 @@ const updateRelationshipRoute = createRoute({
   description: "Update relationship dates",
   operationId: "updateRelationship",
   request: {
-    params: z.object({
-      id: z.string().openapi({
-        description: "Relationship ID",
-        example: "rel_123",
+    params: z
+      .object({
+        id: z.string().openapi({
+          description: "Relationship ID",
+          example: "rel_123",
+        }),
+      })
+      .openapi({
+        description: "Path parameters for relationship endpoint",
       }),
-    }).openapi({
-      description: "Path parameters for relationship endpoint",
-    }),
     body: {
       required: true,
       content: {
@@ -454,10 +460,7 @@ relationshipsRouter.openapi(updateRelationshipRoute, async (c) => {
     const { id } = c.req.valid("param");
 
     if (!id) {
-      return c.json(
-        { error: "Relationship ID is required" },
-        { status: 400 }
-      );
+      return c.json({ error: "Relationship ID is required" }, { status: 400 });
     }
 
     const data = c.req.valid("json");
@@ -478,10 +481,7 @@ relationshipsRouter.openapi(updateRelationshipRoute, async (c) => {
     }
 
     if (error instanceof Error && error.message.includes("not found")) {
-      return c.json(
-        { error: "Relationship not found" },
-        { status: 404 }
-      );
+      return c.json({ error: "Relationship not found" }, { status: 404 });
     }
 
     if (error instanceof Error && error.message.includes("Unauthorized")) {
@@ -489,10 +489,7 @@ relationshipsRouter.openapi(updateRelationshipRoute, async (c) => {
     }
 
     logger.error({ error }, "Error updating relationship");
-    return c.json(
-      { error: "Failed to update relationship" },
-      { status: 500 }
-    );
+    return c.json({ error: "Failed to update relationship" }, { status: 500 });
   }
 });
 
@@ -508,14 +505,16 @@ const deleteRelationshipRoute = createRoute({
   description: "Remove a relationship between two persons",
   operationId: "deleteRelationship",
   request: {
-    params: z.object({
-      id: z.string().openapi({
-        description: "Relationship ID",
-        example: "rel_123",
+    params: z
+      .object({
+        id: z.string().openapi({
+          description: "Relationship ID",
+          example: "rel_123",
+        }),
+      })
+      .openapi({
+        description: "Path parameters for relationship endpoint",
       }),
-    }).openapi({
-      description: "Path parameters for relationship endpoint",
-    }),
   },
   responses: {
     204: {
@@ -561,10 +560,7 @@ relationshipsRouter.openapi(deleteRelationshipRoute, async (c) => {
     const { id } = c.req.valid("param");
 
     if (!id) {
-      return c.json(
-        { error: "Relationship ID is required" },
-        { status: 400 }
-      );
+      return c.json({ error: "Relationship ID is required" }, { status: 400 });
     }
 
     await serverDeleteRelationship({ data: { id } });
@@ -572,10 +568,7 @@ relationshipsRouter.openapi(deleteRelationshipRoute, async (c) => {
     return c.body(null, 204);
   } catch (error) {
     if (error instanceof Error && error.message.includes("not found")) {
-      return c.json(
-        { error: "Relationship not found" },
-        { status: 404 }
-      );
+      return c.json({ error: "Relationship not found" }, { status: 404 });
     }
 
     if (error instanceof Error && error.message.includes("Unauthorized")) {
@@ -583,10 +576,7 @@ relationshipsRouter.openapi(deleteRelationshipRoute, async (c) => {
     }
 
     logger.error({ error }, "Error deleting relationship");
-    return c.json(
-      { error: "Failed to delete relationship" },
-      { status: 500 }
-    );
+    return c.json({ error: "Failed to delete relationship" }, { status: 500 });
   }
 });
 
