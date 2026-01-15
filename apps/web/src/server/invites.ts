@@ -380,3 +380,36 @@ export const resendInvite = createServerFn({ method: "POST" })
       expiresAt: updated.expiresAt.toISOString(),
     };
   });
+
+/**
+ * Delete an invite permanently (only allowed for revoked invites)
+ */
+export const deleteInvite = createServerFn({ method: "POST" })
+  .inputValidator((data: { inviteId: string }) => data)
+  .handler(async ({ data }) => {
+    const user = await requireAuth("ADMIN");
+
+    const invite = await prisma.invite.findUnique({
+      where: { id: data.inviteId },
+    });
+
+    if (!invite) {
+      throw new Error("Invite not found");
+    }
+
+    // Only allow deleting revoked invites
+    if (invite.status !== "REVOKED") {
+      throw new Error("Only revoked invites can be deleted");
+    }
+
+    await prisma.invite.delete({
+      where: { id: data.inviteId },
+    });
+
+    logger.info(
+      { inviteId: data.inviteId, deletedBy: user.id },
+      "Invite deleted"
+    );
+
+    return { success: true };
+  });

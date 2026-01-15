@@ -8,6 +8,7 @@ interface RelationshipMatrixProps {
   people: MatrixPerson[];
   matrix: MatrixCell[];
   onNodeClick?: (nodeId: string) => void;
+  resetSignal?: number;
 }
 
 // Color mapping for relationship types
@@ -44,9 +45,11 @@ export function RelationshipMatrix({
   people,
   matrix,
   onNodeClick,
+  resetSignal,
 }: RelationshipMatrixProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const resetViewRef = useRef<() => void>();
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current || people.length === 0) return;
@@ -157,6 +160,18 @@ export function RelationshipMatrix({
             .style("pointer-events", "none")
             .text(relationshipLabels[cell.relationshipType] || "?");
         }
+
+        if (cell?.relationshipType) {
+          cellGroup
+            .append("title")
+            .text(
+              cell.relationshipType === "SELF"
+                ? "Self"
+                : relationshipLabels[cell.relationshipType]
+                  ? `${relationshipLabels[cell.relationshipType]} (${cell.relationshipType.replace(/_/g, " ")})`
+                  : cell.relationshipType
+            );
+        }
       });
     });
 
@@ -177,7 +192,9 @@ export function RelationshipMatrix({
         .style("font-weight", "500")
         .style("cursor", "pointer")
         .text(`${person.firstName} ${person.lastName}`.substring(0, 18))
-        .on("click", () => onNodeClick?.(person.id));
+        .on("click", () => onNodeClick?.(person.id))
+        .append("title")
+        .text(`${person.firstName} ${person.lastName}`);
 
       // Gender indicator
       rowLabels
@@ -212,7 +229,9 @@ export function RelationshipMatrix({
         .style("font-weight", "500")
         .style("cursor", "pointer")
         .text(`${person.firstName} ${person.lastName}`.substring(0, 15))
-        .on("click", () => onNodeClick?.(person.id));
+        .on("click", () => onNodeClick?.(person.id))
+        .append("title")
+        .text(`${person.firstName} ${person.lastName}`);
     });
 
     // Draw grid lines
@@ -255,8 +274,18 @@ export function RelationshipMatrix({
       const transform = d3.zoomIdentity.translate(20, 20).scale(scale);
 
       svg.transition().duration(750).call(zoom.transform, transform);
+
+      resetViewRef.current = () => {
+        svg.transition().duration(300).call(zoom.transform, transform);
+      };
     }
   }, [people, matrix, onNodeClick]);
+
+  useEffect(() => {
+    if (resetSignal !== undefined && resetViewRef.current) {
+      resetViewRef.current();
+    }
+  }, [resetSignal]);
 
   return (
     <div

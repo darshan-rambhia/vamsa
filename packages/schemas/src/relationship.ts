@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@hono/zod-openapi";
 import { parseDateString } from "@vamsa/lib";
 
 export const relationshipTypeEnum = z.enum([
@@ -14,6 +14,11 @@ const dateSchema = z
     if (!val) return null;
     if (val instanceof Date) return val;
     return parseDateString(val);
+  })
+  .openapi({
+    type: "string",
+    format: "date",
+    description: "Date in ISO format (YYYY-MM-DD) or Date object",
   });
 
 export const relationshipCreateSchema = z.object({
@@ -23,6 +28,8 @@ export const relationshipCreateSchema = z.object({
   marriageDate: dateSchema.optional().nullable(),
   divorceDate: dateSchema.optional().nullable(),
   isActive: z.boolean().optional().default(true),
+}).openapi({
+  description: "Relationship creation data",
 });
 
 export const relationshipUpdateSchema = relationshipCreateSchema.partial();

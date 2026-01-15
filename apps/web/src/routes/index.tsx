@@ -5,7 +5,7 @@ export const Route = createFileRoute("/")({
   beforeLoad: async () => {
     const token = await getSessionToken();
     if (token) {
-      throw redirect({ to: "/tree" });
+      throw redirect({ to: "/visualize" });
     }
     throw redirect({ to: "/login" });
   },

@@ -28,9 +28,13 @@ export type CalendarTokenMinAggregateOutputType = {
   id: string | null
   token: string | null
   userId: string | null
-  type: string | null
+  name: string | null
   expiresAt: Date | null
   isActive: boolean | null
+  lastUsedAt: Date | null
+  rotationPolicy: string | null
+  rotatedAt: Date | null
+  rotatedFrom: string | null
   createdAt: Date | null
 }
 
@@ -38,9 +42,13 @@ export type CalendarTokenMaxAggregateOutputType = {
   id: string | null
   token: string | null
   userId: string | null
-  type: string | null
+  name: string | null
   expiresAt: Date | null
   isActive: boolean | null
+  lastUsedAt: Date | null
+  rotationPolicy: string | null
+  rotatedAt: Date | null
+  rotatedFrom: string | null
   createdAt: Date | null
 }
 
@@ -48,9 +56,14 @@ export type CalendarTokenCountAggregateOutputType = {
   id: number
   token: number
   userId: number
-  type: number
+  name: number
   expiresAt: number
   isActive: number
+  lastUsedAt: number
+  rotationPolicy: number
+  rotatedAt: number
+  rotatedFrom: number
+  scopes: number
   createdAt: number
   _all: number
 }
@@ -60,9 +73,13 @@ export type CalendarTokenMinAggregateInputType = {
   id?: true
   token?: true
   userId?: true
-  type?: true
+  name?: true
   expiresAt?: true
   isActive?: true
+  lastUsedAt?: true
+  rotationPolicy?: true
+  rotatedAt?: true
+  rotatedFrom?: true
   createdAt?: true
 }
 
@@ -70,9 +87,13 @@ export type CalendarTokenMaxAggregateInputType = {
   id?: true
   token?: true
   userId?: true
-  type?: true
+  name?: true
   expiresAt?: true
   isActive?: true
+  lastUsedAt?: true
+  rotationPolicy?: true
+  rotatedAt?: true
+  rotatedFrom?: true
   createdAt?: true
 }
 
@@ -80,9 +101,14 @@ export type CalendarTokenCountAggregateInputType = {
   id?: true
   token?: true
   userId?: true
-  type?: true
+  name?: true
   expiresAt?: true
   isActive?: true
+  lastUsedAt?: true
+  rotationPolicy?: true
+  rotatedAt?: true
+  rotatedFrom?: true
+  scopes?: true
   createdAt?: true
   _all?: true
 }
@@ -163,9 +189,14 @@ export type CalendarTokenGroupByOutputType = {
   id: string
   token: string
   userId: string
-  type: string
+  name: string | null
   expiresAt: Date
   isActive: boolean
+  lastUsedAt: Date | null
+  rotationPolicy: string
+  rotatedAt: Date | null
+  rotatedFrom: string | null
+  scopes: string[]
   createdAt: Date
   _count: CalendarTokenCountAggregateOutputType | null
   _min: CalendarTokenMinAggregateOutputType | null
@@ -194,9 +225,14 @@ export type CalendarTokenWhereInput = {
   id?: Prisma.StringFilter<"CalendarToken"> | string
   token?: Prisma.StringFilter<"CalendarToken"> | string
   userId?: Prisma.StringFilter<"CalendarToken"> | string
-  type?: Prisma.StringFilter<"CalendarToken"> | string
+  name?: Prisma.StringNullableFilter<"CalendarToken"> | string | null
   expiresAt?: Prisma.DateTimeFilter<"CalendarToken"> | Date | string
   isActive?: Prisma.BoolFilter<"CalendarToken"> | boolean
+  lastUsedAt?: Prisma.DateTimeNullableFilter<"CalendarToken"> | Date | string | null
+  rotationPolicy?: Prisma.StringFilter<"CalendarToken"> | string
+  rotatedAt?: Prisma.DateTimeNullableFilter<"CalendarToken"> | Date | string | null
+  rotatedFrom?: Prisma.StringNullableFilter<"CalendarToken"> | string | null
+  scopes?: Prisma.StringNullableListFilter<"CalendarToken">
   createdAt?: Prisma.DateTimeFilter<"CalendarToken"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
@@ -205,9 +241,14 @@ export type CalendarTokenOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   token?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
+  name?: Prisma.SortOrderInput | Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  lastUsedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rotationPolicy?: Prisma.SortOrder
+  rotatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rotatedFrom?: Prisma.SortOrderInput | Prisma.SortOrder
+  scopes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   user?: Prisma.UserOrderByWithRelationInput
 }
@@ -219,9 +260,14 @@ export type CalendarTokenWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.CalendarTokenWhereInput[]
   NOT?: Prisma.CalendarTokenWhereInput | Prisma.CalendarTokenWhereInput[]
   userId?: Prisma.StringFilter<"CalendarToken"> | string
-  type?: Prisma.StringFilter<"CalendarToken"> | string
+  name?: Prisma.StringNullableFilter<"CalendarToken"> | string | null
   expiresAt?: Prisma.DateTimeFilter<"CalendarToken"> | Date | string
   isActive?: Prisma.BoolFilter<"CalendarToken"> | boolean
+  lastUsedAt?: Prisma.DateTimeNullableFilter<"CalendarToken"> | Date | string | null
+  rotationPolicy?: Prisma.StringFilter<"CalendarToken"> | string
+  rotatedAt?: Prisma.DateTimeNullableFilter<"CalendarToken"> | Date | string | null
+  rotatedFrom?: Prisma.StringNullableFilter<"CalendarToken"> | string | null
+  scopes?: Prisma.StringNullableListFilter<"CalendarToken">
   createdAt?: Prisma.DateTimeFilter<"CalendarToken"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id" | "token">
@@ -230,9 +276,14 @@ export type CalendarTokenOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   token?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
+  name?: Prisma.SortOrderInput | Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  lastUsedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rotationPolicy?: Prisma.SortOrder
+  rotatedAt?: Prisma.SortOrderInput | Prisma.SortOrder
+  rotatedFrom?: Prisma.SortOrderInput | Prisma.SortOrder
+  scopes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   _count?: Prisma.CalendarTokenCountOrderByAggregateInput
   _max?: Prisma.CalendarTokenMaxOrderByAggregateInput
@@ -246,18 +297,28 @@ export type CalendarTokenScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"CalendarToken"> | string
   token?: Prisma.StringWithAggregatesFilter<"CalendarToken"> | string
   userId?: Prisma.StringWithAggregatesFilter<"CalendarToken"> | string
-  type?: Prisma.StringWithAggregatesFilter<"CalendarToken"> | string
+  name?: Prisma.StringNullableWithAggregatesFilter<"CalendarToken"> | string | null
   expiresAt?: Prisma.DateTimeWithAggregatesFilter<"CalendarToken"> | Date | string
   isActive?: Prisma.BoolWithAggregatesFilter<"CalendarToken"> | boolean
+  lastUsedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CalendarToken"> | Date | string | null
+  rotationPolicy?: Prisma.StringWithAggregatesFilter<"CalendarToken"> | string
+  rotatedAt?: Prisma.DateTimeNullableWithAggregatesFilter<"CalendarToken"> | Date | string | null
+  rotatedFrom?: Prisma.StringNullableWithAggregatesFilter<"CalendarToken"> | string | null
+  scopes?: Prisma.StringNullableListFilter<"CalendarToken">
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"CalendarToken"> | Date | string
 }
 
 export type CalendarTokenCreateInput = {
   id?: string
   token: string
-  type?: string
+  name?: string | null
   expiresAt: Date | string
   isActive?: boolean
+  lastUsedAt?: Date | string | null
+  rotationPolicy?: string
+  rotatedAt?: Date | string | null
+  rotatedFrom?: string | null
+  scopes?: Prisma.CalendarTokenCreatescopesInput | string[]
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutCalendarTokensInput
 }
@@ -266,18 +327,28 @@ export type CalendarTokenUncheckedCreateInput = {
   id?: string
   token: string
   userId: string
-  type?: string
+  name?: string | null
   expiresAt: Date | string
   isActive?: boolean
+  lastUsedAt?: Date | string | null
+  rotationPolicy?: string
+  rotatedAt?: Date | string | null
+  rotatedFrom?: string | null
+  scopes?: Prisma.CalendarTokenCreatescopesInput | string[]
   createdAt?: Date | string
 }
 
 export type CalendarTokenUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   token?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotationPolicy?: Prisma.StringFieldUpdateOperationsInput | string
+  rotatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotatedFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scopes?: Prisma.CalendarTokenUpdatescopesInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutCalendarTokensNestedInput
 }
@@ -286,9 +357,14 @@ export type CalendarTokenUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   token?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotationPolicy?: Prisma.StringFieldUpdateOperationsInput | string
+  rotatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotatedFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scopes?: Prisma.CalendarTokenUpdatescopesInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -296,18 +372,28 @@ export type CalendarTokenCreateManyInput = {
   id?: string
   token: string
   userId: string
-  type?: string
+  name?: string | null
   expiresAt: Date | string
   isActive?: boolean
+  lastUsedAt?: Date | string | null
+  rotationPolicy?: string
+  rotatedAt?: Date | string | null
+  rotatedFrom?: string | null
+  scopes?: Prisma.CalendarTokenCreatescopesInput | string[]
   createdAt?: Date | string
 }
 
 export type CalendarTokenUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   token?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotationPolicy?: Prisma.StringFieldUpdateOperationsInput | string
+  rotatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotatedFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scopes?: Prisma.CalendarTokenUpdatescopesInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -315,9 +401,14 @@ export type CalendarTokenUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   token?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotationPolicy?: Prisma.StringFieldUpdateOperationsInput | string
+  rotatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotatedFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scopes?: Prisma.CalendarTokenUpdatescopesInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -331,13 +422,26 @@ export type CalendarTokenOrderByRelationAggregateInput = {
   _count?: Prisma.SortOrder
 }
 
+export type StringNullableListFilter<$PrismaModel = never> = {
+  equals?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
+  has?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
+  hasEvery?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  hasSome?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
+  isEmpty?: boolean
+}
+
 export type CalendarTokenCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   token?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
+  name?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  lastUsedAt?: Prisma.SortOrder
+  rotationPolicy?: Prisma.SortOrder
+  rotatedAt?: Prisma.SortOrder
+  rotatedFrom?: Prisma.SortOrder
+  scopes?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -345,9 +449,13 @@ export type CalendarTokenMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   token?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
+  name?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  lastUsedAt?: Prisma.SortOrder
+  rotationPolicy?: Prisma.SortOrder
+  rotatedAt?: Prisma.SortOrder
+  rotatedFrom?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -355,9 +463,13 @@ export type CalendarTokenMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   token?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  type?: Prisma.SortOrder
+  name?: Prisma.SortOrder
   expiresAt?: Prisma.SortOrder
   isActive?: Prisma.SortOrder
+  lastUsedAt?: Prisma.SortOrder
+  rotationPolicy?: Prisma.SortOrder
+  rotatedAt?: Prisma.SortOrder
+  rotatedFrom?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
 }
 
@@ -403,21 +515,40 @@ export type CalendarTokenUncheckedUpdateManyWithoutUserNestedInput = {
   deleteMany?: Prisma.CalendarTokenScalarWhereInput | Prisma.CalendarTokenScalarWhereInput[]
 }
 
+export type CalendarTokenCreatescopesInput = {
+  set: string[]
+}
+
+export type CalendarTokenUpdatescopesInput = {
+  set?: string[]
+  push?: string | string[]
+}
+
 export type CalendarTokenCreateWithoutUserInput = {
   id?: string
   token: string
-  type?: string
+  name?: string | null
   expiresAt: Date | string
   isActive?: boolean
+  lastUsedAt?: Date | string | null
+  rotationPolicy?: string
+  rotatedAt?: Date | string | null
+  rotatedFrom?: string | null
+  scopes?: Prisma.CalendarTokenCreatescopesInput | string[]
   createdAt?: Date | string
 }
 
 export type CalendarTokenUncheckedCreateWithoutUserInput = {
   id?: string
   token: string
-  type?: string
+  name?: string | null
   expiresAt: Date | string
   isActive?: boolean
+  lastUsedAt?: Date | string | null
+  rotationPolicy?: string
+  rotatedAt?: Date | string | null
+  rotatedFrom?: string | null
+  scopes?: Prisma.CalendarTokenCreatescopesInput | string[]
   createdAt?: Date | string
 }
 
@@ -454,45 +585,70 @@ export type CalendarTokenScalarWhereInput = {
   id?: Prisma.StringFilter<"CalendarToken"> | string
   token?: Prisma.StringFilter<"CalendarToken"> | string
   userId?: Prisma.StringFilter<"CalendarToken"> | string
-  type?: Prisma.StringFilter<"CalendarToken"> | string
+  name?: Prisma.StringNullableFilter<"CalendarToken"> | string | null
   expiresAt?: Prisma.DateTimeFilter<"CalendarToken"> | Date | string
   isActive?: Prisma.BoolFilter<"CalendarToken"> | boolean
+  lastUsedAt?: Prisma.DateTimeNullableFilter<"CalendarToken"> | Date | string | null
+  rotationPolicy?: Prisma.StringFilter<"CalendarToken"> | string
+  rotatedAt?: Prisma.DateTimeNullableFilter<"CalendarToken"> | Date | string | null
+  rotatedFrom?: Prisma.StringNullableFilter<"CalendarToken"> | string | null
+  scopes?: Prisma.StringNullableListFilter<"CalendarToken">
   createdAt?: Prisma.DateTimeFilter<"CalendarToken"> | Date | string
 }
 
 export type CalendarTokenCreateManyUserInput = {
   id?: string
   token: string
-  type?: string
+  name?: string | null
   expiresAt: Date | string
   isActive?: boolean
+  lastUsedAt?: Date | string | null
+  rotationPolicy?: string
+  rotatedAt?: Date | string | null
+  rotatedFrom?: string | null
+  scopes?: Prisma.CalendarTokenCreatescopesInput | string[]
   createdAt?: Date | string
 }
 
 export type CalendarTokenUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   token?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotationPolicy?: Prisma.StringFieldUpdateOperationsInput | string
+  rotatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotatedFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scopes?: Prisma.CalendarTokenUpdatescopesInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type CalendarTokenUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   token?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotationPolicy?: Prisma.StringFieldUpdateOperationsInput | string
+  rotatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotatedFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scopes?: Prisma.CalendarTokenUpdatescopesInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
 export type CalendarTokenUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   token?: Prisma.StringFieldUpdateOperationsInput | string
-  type?: Prisma.StringFieldUpdateOperationsInput | string
+  name?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   expiresAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   isActive?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  lastUsedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotationPolicy?: Prisma.StringFieldUpdateOperationsInput | string
+  rotatedAt?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  rotatedFrom?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  scopes?: Prisma.CalendarTokenUpdatescopesInput | string[]
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
 
@@ -502,9 +658,14 @@ export type CalendarTokenSelect<ExtArgs extends runtime.Types.Extensions.Interna
   id?: boolean
   token?: boolean
   userId?: boolean
-  type?: boolean
+  name?: boolean
   expiresAt?: boolean
   isActive?: boolean
+  lastUsedAt?: boolean
+  rotationPolicy?: boolean
+  rotatedAt?: boolean
+  rotatedFrom?: boolean
+  scopes?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["calendarToken"]>
@@ -513,9 +674,14 @@ export type CalendarTokenSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   id?: boolean
   token?: boolean
   userId?: boolean
-  type?: boolean
+  name?: boolean
   expiresAt?: boolean
   isActive?: boolean
+  lastUsedAt?: boolean
+  rotationPolicy?: boolean
+  rotatedAt?: boolean
+  rotatedFrom?: boolean
+  scopes?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["calendarToken"]>
@@ -524,9 +690,14 @@ export type CalendarTokenSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   id?: boolean
   token?: boolean
   userId?: boolean
-  type?: boolean
+  name?: boolean
   expiresAt?: boolean
   isActive?: boolean
+  lastUsedAt?: boolean
+  rotationPolicy?: boolean
+  rotatedAt?: boolean
+  rotatedFrom?: boolean
+  scopes?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["calendarToken"]>
@@ -535,13 +706,18 @@ export type CalendarTokenSelectScalar = {
   id?: boolean
   token?: boolean
   userId?: boolean
-  type?: boolean
+  name?: boolean
   expiresAt?: boolean
   isActive?: boolean
+  lastUsedAt?: boolean
+  rotationPolicy?: boolean
+  rotatedAt?: boolean
+  rotatedFrom?: boolean
+  scopes?: boolean
   createdAt?: boolean
 }
 
-export type CalendarTokenOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "token" | "userId" | "type" | "expiresAt" | "isActive" | "createdAt", ExtArgs["result"]["calendarToken"]>
+export type CalendarTokenOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "token" | "userId" | "name" | "expiresAt" | "isActive" | "lastUsedAt" | "rotationPolicy" | "rotatedAt" | "rotatedFrom" | "scopes" | "createdAt", ExtArgs["result"]["calendarToken"]>
 export type CalendarTokenInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -561,9 +737,14 @@ export type $CalendarTokenPayload<ExtArgs extends runtime.Types.Extensions.Inter
     id: string
     token: string
     userId: string
-    type: string
+    name: string | null
     expiresAt: Date
     isActive: boolean
+    lastUsedAt: Date | null
+    rotationPolicy: string
+    rotatedAt: Date | null
+    rotatedFrom: string | null
+    scopes: string[]
     createdAt: Date
   }, ExtArgs["result"]["calendarToken"]>
   composites: {}
@@ -992,9 +1173,14 @@ export interface CalendarTokenFieldRefs {
   readonly id: Prisma.FieldRef<"CalendarToken", 'String'>
   readonly token: Prisma.FieldRef<"CalendarToken", 'String'>
   readonly userId: Prisma.FieldRef<"CalendarToken", 'String'>
-  readonly type: Prisma.FieldRef<"CalendarToken", 'String'>
+  readonly name: Prisma.FieldRef<"CalendarToken", 'String'>
   readonly expiresAt: Prisma.FieldRef<"CalendarToken", 'DateTime'>
   readonly isActive: Prisma.FieldRef<"CalendarToken", 'Boolean'>
+  readonly lastUsedAt: Prisma.FieldRef<"CalendarToken", 'DateTime'>
+  readonly rotationPolicy: Prisma.FieldRef<"CalendarToken", 'String'>
+  readonly rotatedAt: Prisma.FieldRef<"CalendarToken", 'DateTime'>
+  readonly rotatedFrom: Prisma.FieldRef<"CalendarToken", 'String'>
+  readonly scopes: Prisma.FieldRef<"CalendarToken", 'String[]'>
   readonly createdAt: Prisma.FieldRef<"CalendarToken", 'DateTime'>
 }
     

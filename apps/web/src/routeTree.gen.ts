@@ -15,7 +15,7 @@ import { Route as ClaimProfileRouteImport } from './routes/claim-profile'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as InviteTokenRouteImport } from './routes/invite.$token'
-import { Route as AuthenticatedTreeRouteImport } from './routes/_authenticated/tree'
+import { Route as AuthenticatedVisualizeRouteImport } from './routes/_authenticated/visualize'
 import { Route as AuthenticatedSubscribeRouteImport } from './routes/_authenticated/subscribe'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
@@ -23,14 +23,16 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
 import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
 import { Route as AuthenticatedMapsIndexRouteImport } from './routes/_authenticated/maps/index'
-import { Route as AuthenticatedChartsIndexRouteImport } from './routes/_authenticated/charts/index'
 import { Route as AuthMicrosoftCallbackRouteImport } from './routes/auth/microsoft/callback'
 import { Route as AuthGoogleCallbackRouteImport } from './routes/auth/google/callback'
 import { Route as AuthGithubCallbackRouteImport } from './routes/auth/github/callback'
 import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
+import { Route as AuthenticatedSettingsCalendarTokensRouteImport } from './routes/_authenticated/settings/calendar-tokens'
 import { Route as AuthenticatedPeopleNewRouteImport } from './routes/_authenticated/people/new'
 import { Route as AuthenticatedPeoplePersonIdRouteImport } from './routes/_authenticated/people/$personId'
+import { Route as AuthenticatedDevErrorsRouteImport } from './routes/_authenticated/dev/errors'
 import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
+import { Route as AuthenticatedAdminTokensRouteImport } from './routes/_authenticated/admin/tokens'
 import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin/suggestions'
 import { Route as AuthenticatedAdminSourcesRouteImport } from './routes/_authenticated/admin/sources'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
@@ -68,9 +70,9 @@ const InviteTokenRoute = InviteTokenRouteImport.update({
   path: '/invite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedTreeRoute = AuthenticatedTreeRouteImport.update({
-  id: '/tree',
-  path: '/tree',
+const AuthenticatedVisualizeRoute = AuthenticatedVisualizeRouteImport.update({
+  id: '/visualize',
+  path: '/visualize',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedSubscribeRoute = AuthenticatedSubscribeRouteImport.update({
@@ -110,12 +112,6 @@ const AuthenticatedMapsIndexRoute = AuthenticatedMapsIndexRouteImport.update({
   path: '/maps/',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedChartsIndexRoute =
-  AuthenticatedChartsIndexRouteImport.update({
-    id: '/charts/',
-    path: '/charts/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthMicrosoftCallbackRoute = AuthMicrosoftCallbackRouteImport.update({
   id: '/auth/microsoft/callback',
   path: '/auth/microsoft/callback',
@@ -137,6 +133,12 @@ const AuthenticatedSettingsProfileRoute =
     path: '/settings/profile',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedSettingsCalendarTokensRoute =
+  AuthenticatedSettingsCalendarTokensRouteImport.update({
+    id: '/settings/calendar-tokens',
+    path: '/settings/calendar-tokens',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedPeopleNewRoute = AuthenticatedPeopleNewRouteImport.update({
   id: '/people/new',
   path: '/people/new',
@@ -148,11 +150,22 @@ const AuthenticatedPeoplePersonIdRoute =
     path: '/people/$personId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedDevErrorsRoute = AuthenticatedDevErrorsRouteImport.update({
+  id: '/dev/errors',
+  path: '/dev/errors',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
   id: '/users',
   path: '/users',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const AuthenticatedAdminTokensRoute =
+  AuthenticatedAdminTokensRouteImport.update({
+    id: '/tokens',
+    path: '/tokens',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminSuggestionsRoute =
   AuthenticatedAdminSuggestionsRouteImport.update({
     id: '/suggestions',
@@ -206,7 +219,7 @@ export interface FileRoutesByFullPath {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/subscribe': typeof AuthenticatedSubscribeRoute
-  '/tree': typeof AuthenticatedTreeRoute
+  '/visualize': typeof AuthenticatedVisualizeRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
@@ -214,14 +227,16 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/sources': typeof AuthenticatedAdminSourcesRoute
   '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/admin/tokens': typeof AuthenticatedAdminTokensRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/dev/errors': typeof AuthenticatedDevErrorsRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/people/new': typeof AuthenticatedPeopleNewRoute
+  '/settings/calendar-tokens': typeof AuthenticatedSettingsCalendarTokensRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/auth/github/callback': typeof AuthGithubCallbackRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/auth/microsoft/callback': typeof AuthMicrosoftCallbackRoute
-  '/charts': typeof AuthenticatedChartsIndexRoute
   '/maps': typeof AuthenticatedMapsIndexRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
   '/people/$personId/edit': typeof AuthenticatedPeoplePersonIdEditRoute
@@ -236,7 +251,7 @@ export interface FileRoutesByTo {
   '/change-password': typeof AuthenticatedChangePasswordRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/subscribe': typeof AuthenticatedSubscribeRoute
-  '/tree': typeof AuthenticatedTreeRoute
+  '/visualize': typeof AuthenticatedVisualizeRoute
   '/invite/$token': typeof InviteTokenRoute
   '/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/admin/invites': typeof AuthenticatedAdminInvitesRoute
@@ -244,14 +259,16 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/sources': typeof AuthenticatedAdminSourcesRoute
   '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/admin/tokens': typeof AuthenticatedAdminTokensRoute
   '/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/dev/errors': typeof AuthenticatedDevErrorsRoute
   '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/people/new': typeof AuthenticatedPeopleNewRoute
+  '/settings/calendar-tokens': typeof AuthenticatedSettingsCalendarTokensRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/auth/github/callback': typeof AuthGithubCallbackRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/auth/microsoft/callback': typeof AuthMicrosoftCallbackRoute
-  '/charts': typeof AuthenticatedChartsIndexRoute
   '/maps': typeof AuthenticatedMapsIndexRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
   '/people/$personId/edit': typeof AuthenticatedPeoplePersonIdEditRoute
@@ -268,7 +285,7 @@ export interface FileRoutesById {
   '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/subscribe': typeof AuthenticatedSubscribeRoute
-  '/_authenticated/tree': typeof AuthenticatedTreeRoute
+  '/_authenticated/visualize': typeof AuthenticatedVisualizeRoute
   '/invite/$token': typeof InviteTokenRoute
   '/_authenticated/admin/backup': typeof AuthenticatedAdminBackupRoute
   '/_authenticated/admin/invites': typeof AuthenticatedAdminInvitesRoute
@@ -276,14 +293,16 @@ export interface FileRoutesById {
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/sources': typeof AuthenticatedAdminSourcesRoute
   '/_authenticated/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
+  '/_authenticated/admin/tokens': typeof AuthenticatedAdminTokensRoute
   '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
+  '/_authenticated/dev/errors': typeof AuthenticatedDevErrorsRoute
   '/_authenticated/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
   '/_authenticated/people/new': typeof AuthenticatedPeopleNewRoute
+  '/_authenticated/settings/calendar-tokens': typeof AuthenticatedSettingsCalendarTokensRoute
   '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
   '/auth/github/callback': typeof AuthGithubCallbackRoute
   '/auth/google/callback': typeof AuthGoogleCallbackRoute
   '/auth/microsoft/callback': typeof AuthMicrosoftCallbackRoute
-  '/_authenticated/charts/': typeof AuthenticatedChartsIndexRoute
   '/_authenticated/maps/': typeof AuthenticatedMapsIndexRoute
   '/_authenticated/people/': typeof AuthenticatedPeopleIndexRoute
   '/_authenticated/people/$personId_/edit': typeof AuthenticatedPeoplePersonIdEditRoute
@@ -300,7 +319,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/dashboard'
     | '/subscribe'
-    | '/tree'
+    | '/visualize'
     | '/invite/$token'
     | '/admin/backup'
     | '/admin/invites'
@@ -308,14 +327,16 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/sources'
     | '/admin/suggestions'
+    | '/admin/tokens'
     | '/admin/users'
+    | '/dev/errors'
     | '/people/$personId'
     | '/people/new'
+    | '/settings/calendar-tokens'
     | '/settings/profile'
     | '/auth/github/callback'
     | '/auth/google/callback'
     | '/auth/microsoft/callback'
-    | '/charts'
     | '/maps'
     | '/people'
     | '/people/$personId/edit'
@@ -330,7 +351,7 @@ export interface FileRouteTypes {
     | '/change-password'
     | '/dashboard'
     | '/subscribe'
-    | '/tree'
+    | '/visualize'
     | '/invite/$token'
     | '/admin/backup'
     | '/admin/invites'
@@ -338,14 +359,16 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/sources'
     | '/admin/suggestions'
+    | '/admin/tokens'
     | '/admin/users'
+    | '/dev/errors'
     | '/people/$personId'
     | '/people/new'
+    | '/settings/calendar-tokens'
     | '/settings/profile'
     | '/auth/github/callback'
     | '/auth/google/callback'
     | '/auth/microsoft/callback'
-    | '/charts'
     | '/maps'
     | '/people'
     | '/people/$personId/edit'
@@ -361,7 +384,7 @@ export interface FileRouteTypes {
     | '/_authenticated/change-password'
     | '/_authenticated/dashboard'
     | '/_authenticated/subscribe'
-    | '/_authenticated/tree'
+    | '/_authenticated/visualize'
     | '/invite/$token'
     | '/_authenticated/admin/backup'
     | '/_authenticated/admin/invites'
@@ -369,14 +392,16 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/sources'
     | '/_authenticated/admin/suggestions'
+    | '/_authenticated/admin/tokens'
     | '/_authenticated/admin/users'
+    | '/_authenticated/dev/errors'
     | '/_authenticated/people/$personId'
     | '/_authenticated/people/new'
+    | '/_authenticated/settings/calendar-tokens'
     | '/_authenticated/settings/profile'
     | '/auth/github/callback'
     | '/auth/google/callback'
     | '/auth/microsoft/callback'
-    | '/_authenticated/charts/'
     | '/_authenticated/maps/'
     | '/_authenticated/people/'
     | '/_authenticated/people/$personId_/edit'
@@ -438,11 +463,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/tree': {
-      id: '/_authenticated/tree'
-      path: '/tree'
-      fullPath: '/tree'
-      preLoaderRoute: typeof AuthenticatedTreeRouteImport
+    '/_authenticated/visualize': {
+      id: '/_authenticated/visualize'
+      path: '/visualize'
+      fullPath: '/visualize'
+      preLoaderRoute: typeof AuthenticatedVisualizeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/subscribe': {
@@ -494,13 +519,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMapsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/charts/': {
-      id: '/_authenticated/charts/'
-      path: '/charts'
-      fullPath: '/charts'
-      preLoaderRoute: typeof AuthenticatedChartsIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/auth/microsoft/callback': {
       id: '/auth/microsoft/callback'
       path: '/auth/microsoft/callback'
@@ -529,6 +547,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/settings/calendar-tokens': {
+      id: '/_authenticated/settings/calendar-tokens'
+      path: '/settings/calendar-tokens'
+      fullPath: '/settings/calendar-tokens'
+      preLoaderRoute: typeof AuthenticatedSettingsCalendarTokensRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/people/new': {
       id: '/_authenticated/people/new'
       path: '/people/new'
@@ -543,11 +568,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPeoplePersonIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/dev/errors': {
+      id: '/_authenticated/dev/errors'
+      path: '/dev/errors'
+      fullPath: '/dev/errors'
+      preLoaderRoute: typeof AuthenticatedDevErrorsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/users': {
       id: '/_authenticated/admin/users'
       path: '/users'
       fullPath: '/admin/users'
       preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/tokens': {
+      id: '/_authenticated/admin/tokens'
+      path: '/tokens'
+      fullPath: '/admin/tokens'
+      preLoaderRoute: typeof AuthenticatedAdminTokensRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/suggestions': {
@@ -609,6 +648,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminSourcesRoute: typeof AuthenticatedAdminSourcesRoute
   AuthenticatedAdminSuggestionsRoute: typeof AuthenticatedAdminSuggestionsRoute
+  AuthenticatedAdminTokensRoute: typeof AuthenticatedAdminTokensRoute
   AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
 }
 
@@ -619,6 +659,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminSourcesRoute: AuthenticatedAdminSourcesRoute,
   AuthenticatedAdminSuggestionsRoute: AuthenticatedAdminSuggestionsRoute,
+  AuthenticatedAdminTokensRoute: AuthenticatedAdminTokensRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
 }
 
@@ -631,11 +672,12 @@ interface AuthenticatedRouteChildren {
   AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedSubscribeRoute: typeof AuthenticatedSubscribeRoute
-  AuthenticatedTreeRoute: typeof AuthenticatedTreeRoute
+  AuthenticatedVisualizeRoute: typeof AuthenticatedVisualizeRoute
+  AuthenticatedDevErrorsRoute: typeof AuthenticatedDevErrorsRoute
   AuthenticatedPeoplePersonIdRoute: typeof AuthenticatedPeoplePersonIdRoute
   AuthenticatedPeopleNewRoute: typeof AuthenticatedPeopleNewRoute
+  AuthenticatedSettingsCalendarTokensRoute: typeof AuthenticatedSettingsCalendarTokensRoute
   AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
-  AuthenticatedChartsIndexRoute: typeof AuthenticatedChartsIndexRoute
   AuthenticatedMapsIndexRoute: typeof AuthenticatedMapsIndexRoute
   AuthenticatedPeopleIndexRoute: typeof AuthenticatedPeopleIndexRoute
   AuthenticatedPeoplePersonIdEditRoute: typeof AuthenticatedPeoplePersonIdEditRoute
@@ -647,11 +689,13 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedChangePasswordRoute: AuthenticatedChangePasswordRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedSubscribeRoute: AuthenticatedSubscribeRoute,
-  AuthenticatedTreeRoute: AuthenticatedTreeRoute,
+  AuthenticatedVisualizeRoute: AuthenticatedVisualizeRoute,
+  AuthenticatedDevErrorsRoute: AuthenticatedDevErrorsRoute,
   AuthenticatedPeoplePersonIdRoute: AuthenticatedPeoplePersonIdRoute,
   AuthenticatedPeopleNewRoute: AuthenticatedPeopleNewRoute,
+  AuthenticatedSettingsCalendarTokensRoute:
+    AuthenticatedSettingsCalendarTokensRoute,
   AuthenticatedSettingsProfileRoute: AuthenticatedSettingsProfileRoute,
-  AuthenticatedChartsIndexRoute: AuthenticatedChartsIndexRoute,
   AuthenticatedMapsIndexRoute: AuthenticatedMapsIndexRoute,
   AuthenticatedPeopleIndexRoute: AuthenticatedPeopleIndexRoute,
   AuthenticatedPeoplePersonIdEditRoute: AuthenticatedPeoplePersonIdEditRoute,

@@ -7,6 +7,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireAuth } from "./middleware/require-auth";
 import { logger } from "@vamsa/lib/logger";
+import { prisma } from "./db";
 
 export interface MetricSnapshot {
   timestamp: string;
@@ -96,11 +97,18 @@ async function queryPrometheusVector(
 }
 
 /**
- * Check if Prometheus is available
+ * Check if Prometheus is available at the default URL
  */
 async function isPrometheusAvailable(): Promise<boolean> {
+  return isPrometheusAvailableAt(PROMETHEUS_URL);
+}
+
+/**
+ * Check if Prometheus is available at a specific URL
+ */
+async function isPrometheusAvailableAt(url: string): Promise<boolean> {
   try {
-    const response = await fetch(`${PROMETHEUS_URL}/-/healthy`, {
+    const response = await fetch(`${url}/-/healthy`, {
       signal: AbortSignal.timeout(2000),
     });
     return response.ok;
@@ -215,17 +223,37 @@ export const getMetricsSnapshot = createServerFn({ method: "GET" }).handler(
 
 /**
  * Get Prometheus configuration status
+ *
+ * Checks FamilySettings for custom URLs first, falling back to env vars.
  */
 export const getPrometheusStatus = createServerFn({ method: "GET" }).handler(
   async () => {
     await requireAuth("ADMIN");
 
-    const available = await isPrometheusAvailable();
+    // Check FamilySettings for custom URLs
+    const settings = await prisma.familySettings.findFirst({
+      select: {
+        metricsDashboardUrl: true,
+        metricsApiUrl: true,
+      },
+    });
+
+    // Use custom URLs from settings, fallback to env vars
+    const metricsApiUrl = settings?.metricsApiUrl || PROMETHEUS_URL;
+    const grafanaUrl =
+      settings?.metricsDashboardUrl ||
+      process.env.GRAFANA_URL ||
+      "http://localhost:3001";
+
+    // Check availability using the configured API URL
+    const available = await isPrometheusAvailableAt(metricsApiUrl);
 
     return {
       available,
-      url: PROMETHEUS_URL,
-      grafanaUrl: process.env.GRAFANA_URL || "http://localhost:3001",
+      url: metricsApiUrl,
+      grafanaUrl,
+      // Indicate if using custom URLs
+      usingCustomUrls: !!(settings?.metricsDashboardUrl || settings?.metricsApiUrl),
     };
   }
 );

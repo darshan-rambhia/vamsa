@@ -17,7 +17,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@vamsa/ui";
-import { revokeInvite, resendInvite } from "~/server/invites";
+import { revokeInvite, resendInvite, deleteInvite } from "~/server/invites";
 
 interface Invite {
   id: string;
@@ -82,6 +82,19 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
       onInviteUpdated();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to resend invite");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleDelete = async (inviteId: string) => {
+    setActionLoading(inviteId);
+    setError(null);
+    try {
+      await deleteInvite({ data: { inviteId } });
+      onInviteUpdated();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete invite");
     } finally {
       setActionLoading(null);
     }
@@ -273,17 +286,54 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
                       )}
                       {(invite.status === "EXPIRED" ||
                         invite.status === "REVOKED") && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleResend(invite.id)}
-                          disabled={actionLoading === invite.id}
-                          data-testid={`resend-invite-${invite.id}`}
-                        >
-                          {actionLoading === invite.id
-                            ? "Resending..."
-                            : "Resend"}
-                        </Button>
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleResend(invite.id)}
+                            disabled={actionLoading === invite.id}
+                            data-testid={`resend-invite-${invite.id}`}
+                          >
+                            {actionLoading === invite.id
+                              ? "Resending..."
+                              : "Resend"}
+                          </Button>
+                          {invite.status === "REVOKED" && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  disabled={actionLoading === invite.id}
+                                  data-testid={`delete-invite-${invite.id}`}
+                                >
+                                  Delete
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Delete Invite
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to permanently delete
+                                    this invite for <strong>{invite.email}</strong>?
+                                    This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    onClick={() => handleDelete(invite.id)}
+                                  >
+                                    Delete Permanently
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </>
                       )}
                       {invite.status === "ACCEPTED" && (
                         <span className="text-muted-foreground text-xs">

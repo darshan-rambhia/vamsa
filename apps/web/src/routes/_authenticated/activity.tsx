@@ -1,24 +1,93 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getRecentActivity } from "~/server/dashboard";
-import { Container, PageHeader, Card, CardContent, Avatar } from "@vamsa/ui";
+import { useState, useMemo } from "react";
+import { getRecentActivity, getActivityFilterOptions } from "~/server/dashboard";
+import { Container, PageHeader, Card, CardContent, Avatar, Badge } from "@vamsa/ui";
+import {
+  ActivityFilterPanel,
+  type ActivityFilters,
+} from "~/components/activity/ActivityFilterPanel";
 
 export const Route = createFileRoute("/_authenticated/activity")({
   component: ActivityComponent,
 });
 
+// Default filters: last 7 days
+const defaultFilters: ActivityFilters = {
+  dateFrom: Date.now() - 7 * 24 * 60 * 60 * 1000,
+  dateTo: Date.now(),
+  actionTypes: [],
+  entityTypes: [],
+  userId: undefined,
+  searchQuery: "",
+};
+
 function ActivityComponent() {
-  const { data: activity, isLoading } = useQuery({
-    queryKey: ["activity"],
-    queryFn: () => getRecentActivity({ data: { limit: 50 } }),
+  const [filters, setFilters] = useState<ActivityFilters>(defaultFilters);
+
+  // Fetch filter options
+  const { data: filterOptions, isLoading: isLoadingOptions } = useQuery({
+    queryKey: ["activityFilterOptions"],
+    queryFn: () => getActivityFilterOptions(),
   });
 
+  // Fetch activity with filters
+  const { data: activity, isLoading } = useQuery({
+    queryKey: ["activity", filters],
+    queryFn: () =>
+      getRecentActivity({
+        data: {
+          limit: 100,
+          dateFrom: filters.dateFrom,
+          dateTo: filters.dateTo,
+          actionTypes: filters.actionTypes.length > 0 ? filters.actionTypes : undefined,
+          entityTypes: filters.entityTypes.length > 0 ? filters.entityTypes : undefined,
+          userId: filters.userId,
+          searchQuery: filters.searchQuery || undefined,
+        },
+      }),
+  });
+
+  // Count active filters for display
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (filters.actionTypes.length > 0) count++;
+    if (filters.entityTypes.length > 0) count++;
+    if (filters.userId) count++;
+    if (filters.searchQuery) count++;
+    return count;
+  }, [filters]);
+
   return (
-    <Container className="space-y-8">
+    <Container className="space-y-6">
       <PageHeader
         title="Activity"
         description="Recent changes to your family tree"
       />
+
+      {/* Filter Panel */}
+      <ActivityFilterPanel
+        filters={filters}
+        onFiltersChange={setFilters}
+        actionTypeOptions={filterOptions?.actionTypes ?? []}
+        entityTypeOptions={filterOptions?.entityTypes ?? []}
+        userOptions={filterOptions?.users ?? []}
+        isLoading={isLoadingOptions}
+      />
+
+      {/* Results count */}
+      {!isLoading && activity && (
+        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+          <span>
+            {activity.length} {activity.length === 1 ? "result" : "results"}
+          </span>
+          {activeFilterCount > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              {activeFilterCount} {activeFilterCount === 1 ? "filter" : "filters"} active
+            </Badge>
+          )}
+        </div>
+      )}
 
       <Card>
         <CardContent className="py-6">

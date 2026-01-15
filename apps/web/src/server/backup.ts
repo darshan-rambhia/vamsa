@@ -2,8 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "./db";
 import {
   backupExportSchema,
+  backupSettingsSchema,
+  listBackupsInputSchema,
   type BackupExportInput,
   type BackupMetadata,
+  type BackupSettings,
+  type ListBackupsInput,
+  type Backup,
 } from "@vamsa/schemas";
 import archiver from "archiver";
 import * as fs from "fs";
@@ -231,4 +236,287 @@ export const exportBackup = createServerFn({ method: "POST" })
       filename: `vamsa-backup-${new Date().toISOString().split("T")[0]}.zip`,
       metadata,
     };
+  });
+
+// List backups with pagination
+export const listBackups = createServerFn({ method: "POST" })
+  .inputValidator((data: ListBackupsInput) => listBackupsInputSchema.parse(data))
+  .handler(async ({ data }) => {
+    await requireAuth("ADMIN");
+
+    const [backups, total] = await Promise.all([
+      prisma.backup.findMany({
+        orderBy: { createdAt: "desc" },
+        take: data.limit,
+        skip: data.offset,
+        where: {
+          status: { not: "DELETED" },
+        },
+      }),
+      prisma.backup.count({
+        where: {
+          status: { not: "DELETED" },
+        },
+      }),
+    ]);
+
+    return {
+      items: backups.map((b) => ({
+        id: b.id,
+        filename: b.filename,
+        type: b.type,
+        status: b.status,
+        size: b.size,
+        location: b.location,
+        personCount: b.personCount,
+        relationshipCount: b.relationshipCount,
+        eventCount: b.eventCount,
+        mediaCount: b.mediaCount,
+        duration: b.duration,
+        error: b.error,
+        createdAt: b.createdAt,
+        deletedAt: b.deletedAt,
+      })) as Backup[],
+      total,
+      hasMore: data.offset + data.limit < total,
+    };
+  });
+
+// Download a backup
+export const downloadBackup = createServerFn({ method: "POST" })
+  .inputValidator((data: { backupId: string }) => data)
+  .handler(async ({ data }) => {
+    await requireAuth("ADMIN");
+
+    const backup = await prisma.backup.findUnique({
+      where: { id: data.backupId },
+    });
+
+    if (!backup) {
+      throw new Error("Backup not found");
+    }
+
+    if (backup.status !== "COMPLETED") {
+      throw new Error("Backup is not available for download");
+    }
+
+    // For local storage, we'd need to implement actual file serving
+    // This is a placeholder that returns the expected path
+    const downloadUrl = `/api/backups/${backup.id}/download`;
+
+    return {
+      success: true,
+      downloadUrl,
+      filename: backup.filename,
+    };
+  });
+
+// Verify a backup
+export const verifyBackup = createServerFn({ method: "POST" })
+  .inputValidator((data: { backupId: string }) => data)
+  .handler(async ({ data }) => {
+    await requireAuth("ADMIN");
+
+    const backup = await prisma.backup.findUnique({
+      where: { id: data.backupId },
+    });
+
+    if (!backup) {
+      throw new Error("Backup not found");
+    }
+
+    // Placeholder verification logic
+    // In a real implementation, this would check file integrity
+    const isValid = backup.status === "COMPLETED" && backup.size && backup.size > 0n;
+
+    return {
+      success: true,
+      isValid,
+      backupId: backup.id,
+      message: isValid ? "Backup is valid" : "Backup verification failed",
+    };
+  });
+
+// Delete a backup
+export const deleteBackup = createServerFn({ method: "POST" })
+  .inputValidator((data: { backupId: string }) => data)
+  .handler(async ({ data }) => {
+    const user = await requireAuth("ADMIN");
+
+    const backup = await prisma.backup.findUnique({
+      where: { id: data.backupId },
+    });
+
+    if (!backup) {
+      throw new Error("Backup not found");
+    }
+
+    // Soft delete by updating status
+    await prisma.backup.update({
+      where: { id: data.backupId },
+      data: {
+        status: "DELETED",
+        deletedAt: new Date(),
+      },
+    });
+
+    // Log the deletion
+    try {
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: "DELETE",
+          entityType: "BACKUP",
+          entityId: data.backupId,
+          previousData: {
+            filename: backup.filename,
+            type: backup.type,
+          },
+        },
+      });
+    } catch (err) {
+      logger.error(
+        { error: serializeError(err) },
+        "Failed to create audit log for backup deletion"
+      );
+    }
+
+    return {
+      success: true,
+      message: "Backup deleted successfully",
+    };
+  });
+
+// Get backup settings
+export const getBackupSettings = createServerFn({ method: "GET" }).handler(
+  async () => {
+    await requireAuth("ADMIN");
+
+    const settings = await prisma.backupSettings.findFirst();
+
+    if (!settings) {
+      // Return defaults if no settings exist
+      return {
+        id: null,
+        dailyEnabled: true,
+        dailyTime: "02:00",
+        weeklyEnabled: true,
+        weeklyDay: 0,
+        weeklyTime: "03:00",
+        monthlyEnabled: true,
+        monthlyDay: 1,
+        monthlyTime: "04:00",
+        dailyRetention: 7,
+        weeklyRetention: 4,
+        monthlyRetention: 12,
+        storageProvider: "LOCAL" as const,
+        storageBucket: null,
+        storageRegion: null,
+        storagePath: "backups",
+        includePhotos: true,
+        includeAuditLogs: false,
+        compressLevel: 6,
+        notifyOnSuccess: false,
+        notifyOnFailure: true,
+        notificationEmails: null,
+      };
+    }
+
+    return {
+      id: settings.id,
+      dailyEnabled: settings.dailyEnabled,
+      dailyTime: settings.dailyTime,
+      weeklyEnabled: settings.weeklyEnabled,
+      weeklyDay: settings.weeklyDay,
+      weeklyTime: settings.weeklyTime,
+      monthlyEnabled: settings.monthlyEnabled,
+      monthlyDay: settings.monthlyDay,
+      monthlyTime: settings.monthlyTime,
+      dailyRetention: settings.dailyRetention,
+      weeklyRetention: settings.weeklyRetention,
+      monthlyRetention: settings.monthlyRetention,
+      storageProvider: settings.storageProvider,
+      storageBucket: settings.storageBucket,
+      storageRegion: settings.storageRegion,
+      storagePath: settings.storagePath,
+      includePhotos: settings.includePhotos,
+      includeAuditLogs: settings.includeAuditLogs,
+      compressLevel: settings.compressLevel,
+      notifyOnSuccess: settings.notifyOnSuccess,
+      notifyOnFailure: settings.notifyOnFailure,
+      notificationEmails: settings.notificationEmails,
+    };
+  }
+);
+
+// Update backup settings
+export const updateBackupSettings = createServerFn({ method: "POST" })
+  .inputValidator((data: BackupSettings) => backupSettingsSchema.parse(data))
+  .handler(async ({ data }) => {
+    const user = await requireAuth("ADMIN");
+
+    logger.info({ updatedBy: user.id }, "Updating backup settings");
+
+    const existing = await prisma.backupSettings.findFirst();
+
+    if (existing) {
+      const updated = await prisma.backupSettings.update({
+        where: { id: existing.id },
+        data: {
+          dailyEnabled: data.dailyEnabled,
+          dailyTime: data.dailyTime,
+          weeklyEnabled: data.weeklyEnabled,
+          weeklyDay: data.weeklyDay,
+          weeklyTime: data.weeklyTime,
+          monthlyEnabled: data.monthlyEnabled,
+          monthlyDay: data.monthlyDay,
+          monthlyTime: data.monthlyTime,
+          dailyRetention: data.dailyRetention,
+          weeklyRetention: data.weeklyRetention,
+          monthlyRetention: data.monthlyRetention,
+          storageProvider: data.storageProvider,
+          storageBucket: data.storageBucket,
+          storageRegion: data.storageRegion,
+          storagePath: data.storagePath,
+          includePhotos: data.includePhotos,
+          includeAuditLogs: data.includeAuditLogs,
+          compressLevel: data.compressLevel,
+          notifyOnSuccess: data.notifyOnSuccess,
+          notifyOnFailure: data.notifyOnFailure,
+          notificationEmails: data.notificationEmails,
+        },
+      });
+
+      logger.info({ settingsId: updated.id }, "Backup settings updated");
+      return { success: true, id: updated.id };
+    } else {
+      const created = await prisma.backupSettings.create({
+        data: {
+          dailyEnabled: data.dailyEnabled,
+          dailyTime: data.dailyTime,
+          weeklyEnabled: data.weeklyEnabled,
+          weeklyDay: data.weeklyDay,
+          weeklyTime: data.weeklyTime,
+          monthlyEnabled: data.monthlyEnabled,
+          monthlyDay: data.monthlyDay,
+          monthlyTime: data.monthlyTime,
+          dailyRetention: data.dailyRetention,
+          weeklyRetention: data.weeklyRetention,
+          monthlyRetention: data.monthlyRetention,
+          storageProvider: data.storageProvider,
+          storageBucket: data.storageBucket,
+          storageRegion: data.storageRegion,
+          storagePath: data.storagePath,
+          includePhotos: data.includePhotos,
+          includeAuditLogs: data.includeAuditLogs,
+          compressLevel: data.compressLevel,
+          notifyOnSuccess: data.notifyOnSuccess,
+          notifyOnFailure: data.notifyOnFailure,
+          notificationEmails: data.notificationEmails,
+        },
+      });
+
+      logger.info({ settingsId: created.id }, "Backup settings created");
+      return { success: true, id: created.id };
+    }
   });

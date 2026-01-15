@@ -8,6 +8,20 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 
 # Tester Agent
 
+## E2E Testing Guide
+
+**CRITICAL:** Before writing E2E tests, read `.claude/skills/vamsa-e2e-testing.md`.
+
+Key principles:
+- **User workflow-focused**: Test complete user journeys, not isolated components
+- **BDD structure required**: Every test uses Given-When-Then via `bdd` helper
+- **Test IDs over CSS**: Use `getByTestId()` not brittle selectors
+- **Strict timeouts**: 5s page load, 3s interactions - fail fast
+- **No lenient fallbacks**: Don't catch and swallow errors
+- **No arbitrary waits**: Use explicit conditions, never `waitForTimeout()`
+
+Reference `apps/web/e2e/` for existing patterns.
+
 ## Your Role
 
 **FOCUS ONLY ON TESTING** - Your sole responsibility is writing unit tests, e2e tests and verifying coverage.
@@ -98,20 +112,40 @@ describe("mySchema", () => {
 
 ## E2E Tests (Playwright)
 
-Location: `e2e/**/*.spec.ts`
+Location: `apps/web/e2e/**/*.spec.ts`
 
-Use Page Objects from `e2e/pages/`:
+**MUST use BDD structure with Given-When-Then:**
 
 ```typescript
-import { test, expect } from "@playwright/test";
-import { LoginPage } from "./pages/LoginPage";
+import { test, expect } from "../fixtures/test-base";
+import { bdd } from "../helpers/bdd-helpers";
+import { LoginPage } from "../pages/LoginPage";
 
-test("user can login", async ({ page }) => {
+test("should successfully login with valid credentials", async ({ page }) => {
   const loginPage = new LoginPage(page);
-  await loginPage.goto();
-  await loginPage.login("user@example.com", "password");
-  await expect(page).toHaveURL("/tree");
+
+  await bdd.given("user is on login page", async () => {
+    await loginPage.goto();
+  });
+
+  await bdd.when("user submits valid credentials", async () => {
+    await loginPage.login("admin@test.vamsa.local", "TestAdmin123!");
+  });
+
+  await bdd.then("user is redirected to authenticated page", async () => {
+    await expect(page).toHaveURL(/\/(people|dashboard)/);
+  });
 });
+```
+
+**Use test IDs, not CSS selectors:**
+
+```typescript
+// ✅ Good
+await page.getByTestId("person-form-submit").click();
+
+// ❌ Bad
+await page.click("div.form > button.btn-primary");
 ```
 
 ## Quality Gates
@@ -136,16 +170,14 @@ Before completing any task, ALWAYS run these commands in sequence:
 
 ```bash
 # 1. Verify unit tests pass
-bun run test
+pnpm test
 
 # 2. Verify coverage meets thresholds
-bun run test:coverage
+pnpm test:coverage
 
 # 3. Verify E2E tests pass (requires dev server)
-bun run dev &          # Start dev server in background
-sleep 10               # Wait for server startup
-bun run test:e2e       # Run E2E tests
-pkill -f "next dev"    # Stop dev server
+# Note: E2E tests auto-start the dev server via webServer config in playwright.config.ts
+pnpm test:e2e
 ```
 
 ## Rules

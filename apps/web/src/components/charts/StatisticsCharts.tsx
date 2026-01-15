@@ -22,7 +22,7 @@ interface StatisticsChartsProps {
   data: StatisticsResult;
 }
 
-// Color palette for charts
+// Color palette for charts - using Vamsa earth tones
 const COLORS = [
   "hsl(var(--chart-1))",
   "hsl(var(--chart-2))",
@@ -31,12 +31,14 @@ const COLORS = [
   "hsl(var(--chart-5))",
 ];
 
+// Gender colors using earth tones (forest greens, bark browns, warm creams)
+// Avoiding bright pink/blue - using design-system appropriate colors
 const GENDER_COLORS: Record<string, string> = {
-  Male: "hsl(210, 70%, 50%)",
-  Female: "hsl(330, 70%, 50%)",
-  Other: "hsl(150, 70%, 50%)",
-  "Not Specified": "hsl(45, 70%, 50%)",
-  Unknown: "hsl(0, 0%, 60%)",
+  Male: "hsl(145, 45%, 38%)", // Forest green
+  Female: "hsl(30, 55%, 45%)", // Warm amber/bark brown
+  Other: "hsl(85, 35%, 45%)", // Sage/olive green
+  "Not Specified": "hsl(40, 40%, 65%)", // Warm cream/beige
+  Unknown: "hsl(30, 15%, 55%)", // Muted taupe
 };
 
 // Custom tooltip style

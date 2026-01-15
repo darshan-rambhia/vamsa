@@ -7,12 +7,16 @@ import { getCurrentUser } from "./auth";
 
 // Validation schemas
 const generateTokenSchema = z.object({
-  type: z.enum(["birthdays", "anniversaries", "events", "all"]).default("all"),
+  name: z.string().optional(),
   expiryDays: z.number().int().positive().default(365),
 });
 
 const validateTokenSchema = z.object({
   token: z.string().min(1),
+});
+
+const revokeTokenSchema = z.object({
+  token: z.string().min(1), // This is the token ID, not the token value
 });
 
 /**
@@ -41,7 +45,7 @@ export const generateCalendarToken = createServerFn({ method: "POST" })
         data: {
           token,
           userId: user.id,
-          type: data.type,
+          name: data.name,
           expiresAt,
           isActive: true,
         },
@@ -55,7 +59,7 @@ export const generateCalendarToken = createServerFn({ method: "POST" })
           entityType: "CalendarToken",
           entityId: calendarToken.id,
           newData: {
-            type: calendarToken.type,
+            name: calendarToken.name,
             expiresAt: calendarToken.expiresAt,
           },
         },
@@ -66,7 +70,7 @@ export const generateCalendarToken = createServerFn({ method: "POST" })
       return {
         success: true,
         token: calendarToken.token,
-        type: calendarToken.type,
+        name: calendarToken.name,
         expiresAt: calendarToken.expiresAt.toISOString(),
       };
     } catch (error) {
@@ -93,7 +97,7 @@ export const validateCalendarToken = createServerFn({ method: "POST" })
         !calendarToken.isActive ||
         calendarToken.expiresAt < new Date()
       ) {
-        return { valid: false, user: null, type: null };
+        return { valid: false, user: null };
       }
 
       return {
@@ -102,19 +106,18 @@ export const validateCalendarToken = createServerFn({ method: "POST" })
           id: calendarToken.user.id,
           email: calendarToken.user.email,
         },
-        type: calendarToken.type,
       };
     } catch (error) {
       logger.error({ error }, "Failed to validate calendar token");
-      return { valid: false, user: null, type: null };
+      return { valid: false, user: null };
     }
   });
 
 /**
- * Revoke a calendar token
+ * Revoke a calendar token by ID
  */
 export const revokeCalendarToken = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => validateTokenSchema.parse(data))
+  .inputValidator((data: unknown) => revokeTokenSchema.parse(data))
   .handler(async ({ data }) => {
     try {
       const user = await getCurrentUser();
@@ -122,9 +125,9 @@ export const revokeCalendarToken = createServerFn({ method: "POST" })
         throw new Error("Unauthorized");
       }
 
-      // Find the token and verify it belongs to the current user
+      // Find the token by ID and verify it belongs to the current user
       const calendarToken = await prisma.calendarToken.findUnique({
-        where: { token: data.token },
+        where: { id: data.token },
       });
 
       if (!calendarToken || calendarToken.userId !== user.id) {
@@ -171,7 +174,8 @@ export const listCalendarTokens = createServerFn({ method: "GET" }).handler(
         where: { userId: user.id },
         select: {
           id: true,
-          type: true,
+          token: true,
+          name: true,
           expiresAt: true,
           isActive: true,
           createdAt: true,
@@ -186,3 +190,53 @@ export const listCalendarTokens = createServerFn({ method: "GET" }).handler(
     }
   }
 );
+
+/**
+ * Delete a calendar token permanently (only allowed for revoked tokens)
+ */
+export const deleteCalendarToken = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => revokeTokenSchema.parse(data))
+  .handler(async ({ data }) => {
+    try {
+      const user = await getCurrentUser();
+      if (!user) {
+        throw new Error("Unauthorized");
+      }
+
+      // Find the token by ID and verify it belongs to the current user
+      const calendarToken = await prisma.calendarToken.findUnique({
+        where: { id: data.token },
+      });
+
+      if (!calendarToken || calendarToken.userId !== user.id) {
+        throw new Error("Token not found or unauthorized");
+      }
+
+      // Only allow deleting revoked (inactive) tokens
+      if (calendarToken.isActive) {
+        throw new Error("Only revoked tokens can be deleted. Revoke the token first.");
+      }
+
+      // Delete the token permanently
+      await prisma.calendarToken.delete({
+        where: { id: calendarToken.id },
+      });
+
+      // Log the action
+      await prisma.auditLog.create({
+        data: {
+          userId: user.id,
+          action: "DELETE",
+          entityType: "CalendarToken",
+          entityId: calendarToken.id,
+        },
+      });
+
+      logger.info(`Calendar token deleted for user ${user.id}`);
+
+      return { success: true };
+    } catch (error) {
+      logger.error({ error }, "Failed to delete calendar token");
+      throw error;
+    }
+  });

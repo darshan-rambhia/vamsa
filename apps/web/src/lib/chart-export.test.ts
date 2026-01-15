@@ -15,6 +15,9 @@ import { describe, it, expect, beforeEach, mock, afterEach } from "bun:test";
 import type { ExportOptions } from "./chart-export";
 import { exportToPDF, exportToPNG, exportToSVG } from "./chart-export";
 
+// Store original console.error for restoration
+const originalConsoleError = console.error;
+
 describe("Chart Export Utilities", () => {
   let mockSVGElement: SVGElement;
   let mockCanvas: HTMLCanvasElement;
@@ -22,6 +25,10 @@ describe("Chart Export Utilities", () => {
   let downloadedFiles: Array<{ filename: string; download: string }> = [];
 
   beforeEach(() => {
+    // Suppress console.error during tests - these are expected errors
+    // from browser-only APIs not available in Bun test environment
+    console.error = () => {};
+
     // Reset downloaded files
     downloadedFiles = [];
 
@@ -128,6 +135,8 @@ describe("Chart Export Utilities", () => {
   });
 
   afterEach(() => {
+    // Restore console.error
+    console.error = originalConsoleError;
     // Clean up mocks
     downloadedFiles = [];
   });

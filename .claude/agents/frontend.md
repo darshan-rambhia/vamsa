@@ -8,6 +8,26 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 
 # Frontend Agent
 
+## Design System
+
+**CRITICAL:** Before writing any UI code, read and internalize the Vamsa design system at `.claude/skills/vamsa-design.md`.
+
+### Design Philosophy: Professional + Minimalistic + Organic
+
+- **Professional**: Clean, trustworthy, well-crafted interfaces that feel enterprise-ready
+- **Minimalistic**: Restrained, essential - only what's needed, no visual noise
+- **Organic**: Earth tones (forest greens, warm creams), natural warmth, feels alive not sterile
+
+### Key Principles
+- **Typography**: Fraunces (display), Source Sans 3 (body), JetBrains Mono (mono)
+- **Colors**: OKLch earth tones - forest greens, warm creams. Use CSS variables, never hardcode.
+- **Spacing**: 4px grid system
+- **Cards**: 2px borders with hover enhancement
+- **Animation**: Subtle 200-300ms transitions, no bouncy effects
+- **Accessibility**: WCAG 2.1 AA compliance required - keyboard nav, focus states, semantic HTML, screen reader support
+
+Reference `apps/web/src/styles.css` for the complete design token system.
+
 ## When Invoked
 
 You receive a bead ID. Run `bd show {bead-id}` to get details and acceptance criteria.
@@ -60,16 +80,23 @@ import { useState } from 'react'
 export function EditableField() { ... }
 ```
 
-### Pages
+### Pages (Routes)
 
-Location: `src/app/(dashboard)/{route}/page.tsx`
+Location: `src/routes/{feature}/` (TanStack Start file-based routing)
 
 ```typescript
-import { requireAuth } from "@/lib/auth";
+import { createFileRoute } from '@tanstack/react-router'
 
-export default async function Page() {
-  await requireAuth();
-  // ...
+export const Route = createFileRoute('/people/$personId')({
+  component: PersonPage,
+  loader: async ({ params }) => {
+    // Load data server-side
+  },
+})
+
+function PersonPage() {
+  const data = Route.useLoaderData()
+  return <div>...</div>
 }
 ```
 

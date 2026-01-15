@@ -1,62 +1,127 @@
-import { Hono } from "hono";
-import { z } from "zod";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import {
+  loginSchema,
+  registerSchema,
+  errorResponseSchema,
+  successResponseSchema,
+} from "@vamsa/schemas";
 import {
   login as serverLogin,
   register as serverRegister,
 } from "../../src/server/auth";
 import { logger } from "@vamsa/lib/logger";
 
-const authRouter = new Hono();
+const authRouter = new OpenAPIHono();
 
-// Validation schemas
-const loginSchema = z.object({
-  email: z.string().email("Invalid email"),
-  password: z.string().min(1, "Password is required"),
-});
-
-const registerSchema = z
-  .object({
-    email: z.string().email("Invalid email"),
-    name: z.string().min(1, "Name is required"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
+// Response schema for auth endpoints
+const authSuccessSchema = z.object({
+  user: z.object({
+    id: z.string().openapi({
+      description: "User ID",
+      example: "user_123",
+    }),
+    email: z.string().email().openapi({
+      description: "User email address",
+      example: "user@example.com",
+    }),
+    name: z.string().nullable().openapi({
+      description: "User display name",
+      example: "John Doe",
+    }),
+    role: z.string().openapi({
+      description: "User role",
+      example: "MEMBER",
+    }),
+  }).openapi({
+    description: "Authenticated user information",
+  }),
+  token: z.string().openapi({
+    description: "Session token",
+    example: "eyJhbGciOiJIUzI1NiIs...",
+  }),
+}).openapi('AuthSuccessResponse');
 
 /**
  * POST /api/v1/auth/login
  * Login with email and password
  */
-authRouter.post("/login", async (c) => {
-  try {
-    const body = await c.req.json();
-    const { email, password } = loginSchema.parse(body);
+const loginRoute = createRoute({
+  method: "post",
+  path: "/login",
+  tags: ["Authentication"],
+  summary: "Login with email and password",
+  description: "Authenticate user and create session",
+  operationId: "login",
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: loginSchema.openapi({
+            description: "Login credentials",
+            example: {
+              email: "user@example.com",
+              password: "password123",
+            },
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    200: {
+      description: "Login successful",
+      content: {
+        "application/json": {
+          schema: authSuccessSchema,
+        },
+      },
+    },
+    400: {
+      description: "Invalid credentials or validation error",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    401: {
+      description: "Invalid email or password",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: "Server error",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+  },
+});
 
-    // Use server function for login
+authRouter.openapi(loginRoute, async (c) => {
+  try {
+    const { email, password } = c.req.valid("json");
+
     const result = await serverLogin({ data: { email, password } });
 
     if (!result || typeof result !== "object" || "error" in result) {
-      return c.json({ error: "Invalid email or password" }, { status: 401 });
+      return c.json(
+        { error: "Invalid email or password" },
+        { status: 401 }
+      );
     }
 
-    // Extract user and token from the result
-    const user = result.user || result;
-    const token =
-      result.token || (result as Record<string, unknown>).sessionToken;
-
-    // Set session cookie via Set-Cookie header
-    if (token) {
-      const cookieValue = `vamsa-session=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${30 * 24 * 60 * 60}`;
-      c.header("Set-Cookie", cookieValue);
-    }
-
+    // Server function returns { success, user } - token is set as cookie by server function
     return c.json(
       {
-        user,
-        token: token || "",
+        user: result.user,
+        token: "", // Token is in HttpOnly cookie, not exposed to JS
       },
       { status: 200 }
     );
@@ -65,7 +130,7 @@ authRouter.post("/login", async (c) => {
       return c.json(
         {
           error: "Validation error",
-          details: error.errors[0]?.message,
+          details: error.issues[0]?.message,
         },
         { status: 400 }
       );
@@ -80,35 +145,89 @@ authRouter.post("/login", async (c) => {
  * POST /api/v1/auth/register
  * Register a new account
  */
-authRouter.post("/register", async (c) => {
-  try {
-    const body = await c.req.json();
-    const { email, name, password } = registerSchema.parse(body);
+const registerRoute = createRoute({
+  method: "post",
+  path: "/register",
+  tags: ["Authentication"],
+  summary: "Register a new account",
+  description: "Create new user account and authenticate",
+  operationId: "register",
+  request: {
+    body: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: registerSchema.openapi({
+            description: "Registration details",
+            example: {
+              email: "newuser@example.com",
+              name: "John Doe",
+              password: "securepass123",
+              confirmPassword: "securepass123",
+            },
+          }),
+        },
+      },
+    },
+  },
+  responses: {
+    201: {
+      description: "Account created successfully",
+      content: {
+        "application/json": {
+          schema: authSuccessSchema,
+        },
+      },
+    },
+    400: {
+      description: "Validation error or registration failed",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    409: {
+      description: "Email already in use",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: "Server error",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+  },
+});
 
-    // Use server function for registration
+authRouter.openapi(registerRoute, async (c) => {
+  try {
+    const { email, name, password, confirmPassword } = c.req.valid("json");
+
     const result = await serverRegister({
-      data: { email, name, password },
+      data: { email, name, password, confirmPassword },
     });
 
     if (!result || typeof result !== "object" || "error" in result) {
       return c.json({ error: "Registration failed" }, { status: 400 });
     }
 
-    // Extract user and token
-    const user = result.user || result;
-    const token =
-      result.token || (result as Record<string, unknown>).sessionToken;
-
-    // Set session cookie
-    if (token) {
-      const cookieValue = `vamsa-session=${encodeURIComponent(token)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${30 * 24 * 60 * 60}`;
-      c.header("Set-Cookie", cookieValue);
-    }
-
+    // Server returns { success, userId } - create minimal user response
     return c.json(
       {
-        user,
-        token: token || "",
+        user: {
+          id: result.userId,
+          email,
+          name,
+          role: "VIEWER",
+        },
+        token: "", // No token returned on registration
       },
       { status: 201 }
     );
@@ -117,13 +236,12 @@ authRouter.post("/register", async (c) => {
       return c.json(
         {
           error: "Validation error",
-          details: error.errors[0]?.message,
+          details: error.issues[0]?.message,
         },
         { status: 400 }
       );
     }
 
-    // Check if email already exists
     if (
       error instanceof Error &&
       error.message.includes("Email already exists")
@@ -140,15 +258,41 @@ authRouter.post("/register", async (c) => {
  * POST /api/v1/auth/logout
  * Logout the current user
  */
-authRouter.post("/logout", async (c) => {
+const logoutRoute = createRoute({
+  method: "post",
+  path: "/logout",
+  tags: ["Authentication"],
+  summary: "Logout current user",
+  description: "Clear session cookie and logout",
+  operationId: "logout",
+  responses: {
+    200: {
+      description: "Logout successful",
+      content: {
+        "application/json": {
+          schema: successResponseSchema,
+        },
+      },
+    },
+    500: {
+      description: "Server error",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
+  },
+});
+
+authRouter.openapi(logoutRoute, async (c) => {
   try {
-    // Clear session cookie
     c.header(
       "Set-Cookie",
       "vamsa-session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0"
     );
 
-    return c.json({ success: true });
+    return c.json({ success: true as const }, { status: 200 });
   } catch (error) {
     logger.error({ error }, "Logout error");
     return c.json({ error: "Logout failed" }, { status: 500 });

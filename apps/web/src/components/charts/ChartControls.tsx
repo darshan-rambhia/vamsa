@@ -1,19 +1,21 @@
 "use client";
 
+import { useState } from "react";
 import {
   Card,
   CardContent,
   Button,
   Label,
-  Input,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui";
+import { GenerationSlider } from "./GenerationSlider";
 
 export type ChartType =
+  | "tree"
   | "ancestor"
   | "descendant"
   | "hourglass"
@@ -31,7 +33,8 @@ export interface ChartControlsProps {
   descendantGenerations?: number;
   maxPeople?: number;
   sortBy?: "birth" | "death" | "name";
-  onChartTypeChange: (type: ChartType) => void;
+  hideChartTypeSelector?: boolean;
+  onChartTypeChange?: (type: ChartType) => void;
   onGenerationsChange: (generations: number) => void;
   onAncestorGenerationsChange?: (generations: number) => void;
   onDescendantGenerationsChange?: (generations: number) => void;
@@ -41,6 +44,8 @@ export interface ChartControlsProps {
   onExportPNG?: () => void;
   onExportSVG?: () => void;
   onPrint?: () => void;
+  onResetView?: () => void;
+  activeContextLabel?: string;
 }
 
 export function ChartControls({
@@ -50,6 +55,7 @@ export function ChartControls({
   descendantGenerations = 2,
   maxPeople = 20,
   sortBy = "birth",
+  hideChartTypeSelector = false,
   onChartTypeChange,
   onGenerationsChange,
   onAncestorGenerationsChange,
@@ -60,7 +66,11 @@ export function ChartControls({
   onExportPNG,
   onExportSVG,
   onPrint,
+  onResetView,
+  activeContextLabel,
 }: ChartControlsProps) {
+  const [isExportOpen, setIsExportOpen] = useState(false);
+
   const handlePrint = () => {
     if (onPrint) {
       onPrint();
@@ -68,207 +78,211 @@ export function ChartControls({
       window.print();
     }
   };
+
+  const toggleExportMenu = () => setIsExportOpen((prev) => !prev);
+
+  const closeExportMenu = () => setIsExportOpen(false);
+
+  const handleExportClick = (fn?: () => void) => {
+    if (fn) fn();
+    closeExportMenu();
+  };
+
   return (
     <Card className="chart-controls">
-      <CardContent className="space-y-4 p-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="space-y-2">
-            <Label htmlFor="chart-type">Chart Type</Label>
-            <Select value={chartType} onValueChange={onChartTypeChange}>
-              <SelectTrigger id="chart-type">
-                <SelectValue placeholder="Select chart type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ancestor">Ancestor Chart</SelectItem>
-                <SelectItem value="descendant">Descendant Chart</SelectItem>
-                <SelectItem value="hourglass">Hourglass Chart</SelectItem>
-                <SelectItem value="fan">Fan Chart</SelectItem>
-                <SelectItem value="timeline">Timeline Chart</SelectItem>
-                <SelectItem value="matrix">Relationship Matrix</SelectItem>
-                <SelectItem value="bowtie">Bowtie Chart</SelectItem>
-                <SelectItem value="compact">Compact Tree</SelectItem>
-                <SelectItem value="statistics">Statistics</SelectItem>
-              </SelectContent>
-            </Select>
+      <CardContent className="p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          {/* Left side: Controls */}
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+            {!hideChartTypeSelector && (
+              <div className="space-y-2">
+                <Label htmlFor="chart-type">Chart Type</Label>
+                <Select value={chartType} onValueChange={onChartTypeChange}>
+                  <SelectTrigger id="chart-type" className="w-[180px]">
+                    <SelectValue placeholder="Select chart type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="tree">Interactive Tree</SelectItem>
+                    <SelectItem value="ancestor">Ancestor Chart</SelectItem>
+                    <SelectItem value="descendant">Descendant Chart</SelectItem>
+                    <SelectItem value="hourglass">Hourglass Chart</SelectItem>
+                    <SelectItem value="fan">Fan Chart</SelectItem>
+                    <SelectItem value="timeline">Timeline Chart</SelectItem>
+                    <SelectItem value="matrix">Relationship Matrix</SelectItem>
+                    <SelectItem value="bowtie">Bowtie Chart</SelectItem>
+                    <SelectItem value="compact">Compact Tree</SelectItem>
+                    <SelectItem value="statistics">Statistics</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Generation sliders based on chart type configuration:
+                - Tree, Hourglass: Both ancestor + descendant
+                - Ancestor, Fan, Bowtie: Ancestor only
+                - Descendant, Compact: Descendant only
+                - Timeline: Sort dropdown
+                - Matrix: Max people slider
+                - Statistics: No controls */}
+
+            {/* Ancestor slider - for: tree, hourglass, ancestor, fan, bowtie */}
+            {["tree", "hourglass", "ancestor", "fan", "bowtie"].includes(
+              chartType
+            ) && (
+              <GenerationSlider
+                label="Ancestor Generations"
+                value={ancestorGenerations}
+                min={1}
+                max={10}
+                onChange={(v) => onAncestorGenerationsChange?.(v)}
+                showNumberInput
+                id="ancestor-generations"
+              />
+            )}
+
+            {/* Descendant slider - for: tree, hourglass, descendant, compact */}
+            {["tree", "hourglass", "descendant", "compact"].includes(
+              chartType
+            ) && (
+              <GenerationSlider
+                label="Descendant Generations"
+                value={descendantGenerations}
+                min={1}
+                max={10}
+                onChange={(v) => onDescendantGenerationsChange?.(v)}
+                showNumberInput
+                id="descendant-generations"
+              />
+            )}
+
+            {/* Timeline: Sort dropdown */}
+            {chartType === "timeline" && (
+              <div className="space-y-2">
+                <Label htmlFor="sort-by">Sort By</Label>
+                <Select
+                  value={sortBy}
+                  onValueChange={(value) =>
+                    onSortByChange?.(value as "birth" | "death" | "name")
+                  }
+                >
+                  <SelectTrigger id="sort-by" className="w-[160px]">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="birth">Birth Year</SelectItem>
+                    <SelectItem value="death">Death Year</SelectItem>
+                    <SelectItem value="name">Name</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Matrix: Max people slider */}
+            {chartType === "matrix" && (
+              <GenerationSlider
+                label="Max People"
+                value={maxPeople}
+                min={5}
+                max={50}
+                onChange={(v) => onMaxPeopleChange?.(v)}
+                showNumberInput
+                id="max-people"
+              />
+            )}
+
+            {/* Statistics: Info text */}
+            {chartType === "statistics" && (
+              <div className="flex items-center">
+                <span className="text-muted-foreground text-sm">
+                  Statistical analysis of all family members
+                </span>
+              </div>
+            )}
           </div>
 
-          {chartType === "hourglass" ? (
-            <>
-              <div className="space-y-2">
-                <Label htmlFor="ancestor-generations">
-                  Ancestor Generations ({ancestorGenerations})
-                </Label>
-                <Input
-                  id="ancestor-generations"
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={ancestorGenerations}
-                  onChange={(e) =>
-                    onAncestorGenerationsChange?.(parseInt(e.target.value))
-                  }
-                  className="w-full"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="descendant-generations">
-                  Descendant Generations ({descendantGenerations})
-                </Label>
-                <Input
-                  id="descendant-generations"
-                  type="range"
-                  min="1"
-                  max="10"
-                  value={descendantGenerations}
-                  onChange={(e) =>
-                    onDescendantGenerationsChange?.(parseInt(e.target.value))
-                  }
-                  className="w-full"
-                />
-              </div>
-            </>
-          ) : chartType === "timeline" ? (
-            <div className="space-y-2">
-              <Label htmlFor="sort-by">Sort By</Label>
-              <Select
-                value={sortBy}
-                onValueChange={(value) =>
-                  onSortByChange?.(value as "birth" | "death" | "name")
-                }
-              >
-                <SelectTrigger id="sort-by">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="birth">Birth Year</SelectItem>
-                  <SelectItem value="death">Death Year</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          ) : chartType === "matrix" ? (
-            <div className="space-y-2">
-              <Label htmlFor="max-people">Max People ({maxPeople})</Label>
-              <Input
-                id="max-people"
-                type="range"
-                min="5"
-                max="50"
-                value={maxPeople}
-                onChange={(e) => onMaxPeopleChange?.(parseInt(e.target.value))}
-                className="w-full"
-              />
-            </div>
-          ) : chartType === "statistics" ? (
-            <div className="space-y-2">
-              <span className="text-muted-foreground text-sm">
-                Statistical analysis of all family members
+          {/* Actions: reset view + export menu */}
+          <div className="flex flex-wrap items-center gap-2">
+            {activeContextLabel && (
+              <span className="bg-muted text-muted-foreground inline-flex items-center rounded-full px-3 py-1 text-xs font-medium">
+                {activeContextLabel}
               </span>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <Label htmlFor="generations">Generations ({generations})</Label>
-              <Input
-                id="generations"
-                type="range"
-                min="1"
-                max="10"
-                value={generations}
-                onChange={(e) => onGenerationsChange(parseInt(e.target.value))}
-                className="w-full"
-              />
-            </div>
-          )}
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onResetView}
+              title="Reset zoom and recenter"
+            >
+              <svg
+                className="h-4 w-4 sm:mr-1.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M4.5 9.75A7.5 7.5 0 0112 2.25c4.142 0 7.5 3.358 7.5 7.5m0 0H18m1.5 0V6.75M19.5 14.25A7.5 7.5 0 0112 21.75 7.5 7.5 0 014.5 14.25m0 0H6m-1.5 0v3"
+                />
+              </svg>
+              <span className="hidden sm:inline">Reset view</span>
+            </Button>
 
-          <div className="flex items-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onExportPDF}
-              className="flex-1"
-              title="Export as PDF"
-            >
-              <svg
-                className="mr-2 h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
+            <div className="relative">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={toggleExportMenu}
+                title="Export or share chart"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
-                />
-              </svg>
-              PDF
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onExportPNG}
-              className="flex-1"
-              title="Export as PNG (2x resolution)"
-            >
-              <svg
-                className="mr-2 h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
-                />
-              </svg>
-              PNG
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onExportSVG}
-              className="flex-1"
-              title="Export as SVG"
-            >
-              <svg
-                className="mr-2 h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
-                />
-              </svg>
-              SVG
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrint}
-              className="flex-1"
-              title="Print chart"
-            >
-              <svg
-                className="mr-2 h-4 w-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={2}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0110.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0l.229 2.523a1.125 1.125 0 01-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0021 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 00-1.913-.247M6.34 18H5.25A2.25 2.25 0 013 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 011.913-.247m10.5 0a48.536 48.536 0 00-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5zm-3 0h.008v.008H15V10.5z"
-                />
-              </svg>
-              Print
-            </Button>
+                <svg
+                  className="h-4 w-4 sm:mr-1.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4.5 12.75l6 6 9-13.5"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Export / Share</span>
+              </Button>
+
+              {isExportOpen && (
+                <div className="bg-popover border-border absolute right-0 z-20 mt-2 w-44 rounded-md border shadow-lg">
+                  <div className="flex flex-col py-2 text-sm">
+                    <button
+                      className="hover:bg-muted text-left px-3 py-2"
+                      onClick={() => handleExportClick(onExportPDF)}
+                    >
+                      Export PDF
+                    </button>
+                    <button
+                      className="hover:bg-muted text-left px-3 py-2"
+                      onClick={() => handleExportClick(onExportPNG)}
+                    >
+                      Export PNG (2x)
+                    </button>
+                    <button
+                      className="hover:bg-muted text-left px-3 py-2"
+                      onClick={() => handleExportClick(onExportSVG)}
+                    >
+                      Export SVG
+                    </button>
+                    <button
+                      className="hover:bg-muted text-left px-3 py-2"
+                      onClick={() => handleExportClick(handlePrint)}
+                    >
+                      Print
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>

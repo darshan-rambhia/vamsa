@@ -1,5 +1,4 @@
 import { jsPDF } from "jspdf";
-import { svg2pdf } from "svg2pdf.js";
 
 export interface ExportOptions {
   title: string;
@@ -15,6 +14,10 @@ export async function exportToPDF(
   svgElement: SVGElement,
   options: ExportOptions
 ): Promise<void> {
+  // Dynamic import to handle CommonJS module
+  const svg2pdfModule = await import("svg2pdf.js");
+  const svg2pdf = svg2pdfModule.svg2pdf || (svg2pdfModule as any).default;
+
   const { title, orientation, includeMetadata = true, scale = 1 } = options;
 
   // Get SVG dimensions

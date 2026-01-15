@@ -2254,9 +2254,14 @@ export const CalendarTokenScalarFieldEnum = {
   id: 'id',
   token: 'token',
   userId: 'userId',
-  type: 'type',
+  name: 'name',
   expiresAt: 'expiresAt',
   isActive: 'isActive',
+  lastUsedAt: 'lastUsedAt',
+  rotationPolicy: 'rotationPolicy',
+  rotatedAt: 'rotatedAt',
+  rotatedFrom: 'rotatedFrom',
+  scopes: 'scopes',
   createdAt: 'createdAt'
 } as const
 
@@ -2302,6 +2307,8 @@ export const FamilySettingsScalarFieldEnum = {
   defaultPrivacy: 'defaultPrivacy',
   allowSelfRegistration: 'allowSelfRegistration',
   requireApprovalForEdits: 'requireApprovalForEdits',
+  metricsDashboardUrl: 'metricsDashboardUrl',
+  metricsApiUrl: 'metricsApiUrl',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const

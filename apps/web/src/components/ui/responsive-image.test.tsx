@@ -22,7 +22,8 @@ describe("ResponsiveImage Component", () => {
       );
 
       expect(component).toBeDefined();
-      expect(component.type).toBe(React.Fragment);
+      // Component type is the ResponsiveImage function when accessing JSX directly
+      expect(component.type).toBe(ResponsiveImage);
     });
 
     it("should render simple img when no responsive sizes", () => {

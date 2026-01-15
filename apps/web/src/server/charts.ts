@@ -280,6 +280,12 @@ const statisticsSchema = z.object({
   includeDeceased: z.boolean().default(true),
 });
 
+const treeChartSchema = z.object({
+  personId: z.string(),
+  ancestorGenerations: z.number().int().min(1).max(10).default(2),
+  descendantGenerations: z.number().int().min(1).max(10).default(2),
+});
+
 /**
  * Helper function to build relationship maps
  */
@@ -1787,6 +1793,383 @@ export const getStatistics = createServerFn({ method: "POST" })
         deceasedCount,
         oldestPerson,
         youngestPerson,
+      },
+    };
+  });
+
+/**
+ * Helper function to collect ancestors with negative generation numbers
+ * Generation -1 = parents, -2 = grandparents, etc.
+ */
+function collectTreeAncestors(
+  personId: string,
+  currentGen: number, // Should be negative (e.g., -1, -2)
+  maxGen: number, // Should be negative limit (e.g., -3 for 3 ancestor generations)
+  childToParents: Map<string, Set<string>>,
+  personMap: Map<
+    string,
+    {
+      id: string;
+      firstName: string;
+      lastName: string;
+      dateOfBirth: Date | null;
+      dateOfPassing: Date | null;
+      isLiving: boolean;
+      photoUrl: string | null;
+      gender: string | null;
+    }
+  >,
+  spouseMap: Map<string, Set<string>>,
+  collected: {
+    nodeIds: Set<string>;
+    edges: Map<string, { source: string; target: string; type: string }>;
+    generations: Map<string, number>;
+  }
+) {
+  if (currentGen < maxGen || !personId) return;
+
+  // Add person if not already collected
+  if (!collected.nodeIds.has(personId)) {
+    collected.nodeIds.add(personId);
+    collected.generations.set(personId, currentGen);
+  }
+
+  // Add spouses at same generation
+  const spouses = spouseMap.get(personId);
+  if (spouses) {
+    spouses.forEach((spouseId) => {
+      if (!collected.nodeIds.has(spouseId)) {
+        collected.nodeIds.add(spouseId);
+        collected.generations.set(spouseId, currentGen);
+
+        // Add spouse edge
+        const edgeKey = [personId, spouseId].sort().join("-");
+        collected.edges.set(edgeKey, {
+          source: personId,
+          target: spouseId,
+          type: "spouse",
+        });
+      }
+    });
+  }
+
+  // Get parents and recurse (going more negative)
+  const parents = childToParents.get(personId);
+  if (parents && currentGen > maxGen) {
+    parents.forEach((parentId) => {
+      if (personMap.has(parentId)) {
+        // Add parent-child edge (parent at top, child at bottom)
+        collected.edges.set(`${parentId}-${personId}`, {
+          source: parentId,
+          target: personId,
+          type: "parent-child",
+        });
+
+        // Recurse to parent's ancestors (more negative generation)
+        collectTreeAncestors(
+          parentId,
+          currentGen - 1,
+          maxGen,
+          childToParents,
+          personMap,
+          spouseMap,
+          collected
+        );
+      }
+    });
+  }
+}
+
+/**
+ * Helper function to collect descendants with positive generation numbers
+ * Generation 1 = children, 2 = grandchildren, etc.
+ */
+function collectTreeDescendants(
+  personId: string,
+  currentGen: number, // Should be positive (e.g., 1, 2)
+  maxGen: number, // Should be positive limit (e.g., 3 for 3 descendant generations)
+  parentToChildren: Map<string, Set<string>>,
+  personMap: Map<
+    string,
+    {
+      id: string;
+      firstName: string;
+      lastName: string;
+      dateOfBirth: Date | null;
+      dateOfPassing: Date | null;
+      isLiving: boolean;
+      photoUrl: string | null;
+      gender: string | null;
+    }
+  >,
+  spouseMap: Map<string, Set<string>>,
+  collected: {
+    nodeIds: Set<string>;
+    edges: Map<string, { source: string; target: string; type: string }>;
+    generations: Map<string, number>;
+  }
+) {
+  if (currentGen > maxGen || !personId) return;
+
+  // Add person if not already collected
+  if (!collected.nodeIds.has(personId)) {
+    collected.nodeIds.add(personId);
+    collected.generations.set(personId, currentGen);
+  }
+
+  // Add spouses at same generation
+  const spouses = spouseMap.get(personId);
+  if (spouses) {
+    spouses.forEach((spouseId) => {
+      if (!collected.nodeIds.has(spouseId)) {
+        collected.nodeIds.add(spouseId);
+        collected.generations.set(spouseId, currentGen);
+
+        // Add spouse edge
+        const edgeKey = [personId, spouseId].sort().join("-");
+        collected.edges.set(edgeKey, {
+          source: personId,
+          target: spouseId,
+          type: "spouse",
+        });
+      }
+    });
+  }
+
+  // Get children and recurse (going more positive)
+  const children = parentToChildren.get(personId);
+  if (children && currentGen < maxGen) {
+    children.forEach((childId) => {
+      if (personMap.has(childId)) {
+        // Add parent-child edge
+        collected.edges.set(`${personId}-${childId}`, {
+          source: personId,
+          target: childId,
+          type: "parent-child",
+        });
+
+        // Recurse to children's descendants (more positive generation)
+        collectTreeDescendants(
+          childId,
+          currentGen + 1,
+          maxGen,
+          parentToChildren,
+          personMap,
+          spouseMap,
+          collected
+        );
+      }
+    });
+  }
+}
+
+/**
+ * Get tree chart data - full family tree with both ancestors and descendants
+ * Center person is at generation 0
+ * Ancestors have negative generation numbers (-1 = parents, -2 = grandparents)
+ * Descendants have positive generation numbers (1 = children, 2 = grandchildren)
+ */
+export const getTreeChart = createServerFn({ method: "POST" })
+  .inputValidator((data: z.infer<typeof treeChartSchema>) => {
+    return treeChartSchema.parse(data);
+  })
+  .handler(async ({ data }) => {
+    const start = Date.now();
+    await requireAuth("VIEWER");
+
+    const { personId, ancestorGenerations, descendantGenerations } = data;
+
+    // Validate person exists
+    const rootPerson = await prisma.person.findUnique({
+      where: { id: personId },
+    });
+
+    if (!rootPerson) {
+      throw new Error("Person not found");
+    }
+
+    // Fetch all persons and relationships
+    const persons = await prisma.person.findMany();
+    const relationships = await prisma.relationship.findMany();
+
+    const personMap = new Map(persons.map((p) => [p.id, p]));
+    const { childToParents, parentToChildren, spouseMap } =
+      buildRelationshipMaps(relationships);
+
+    // Initialize collection
+    const collected = {
+      nodeIds: new Set<string>(),
+      edges: new Map<
+        string,
+        { source: string; target: string; type: string }
+      >(),
+      generations: new Map<string, number>(),
+    };
+
+    // Add root person at generation 0
+    collected.nodeIds.add(personId);
+    collected.generations.set(personId, 0);
+
+    // Add root person's spouses
+    const rootSpouses = spouseMap.get(personId);
+    if (rootSpouses) {
+      rootSpouses.forEach((spouseId) => {
+        if (!collected.nodeIds.has(spouseId)) {
+          collected.nodeIds.add(spouseId);
+          collected.generations.set(spouseId, 0);
+
+          const edgeKey = [personId, spouseId].sort().join("-");
+          collected.edges.set(edgeKey, {
+            source: personId,
+            target: spouseId,
+            type: "spouse",
+          });
+        }
+      });
+    }
+
+    // Collect ancestors (negative generations)
+    const rootParents = childToParents.get(personId);
+    if (rootParents) {
+      rootParents.forEach((parentId) => {
+        if (personMap.has(parentId)) {
+          // Add edge from parent to root
+          collected.edges.set(`${parentId}-${personId}`, {
+            source: parentId,
+            target: personId,
+            type: "parent-child",
+          });
+
+          // Collect parent's ancestors
+          collectTreeAncestors(
+            parentId,
+            -1,
+            -ancestorGenerations,
+            childToParents,
+            personMap,
+            spouseMap,
+            collected
+          );
+        }
+      });
+    }
+
+    // Collect descendants (positive generations)
+    const rootChildren = parentToChildren.get(personId);
+    if (rootChildren) {
+      rootChildren.forEach((childId) => {
+        if (personMap.has(childId)) {
+          // Add edge from root to child
+          collected.edges.set(`${personId}-${childId}`, {
+            source: personId,
+            target: childId,
+            type: "parent-child",
+          });
+
+          // Collect child's descendants
+          collectTreeDescendants(
+            childId,
+            1,
+            descendantGenerations,
+            parentToChildren,
+            personMap,
+            spouseMap,
+            collected
+          );
+        }
+      });
+    }
+
+    // Also collect descendants from root's spouses (step-children)
+    if (rootSpouses) {
+      rootSpouses.forEach((spouseId) => {
+        const spouseChildren = parentToChildren.get(spouseId);
+        if (spouseChildren) {
+          spouseChildren.forEach((childId) => {
+            if (personMap.has(childId) && !collected.nodeIds.has(childId)) {
+              // Add edge from spouse to child
+              collected.edges.set(`${spouseId}-${childId}`, {
+                source: spouseId,
+                target: childId,
+                type: "parent-child",
+              });
+
+              // Collect child's descendants
+              collectTreeDescendants(
+                childId,
+                1,
+                descendantGenerations,
+                parentToChildren,
+                personMap,
+                spouseMap,
+                collected
+              );
+            }
+          });
+        }
+      });
+    }
+
+    // Build nodes array
+    const nodes: ChartNode[] = [];
+    collected.nodeIds.forEach((id) => {
+      const person = personMap.get(id);
+      if (person) {
+        nodes.push({
+          id: person.id,
+          firstName: person.firstName,
+          lastName: person.lastName,
+          dateOfBirth: person.dateOfBirth
+            ? person.dateOfBirth.toISOString().split("T")[0]
+            : null,
+          dateOfPassing: person.dateOfPassing
+            ? person.dateOfPassing.toISOString().split("T")[0]
+            : null,
+          isLiving: person.isLiving,
+          photoUrl: person.photoUrl,
+          gender: person.gender,
+          generation: collected.generations.get(id) ?? 0,
+        });
+      }
+    });
+
+    // Build edges array
+    const edges: ChartEdge[] = [];
+    const processedEdges = new Set<string>();
+
+    collected.edges.forEach((edgeData) => {
+      const key = `${edgeData.source}-${edgeData.target}`;
+      if (!processedEdges.has(key)) {
+        processedEdges.add(key);
+        edges.push({
+          id: key,
+          source: edgeData.source,
+          target: edgeData.target,
+          type: edgeData.type as "parent-child" | "spouse",
+        });
+      }
+    });
+
+    // Record metrics
+    const duration = Date.now() - start;
+    recordChartMetrics("tree", nodes.length, duration);
+
+    // Calculate actual generation count
+    const minGen = Math.min(...Array.from(collected.generations.values()));
+    const maxGen = Math.max(...Array.from(collected.generations.values()));
+    const totalGens = maxGen - minGen + 1;
+
+    return {
+      nodes,
+      edges,
+      metadata: {
+        chartType: "tree",
+        totalGenerations: totalGens,
+        totalPeople: nodes.length,
+        rootPersonId: personId,
+        ancestorGenerations,
+        descendantGenerations,
+        livingCount: nodes.filter((n) => n.isLiving).length,
       },
     };
   });

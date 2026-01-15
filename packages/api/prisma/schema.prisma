@@ -279,12 +279,17 @@ model Session {
 }
 
 model CalendarToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  type      String   @default("all") // "birthdays", "anniversaries", "events", "all"
-  expiresAt DateTime
-  isActive  Boolean  @default(true)
+  id             String    @id @default(cuid())
+  token          String    @unique
+  userId         String
+  name           String?
+  expiresAt      DateTime
+  isActive       Boolean   @default(true)
+  lastUsedAt     DateTime?
+  rotationPolicy String    @default("annual")
+  rotatedAt      DateTime?
+  rotatedFrom    String?
+  scopes         String[]  @default(["calendar:read"])
 
   createdAt DateTime @default(now())
 
@@ -294,6 +299,7 @@ model CalendarToken {
   @@index([token])
   @@index([expiresAt])
   @@index([isActive])
+  @@index([userId, isActive])
 }
 
 model OAuthState {
@@ -343,6 +349,10 @@ model FamilySettings {
   defaultPrivacy          PrivacyLevel @default(MEMBERS_ONLY)
   allowSelfRegistration   Boolean      @default(true)
   requireApprovalForEdits Boolean      @default(true)
+
+  // Custom metrics URLs (override environment variables)
+  metricsDashboardUrl String? // Custom Grafana/Datadog/etc. dashboard URL
+  metricsApiUrl       String? // Custom Prometheus/metrics API URL
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

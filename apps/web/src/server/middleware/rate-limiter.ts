@@ -18,6 +18,9 @@
 
 import { logger } from "@vamsa/lib/logger";
 
+// Skip rate limiting in E2E tests to avoid flaky tests due to parallel workers
+const SKIP_RATE_LIMITING = process.env.E2E_TESTING === "true";
+
 interface RateLimitEntry {
   count: number;
   resetAt: number;
@@ -74,6 +77,11 @@ export function checkRateLimit(
   identifier: string,
   options?: Partial<RateLimitOptions>
 ): void {
+  // Skip rate limiting in E2E tests
+  if (SKIP_RATE_LIMITING) {
+    return;
+  }
+
   const config = { ...RATE_LIMITS[action], ...options };
   const key = `${action}:${identifier}`;
   const now = Date.now();

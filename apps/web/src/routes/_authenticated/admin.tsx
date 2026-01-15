@@ -3,11 +3,18 @@ import {
   Outlet,
   Link,
   useLocation,
+  redirect,
 } from "@tanstack/react-router";
 import { Container, PageHeader, Badge } from "@vamsa/ui";
 import { cn } from "@vamsa/ui";
 
 export const Route = createFileRoute("/_authenticated/admin")({
+  beforeLoad: ({ location }) => {
+    // Redirect /admin to /admin/settings as the default view
+    if (location.pathname === "/admin" || location.pathname === "/admin/") {
+      throw redirect({ to: "/admin/settings" });
+    }
+  },
   component: AdminLayout,
 });
 

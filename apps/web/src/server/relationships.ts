@@ -1,11 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "./db";
 import { z } from "zod";
-import {
-  computeTreeLayout,
-  type Person,
-  type Relationship as LayoutRelationship,
-} from "./tree-layout";
 import { logger } from "@vamsa/lib/logger";
 import { requireAuth } from "./middleware/require-auth";
 import { recordRelationshipCalc } from "../../server/metrics/application";
@@ -262,67 +257,3 @@ export const getFamilyTree = createServerFn({ method: "GET" }).handler(
   }
 );
 
-// Input schema for tree layout
-const treeLayoutInputSchema = z.object({
-  focusedPersonId: z.string(),
-  view: z.enum(["focused", "full"]).default("focused"),
-  expandedNodes: z.array(z.string()).default([]),
-  generationDepth: z.number().default(1),
-});
-
-// Get family tree with pre-computed layout
-export const getFamilyTreeLayout = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof treeLayoutInputSchema>) => {
-    return treeLayoutInputSchema.parse(data);
-  })
-  .handler(async ({ data }) => {
-    const start = Date.now();
-    const { focusedPersonId, view, expandedNodes, generationDepth } = data;
-
-    // Fetch all persons and relationships
-    const persons = await prisma.person.findMany();
-    const relationships = await prisma.relationship.findMany();
-
-    // Transform to layout types
-    const layoutPersons: Person[] = persons.map((p) => ({
-      id: p.id,
-      firstName: p.firstName,
-      lastName: p.lastName,
-      gender: p.gender,
-      dateOfBirth: p.dateOfBirth?.toISOString().split("T")[0] ?? null,
-      dateOfPassing: p.dateOfPassing?.toISOString().split("T")[0] ?? null,
-      isLiving: p.isLiving,
-      photoUrl: p.photoUrl,
-    }));
-
-    const layoutRelationships: LayoutRelationship[] = relationships.map(
-      (r) => ({
-        id: r.id,
-        personId: r.personId,
-        relatedPersonId: r.relatedPersonId,
-        type: r.type,
-        isActive: r.isActive,
-        marriageDate: r.marriageDate?.toISOString().split("T")[0] ?? null,
-        divorceDate: r.divorceDate?.toISOString().split("T")[0] ?? null,
-      })
-    );
-
-    // Compute layout
-    const layout = computeTreeLayout(layoutPersons, layoutRelationships, {
-      focusedPersonId,
-      view,
-      expandedNodes,
-      generationDepth,
-    });
-
-    // Record metrics
-    const duration = Date.now() - start;
-    recordRelationshipCalc(
-      "tree_layout",
-      duration,
-      layout.nodes?.length,
-      layout.nodes?.length > 0
-    );
-
-    return layout;
-  });

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@hono/zod-openapi";
 
 export const userRoleEnum = z.enum(["ADMIN", "MEMBER", "VIEWER"]);
 
@@ -21,6 +21,8 @@ export const userUpdateSchema = z.object({
 export const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(1, "Password is required"),
+}).openapi({
+  description: "Login credentials",
 });
 
 export const registerSchema = z
@@ -33,6 +35,9 @@ export const registerSchema = z
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
+  })
+  .openapi({
+    description: "Registration data",
   });
 
 export const changePasswordSchema = z

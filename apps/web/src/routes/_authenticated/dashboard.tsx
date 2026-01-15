@@ -308,7 +308,7 @@ function DashboardComponent() {
               description={t("people.addPerson")}
             />
             <QuickAction
-              href="/tree"
+              href="/visualize"
               icon={
                 <svg
                   className="h-5 w-5"

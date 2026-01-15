@@ -4,13 +4,13 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import { vamsaDevApiPlugin } from "./server/dev";
 
 export default defineConfig({
   // Load .env from monorepo root
   envDir: path.resolve(__dirname, "../.."),
   server: {
     port: 3000,
-    middlewareMode: false,
   },
   resolve: {
     alias: {
@@ -21,6 +21,8 @@ export default defineConfig({
     },
   },
   plugins: [
+    // Add API routes in dev mode for dev/prod parity
+    vamsaDevApiPlugin(),
     tailwindcss(),
     tsConfigPaths({
       projects: ["./tsconfig.json"],

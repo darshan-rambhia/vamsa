@@ -149,3 +149,62 @@ export type BackupValidationPreview = z.infer<
   typeof backupValidationPreviewSchema
 >;
 export type ImportPreview = z.infer<typeof importPreviewSchema>;
+
+// Backup Settings schema (matches Prisma BackupSettings model)
+export const storageProviderEnum = z.enum(["LOCAL", "S3", "R2", "B2"]);
+export const backupStatusEnum = z.enum(["PENDING", "IN_PROGRESS", "COMPLETED", "FAILED", "DELETED"]);
+export const backupTypeEnum = z.enum(["DAILY", "WEEKLY", "MONTHLY", "MANUAL"]);
+
+export const backupSettingsSchema = z.object({
+  id: z.string().optional(),
+  dailyEnabled: z.boolean().default(true),
+  dailyTime: z.string().default("02:00"),
+  weeklyEnabled: z.boolean().default(true),
+  weeklyDay: z.number().min(0).max(6).default(0),
+  weeklyTime: z.string().default("03:00"),
+  monthlyEnabled: z.boolean().default(true),
+  monthlyDay: z.number().min(1).max(28).default(1),
+  monthlyTime: z.string().default("04:00"),
+  dailyRetention: z.number().min(1).default(7),
+  weeklyRetention: z.number().min(1).default(4),
+  monthlyRetention: z.number().min(1).default(12),
+  storageProvider: storageProviderEnum.default("LOCAL"),
+  storageBucket: z.string().nullable().optional(),
+  storageRegion: z.string().nullable().optional(),
+  storagePath: z.string().default("backups"),
+  includePhotos: z.boolean().default(true),
+  includeAuditLogs: z.boolean().default(false),
+  compressLevel: z.number().min(0).max(9).default(6),
+  notifyOnSuccess: z.boolean().default(false),
+  notifyOnFailure: z.boolean().default(true),
+  notificationEmails: z.string().nullable().optional(),
+});
+
+export const backupSchema = z.object({
+  id: z.string(),
+  filename: z.string(),
+  type: backupTypeEnum,
+  status: backupStatusEnum,
+  size: z.union([z.bigint(), z.number()]).nullable(),
+  location: storageProviderEnum,
+  personCount: z.number().nullable(),
+  relationshipCount: z.number().nullable(),
+  eventCount: z.number().nullable(),
+  mediaCount: z.number().nullable(),
+  duration: z.number().nullable(),
+  error: z.string().nullable(),
+  createdAt: z.union([z.date(), z.string()]),
+  deletedAt: z.union([z.date(), z.string()]).nullable(),
+});
+
+export const listBackupsInputSchema = z.object({
+  limit: z.number().min(1).max(100).default(50),
+  offset: z.number().min(0).default(0),
+});
+
+export type StorageProvider = z.infer<typeof storageProviderEnum>;
+export type BackupStatus = z.infer<typeof backupStatusEnum>;
+export type BackupType = z.infer<typeof backupTypeEnum>;
+export type BackupSettings = z.infer<typeof backupSettingsSchema>;
+export type Backup = z.infer<typeof backupSchema>;
+export type ListBackupsInput = z.infer<typeof listBackupsInputSchema>;

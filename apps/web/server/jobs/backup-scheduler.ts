@@ -1,0 +1,188 @@
+/**
+ * Backup scheduler using node-cron
+ *
+ * Manages scheduled backup jobs:
+ * - Daily backups
+ * - Weekly backups
+ * - Monthly backups
+ * - Dynamic reconfiguration on settings changes
+ */
+
+import cron, { type ScheduledTask } from "node-cron";
+import { prisma } from "../db";
+import { performBackup } from "./backup-job";
+import { logger, serializeError } from "@vamsa/lib/logger";
+
+// Store scheduled cron jobs
+const scheduledJobs: Map<string, ScheduledTask> = new Map();
+
+/**
+ * Initialize backup scheduler based on settings from database
+ */
+export async function initBackupScheduler(): Promise<void> {
+  try {
+    // Stop any existing jobs
+    stopBackupScheduler();
+
+    const settings = await prisma.backupSettings.findFirst();
+    if (!settings) {
+      logger.info("No backup settings found, skipping scheduler initialization");
+      return;
+    }
+
+    // Daily backup
+    if (settings.dailyEnabled) {
+      const [hour, minute] = settings.dailyTime.split(":").map(Number);
+      const cronExpression = `${minute} ${hour} * * *`;
+      const jobKey = "daily";
+
+      try {
+        const dailyJob = cron.schedule(cronExpression, async () => {
+          logger.info("Starting scheduled daily backup");
+          try {
+            await performBackup("DAILY");
+          } catch (error) {
+            logger.error(
+              { error: serializeError(error) },
+              "Daily backup failed"
+            );
+          }
+        });
+        scheduledJobs.set(jobKey, dailyJob);
+        logger.info({ cron: cronExpression, job: jobKey }, "Scheduled daily backup");
+      } catch (error) {
+        logger.error(
+          { error: serializeError(error), job: jobKey },
+          "Failed to schedule daily backup"
+        );
+      }
+    }
+
+    // Weekly backup
+    if (settings.weeklyEnabled) {
+      const [hour, minute] = settings.weeklyTime.split(":").map(Number);
+      const dayOfWeek = settings.weeklyDay;
+      const cronExpression = `${minute} ${hour} * * ${dayOfWeek}`;
+      const jobKey = "weekly";
+
+      try {
+        const weeklyJob = cron.schedule(cronExpression, async () => {
+          logger.info("Starting scheduled weekly backup");
+          try {
+            await performBackup("WEEKLY");
+          } catch (error) {
+            logger.error(
+              { error: serializeError(error) },
+              "Weekly backup failed"
+            );
+          }
+        });
+        scheduledJobs.set(jobKey, weeklyJob);
+        logger.info({ cron: cronExpression, job: jobKey }, "Scheduled weekly backup");
+      } catch (error) {
+        logger.error(
+          { error: serializeError(error), job: jobKey },
+          "Failed to schedule weekly backup"
+        );
+      }
+    }
+
+    // Monthly backup
+    if (settings.monthlyEnabled) {
+      const [hour, minute] = settings.monthlyTime.split(":").map(Number);
+      const dayOfMonth = Math.min(settings.monthlyDay, 28); // Ensure valid day (1-28)
+      const cronExpression = `${minute} ${hour} ${dayOfMonth} * *`;
+      const jobKey = "monthly";
+
+      try {
+        const monthlyJob = cron.schedule(cronExpression, async () => {
+          logger.info("Starting scheduled monthly backup");
+          try {
+            await performBackup("MONTHLY");
+          } catch (error) {
+            logger.error(
+              { error: serializeError(error) },
+              "Monthly backup failed"
+            );
+          }
+        });
+        scheduledJobs.set(jobKey, monthlyJob);
+        logger.info({ cron: cronExpression, job: jobKey }, "Scheduled monthly backup");
+      } catch (error) {
+        logger.error(
+          { error: serializeError(error), job: jobKey },
+          "Failed to schedule monthly backup"
+        );
+      }
+    }
+
+    logger.info(
+      { jobCount: scheduledJobs.size },
+      "Backup scheduler initialized"
+    );
+  } catch (error) {
+    logger.error(
+      { error: serializeError(error) },
+      "Failed to initialize backup scheduler"
+    );
+    throw error;
+  }
+}
+
+/**
+ * Stop all scheduled backup jobs
+ */
+export function stopBackupScheduler(): void {
+  for (const [jobKey, job] of scheduledJobs.entries()) {
+    try {
+      job.stop();
+      job.destroy();
+      logger.debug({ job: jobKey }, "Stopped scheduled backup job");
+    } catch (error) {
+      logger.warn(
+        { error: serializeError(error), job: jobKey },
+        "Error stopping backup job"
+      );
+    }
+  }
+  scheduledJobs.clear();
+  logger.info("Backup scheduler stopped");
+}
+
+/**
+ * Refresh scheduler after settings change
+ * Call this when backup settings are updated via the API
+ */
+export async function refreshBackupScheduler(): Promise<void> {
+  logger.info("Refreshing backup scheduler");
+  try {
+    await initBackupScheduler();
+    logger.info("Backup scheduler refreshed successfully");
+  } catch (error) {
+    logger.error(
+      { error: serializeError(error) },
+      "Failed to refresh backup scheduler"
+    );
+    throw error;
+  }
+}
+
+/**
+ * Get the status of the scheduler
+ */
+export function getSchedulerStatus(): {
+  isRunning: boolean;
+  jobCount: number;
+  jobs: Array<{ name: string; status: string }>;
+} {
+  const jobs = Array.from(scheduledJobs.entries()).map(([name]) => ({
+    name,
+    status: "running",
+  }));
+
+  return {
+    isRunning: scheduledJobs.size > 0,
+    jobCount: scheduledJobs.size,
+    jobs,
+  };
+}

@@ -32,6 +32,8 @@ export type FamilySettingsMinAggregateOutputType = {
   defaultPrivacy: $Enums.PrivacyLevel | null
   allowSelfRegistration: boolean | null
   requireApprovalForEdits: boolean | null
+  metricsDashboardUrl: string | null
+  metricsApiUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -44,6 +46,8 @@ export type FamilySettingsMaxAggregateOutputType = {
   defaultPrivacy: $Enums.PrivacyLevel | null
   allowSelfRegistration: boolean | null
   requireApprovalForEdits: boolean | null
+  metricsDashboardUrl: string | null
+  metricsApiUrl: string | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -57,6 +61,8 @@ export type FamilySettingsCountAggregateOutputType = {
   defaultPrivacy: number
   allowSelfRegistration: number
   requireApprovalForEdits: number
+  metricsDashboardUrl: number
+  metricsApiUrl: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -71,6 +77,8 @@ export type FamilySettingsMinAggregateInputType = {
   defaultPrivacy?: true
   allowSelfRegistration?: true
   requireApprovalForEdits?: true
+  metricsDashboardUrl?: true
+  metricsApiUrl?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -83,6 +91,8 @@ export type FamilySettingsMaxAggregateInputType = {
   defaultPrivacy?: true
   allowSelfRegistration?: true
   requireApprovalForEdits?: true
+  metricsDashboardUrl?: true
+  metricsApiUrl?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -96,6 +106,8 @@ export type FamilySettingsCountAggregateInputType = {
   defaultPrivacy?: true
   allowSelfRegistration?: true
   requireApprovalForEdits?: true
+  metricsDashboardUrl?: true
+  metricsApiUrl?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -182,6 +194,8 @@ export type FamilySettingsGroupByOutputType = {
   defaultPrivacy: $Enums.PrivacyLevel
   allowSelfRegistration: boolean
   requireApprovalForEdits: boolean
+  metricsDashboardUrl: string | null
+  metricsApiUrl: string | null
   createdAt: Date
   updatedAt: Date
   _count: FamilySettingsCountAggregateOutputType | null
@@ -216,6 +230,8 @@ export type FamilySettingsWhereInput = {
   defaultPrivacy?: Prisma.EnumPrivacyLevelFilter<"FamilySettings"> | $Enums.PrivacyLevel
   allowSelfRegistration?: Prisma.BoolFilter<"FamilySettings"> | boolean
   requireApprovalForEdits?: Prisma.BoolFilter<"FamilySettings"> | boolean
+  metricsDashboardUrl?: Prisma.StringNullableFilter<"FamilySettings"> | string | null
+  metricsApiUrl?: Prisma.StringNullableFilter<"FamilySettings"> | string | null
   createdAt?: Prisma.DateTimeFilter<"FamilySettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"FamilySettings"> | Date | string
 }
@@ -229,6 +245,8 @@ export type FamilySettingsOrderByWithRelationInput = {
   defaultPrivacy?: Prisma.SortOrder
   allowSelfRegistration?: Prisma.SortOrder
   requireApprovalForEdits?: Prisma.SortOrder
+  metricsDashboardUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  metricsApiUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -245,6 +263,8 @@ export type FamilySettingsWhereUniqueInput = Prisma.AtLeast<{
   defaultPrivacy?: Prisma.EnumPrivacyLevelFilter<"FamilySettings"> | $Enums.PrivacyLevel
   allowSelfRegistration?: Prisma.BoolFilter<"FamilySettings"> | boolean
   requireApprovalForEdits?: Prisma.BoolFilter<"FamilySettings"> | boolean
+  metricsDashboardUrl?: Prisma.StringNullableFilter<"FamilySettings"> | string | null
+  metricsApiUrl?: Prisma.StringNullableFilter<"FamilySettings"> | string | null
   createdAt?: Prisma.DateTimeFilter<"FamilySettings"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"FamilySettings"> | Date | string
 }, "id">
@@ -258,6 +278,8 @@ export type FamilySettingsOrderByWithAggregationInput = {
   defaultPrivacy?: Prisma.SortOrder
   allowSelfRegistration?: Prisma.SortOrder
   requireApprovalForEdits?: Prisma.SortOrder
+  metricsDashboardUrl?: Prisma.SortOrderInput | Prisma.SortOrder
+  metricsApiUrl?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.FamilySettingsCountOrderByAggregateInput
@@ -277,6 +299,8 @@ export type FamilySettingsScalarWhereWithAggregatesInput = {
   defaultPrivacy?: Prisma.EnumPrivacyLevelWithAggregatesFilter<"FamilySettings"> | $Enums.PrivacyLevel
   allowSelfRegistration?: Prisma.BoolWithAggregatesFilter<"FamilySettings"> | boolean
   requireApprovalForEdits?: Prisma.BoolWithAggregatesFilter<"FamilySettings"> | boolean
+  metricsDashboardUrl?: Prisma.StringNullableWithAggregatesFilter<"FamilySettings"> | string | null
+  metricsApiUrl?: Prisma.StringNullableWithAggregatesFilter<"FamilySettings"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"FamilySettings"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"FamilySettings"> | Date | string
 }
@@ -290,6 +314,8 @@ export type FamilySettingsCreateInput = {
   defaultPrivacy?: $Enums.PrivacyLevel
   allowSelfRegistration?: boolean
   requireApprovalForEdits?: boolean
+  metricsDashboardUrl?: string | null
+  metricsApiUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -303,6 +329,8 @@ export type FamilySettingsUncheckedCreateInput = {
   defaultPrivacy?: $Enums.PrivacyLevel
   allowSelfRegistration?: boolean
   requireApprovalForEdits?: boolean
+  metricsDashboardUrl?: string | null
+  metricsApiUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -316,6 +344,8 @@ export type FamilySettingsUpdateInput = {
   defaultPrivacy?: Prisma.EnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel
   allowSelfRegistration?: Prisma.BoolFieldUpdateOperationsInput | boolean
   requireApprovalForEdits?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  metricsDashboardUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metricsApiUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -329,6 +359,8 @@ export type FamilySettingsUncheckedUpdateInput = {
   defaultPrivacy?: Prisma.EnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel
   allowSelfRegistration?: Prisma.BoolFieldUpdateOperationsInput | boolean
   requireApprovalForEdits?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  metricsDashboardUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metricsApiUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -342,6 +374,8 @@ export type FamilySettingsCreateManyInput = {
   defaultPrivacy?: $Enums.PrivacyLevel
   allowSelfRegistration?: boolean
   requireApprovalForEdits?: boolean
+  metricsDashboardUrl?: string | null
+  metricsApiUrl?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -355,6 +389,8 @@ export type FamilySettingsUpdateManyMutationInput = {
   defaultPrivacy?: Prisma.EnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel
   allowSelfRegistration?: Prisma.BoolFieldUpdateOperationsInput | boolean
   requireApprovalForEdits?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  metricsDashboardUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metricsApiUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -368,6 +404,8 @@ export type FamilySettingsUncheckedUpdateManyInput = {
   defaultPrivacy?: Prisma.EnumPrivacyLevelFieldUpdateOperationsInput | $Enums.PrivacyLevel
   allowSelfRegistration?: Prisma.BoolFieldUpdateOperationsInput | boolean
   requireApprovalForEdits?: Prisma.BoolFieldUpdateOperationsInput | boolean
+  metricsDashboardUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  metricsApiUrl?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -381,6 +419,8 @@ export type FamilySettingsCountOrderByAggregateInput = {
   defaultPrivacy?: Prisma.SortOrder
   allowSelfRegistration?: Prisma.SortOrder
   requireApprovalForEdits?: Prisma.SortOrder
+  metricsDashboardUrl?: Prisma.SortOrder
+  metricsApiUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -393,6 +433,8 @@ export type FamilySettingsMaxOrderByAggregateInput = {
   defaultPrivacy?: Prisma.SortOrder
   allowSelfRegistration?: Prisma.SortOrder
   requireApprovalForEdits?: Prisma.SortOrder
+  metricsDashboardUrl?: Prisma.SortOrder
+  metricsApiUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -405,6 +447,8 @@ export type FamilySettingsMinOrderByAggregateInput = {
   defaultPrivacy?: Prisma.SortOrder
   allowSelfRegistration?: Prisma.SortOrder
   requireApprovalForEdits?: Prisma.SortOrder
+  metricsDashboardUrl?: Prisma.SortOrder
+  metricsApiUrl?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -424,6 +468,8 @@ export type FamilySettingsSelect<ExtArgs extends runtime.Types.Extensions.Intern
   defaultPrivacy?: boolean
   allowSelfRegistration?: boolean
   requireApprovalForEdits?: boolean
+  metricsDashboardUrl?: boolean
+  metricsApiUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["familySettings"]>
@@ -437,6 +483,8 @@ export type FamilySettingsSelectCreateManyAndReturn<ExtArgs extends runtime.Type
   defaultPrivacy?: boolean
   allowSelfRegistration?: boolean
   requireApprovalForEdits?: boolean
+  metricsDashboardUrl?: boolean
+  metricsApiUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["familySettings"]>
@@ -450,6 +498,8 @@ export type FamilySettingsSelectUpdateManyAndReturn<ExtArgs extends runtime.Type
   defaultPrivacy?: boolean
   allowSelfRegistration?: boolean
   requireApprovalForEdits?: boolean
+  metricsDashboardUrl?: boolean
+  metricsApiUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["familySettings"]>
@@ -463,11 +513,13 @@ export type FamilySettingsSelectScalar = {
   defaultPrivacy?: boolean
   allowSelfRegistration?: boolean
   requireApprovalForEdits?: boolean
+  metricsDashboardUrl?: boolean
+  metricsApiUrl?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type FamilySettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "familyName" | "description" | "locale" | "customLabels" | "defaultPrivacy" | "allowSelfRegistration" | "requireApprovalForEdits" | "createdAt" | "updatedAt", ExtArgs["result"]["familySettings"]>
+export type FamilySettingsOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "familyName" | "description" | "locale" | "customLabels" | "defaultPrivacy" | "allowSelfRegistration" | "requireApprovalForEdits" | "metricsDashboardUrl" | "metricsApiUrl" | "createdAt" | "updatedAt", ExtArgs["result"]["familySettings"]>
 
 export type $FamilySettingsPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "FamilySettings"
@@ -481,6 +533,8 @@ export type $FamilySettingsPayload<ExtArgs extends runtime.Types.Extensions.Inte
     defaultPrivacy: $Enums.PrivacyLevel
     allowSelfRegistration: boolean
     requireApprovalForEdits: boolean
+    metricsDashboardUrl: string | null
+    metricsApiUrl: string | null
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["familySettings"]>
@@ -914,6 +968,8 @@ export interface FamilySettingsFieldRefs {
   readonly defaultPrivacy: Prisma.FieldRef<"FamilySettings", 'PrivacyLevel'>
   readonly allowSelfRegistration: Prisma.FieldRef<"FamilySettings", 'Boolean'>
   readonly requireApprovalForEdits: Prisma.FieldRef<"FamilySettings", 'Boolean'>
+  readonly metricsDashboardUrl: Prisma.FieldRef<"FamilySettings", 'String'>
+  readonly metricsApiUrl: Prisma.FieldRef<"FamilySettings", 'String'>
   readonly createdAt: Prisma.FieldRef<"FamilySettings", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"FamilySettings", 'DateTime'>
 }

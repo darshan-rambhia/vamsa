@@ -14,6 +14,7 @@ import { I18nextProvider } from "react-i18next";
 import i18n from "~/i18n/config";
 import appCss from "~/styles.css?url";
 import printCss from "~/styles/print.css?url";
+import { AlertTriangle, Home, RefreshCw, Search, ChevronDown, ChevronUp } from "lucide-react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -24,20 +25,80 @@ const queryClient = new QueryClient({
   },
 });
 
+/**
+ * 404 Not Found page - themed to match the app
+ */
 function NotFound() {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-      <h1 className="font-display text-4xl">404 - Page Not Found</h1>
-      <p className="text-muted-foreground">
-        The page you&apos;re looking for doesn&apos;t exist.
-      </p>
-      <Link to="/" className="text-primary hover:underline">
-        Go back home
-      </Link>
+    <div className="bg-background min-h-screen">
+      {/* Minimal header */}
+      <header className="border-border/50 border-b">
+        <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="bg-primary/10 flex h-9 w-9 items-center justify-center rounded-lg">
+              <svg
+                className="text-primary h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
+                />
+              </svg>
+            </div>
+            <span className="font-display text-xl font-medium tracking-tight">
+              Vamsa
+            </span>
+          </Link>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main className="flex flex-col items-center justify-center px-4 py-24 sm:py-32">
+        <div className="text-center">
+          {/* Decorative 404 */}
+          <p className="font-display text-primary/20 text-[120px] font-bold leading-none sm:text-[180px]">
+            404
+          </p>
+
+          <h1 className="font-display -mt-8 text-2xl font-semibold sm:text-3xl">
+            Page not found
+          </h1>
+          <p className="text-muted-foreground mt-3 max-w-md text-base">
+            The page you&apos;re looking for doesn&apos;t exist or may have been
+            moved. Check the URL or navigate back home.
+          </p>
+
+          <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+            <Link
+              to="/"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition-colors"
+            >
+              <Home className="h-4 w-4" />
+              Go to Homepage
+            </Link>
+            <Link
+              to="/people"
+              className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex items-center justify-center gap-2 rounded-md border px-5 py-2.5 text-sm font-medium transition-colors"
+            >
+              <Search className="h-4 w-4" />
+              Search People
+            </Link>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }
 
+/**
+ * Root error component - shown when an unhandled error occurs.
+ * This is the last resort error page when errors bubble up to the root.
+ */
 function RootErrorComponent({ error, reset }: ErrorComponentProps) {
   const [showDetails, setShowDetails] = useState(false);
   const router = useRouter();
@@ -53,70 +114,114 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-6 p-4">
-      <div className="text-center">
-        <div className="bg-destructive/10 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
-          <svg
-            className="text-destructive h-8 w-8"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
-        </div>
-        <h1 className="font-display text-2xl font-semibold">
-          Something went wrong
-        </h1>
-        <p className="text-muted-foreground mt-2 max-w-md">
-          We encountered an unexpected error. Please try again or return to the
-          home page.
-        </p>
-      </div>
-
-      <div className="flex gap-3">
-        <button
-          onClick={handleRetry}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-md px-4 py-2 text-sm font-medium transition-colors"
-        >
-          Try Again
-        </button>
-        <Link
-          to="/"
-          className="border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md border px-4 py-2 text-sm font-medium transition-colors"
-        >
-          Go Home
-        </Link>
-      </div>
-
-      {isDev && (
-        <div className="w-full max-w-2xl">
-          <button
-            onClick={() => setShowDetails(!showDetails)}
-            className="text-muted-foreground hover:text-foreground text-sm underline-offset-4 hover:underline"
-          >
-            {showDetails ? "Hide" : "Show"} technical details
-          </button>
-
-          {showDetails && (
-            <div className="bg-muted/50 mt-3 overflow-auto rounded-lg border p-4">
-              <p className="text-destructive mb-2 font-mono text-sm font-medium">
-                {errorMessage}
-              </p>
-              {errorStack && (
-                <pre className="text-muted-foreground overflow-x-auto font-mono text-xs whitespace-pre-wrap">
-                  {errorStack}
-                </pre>
-              )}
+    <div className="bg-background min-h-screen">
+      {/* Minimal header */}
+      <header className="border-border/50 border-b">
+        <div className="mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
+          <Link to="/" className="flex items-center gap-3">
+            <div className="bg-primary/10 flex h-9 w-9 items-center justify-center rounded-lg">
+              <svg
+                className="text-primary h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={1.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
+                />
+              </svg>
             </div>
-          )}
+            <span className="font-display text-xl font-medium tracking-tight">
+              Vamsa
+            </span>
+          </Link>
         </div>
-      )}
+      </header>
+
+      {/* Content */}
+      <main className="flex flex-col items-center justify-center px-4 py-16 sm:py-24">
+        <div className="w-full max-w-lg">
+          {/* Error card */}
+          <div className="border-destructive/20 rounded-xl border-2 bg-card p-8 shadow-sm">
+            <div className="flex flex-col items-center text-center">
+              <div className="bg-destructive/10 mb-5 flex h-16 w-16 items-center justify-center rounded-full">
+                <AlertTriangle className="text-destructive h-8 w-8" />
+              </div>
+
+              <h1 className="font-display text-2xl font-semibold">
+                Something went wrong
+              </h1>
+              <p className="text-muted-foreground mt-2 max-w-sm">
+                We encountered an unexpected error. Please try again or return to
+                the home page.
+              </p>
+
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={handleRetry}
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Try Again
+                </button>
+                <Link
+                  to="/"
+                  className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex items-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors"
+                >
+                  <Home className="h-4 w-4" />
+                  Go Home
+                </Link>
+              </div>
+            </div>
+
+            {isDev && (
+              <div className="mt-8 border-t pt-6">
+                <button
+                  onClick={() => setShowDetails(!showDetails)}
+                  className="text-muted-foreground hover:text-foreground flex w-full items-center justify-center gap-1 text-sm"
+                >
+                  {showDetails ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                  {showDetails ? "Hide" : "Show"} technical details
+                </button>
+
+                {showDetails && (
+                  <div className="bg-muted/50 mt-4 overflow-auto rounded-lg border p-4">
+                    <p className="text-destructive mb-2 font-mono text-sm font-medium break-all">
+                      {errorMessage}
+                    </p>
+                    {errorStack && (
+                      <pre className="text-muted-foreground overflow-x-auto font-mono text-xs whitespace-pre-wrap">
+                        {errorStack}
+                      </pre>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Help text */}
+          <p className="text-muted-foreground mt-6 text-center text-sm">
+            If this problem persists, please{" "}
+            <a
+              href="https://github.com/anthropics/claude-code/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              report an issue
+            </a>
+            .
+          </p>
+        </div>
+      </main>
     </div>
   );
 }

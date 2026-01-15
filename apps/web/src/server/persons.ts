@@ -77,6 +77,9 @@ export const listPersons = createServerFn({ method: "GET" })
     return personListInputSchema.parse(data);
   })
   .handler(async ({ data }) => {
+    // Require authentication to access person data
+    await requireAuth("VIEWER");
+
     const start = Date.now();
     const { page, limit, sortBy, sortOrder, search, isLiving } = data;
 
@@ -152,6 +155,9 @@ export const listPersons = createServerFn({ method: "GET" })
 export const getPerson = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
+    // Require authentication to access person data
+    await requireAuth("VIEWER");
+
     const person = await prisma.person.findUnique({
       where: { id: data.id },
       include: {
@@ -316,6 +322,9 @@ export const deletePerson = createServerFn({ method: "POST" })
 export const searchPersons = createServerFn({ method: "GET" })
   .inputValidator((data: { query: string; excludeId?: string }) => data)
   .handler(async ({ data }) => {
+    // Require authentication to search person data
+    await requireAuth("VIEWER");
+
     const start = Date.now();
 
     const persons = await prisma.person.findMany({

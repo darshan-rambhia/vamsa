@@ -107,10 +107,16 @@ export async function startTelemetry(): Promise<void> {
           // Configure HTTP instrumentation
           "@opentelemetry/instrumentation-http": {
             enabled: true,
-            // Ignore health checks and metrics endpoints
-            ignoreIncomingPaths: ["/health", "/health/cache", "/metrics"],
+            // Use ignoreIncomingRequestHook to filter out health checks and metrics endpoints
+            ignoreIncomingRequestHook: (request) => {
+              const url = request.url || "";
+              return url.startsWith("/health") || url === "/metrics";
+            },
             // Ignore outgoing requests to OTLP endpoint
-            ignoreOutgoingUrls: [new RegExp(`^${config.endpoint}`)],
+            ignoreOutgoingRequestHook: (request) => {
+              const host = request.host || "";
+              return host.includes("localhost:4318") || host.includes("otel");
+            },
           },
           // Disable DNS instrumentation (usually not needed)
           "@opentelemetry/instrumentation-dns": { enabled: false },

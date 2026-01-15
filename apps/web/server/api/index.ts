@@ -1,25 +1,26 @@
-import { Hono } from "hono";
+import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import authRouter from "./auth";
 import personsRouter from "./persons";
 import relationshipsRouter from "./relationships";
 import calendarRouter from "./calendar";
 import metricsRouter from "./metrics";
-import { openAPISpec } from "./openapi-spec";
 import { logger } from "@vamsa/lib/logger";
 
 /**
  * Main API router for Vamsa
  *
  * All routes are prefixed with /api/v1 in the main server
+ * Uses OpenAPIHono for automatic OpenAPI spec generation
  * This router handles:
  * - Authentication (login, logout, register)
  * - Person management (CRUD)
  * - Relationship management (CRUD)
- * - OpenAPI documentation and Swagger UI
+ * - Calendar feeds (RSS, iCal)
+ * - Metrics and monitoring
  */
 
-const apiV1 = new Hono();
+const apiV1 = new OpenAPIHono();
 
 // ============================================
 // Documentation Routes
@@ -39,10 +40,51 @@ apiV1.get(
 
 /**
  * GET /api/v1/openapi.json
- * OpenAPI 3.0 specification in JSON format
+ * OpenAPI 3.0 specification auto-generated from routes
  */
-apiV1.get("/openapi.json", (c) => {
-  return c.json(openAPISpec, { status: 200 });
+apiV1.doc("/openapi.json", {
+  openapi: "3.0.0",
+  info: {
+    title: "Vamsa API",
+    version: "1.0.0",
+    description: "Family genealogy application REST API",
+    contact: {
+      name: "Vamsa",
+      url: "https://vamsa.app",
+    },
+  },
+  servers: [
+    {
+      url: "http://localhost:3000/api/v1",
+      description: "Development server",
+    },
+    {
+      url: "https://vamsa.app/api/v1",
+      description: "Production server",
+    },
+  ],
+  tags: [
+    {
+      name: "Authentication",
+      description: "User authentication endpoints",
+    },
+    {
+      name: "Persons",
+      description: "Family tree person management",
+    },
+    {
+      name: "Relationships",
+      description: "Relationship management between persons",
+    },
+    {
+      name: "Calendar",
+      description: "Calendar feeds (RSS, iCal formats)",
+    },
+    {
+      name: "Metrics",
+      description: "Monitoring and performance metrics",
+    },
+  ],
 });
 
 /**
@@ -61,6 +103,8 @@ apiV1.get("/", (c) => {
         auth: "/api/v1/auth",
         persons: "/api/v1/persons",
         relationships: "/api/v1/relationships",
+        calendar: "/api/v1/calendar",
+        metrics: "/api/v1/metrics",
       },
     },
     { status: 200 }
@@ -73,7 +117,7 @@ apiV1.get("/", (c) => {
 
 /**
  * Mount sub-routers for each resource
- * These are versioned as /api/v1/...
+ * All routers use OpenAPIHono for consistent spec generation
  */
 apiV1.route("/auth", authRouter);
 apiV1.route("/persons", personsRouter);

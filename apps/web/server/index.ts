@@ -235,10 +235,10 @@ app.get("/media/*", serveMedia);
 
 // Use dynamic import to prevent Bun from auto-starting the TanStack server
 async function setupRoutes() {
-  // @ts-expect-error - Generated dist file
   const handler = await import("../dist/server/server.js");
 
   // Extract the fetch handler from TanStack Start
+  // @ts-expect-error - Dynamic import of generated bundle
   const tanstackFetch = handler.default?.fetch || handler.fetch;
 
   if (!tanstackFetch) {

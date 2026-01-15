@@ -65,6 +65,12 @@ export {
   importResultSchema,
   backupValidationPreviewSchema,
   importPreviewSchema,
+  storageProviderEnum,
+  backupStatusEnum,
+  backupTypeEnum,
+  backupSettingsSchema,
+  backupSchema,
+  listBackupsInputSchema,
   type BackupExportInput,
   type BackupMetadata,
   type ConflictResolutionStrategy,
@@ -74,6 +80,12 @@ export {
   type ImportResult,
   type BackupValidationPreview,
   type ImportPreview,
+  type StorageProvider,
+  type BackupStatus,
+  type BackupType,
+  type BackupSettings,
+  type Backup,
+  type ListBackupsInput,
 } from "./backup";
 
 // Event schemas
@@ -171,3 +183,14 @@ export {
   type SuggestionListInput,
   type AuditLogListInput,
 } from "./pagination";
+
+// Response schemas
+export {
+  errorResponseSchema,
+  successResponseSchema,
+  paginationMetadataSchema,
+  paginatedResponseSchema,
+  type ErrorResponse,
+  type SuccessResponse,
+  type PaginationMetadata,
+} from "./response";

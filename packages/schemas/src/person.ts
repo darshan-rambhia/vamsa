@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@hono/zod-openapi";
 import { parseDateString } from "@vamsa/lib";
 
 export const genderEnum = z.enum([
@@ -14,6 +14,8 @@ export const addressSchema = z.object({
   state: z.string().optional(),
   postalCode: z.string().optional(),
   country: z.string().optional(),
+}).openapi({
+  description: "Address information",
 });
 
 export const socialLinksSchema = z.object({
@@ -22,6 +24,8 @@ export const socialLinksSchema = z.object({
   linkedin: z.string().url().optional().or(z.literal("")),
   instagram: z.string().url().optional().or(z.literal("")),
   other: z.string().url().optional().or(z.literal("")),
+}).openapi({
+  description: "Social media links",
 });
 
 const dateSchema = z
@@ -30,6 +34,11 @@ const dateSchema = z
     if (!val) return null;
     if (val instanceof Date) return val;
     return parseDateString(val);
+  })
+  .openapi({
+    type: "string",
+    format: "date",
+    description: "Date in ISO format (YYYY-MM-DD) or Date object",
   });
 
 export const personCreateSchema = z.object({
@@ -50,6 +59,8 @@ export const personCreateSchema = z.object({
   employer: z.string().optional(),
   socialLinks: socialLinksSchema.optional().nullable(),
   isLiving: z.boolean().default(true),
+}).openapi({
+  description: "Person creation data",
 });
 
 export const personUpdateSchema = personCreateSchema.partial();

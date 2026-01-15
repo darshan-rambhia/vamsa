@@ -1,10 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {
   generateCalendarToken,
   listCalendarTokens,
   revokeCalendarToken,
+  deleteCalendarToken,
 } from "~/server/calendar";
 import {
   Container,
@@ -26,10 +27,9 @@ export const Route = createFileRoute("/_authenticated/subscribe")({
 });
 
 function SubscribeComponent() {
-  const [selectedType, setSelectedType] = useState<
-    "birthdays" | "anniversaries" | "events" | "all"
-  >("all");
+  const [tokenName, setTokenName] = useState("");
   const [generatedToken, setGeneratedToken] = useState<string | null>(null);
+  const [selectedTokenId, setSelectedTokenId] = useState<string | null>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
 
   const appUrl = typeof window !== "undefined" ? window.location.origin : "";
@@ -40,10 +40,15 @@ function SubscribeComponent() {
   });
 
   const generateMutation = useMutation({
-    mutationFn: (type: "birthdays" | "anniversaries" | "events" | "all") =>
-      generateCalendarToken({ data: { type, expiryDays: 365 } }),
+    mutationFn: (params: {
+      name?: string;
+    }) =>
+      generateCalendarToken({
+        data: { name: params.name || undefined, expiryDays: 365 },
+      }),
     onSuccess: (data) => {
       setGeneratedToken(data.token);
+      setTokenName("");
       refetchTokens();
     },
   });
@@ -58,8 +63,15 @@ function SubscribeComponent() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (token: string) => deleteCalendarToken({ data: { token } }),
+    onSuccess: () => {
+      refetchTokens();
+    },
+  });
+
   const handleGenerateToken = () => {
-    generateMutation.mutate(selectedType);
+    generateMutation.mutate({ name: tokenName.trim() || undefined });
   };
 
   const getCalendarUrl = (
@@ -86,6 +98,13 @@ function SubscribeComponent() {
   };
 
   const activeTokens = tokens?.filter((t) => t.isActive) || [];
+  const revokedTokens = tokens?.filter((t) => !t.isActive) || [];
+
+  // Get the selected token value (either newly generated or selected from list)
+  const selectedToken = selectedTokenId
+    ? activeTokens.find((t) => t.id === selectedTokenId)
+    : null;
+  const activeTokenValue = generatedToken || selectedToken?.token || null;
 
   return (
     <Container className="space-y-8">
@@ -105,26 +124,18 @@ function SubscribeComponent() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="calendar-type">Calendar Type</Label>
-              <select
-                id="calendar-type"
-                value={selectedType}
-                onChange={(e) =>
-                  setSelectedType(
-                    e.target.value as
-                      | "birthdays"
-                      | "anniversaries"
-                      | "events"
-                      | "all"
-                  )
-                }
-                className="border-input bg-background hover:border-primary/50 focus-visible:border-primary focus-visible:ring-primary/20 flex h-11 w-full rounded-md border-2 px-4 py-2 text-base transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
-              >
-                <option value="all">All Calendars</option>
-                <option value="birthdays">Birthdays Only</option>
-                <option value="anniversaries">Anniversaries Only</option>
-                <option value="events">Events Only</option>
-              </select>
+              <Label htmlFor="token-name">Token Name (Optional)</Label>
+              <Input
+                id="token-name"
+                type="text"
+                placeholder="e.g., iPhone Calendar, Work Mac"
+                value={tokenName}
+                onChange={(e) => setTokenName(e.target.value)}
+                className="w-full"
+              />
+              <p className="text-muted-foreground text-xs">
+                Give your token a name to identify it later
+              </p>
             </div>
 
             <Button
@@ -174,8 +185,8 @@ function SubscribeComponent() {
                       className="border-border flex items-center justify-between rounded-lg border p-3"
                     >
                       <div>
-                        <p className="text-sm font-medium capitalize">
-                          {token.type}
+                        <p className="text-sm font-medium">
+                          {token.name || "Calendar Token"}
                         </p>
                         <p className="text-muted-foreground text-xs">
                           Expires:{" "}
@@ -195,6 +206,48 @@ function SubscribeComponent() {
                 </div>
               </div>
             )}
+
+            {/* Revoked Tokens List */}
+            {revokedTokens.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-muted-foreground text-sm font-medium">Revoked Tokens</p>
+                <div className="space-y-2">
+                  {revokedTokens.map((token) => (
+                    <div
+                      key={token.id}
+                      className="border-border bg-muted/30 flex items-center justify-between rounded-lg border p-3"
+                    >
+                      <div>
+                        <p className="text-muted-foreground text-sm font-medium">
+                          {token.name || "Calendar Token"}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          Revoked
+                        </p>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => deleteMutation.mutate(token.id)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Link to advanced token management */}
+            <div className="border-border border-t pt-4">
+              <Link
+                to="/settings/calendar-tokens"
+                className="text-primary hover:text-primary/80 text-sm underline-offset-4 hover:underline"
+              >
+                Manage Tokens
+              </Link>
+            </div>
           </CardContent>
         </Card>
 
@@ -207,26 +260,91 @@ function SubscribeComponent() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {/* Token Selector */}
+            {(activeTokens.length > 0 || generatedToken) && (
+              <div className="space-y-2">
+                <Label htmlFor="token-select">Select Token</Label>
+                <select
+                  id="token-select"
+                  value={generatedToken ? "__new__" : selectedTokenId || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === "__new__") {
+                      // Keep using the generated token
+                      setSelectedTokenId(null);
+                    } else if (value === "") {
+                      setGeneratedToken(null);
+                      setSelectedTokenId(null);
+                    } else {
+                      setGeneratedToken(null);
+                      setSelectedTokenId(value);
+                    }
+                  }}
+                  className="border-input bg-background hover:border-primary/50 focus-visible:border-primary focus-visible:ring-primary/20 flex h-11 w-full rounded-md border-2 px-4 py-2 text-base transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
+                >
+                  <option value="">Select a token...</option>
+                  {generatedToken && (
+                    <option value="__new__">
+                      Newly Generated Token (copy this one!)
+                    </option>
+                  )}
+                  {activeTokens.map((token) => (
+                    <option key={token.id} value={token.id}>
+                      {token.name || "Calendar Token"} - Expires{" "}
+                      {new Date(token.expiresAt).toLocaleDateString()}
+                    </option>
+                  ))}
+                </select>
+                {generatedToken && (
+                  <p className="text-primary text-xs font-medium">
+                    New token generated! Copy the URLs below to use it.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {!activeTokenValue && (
+              <div className="border-amber-500/30 bg-amber-500/10 rounded-lg border-2 p-3">
+                <p className="text-amber-700 dark:text-amber-400 text-sm">
+                  <strong>No token selected.</strong> Generate a new token or
+                  select an existing one to get authenticated calendar URLs.
+                </p>
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="birthdays-url">
                 Birthday Calendar
-                <Badge variant="secondary" className="ml-2">
-                  Public
-                </Badge>
+                {activeTokenValue && (
+                  <Badge variant="secondary" className="ml-2">
+                    Authenticated
+                  </Badge>
+                )}
               </Label>
               <div className="flex gap-2">
                 <Input
                   id="birthdays-url"
                   readOnly
-                  value={getCalendarUrl("birthdays")}
-                  onClick={(e) => e.currentTarget.select()}
+                  value={
+                    activeTokenValue
+                      ? getCalendarUrl("birthdays", activeTokenValue)
+                      : "Generate or select a token to get URL"
+                  }
+                  onClick={(e) => activeTokenValue && e.currentTarget.select()}
                   className="text-xs"
+                  disabled={!activeTokenValue}
                 />
                 <Button
                   size="sm"
-                  onClick={() => copyToClipboard(getCalendarUrl("birthdays"))}
+                  onClick={() =>
+                    copyToClipboard(
+                      getCalendarUrl("birthdays", activeTokenValue || undefined)
+                    )
+                  }
+                  disabled={!activeTokenValue}
                 >
-                  {copiedUrl === getCalendarUrl("birthdays")
+                  {copiedUrl ===
+                  getCalendarUrl("birthdays", activeTokenValue || undefined)
                     ? "Copied!"
                     : "Copy"}
                 </Button>
@@ -236,25 +354,39 @@ function SubscribeComponent() {
             <div className="space-y-2">
               <Label htmlFor="anniversaries-url">
                 Anniversary Calendar
-                <Badge variant="secondary" className="ml-2">
-                  Public
-                </Badge>
+                {activeTokenValue && (
+                  <Badge variant="secondary" className="ml-2">
+                    Authenticated
+                  </Badge>
+                )}
               </Label>
               <div className="flex gap-2">
                 <Input
                   id="anniversaries-url"
                   readOnly
-                  value={getCalendarUrl("anniversaries")}
-                  onClick={(e) => e.currentTarget.select()}
+                  value={
+                    activeTokenValue
+                      ? getCalendarUrl("anniversaries", activeTokenValue)
+                      : "Generate or select a token to get URL"
+                  }
+                  onClick={(e) => activeTokenValue && e.currentTarget.select()}
                   className="text-xs"
+                  disabled={!activeTokenValue}
                 />
                 <Button
                   size="sm"
                   onClick={() =>
-                    copyToClipboard(getCalendarUrl("anniversaries"))
+                    copyToClipboard(
+                      getCalendarUrl(
+                        "anniversaries",
+                        activeTokenValue || undefined
+                      )
+                    )
                   }
+                  disabled={!activeTokenValue}
                 >
-                  {copiedUrl === getCalendarUrl("anniversaries")
+                  {copiedUrl ===
+                  getCalendarUrl("anniversaries", activeTokenValue || undefined)
                     ? "Copied!"
                     : "Copy"}
                 </Button>
@@ -264,23 +396,38 @@ function SubscribeComponent() {
             <div className="space-y-2">
               <Label htmlFor="events-url">
                 Events Calendar
-                <Badge variant="secondary" className="ml-2">
-                  Public
-                </Badge>
+                {activeTokenValue && (
+                  <Badge variant="secondary" className="ml-2">
+                    Authenticated
+                  </Badge>
+                )}
               </Label>
               <div className="flex gap-2">
                 <Input
                   id="events-url"
                   readOnly
-                  value={getCalendarUrl("events")}
-                  onClick={(e) => e.currentTarget.select()}
+                  value={
+                    activeTokenValue
+                      ? getCalendarUrl("events", activeTokenValue)
+                      : "Generate or select a token to get URL"
+                  }
+                  onClick={(e) => activeTokenValue && e.currentTarget.select()}
                   className="text-xs"
+                  disabled={!activeTokenValue}
                 />
                 <Button
                   size="sm"
-                  onClick={() => copyToClipboard(getCalendarUrl("events"))}
+                  onClick={() =>
+                    copyToClipboard(
+                      getCalendarUrl("events", activeTokenValue || undefined)
+                    )
+                  }
+                  disabled={!activeTokenValue}
                 >
-                  {copiedUrl === getCalendarUrl("events") ? "Copied!" : "Copy"}
+                  {copiedUrl ===
+                  getCalendarUrl("events", activeTokenValue || undefined)
+                    ? "Copied!"
+                    : "Copy"}
                 </Button>
               </div>
             </div>
@@ -288,29 +435,52 @@ function SubscribeComponent() {
             <div className="space-y-2">
               <Label htmlFor="rss-url">
                 RSS Feed
-                <Badge variant="secondary" className="ml-2">
-                  Public
-                </Badge>
+                {activeTokenValue && (
+                  <Badge variant="secondary" className="ml-2">
+                    Authenticated
+                  </Badge>
+                )}
               </Label>
               <div className="flex gap-2">
                 <Input
                   id="rss-url"
                   readOnly
-                  value={getRssUrl()}
-                  onClick={(e) => e.currentTarget.select()}
+                  value={
+                    activeTokenValue
+                      ? getRssUrl(activeTokenValue)
+                      : "Generate or select a token to get URL"
+                  }
+                  onClick={(e) => activeTokenValue && e.currentTarget.select()}
                   className="text-xs"
+                  disabled={!activeTokenValue}
                 />
-                <Button size="sm" onClick={() => copyToClipboard(getRssUrl())}>
-                  {copiedUrl === getRssUrl() ? "Copied!" : "Copy"}
+                <Button
+                  size="sm"
+                  onClick={() =>
+                    copyToClipboard(getRssUrl(activeTokenValue || undefined))
+                  }
+                  disabled={!activeTokenValue}
+                >
+                  {copiedUrl === getRssUrl(activeTokenValue || undefined)
+                    ? "Copied!"
+                    : "Copy"}
                 </Button>
               </div>
             </div>
 
             <div className="bg-muted/30 rounded-lg p-3">
               <p className="text-muted-foreground text-xs">
-                <strong>Note:</strong> To use private calendars with token
-                authentication, append <code>?token=YOUR_TOKEN</code> to any
-                calendar URL above.
+                {activeTokenValue ? (
+                  <>
+                    <strong>Note:</strong> URLs above include your token. Copy
+                    them to subscribe in your calendar app.
+                  </>
+                ) : (
+                  <>
+                    <strong>Note:</strong> Generate a new token or select an
+                    existing one to get authenticated calendar URLs.
+                  </>
+                )}
               </p>
             </div>
           </CardContent>

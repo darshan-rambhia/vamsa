@@ -111,13 +111,29 @@ function FanChartComponent({
 
         genNodes.forEach((node, index) => {
           if (gen === 0) {
-            // Root node at center
-            nodePositions.set(node.id, {
-              x: centerX,
-              y: centerY,
-              angle: 0,
-              radius: 0,
-            });
+            // Generation 0: Center person and any spouses
+            // If multiple people at gen 0 (e.g., person + spouse), offset them
+            if (genNodes.length === 1) {
+              // Single root node at center
+              nodePositions.set(node.id, {
+                x: centerX,
+                y: centerY,
+                angle: 0,
+                radius: 0,
+              });
+            } else {
+              // Multiple nodes at gen 0 (root + spouse): position side by side
+              const spouseOffset = nodeRadius * 2.5; // Space between nodes
+              const totalWidth = (genNodes.length - 1) * spouseOffset;
+              const startX = centerX - totalWidth / 2;
+
+              nodePositions.set(node.id, {
+                x: startX + index * spouseOffset,
+                y: centerY,
+                angle: 0,
+                radius: 0,
+              });
+            }
           } else {
             // Calculate angle - start from top and go clockwise
             const angle = -Math.PI / 2 + index * angleStep;
@@ -170,8 +186,20 @@ function FanChartComponent({
             .style("stroke-width", "2px")
             .style("fill", "none");
         } else if (edge.type === "spouse") {
-          // Arc connection along the same generation circle
-          if (source.radius === target.radius && source.radius > 0) {
+          // Spouse connection
+          if (source.radius === 0 && target.radius === 0) {
+            // Both at center (gen 0) - draw straight dashed line between them
+            edgeGroup
+              .append("line")
+              .attr("x1", source.x)
+              .attr("y1", source.y)
+              .attr("x2", target.x)
+              .attr("y2", target.y)
+              .style("stroke", "var(--color-primary)")
+              .style("stroke-width", "2px")
+              .style("stroke-dasharray", "5,5");
+          } else if (source.radius === target.radius && source.radius > 0) {
+            // Arc connection along the same generation circle
             const radius = source.radius;
             const startAngle = Math.atan2(
               source.y - centerY,

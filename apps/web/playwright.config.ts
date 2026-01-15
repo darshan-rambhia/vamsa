@@ -59,6 +59,8 @@ const webServerConfig = {
     DATABASE_URL:
       process.env.DATABASE_URL ||
       "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
+    // Disable rate limiting for E2E tests to prevent flaky tests
+    E2E_TESTING: "true",
   },
 };
 
@@ -82,7 +84,7 @@ export default defineConfig({
     timeout: 10 * 1000,
   },
   retries: process.env.CI ? 2 : 0,
-  workers: 8,
+  workers: 15,
   fullyParallel: true,
   outputDir: "test-output/results/",
   reporter: [
@@ -112,76 +114,5 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-
-    /* COMMENTED OUT FOR OPTIMIZATION - Can be re-enabled when needed
-
-    // Additional desktop browsers
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
-    },
-
-    // Tablet devices
-    {
-      name: "tablet-ipad",
-      use: { ...devices["iPad Pro"] },
-    },
-    {
-      name: "tablet-android",
-      use: { ...devices["Galaxy Tab S4"] },
-    },
-
-    // Mobile devices
-    {
-      name: "mobile-iphone",
-      use: { ...devices["iPhone 14 Pro"] },
-    },
-    {
-      name: "mobile-android",
-      use: { ...devices["Pixel 7"] },
-    },
-
-    // Responsive breakpoints for design system testing
-    {
-      name: "viewport-sm",
-      use: {
-        viewport: { width: 640, height: 900 },
-        userAgent: "Playwright/Viewport-SM",
-      },
-    },
-    {
-      name: "viewport-md",
-      use: {
-        viewport: { width: 768, height: 1024 },
-        userAgent: "Playwright/Viewport-MD",
-      },
-    },
-    {
-      name: "viewport-lg",
-      use: {
-        viewport: { width: 1024, height: 768 },
-        userAgent: "Playwright/Viewport-LG",
-      },
-    },
-    {
-      name: "viewport-xl",
-      use: {
-        viewport: { width: 1280, height: 800 },
-        userAgent: "Playwright/Viewport-XL",
-      },
-    },
-    {
-      name: "viewport-2xl",
-      use: {
-        viewport: { width: 1536, height: 864 },
-        userAgent: "Playwright/Viewport-2XL",
-      },
-    },
-
-    */
   ],
 });

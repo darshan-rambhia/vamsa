@@ -20,6 +20,8 @@ export const getFamilySettings = createServerFn({ method: "GET" }).handler(
         description: "",
         allowSelfRegistration: true,
         requireApprovalForEdits: true,
+        metricsDashboardUrl: null,
+        metricsApiUrl: null,
       };
     }
 
@@ -29,6 +31,8 @@ export const getFamilySettings = createServerFn({ method: "GET" }).handler(
       description: settings.description ?? "",
       allowSelfRegistration: settings.allowSelfRegistration,
       requireApprovalForEdits: settings.requireApprovalForEdits,
+      metricsDashboardUrl: settings.metricsDashboardUrl ?? null,
+      metricsApiUrl: settings.metricsApiUrl ?? null,
     };
   }
 );
@@ -39,6 +43,8 @@ const updateSettingsSchema = z.object({
   description: z.string().optional(),
   allowSelfRegistration: z.boolean(),
   requireApprovalForEdits: z.boolean(),
+  metricsDashboardUrl: z.string().url().nullable().optional(),
+  metricsApiUrl: z.string().url().nullable().optional(),
 });
 
 // Language preference schema
@@ -68,6 +74,8 @@ export const updateFamilySettings = createServerFn({ method: "POST" })
           description: data.description ?? null,
           allowSelfRegistration: data.allowSelfRegistration,
           requireApprovalForEdits: data.requireApprovalForEdits,
+          metricsDashboardUrl: data.metricsDashboardUrl ?? null,
+          metricsApiUrl: data.metricsApiUrl ?? null,
         },
       });
 
@@ -81,6 +89,8 @@ export const updateFamilySettings = createServerFn({ method: "POST" })
           description: data.description ?? null,
           allowSelfRegistration: data.allowSelfRegistration,
           requireApprovalForEdits: data.requireApprovalForEdits,
+          metricsDashboardUrl: data.metricsDashboardUrl ?? null,
+          metricsApiUrl: data.metricsApiUrl ?? null,
         },
       });
 

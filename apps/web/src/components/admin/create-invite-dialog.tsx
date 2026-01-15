@@ -164,8 +164,8 @@ export function CreateInviteDialog({
 
             <div className="space-y-2">
               <Label htmlFor="invite-link">Invite Link</Label>
-              <div className="bg-muted flex items-center gap-2 rounded-md p-2">
-                <code id="invite-link" className="flex-1 truncate text-sm">
+              <div className="bg-muted flex items-center gap-2 overflow-hidden rounded-md p-2">
+                <code id="invite-link" className="min-w-0 flex-1 truncate text-sm">
                   {`${typeof window !== "undefined" ? window.location.origin : ""}/invite/${success.token}`}
                 </code>
                 <Button

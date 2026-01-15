@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@hono/zod-openapi";
 import { parseDateString } from "@vamsa/lib";
 
 export const eventTypeEnum = z.enum([
@@ -25,6 +25,11 @@ const dateSchema = z
     if (!val) return null;
     if (val instanceof Date) return val;
     return parseDateString(val);
+  })
+  .openapi({
+    type: "string",
+    format: "date",
+    description: "Date in ISO format (YYYY-MM-DD) or Date object",
   });
 
 export const eventCreateSchema = z.object({

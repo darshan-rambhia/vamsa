@@ -9,6 +9,7 @@ interface TimelineChartProps {
   minYear: number;
   maxYear: number;
   onNodeClick?: (nodeId: string) => void;
+  resetSignal?: number;
 }
 
 export function TimelineChart({
@@ -16,9 +17,11 @@ export function TimelineChart({
   minYear,
   maxYear,
   onNodeClick,
+  resetSignal,
 }: TimelineChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const resetViewRef = useRef<() => void>();
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current || entries.length === 0)
@@ -290,8 +293,18 @@ export function TimelineChart({
       const transform = d3.zoomIdentity.translate(20, 20).scale(scale);
 
       svg.transition().duration(750).call(zoom.transform, transform);
+
+      resetViewRef.current = () => {
+        svg.transition().duration(300).call(zoom.transform, transform);
+      };
     }
   }, [entries, minYear, maxYear, onNodeClick]);
+
+  useEffect(() => {
+    if (resetSignal !== undefined && resetViewRef.current) {
+      resetViewRef.current();
+    }
+  }, [resetSignal]);
 
   return (
     <div

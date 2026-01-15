@@ -20,6 +20,8 @@ interface SettingsFormData {
   description: string;
   allowSelfRegistration: boolean;
   requireApprovalForEdits: boolean;
+  metricsDashboardUrl: string;
+  metricsApiUrl: string;
 }
 
 interface SettingsFormProps {
@@ -29,6 +31,8 @@ interface SettingsFormProps {
     description: string;
     allowSelfRegistration: boolean;
     requireApprovalForEdits: boolean;
+    metricsDashboardUrl: string | null;
+    metricsApiUrl: string | null;
   };
 }
 
@@ -49,6 +53,8 @@ export function SettingsForm({ settings }: SettingsFormProps) {
       description: settings.description,
       allowSelfRegistration: settings.allowSelfRegistration,
       requireApprovalForEdits: settings.requireApprovalForEdits,
+      metricsDashboardUrl: settings.metricsDashboardUrl ?? "",
+      metricsApiUrl: settings.metricsApiUrl ?? "",
     },
   });
 
@@ -58,7 +64,14 @@ export function SettingsForm({ settings }: SettingsFormProps) {
     setSuccess(false);
 
     try {
-      await updateFamilySettings({ data });
+      await updateFamilySettings({
+        data: {
+          ...data,
+          // Convert empty strings to null for optional URL fields
+          metricsDashboardUrl: data.metricsDashboardUrl || null,
+          metricsApiUrl: data.metricsApiUrl || null,
+        },
+      });
       setSuccess(true);
       router.invalidate();
       // Clear success message after 3 seconds
@@ -193,6 +206,65 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                 edits
               </p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Integrations</CardTitle>
+          <CardDescription>
+            Configure external monitoring and observability tools
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="metricsDashboardUrl">Metrics Dashboard URL</Label>
+            <Input
+              id="metricsDashboardUrl"
+              type="url"
+              {...register("metricsDashboardUrl", {
+                validate: (value) =>
+                  !value ||
+                  /^https?:\/\/.+/.test(value) ||
+                  "Please enter a valid URL",
+              })}
+              placeholder="https://grafana.example.com"
+              data-testid="settings-metrics-dashboard-url-input"
+            />
+            <p className="text-muted-foreground text-sm">
+              Custom Grafana, Datadog, or other metrics dashboard URL. Leave
+              empty to use the default.
+            </p>
+            {errors.metricsDashboardUrl && (
+              <p className="text-destructive text-sm">
+                {errors.metricsDashboardUrl.message}
+              </p>
+            )}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="metricsApiUrl">Metrics API URL</Label>
+            <Input
+              id="metricsApiUrl"
+              type="url"
+              {...register("metricsApiUrl", {
+                validate: (value) =>
+                  !value ||
+                  /^https?:\/\/.+/.test(value) ||
+                  "Please enter a valid URL",
+              })}
+              placeholder="https://prometheus.example.com"
+              data-testid="settings-metrics-api-url-input"
+            />
+            <p className="text-muted-foreground text-sm">
+              Custom Prometheus or metrics API endpoint URL. Leave empty to use
+              the default.
+            </p>
+            {errors.metricsApiUrl && (
+              <p className="text-destructive text-sm">
+                {errors.metricsApiUrl.message}
+              </p>
+            )}
           </div>
         </CardContent>
       </Card>
