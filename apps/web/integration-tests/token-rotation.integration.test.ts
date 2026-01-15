@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 
 // Note: LOG_LEVEL=error is used in test command to silence logger warnings
-import { prisma } from "../../src/server/db";
+import { prisma } from "../src/server/db";
 import { Prisma } from "@vamsa/api";
 import { addDays, subDays, differenceInDays } from "date-fns";
 import crypto from "crypto";
@@ -15,7 +15,7 @@ import {
   rotateToken,
   revokeToken,
   enforceRotationPolicy,
-} from "./token-rotation";
+} from "../server/auth/token-rotation";
 
 // --- Helpers ---
 

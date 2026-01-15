@@ -10,25 +10,24 @@
 
 import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
 
-// Mock the OpenTelemetry API
-let mockSpan: any;
-let mockTracer: any;
+// Mock the OpenTelemetry API - scoped within the test file's execution
+// These mocks affect module resolution during this test file only
+const mockSpan = {
+  setAttribute: mock(() => {}),
+  setStatus: mock(() => {}),
+  recordException: mock(() => {}),
+  end: mock(() => {}),
+};
 
-beforeEach(() => {
-  mockSpan = {
-    setAttribute: mock(() => {}),
-    setStatus: mock(() => {}),
-    recordException: mock(() => {}),
-    end: mock(() => {}),
-  };
+const mockTracer = {
+  startActiveSpan: mock(async (_name: string, _options: unknown, callback: (span: typeof mockSpan) => unknown) => {
+    return callback(mockSpan);
+  }),
+};
 
-  mockTracer = {
-    startActiveSpan: mock(async (name, options, callback) => {
-      return callback(mockSpan);
-    }),
-  };
-});
-
+// Note: mock.module() calls affect module resolution globally in Bun's test runner.
+// These mocks are needed to test the db module without real database connections.
+// Other test files that need the real implementations should import before these mocks take effect.
 mock.module("@opentelemetry/api", () => ({
   trace: {
     getTracer: mock(() => mockTracer),
@@ -41,7 +40,7 @@ mock.module("@opentelemetry/api", () => ({
 
 mock.module("@vamsa/api/client", () => ({
   prisma: {
-    $extends: (extensionObj) => {
+    $extends: (_extensionObj: unknown) => {
       // Return a mock prisma client with the extension
       return {
         $extends: mock(() => ({})),
@@ -58,6 +57,9 @@ mock.module("@vamsa/api/client", () => ({
   shutdown: mock(() => Promise.resolve()),
 }));
 
+// Note: This mock intentionally returns "UNKNOWN" for getPrismaErrorType
+// since we're testing the db module's usage of these functions, not the functions themselves.
+// The actual getPrismaErrorType implementation is tested in prisma.test.ts
 mock.module("./metrics/prisma", () => ({
   recordPrismaQuery: mock(() => {}),
   recordPrismaError: mock(() => {}),
@@ -67,7 +69,7 @@ mock.module("./metrics/prisma", () => ({
 
 mock.module("./metrics/slow-query-logger", () => ({
   logSlowQuery: mock(() => {}),
-  sanitizeQueryParams: mock((params) => params),
+  sanitizeQueryParams: mock((params: unknown) => params),
 }));
 
 describe("Database Client", () => {
