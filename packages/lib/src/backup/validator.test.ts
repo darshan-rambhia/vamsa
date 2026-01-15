@@ -368,4 +368,39 @@ describe("BackupValidator", () => {
       expect(result.isValid).toBe(false);
     });
   });
+
+  describe("integration validation scenarios", () => {
+    it("validates result structure with errors", async () => {
+      const buffer = Buffer.from("");
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      // Should have proper result structure
+      expect(result).toHaveProperty("isValid");
+      expect(result).toHaveProperty("metadata");
+      expect(result).toHaveProperty("conflicts");
+      expect(result).toHaveProperty("statistics");
+      expect(result).toHaveProperty("errors");
+      expect(result).toHaveProperty("warnings");
+    });
+
+    it("returns false for validation on empty buffer", async () => {
+      const buffer = Buffer.from("");
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors.length).toBeGreaterThan(0);
+    });
+
+    it("metadata is always defined in result", async () => {
+      const buffer = Buffer.from("");
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.metadata).toBeDefined();
+      expect(result.metadata.version).toBeDefined();
+      expect(result.metadata.statistics).toBeDefined();
+    });
+  });
 });

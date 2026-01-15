@@ -35,6 +35,12 @@ describe("sanitizeQuery", () => {
   });
 });
 
+/**
+ * Note: The phrase detection logic (lines 138, 188-194 in search.ts) is unreachable
+ * because sanitizeQuery() removes quotes before phrase regex matching. The phrase
+ * support mentioned in JSDoc is not actually functional due to this design issue.
+ * This would require refactoring to extract/sanitize phrases before removing quotes.
+ */
 describe("buildTsQuery", () => {
   it("builds simple term query with prefix", () => {
     expect(buildTsQuery("john")).toBe("john:*");
@@ -68,20 +74,54 @@ describe("buildTsQuery", () => {
     expect(buildTsQuery("joh*")).toBe("joh:*");
   });
 
-  it("handles phrase search", () => {
-    // Phrases are processed - the quote characters get sanitized out
-    // The actual phrase search uses <-> (FOLLOWED BY) operator
+  it("handles quoted phrase - quotes removed during sanitization", () => {
+    // Quotes are removed by sanitizeQuery, so phrase syntax is not preserved
+    // This means '"john doe"' becomes 'john doe' and is treated as two terms
     const result = buildTsQuery('"john doe"');
-    // After sanitization, quotes are removed, so it's treated as individual terms
-    expect(result).toContain("john");
-    expect(result).toContain("doe");
+    expect(result).toContain("john:*");
+    expect(result).toContain("doe:*");
+    // Two separate terms connected with &
+    expect(result).toBe("john:* & doe:*");
   });
 
-  it("handles mixed terms and phrases", () => {
-    const result = buildTsQuery('smith "john doe"');
-    expect(result).toContain("smith:*");
+  it("handles complex query with OR and NOT", () => {
+    const result = buildTsQuery("john OR NOT mary");
+    expect(result).toContain("john:*");
+    expect(result).toContain("!mary:*");
+    expect(result).toContain("|");
+  });
+
+  it("handles multiple OR operators", () => {
+    const result = buildTsQuery("john OR jane OR mary");
+    expect(result).toContain("john:*");
+    expect(result).toContain("jane:*");
+    expect(result).toContain("mary:*");
+    const orCount = (result.match(/\|/g) || []).length;
+    expect(orCount).toBe(2);
+  });
+
+  it("handles NOT at end without next term", () => {
+    const result = buildTsQuery("john NOT");
+    // NOT without following term should be ignored
+    expect(result).toBe("john:*");
+  });
+
+  it("handles multiple consecutive NOT operators", () => {
+    const result = buildTsQuery("NOT NOT john");
+    // Should process two NOTs on john
     expect(result).toContain("john");
-    expect(result).toContain("doe");
+  });
+
+  it("handles dash prefix without term", () => {
+    const result = buildTsQuery("-");
+    // Dash alone should result in empty
+    expect(result).toBe("");
+  });
+
+  it("handles asterisk without preceding term", () => {
+    const result = buildTsQuery("*");
+    // Just an asterisk should be handled gracefully
+    expect(result).toBe("");
   });
 
   it("handles empty query", () => {

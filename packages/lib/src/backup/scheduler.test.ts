@@ -188,6 +188,175 @@ describe("getNextScheduledTime", () => {
     // Should be Feb 1 since Jan 1 has passed
     expect(next.getUTCMonth()).toBe(1); // February
   });
+
+  it("returns same day weekly when current day matches and time not passed", () => {
+    const schedule: BackupSchedule = {
+      type: "WEEKLY",
+      enabled: true,
+      time: "15:00",
+      day: 1, // Monday
+    };
+    // Monday Jan 15, 2024 at 10:00 UTC
+    const from = new Date("2024-01-15T10:00:00Z");
+    const next = getNextScheduledTime(schedule, from);
+
+    // Current day is Monday (day 1) and time hasn't passed
+    expect(next.getUTCDay()).toBe(1); // Monday
+    expect(next.getUTCHours()).toBe(15);
+    expect(next.getUTCDate()).toBe(15); // Same day
+  });
+
+  it("adjusts weekly when current day matches but target is different", () => {
+    const schedule: BackupSchedule = {
+      type: "WEEKLY",
+      enabled: true,
+      time: "15:00",
+      day: 3, // Wednesday
+    };
+    // Monday Jan 15, 2024 at 10:00 UTC
+    const from = new Date("2024-01-15T10:00:00Z");
+    const next = getNextScheduledTime(schedule, from);
+
+    // Should move to Wednesday (2 days later)
+    expect(next.getUTCDay()).toBe(3);
+    expect(next.getUTCDate()).toBe(17);
+  });
+
+  it("handles monthly same date when time not passed yet", () => {
+    const schedule: BackupSchedule = {
+      type: "MONTHLY",
+      enabled: true,
+      time: "15:00",
+      day: 15,
+    };
+    // Jan 15, 2024 at 10:00 UTC
+    const from = new Date("2024-01-15T10:00:00Z");
+    const next = getNextScheduledTime(schedule, from);
+
+    // Current day is 15th and time hasn't passed
+    expect(next.getUTCDate()).toBe(15);
+    expect(next.getUTCHours()).toBe(15);
+    expect(next.getUTCMonth()).toBe(0); // Same month
+  });
+
+  it("moves to next month for monthly when target day is in the past", () => {
+    const schedule: BackupSchedule = {
+      type: "MONTHLY",
+      enabled: true,
+      time: "04:00",
+      day: 10,
+    };
+    // Jan 15, 2024 at 10:00 UTC (10th already passed)
+    const from = new Date("2024-01-15T10:00:00Z");
+    const next = getNextScheduledTime(schedule, from);
+
+    // Should be Feb 10
+    expect(next.getUTCDate()).toBe(10);
+    expect(next.getUTCMonth()).toBe(1); // February
+  });
+
+  it("calculates correctly at exact scheduled time boundary", () => {
+    const schedule: BackupSchedule = {
+      type: "DAILY",
+      enabled: true,
+      time: "14:00",
+    };
+    const from = new Date("2024-01-15T14:00:00Z");
+    const next = getNextScheduledTime(schedule, from);
+
+    // Time is exactly at the scheduled time, should move to next day
+    expect(next.getUTCDate()).toBe(16);
+  });
+
+  it("handles Saturday to Sunday weekly transition", () => {
+    const schedule: BackupSchedule = {
+      type: "WEEKLY",
+      enabled: true,
+      time: "03:00",
+      day: 0, // Sunday
+    };
+    // Saturday Jan 20, 2024 at 10:00 UTC
+    const from = new Date("2024-01-20T10:00:00Z");
+    const next = getNextScheduledTime(schedule, from);
+
+    expect(next.getUTCDay()).toBe(0); // Sunday
+    expect(next.getUTCDate()).toBe(21); // Next day
+  });
+
+  it("handles month-end for monthly scheduling same month", () => {
+    const schedule: BackupSchedule = {
+      type: "MONTHLY",
+      enabled: true,
+      time: "15:00",
+      day: 28, // Safe day
+    };
+    // Jan 20, 2024 at 10:00
+    const from = new Date("2024-01-20T10:00:00Z");
+    const next = getNextScheduledTime(schedule, from);
+
+    // Jan 28 at 15:00 is after Jan 20 at 10:00
+    expect(next.getUTCDate()).toBe(28);
+    expect(next.getUTCMonth()).toBe(0); // Same month
+  });
+
+  it("handles weekly wrap-around from Friday to Monday", () => {
+    const schedule: BackupSchedule = {
+      type: "WEEKLY",
+      enabled: true,
+      time: "02:00",
+      day: 1, // Monday
+    };
+    // Friday Jan 19, 2024 at 10:00 UTC
+    const from = new Date("2024-01-19T10:00:00Z");
+    const next = getNextScheduledTime(schedule, from);
+
+    // Should be next Monday
+    expect(next.getUTCDay()).toBe(1);
+    expect(next.getUTCDate()).toBe(22);
+  });
+
+  it("handles weekly when no day specified defaults to Sunday", () => {
+    const schedule: BackupSchedule = {
+      type: "WEEKLY",
+      enabled: true,
+      time: "12:00",
+    };
+    // Monday Jan 15, 2024
+    const from = new Date("2024-01-15T10:00:00Z");
+    const next = getNextScheduledTime(schedule, from);
+
+    expect(next.getUTCDay()).toBe(0); // Sunday (default)
+  });
+
+  it("handles monthly when no day specified defaults to 1st", () => {
+    const schedule: BackupSchedule = {
+      type: "MONTHLY",
+      enabled: true,
+      time: "12:00",
+    };
+    // Jan 15, 2024
+    const from = new Date("2024-01-15T10:00:00Z");
+    const next = getNextScheduledTime(schedule, from);
+
+    expect(next.getUTCDate()).toBe(1);
+    expect(next.getUTCMonth()).toBe(1); // Feb (Jan 1st passed)
+  });
+
+  it("handles weekly when same day and time already passed", () => {
+    const schedule: BackupSchedule = {
+      type: "WEEKLY",
+      enabled: true,
+      time: "02:00",
+      day: 1, // Monday
+    };
+    // Monday Jan 15, 2024 at 10:00 UTC (after 02:00)
+    const from = new Date("2024-01-15T10:00:00Z");
+    const next = getNextScheduledTime(schedule, from);
+
+    // Should move to next Monday
+    expect(next.getUTCDay()).toBe(1);
+    expect(next.getUTCDate()).toBe(22);
+  });
 });
 
 describe("isValidWeekday", () => {
