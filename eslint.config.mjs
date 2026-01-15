@@ -31,6 +31,7 @@ export default tseslint.config(
       "**/*.config.js",
       "**/*.config.mjs",
       "**/postcss.config.mjs",
+      "site/**", // Ladle build output
     ],
   },
 

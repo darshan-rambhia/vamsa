@@ -57,5 +57,8 @@ yarn.lock
 .idea
 .vscode
 
+# Ladle cache
+apps/web/.ladle/.cache
+
 !.claude
 !CLAUDE.md
