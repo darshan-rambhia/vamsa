@@ -40,20 +40,32 @@ describe("Card", () => {
       const { getByTestId } = render(<Card data-testid="card">Content</Card>);
       const card = getByTestId("card");
       expect(card.className).toContain("rounded-lg");
-      expect(card.className).toContain("border");
-      expect(card.className).toContain("shadow");
+      expect(card.className).toContain("border-2");
+      expect(card.className).toContain("shadow-sm");
     });
 
-    test("has hover styles", () => {
+    test("applies hover styles on hover", () => {
       const { getByTestId } = render(<Card data-testid="card">Content</Card>);
       const card = getByTestId("card");
-      expect(card.className).toContain("hover:");
+      // Verify hover classes are present
+      expect(card.className).toContain("hover:border-primary/20");
+      expect(card.className).toContain("hover:shadow-md");
     });
 
-    test("has transition styles", () => {
+    test("applies transition animation", () => {
       const { getByTestId } = render(<Card data-testid="card">Content</Card>);
       const card = getByTestId("card");
-      expect(card.className).toContain("transition");
+      // Verify full transition configuration
+      expect(card.className).toContain("transition-all");
+      expect(card.className).toContain("duration-300");
+      expect(card.className).toContain("ease-out");
+    });
+
+    test("applies background and text color", () => {
+      const { getByTestId } = render(<Card data-testid="card">Content</Card>);
+      const card = getByTestId("card");
+      expect(card.className).toContain("bg-card");
+      expect(card.className).toContain("text-card-foreground");
     });
   });
 
@@ -88,12 +100,19 @@ describe("CardHeader", () => {
     expect(getByText("Header Content")).toBeDefined();
   });
 
-  test("applies base styles with padding", () => {
+  test("applies flex layout for title and description", () => {
     const { getByTestId } = render(
       <CardHeader data-testid="header">Header</CardHeader>
     );
     const header = getByTestId("header");
+    // Vertical flex layout for stacking
+    expect(header.className).toContain("flex");
+    expect(header.className).toContain("flex-col");
+    // Spacing between children
+    expect(header.className).toContain("space-y-2");
+    // Padding with reduced bottom padding for content spacing
     expect(header.className).toContain("p-6");
+    expect(header.className).toContain("pb-4");
   });
 
   test("applies custom className", () => {
@@ -141,13 +160,35 @@ describe("CardTitle", () => {
     expect(getByText("My Card Title")).toBeDefined();
   });
 
-  test("applies font styles", () => {
+  test("applies typography and spacing styles", () => {
     const { getByTestId } = render(
       <CardTitle data-testid="title">Title</CardTitle>
     );
     const title = getByTestId("title");
+    // Display font
     expect(title.className).toContain("font-display");
+    expect(title.className).toContain("text-xl");
+    // Weight and spacing
     expect(title.className).toContain("font-medium");
+    expect(title.className).toContain("leading-tight");
+    expect(title.className).toContain("tracking-tight");
+  });
+
+  test("renders with aria-label for accessibility", () => {
+    const { getByTestId } = render(
+      <CardTitle aria-label="Important Title" data-testid="title">
+        Title
+      </CardTitle>
+    );
+    const title = getByTestId("title");
+    expect(title.getAttribute("aria-label")).toBe("Important Title");
+  });
+
+  test("renders sr-only text when no children provided", () => {
+    const { container } = render(<CardTitle aria-label="Card title" />);
+    const srOnlyText = container.querySelector(".sr-only");
+    expect(srOnlyText).toBeDefined();
+    expect(srOnlyText?.textContent).toBe("Card title");
   });
 
   test("applies custom className", () => {
@@ -191,20 +232,16 @@ describe("CardDescription", () => {
     expect(getByText("Card description text")).toBeDefined();
   });
 
-  test("applies muted text style", () => {
+  test("applies muted text styling for secondary information", () => {
     const { getByTestId } = render(
       <CardDescription data-testid="desc">Description</CardDescription>
     );
     const desc = getByTestId("desc");
+    // Color and size for subtle description text
     expect(desc.className).toContain("text-muted-foreground");
-  });
-
-  test("applies small text size", () => {
-    const { getByTestId } = render(
-      <CardDescription data-testid="desc">Description</CardDescription>
-    );
-    const desc = getByTestId("desc");
     expect(desc.className).toContain("text-sm");
+    // Line height for readability
+    expect(desc.className).toContain("leading-relaxed");
   });
 
   test("applies custom className", () => {
@@ -245,12 +282,15 @@ describe("CardContent", () => {
     expect(getByText("Main content here")).toBeDefined();
   });
 
-  test("applies padding styles", () => {
+  test("applies padding with reduced top padding", () => {
     const { getByTestId } = render(
       <CardContent data-testid="content">Content</CardContent>
     );
     const content = getByTestId("content");
+    // Standard padding on sides and bottom
     expect(content.className).toContain("p-6");
+    // Reduced top padding to avoid double spacing after header
+    expect(content.className).toContain("pt-0");
   });
 
   test("applies custom className", () => {
@@ -291,13 +331,19 @@ describe("CardFooter", () => {
     expect(getByText("Footer content")).toBeDefined();
   });
 
-  test("applies flex styles for actions", () => {
+  test("applies flex layout for action buttons", () => {
     const { getByTestId } = render(
       <CardFooter data-testid="footer">Footer</CardFooter>
     );
     const footer = getByTestId("footer");
+    // Layout for horizontal button arrangement
     expect(footer.className).toContain("flex");
     expect(footer.className).toContain("items-center");
+    // Spacing between actions
+    expect(footer.className).toContain("gap-4");
+    // Padding to match content area
+    expect(footer.className).toContain("p-6");
+    expect(footer.className).toContain("pt-0");
   });
 
   test("applies custom className", () => {

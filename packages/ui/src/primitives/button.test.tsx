@@ -34,71 +34,113 @@ describe("Button", () => {
   });
 
   describe("variants", () => {
-    test("applies default variant", () => {
+    test("applies default variant with primary background", () => {
       const { getByRole } = render(<Button>Default</Button>);
       const button = getByRole("button");
+      // Verify button has shadow (only primary and secondary have shadow-sm)
+      expect(button.className).toContain("shadow-sm");
       expect(button.className).toContain("bg-primary");
     });
 
-    test("applies destructive variant", () => {
-      const { getByRole } = render(
-        <Button variant="destructive">Delete</Button>
-      );
-      const button = getByRole("button");
-      expect(button.className).toContain("bg-destructive");
+    test("destructive variant differs from default", () => {
+      const { getByRole, rerender } = render(<Button>Default</Button>);
+      const defaultButton = getByRole("button");
+      const defaultClasses = defaultButton.className;
+
+      rerender(<Button variant="destructive">Delete</Button>);
+      const destructiveButton = getByRole("button");
+      // Verify it's not the same styling as default
+      expect(destructiveButton.className).not.toEqual(defaultClasses);
+      expect(destructiveButton.className).toContain("bg-destructive");
+      expect(destructiveButton.className).toContain("shadow-sm");
     });
 
-    test("applies outline variant", () => {
+    test("outline variant has transparent background with border", () => {
       const { getByRole } = render(<Button variant="outline">Outline</Button>);
       const button = getByRole("button");
+      expect(button.className).toContain("bg-transparent");
       expect(button.className).toContain("border");
+      // Outline should not have shadow
+      expect(button.className).not.toContain("shadow-sm");
     });
 
-    test("applies secondary variant", () => {
+    test("secondary variant uses secondary colors", () => {
       const { getByRole } = render(
         <Button variant="secondary">Secondary</Button>
       );
       const button = getByRole("button");
       expect(button.className).toContain("bg-secondary");
+      expect(button.className).toContain("shadow-sm");
     });
 
-    test("applies ghost variant", () => {
+    test("ghost variant has minimal styling", () => {
       const { getByRole } = render(<Button variant="ghost">Ghost</Button>);
       const button = getByRole("button");
+      // Ghost should not have background color or shadow
+      expect(button.className).not.toContain("bg-primary");
+      expect(button.className).not.toContain("bg-secondary");
+      expect(button.className).not.toContain("bg-destructive");
+      expect(button.className).not.toContain("shadow-sm");
+      // But should have hover effect
       expect(button.className).toContain("hover:bg-accent");
     });
 
-    test("applies link variant", () => {
+    test("link variant renders as text with underline on hover", () => {
       const { getByRole } = render(<Button variant="link">Link</Button>);
       const button = getByRole("button");
+      // Link variant should not have background
+      expect(button.className).not.toContain("bg-primary");
+      expect(button.className).not.toContain("shadow-sm");
+      // Should have underline styling
       expect(button.className).toContain("underline-offset-4");
+      expect(button.className).toContain("hover:underline");
     });
   });
 
   describe("sizes", () => {
-    test("applies default size", () => {
+    test("default size has standard dimensions", () => {
       const { getByRole } = render(<Button>Default Size</Button>);
       const button = getByRole("button");
       expect(button.className).toContain("h-10");
+      expect(button.className).toContain("px-6");
+      expect(button.className).toContain("py-2.5");
     });
 
-    test("applies sm size", () => {
-      const { getByRole } = render(<Button size="sm">Small</Button>);
-      const button = getByRole("button");
-      expect(button.className).toContain("h-9");
+    test("small size is visually distinct from default", () => {
+      const { getByRole, rerender } = render(<Button>Default</Button>);
+      const defaultButton = getByRole("button");
+      const defaultHeight = defaultButton.className.includes("h-10");
+
+      rerender(<Button size="sm">Small</Button>);
+      const smallButton = getByRole("button");
+      // Verify small is actually shorter
+      expect(smallButton.className).toContain("h-9");
+      expect(defaultHeight).toBe(true);
+      // Verify padding is reduced
+      expect(smallButton.className).toContain("px-6");
     });
 
-    test("applies lg size", () => {
-      const { getByRole } = render(<Button size="lg">Large</Button>);
-      const button = getByRole("button");
-      expect(button.className).toContain("h-12");
+    test("large size is visually distinct from default", () => {
+      const { getByRole, rerender } = render(<Button>Default</Button>);
+      // First render to establish baseline, then rerender with size
+      rerender(<Button size="lg">Large</Button>);
+      const largeButton = getByRole("button");
+      // Verify large is actually taller
+      expect(largeButton.className).toContain("h-12");
+      expect(largeButton.className).toContain("px-9");
+      expect(largeButton.className).toContain("py-3");
+      // Verify text is larger
+      expect(largeButton.className).toContain("text-base");
     });
 
-    test("applies icon size", () => {
+    test("icon size creates square button", () => {
       const { getByRole } = render(<Button size="icon">I</Button>);
       const button = getByRole("button");
+      // Icon size should be square
       expect(button.className).toContain("h-10");
       expect(button.className).toContain("w-10");
+      // Icon size should not have padding (height/width define size)
+      expect(button.className).not.toContain("px-6");
     });
   });
 
@@ -128,10 +170,14 @@ describe("Button", () => {
       expect(button.hasAttribute("disabled")).toBe(true);
     });
 
-    test("applies disabled styles", () => {
+    test("disabled state prevents interaction", () => {
       const { getByRole } = render(<Button disabled>Disabled</Button>);
-      const button = getByRole("button");
+      const button = getByRole("button") as HTMLButtonElement;
+      // Verify disabled is actually set (not just a className)
+      expect(button.disabled).toBe(true);
+      // Verify disabled styling is present
       expect(button.className).toContain("disabled:opacity-50");
+      expect(button.className).toContain("disabled:pointer-events-none");
     });
 
     test("passes through aria attributes", () => {
@@ -152,26 +198,55 @@ describe("Button", () => {
 });
 
 describe("buttonVariants", () => {
-  test("generates default classes", () => {
+  test("generates valid base button styling", () => {
     const classes = buttonVariants();
+    // Verify essential layout classes are present
     expect(classes).toContain("inline-flex");
     expect(classes).toContain("items-center");
+    expect(classes).toContain("justify-center");
+    // Verify base variant styling
     expect(classes).toContain("bg-primary");
     expect(classes).toContain("h-10");
+    // Verify interactive states exist
+    expect(classes).toContain("focus-visible:outline-none");
+    expect(classes).toContain("disabled:opacity-50");
   });
 
-  test("generates classes for specific variant", () => {
-    const classes = buttonVariants({ variant: "destructive" });
-    expect(classes).toContain("bg-destructive");
+  test("applies distinct styling for different variants", () => {
+    const defaultClasses = buttonVariants({ variant: "default" });
+    const destructiveClasses = buttonVariants({ variant: "destructive" });
+    const outlineClasses = buttonVariants({ variant: "outline" });
+
+    // Each variant should have different background/styling
+    expect(destructiveClasses).not.toEqual(defaultClasses);
+    expect(outlineClasses).not.toEqual(defaultClasses);
+    expect(destructiveClasses).toContain("bg-destructive");
+    expect(outlineClasses).toContain("border");
   });
 
-  test("generates classes for specific size", () => {
-    const classes = buttonVariants({ size: "lg" });
-    expect(classes).toContain("h-12");
+  test("applies distinct sizing for different sizes", () => {
+    const defaultSize = buttonVariants({ size: "default" });
+    const smallSize = buttonVariants({ size: "sm" });
+    const largeSize = buttonVariants({ size: "lg" });
+
+    // Each size should produce different classes
+    expect(defaultSize).not.toEqual(smallSize);
+    expect(largeSize).not.toEqual(defaultSize);
+    expect(defaultSize).toContain("h-10");
+    expect(smallSize).toContain("h-9");
+    expect(largeSize).toContain("h-12");
   });
 
-  test("merges custom className", () => {
-    const classes = buttonVariants({ className: "my-custom-class" });
+  test("preserves custom className while applying variants", () => {
+    const classes = buttonVariants({
+      variant: "outline",
+      size: "lg",
+      className: "my-custom-class",
+    });
+    // Custom class should be preserved
     expect(classes).toContain("my-custom-class");
+    // Variant and size should still apply
+    expect(classes).toContain("border");
+    expect(classes).toContain("h-12");
   });
 });

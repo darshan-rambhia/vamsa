@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "LOG_LEVEL=silent bun test --preload=./tests/setup/test-logger-mock.ts ./src ./server ./tests",
     "test:coverage": "LOG_LEVEL=silent bun test --coverage --preload=./tests/setup/test-logger-mock.ts ./src ./server ./tests",
-    "test:integration": "LOG_LEVEL=silent bun test --preload=./tests/setup/test-logger-mock.ts ./integration-tests",
+    "test:integration": "LOG_LEVEL=silent bun test --preload=./tests/setup/test-logger-mock.ts ./server/**/*.integration.test.ts",
     "test:e2e": "bun run scripts/run-e2e.ts --reporter=list",
     "test:e2e:ui": "bun run scripts/run-e2e.ts --ui",
     "test:e2e:debug": "bun run scripts/run-e2e.ts --debug",
