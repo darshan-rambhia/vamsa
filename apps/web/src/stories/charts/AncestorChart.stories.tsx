@@ -9,6 +9,7 @@ import {
   createMockEdges,
   resetIdCounter,
 } from "~/stories/mocks/chart-data";
+import { logger } from "@vamsa/lib/logger";
 
 export default {
   title: "Charts/AncestorChart",
@@ -19,7 +20,9 @@ export const Default: Story = () => (
     <AncestorChart
       nodes={SMALL_FAMILY.nodes}
       edges={SMALL_FAMILY.edges}
-      onNodeClick={(id) => console.log("Clicked:", id)}
+      onNodeClick={(id) =>
+        logger.info({ nodeId: id }, "Node clicked in AncestorChart story")
+      }
     />
   </StoryDecorator>
 );
@@ -35,7 +38,9 @@ export const ThreeGenerations: Story = () => {
       <AncestorChart
         nodes={nodes}
         edges={edges}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in AncestorChart story")
+        }
       />
     </StoryDecorator>
   );
@@ -47,7 +52,9 @@ export const TenGenerations: Story = () => (
     <AncestorChart
       nodes={DEEP_ANCESTRY.nodes}
       edges={DEEP_ANCESTRY.edges}
-      onNodeClick={(id) => console.log("Clicked:", id)}
+      onNodeClick={(id) =>
+        logger.info({ nodeId: id }, "Node clicked in AncestorChart story")
+      }
     />
   </StoryDecorator>
 );
@@ -63,7 +70,9 @@ export const WithSpouses: Story = () => {
       <AncestorChart
         nodes={nodes}
         edges={edges}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in AncestorChart story")
+        }
       />
     </StoryDecorator>
   );
@@ -75,7 +84,9 @@ export const NoAncestors: Story = () => (
     <AncestorChart
       nodes={SINGLE_PERSON.nodes}
       edges={SINGLE_PERSON.edges}
-      onNodeClick={(id) => console.log("Clicked:", id)}
+      onNodeClick={(id) =>
+        logger.info({ nodeId: id }, "Node clicked in AncestorChart story")
+      }
     />
   </StoryDecorator>
 );

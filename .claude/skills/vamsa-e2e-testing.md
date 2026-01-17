@@ -1,6 +1,7 @@
 ---
 name: vamsa-e2e-testing
 description: Write user workflow-focused E2E tests for Vamsa using Playwright. Use this skill when creating or modifying E2E tests. Tests must simulate real user journeys with BDD structure (Given-When-Then), strict assertions, and no lenient fallbacks.
+license: MIT
 ---
 
 # Vamsa E2E Testing Guide

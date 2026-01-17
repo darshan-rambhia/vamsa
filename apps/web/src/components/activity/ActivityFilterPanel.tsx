@@ -198,7 +198,7 @@ export function ActivityFilterPanel({
           <div className="mt-4 space-y-4 border-t pt-4">
             {/* Date Range Presets */}
             <div className="space-y-2">
-              <Label>Date Range</Label>
+              <span className="text-sm font-medium">Date Range</span>
               <div className="flex flex-wrap gap-2">
                 {datePresets.map((preset) => (
                   <Button
@@ -218,7 +218,7 @@ export function ActivityFilterPanel({
             {/* Action Types */}
             {actionTypeOptions.length > 0 && (
               <div className="space-y-2">
-                <Label>Action Type</Label>
+                <span className="text-sm font-medium">Action Type</span>
                 <div className="flex flex-wrap gap-3">
                   {actionTypeOptions.map((option) => (
                     <label
@@ -244,7 +244,7 @@ export function ActivityFilterPanel({
             {/* Entity Types */}
             {entityTypeOptions.length > 0 && (
               <div className="space-y-2">
-                <Label>Entity Type</Label>
+                <span className="text-sm font-medium">Entity Type</span>
                 <div className="flex flex-wrap gap-3">
                   {entityTypeOptions.map((option) => (
                     <label
@@ -280,7 +280,7 @@ export function ActivityFilterPanel({
                     })
                   }
                 >
-                  <SelectTrigger id="user-filter" className="w-[200px]">
+                  <SelectTrigger id="user-filter" className="w-50">
                     <SelectValue placeholder="All users" />
                   </SelectTrigger>
                   <SelectContent>

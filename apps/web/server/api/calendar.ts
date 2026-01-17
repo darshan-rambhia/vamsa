@@ -1,6 +1,6 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
-import { prisma } from "../../src/server/db";
+import { prisma } from "@vamsa/lib/server";
 import { logger } from "@vamsa/lib/logger";
 import ical, { ICalEventRepeatingFreq } from "ical-generator";
 import RSS from "rss";
@@ -112,6 +112,7 @@ calendarRouter.openapi(rssRoute, async (c) => {
       let guid = "";
 
       if (update.entityType === "Person") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const person = update.newData as any;
         title = `${update.action === "CREATE" ? "New person added" : "Person updated"}: ${person.firstName} ${person.lastName}`;
         description =
@@ -120,6 +121,7 @@ calendarRouter.openapi(rssRoute, async (c) => {
         url = `${appUrl}/people/${update.entityId}`;
         guid = `person-${update.entityId}-${update.createdAt.getTime()}`;
       } else if (update.entityType === "Event") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const event = update.newData as any;
         title = `New event: ${event.type}`;
         description =
@@ -128,6 +130,7 @@ calendarRouter.openapi(rssRoute, async (c) => {
         url = `${appUrl}/events/${update.entityId}`;
         guid = `event-${update.entityId}-${update.createdAt.getTime()}`;
       } else if (update.entityType === "MediaObject") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const media = update.newData as any;
         title = `New media uploaded: ${media.title || "Untitled"}`;
         description =

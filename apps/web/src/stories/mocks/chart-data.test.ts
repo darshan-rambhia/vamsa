@@ -106,9 +106,7 @@ describe("Mock Data Factories", () => {
       const nodes = createMockNodes(5, { longNames: true });
 
       const hasLongName = nodes.some(
-        (n) =>
-          n.firstName!.length > 10 ||
-          n.lastName!.includes("-")
+        (n) => n.firstName!.length > 10 || n.lastName!.includes("-")
       );
       expect(hasLongName).toBe(true);
     });
@@ -283,7 +281,7 @@ describe("Mock Data Factories", () => {
     });
 
     it("should create matrix cells for all person pairs", () => {
-      const { people, matrix } = createMatrixData(5);
+      const { matrix } = createMatrixData(5);
       // 5x5 = 25 cells
       expect(matrix.length).toBe(25);
     });
@@ -379,9 +377,9 @@ describe("Mock Data Factories", () => {
       const stats = createStatisticsData();
 
       expect(stats.metadata.oldestPerson).toBeDefined();
-      expect(stats.metadata.oldestPerson.age).toBe(95);
+      expect(stats.metadata.oldestPerson?.age).toBe(95);
       expect(stats.metadata.youngestPerson).toBeDefined();
-      expect(stats.metadata.youngestPerson.age).toBe(2);
+      expect(stats.metadata.youngestPerson?.age).toBe(2);
     });
 
     it("should have surname frequency data", () => {
@@ -435,7 +433,9 @@ describe("Mock Data Factories", () => {
       });
 
       it("should span 5 generations", () => {
-        const generations = new Set(LARGE_FAMILY.nodes.map((n) => n.generation));
+        const generations = new Set(
+          LARGE_FAMILY.nodes.map((n) => n.generation)
+        );
         expect(generations.size).toBe(5);
       });
     });
@@ -446,7 +446,9 @@ describe("Mock Data Factories", () => {
       });
 
       it("should span 10 generations", () => {
-        const generations = new Set(DEEP_ANCESTRY.nodes.map((n) => n.generation));
+        const generations = new Set(
+          DEEP_ANCESTRY.nodes.map((n) => n.generation)
+        );
         expect(generations.size).toBe(10);
       });
     });

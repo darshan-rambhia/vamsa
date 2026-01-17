@@ -2,6 +2,7 @@ import type { Story } from "@ladle/react";
 import { CompactTree } from "~/components/charts/CompactTree";
 import { StoryDecorator } from "~/stories/decorators";
 import { createCompactTreeData } from "~/stories/mocks/chart-data";
+import { logger } from "@vamsa/lib/logger";
 
 export default {
   title: "Charts/CompactTree",
@@ -14,7 +15,9 @@ export const Default: Story = () => {
     <StoryDecorator>
       <CompactTree
         data={data}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in CompactTree story")
+        }
       />
     </StoryDecorator>
   );
@@ -29,7 +32,9 @@ export const Collapsed: Story = () => {
     <StoryDecorator>
       <CompactTree
         data={data}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in CompactTree story")
+        }
       />
     </StoryDecorator>
   );
@@ -44,7 +49,9 @@ export const Expanded: Story = () => {
     <StoryDecorator>
       <CompactTree
         data={data}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in CompactTree story")
+        }
       />
     </StoryDecorator>
   );
@@ -59,7 +66,9 @@ export const DeepNesting: Story = () => {
     <StoryDecorator>
       <CompactTree
         data={data}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in CompactTree story")
+        }
       />
     </StoryDecorator>
   );
@@ -74,7 +83,9 @@ export const ManySiblings: Story = () => {
     <StoryDecorator>
       <CompactTree
         data={data}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in CompactTree story")
+        }
       />
     </StoryDecorator>
   );

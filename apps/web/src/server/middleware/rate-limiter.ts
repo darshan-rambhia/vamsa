@@ -198,7 +198,7 @@ export function getClientIP(): string {
   // This will be called within the server function context
   try {
     // Dynamic import to avoid issues if called outside server context
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+
     const { getHeaders } = require("@tanstack/react-start/server");
     const headers = getHeaders();
 

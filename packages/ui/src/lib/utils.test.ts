@@ -21,7 +21,7 @@ describe("cn (class name utility)", () => {
   });
 
   test("filters out falsy values", () => {
-    const result = cn("keep", false && "skip", undefined, null, "also-keep");
+    const result = cn("keep", false, undefined, null, "also-keep");
     expect(result).toBe("keep also-keep");
   });
 

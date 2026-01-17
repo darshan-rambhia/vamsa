@@ -3,12 +3,12 @@ import { FanChart } from "~/components/charts/FanChart";
 import { StoryDecorator } from "~/stories/decorators";
 import {
   SMALL_FAMILY,
-  DEEP_ANCESTRY,
   SINGLE_PERSON,
   createMockNodes,
   createMockEdges,
   resetIdCounter,
 } from "~/stories/mocks/chart-data";
+import { logger } from "@vamsa/lib/logger";
 
 export default {
   title: "Charts/FanChart",
@@ -19,7 +19,9 @@ export const Default: Story = () => (
     <FanChart
       nodes={SMALL_FAMILY.nodes}
       edges={SMALL_FAMILY.edges}
-      onNodeClick={(id) => console.log("Clicked:", id)}
+      onNodeClick={(id) =>
+        logger.info({ nodeId: id }, "Node clicked in FanChart story")
+      }
     />
   </StoryDecorator>
 );
@@ -35,7 +37,9 @@ export const FourGenerations: Story = () => {
       <FanChart
         nodes={nodes}
         edges={edges}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in FanChart story")
+        }
       />
     </StoryDecorator>
   );
@@ -52,7 +56,9 @@ export const EightGenerations: Story = () => {
       <FanChart
         nodes={nodes}
         edges={edges}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in FanChart story")
+        }
       />
     </StoryDecorator>
   );
@@ -64,7 +70,9 @@ export const SingleAncestor: Story = () => (
     <FanChart
       nodes={SINGLE_PERSON.nodes}
       edges={SINGLE_PERSON.edges}
-      onNodeClick={(id) => console.log("Clicked:", id)}
+      onNodeClick={(id) =>
+        logger.info({ nodeId: id }, "Node clicked in FanChart story")
+      }
     />
   </StoryDecorator>
 );

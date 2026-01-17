@@ -8,7 +8,6 @@ import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import apiV1 from "./index";
 import {
   clearSlowQueries,
-  getSlowQueries,
   SLOW_QUERY_LOG_THRESHOLD_MS,
 } from "../metrics/slow-query-logger";
 

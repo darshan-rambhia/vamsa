@@ -737,7 +737,7 @@ describe("OpenAPI Specification Completeness", () => {
       paths: Record<string, Record<string, unknown>>;
     };
 
-    for (const [path, pathItem] of Object.entries(spec.paths)) {
+    for (const [_path, pathItem] of Object.entries(spec.paths)) {
       for (const [method, operation] of Object.entries(pathItem)) {
         if (method === "parameters" || typeof operation !== "object") continue;
         const op = operation as any;
@@ -758,7 +758,7 @@ describe("OpenAPI Specification Completeness", () => {
     };
 
     const operationIds = new Set<string>();
-    for (const [path, pathItem] of Object.entries(spec.paths)) {
+    for (const [_path, pathItem] of Object.entries(spec.paths)) {
       for (const [method, operation] of Object.entries(pathItem)) {
         if (method === "parameters" || typeof operation !== "object") continue;
         const op = operation as any;
@@ -779,7 +779,7 @@ describe("OpenAPI Specification Completeness", () => {
     };
 
     let successResponseCount = 0;
-    for (const [path, pathItem] of Object.entries(spec.paths)) {
+    for (const [_path, pathItem] of Object.entries(spec.paths)) {
       for (const [method, operation] of Object.entries(pathItem)) {
         if (method === "parameters" || typeof operation !== "object") continue;
         const op = operation as any;

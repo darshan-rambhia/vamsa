@@ -6,8 +6,9 @@
  * - rotateBackups: Delete old backups based on retention settings
  */
 
-import { describe, it, expect, mock, beforeEach, afterEach } from "bun:test";
-import { performBackup } from "./backup-job";
+import { describe, it, expect, mock } from "bun:test";
+// Note: performBackup is imported dynamically AFTER mocks are set up
+// to avoid loading server/db.ts before it can be mocked
 import type { BackupType } from "@vamsa/api";
 
 // Mock filesystem
@@ -24,7 +25,7 @@ mock.module("archiver", () => ({
     append: mock(() => undefined),
     file: mock(() => undefined),
     finalize: mock(() => undefined),
-    on: mock((event: string, handler: Function) => {
+    on: mock((event: string, handler: () => void) => {
       if (event === "end") {
         // Simulate archive completion
         setTimeout(() => handler(), 10);
@@ -121,26 +122,41 @@ mock.module("../db", () => ({
   },
 }));
 
-// Mock storage functions
-mock.module("./storage", () => ({
-  uploadToStorage: mock(async () => undefined),
-  deleteFromStorage: mock(async () => undefined),
+// Mock AWS SDK for storage (instead of mocking ./storage directly)
+// This allows storage.test.ts to run its own tests without mock pollution
+mock.module("@aws-sdk/client-s3", () => ({
+  S3Client: class MockS3Client {
+    send = mock(async () => ({}));
+  },
+  PutObjectCommand: class MockPutObjectCommand {
+    constructor(_args: unknown) {}
+  },
+  DeleteObjectCommand: class MockDeleteObjectCommand {
+    constructor(_args: unknown) {}
+  },
 }));
 
-// Mock notifications
-mock.module("./notifications", () => ({
-  sendBackupNotification: mock(async () => undefined),
-}));
+// Note: Neither ./storage nor ./notifications are mocked here.
+// It uses the shared logger mock from preload file, which allows
+// notifications.test.ts to run its own tests without mock pollution.
+
+// Import module AFTER mocks are set up (dynamic import to avoid hoisting)
+ 
+let backupJobModule: any;
 
 describe("Backup Job", () => {
   describe("performBackup", () => {
-    it("should have performBackup function", () => {
-      expect(typeof performBackup).toBe("function");
+    it("should have performBackup function", async () => {
+      backupJobModule = await import("./backup-job");
+      expect(typeof backupJobModule.performBackup).toBe("function");
     });
 
     it("performBackup is async", async () => {
       // This test verifies the function exists and is callable
-      expect(performBackup).toBeDefined();
+      if (!backupJobModule) {
+        backupJobModule = await import("./backup-job");
+      }
+      expect(backupJobModule.performBackup).toBeDefined();
     });
 
     it("should accept DAILY backup type", () => {
@@ -165,7 +181,10 @@ describe("Backup Job", () => {
 
     it("should return backup ID as string", async () => {
       // The function signature shows it returns Promise<string>
-      const returnType = typeof performBackup("DAILY");
+      if (!backupJobModule) {
+        backupJobModule = await import("./backup-job");
+      }
+      const returnType = typeof backupJobModule.performBackup("DAILY");
       expect(returnType).toBe("object"); // Promise is an object
     });
 

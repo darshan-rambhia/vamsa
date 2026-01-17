@@ -22,7 +22,7 @@ import { secureHeaders } from "hono/secure-headers";
 import { logger, serializeError } from "@vamsa/lib/logger";
 import { etagMiddleware, getETagMetrics } from "./middleware/etag";
 import { telemetryMiddleware } from "./middleware/telemetry";
-import { initializeServerI18n } from "../src/server/i18n";
+import { initializeServerI18n } from "@vamsa/lib/server";
 import { serveMedia } from "./middleware/media-server";
 
 const app = new Hono();

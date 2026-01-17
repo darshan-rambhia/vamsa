@@ -77,7 +77,14 @@ export function InteractiveMap({
         map.current = null;
       }
     };
-  }, []);
+  }, [centerLat, centerLng, style, zoom]);
+
+  // Sync center/zoom when props change
+  useEffect(() => {
+    if (!map.current) return;
+    map.current.setCenter([centerLng, centerLat]);
+    map.current.setZoom(zoom);
+  }, [centerLat, centerLng, zoom]);
 
   // Update map style
   useEffect(() => {

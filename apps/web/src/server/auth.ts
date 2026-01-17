@@ -1,72 +1,47 @@
+"use server";
+
 import { createServerFn } from "@tanstack/react-start";
 import {
   getCookie,
   setCookie,
   deleteCookie,
-} from "@tanstack/react-start/server";
-import { prisma } from "./db";
-import bcrypt from "bcryptjs";
-import { randomBytes, createHash } from "crypto";
-import { z } from "zod";
-import { notifyNewMemberJoined } from "./notifications";
+} from "./test-helpers/react-start-server";
+import {
+  loginUser,
+  registerUser,
+  claimProfileAsUser,
+  changeUserPassword,
+  verifySessionToken,
+  createSessionToken,
+  hashToken,
+  TOKEN_COOKIE_NAME,
+  TOKEN_MAX_AGE,
+} from "@vamsa/lib/server/business";
+import {
+  loginSchema,
+  registerSchema,
+  claimProfileSchema,
+  changePasswordSchema,
+} from "@vamsa/schemas";
+import { prisma } from "@vamsa/lib/server";
 import { logger } from "@vamsa/lib/logger";
+import { t } from "@vamsa/lib/server";
 import {
   checkRateLimit,
   resetRateLimit,
   getClientIP,
 } from "./middleware/rate-limiter";
-import { t } from "./i18n";
+import { notifyNewMemberJoined } from "@vamsa/lib/server/business";
 
 /**
- * Hash a session token for secure database storage
- * Uses SHA-256 which is sufficient for session tokens since:
- * - Tokens are random 256-bit values (high entropy)
- * - No need for slow hashing (unlike passwords)
- * - Fast lookup is desirable for session validation
+ * Get the current session token from cookie
+ * Wrapper function for retrieving session token without validation
+ *
+ * @returns Current session token or null if not set
+ *
+ * @example
+ * const token = await getSessionToken();
  */
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
-
-const TOKEN_COOKIE_NAME = "vamsa-session";
-const TOKEN_MAX_AGE = 30 * 24 * 60 * 60; // 30 days in seconds
-
-// Validation schemas
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
-});
-
-const registerSchema = z
-  .object({
-    email: z.string().email("Invalid email address"),
-    name: z.string().min(1, "Name is required"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-const claimProfileSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  personId: z.string().min(1, "Please select your profile"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-
-const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-// Get the current session token from cookie
 export const getSessionToken = createServerFn({ method: "GET" }).handler(
   async () => {
     const token = getCookie(TOKEN_COOKIE_NAME);
@@ -74,7 +49,16 @@ export const getSessionToken = createServerFn({ method: "GET" }).handler(
   }
 );
 
-// Set a session token in cookie
+/**
+ * Set a session token in cookie
+ * Raw cookie operation - typically used internally
+ *
+ * @param token - Session token to store
+ * @returns Success confirmation
+ *
+ * @example
+ * await setSessionToken(token);
+ */
 export const setSessionToken = createServerFn({ method: "POST" })
   .inputValidator((data: { token: string }) => data)
   .handler(async ({ data }) => {
@@ -88,7 +72,15 @@ export const setSessionToken = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-// Clear the session token
+/**
+ * Clear the session token from cookie
+ * Used during logout
+ *
+ * @returns Success confirmation
+ *
+ * @example
+ * await clearSessionToken();
+ */
 export const clearSessionToken = createServerFn({ method: "POST" }).handler(
   async () => {
     deleteCookie(TOKEN_COOKIE_NAME);
@@ -96,7 +88,18 @@ export const clearSessionToken = createServerFn({ method: "POST" }).handler(
   }
 );
 
-// Login with email and password
+/**
+ * Login user with email and password
+ * Validates credentials, handles account lockout, and creates session
+ *
+ * @param email - User email
+ * @param password - User password
+ * @returns Authenticated user object
+ * @throws Error for invalid credentials, disabled account, or lockout
+ *
+ * @example
+ * const { user } = await login({ email: "john@example.com", password: "pass123" });
+ */
 export const login = createServerFn({ method: "POST" })
   .inputValidator((data: { email: string; password: string }) => {
     return loginSchema.parse(data);
@@ -108,160 +111,51 @@ export const login = createServerFn({ method: "POST" })
     const clientIP = getClientIP();
     checkRateLimit("login", clientIP);
 
-    logger.info({ email: email.toLowerCase() }, "Login attempt");
+    try {
+      const { user, token } = await loginUser(email, password);
 
-    // Find user by email
-    const user = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
-    });
+      // Set cookie
+      logger.debug({ userId: user.id }, "Setting session cookie");
+      setCookie(TOKEN_COOKIE_NAME, token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: TOKEN_MAX_AGE,
+        path: "/",
+      });
 
-    logger.debug(
-      { userId: user?.id, email: user?.email, found: !!user },
-      "User lookup result"
-    );
+      // Reset rate limit on successful login
+      resetRateLimit("login", clientIP);
 
-    if (!user || !user.passwordHash) {
-      logger.warn(
-        { email: email.toLowerCase() },
-        "User not found or no password hash"
-      );
-      throw new Error(await t("errors:auth.invalidCredentials"));
-    }
-
-    if (!user.isActive) {
-      logger.warn({ userId: user.id }, "User account is disabled");
-      throw new Error(await t("errors:auth.accountDisabled"));
-    }
-
-    // Check if account is locked
-    if (user.lockedUntil && user.lockedUntil > new Date()) {
-      const remainingMinutes = Math.ceil(
-        (user.lockedUntil.getTime() - Date.now()) / 60000
-      );
-      logger.warn({ userId: user.id, remainingMinutes }, "Account is locked");
-      throw new Error(
-        await t("errors:auth.accountLocked", { minutes: remainingMinutes })
-      );
-    }
-
-    // Verify password
-    logger.debug({ userId: user.id }, "Comparing passwords");
-    const validPassword = await bcrypt.compare(password, user.passwordHash);
-    logger.debug(
-      { userId: user.id, valid: validPassword },
-      "Password validation result"
-    );
-
-    if (!validPassword) {
-      // Increment failed attempts
-      const failedAttempts = user.failedLoginAttempts + 1;
-      const LOCKOUT_THRESHOLD = 5;
-      const LOCKOUT_DURATION_MINUTES = 15;
-
-      const updateData: {
-        failedLoginAttempts: number;
-        lastFailedLoginAt: Date;
-        lockedUntil?: Date;
-      } = {
-        failedLoginAttempts: failedAttempts,
-        lastFailedLoginAt: new Date(),
+      return {
+        success: true,
+        user,
       };
-
-      // Lock account after threshold exceeded
-      if (failedAttempts >= LOCKOUT_THRESHOLD) {
-        updateData.lockedUntil = new Date(
-          Date.now() + LOCKOUT_DURATION_MINUTES * 60 * 1000
-        );
-        logger.warn(
-          { userId: user.id, failedAttempts },
-          "Account locked due to too many failed attempts"
-        );
-      }
-
-      await prisma.user.update({
-        where: { id: user.id },
-        data: updateData,
-      });
-
-      if (failedAttempts >= LOCKOUT_THRESHOLD) {
-        throw new Error(
-          await t("errors:auth.accountLockedAfterThreshold", {
-            minutes: LOCKOUT_DURATION_MINUTES,
-          })
-        );
-      }
-
-      const attemptsRemaining = LOCKOUT_THRESHOLD - failedAttempts;
-      logger.warn(
-        { userId: user.id, failedAttempts, attemptsRemaining },
-        "Failed login attempt"
-      );
-
-      const errorMsg = await t("errors:auth.invalidCredentials");
-      const attemptsMsg = await t("auth:attempts_remaining", {
-        count: attemptsRemaining,
-      });
-      throw new Error(`${errorMsg}. ${attemptsMsg}`);
+    } catch (error) {
+      logger.warn({ email: email.toLowerCase(), error }, "Login failed");
+      throw error;
     }
-
-    // Generate session token
-    const token = randomBytes(32).toString("hex");
-    const tokenHash = hashToken(token);
-    const expiresAt = new Date(Date.now() + TOKEN_MAX_AGE * 1000);
-
-    logger.debug({ userId: user.id }, "Creating session");
-
-    // Create session with hashed token for secure storage
-    await prisma.session.create({
-      data: {
-        token: tokenHash,
-        userId: user.id,
-        expiresAt,
-      },
-    });
-
-    logger.debug({ userId: user.id }, "Session created, updating last login");
-
-    // Reset failed attempts on successful login and update last login
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        lastLoginAt: new Date(),
-        failedLoginAttempts: 0,
-        lockedUntil: null,
-      },
-    });
-
-    // Set cookie
-    logger.debug({ userId: user.id }, "Setting session cookie");
-    setCookie(TOKEN_COOKIE_NAME, token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: TOKEN_MAX_AGE,
-      path: "/",
-    });
-
-    // Reset rate limit on successful login
-    resetRateLimit("login", clientIP);
-
-    logger.info({ userId: user.id, email: user.email }, "Login successful");
-
-    return {
-      success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        mustChangePassword: user.mustChangePassword,
-        oidcProvider: user.oidcProvider,
-        profileClaimStatus: user.profileClaimStatus,
-      },
-    };
   });
 
-// Register with email, name, and password
+/**
+ * Register new user with email, name, and password
+ * Creates VIEWER role account, requires self-registration to be enabled
+ *
+ * @param email - User email
+ * @param name - User full name
+ * @param password - User password (min 8 chars)
+ * @param confirmPassword - Password confirmation (validated in schema)
+ * @returns New user ID
+ * @throws Error if email exists, self-registration disabled, or validation fails
+ *
+ * @example
+ * const { userId } = await register({
+ *   email: "jane@example.com",
+ *   name: "Jane Doe",
+ *   password: "newpass123",
+ *   confirmPassword: "newpass123"
+ * });
+ */
 export const register = createServerFn({ method: "POST" })
   .inputValidator(
     (data: {
@@ -280,53 +174,28 @@ export const register = createServerFn({ method: "POST" })
     const clientIP = getClientIP();
     checkRateLimit("register", clientIP);
 
-    logger.info({ email: email.toLowerCase() }, "Registration attempt");
+    try {
+      const userId = await registerUser(email, name, password);
 
-    // Check if self-registration is enabled
-    const settings = await prisma.familySettings.findFirst();
-    if (!settings?.allowSelfRegistration) {
-      logger.warn("Self-registration is disabled");
-      throw new Error("Self-registration is disabled");
+      logger.info({ userId }, "Registration successful");
+
+      return { success: true, userId };
+    } catch (error) {
+      logger.warn({ email: email.toLowerCase(), error }, "Registration failed");
+      throw error;
     }
-
-    // Check for duplicate email (case-insensitive)
-    const existing = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
-    });
-
-    if (existing) {
-      logger.warn(
-        { email: email.toLowerCase() },
-        "User with this email already exists"
-      );
-      throw new Error(await t("errors:user.alreadyExists"));
-    }
-
-    // Hash password
-    logger.debug("Hashing password");
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    // Create user
-    logger.debug("Creating user");
-    const user = await prisma.user.create({
-      data: {
-        email: email.toLowerCase(),
-        name,
-        passwordHash,
-        role: "VIEWER",
-        isActive: true,
-      },
-    });
-
-    logger.info({ userId: user.id }, "User registered successfully");
-
-    // Send notification about new member joined (if they are a viewer, they won't trigger notifications yet)
-    // We'll notify when they upgrade to MEMBER role
-
-    return { success: true, userId: user.id };
   });
 
-// Get unclaimed living profiles that can be claimed
+/**
+ * Get unclaimed living profiles available for claiming
+ * Returns profiles not yet linked to any user
+ *
+ * @returns Array of claimable profiles with id, firstName, lastName
+ *
+ * @example
+ * const profiles = await getUnclaimedProfiles();
+ * // [{ id: "person_123", firstName: "John", lastName: "Doe" }, ...]
+ */
 export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
   async () => {
     logger.debug("Fetching unclaimed profiles");
@@ -363,7 +232,23 @@ export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
   }
 );
 
-// Claim a profile by creating a user linked to a person
+/**
+ * Claim a family profile by creating a user account linked to a Person
+ * User must provide email, select a living unclaimed profile, and create password
+ *
+ * @param email - User email
+ * @param personId - ID of the Person profile to claim
+ * @param password - User password (min 8 chars)
+ * @returns New user ID
+ * @throws Error if profile doesn't exist, is already claimed, or email exists
+ *
+ * @example
+ * const { userId } = await claimProfile({
+ *   email: "john@example.com",
+ *   personId: "person_456",
+ *   password: "password123"
+ * });
+ */
 export const claimProfile = createServerFn({ method: "POST" })
   .inputValidator(
     (data: { email: string; personId: string; password: string }) => {
@@ -377,74 +262,40 @@ export const claimProfile = createServerFn({ method: "POST" })
     const clientIP = getClientIP();
     checkRateLimit("claimProfile", clientIP);
 
-    logger.info({ personId }, "Claim profile attempt");
+    try {
+      const userId = await claimProfileAsUser(email, personId, password);
 
-    // Verify the person exists and is living
-    const person = await prisma.person.findUnique({
-      where: { id: personId },
-    });
+      // Send notification about new family member joined
+      await notifyNewMemberJoined(userId);
 
-    if (!person) {
-      logger.warn({ personId }, "Profile not found");
-      throw new Error(await t("errors:person.notFound"));
+      logger.info({ userId, personId }, "Profile claimed successfully");
+
+      return { success: true, userId };
+    } catch (error) {
+      logger.warn(
+        { email: email.toLowerCase(), personId, error },
+        "Profile claim failed"
+      );
+      throw error;
     }
-
-    if (!person.isLiving) {
-      logger.warn({ personId }, "Cannot claim a non-living profile");
-      throw new Error("Cannot claim a non-living profile");
-    }
-
-    logger.debug(
-      { personId, firstName: person.firstName, lastName: person.lastName },
-      "Profile found"
-    );
-
-    // Verify no user already has this personId
-    const existingUserWithPerson = await prisma.user.findUnique({
-      where: { personId },
-    });
-
-    if (existingUserWithPerson) {
-      logger.warn({ personId }, "Profile is already claimed");
-      throw new Error("This profile is already claimed");
-    }
-
-    // Check if email is already taken
-    const existingUserWithEmail = await prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
-    });
-
-    if (existingUserWithEmail) {
-      logger.warn({ email: email.toLowerCase() }, "Email already in use");
-      throw new Error(await t("errors:user.alreadyExists"));
-    }
-
-    // Hash password with bcrypt (12 rounds)
-    logger.debug("Hashing password");
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    // Create user with role MEMBER, linked to personId
-    logger.debug("Creating user with MEMBER role");
-    const user = await prisma.user.create({
-      data: {
-        email: email.toLowerCase(),
-        name: `${person.firstName} ${person.lastName}`,
-        passwordHash,
-        personId,
-        role: "MEMBER",
-        isActive: true,
-      },
-    });
-
-    logger.info({ userId: user.id, personId }, "Profile claimed successfully");
-
-    // Send notification about new family member joined
-    await notifyNewMemberJoined(user.id);
-
-    return { success: true, userId: user.id };
   });
 
-// Change password
+/**
+ * Change user password after verifying current password
+ * User must be authenticated (have valid session token)
+ *
+ * @param currentPassword - Current password for verification
+ * @param newPassword - New password (min 8 chars)
+ * @param confirmPassword - Password confirmation (validated in schema)
+ * @throws Error if session invalid, current password wrong, or user is OAuth-only
+ *
+ * @example
+ * await changePassword({
+ *   currentPassword: "oldpass123",
+ *   newPassword: "newpass456",
+ *   confirmPassword: "newpass456"
+ * });
+ */
 export const changePassword = createServerFn({ method: "POST" })
   .inputValidator(
     (data: {
@@ -456,145 +307,158 @@ export const changePassword = createServerFn({ method: "POST" })
     }
   )
   .handler(async ({ data }) => {
-    // 1. Get current session token
     const token = getCookie(TOKEN_COOKIE_NAME);
-    if (!token) {
-      throw new Error(await t("errors:auth.notAuthenticated"));
+
+    try {
+      await changeUserPassword(token, data.currentPassword, data.newPassword);
+
+      logger.info("Password changed successfully");
+
+      return { success: true };
+    } catch (error) {
+      logger.warn({ error }, "Password change failed");
+      throw error;
     }
-
-    // 2. Find session and user (hash token for lookup)
-    const tokenHash = hashToken(token);
-    const session = await prisma.session.findFirst({
-      where: { token: tokenHash },
-      include: { user: true },
-    });
-
-    if (!session || session.expiresAt < new Date()) {
-      throw new Error(await t("errors:auth.sessionExpired"));
-    }
-
-    const user = session.user;
-
-    // 3. Check if user has passwordHash (not OAuth-only)
-    if (!user.passwordHash) {
-      throw new Error("Cannot change password for OAuth accounts");
-    }
-
-    // 4. Verify current password
-    const validCurrentPassword = await bcrypt.compare(
-      data.currentPassword,
-      user.passwordHash
-    );
-    if (!validCurrentPassword) {
-      throw new Error("Current password is incorrect");
-    }
-
-    // 5. Hash new password (12 rounds)
-    const newPasswordHash = await bcrypt.hash(data.newPassword, 12);
-
-    // 6. Update user with new hash and clear mustChangePassword
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        passwordHash: newPasswordHash,
-        mustChangePassword: false,
-      },
-    });
-
-    logger.info({ userId: user.id }, "Password changed");
-
-    return { success: true };
   });
 
-// Logout
+/**
+ * Logout user by deleting session from database and clearing cookie
+ * Safe to call even if user is not authenticated
+ *
+ * @returns Success confirmation
+ *
+ * @example
+ * await logout();
+ */
 export const logout = createServerFn({ method: "POST" }).handler(async () => {
   const token = getCookie(TOKEN_COOKIE_NAME);
 
   if (token) {
-    // Delete session from database (hash token for lookup)
-    const tokenHash = hashToken(token);
-    await prisma.session.deleteMany({
-      where: { token: tokenHash },
-    });
+    try {
+      // Delete session from database (hash token for lookup)
+      const tokenHash = hashToken(token);
+      await prisma.session.deleteMany({
+        where: { token: tokenHash },
+      });
+      logger.debug("Session deleted from database");
+    } catch (error) {
+      logger.warn({ error }, "Failed to delete session from database");
+      // Continue with cookie deletion even if DB deletion fails
+    }
   }
 
   // Clear cookie
   deleteCookie(TOKEN_COOKIE_NAME);
 
+  logger.info("Logout completed");
+
   return { success: true };
 });
 
-// Get current user from session
-export const getCurrentUser = createServerFn({ method: "GET" }).handler(
+/**
+ * Get current authenticated user from session
+ * Returns null if session is invalid or expired
+ *
+ * @returns Current user object with id, email, name, role, etc. or null
+ *
+ * @example
+ * const user = await getSession();
+ * if (user) {
+ *   console.log(`Logged in as: ${user.email}`);
+ * }
+ */
+export const getSession = createServerFn({ method: "GET" }).handler(
   async () => {
     const token = getCookie(TOKEN_COOKIE_NAME);
+    const user = await verifySessionToken(token);
 
-    if (!token) {
-      return null;
-    }
-
-    // Find session (hash token for lookup)
-    const tokenHash = hashToken(token);
-    const session = await prisma.session.findFirst({
-      where: { token: tokenHash },
-      include: { user: true },
-    });
-
-    if (!session || session.expiresAt < new Date()) {
-      // Session expired, clean up
-      if (session) {
-        await prisma.session.delete({ where: { id: session.id } });
-      }
+    if (!user) {
+      // Session invalid or expired, ensure cookie is cleared
       deleteCookie(TOKEN_COOKIE_NAME);
       return null;
     }
 
-    const { user } = session;
-
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-      personId: user.personId,
-      mustChangePassword: user.mustChangePassword,
-      oidcProvider: user.oidcProvider,
-      profileClaimStatus: user.profileClaimStatus,
-    };
+    return user;
   }
 );
 
-// Validate session (for route guards)
-export const validateSession = createServerFn({ method: "GET" }).handler(
+/**
+ * Validate session without retrieving full user object
+ * Useful for route guards and permission checks
+ *
+ * @returns Object with valid boolean and user object if valid
+ *
+ * @example
+ * const { valid, user } = await checkAuth();
+ * if (!valid) {
+ *   // Redirect to login
+ * }
+ */
+export const checkAuth = createServerFn({ method: "GET" }).handler(async () => {
+  const token = getCookie(TOKEN_COOKIE_NAME);
+  const user = await verifySessionToken(token);
+
+  if (!user) {
+    return { valid: false, user: null };
+  }
+
+  return {
+    valid: true,
+    user,
+  };
+});
+
+/**
+ * Refresh session token by creating a new one
+ * Invalidates old session and sets new cookie
+ * Useful for extending session timeout on activity
+ *
+ * @returns New session token
+ * @throws Error if user is not authenticated
+ *
+ * @example
+ * const { token } = await refreshSession();
+ */
+export const refreshSession = createServerFn({ method: "POST" }).handler(
   async () => {
     const token = getCookie(TOKEN_COOKIE_NAME);
 
-    if (!token) {
-      return { valid: false, user: null };
+    // Verify current session
+    const user = await verifySessionToken(token);
+    if (!user) {
+      throw new Error(await t("errors:auth.notAuthenticated"));
     }
 
-    // Hash token for lookup
-    const tokenHash = hashToken(token);
-    const session = await prisma.session.findFirst({
-      where: { token: tokenHash },
-      include: { user: true },
+    logger.debug({ userId: user.id }, "Refreshing session token");
+
+    // Delete old session if token exists
+    if (token) {
+      const tokenHash = hashToken(token);
+      await prisma.session.deleteMany({
+        where: { token: tokenHash },
+      });
+    }
+
+    // Create new session token
+    const { token: newToken } = await createSessionToken(user.id);
+
+    // Set new cookie
+    setCookie(TOKEN_COOKIE_NAME, newToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: TOKEN_MAX_AGE,
+      path: "/",
     });
 
-    if (!session || session.expiresAt < new Date()) {
-      return { valid: false, user: null };
-    }
+    logger.info({ userId: user.id }, "Session token refreshed");
 
     return {
-      valid: true,
-      user: {
-        id: session.user.id,
-        email: session.user.email,
-        name: session.user.name,
-        role: session.user.role,
-        mustChangePassword: session.user.mustChangePassword,
-        oidcProvider: session.user.oidcProvider,
-        profileClaimStatus: session.user.profileClaimStatus,
-      },
+      success: true,
+      token: newToken,
     };
   }
 );
+
+// Alias exports for backward compatibility
+export { getSession as getCurrentUser, checkAuth as validateSession };

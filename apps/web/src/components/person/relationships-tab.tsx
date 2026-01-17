@@ -76,8 +76,8 @@ export function RelationshipsTab({
       await updateRelationship({
         data: {
           id: editingRel.id,
-          marriageDate: marriageDate || null,
-          divorceDate: divorceDate || null,
+          marriageDate: marriageDate ? new Date(marriageDate) : null,
+          divorceDate: divorceDate ? new Date(divorceDate) : null,
         },
       });
       setEditingRel(null);

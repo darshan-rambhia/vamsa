@@ -73,7 +73,8 @@
       "Bash(bd dep remove:*)",
       "WebFetch(domain:github.com)",
       "WebSearch",
-      "WebFetch(domain:www.grampsweb.org)"
+      "WebFetch(domain:www.grampsweb.org)",
+      "Bash(bunx tsc:*)"
     ]
   },
   "enabledPlugins": {

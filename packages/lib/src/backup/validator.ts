@@ -26,8 +26,8 @@ export interface Conflict {
   type: "person" | "user" | "relationship" | "suggestion" | "settings";
   action: "create" | "update";
   existingId?: string;
-  existingData?: Record<string, any>;
-  newData: Record<string, any>;
+  // existingData?: Record<string, any>;
+  // newData: Record<string, any>;
   conflictFields: string[];
   severity: "low" | "medium" | "high";
   description: string;
@@ -51,7 +51,7 @@ const SUPPORTED_VERSIONS = ["1.0.0"];
 
 export class BackupValidator {
   private zipBuffer: Buffer;
-  private extractedFiles: Map<string, any> = new Map();
+  private extractedFiles: Map<string, unknown> = new Map();
   private metadata: BackupMetadata | null = null;
 
   constructor(zipBuffer: Buffer) {
@@ -144,34 +144,41 @@ export class BackupValidator {
     try {
       const metadataData = this.extractedFiles.get("metadata.json");
 
+      if (!metadataData || typeof metadataData !== "object") {
+        errors.push("Invalid metadata format in metadata.json");
+        return { isValid: false, errors };
+      }
+
+      const typedMetadata = metadataData as BackupMetadata;
+
       // Basic validation
-      if (!metadataData.version) {
+      if (!typedMetadata.version) {
         errors.push("Missing version in metadata");
         return { isValid: false, errors };
       }
 
-      if (!metadataData.exportedAt) {
+      if (!typedMetadata.exportedAt) {
         errors.push("Missing exportedAt in metadata");
         return { isValid: false, errors };
       }
 
-      if (!metadataData.statistics) {
+      if (!typedMetadata.statistics) {
         errors.push("Missing statistics in metadata");
         return { isValid: false, errors };
       }
 
       // Check version compatibility
-      if (!SUPPORTED_VERSIONS.includes(metadataData.version)) {
+      if (!SUPPORTED_VERSIONS.includes(typedMetadata.version)) {
         errors.push(
-          `Unsupported backup version: ${metadataData.version}. Supported versions: ${SUPPORTED_VERSIONS.join(", ")}`
+          `Unsupported backup version: ${typedMetadata.version}. Supported versions: ${SUPPORTED_VERSIONS.join(", ")}`
         );
       }
 
-      this.metadata = metadataData;
+      this.metadata = typedMetadata;
 
       // Validate required data files exist
-      if (Array.isArray(metadataData.dataFiles)) {
-        for (const dataFile of metadataData.dataFiles) {
+      if (Array.isArray(typedMetadata.dataFiles)) {
+        for (const dataFile of typedMetadata.dataFiles) {
           if (!this.extractedFiles.has(dataFile)) {
             errors.push(`Missing required data file: ${dataFile}`);
           }
@@ -289,7 +296,7 @@ export class BackupValidator {
     };
   }
 
-  getExtractedFiles(): Map<string, any> {
+  getExtractedFiles(): Map<string, unknown> {
     return this.extractedFiles;
   }
 
@@ -306,16 +313,17 @@ export class BackupValidator {
   } {
     return {
       people: this.extractedFiles.has("data/people.json")
-        ? (this.extractedFiles.get("data/people.json") as any[]).length
+        ? (this.extractedFiles.get("data/people.json") as unknown[]).length
         : 0,
       users: this.extractedFiles.has("data/users.json")
-        ? (this.extractedFiles.get("data/users.json") as any[]).length
+        ? (this.extractedFiles.get("data/users.json") as unknown[]).length
         : 0,
       relationships: this.extractedFiles.has("data/relationships.json")
-        ? (this.extractedFiles.get("data/relationships.json") as any[]).length
+        ? (this.extractedFiles.get("data/relationships.json") as unknown[])
+            .length
         : 0,
       suggestions: this.extractedFiles.has("data/suggestions.json")
-        ? (this.extractedFiles.get("data/suggestions.json") as any[]).length
+        ? (this.extractedFiles.get("data/suggestions.json") as unknown[]).length
         : 0,
     };
   }

@@ -1,6 +1,7 @@
 import type { Story } from "@ladle/react";
 import { ChartTooltip } from "~/components/charts/ChartTooltip";
 import { ThemeDecorator } from "~/stories/decorators";
+import { logger } from "@vamsa/lib/logger";
 
 export default {
   title: "Charts/UI/ChartTooltip",
@@ -46,8 +47,12 @@ export const Default: Story = () => (
         node={mockNode}
         position={{ x: 200, y: 200 }}
         rootPersonId="person-root"
-        onSetAsCenter={(id) => console.log("Set as center:", id)}
-        onViewProfile={(id) => console.log("View profile:", id)}
+        onSetAsCenter={(id) =>
+          logger.info({ personId: id }, "Set as center in ChartTooltip story")
+        }
+        onViewProfile={(id) =>
+          logger.info({ personId: id }, "View profile in ChartTooltip story")
+        }
         relationshipLabel="3 generations up"
       />
     </div>
@@ -62,8 +67,12 @@ export const LongContent: Story = () => (
         node={mockLongNameNode}
         position={{ x: 300, y: 300 }}
         rootPersonId="person-root"
-        onSetAsCenter={(id) => console.log("Set as center:", id)}
-        onViewProfile={(id) => console.log("View profile:", id)}
+        onSetAsCenter={(id) =>
+          logger.info({ personId: id }, "Set as center in ChartTooltip story")
+        }
+        onViewProfile={(id) =>
+          logger.info({ personId: id }, "View profile in ChartTooltip story")
+        }
         relationshipLabel="2 generations down (grandson)"
       />
     </div>
@@ -79,11 +88,11 @@ export const WithActions: Story = () => (
         position={{ x: 400, y: 400 }}
         rootPersonId="person-root"
         onSetAsCenter={(id) => {
-          console.log("Set as center:", id);
+          logger.info({ personId: id }, "Set as center in ChartTooltip story");
           alert(`Setting ${id} as center person`);
         }}
         onViewProfile={(id) => {
-          console.log("View profile:", id);
+          logger.info({ personId: id }, "View profile in ChartTooltip story");
           alert(`Viewing profile for ${id}`);
         }}
         relationshipLabel="Grandmother"
@@ -100,8 +109,12 @@ export const RootPerson: Story = () => (
         node={mockNode}
         position={{ x: 500, y: 200 }}
         rootPersonId="person-1"
-        onSetAsCenter={(id) => console.log("Set as center:", id)}
-        onViewProfile={(id) => console.log("View profile:", id)}
+        onSetAsCenter={(id) =>
+          logger.info({ personId: id }, "Set as center in ChartTooltip story")
+        }
+        onViewProfile={(id) =>
+          logger.info({ personId: id }, "View profile in ChartTooltip story")
+        }
         relationshipLabel="Center"
       />
     </div>
@@ -121,8 +134,18 @@ export const EdgePositioning: Story = () => (
             node={mockNode}
             position={{ x: 10, y: 10 }}
             rootPersonId="person-root"
-            onSetAsCenter={(id) => console.log("Set as center:", id)}
-            onViewProfile={(id) => console.log("View profile:", id)}
+            onSetAsCenter={(id) =>
+              logger.info(
+                { personId: id },
+                "Set as center in ChartTooltip story"
+              )
+            }
+            onViewProfile={(id) =>
+              logger.info(
+                { personId: id },
+                "View profile in ChartTooltip story"
+              )
+            }
           />
         </div>
 
@@ -137,8 +160,18 @@ export const EdgePositioning: Story = () => (
               y: window.innerHeight - 100,
             }}
             rootPersonId="person-root"
-            onSetAsCenter={(id) => console.log("Set as center:", id)}
-            onViewProfile={(id) => console.log("View profile:", id)}
+            onSetAsCenter={(id) =>
+              logger.info(
+                { personId: id },
+                "Set as center in ChartTooltip story"
+              )
+            }
+            onViewProfile={(id) =>
+              logger.info(
+                { personId: id },
+                "View profile in ChartTooltip story"
+              )
+            }
             relationshipLabel="Edge positioning test"
           />
         </div>

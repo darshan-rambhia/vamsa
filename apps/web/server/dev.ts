@@ -8,6 +8,7 @@
  */
 
 import type { Plugin, ViteDevServer } from "vite";
+import { logger } from "@vamsa/lib/logger";
 
 /**
  * Vite plugin that adds API routes during development
@@ -83,12 +84,12 @@ export function vamsaDevApiPlugin(): Plugin {
 
       app.route("/api", apiRouter);
 
-      console.log("\x1b[32m✓\x1b[0m Development API routes initialized");
-      console.log("  API:     http://localhost:3000/api");
-      console.log("  Docs:    http://localhost:3000/api/v1/docs");
-      console.log("  OpenAPI: http://localhost:3000/api/v1/openapi.json");
+      logger.info("Development API routes initialized");
+      logger.info("  API:     http://localhost:3000/api");
+      logger.info("  Docs:    http://localhost:3000/api/v1/docs");
+      logger.info("  OpenAPI: http://localhost:3000/api/v1/openapi.json");
     } catch (error) {
-      console.error("\x1b[31m✗\x1b[0m Failed to load API routes:", error);
+      logger.error({ error }, "Failed to load API routes");
       // Add a fallback error route
       app.all("/api/*", (c) =>
         c.json(
@@ -191,7 +192,7 @@ export function vamsaDevApiPlugin(): Plugin {
           }
           res.end();
         } catch (error) {
-          console.error("API request error:", error);
+          logger.error({ error }, "API request error");
           res.statusCode = 500;
           res.setHeader("Content-Type", "application/json");
           res.end(

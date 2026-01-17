@@ -6,8 +6,7 @@
 
 import { getCookie } from "@tanstack/react-start/server";
 import { createHash } from "crypto";
-import { prisma } from "../db";
-import { t } from "../i18n";
+import { prisma, t } from "@vamsa/lib/server";
 
 const TOKEN_COOKIE_NAME = "vamsa-session";
 

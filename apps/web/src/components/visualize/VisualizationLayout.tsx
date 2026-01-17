@@ -118,7 +118,7 @@ export function VisualizationLayout({
                 value={visualizationType}
                 onValueChange={(value) => onTypeChange(value as ChartType)}
               >
-                <SelectTrigger id="viz-type" className="w-[200px]">
+                <SelectTrigger id="viz-type" className="w-50">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

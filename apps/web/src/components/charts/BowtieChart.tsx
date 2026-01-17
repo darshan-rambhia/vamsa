@@ -356,14 +356,14 @@ function BowtieChartComponent({
         }
       });
 
-      // Initial zoom to fit
+      // Initial zoom to fit (use 90% of available space with padding)
       const bounds = g.node()?.getBBox();
       if (bounds) {
         const padding = 60;
         const scale = Math.min(
-          width / (bounds.width + padding * 2),
-          height / (bounds.height + padding * 2),
-          0.9
+          (width * 0.9) / (bounds.width + padding * 2),
+          (height * 0.9) / (bounds.height + padding * 2),
+          0.95
         );
         const transform = d3.zoomIdentity
           .translate(width / 2, height / 2)

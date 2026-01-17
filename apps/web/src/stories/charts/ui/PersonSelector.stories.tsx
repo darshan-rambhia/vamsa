@@ -105,7 +105,8 @@ export const WithSearch: Story = () => {
           placeholder="Type to search..."
         />
         <p className="text-muted-foreground mt-4 text-sm">
-          Try searching for "John", "Jane", or "Bob"
+          Try searching for &quot;John&quot;, &quot;Jane&quot;, or
+          &quot;Bob&quot;
         </p>
       </div>
     </ThemeDecorator>

@@ -10,7 +10,7 @@ interface DecoratorProps {
  */
 export function ChartDecorator({ children }: DecoratorProps) {
   return (
-    <div className="bg-background h-[600px] w-full rounded-lg border p-4">
+    <div className="bg-background h-150 w-full rounded-lg border p-4">
       {children}
     </div>
   );

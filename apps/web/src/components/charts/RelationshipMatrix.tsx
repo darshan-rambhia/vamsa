@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import type { MatrixPerson, MatrixCell } from "~/server/charts";
 
@@ -49,13 +49,32 @@ export function RelationshipMatrix({
 }: RelationshipMatrixProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const resetViewRef = useRef<() => void>();
+  const resetViewRef = useRef<(() => void) | null>(null);
+  const [cellSize, setCellSize] = useState(40);
+
+  // Responsive cell sizing based on container width and people count
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    const updateSizes = () => {
+      const container = containerRef.current!;
+      const available =
+        container.clientWidth > 0 ? container.clientWidth : window.innerWidth;
+      const base = available / Math.max(people.length + 2, 3);
+      // clamp for legibility
+      setCellSize(Math.min(Math.max(base, 24), 64));
+    };
+
+    updateSizes();
+    const ro = new ResizeObserver(updateSizes);
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, [people.length]);
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current || people.length === 0) return;
 
     const container = containerRef.current;
-    const cellSize = 40;
     const labelWidth = 150;
     const labelHeight = 100;
     const margin = {
@@ -69,7 +88,10 @@ export function RelationshipMatrix({
       container.clientWidth,
       margin.left + gridSize + margin.right
     );
-    const height = margin.top + gridSize + margin.bottom;
+    const height = Math.max(
+      container.clientHeight,
+      margin.top + gridSize + margin.bottom
+    );
 
     // Clear previous chart
     d3.select(svgRef.current).selectAll("*").remove();
@@ -261,14 +283,14 @@ export function RelationshipMatrix({
         .style("stroke-width", "1px");
     }
 
-    // Initial zoom to fit
+    // Initial zoom to fit (use 90% of available space)
     const bounds = g.node()?.getBBox();
     if (bounds) {
       const availableWidth = container.clientWidth;
       const availableHeight = Math.max(600, container.clientHeight);
       const scale = Math.min(
-        availableWidth / (bounds.width + 40),
-        availableHeight / (bounds.height + 40),
+        (availableWidth * 0.9) / (bounds.width + 40),
+        (availableHeight * 0.9) / (bounds.height + 40),
         1
       );
       const transform = d3.zoomIdentity.translate(20, 20).scale(scale);
@@ -279,7 +301,7 @@ export function RelationshipMatrix({
         svg.transition().duration(300).call(zoom.transform, transform);
       };
     }
-  }, [people, matrix, onNodeClick]);
+  }, [people, matrix, onNodeClick, cellSize]);
 
   useEffect(() => {
     if (resetSignal !== undefined && resetViewRef.current) {
@@ -290,7 +312,7 @@ export function RelationshipMatrix({
   return (
     <div
       ref={containerRef}
-      className="bg-card relative h-full w-full overflow-hidden rounded-lg border"
+      className="bg-card relative h-full min-h-[70vh] w-full overflow-hidden rounded-lg border"
     >
       <svg ref={svgRef} className="h-full w-full" />
       {/* Legend */}

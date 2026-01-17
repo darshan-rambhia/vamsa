@@ -1,258 +1,245 @@
 import { createServerFn } from "@tanstack/react-start";
-import { prisma } from "./db";
-import { z } from "zod";
 import { logger } from "@vamsa/lib/logger";
+import {
+  relationshipCreateSchema,
+  relationshipUpdateSchema,
+  relationshipTypeEnum,
+  type RelationshipCreateInput,
+  type RelationshipUpdateInput,
+} from "@vamsa/schemas";
+import { z } from "zod";
+import { prisma } from "@vamsa/lib/server";
 import { requireAuth } from "./middleware/require-auth";
-import { recordRelationshipCalc } from "../../server/metrics/application";
+import {
+  listRelationshipsData,
+  getRelationshipData,
+  createRelationshipData,
+  updateRelationshipData,
+  deleteRelationshipData,
+} from "@vamsa/lib/server/business";
 
-const relationshipTypeSchema = z.enum(["PARENT", "CHILD", "SPOUSE", "SIBLING"]);
-
-const createRelationshipSchema = z.object({
-  personId: z.string(),
-  relatedPersonId: z.string(),
-  type: relationshipTypeSchema,
-  marriageDate: z.string().optional(),
-  divorceDate: z.string().optional(),
-});
-
-// Get relationships for a person
-export const getRelationships = createServerFn({ method: "GET" })
-  .inputValidator((data: { personId: string }) => data)
-  .handler(async ({ data }) => {
-    // Only fetch relationships FROM this person to avoid duplicates
-    // Since relationships are stored bidirectionally (A->B and B->A),
-    // we only need to look at relationships where personId matches
-    const relationships = await prisma.relationship.findMany({
-      where: {
-        personId: data.personId,
-      },
-      include: {
-        relatedPerson: true,
-      },
+/**
+ * List relationships for a person.
+ *
+ * Server function that fetches all relationships for a specific person.
+ * Optionally filters by relationship type.
+ *
+ * Method: GET
+ * Input: { personId: string, type?: RelationshipType }
+ * Output: Array of relationships with related person information
+ */
+export const listRelationships = createServerFn({ method: "GET" })
+  .inputValidator((data: { personId: string; type?: string }) => {
+    const schema = z.object({
+      personId: z.string().min(1),
+      type: relationshipTypeEnum.optional(),
     });
-
-    return relationships.map((r) => ({
-      id: r.id,
-      type: r.type,
-      isActive: r.isActive,
-      marriageDate: r.marriageDate?.toISOString().split("T")[0] ?? null,
-      divorceDate: r.divorceDate?.toISOString().split("T")[0] ?? null,
-      relatedPerson: {
-        id: r.relatedPerson.id,
-        firstName: r.relatedPerson.firstName,
-        lastName: r.relatedPerson.lastName,
-      },
-    }));
+    return schema.parse(data);
+  })
+  .handler(async ({ data }) => {
+    try {
+      const relationships = await listRelationshipsData(
+        data.personId,
+        data.type
+      );
+      return relationships;
+    } catch (error) {
+      logger.error(
+        { error, personId: data.personId },
+        "listRelationships failed"
+      );
+      throw error;
+    }
   });
 
-// Create a relationship
+/**
+ * Get a single relationship by ID.
+ *
+ * Server function that fetches a specific relationship with full details.
+ *
+ * Method: GET
+ * Input: { id: string }
+ * Output: Relationship with related person information
+ */
+export const getRelationship = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => {
+    const schema = z.object({
+      id: z.string().min(1),
+    });
+    return schema.parse(data);
+  })
+  .handler(async ({ data }) => {
+    try {
+      const relationship = await getRelationshipData(data.id);
+      return relationship;
+    } catch (error) {
+      logger.error(
+        { error, relationshipId: data.id },
+        "getRelationship failed"
+      );
+      throw error;
+    }
+  });
+
+/**
+ * Create a new relationship.
+ *
+ * Server function that creates a relationship with automatic bidirectional syncing.
+ * Validates input using the relationshipCreateSchema from @vamsa/schemas.
+ *
+ * Requires MEMBER role.
+ *
+ * Method: POST
+ * Input: RelationshipCreateInput
+ * Output: { id: string }
+ */
 export const createRelationship = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof createRelationshipSchema>) => {
-    return createRelationshipSchema.parse(data);
+  .inputValidator((data: RelationshipCreateInput) => {
+    return relationshipCreateSchema.parse(data);
   })
   .handler(async ({ data }) => {
     const user = await requireAuth("MEMBER");
 
-    // Prevent self-relationship
-    if (data.personId === data.relatedPersonId) {
-      throw new Error("Cannot create relationship with self");
+    try {
+      const result = await createRelationshipData(data);
+
+      logger.info(
+        { relationshipId: result.id, createdBy: user.id, type: data.type },
+        "Created relationship"
+      );
+
+      return result;
+    } catch (error) {
+      logger.error(
+        { error, userId: user.id, input: data },
+        "createRelationship failed"
+      );
+      throw error;
     }
-
-    // Check for duplicate relationship
-    const existing = await prisma.relationship.findFirst({
-      where: {
-        personId: data.personId,
-        relatedPersonId: data.relatedPersonId,
-        type: data.type,
-      },
-    });
-
-    if (existing) {
-      throw new Error("This relationship already exists");
-    }
-
-    // Set isActive based on divorceDate
-    const isActive = !data.divorceDate;
-
-    // Create the relationship
-    const relationship = await prisma.relationship.create({
-      data: {
-        personId: data.personId,
-        relatedPersonId: data.relatedPersonId,
-        type: data.type,
-        marriageDate: data.marriageDate ? new Date(data.marriageDate) : null,
-        divorceDate: data.divorceDate ? new Date(data.divorceDate) : null,
-        isActive,
-      },
-    });
-
-    // Create reciprocal relationship for bidirectional types
-    if (data.type === "SPOUSE" || data.type === "SIBLING") {
-      await prisma.relationship.create({
-        data: {
-          personId: data.relatedPersonId,
-          relatedPersonId: data.personId,
-          type: data.type,
-          marriageDate: data.marriageDate ? new Date(data.marriageDate) : null,
-          divorceDate: data.divorceDate ? new Date(data.divorceDate) : null,
-          isActive,
-        },
-      });
-    } else if (data.type === "PARENT") {
-      // If A is parent of B, then B is child of A
-      await prisma.relationship.create({
-        data: {
-          personId: data.relatedPersonId,
-          relatedPersonId: data.personId,
-          type: "CHILD",
-          isActive,
-        },
-      });
-    } else if (data.type === "CHILD") {
-      // If A is child of B, then B is parent of A
-      await prisma.relationship.create({
-        data: {
-          personId: data.relatedPersonId,
-          relatedPersonId: data.personId,
-          type: "PARENT",
-          isActive,
-        },
-      });
-    }
-
-    logger.info(
-      { relationshipId: relationship.id, createdBy: user.id },
-      "Created relationship"
-    );
-
-    return { id: relationship.id };
   });
 
-const updateRelationshipSchema = z.object({
-  id: z.string(),
-  marriageDate: z.string().optional().nullable(),
-  divorceDate: z.string().optional().nullable(),
-});
-
-// Update a relationship
+/**
+ * Update a relationship.
+ *
+ * Server function that updates a relationship's dates.
+ * For SPOUSE relationships, also syncs the inverse relationship.
+ *
+ * Requires MEMBER role.
+ *
+ * Method: POST
+ * Input: RelationshipUpdateInput with id
+ * Output: { id: string }
+ */
 export const updateRelationship = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof updateRelationshipSchema>) => {
-    return updateRelationshipSchema.parse(data);
+  .inputValidator((data: { id: string } & RelationshipUpdateInput) => {
+    const schema = z
+      .object({
+        id: z.string().min(1),
+      })
+      .merge(relationshipUpdateSchema);
+
+    return schema.parse(data);
   })
   .handler(async ({ data }) => {
     const user = await requireAuth("MEMBER");
 
-    // Find the relationship
-    const relationship = await prisma.relationship.findUnique({
-      where: { id: data.id },
-    });
+    try {
+      const { id, ...updateInput } = data;
+      const result = await updateRelationshipData(id, updateInput);
 
-    if (!relationship) {
-      throw new Error("Relationship not found");
+      logger.info(
+        { relationshipId: id, updatedBy: user.id },
+        "Updated relationship"
+      );
+
+      return result;
+    } catch (error) {
+      logger.error(
+        { error, userId: user.id, relationshipId: data.id },
+        "updateRelationship failed"
+      );
+      throw error;
     }
-
-    // Determine isActive based on divorceDate
-    const isActive = !data.divorceDate;
-
-    // Update primary relationship
-    const updated = await prisma.relationship.update({
-      where: { id: data.id },
-      data: {
-        marriageDate: data.marriageDate ? new Date(data.marriageDate) : null,
-        divorceDate: data.divorceDate ? new Date(data.divorceDate) : null,
-        isActive,
-      },
-    });
-
-    // BIDIRECTIONAL SYNC for SPOUSE type
-    if (relationship.type === "SPOUSE") {
-      await prisma.relationship.updateMany({
-        where: {
-          personId: relationship.relatedPersonId,
-          relatedPersonId: relationship.personId,
-          type: "SPOUSE",
-        },
-        data: {
-          marriageDate: data.marriageDate ? new Date(data.marriageDate) : null,
-          divorceDate: data.divorceDate ? new Date(data.divorceDate) : null,
-          isActive,
-        },
-      });
-    }
-
-    logger.info(
-      { relationshipId: data.id, updatedBy: user.id },
-      "Updated relationship"
-    );
-
-    return { id: updated.id };
   });
 
-// Delete a relationship
+/**
+ * Delete a relationship.
+ *
+ * Server function that deletes a relationship and its inverse.
+ * Maintains bidirectional consistency by also deleting the inverse relationship.
+ *
+ * Requires MEMBER role.
+ *
+ * Method: POST
+ * Input: { id: string }
+ * Output: { success: boolean }
+ */
 export const deleteRelationship = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: string }) => data)
+  .inputValidator((data: { id: string }) => {
+    const schema = z.object({
+      id: z.string().min(1),
+    });
+    return schema.parse(data);
+  })
   .handler(async ({ data }) => {
     const user = await requireAuth("MEMBER");
 
-    const relationship = await prisma.relationship.findUnique({
-      where: { id: data.id },
-    });
+    try {
+      const result = await deleteRelationshipData(data.id);
 
-    if (!relationship) {
-      throw new Error("Relationship not found");
+      logger.info(
+        { relationshipId: data.id, deletedBy: user.id },
+        "Deleted relationship"
+      );
+
+      return result;
+    } catch (error) {
+      logger.error(
+        { error, userId: user.id, relationshipId: data.id },
+        "deleteRelationship failed"
+      );
+      throw error;
     }
-
-    // Delete the relationship
-    await prisma.relationship.delete({
-      where: { id: data.id },
-    });
-
-    // Delete reciprocal relationship if it exists
-    await prisma.relationship.deleteMany({
-      where: {
-        personId: relationship.relatedPersonId,
-        relatedPersonId: relationship.personId,
-        type:
-          relationship.type === "PARENT"
-            ? "CHILD"
-            : relationship.type === "CHILD"
-              ? "PARENT"
-              : relationship.type,
-      },
-    });
-
-    logger.info(
-      { relationshipId: data.id, deletedBy: user.id },
-      "Deleted relationship"
-    );
-
-    return { success: true };
   });
 
-// Get family tree data (legacy - returns raw data)
+/**
+ * Get family tree data (legacy endpoint).
+ *
+ * Returns raw person and relationship data for family tree visualization.
+ *
+ * Method: GET
+ * Input: none
+ * Output: { nodes: Person[], edges: Relationship[] }
+ */
 export const getFamilyTree = createServerFn({ method: "GET" }).handler(
   async () => {
-    const persons = await prisma.person.findMany();
+    try {
+      const [persons, relationships] = await Promise.all([
+        prisma.person.findMany(),
+        prisma.relationship.findMany(),
+      ]);
 
-    const relationships = await prisma.relationship.findMany();
-
-    return {
-      nodes: persons.map((p) => ({
-        id: p.id,
-        firstName: p.firstName,
-        lastName: p.lastName,
-        gender: p.gender,
-        dateOfBirth: p.dateOfBirth?.toISOString().split("T")[0] ?? null,
-        dateOfPassing: p.dateOfPassing?.toISOString().split("T")[0] ?? null,
-        isLiving: p.isLiving,
-        photoUrl: p.photoUrl,
-      })),
-      edges: relationships.map((r) => ({
-        id: r.id,
-        source: r.personId,
-        target: r.relatedPersonId,
-        type: r.type,
-      })),
-    };
+      return {
+        nodes: persons.map((p) => ({
+          id: p.id,
+          firstName: p.firstName,
+          lastName: p.lastName,
+          gender: p.gender,
+          dateOfBirth: p.dateOfBirth?.toISOString().split("T")[0] ?? null,
+          dateOfPassing: p.dateOfPassing?.toISOString().split("T")[0] ?? null,
+          isLiving: p.isLiving,
+          photoUrl: p.photoUrl,
+        })),
+        edges: relationships.map((r) => ({
+          id: r.id,
+          source: r.personId,
+          target: r.relatedPersonId,
+          type: r.type,
+        })),
+      };
+    } catch (error) {
+      logger.error({ error }, "getFamilyTree failed");
+      throw error;
+    }
   }
 );

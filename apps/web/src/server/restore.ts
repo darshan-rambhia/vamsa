@@ -1,231 +1,71 @@
 import { createServerFn } from "@tanstack/react-start";
-import { prisma } from "./db";
+import { z } from "zod";
 import type {
   ValidationResult,
   ImportResult,
   ImportPreview,
   ConflictResolutionStrategy,
 } from "@vamsa/schemas";
-import { logger, serializeError } from "@vamsa/lib/logger";
 import { requireAuth } from "./middleware/require-auth";
+import {
+  validateBackupData,
+  previewImportData,
+  importBackupData,
+  getImportHistoryData,
+} from "@vamsa/lib/server/business";
 
-// Re-export types for use in components
-export type { ValidationResult, ImportResult, ImportPreview };
+// Input validation schemas
+const conflictStrategySchema = z.enum(["skip", "merge", "replace"] as const);
+
+const importOptionsSchema = z.object({
+  strategy: conflictStrategySchema
+    .optional()
+    .default("skip" as ConflictResolutionStrategy),
+});
 
 /**
- * Validate a backup ZIP file without importing
+ * Server function: Validate a backup ZIP file without importing
+ * @returns Validation result with metadata about the backup
+ * @requires ADMIN role
  */
 export const validateBackup = createServerFn({ method: "POST" }).handler(
   async (): Promise<ValidationResult> => {
     const user = await requireAuth("ADMIN");
-
-    try {
-      // For now, return a validation result
-      // In production, this would handle FormData with file uploads
-      // and use the BackupValidator class
-
-      return {
-        isValid: true,
-        metadata: {
-          version: "1.0.0",
-          exportedAt: new Date().toISOString(),
-          exportedBy: {
-            id: user.id,
-            email: user.email,
-            name: user.name || null,
-          },
-          statistics: {
-            totalPeople: 0,
-            totalRelationships: 0,
-            totalUsers: 0,
-            totalSuggestions: 0,
-            totalPhotos: 0,
-            auditLogDays: 0,
-            totalAuditLogs: 0,
-          },
-          dataFiles: [],
-          photoDirectories: [],
-        },
-        conflicts: [],
-        statistics: {
-          totalConflicts: 0,
-          conflictsByType: {},
-          conflictsBySeverity: {},
-        },
-        errors: [],
-        warnings: [],
-      };
-    } catch (error) {
-      logger.error({ error: serializeError(error) }, "Backup validation error");
-      throw new Error(
-        `Validation failed: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
-    }
+    return validateBackupData(user);
   }
 );
 
 /**
- * Preview what would be imported from a backup
+ * Server function: Preview what would be imported from a backup
+ * @returns Import preview with existing data counts
+ * @requires ADMIN role
  */
 export const previewImport = createServerFn({ method: "POST" }).handler(
   async (): Promise<ImportPreview> => {
-    await requireAuth("ADMIN");
-
-    try {
-      // Count existing items for comparison
-      const [
-        existingPeople,
-        existingUsers,
-        existingRelationships,
-        existingSuggestions,
-      ] = await Promise.all([
-        prisma.person.count(),
-        prisma.user.count(),
-        prisma.relationship.count(),
-        prisma.suggestion.count(),
-      ]);
-
-      return {
-        conflicts: [],
-        statistics: {
-          totalConflicts: 0,
-          conflictsByType: {},
-          conflictsBySeverity: {},
-          newItems: {
-            people: 0,
-            relationships: 0,
-            users: 0,
-            suggestions: 0,
-            photos: 0,
-          },
-          existingItems: {
-            people: existingPeople,
-            relationships: existingRelationships,
-            users: existingUsers,
-            suggestions: existingSuggestions,
-          },
-        },
-        estimatedDuration: {
-          minSeconds: 5,
-          maxSeconds: 30,
-        },
-      };
-    } catch (error) {
-      logger.error({ error: serializeError(error) }, "Import preview error");
-      throw new Error(
-        `Preview failed: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
-    }
-  }
-);
-
-/**
- * Execute import with conflict resolution
- */
-export const importBackup = createServerFn({ method: "POST" }).handler(
-  async (): Promise<ImportResult> => {
     const user = await requireAuth("ADMIN");
-
-    try {
-      // Validate admin permissions
-      if (user.role !== "ADMIN") {
-        throw new Error("Only administrators can import backups");
-      }
-
-      // This is a placeholder that demonstrates the structure
-      // In production, this would:
-      // 1. Receive FormData with file
-      // 2. Validate the backup
-      // 3. Create pre-import backup
-      // 4. Start transaction
-      // 5. Apply conflict resolution
-      // 6. Import data
-      // 7. Create audit log
-      // 8. Commit transaction
-
-      const result = await prisma.$transaction(async (tx) => {
-        // Log the import action
-        await tx.auditLog.create({
-          data: {
-            userId: user.id,
-            action: "CREATE",
-            entityType: "BACKUP_IMPORT",
-            entityId: null,
-            newData: {
-              timestamp: new Date().toISOString(),
-              strategy: "skip",
-              statistics: {
-                peopleImported: 0,
-                relationshipsImported: 0,
-                usersImported: 0,
-                suggestionsImported: 0,
-                photosImported: 0,
-                auditLogsImported: 0,
-                conflictsResolved: 0,
-                skippedItems: 0,
-              },
-            },
-          },
-        });
-
-        return {
-          success: true,
-          importedAt: new Date().toISOString(),
-          importedBy: {
-            id: user.id,
-            email: user.email,
-            name: user.name || null,
-          },
-          strategy: "skip" as ConflictResolutionStrategy,
-          statistics: {
-            peopleImported: 0,
-            relationshipsImported: 0,
-            usersImported: 0,
-            suggestionsImported: 0,
-            photosImported: 0,
-            auditLogsImported: 0,
-            conflictsResolved: 0,
-            skippedItems: 0,
-          },
-          errors: [],
-          warnings: [],
-        };
-      });
-
-      return result;
-    } catch (error) {
-      logger.error({ error: serializeError(error) }, "Backup import error");
-
-      // Log failed import attempt
-      try {
-        await prisma.auditLog.create({
-          data: {
-            userId: user.id,
-            action: "CREATE",
-            entityType: "BACKUP_IMPORT_FAILED",
-            entityId: null,
-            newData: {
-              timestamp: new Date().toISOString(),
-              error: error instanceof Error ? error.message : "Unknown error",
-            },
-          },
-        });
-      } catch (logError) {
-        logger.error(
-          { error: serializeError(logError) },
-          "Failed to log import error"
-        );
-      }
-
-      throw new Error(
-        `Import failed: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
-    }
+    return previewImportData(user);
   }
 );
 
 /**
- * Get import history for audit purposes
+ * Server function: Execute import with conflict resolution
+ * @param strategy - Conflict resolution strategy (skip, merge, replace)
+ * @returns Import result with statistics
+ * @requires ADMIN role
+ */
+export const importBackup = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => {
+    return importOptionsSchema.parse(data);
+  })
+  .handler(async ({ data }): Promise<ImportResult> => {
+    const user = await requireAuth("ADMIN");
+    return importBackupData(user, data.strategy as ConflictResolutionStrategy);
+  });
+
+/**
+ * Server function: Get import history for audit purposes
+ * @returns List of recent imports (max 50)
+ * @requires ADMIN role
  */
 export const getImportHistory = createServerFn({ method: "GET" }).handler(
   async (): Promise<
@@ -234,39 +74,17 @@ export const getImportHistory = createServerFn({ method: "GET" }).handler(
       importedAt: string;
       importedBy: string;
       strategy: string;
-      statistics: any;
       success: boolean;
     }>
   > => {
-    await requireAuth("ADMIN");
-
-    const auditLogs = await prisma.auditLog.findMany({
-      where: {
-        entityType: {
-          in: ["BACKUP_IMPORT", "BACKUP_IMPORT_FAILED"],
-        },
-      },
-      include: {
-        user: {
-          select: {
-            email: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 50,
-    });
-
-    return auditLogs.map((log) => ({
-      id: log.id,
-      importedAt: log.createdAt.toISOString(),
-      importedBy: log.user.name || log.user.email,
-      strategy: (log.newData as any)?.strategy || "unknown",
-      statistics: (log.newData as any)?.statistics || {},
-      success: log.entityType === "BACKUP_IMPORT",
-    }));
+    const user = await requireAuth("ADMIN");
+    const history = await getImportHistoryData(user);
+    return history as Array<{
+      id: string;
+      importedAt: string;
+      importedBy: string;
+      strategy: string;
+      success: boolean;
+    }>;
   }
 );

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
 import { prisma, getPoolStats } from "@vamsa/api/client";
@@ -174,9 +175,12 @@ metricsRouter.openapi(slowQueriesRoute, (c) => {
     });
   } catch (error) {
     logger.error({ error }, "Error fetching slow queries");
-    return c.json({ error: "Failed to fetch slow queries" }, { status: 500 });
+    return c.json(
+      { error: "Failed to fetch slow queries" },
+      { status: 500 }
+    ) as any;
   }
-});
+}) as any;
 
 /**
  * GET /api/v1/metrics/slow-queries/stats
@@ -223,9 +227,9 @@ metricsRouter.openapi(slowQueryStatsRoute, (c) => {
     return c.json(
       { error: "Failed to fetch slow query statistics" },
       { status: 500 }
-    );
+    ) as any;
   }
-});
+}) as any;
 
 /**
  * DELETE /api/v1/metrics/slow-queries
@@ -283,9 +287,12 @@ metricsRouter.openapi(clearSlowQueriesRoute, (c) => {
     });
   } catch (error) {
     logger.error({ error }, "Error clearing slow queries");
-    return c.json({ error: "Failed to clear slow queries" }, { status: 500 });
+    return c.json(
+      { error: "Failed to clear slow queries" },
+      { status: 500 }
+    ) as any;
   }
-});
+}) as any;
 
 /**
  * GET /api/v1/metrics/db/health
@@ -411,8 +418,8 @@ metricsRouter.openapi(dbPoolRoute, async (c) => {
     return c.json(
       { error: "Failed to fetch pool statistics" },
       { status: 500 }
-    );
+    ) as any;
   }
-});
+}) as any;
 
 export default metricsRouter;

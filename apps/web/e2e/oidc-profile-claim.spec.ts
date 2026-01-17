@@ -5,7 +5,6 @@
  */
 
 import { test, expect, bdd, TEST_USERS } from "./fixtures";
-import { LoginPage } from "./fixtures/page-objects";
 
 class OIDCProfileClaimModal {
   readonly page;
@@ -21,7 +20,7 @@ class OIDCProfileClaimModal {
   readonly errorMessage;
   readonly loadingSpinner;
 
-  constructor(page) {
+  constructor(page: any) {
     this.page = page;
     this.dialog = page.locator("[role=dialog]");
     this.title = page.getByRole("heading", {
@@ -107,7 +106,7 @@ class SettingsProfilePage {
   readonly linkedProfileInfo;
   readonly claimedStatus;
 
-  constructor(page) {
+  constructor(page: any) {
     this.page = page;
     this.profileSettingsCard = page.locator("text=Profile Settings");
     this.familyTreeProfileSection = page.locator("text=Family Tree Profile");
@@ -566,7 +565,9 @@ test.describe("Feature: OIDC Profile Claiming Workflow", () => {
 
       await bdd.when("user claims a profile", async () => {
         const modal = new OIDCProfileClaimModal(page);
-        const hasProfiles = await modal.profileCards.count().then((c) => c > 0);
+        const hasProfiles = await modal.profileCards
+          .count()
+          .then((c: any) => c > 0);
 
         if (hasProfiles) {
           await modal.claimFirstProfile().catch(() => {
@@ -607,7 +608,9 @@ test.describe("Feature: OIDC Profile Claiming Workflow", () => {
 
       await bdd.when("user clicks claim button", async () => {
         const modal = new OIDCProfileClaimModal(page);
-        const hasProfiles = await modal.profileCards.count().then((c) => c > 0);
+        const hasProfiles = await modal.profileCards
+          .count()
+          .then((c: any) => c > 0);
 
         if (hasProfiles) {
           // Try to claim a profile that might already be claimed
@@ -633,7 +636,9 @@ test.describe("Feature: OIDC Profile Claiming Workflow", () => {
 
       await bdd.when("claim request is in flight", async () => {
         const modal = new OIDCProfileClaimModal(page);
-        const hasProfiles = await modal.profileCards.count().then((c) => c > 0);
+        const hasProfiles = await modal.profileCards
+          .count()
+          .then((c: any) => c > 0);
 
         if (hasProfiles) {
           // Check if buttons are disabled during operation
@@ -656,7 +661,9 @@ test.describe("Feature: OIDC Profile Claiming Workflow", () => {
 
       await bdd.when("request is processing", async () => {
         const modal = new OIDCProfileClaimModal(page);
-        const hasProfiles = await modal.profileCards.count().then((c) => c > 0);
+        const hasProfiles = await modal.profileCards
+          .count()
+          .then((c: any) => c > 0);
 
         if (hasProfiles) {
           // Try to observe loading state
@@ -902,12 +909,6 @@ test.describe("Feature: OIDC Profile Claiming Workflow", () => {
       page,
     }) => {
       await bdd.given("user has claimed profile recently", async () => {
-        const claimDate = new Date().toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        });
-
         await page.evaluateHandle(() => {
           sessionStorage.setItem(
             "user",

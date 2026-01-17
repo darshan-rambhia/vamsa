@@ -34,7 +34,6 @@ describe("Chart Export Utilities", () => {
 
     // Create mock SVG element with complete DOM API support
     const clonedSVG = {
-      getAttribute: mock((attr: string) => ""),
       setAttribute: mock(() => {}),
       querySelectorAll: mock(() => []),
       parentNode: null,
@@ -48,9 +47,9 @@ describe("Chart Export Utilities", () => {
         width: 800,
         height: 600,
       }),
-      cloneNode: (deep: boolean) => clonedSVG,
+      cloneNode: () => clonedSVG,
       setAttribute: mock(() => {}),
-      getAttribute: mock((attr: string) => ""),
+      getAttribute: mock(() => ""),
       querySelectorAll: mock(() => []),
     } as unknown as SVGElement;
 
@@ -104,14 +103,14 @@ describe("Chart Export Utilities", () => {
     }) as any;
 
     // Mock URL methods
-    global.URL.createObjectURL = mock((blob: any) => {
+    global.URL.createObjectURL = mock(() => {
       return `blob:${Math.random()}`;
     });
     global.URL.revokeObjectURL = mock(() => {});
 
     // Mock XMLSerializer
     global.XMLSerializer = class {
-      serializeToString(element: Element) {
+      serializeToString() {
         return "<svg></svg>";
       }
     } as any;
@@ -244,7 +243,7 @@ describe("Chart Export Utilities", () => {
           width: 800,
           height: 600,
         }),
-        cloneNode: (deep: boolean) => ({
+        cloneNode: () => ({
           setAttribute: mock(() => {}),
         }),
       } as unknown as SVGElement;
@@ -318,13 +317,13 @@ describe("Chart Export Utilities", () => {
     });
 
     it("should serialize SVG to XML string", () => {
-      const serializeSpy = mock((element: Element) => {
+      const serializeSpy = mock(() => {
         return "<svg xmlns='http://www.w3.org/2000/svg'></svg>";
       });
 
       global.XMLSerializer = class {
-        serializeToString(element: Element) {
-          return serializeSpy(element);
+        serializeToString() {
+          return serializeSpy();
         }
       } as any;
 
@@ -367,8 +366,8 @@ describe("Chart Export Utilities", () => {
     it("should set xmlns attribute on cloned SVG", () => {
       let xmlnsSet = false;
       const clonedSVG = {
-        getAttribute: mock((attr: string) => ""),
-        setAttribute: mock((attr: string, value: string) => {
+        getAttribute: mock(() => ""),
+        setAttribute: mock((attr: string) => {
           if (attr === "xmlns") {
             xmlnsSet = true;
           }
@@ -388,8 +387,8 @@ describe("Chart Export Utilities", () => {
     it("should set xlink namespace on cloned SVG", () => {
       let xlinkSet = false;
       const clonedSVG = {
-        getAttribute: mock((attr: string) => ""),
-        setAttribute: mock((attr: string, value: string) => {
+        getAttribute: mock(() => ""),
+        setAttribute: mock((attr: string) => {
           if (attr.includes("xlink")) {
             xlinkSet = true;
           }
@@ -411,7 +410,7 @@ describe("Chart Export Utilities", () => {
       const originalSerializer = global.XMLSerializer;
 
       global.XMLSerializer = class {
-        serializeToString(element: Element) {
+        serializeToString() {
           serializeCalled = true;
           return "<svg xmlns='http://www.w3.org/2000/svg'></svg>";
         }
@@ -581,8 +580,9 @@ describe("Chart Export Utilities", () => {
 
       try {
         exportToSVG(mockSVGElement, "test.svg");
+        expect(false).toBe(true); // Should throw before reaching here
       } catch (error) {
-        // Expected to fail without XMLSerializer
+        expect((error as Error).message).toContain("Failed to export");
       } finally {
         global.XMLSerializer = originalSerializer;
       }
@@ -762,7 +762,7 @@ describe("Chart Export Utilities", () => {
       let createCalls = 0;
       let revokeCalls = 0;
 
-      global.URL.createObjectURL = mock((blob: any) => {
+      global.URL.createObjectURL = mock(() => {
         createCalls++;
         return `blob:${Math.random()}`;
       });

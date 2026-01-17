@@ -1,4 +1,4 @@
-import { useRouter, type ErrorComponentProps } from "@tanstack/react-router";
+import { type ErrorComponentProps } from "@tanstack/react-router";
 import { CompactRouteError } from "~/components/error";
 
 /**

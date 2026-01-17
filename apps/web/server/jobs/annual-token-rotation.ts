@@ -1,7 +1,7 @@
 import cron from "node-cron";
-import { prisma } from "../../src/server/db";
+import { prisma } from "@vamsa/lib/server";
 import { logger } from "@vamsa/lib/logger";
-import { enforceRotationPolicy } from "../auth/token-rotation";
+import { enforceRotationPolicy } from "@vamsa/lib/server/business";
 
 /**
  * Daily job to check for tokens that need annual rotation

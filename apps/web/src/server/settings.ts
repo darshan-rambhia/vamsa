@@ -1,43 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
-import { prisma } from "./db";
 import { z } from "zod";
-import { logger } from "@vamsa/lib/logger";
 import { requireAuth } from "./middleware/require-auth";
+import {
+  getFamilySettingsData,
+  updateFamilySettingsData,
+  getUserLanguagePreferenceData,
+  setUserLanguagePreferenceData,
+  type UpdateFamilySettingsInput,
+} from "@vamsa/lib/server/business";
 
-// Get family settings
-export const getFamilySettings = createServerFn({ method: "GET" }).handler(
-  async () => {
-    // Allow any authenticated user to read settings
-    await requireAuth("VIEWER");
-
-    const settings = await prisma.familySettings.findFirst();
-
-    if (!settings) {
-      // Return defaults if no settings exist
-      return {
-        id: null,
-        familyName: "Our Family",
-        description: "",
-        allowSelfRegistration: true,
-        requireApprovalForEdits: true,
-        metricsDashboardUrl: null,
-        metricsApiUrl: null,
-      };
-    }
-
-    return {
-      id: settings.id,
-      familyName: settings.familyName,
-      description: settings.description ?? "",
-      allowSelfRegistration: settings.allowSelfRegistration,
-      requireApprovalForEdits: settings.requireApprovalForEdits,
-      metricsDashboardUrl: settings.metricsDashboardUrl ?? null,
-      metricsApiUrl: settings.metricsApiUrl ?? null,
-    };
-  }
-);
-
-// Update settings schema
+/**
+ * Update family settings schema for input validation
+ * Defines all required and optional fields for updating family settings
+ */
 const updateSettingsSchema = z.object({
   familyName: z.string().min(1, "Family name is required"),
   description: z.string().optional(),
@@ -47,12 +22,51 @@ const updateSettingsSchema = z.object({
   metricsApiUrl: z.string().url().nullable().optional(),
 });
 
-// Language preference schema
+/**
+ * Language preference schema for input validation
+ * Restricts language codes to supported values
+ */
 const languagePreferenceSchema = z.object({
   language: z.enum(["en", "hi", "es"]),
 });
 
-// Update family settings (admin only)
+/**
+ * Server function to retrieve family settings
+ *
+ * Requires VIEWER role or higher
+ * Returns family settings with defaults if none exist
+ *
+ * @returns {Promise<FamilySettingsData>} Family settings
+ *
+ * @example
+ * const settings = await getFamilySettings();
+ * console.log(settings.familyName);
+ */
+export const getFamilySettings = createServerFn({ method: "GET" }).handler(
+  async () => {
+    // Allow any authenticated user to read settings
+    await requireAuth("VIEWER");
+
+    return await getFamilySettingsData();
+  }
+);
+
+/**
+ * Server function to update family settings
+ *
+ * Requires ADMIN role
+ * Updates existing settings or creates new ones if none exist
+ *
+ * @param {UpdateFamilySettingsInput} data - Settings data to update
+ * @returns {Promise<{ success: true; id: string }>} Success response with settings ID
+ *
+ * @example
+ * const result = await updateFamilySettings({
+ *   familyName: "Smith Family",
+ *   allowSelfRegistration: false,
+ *   requireApprovalForEdits: true,
+ * });
+ */
 export const updateFamilySettings = createServerFn({ method: "POST" })
   .inputValidator((data: z.infer<typeof updateSettingsSchema>) => {
     return updateSettingsSchema.parse(data);
@@ -60,66 +74,52 @@ export const updateFamilySettings = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const currentUser = await requireAuth("ADMIN");
 
-    logger.info({ updatedBy: currentUser.id }, "Updating family settings");
+    await updateFamilySettingsData(
+      data as UpdateFamilySettingsInput,
+      currentUser.role,
+      currentUser.id
+    );
 
-    // Check if settings exist
-    const existing = await prisma.familySettings.findFirst();
-
-    if (existing) {
-      // Update existing settings
-      const updated = await prisma.familySettings.update({
-        where: { id: existing.id },
-        data: {
-          familyName: data.familyName,
-          description: data.description ?? null,
-          allowSelfRegistration: data.allowSelfRegistration,
-          requireApprovalForEdits: data.requireApprovalForEdits,
-          metricsDashboardUrl: data.metricsDashboardUrl ?? null,
-          metricsApiUrl: data.metricsApiUrl ?? null,
-        },
-      });
-
-      logger.info({ settingsId: updated.id }, "Settings updated");
-      return { success: true, id: updated.id };
-    } else {
-      // Create new settings
-      const created = await prisma.familySettings.create({
-        data: {
-          familyName: data.familyName,
-          description: data.description ?? null,
-          allowSelfRegistration: data.allowSelfRegistration,
-          requireApprovalForEdits: data.requireApprovalForEdits,
-          metricsDashboardUrl: data.metricsDashboardUrl ?? null,
-          metricsApiUrl: data.metricsApiUrl ?? null,
-        },
-      });
-
-      logger.info({ settingsId: created.id }, "Settings created");
-      return { success: true, id: created.id };
-    }
+    return { success: true, id: currentUser.id };
   });
 
-// Get user's language preference
+/**
+ * Server function to get user's language preference
+ *
+ * Requires VIEWER role or higher
+ * Returns user's preferred language or "en" as default
+ *
+ * @returns {Promise<{ language: string }>} User's language preference
+ *
+ * @example
+ * const pref = await getUserLanguagePreference();
+ * console.log(pref.language); // "en", "hi", or "es"
+ */
 export const getUserLanguagePreference = createServerFn({
   method: "GET",
 }).handler(async () => {
   const user = await requireAuth("VIEWER");
 
-  const userData = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: { preferredLanguage: true },
-  });
-
-  if (!userData) {
-    throw new Error("User not found");
-  }
+  const language = await getUserLanguagePreferenceData(user.id);
 
   return {
-    language: userData.preferredLanguage ?? "en",
+    language,
   };
 });
 
-// Set user's language preference
+/**
+ * Server function to set user's language preference
+ *
+ * Requires VIEWER role or higher
+ * Updates the user's preferred language setting
+ *
+ * @param {string} language - Language code to set ("en", "hi", or "es")
+ * @returns {Promise<{ success: true; language: string }>} Success response with updated language
+ *
+ * @example
+ * const result = await setUserLanguagePreference({ language: "hi" });
+ * console.log(result.language); // "hi"
+ */
 export const setUserLanguagePreference = createServerFn({
   method: "POST",
 })
@@ -129,24 +129,13 @@ export const setUserLanguagePreference = createServerFn({
   .handler(async ({ data }) => {
     const user = await requireAuth("VIEWER");
 
-    const updated = await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        preferredLanguage: data.language,
-      },
-      select: {
-        id: true,
-        preferredLanguage: true,
-      },
-    });
-
-    logger.info(
-      { userId: user.id, language: data.language },
-      "Language preference updated"
+    const language = await setUserLanguagePreferenceData(
+      user.id,
+      data.language
     );
 
     return {
       success: true,
-      language: updated.preferredLanguage ?? "en",
+      language,
     };
   });

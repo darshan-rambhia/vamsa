@@ -6,14 +6,20 @@
  * - deleteFromStorage: Delete backup from cloud storage
  */
 
-import { describe, it, expect, mock } from "bun:test";
-import { uploadToStorage, deleteFromStorage } from "./storage";
-import type { StorageProvider } from "./storage";
+import { describe, it, expect, mock, beforeEach } from "bun:test";
 
-// Mock S3Client
+// Use shared mock from test setup (logger is already mocked globally in preload)
+import {
+  mockLogger,
+  clearAllMocks,
+} from "../../tests/setup/shared-mocks";
+
+// Create mock S3Client and commands before mocking the module
+const mockS3Send = mock(async () => ({}));
+
 mock.module("@aws-sdk/client-s3", () => ({
   S3Client: class MockS3Client {
-    send = mock(async () => ({}));
+    send = mockS3Send;
   },
   PutObjectCommand: class MockPutObjectCommand {
     args: unknown;
@@ -29,240 +35,331 @@ mock.module("@aws-sdk/client-s3", () => ({
   },
 }));
 
-// Mock logger
-mock.module("@vamsa/lib/logger", () => ({
-  logger: {
-    info: mock(() => undefined),
-    error: mock(() => undefined),
-    warn: mock(() => undefined),
-  },
-  serializeError: mock((error: any) => String(error)),
-}));
+// Note: @vamsa/lib/logger is mocked globally in test setup (preload file)
+
+// Import after mocks are set up
+import { uploadToStorage, deleteFromStorage } from "./storage";
+import type { StorageProvider } from "./storage";
 
 describe("Cloud Storage Integration", () => {
-  describe("uploadToStorage", () => {
+  beforeEach(() => {
+    clearAllMocks();
+    mockS3Send.mockClear();
+  });
+
+  describe("uploadToStorage - S3 Providers", () => {
     it("should accept S3 as storage provider", () => {
-      const providers: StorageProvider[] = ["LOCAL", "S3", "R2", "B2"];
+      const providers: StorageProvider[] = ["S3", "R2", "B2", "LOCAL"];
       expect(providers).toContain("S3");
     });
 
     it("should accept R2 as storage provider", () => {
-      const providers: StorageProvider[] = ["LOCAL", "S3", "R2", "B2"];
+      const providers: StorageProvider[] = ["S3", "R2", "B2", "LOCAL"];
       expect(providers).toContain("R2");
     });
 
     it("should accept B2 as storage provider", () => {
-      const providers: StorageProvider[] = ["LOCAL", "S3", "R2", "B2"];
+      const providers: StorageProvider[] = ["S3", "R2", "B2", "LOCAL"];
       expect(providers).toContain("B2");
     });
 
-    it("should upload with correct bucket", async () => {
-      const config = {
-        bucket: "my-backup-bucket",
-        region: "us-east-1",
-      };
+    it("should handle S3 upload with credentials", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
 
-      expect(config.bucket).toBe("my-backup-bucket");
+      try {
+        const buffer = Buffer.from("backup data");
+        const config = { bucket: "my-backup-bucket" };
+
+        let errorThrown = false;
+        try {
+          await uploadToStorage("S3", "backup.zip", buffer, config);
+        } catch {
+          errorThrown = true;
+        }
+        expect(errorThrown).toBe(false);
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
-    it("should use bucket from config", async () => {
-      const config = {
-        bucket: "production-backups",
-      };
+    it("should handle R2 upload", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
 
-      expect(config.bucket).toBe("production-backups");
+      try {
+        const buffer = Buffer.from("backup");
+        const config = { bucket: "r2-bucket", region: "auto" };
+
+        let errorThrown = false;
+        try {
+          await uploadToStorage("R2", "backup.zip", buffer, config);
+        } catch {
+          errorThrown = true;
+        }
+        expect(errorThrown).toBe(false);
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
-    it("should use region from config", async () => {
-      const config = {
-        bucket: "backups",
-        region: "eu-west-1",
-      };
+    it("should handle B2 upload", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
 
-      expect(config.region).toBe("eu-west-1");
+      try {
+        const buffer = Buffer.from("backup");
+        const config = { bucket: "b2-bucket" };
+
+        let errorThrown = false;
+        try {
+          await uploadToStorage("B2", "backup.zip", buffer, config);
+        } catch {
+          errorThrown = true;
+        }
+        expect(errorThrown).toBe(false);
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
-    it("should generate correct S3 key without prefix", async () => {
-      const filename = "vamsa-backup-daily-2024-01-15.zip";
-      const config: { bucket: string; prefix?: string } = {
-        bucket: "backups",
-      };
+    it("should require S3 credentials for S3 provider", () => {
+      // Verify that S3 requires specific environment variables
+      const requiredVars = ["S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY"];
+      expect(requiredVars.length).toBeGreaterThan(0);
+    });
+  });
 
-      const key = config.prefix ? `${config.prefix}/${filename}` : filename;
-
-      expect(key).toBe(filename);
+  describe("uploadToStorage - Configuration", () => {
+    it("should accept bucket configuration", () => {
+      const config = { bucket: "my-bucket" };
+      expect(config.bucket).toBe("my-bucket");
     });
 
-    it("should generate correct S3 key with prefix", async () => {
-      const filename = "vamsa-backup-daily-2024-01-15.zip";
-      const config = {
-        bucket: "backups",
-        prefix: "backups/2024",
-      };
-
-      const key = config.prefix ? `${config.prefix}/${filename}` : filename;
-
-      expect(key).toBe("backups/2024/vamsa-backup-daily-2024-01-15.zip");
+    it("should accept optional region", () => {
+      const config = { bucket: "backups", region: "us-west-2" };
+      expect(config.region).toBe("us-west-2");
     });
 
-    it("should handle nested prefix paths", async () => {
-      const filename = "backup.zip";
-      const config = {
-        bucket: "backups",
-        prefix: "company/vamsa/daily",
-      };
-
-      const key = config.prefix ? `${config.prefix}/${filename}` : filename;
-
-      expect(key).toBe("company/vamsa/daily/backup.zip");
+    it("should accept optional prefix", () => {
+      const config = { bucket: "backups", prefix: "vamsa" };
+      expect(config.prefix).toBe("vamsa");
     });
 
-    it("should set correct content type to application/zip", () => {
-      const contentType = "application/zip";
-      expect(contentType).toBe("application/zip");
+    it("should handle configuration without prefix", () => {
+      const config: { bucket: string; prefix?: string } = { bucket: "backups" };
+      expect(config.prefix).toBeUndefined();
     });
 
-    it("should upload buffer as body", () => {
-      const buffer = Buffer.from("test data");
-      expect(buffer).toHaveProperty("length");
-      expect(buffer.length).toBeGreaterThan(0);
+    it("should handle configuration without region", () => {
+      const config: { bucket: string; region?: string } = { bucket: "backups" };
+      expect(config.region).toBeUndefined();
+    });
+  });
+
+  describe("uploadToStorage - Buffer Handling", () => {
+    it("should accept small buffers", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
+
+      try {
+        const buffer = Buffer.from("small");
+        const config = { bucket: "backups" };
+
+        expect(buffer.length).toBeGreaterThan(0);
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
-    it("should handle large file uploads", async () => {
-      const largeBuffer = Buffer.alloc(1024 * 1024 * 100); // 100MB
-      expect(largeBuffer.length).toBe(1024 * 1024 * 100);
+    it("should accept medium sized buffers", () => {
+      const buffer = Buffer.alloc(1024 * 1024); // 1MB
+      expect(buffer.length).toBe(1024 * 1024);
     });
 
-    it("should handle small file uploads", async () => {
-      const smallBuffer = Buffer.from("small");
-      expect(smallBuffer.length).toBe(5);
+    it("should accept empty buffers", () => {
+      const buffer = Buffer.alloc(0);
+      expect(buffer.length).toBe(0);
     });
 
-    it("should skip upload for LOCAL provider", async () => {
-      const config = {
-        bucket: "backups",
-      };
-
-      // LOCAL provider should not perform upload
-      expect(config.bucket).toBeTruthy();
+    it("should accept large buffers", () => {
+      const buffer = Buffer.alloc(1024 * 1024 * 100); // 100MB
+      expect(buffer.length).toBe(1024 * 1024 * 100);
     });
+  });
 
-    it("should throw error for unsupported provider", async () => {
-      const shouldThrow = () => {
-        const provider = "UNSUPPORTED" as unknown as StorageProvider;
-        throw new Error(`Unsupported storage provider: ${provider}`);
-      };
+  describe("uploadToStorage - LOCAL Provider", () => {
+    it("should handle LOCAL provider", async () => {
+      const buffer = Buffer.from("backup data");
+      const config = { bucket: "backups" };
 
-      expect(shouldThrow).toThrow("Unsupported storage provider");
+      let errorThrown = false;
+      try {
+        await uploadToStorage("LOCAL", "backup.zip", buffer, config);
+      } catch {
+        errorThrown = true;
+      }
+      // LOCAL provider should not throw
+      expect(errorThrown).toBe(false);
     });
+  });
 
-    it("should include filename in upload", () => {
-      const filename = "vamsa-backup-daily-2024-01-15.zip";
-      expect(filename).toContain(".zip");
-    });
-
-    it("should include timestamp in filename", () => {
-      const filename = "vamsa-backup-daily-2024-01-15T10-30-45-123Z.zip";
-      expect(filename).toContain("2024-01-15");
-    });
-
-    it("should include backup type in filename", () => {
-      const filename = "vamsa-backup-daily-2024-01-15.zip";
-      expect(filename).toContain("daily");
+  describe("uploadToStorage - Error Handling", () => {
+    it("should validate storage provider type", () => {
+      const validProviders: StorageProvider[] = ["S3", "R2", "B2", "LOCAL"];
+      expect(validProviders.length).toBe(4);
     });
   });
 
   describe("deleteFromStorage", () => {
-    it("should delete from S3", async () => {
-      const config = {
-        bucket: "my-backup-bucket",
-      };
+    it("should handle S3 deletion", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
 
-      expect(config.bucket).toBe("my-backup-bucket");
+      try {
+        const config = { bucket: "my-backup-bucket" };
+
+        let errorThrown = false;
+        try {
+          await deleteFromStorage("S3", "backup.zip", config);
+        } catch {
+          errorThrown = true;
+        }
+        expect(errorThrown).toBe(false);
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
-    it("should delete from R2 (S3-compatible)", async () => {
-      const config = {
-        bucket: "r2-bucket",
-      };
+    it("should handle R2 deletion", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
 
-      expect(config.bucket).toBe("r2-bucket");
+      try {
+        const config = { bucket: "r2-bucket" };
+
+        let errorThrown = false;
+        try {
+          await deleteFromStorage("R2", "backup.zip", config);
+        } catch {
+          errorThrown = true;
+        }
+        expect(errorThrown).toBe(false);
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
-    it("should delete from B2 (S3-compatible)", async () => {
-      const config = {
-        bucket: "b2-bucket",
-      };
+    it("should handle B2 deletion", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
 
-      expect(config.bucket).toBe("b2-bucket");
+      try {
+        const config = { bucket: "b2-bucket" };
+
+        let errorThrown = false;
+        try {
+          await deleteFromStorage("B2", "backup.zip", config);
+        } catch {
+          errorThrown = true;
+        }
+        expect(errorThrown).toBe(false);
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
-    it("should use correct bucket for deletion", () => {
-      const config = {
-        bucket: "backups",
-      };
-
+    it("should use correct bucket", () => {
+      const config = { bucket: "backups" };
       expect(config.bucket).toBe("backups");
     });
 
-    it("should generate correct key for deletion", () => {
+    it("should handle deletion without prefix", () => {
+      const filename = "backup.zip";
+      const config: { bucket: string; prefix?: string } = { bucket: "backups" };
+      const key = config.prefix ? `${config.prefix}/${filename}` : filename;
+      expect(key).toBe("backup.zip");
+    });
+
+    it("should handle deletion with prefix", () => {
       const filename = "vamsa-backup-daily-2024-01-15.zip";
       const config = {
         bucket: "backups",
         prefix: "backups/2024",
       };
-
       const key = config.prefix ? `${config.prefix}/${filename}` : filename;
-
       expect(key).toBe("backups/2024/vamsa-backup-daily-2024-01-15.zip");
     });
 
-    it("should delete without prefix", () => {
-      const filename = "backup.zip";
-      const config: { bucket: string; prefix?: string } = {
-        bucket: "backups",
-      };
+    it("should handle LOCAL provider deletion", async () => {
+      const config = { bucket: "backups" };
 
-      const key = config.prefix ? `${config.prefix}/${filename}` : filename;
-
-      expect(key).toBe("backup.zip");
+      let errorThrown = false;
+      try {
+        await deleteFromStorage("LOCAL", "backup.zip", config);
+      } catch {
+        errorThrown = true;
+      }
+      expect(errorThrown).toBe(false);
     });
 
-    it("should skip deletion for LOCAL provider", async () => {
-      // LOCAL provider should not attempt to delete from cloud
-      const shouldNotDelete = true;
-      expect(shouldNotDelete).toBe(true);
+    it("should handle non-existent files", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
+
+      try {
+        const config = { bucket: "backups" };
+
+        let errorThrown = false;
+        try {
+          await deleteFromStorage("S3", "non-existent.zip", config);
+        } catch {
+          errorThrown = true;
+        }
+        expect(errorThrown).toBe(false);
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
-    it("should handle deletion of non-existent file gracefully", () => {
-      // S3 DeleteObject is idempotent - doesn't error on missing file
-      const result = { success: true };
-      expect(result.success).toBe(true);
+    it("should handle special characters in filename", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
+
+      try {
+        const filename = "vamsa-backup-daily-2024-01-15T10-30-45-123Z.zip";
+        const config = { bucket: "backups" };
+
+        let errorThrown = false;
+        try {
+          await deleteFromStorage("S3", filename, config);
+        } catch {
+          errorThrown = true;
+        }
+        expect(errorThrown).toBe(false);
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
-    it("should delete file with special characters in name", () => {
-      const filename = "vamsa-backup-daily-2024-01-15T10-30-45-123Z.zip";
-      expect(filename).toContain("T");
-      expect(filename).toContain("-");
-    });
-
-    it("should handle deeply nested prefix paths", () => {
+    it("should handle deeply nested prefixes", () => {
       const filename = "backup.zip";
       const config = {
         bucket: "backups",
         prefix: "org/company/team/project/vamsa/daily",
       };
-
       const key = config.prefix ? `${config.prefix}/${filename}` : filename;
-
       expect(key).toContain("org/company");
       expect(key).toContain("backup.zip");
-    });
-
-    it("should handle deletion error gracefully", () => {
-      // Deletion errors should be logged but not block cleanup
-      const result = { success: false, error: "Access denied" };
-      expect(result.success).toBe(false);
     });
   });
 
@@ -328,126 +425,141 @@ describe("Cloud Storage Integration", () => {
   });
 
   describe("Error Handling", () => {
-    it("should throw for unsupported provider on upload", () => {
-      const shouldThrow = () => {
-        throw new Error("Unsupported storage provider: UNKNOWN");
-      };
-
-      expect(shouldThrow).toThrow();
+    it("should validate supported providers", () => {
+      const supportedProviders: StorageProvider[] = ["S3", "R2", "B2", "LOCAL"];
+      expect(supportedProviders).toContain("S3");
+      expect(supportedProviders).toContain("LOCAL");
     });
 
-    it("should throw for unsupported provider on delete", () => {
-      const shouldThrow = () => {
-        throw new Error("Unsupported storage provider: UNKNOWN");
-      };
-
-      expect(shouldThrow).toThrow();
+    it("should support deletion from all S3-compatible providers", () => {
+      const providers: StorageProvider[] = ["S3", "R2", "B2"];
+      expect(providers.length).toBe(3);
     });
 
-    it("should handle S3 upload errors", () => {
-      const error = new Error("Access denied");
-      expect(error.message).toContain("Access denied");
+    it("should require S3 credentials", () => {
+      const requiredEnvVars = ["S3_ACCESS_KEY_ID", "S3_SECRET_ACCESS_KEY"];
+      expect(requiredEnvVars.length).toBe(2);
     });
 
-    it("should handle S3 deletion errors", () => {
-      const error = new Error("Bucket not found");
-      expect(error.message).toContain("Bucket");
-    });
+    it("should handle S3 configuration with endpoint", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
+      process.env.S3_ENDPOINT = "https://custom-s3.example.com";
 
-    it("should handle missing credentials", () => {
-      const error = new Error(
-        "S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY environment variables are required"
-      );
-      expect(error.message).toContain("environment variables");
-    });
+      try {
+        const buffer = Buffer.from("test");
+        const config = { bucket: "backups" };
 
-    it("should handle network timeouts", () => {
-      const error = new Error("Request timeout");
-      expect(error.message).toContain("timeout");
-    });
-
-    it("should handle file too large error", () => {
-      const error = new Error("File exceeds maximum size");
-      expect(error.message).toContain("size");
+        await uploadToStorage("S3", "backup.zip", buffer, config);
+        expect(mockLogger.info).toHaveBeenCalled();
+      } finally {
+        process.env = originalEnv;
+      }
     });
   });
 
   describe("S3-Compatible Provider Compatibility", () => {
-    it("should treat R2 as S3-compatible", () => {
-      const providers = {
-        S3: "S3",
-        R2: "S3", // R2 uses S3 API
-        B2: "S3", // B2 uses S3 API
-      };
+    it("should use same client interface for all S3-compatible providers", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
 
-      expect(providers.R2).toBe("S3");
-      expect(providers.B2).toBe("S3");
+      try {
+        const buffer = Buffer.from("test");
+        const config = { bucket: "backups" };
+
+        // All three providers should work with same S3Client
+        await uploadToStorage("S3", "backup.zip", buffer, config);
+        mockS3Send.mockClear();
+
+        await uploadToStorage("R2", "backup.zip", buffer, config);
+        mockS3Send.mockClear();
+
+        await uploadToStorage("B2", "backup.zip", buffer, config);
+
+        expect(mockLogger.info).toHaveBeenCalled();
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
-    it("should use same client for all S3-compatible providers", () => {
-      const providers = ["S3", "R2", "B2"];
-      expect(providers).toHaveLength(3);
-      // All use same S3Client internally
+    it("should handle R2 specific configuration", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
+      process.env.S3_REGION = "auto";
+
+      try {
+        const buffer = Buffer.from("test");
+        const config = {
+          bucket: "my-r2-bucket",
+          region: "auto",
+          prefix: "backups",
+        };
+
+        await uploadToStorage("R2", "backup.zip", buffer, config);
+        expect(mockLogger.info).toHaveBeenCalled();
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
-    it("should handle R2 specific configuration", () => {
-      const config = {
-        bucket: "my-r2-bucket",
-        region: "auto",
-        prefix: "backups",
-      };
+    it("should handle B2 specific configuration", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
 
-      expect(config.region).toBe("auto");
-    });
+      try {
+        const buffer = Buffer.from("test");
+        const config = {
+          bucket: "my-b2-bucket",
+          region: "us-west-1",
+          prefix: "backups",
+        };
 
-    it("should handle B2 specific configuration", () => {
-      const config = {
-        bucket: "my-b2-bucket",
-        region: "us-west-1",
-        prefix: "backups",
-      };
-
-      expect(config.region).toBe("us-west-1");
+        await uploadToStorage("B2", "backup.zip", buffer, config);
+        expect(mockLogger.info).toHaveBeenCalled();
+      } finally {
+        process.env = originalEnv;
+      }
     });
   });
 
-  describe("Buffer Handling", () => {
-    it("should handle binary buffer", () => {
-      const buffer = Buffer.from([0x00, 0x01, 0x02, 0x03]);
-      expect(buffer.length).toBe(4);
-    });
+  describe("Content Type Handling", () => {
+    it("should set correct content type for zip files", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
 
-    it("should preserve buffer content", () => {
-      const data = "test backup content";
-      const buffer = Buffer.from(data);
-      expect(buffer.toString()).toBe(data);
-    });
+      try {
+        const buffer = Buffer.from("test data");
+        const config = { bucket: "backups" };
 
-    it("should handle empty buffer", () => {
-      const buffer = Buffer.alloc(0);
-      expect(buffer.length).toBe(0);
-    });
-
-    it("should handle large buffers", () => {
-      const buffer = Buffer.alloc(1024 * 1024); // 1MB
-      expect(buffer.length).toBe(1024 * 1024);
+        await uploadToStorage("S3", "backup.zip", buffer, config);
+        expect(mockLogger.info).toHaveBeenCalled();
+      } finally {
+        process.env = originalEnv;
+      }
     });
   });
 
   describe("Filename Handling", () => {
-    it("should include type in filename", () => {
-      const filename = "vamsa-backup-daily-2024-01-15.zip";
-      expect(filename).toContain("daily");
-    });
+    it("should preserve filename with special characters", async () => {
+      const originalEnv = { ...process.env };
+      process.env.S3_ACCESS_KEY_ID = "test-key";
+      process.env.S3_SECRET_ACCESS_KEY = "test-secret";
 
-    it("should include timestamp in filename", () => {
-      const filename = "vamsa-backup-daily-2024-01-15T10-30-45.zip";
-      expect(filename).toContain("T10");
-    });
+      try {
+        const filename = "vamsa-backup-daily-2024-01-15T10-30-45-123Z.zip";
+        const buffer = Buffer.from("test");
+        const config = { bucket: "backups" };
 
-    it("should have .zip extension", () => {
-      const filename = "vamsa-backup-daily-2024-01-15.zip";
-      expect(filename.endsWith(".zip")).toBe(true);
+        await uploadToStorage("S3", filename, buffer, config);
+        expect(mockLogger.info).toHaveBeenCalled();
+      } finally {
+        process.env = originalEnv;
+      }
     });
 
     it("should be unique per backup", () => {
@@ -457,6 +569,11 @@ describe("Cloud Storage Integration", () => {
       const filename2 = `vamsa-backup-daily-${ts2}.zip`;
 
       expect(filename1).not.toEqual(filename2);
+    });
+
+    it("should have .zip extension", () => {
+      const filename = "vamsa-backup-daily-2024-01-15.zip";
+      expect(filename.endsWith(".zip")).toBe(true);
     });
   });
 });

@@ -158,7 +158,7 @@ function TreeChartComponent({
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const [isRendering, setIsRendering] = useState(true);
-  const resetViewRef = useRef<() => void>();
+  const resetViewRef = useRef<(() => void) | undefined>(undefined);
 
   // Tooltip state
   const [tooltip, setTooltip] = useState<{

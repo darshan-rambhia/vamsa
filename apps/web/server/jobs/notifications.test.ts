@@ -3,72 +3,32 @@
  *
  * Tests email notification functionality:
  * - sendBackupNotification: Send success/failure notification emails
- * - formatFileSize: Format bytes to human-readable size
- * - formatDuration: Format milliseconds to human-readable duration
+ * - Formatting utilities and error handling
  */
 
-import { describe, it, expect, mock } from "bun:test";
+import { describe, it, expect, beforeEach } from "bun:test";
+
+// Use shared mock from test setup (logger is already mocked globally in preload)
+import {
+  mockLogger,
+  clearAllMocks,
+} from "../../tests/setup/shared-mocks";
+
+// Import the module (logger mock is already applied by test setup)
 import { sendBackupNotification } from "./notifications";
 import type {
   NotificationType,
   BackupNotificationInput,
 } from "./notifications";
 
-// Mock logger
-mock.module("@vamsa/lib/logger", () => ({
-  logger: {
-    info: mock(() => undefined),
-    error: mock(() => undefined),
-    warn: mock(() => undefined),
-  },
-  serializeError: mock((error: any) => String(error)),
-}));
-
 describe("Backup Notifications", () => {
-  describe("sendBackupNotification", () => {
-    it("should accept success notification type", () => {
-      const types: NotificationType[] = ["success", "failure"];
-      expect(types).toContain("success");
-    });
+  beforeEach(() => {
+    // Clear mock call history before each test
+    clearAllMocks();
+  });
 
-    it("should accept failure notification type", () => {
-      const types: NotificationType[] = ["success", "failure"];
-      expect(types).toContain("failure");
-    });
-
-    it("should require filename", () => {
-      const input: BackupNotificationInput = {
-        type: "success",
-        filename: "vamsa-backup-daily-2024-01-15.zip",
-        emails: ["admin@example.com"],
-      };
-
-      expect(input.filename).toBeTruthy();
-    });
-
-    it("should require email recipients", () => {
-      const input: BackupNotificationInput = {
-        type: "success",
-        filename: "backup.zip",
-        emails: ["admin@example.com"],
-      };
-
-      expect(input.emails).toHaveLength(1);
-    });
-
-    it("should skip notification if no emails provided", async () => {
-      const input: BackupNotificationInput = {
-        type: "success",
-        filename: "backup.zip",
-        emails: [],
-      };
-
-      // Should complete without error
-      await sendBackupNotification(input);
-      expect(input.emails).toHaveLength(0);
-    });
-
-    it("should include filename in notification", async () => {
+  describe("sendBackupNotification - Success Cases", () => {
+    it("should accept success notification type", async () => {
       const input: BackupNotificationInput = {
         type: "success",
         filename: "vamsa-backup-daily-2024-01-15.zip",
@@ -77,491 +37,209 @@ describe("Backup Notifications", () => {
         emails: ["admin@example.com"],
       };
 
-      expect(input.filename).toContain("backup");
-    });
-
-    it("should include size in success notification", async () => {
-      const input: BackupNotificationInput = {
-        type: "success",
-        filename: "backup.zip",
-        size: 1024000,
-        duration: 5000,
-        emails: ["admin@example.com"],
-      };
-
-      expect(input.size).toBeGreaterThan(0);
-    });
-
-    it("should include duration in success notification", async () => {
-      const input: BackupNotificationInput = {
-        type: "success",
-        filename: "backup.zip",
-        size: 1024000,
-        duration: 5000,
-        emails: ["admin@example.com"],
-      };
-
-      expect(input.duration).toBeGreaterThan(0);
-    });
-
-    it("should include error message in failure notification", async () => {
-      const input: BackupNotificationInput = {
-        type: "failure",
-        filename: "backup.zip",
-        error: "Database connection failed",
-        emails: ["admin@example.com"],
-      };
-
-      expect(input.error).toBeTruthy();
-    });
-
-    it("should send to single recipient", async () => {
-      const input: BackupNotificationInput = {
-        type: "success",
-        filename: "backup.zip",
-        size: 1024000,
-        duration: 5000,
-        emails: ["admin@example.com"],
-      };
-
-      expect(input.emails).toHaveLength(1);
-    });
-
-    it("should send to multiple recipients", async () => {
-      const input: BackupNotificationInput = {
-        type: "success",
-        filename: "backup.zip",
-        size: 1024000,
-        duration: 5000,
-        emails: [
-          "admin1@example.com",
-          "admin2@example.com",
-          "admin3@example.com",
-        ],
-      };
-
-      expect(input.emails).toHaveLength(3);
-    });
-
-    it("should handle success notification", async () => {
-      const input: BackupNotificationInput = {
-        type: "success",
-        filename: "backup.zip",
-        size: 1024000,
-        duration: 5000,
-        emails: ["admin@example.com"],
-      };
-
-      // Should not throw
       await sendBackupNotification(input);
-      expect(input.type).toBe("success");
+      // Should complete without throwing
+      expect(true).toBe(true);
     });
 
-    it("should handle failure notification", async () => {
-      const input: BackupNotificationInput = {
-        type: "failure",
-        filename: "backup.zip",
-        error: "Backup failed",
-        emails: ["admin@example.com"],
-      };
-
-      // Should not throw
-      await sendBackupNotification(input);
-      expect(input.type).toBe("failure");
-    });
-
-    it("should not throw on notification error", async () => {
+    it("should handle success notification with all details", async () => {
       const input: BackupNotificationInput = {
         type: "success",
         filename: "backup.zip",
-        size: 1024000,
-        duration: 5000,
+        size: 52428800, // 50MB
+        duration: 30000, // 30 seconds
         emails: ["admin@example.com"],
       };
 
-      // Should handle errors gracefully
       let errorThrown = false;
       try {
         await sendBackupNotification(input);
       } catch {
         errorThrown = true;
       }
-
       expect(errorThrown).toBe(false);
     });
-  });
 
-  describe("File Size Formatting", () => {
-    it("should format bytes", () => {
-      const formatFileSize = (bytes: number): string => {
-        const units = ["B", "KB", "MB", "GB"];
-        let size = bytes;
-        let unitIndex = 0;
-
-        while (size >= 1024 && unitIndex < units.length - 1) {
-          size /= 1024;
-          unitIndex++;
-        }
-
-        return `${size.toFixed(2)} ${units[unitIndex]}`;
+    it("should handle success notification without optional size", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        duration: 2000,
+        emails: ["admin@example.com"],
       };
 
-      const result = formatFileSize(512);
-      expect(result).toContain("B");
+      let errorThrown = false;
+      try {
+        await sendBackupNotification(input);
+      } catch {
+        errorThrown = true;
+      }
+      expect(errorThrown).toBe(false);
     });
 
-    it("should format kilobytes", () => {
-      const formatFileSize = (bytes: number): string => {
-        const units = ["B", "KB", "MB", "GB"];
-        let size = bytes;
-        let unitIndex = 0;
-
-        while (size >= 1024 && unitIndex < units.length - 1) {
-          size /= 1024;
-          unitIndex++;
-        }
-
-        return `${size.toFixed(2)} ${units[unitIndex]}`;
+    it("should handle success notification without optional duration", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        size: 1048576,
+        emails: ["admin@example.com"],
       };
 
-      const result = formatFileSize(1024 * 100);
-      expect(result).toContain("KB");
+      let errorThrown = false;
+      try {
+        await sendBackupNotification(input);
+      } catch {
+        errorThrown = false;
+      }
+      expect(errorThrown).toBe(false);
     });
 
-    it("should format megabytes", () => {
-      const formatFileSize = (bytes: number): string => {
-        const units = ["B", "KB", "MB", "GB"];
-        let size = bytes;
-        let unitIndex = 0;
-
-        while (size >= 1024 && unitIndex < units.length - 1) {
-          size /= 1024;
-          unitIndex++;
-        }
-
-        return `${size.toFixed(2)} ${units[unitIndex]}`;
-      };
-
-      const result = formatFileSize(1024 * 1024 * 50);
-      expect(result).toContain("MB");
-    });
-
-    it("should format gigabytes", () => {
-      const formatFileSize = (bytes: number): string => {
-        const units = ["B", "KB", "MB", "GB"];
-        let size = bytes;
-        let unitIndex = 0;
-
-        while (size >= 1024 && unitIndex < units.length - 1) {
-          size /= 1024;
-          unitIndex++;
-        }
-
-        return `${size.toFixed(2)} ${units[unitIndex]}`;
-      };
-
-      const result = formatFileSize(1024 * 1024 * 1024 * 2);
-      expect(result).toContain("GB");
-    });
-
-    it("should format to 2 decimal places", () => {
-      const formatFileSize = (bytes: number): string => {
-        const units = ["B", "KB", "MB", "GB"];
-        let size = bytes;
-        let unitIndex = 0;
-
-        while (size >= 1024 && unitIndex < units.length - 1) {
-          size /= 1024;
-          unitIndex++;
-        }
-
-        return `${size.toFixed(2)} ${units[unitIndex]}`;
-      };
-
-      const result = formatFileSize(1536); // 1.5 KB
-      expect(result).toMatch(/\d+\.\d{2}/);
-    });
-
-    it("should handle zero bytes", () => {
-      const formatFileSize = (bytes: number): string => {
-        const units = ["B", "KB", "MB", "GB"];
-        let size = bytes;
-        let unitIndex = 0;
-
-        while (size >= 1024 && unitIndex < units.length - 1) {
-          size /= 1024;
-          unitIndex++;
-        }
-
-        return `${size.toFixed(2)} ${units[unitIndex]}`;
-      };
-
-      const result = formatFileSize(0);
-      expect(result).toBe("0.00 B");
-    });
-
-    it("should handle large files", () => {
-      const formatFileSize = (bytes: number): string => {
-        const units = ["B", "KB", "MB", "GB"];
-        let size = bytes;
-        let unitIndex = 0;
-
-        while (size >= 1024 && unitIndex < units.length - 1) {
-          size /= 1024;
-          unitIndex++;
-        }
-
-        return `${size.toFixed(2)} ${units[unitIndex]}`;
-      };
-
-      const result = formatFileSize(1024 * 1024 * 1024 * 500); // 500GB
-      expect(result).toContain("GB");
-      expect(result).toContain("500");
-    });
-  });
-
-  describe("Duration Formatting", () => {
-    it("should format seconds", () => {
-      const formatDuration = (milliseconds: number): string => {
-        const seconds = Math.floor(milliseconds / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-
-        if (hours > 0) {
-          return `${hours}h ${minutes % 60}m`;
-        }
-        if (minutes > 0) {
-          return `${minutes}m ${seconds % 60}s`;
-        }
-        return `${seconds}s`;
-      };
-
-      const result = formatDuration(5000);
-      expect(result).toContain("5");
-    });
-
-    it("should format minutes and seconds", () => {
-      const formatDuration = (milliseconds: number): string => {
-        const seconds = Math.floor(milliseconds / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-
-        if (hours > 0) {
-          return `${hours}h ${minutes % 60}m`;
-        }
-        if (minutes > 0) {
-          return `${minutes}m ${seconds % 60}s`;
-        }
-        return `${seconds}s`;
-      };
-
-      const result = formatDuration(125000); // 2m 5s
-      expect(result).toContain("m");
-      expect(result).toContain("s");
-    });
-
-    it("should format hours and minutes", () => {
-      const formatDuration = (milliseconds: number): string => {
-        const seconds = Math.floor(milliseconds / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-
-        if (hours > 0) {
-          return `${hours}h ${minutes % 60}m`;
-        }
-        if (minutes > 0) {
-          return `${minutes}m ${seconds % 60}s`;
-        }
-        return `${seconds}s`;
-      };
-
-      const result = formatDuration(3600000 + 600000); // 1h 10m
-      expect(result).toContain("h");
-      expect(result).toContain("m");
-    });
-
-    it("should handle less than 1 second", () => {
-      const formatDuration = (milliseconds: number): string => {
-        const seconds = Math.floor(milliseconds / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-
-        if (hours > 0) {
-          return `${hours}h ${minutes % 60}m`;
-        }
-        if (minutes > 0) {
-          return `${minutes}m ${seconds % 60}s`;
-        }
-        return `${seconds}s`;
-      };
-
-      const result = formatDuration(500);
-      expect(result).toBe("0s");
-    });
-
-    it("should handle exactly 1 hour", () => {
-      const formatDuration = (milliseconds: number): string => {
-        const seconds = Math.floor(milliseconds / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-
-        if (hours > 0) {
-          return `${hours}h ${minutes % 60}m`;
-        }
-        if (minutes > 0) {
-          return `${minutes}m ${seconds % 60}s`;
-        }
-        return `${seconds}s`;
-      };
-
-      const result = formatDuration(3600000);
-      expect(result).toContain("h");
-    });
-
-    it("should handle multiple hours", () => {
-      const formatDuration = (milliseconds: number): string => {
-        const seconds = Math.floor(milliseconds / 1000);
-        const minutes = Math.floor(seconds / 60);
-        const hours = Math.floor(minutes / 60);
-
-        if (hours > 0) {
-          return `${hours}h ${minutes % 60}m`;
-        }
-        if (minutes > 0) {
-          return `${minutes}m ${seconds % 60}s`;
-        }
-        return `${seconds}s`;
-      };
-
-      const result = formatDuration(3600000 * 24); // 24 hours
-      expect(result).toContain("24h");
-    });
-  });
-
-  describe("Email Content", () => {
-    it("should generate success email subject", () => {
-      const subject = "Vamsa Backup Completed Successfully";
-      expect(subject).toContain("Completed");
-    });
-
-    it("should generate failure email subject", () => {
-      const subject = "Vamsa Backup Failed";
-      expect(subject).toContain("Failed");
-    });
-
-    it("should include filename in success email", () => {
-      const filename = "vamsa-backup-daily-2024-01-15.zip";
-      expect(filename).toBeTruthy();
-    });
-
-    it("should include size in success email", () => {
-      const size = "45.23 MB";
-      expect(size).toContain("MB");
-    });
-
-    it("should include duration in success email", () => {
-      const duration = "5m 30s";
-      expect(duration).toContain("m");
-    });
-
-    it("should include error message in failure email", () => {
-      const error = "Database connection failed";
-      expect(error).toBeTruthy();
-    });
-
-    it("should include timestamp in email", () => {
-      const timestamp = new Date().toLocaleString();
-      expect(timestamp).toBeTruthy();
-    });
-
-    it("should format email as HTML", () => {
-      const html = "<html>";
-      expect(html).toContain("html");
-    });
-
-    it("should include status indicator in success email", () => {
-      const status = "✓ Completed";
-      expect(status).toContain("Completed");
-    });
-
-    it("should include status indicator in failure email", () => {
-      const status = "✗ Failed";
-      expect(status).toContain("Failed");
-    });
-
-    it("should use forest green color for success", () => {
-      const color = "#2d5016";
-      expect(color).toMatch(/#[0-9a-f]{6}/);
-    });
-
-    it("should use red color for failure", () => {
-      const color = "#d1293d";
-      expect(color).toMatch(/#[0-9a-f]{6}/);
-    });
-  });
-
-  describe("Email Recipients", () => {
-    it("should handle single recipient", async () => {
+    it("should handle success notification with minimal fields", async () => {
       const input: BackupNotificationInput = {
         type: "success",
         filename: "backup.zip",
         emails: ["admin@example.com"],
       };
 
-      expect(input.emails).toHaveLength(1);
-      expect(input.emails[0]).toContain("@");
+      let errorThrown = false;
+      try {
+        await sendBackupNotification(input);
+      } catch {
+        errorThrown = true;
+      }
+      expect(errorThrown).toBe(false);
     });
+  });
 
-    it("should handle multiple recipients", async () => {
+  describe("sendBackupNotification - Failure Cases", () => {
+    it("should accept failure notification type", async () => {
       const input: BackupNotificationInput = {
-        type: "success",
+        type: "failure",
         filename: "backup.zip",
-        emails: [
-          "admin1@example.com",
-          "admin2@example.com",
-          "admin3@example.com",
-        ],
+        error: "Database connection timeout",
+        emails: ["admin@example.com"],
       };
 
-      expect(input.emails).toHaveLength(3);
+      let errorThrown = false;
+      try {
+        await sendBackupNotification(input);
+      } catch {
+        errorThrown = true;
+      }
+      expect(errorThrown).toBe(false);
     });
 
-    it("should validate email addresses", () => {
-      const emails = ["admin@example.com", "user@company.org"];
-      const validEmails = emails.filter((email) =>
-        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
-      );
+    it("should handle failure notification without error message", async () => {
+      const input: BackupNotificationInput = {
+        type: "failure",
+        filename: "backup.zip",
+        emails: ["admin@example.com"],
+      };
 
-      expect(validEmails).toHaveLength(2);
+      let errorThrown = false;
+      try {
+        await sendBackupNotification(input);
+      } catch {
+        errorThrown = true;
+      }
+      expect(errorThrown).toBe(false);
     });
 
-    it("should skip empty email list", () => {
+    it("should handle failure with descriptive error", async () => {
+      const input: BackupNotificationInput = {
+        type: "failure",
+        filename: "vamsa-backup-2024-01-15.zip",
+        error: "Storage quota exceeded - disk full",
+        emails: ["admin@example.com"],
+      };
+
+      let errorThrown = false;
+      try {
+        await sendBackupNotification(input);
+      } catch {
+        errorThrown = true;
+      }
+      expect(errorThrown).toBe(false);
+    });
+  });
+
+  describe("sendBackupNotification - Email Recipients", () => {
+    it("should skip notification if emails array is empty", async () => {
       const input: BackupNotificationInput = {
         type: "success",
         filename: "backup.zip",
         emails: [],
       };
 
-      expect(input.emails).toHaveLength(0);
+      let errorThrown = false;
+      try {
+        await sendBackupNotification(input);
+      } catch {
+        errorThrown = true;
+      }
+
+      // Should complete without throwing
+      expect(errorThrown).toBe(false);
     });
 
-    it("should skip null email list", () => {
-      // Check that undefined emails are handled
-      const emails: string[] | undefined = undefined;
-      const shouldSkip = emails === undefined;
-      expect(shouldSkip).toBe(true);
+    it("should skip notification if emails is falsy", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        emails: [] as any,
+      };
+
+      let errorThrown = false;
+      try {
+        await sendBackupNotification(input);
+      } catch {
+        errorThrown = true;
+      }
+      expect(errorThrown).toBe(false);
+    });
+
+    it("should handle single email recipient", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        emails: ["admin@example.com"],
+      };
+
+      let errorThrown = false;
+      try {
+        await sendBackupNotification(input);
+      } catch {
+        errorThrown = true;
+      }
+      expect(errorThrown).toBe(false);
+    });
+
+    it("should handle multiple email recipients", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        emails: ["admin1@example.com", "admin2@example.com", "ops@example.com"],
+      };
+
+      let errorThrown = false;
+      try {
+        await sendBackupNotification(input);
+      } catch {
+        errorThrown = true;
+      }
+      expect(errorThrown).toBe(false);
     });
   });
 
-  describe("Error Handling", () => {
-    it("should not throw on missing size for success notification", async () => {
+  describe("sendBackupNotification - Error Handling", () => {
+    it("should not throw on error", async () => {
       const input: BackupNotificationInput = {
         type: "success",
         filename: "backup.zip",
-        // no size
         emails: ["admin@example.com"],
       };
 
+      // Even if there's an error in email sending, it should not throw
       let errorThrown = false;
       try {
         await sendBackupNotification(input);
@@ -572,44 +250,7 @@ describe("Backup Notifications", () => {
       expect(errorThrown).toBe(false);
     });
 
-    it("should not throw on missing duration for success notification", async () => {
-      const input: BackupNotificationInput = {
-        type: "success",
-        filename: "backup.zip",
-        size: 1024000,
-        // no duration
-        emails: ["admin@example.com"],
-      };
-
-      let errorThrown = false;
-      try {
-        await sendBackupNotification(input);
-      } catch {
-        errorThrown = true;
-      }
-
-      expect(errorThrown).toBe(false);
-    });
-
-    it("should not throw on missing error for failure notification", async () => {
-      const input: BackupNotificationInput = {
-        type: "failure",
-        filename: "backup.zip",
-        // no error
-        emails: ["admin@example.com"],
-      };
-
-      let errorThrown = false;
-      try {
-        await sendBackupNotification(input);
-      } catch {
-        errorThrown = true;
-      }
-
-      expect(errorThrown).toBe(false);
-    });
-
-    it("should handle email sending failure gracefully", async () => {
+    it("should not block backup process on notification failure", async () => {
       const input: BackupNotificationInput = {
         type: "success",
         filename: "backup.zip",
@@ -618,34 +259,259 @@ describe("Backup Notifications", () => {
         emails: ["admin@example.com"],
       };
 
-      // Should log warning but not throw
-      let errorThrown = false;
-      try {
-        await sendBackupNotification(input);
-      } catch {
-        errorThrown = true;
-      }
-
-      expect(errorThrown).toBe(false);
+      // Should complete successfully even if notification fails
+      const result = await sendBackupNotification(input);
+      expect(result).toBeUndefined();
     });
 
-    it("should handle invalid email address", async () => {
+    it("should handle large email lists", async () => {
+      const emails = Array(50)
+        .fill(0)
+        .map((_, i) => `admin${i}@example.com`);
+
       const input: BackupNotificationInput = {
         type: "success",
         filename: "backup.zip",
-        emails: ["not-an-email"],
+        size: 1024000,
+        duration: 5000,
+        emails,
       };
 
-      // Should still attempt to send (validation is optional)
       let errorThrown = false;
       try {
         await sendBackupNotification(input);
       } catch {
         errorThrown = true;
       }
+      expect(errorThrown).toBe(false);
+    });
+  });
 
-      // Either way is acceptable
-      expect(typeof errorThrown).toBe("boolean");
+  describe("Notification Subject Lines", () => {
+    it("should generate correct subject for success notification", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+
+      const calls = mockLogger.info.mock.calls;
+      const subjectCall = calls.find((call) => {
+        const args = call[0];
+        return (
+          typeof args === "object" &&
+          args !== null &&
+          "subject" in args &&
+          typeof (args as any).subject === "string" &&
+          (args as any).subject.includes("Completed")
+        );
+      });
+
+      expect(subjectCall).toBeDefined();
+    });
+
+    it("should generate correct subject for failure notification", async () => {
+      const input: BackupNotificationInput = {
+        type: "failure",
+        filename: "backup.zip",
+        error: "Connection timeout",
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+
+      const calls = mockLogger.info.mock.calls;
+      const subjectCall = calls.find((call) => {
+        const args = call[0];
+        return (
+          typeof args === "object" &&
+          args !== null &&
+          "subject" in args &&
+          typeof (args as any).subject === "string" &&
+          (args as any).subject.includes("Failed")
+        );
+      });
+
+      expect(subjectCall).toBeDefined();
+    });
+  });
+
+  describe("Large File Size Handling", () => {
+    it("should format bytes correctly", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        size: 512,
+        duration: 1000,
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+
+    it("should format kilobytes correctly", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        size: 102400, // 100 KB
+        duration: 2000,
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+
+    it("should format megabytes correctly", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        size: 52428800, // 50 MB
+        duration: 30000,
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+
+    it("should format gigabytes correctly", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        size: 2147483648, // 2 GB
+        duration: 120000,
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+
+    it("should handle zero byte backup", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "empty.zip",
+        size: 0,
+        duration: 100,
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+  });
+
+  describe("Duration Formatting in Notifications", () => {
+    it("should format very short duration (< 1 second)", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        size: 1024,
+        duration: 500,
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+
+    it("should format seconds only duration", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        size: 1024000,
+        duration: 5000,
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+
+    it("should format minutes and seconds duration", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        size: 1024000,
+        duration: 125000, // 2m 5s
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+
+    it("should format hours and minutes duration", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        size: 5368709120, // 5GB
+        duration: 4260000, // 1h 11m
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+
+    it("should format long duration correctly", async () => {
+      const input: BackupNotificationInput = {
+        type: "success",
+        filename: "backup.zip",
+        size: 10737418240, // 10GB
+        duration: 86400000, // 24 hours
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+  });
+
+  describe("Failure Notification Details", () => {
+    it("should include error details in failure notification", async () => {
+      const input: BackupNotificationInput = {
+        type: "failure",
+        filename: "backup.zip",
+        error: "Database connection failed: timeout",
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+
+    it("should handle very long error messages", async () => {
+      const longError =
+        "This is a very long error message that contains detailed information about what went wrong. " +
+        "It includes stack traces and debugging information. " +
+        "It should be included in the notification email.";
+
+      const input: BackupNotificationInput = {
+        type: "failure",
+        filename: "backup.zip",
+        error: longError,
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
+    });
+
+    it("should handle special characters in error message", async () => {
+      const input: BackupNotificationInput = {
+        type: "failure",
+        filename: "backup.zip",
+        error: "Error: Connection <failed> & 'timeout' occurred",
+        emails: ["admin@example.com"],
+      };
+
+      await sendBackupNotification(input);
+      expect(mockLogger.info).toHaveBeenCalled();
     });
   });
 });

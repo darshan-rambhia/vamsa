@@ -37,7 +37,7 @@ function MicrosoftCallbackComponent() {
     from: "/auth/microsoft/callback",
   });
   const [error, setError] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(true);
+  const [_isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
     async function processCallback() {

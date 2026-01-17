@@ -1,5 +1,5 @@
-import { describe, it, expect } from "bun:test";
-import { t, tMultiple, getServerI18n } from "./i18n";
+import { describe, it, expect, beforeAll } from "bun:test";
+import { t, tMultiple, getServerI18n, initializeServerI18n } from "@vamsa/lib/server";
 
 /**
  * Integration tests for persons server function error messages with i18n
@@ -7,6 +7,10 @@ import { t, tMultiple, getServerI18n } from "./i18n";
  * across multiple languages
  */
 describe("Persons Server Function i18n Integration", () => {
+  // Ensure i18n is initialized before any tests run
+  beforeAll(async () => {
+    await initializeServerI18n();
+  });
   describe("Person Not Found Error Messages", () => {
     it("person not found error in English", async () => {
       const errorMsg = await t("errors:person.notFound");

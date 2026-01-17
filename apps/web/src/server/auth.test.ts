@@ -243,7 +243,9 @@ describe("Authentication Server Functions", () => {
     const changePasswordSchema = z
       .object({
         currentPassword: z.string().min(1, "Current password is required"),
-        newPassword: z.string().min(8, "Password must be at least 8 characters"),
+        newPassword: z
+          .string()
+          .min(8, "Password must be at least 8 characters"),
         confirmPassword: z.string(),
       })
       .refine((data) => data.newPassword === data.confirmPassword, {
@@ -312,8 +314,12 @@ describe("Authentication Server Functions", () => {
       const expiresAt = new Date(beforeTime + TOKEN_MAX_AGE * 1000);
       const afterTime = Date.now();
 
-      expect(expiresAt.getTime()).toBeGreaterThanOrEqual(beforeTime + TOKEN_MAX_AGE * 1000);
-      expect(expiresAt.getTime()).toBeLessThanOrEqual(afterTime + TOKEN_MAX_AGE * 1000);
+      expect(expiresAt.getTime()).toBeGreaterThanOrEqual(
+        beforeTime + TOKEN_MAX_AGE * 1000
+      );
+      expect(expiresAt.getTime()).toBeLessThanOrEqual(
+        afterTime + TOKEN_MAX_AGE * 1000
+      );
     });
 
     it("should detect expired session", () => {

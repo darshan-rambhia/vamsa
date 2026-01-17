@@ -10,6 +10,8 @@ export interface GenerationSliderProps {
   onChange: (value: number) => void;
   id?: string;
   showNumberInput?: boolean;
+  /** Compact mode for floating panels - smaller buttons and no slider */
+  compact?: boolean;
 }
 
 /**
@@ -24,6 +26,7 @@ export function GenerationSlider({
   onChange,
   id,
   showNumberInput = false,
+  compact = false,
 }: GenerationSliderProps) {
   const handleDecrease = () => {
     if (value > min) {
@@ -39,6 +42,81 @@ export function GenerationSlider({
 
   const sliderId = id || `slider-${label.toLowerCase().replace(/\s+/g, "-")}`;
 
+  // Compact mode for toolbar controls
+  if (compact) {
+    return (
+      <div className="space-y-1">
+        <Label htmlFor={sliderId} className="text-xs">
+          {label}
+        </Label>
+        <div className="flex items-center gap-1">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleDecrease}
+            disabled={value <= min}
+            className="h-9 w-9 p-0"
+            title={`Decrease ${label.toLowerCase()}`}
+            aria-label={`Decrease ${label.toLowerCase()}`}
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14" />
+            </svg>
+          </Button>
+
+          <Input
+            id={sliderId}
+            type="number"
+            min={min}
+            max={max}
+            value={value}
+            onChange={(e) => {
+              const next = Number(e.target.value);
+              if (Number.isNaN(next)) return;
+              const clamped = Math.min(Math.max(next, min), max);
+              onChange(clamped);
+            }}
+            className="h-9 w-14 px-2 text-center text-sm"
+            aria-label={`${label} value`}
+          />
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleIncrease}
+            disabled={value >= max}
+            className="h-9 w-9 p-0"
+            title={`Increase ${label.toLowerCase()}`}
+            aria-label={`Increase ${label.toLowerCase()}`}
+          >
+            <svg
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 4.5v15m7.5-7.5h-15"
+              />
+            </svg>
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  // Standard mode
   return (
     <div className="space-y-2">
       <Label htmlFor={sliderId}>{label}</Label>

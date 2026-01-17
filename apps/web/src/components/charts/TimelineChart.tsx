@@ -21,7 +21,7 @@ export function TimelineChart({
 }: TimelineChartProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const resetViewRef = useRef<() => void>();
+  const resetViewRef = useRef<(() => void) | undefined>(undefined);
 
   useEffect(() => {
     if (!svgRef.current || !containerRef.current || entries.length === 0)
@@ -282,12 +282,12 @@ export function TimelineChart({
       }
     });
 
-    // Initial zoom to fit
+    // Initial zoom to fit (use 90% of available space)
     const bounds = g.node()?.getBBox();
     if (bounds) {
       const scale = Math.min(
-        width / (bounds.width + 40),
-        height / (bounds.height + 40),
+        (width * 0.9) / (bounds.width + 40),
+        (height * 0.9) / (bounds.height + 40),
         1
       );
       const transform = d3.zoomIdentity.translate(20, 20).scale(scale);

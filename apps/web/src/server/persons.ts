@@ -1,12 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
-import { prisma } from "./db";
 import { z } from "zod";
-import type { Prisma } from "@vamsa/api";
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { personCreateSchema, personUpdateSchema } from "@vamsa/schemas";
 import { requireAuth } from "./middleware/require-auth";
-import { createPaginationMeta } from "@vamsa/schemas";
-import { t } from "./i18n";
-import { recordSearchMetrics } from "../../server/metrics/application";
+import {
+  listPersonsData,
+  getPersonData,
+  createPersonData,
+  updatePersonData,
+  deletePersonData,
+  searchPersonsData,
+  type PersonListOptions,
+  type PersonListResult,
+  type PersonDetail,
+  type PersonCreateResult,
+  type PersonUpdateResult,
+  type PersonDeleteResult,
+  type PersonSearchResult,
+} from "@vamsa/lib/server/business";
 
 // Person list input schema with pagination, search, and filters
 const personListInputSchema = z.object({
@@ -19,340 +29,98 @@ const personListInputSchema = z.object({
     .default("lastName"),
   isLiving: z.boolean().optional(),
 });
+
 type PersonListInput = z.infer<typeof personListInputSchema>;
 
-// Audit log helper
-async function logAuditAction(
-  userId: string,
-  action: "CREATE" | "UPDATE" | "DELETE",
-  entityId: string,
-  previousData?: unknown,
-  newData?: unknown
-) {
-  try {
-    await prisma.auditLog.create({
-      data: {
-        userId,
-        action,
-        entityType: "Person",
-        entityId,
-        previousData: previousData as Prisma.InputJsonValue,
-        newData: newData as Prisma.InputJsonValue,
-      },
-    });
-  } catch (error) {
-    logger.error(
-      { error: serializeError(error) },
-      "Failed to log audit action"
-    );
-  }
-}
-
-// Validation schemas
-const createPersonSchema = z.object({
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  maidenName: z.string().optional(),
-  dateOfBirth: z.string().optional(),
-  dateOfPassing: z.string().optional(),
-  birthPlace: z.string().optional(),
-  nativePlace: z.string().optional(),
-  gender: z.enum(["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]).optional(),
-  photoUrl: z.string().optional(),
-  bio: z.string().optional(),
-  email: z.string().email().optional().or(z.literal("")),
-  phone: z.string().optional(),
-  profession: z.string().optional(),
-  employer: z.string().optional(),
-  isLiving: z.boolean().default(true),
-});
-
-const updatePersonSchema = createPersonSchema.partial().extend({
-  id: z.string(),
-});
-
-// List persons with pagination
+/**
+ * Server function: List persons with pagination and filtering
+ * @returns Paginated list of persons
+ * @requires VIEWER role or higher
+ */
 export const listPersons = createServerFn({ method: "GET" })
   .inputValidator((data: Partial<PersonListInput>) => {
     return personListInputSchema.parse(data);
   })
-  .handler(async ({ data }) => {
-    // Require authentication to access person data
+  .handler(async ({ data }): Promise<PersonListResult> => {
     await requireAuth("VIEWER");
 
-    const start = Date.now();
-    const { page, limit, sortBy, sortOrder, search, isLiving } = data;
-
-    // Build where clause
-    const where: Prisma.PersonWhereInput = {};
-
-    if (search) {
-      where.OR = [
-        { firstName: { contains: search, mode: "insensitive" } },
-        { lastName: { contains: search, mode: "insensitive" } },
-      ];
-    }
-
-    if (isLiving !== undefined) {
-      where.isLiving = isLiving;
-    }
-
-    // Build orderBy clause
-    const orderBy: Prisma.PersonOrderByWithRelationInput[] = [];
-    if (sortBy === "lastName") {
-      orderBy.push({ lastName: sortOrder }, { firstName: sortOrder });
-    } else if (sortBy === "firstName") {
-      orderBy.push({ firstName: sortOrder }, { lastName: sortOrder });
-    } else if (sortBy === "dateOfBirth") {
-      orderBy.push({ dateOfBirth: sortOrder });
-    } else if (sortBy === "createdAt") {
-      orderBy.push({ createdAt: sortOrder });
-    }
-
-    // Get total count
-    const total = await prisma.person.count({ where });
-
-    // Get paginated results
-    const persons = await prisma.person.findMany({
-      where,
-      orderBy,
-      skip: (page - 1) * limit,
-      take: limit,
-    });
-
-    // Record search metrics if search query was provided
-    if (search) {
-      const duration = Date.now() - start;
-      recordSearchMetrics(search, total, duration, "person_list");
-    }
-
-    return {
-      items: persons.map((p) => ({
-        id: p.id,
-        firstName: p.firstName,
-        lastName: p.lastName,
-        maidenName: p.maidenName,
-        dateOfBirth: p.dateOfBirth?.toISOString().split("T")[0] ?? null,
-        dateOfPassing: p.dateOfPassing?.toISOString().split("T")[0] ?? null,
-        birthPlace: p.birthPlace,
-        nativePlace: p.nativePlace,
-        gender: p.gender,
-        photoUrl: p.photoUrl,
-        bio: p.bio,
-        email: p.email,
-        phone: p.phone,
-        profession: p.profession,
-        employer: p.employer,
-        isLiving: p.isLiving,
-        createdAt: p.createdAt.toISOString(),
-        updatedAt: p.updatedAt.toISOString(),
-      })),
-      pagination: createPaginationMeta(page, limit, total),
+    const options: PersonListOptions = {
+      page: data.page,
+      limit: data.limit,
+      sortBy: data.sortBy as PersonListOptions["sortBy"],
+      sortOrder: data.sortOrder as PersonListOptions["sortOrder"],
+      search: data.search,
+      isLiving: data.isLiving,
     };
+
+    return listPersonsData(options);
   });
 
-// Get a single person by ID
+/**
+ * Server function: Get a single person by ID with relationships
+ * @returns Person detail with relationships
+ * @requires VIEWER role or higher
+ * @throws Error if person not found
+ */
 export const getPerson = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
-  .handler(async ({ data }) => {
-    // Require authentication to access person data
+  .handler(async ({ data }): Promise<PersonDetail> => {
     await requireAuth("VIEWER");
-
-    const person = await prisma.person.findUnique({
-      where: { id: data.id },
-      include: {
-        relationshipsFrom: {
-          include: { relatedPerson: true },
-        },
-      },
-    });
-
-    if (!person) {
-      throw new Error(await t("errors:person.notFound"));
-    }
-
-    // Build relationships list
-    // Only use relationshipsFrom to avoid duplicates since relationships are stored bidirectionally
-    const relationships = person.relationshipsFrom.map((r) => ({
-      id: r.id,
-      type: r.type,
-      marriageDate: r.marriageDate?.toISOString().split("T")[0] ?? null,
-      divorceDate: r.divorceDate?.toISOString().split("T")[0] ?? null,
-      isActive: r.isActive,
-      relatedPerson: {
-        id: r.relatedPerson.id,
-        firstName: r.relatedPerson.firstName,
-        lastName: r.relatedPerson.lastName,
-      },
-    }));
-
-    return {
-      id: person.id,
-      firstName: person.firstName,
-      lastName: person.lastName,
-      maidenName: person.maidenName,
-      dateOfBirth: person.dateOfBirth?.toISOString().split("T")[0] ?? null,
-      dateOfPassing: person.dateOfPassing?.toISOString().split("T")[0] ?? null,
-      birthPlace: person.birthPlace,
-      nativePlace: person.nativePlace,
-      gender: person.gender,
-      photoUrl: person.photoUrl,
-      bio: person.bio,
-      email: person.email,
-      phone: person.phone,
-      currentAddress: person.currentAddress,
-      workAddress: person.workAddress,
-      profession: person.profession,
-      employer: person.employer,
-      socialLinks: person.socialLinks,
-      isLiving: person.isLiving,
-      createdAt: person.createdAt.toISOString(),
-      updatedAt: person.updatedAt.toISOString(),
-      relationships,
-    };
+    return getPersonData(data.id);
   });
 
-// Create a new person
+/**
+ * Server function: Create a new person
+ * @returns Created person ID
+ * @requires MEMBER role or higher
+ */
 export const createPerson = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof createPersonSchema>) => {
-    return createPersonSchema.parse(data);
+  .inputValidator((data: unknown) => {
+    return personCreateSchema.parse(data);
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<PersonCreateResult> => {
     const user = await requireAuth("MEMBER");
-
-    const person = await prisma.person.create({
-      data: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        maidenName: data.maidenName || null,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-        dateOfPassing: data.dateOfPassing ? new Date(data.dateOfPassing) : null,
-        birthPlace: data.birthPlace || null,
-        nativePlace: data.nativePlace || null,
-        gender: data.gender || null,
-        photoUrl: data.photoUrl || null,
-        bio: data.bio || null,
-        email: data.email || null,
-        phone: data.phone || null,
-        profession: data.profession || null,
-        employer: data.employer || null,
-        isLiving: data.isLiving ?? true,
-        createdById: user.id,
-      },
-    });
-
-    await logAuditAction(user.id, "CREATE", person.id, null, data);
-
-    return { id: person.id };
+    return createPersonData(data, user.id);
   });
 
-// Update a person
+/**
+ * Server function: Update an existing person
+ * @returns Updated person ID
+ * @requires MEMBER role or higher
+ * @throws Error if person not found or user lacks permission
+ */
 export const updatePerson = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof updatePersonSchema>) => {
-    return updatePersonSchema.parse(data);
+  .inputValidator((data: unknown) => {
+    return personUpdateSchema.parse(data);
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<PersonUpdateResult> => {
     const user = await requireAuth("MEMBER");
-    const { id, ...updates } = data;
+    const { id, ...updates } = data as { id: string } & Record<string, unknown>;
 
-    // Get existing person
-    const existing = await prisma.person.findUnique({
-      where: { id },
-      include: { user: true },
-    });
-
-    if (!existing) {
-      throw new Error(await t("errors:person.notFound"));
-    }
-
-    // Permission check: User can edit if they are an ADMIN or editing their own profile
-    const linkedUser = await prisma.user.findUnique({
-      where: { personId: id },
-    });
-
-    const isOwnProfile = linkedUser?.id === user.id;
-    const isAdmin = user.role === "ADMIN";
-
-    if (!isOwnProfile && !isAdmin) {
-      throw new Error(await t("errors:person.cannotEdit"));
-    }
-
-    const person = await prisma.person.update({
-      where: { id },
-      data: {
-        ...updates,
-        dateOfBirth: updates.dateOfBirth
-          ? new Date(updates.dateOfBirth)
-          : undefined,
-        dateOfPassing: updates.dateOfPassing
-          ? new Date(updates.dateOfPassing)
-          : undefined,
-      },
-    });
-
-    await logAuditAction(user.id, "UPDATE", person.id, existing, updates);
-
-    return { id: person.id };
+    return updatePersonData(id, updates as typeof data, user.id);
   });
 
-// Delete a person
+/**
+ * Server function: Delete a person
+ * @returns Success status
+ * @requires ADMIN role
+ * @throws Error if person not found
+ */
 export const deletePerson = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<PersonDeleteResult> => {
     const user = await requireAuth("ADMIN");
-
-    const person = await prisma.person.findUnique({
-      where: { id: data.id },
-    });
-
-    if (!person) {
-      throw new Error(await t("errors:person.notFound"));
-    }
-
-    await prisma.person.delete({
-      where: { id: data.id },
-    });
-
-    await logAuditAction(user.id, "DELETE", data.id, person, null);
-
-    return { success: true };
+    return deletePersonData(data.id, user.id);
   });
 
-// Search persons
+/**
+ * Server function: Search persons by name
+ * @returns List of matching persons (max 10 results)
+ * @requires VIEWER role or higher
+ */
 export const searchPersons = createServerFn({ method: "GET" })
   .inputValidator((data: { query: string; excludeId?: string }) => data)
-  .handler(async ({ data }) => {
-    // Require authentication to search person data
+  .handler(async ({ data }): Promise<PersonSearchResult[]> => {
     await requireAuth("VIEWER");
-
-    const start = Date.now();
-
-    const persons = await prisma.person.findMany({
-      where: {
-        AND: [
-          {
-            OR: [
-              { firstName: { contains: data.query, mode: "insensitive" } },
-              { lastName: { contains: data.query, mode: "insensitive" } },
-            ],
-          },
-          // Exclude the specified person if excludeId is provided
-          ...(data.excludeId ? [{ id: { not: data.excludeId } }] : []),
-        ],
-      },
-      take: 10,
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-    });
-
-    // Record metrics
-    const duration = Date.now() - start;
-    recordSearchMetrics(data.query, persons.length, duration, "person_name");
-
-    return persons.map((p) => ({
-      id: p.id,
-      firstName: p.firstName,
-      lastName: p.lastName,
-      photoUrl: p.photoUrl,
-      isLiving: p.isLiving,
-    }));
+    return searchPersonsData(data.query, data.excludeId);
   });

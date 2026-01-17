@@ -1,2 +1,4 @@
 [test]
 # Test configuration for @vamsa/lib
+# Preload test setup to configure global logger mocks
+preload = ["./tests/setup/test-logger-mock.ts"]

@@ -167,9 +167,9 @@ export function PersonSelector({
 
   if (isLoading) {
     return (
-      <div className={cn("space-y-2", className)}>
-        {label && <Label>{label}</Label>}
-        <div className="bg-muted flex h-10 w-[250px] items-center justify-center rounded-md border">
+      <div className={cn("space-y-1", className)}>
+        {label && <Label className="text-xs">{label}</Label>}
+        <div className="bg-muted flex h-9 w-50 items-center justify-center rounded-md border">
           <span className="text-muted-foreground text-sm">Loading...</span>
         </div>
       </div>
@@ -177,8 +177,12 @@ export function PersonSelector({
   }
 
   return (
-    <div className={cn("relative space-y-2", className)}>
-      {label && <Label htmlFor="person-selector">{label}</Label>}
+    <div className={cn("relative space-y-1", className)}>
+      {label && (
+        <Label htmlFor="person-selector" className="text-xs">
+          {label}
+        </Label>
+      )}
 
       <div className="relative">
         {/* Input field */}
@@ -200,7 +204,7 @@ export function PersonSelector({
           }}
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          className="w-[250px]"
+          className="h-9 w-50"
           autoComplete="off"
           aria-expanded={isOpen}
           aria-haspopup="listbox"
@@ -243,8 +247,7 @@ export function PersonSelector({
       {isOpen && (
         <ul
           ref={listRef}
-          className="bg-popover border-border absolute z-50 mt-1 max-h-[300px] w-[250px] overflow-auto rounded-md border shadow-lg"
-          role="listbox"
+          className="bg-popover border-border absolute z-50 mt-1 max-h-75 w-50 overflow-auto rounded-md border shadow-lg"
           aria-label="People"
         >
           {filteredPersons.length === 0 ? (
@@ -253,44 +256,46 @@ export function PersonSelector({
             </li>
           ) : (
             filteredPersons.map((person, index) => (
-              <li
-                key={person.id}
-                role="option"
-                aria-selected={person.id === selectedPersonId}
-                className={cn(
-                  "flex cursor-pointer items-center gap-2 px-3 py-2 text-sm",
-                  "hover:bg-accent hover:text-accent-foreground",
-                  index === highlightedIndex &&
-                    "bg-accent text-accent-foreground",
-                  person.id === selectedPersonId && "font-medium"
-                )}
-                onClick={() => handleSelect(person.id)}
-                onMouseEnter={() => setHighlightedIndex(index)}
-              >
-                {/* Living status indicator */}
-                <span
+              <li key={person.id}>
+                <button
+                  type="button"
+                  role="option"
+                  aria-selected={person.id === selectedPersonId}
                   className={cn(
-                    "h-2 w-2 shrink-0 rounded-full",
-                    person.isLiving ? "bg-primary" : "bg-muted-foreground"
+                    "flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-left text-sm",
+                    "hover:bg-accent hover:text-accent-foreground",
+                    index === highlightedIndex &&
+                      "bg-accent text-accent-foreground",
+                    person.id === selectedPersonId && "font-medium"
                   )}
-                  title={person.isLiving ? "Living" : "Deceased"}
-                />
-                <span className="truncate">{getDisplayName(person)}</span>
-                {person.id === selectedPersonId && (
-                  <svg
-                    className="text-primary ml-auto h-4 w-4 shrink-0"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                )}
+                  onClick={() => handleSelect(person.id)}
+                  onMouseEnter={() => setHighlightedIndex(index)}
+                >
+                  {/* Living status indicator */}
+                  <span
+                    className={cn(
+                      "h-2 w-2 shrink-0 rounded-full",
+                      person.isLiving ? "bg-primary" : "bg-muted-foreground"
+                    )}
+                    title={person.isLiving ? "Living" : "Deceased"}
+                  />
+                  <span className="truncate">{getDisplayName(person)}</span>
+                  {person.id === selectedPersonId && (
+                    <svg
+                      className="text-primary ml-auto h-4 w-4 shrink-0"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  )}
+                </button>
               </li>
             ))
           )}

@@ -8,58 +8,45 @@
  * - Error handling for validation failures and auth failures
  */
 
-import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test";
+import { describe, test, expect, mock } from "bun:test";
 import { z } from "zod";
 import authRouter from "./auth";
 
-// Mock the server auth functions
-mock.module("../../src/server/auth", () => ({
-  login: mock(async ({ data }: { data: { email: string; password: string } }) => {
-    if (data.email === "valid@test.com" && data.password === "password123") {
-      return {
-        success: true,
-        user: {
-          id: "user-123",
-          email: "valid@test.com",
-          name: "Test User",
-          role: "MEMBER",
-          mustChangePassword: false,
-          oidcProvider: null,
-          profileClaimStatus: null,
-        },
-      };
+// Mock the server auth functions from @vamsa/lib/server/business
+mock.module("@vamsa/lib/server/business", () => ({
+  loginUser: mock(
+    async (email: string, password: string) => {
+      if (email === "valid@test.com" && password === "password123") {
+        return {
+          success: true,
+          user: {
+            id: "user-123",
+            email: "valid@test.com",
+            name: "Test User",
+            role: "MEMBER",
+            mustChangePassword: false,
+            oidcProvider: null,
+            profileClaimStatus: null,
+          },
+        };
+      }
+      return { error: "Invalid credentials" };
     }
-    return { error: "Invalid credentials" };
-  }),
-  register: mock(async ({
-    data,
-  }: {
-    data: {
-      email: string;
-      name: string;
-      password: string;
-      confirmPassword: string;
-    };
-  }) => {
-    if (data.email === "newuser@test.com") {
-      return { success: true, userId: "user-456" };
+  ),
+  registerUser: mock(
+    async (email: string, name: string, password: string) => {
+      if (email === "newuser@test.com") {
+        return { success: true, userId: "user-456" };
+      }
+      if (email === "existing@test.com") {
+        throw new Error("Email already exists");
+      }
+      return { error: "Registration failed" };
     }
-    if (data.email === "existing@test.com") {
-      throw new Error("Email already exists");
-    }
-    return { error: "Registration failed" };
-  }),
+  ),
 }));
 
-// Mock logger
-mock.module("@vamsa/lib/logger", () => ({
-  logger: {
-    error: mock(() => {}),
-    warn: mock(() => {}),
-    info: mock(() => {}),
-    debug: mock(() => {}),
-  },
-}));
+// Note: @vamsa/lib/logger is mocked globally in test setup (preload file)
 
 describe("Auth Router", () => {
   describe("Login Route", () => {
@@ -453,9 +440,8 @@ describe("Auth Router", () => {
     test("should handle ZodError for invalid input", async () => {
       const error = new z.ZodError([
         {
-          code: z.ZodIssueCode.invalid_type,
+          code: "invalid_type",
           expected: "string",
-          received: "undefined",
           path: ["email"],
           message: "Required",
         },
@@ -476,7 +462,12 @@ describe("Auth Router", () => {
     test("should detect successful result structure", async () => {
       const result = {
         success: true,
-        user: { id: "user-123", email: "user@test.com", name: "Test", role: "MEMBER" },
+        user: {
+          id: "user-123",
+          email: "user@test.com",
+          name: "Test",
+          role: "MEMBER",
+        },
       };
       const isError = typeof result === "object" && "error" in result;
 
@@ -487,7 +478,8 @@ describe("Auth Router", () => {
       const successResult = { success: true, user: { id: "123" } };
       const errorResult = { error: "Something went wrong" };
 
-      const isSuccess = typeof successResult === "object" && "success" in successResult;
+      const isSuccess =
+        typeof successResult === "object" && "success" in successResult;
       const isError = typeof errorResult === "object" && "error" in errorResult;
 
       expect(isSuccess).toBe(true);
@@ -497,30 +489,35 @@ describe("Auth Router", () => {
 
   describe("Cookie Handling", () => {
     test("should set HttpOnly cookie for login", () => {
-      const cookieValue = "vamsa-session=token-value; HttpOnly; Secure; SameSite=Lax; Path=/";
+      const cookieValue =
+        "vamsa-session=token-value; HttpOnly; Secure; SameSite=Lax; Path=/";
       expect(cookieValue).toContain("HttpOnly");
       expect(cookieValue).toContain("Secure");
       expect(cookieValue).toContain("SameSite=Lax");
     });
 
     test("should use Path=/ for session cookie", () => {
-      const cookieValue = "vamsa-session=token-value; HttpOnly; Secure; SameSite=Lax; Path=/";
+      const cookieValue =
+        "vamsa-session=token-value; HttpOnly; Secure; SameSite=Lax; Path=/";
       expect(cookieValue).toContain("Path=/");
     });
 
     test("should clear cookie on logout", () => {
-      const logoutCookie = "vamsa-session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
+      const logoutCookie =
+        "vamsa-session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
       expect(logoutCookie).toContain("Max-Age=0");
       expect(logoutCookie).not.toContain("=token");
     });
 
     test("should set secure flag in production", () => {
-      const prodCookie = "vamsa-session=token; HttpOnly; Secure; SameSite=Lax; Path=/";
+      const prodCookie =
+        "vamsa-session=token; HttpOnly; Secure; SameSite=Lax; Path=/";
       expect(prodCookie).toContain("Secure");
     });
 
     test("should include all required cookie flags", () => {
-      const cookieValue = "vamsa-session=token-value; HttpOnly; Secure; SameSite=Lax; Path=/";
+      const cookieValue =
+        "vamsa-session=token-value; HttpOnly; Secure; SameSite=Lax; Path=/";
       const flags = ["HttpOnly", "Secure", "SameSite", "Path"];
       flags.forEach((flag) => {
         expect(cookieValue).toContain(flag);

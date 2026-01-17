@@ -35,27 +35,15 @@ export function EventTimeline({ events, onEventClick }: EventTimelineProps) {
       {events.map((event) => {
         const eventTypeConfig = getEventTypeConfig(event.type);
 
-        return (
-          <div
-            key={event.id}
-            className="group relative"
-            onClick={() => onEventClick?.(event.id)}
-            onKeyDown={(e) => {
-              if (onEventClick && (e.key === "Enter" || e.key === " ")) {
-                e.preventDefault();
-                onEventClick(event.id);
-              }
-            }}
-            role={onEventClick ? "button" : undefined}
-            tabIndex={onEventClick ? 0 : undefined}
-          >
+        const content = (
+          <>
             {/* Timeline dot */}
             <div
               className={`border-background absolute top-1 -left-8 flex h-6 w-6 items-center justify-center rounded-full border-4 sm:-left-12 ${eventTypeConfig.dotClass}`}
             />
 
             {/* Event content */}
-            <div className="border-border bg-card hover:border-primary/30 hover:bg-accent/5 cursor-pointer rounded-lg border-2 p-4 transition-all duration-200 sm:p-5">
+            <div className="border-border bg-card hover:border-primary/30 hover:bg-accent/5 rounded-lg border-2 p-4 transition-all duration-200 sm:p-5">
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge
@@ -126,6 +114,26 @@ export function EventTimeline({ events, onEventClick }: EventTimelineProps) {
                 )}
               </div>
             </div>
+          </>
+        );
+
+        if (onEventClick) {
+          return (
+            <button
+              key={event.id}
+              type="button"
+              className="group focus-visible:ring-ring relative w-full cursor-pointer rounded-lg text-left focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+              onClick={() => onEventClick(event.id)}
+              aria-label={`View ${eventTypeConfig.label.toLowerCase()} event${event.date ? ` on ${formatDate(new Date(event.date))}` : ""}`}
+            >
+              {content}
+            </button>
+          );
+        }
+
+        return (
+          <div key={event.id} className="group relative">
+            {content}
           </div>
         );
       })}

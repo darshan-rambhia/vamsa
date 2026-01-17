@@ -2,6 +2,7 @@ import type { Story } from "@ladle/react";
 import { TimelineChart } from "~/components/charts/TimelineChart";
 import { StoryDecorator } from "~/stories/decorators";
 import { createTimelineEntries } from "~/stories/mocks/chart-data";
+import { logger } from "@vamsa/lib/logger";
 
 export default {
   title: "Charts/TimelineChart",
@@ -23,7 +24,9 @@ export const Default: Story = () => {
         entries={entries}
         minYear={minYear}
         maxYear={maxYear}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in TimelineChart story")
+        }
       />
     </StoryDecorator>
   );
@@ -42,7 +45,9 @@ export const Century: Story = () => {
         entries={entries.slice(0, 10)}
         minYear={minYear}
         maxYear={maxYear}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in TimelineChart story")
+        }
       />
     </StoryDecorator>
   );
@@ -61,7 +66,9 @@ export const ThreeCenturies: Story = () => {
         entries={entries}
         minYear={minYear}
         maxYear={maxYear}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in TimelineChart story")
+        }
       />
     </StoryDecorator>
   );
@@ -82,7 +89,9 @@ export const NoDates: Story = () => {
         entries={entries}
         minYear={1900}
         maxYear={2000}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in TimelineChart story")
+        }
       />
     </StoryDecorator>
   );
@@ -105,7 +114,9 @@ export const AllLiving: Story = () => {
         entries={entries}
         minYear={currentYear - 80}
         maxYear={currentYear}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in TimelineChart story")
+        }
       />
     </StoryDecorator>
   );

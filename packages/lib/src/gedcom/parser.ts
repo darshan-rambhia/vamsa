@@ -391,14 +391,12 @@ export class GedcomParser {
     let workingStr = dateStr.trim();
     const qualifierMatch = workingStr.match(/^(ABT|BEF|AFT|BET)\s+/);
     if (qualifierMatch) {
-      result.qualifier = qualifierMatch[1] as any;
+      result.qualifier = qualifierMatch[1] as "ABT" | "BEF" | "AFT" | "BET";
       result.isApproximate = true;
       workingStr = workingStr.substring(qualifierMatch[0].length).trim();
     }
 
-    // Handle "BET ... AND ..." format (e.g., "BET 1975 AND 1985" or "BET 1 JAN 1975 AND 1 JAN 1985")
     if (result.qualifier === "BET") {
-      // Try full date format first: "BET 15 JAN 1975 AND 15 JAN 1985"
       const betFullMatch = workingStr.match(
         /^(\d{1,2})\s+(\w+)\s+(\d{4})\s+AND\s+(\d{1,2})\s+(\w+)\s+(\d{4})$/
       );
@@ -409,7 +407,6 @@ export class GedcomParser {
         return result;
       }
 
-      // Try year-only format: "BET 1975 AND 1985"
       const betYearMatch = workingStr.match(/^(\d{4})\s+AND\s+(\d{4})$/);
       if (betYearMatch) {
         result.year = parseInt(betYearMatch[1], 10);
@@ -417,7 +414,6 @@ export class GedcomParser {
       }
     }
 
-    // Try full date format: "15 JAN 1985"
     const fullMatch = workingStr.match(/^(\d{1,2})\s+(\w+)\s+(\d{4})$/);
     if (fullMatch) {
       result.day = parseInt(fullMatch[1], 10);
@@ -426,7 +422,6 @@ export class GedcomParser {
       return result;
     }
 
-    // Try month-year format: "JAN 1985"
     const monthYearMatch = workingStr.match(/^(\w+)\s+(\d{4})$/);
     if (monthYearMatch) {
       result.month = this.monthToNumber(monthYearMatch[1]);
@@ -434,7 +429,6 @@ export class GedcomParser {
       return result;
     }
 
-    // Try year only: "1985"
     const yearMatch = workingStr.match(/^(\d{4})$/);
     if (yearMatch) {
       result.year = parseInt(yearMatch[1], 10);
@@ -477,18 +471,19 @@ export class GedcomParser {
 
     const trimmed = gedcomName.trim();
 
-    // Find surname between forward slashes
-    const surnameMatch = trimmed.match(/\/([^\/]*)\//);
-    const lastName = surnameMatch ? surnameMatch[1].trim() : undefined;
+    const firstSlash = trimmed.indexOf("/");
+    const lastSlash = trimmed.lastIndexOf("/");
 
-    // Extract given names (everything before and after surname)
+    let lastName: string | undefined;
     let firstName: string | undefined;
-    if (surnameMatch) {
-      // Remove the /surname/ part and trim
-      const withoutSurname = trimmed.replace(/\/[^\/]*\//, "").trim();
+
+    if (firstSlash !== -1 && lastSlash > firstSlash) {
+      lastName = trimmed.slice(firstSlash + 1, lastSlash).trim() || undefined;
+
+      const withoutSurname =
+        `${trimmed.slice(0, firstSlash)}${trimmed.slice(lastSlash + 1)}`.trim();
       firstName = withoutSurname || undefined;
     } else {
-      // No surname markers, entire thing is given name
       firstName = trimmed || undefined;
     }
 
@@ -504,7 +499,6 @@ export class GedcomParser {
   validate(file: GedcomFile): ValidationError[] {
     const errors: ValidationError[] = [];
 
-    // Check for required records
     if (!file.header) {
       errors.push({
         message: "Missing required HEAD record",
@@ -519,7 +513,6 @@ export class GedcomParser {
       });
     }
 
-    // Check for unique xrefs
     const xrefSet = new Set<string>();
     const allRecords = [
       file.header,
@@ -540,7 +533,6 @@ export class GedcomParser {
       }
     }
 
-    // Check for broken references in families
     const personIds = new Set(file.individuals.map((i) => i.id));
     const familyIds = new Set(file.families.map((f) => f.id));
 
@@ -582,7 +574,6 @@ export class GedcomParser {
       }
     }
 
-    // Check for broken family references in individuals
     for (const person of file.individuals) {
       const famcLines = person.tags.get("FAMC") || [];
       const famsLines = person.tags.get("FAMS") || [];
@@ -615,7 +606,6 @@ export class GedcomParser {
   parseIndividual(record: GedcomRecord): ParsedIndividual {
     const id = record.id || "unknown";
 
-    // Extract names
     const names: Array<{
       full: string;
       firstName?: string;
@@ -631,32 +621,27 @@ export class GedcomParser {
       });
     }
 
-    // Extract sex
     const sexLine = record.tags.get("SEX")?.[0];
     const sex =
       sexLine?.value === "M" || sexLine?.value === "F" || sexLine?.value === "X"
         ? sexLine.value
         : undefined;
 
-    // Extract birth information
     const birtLine = record.tags.get("BIRT")?.[0];
     const birthDate = birtLine
       ? this.parseDateFromRecord(record, "BIRT")
       : undefined;
     const birthPlace = this.getPlaceFromEvent(record, "BIRT");
 
-    // Extract death information
     const deathLine = record.tags.get("DEAT")?.[0];
     const deathDate = deathLine
       ? this.parseDateFromRecord(record, "DEAT")
       : undefined;
     const deathPlace = this.getPlaceFromEvent(record, "DEAT");
 
-    // Extract occupation
     const occuLine = record.tags.get("OCCU")?.[0];
     const occupation = occuLine?.value;
 
-    // Extract notes (skip empty notes)
     const notes: string[] = [];
     const noteLines = record.tags.get("NOTE") || [];
     for (const line of noteLines) {
@@ -666,7 +651,6 @@ export class GedcomParser {
       }
     }
 
-    // Extract family references
     const familiesAsChild: string[] = [];
     const famcLines = record.tags.get("FAMC") || [];
     for (const line of famcLines) {
@@ -704,13 +688,11 @@ export class GedcomParser {
   parseFamily(record: GedcomRecord): ParsedFamily {
     const id = record.id || "unknown";
 
-    // Extract spouse information
     const husbandLine = record.tags.get("HUSB")?.[0];
     const wifeLine = record.tags.get("WIFE")?.[0];
     const husband = husbandLine?.pointer?.replace(/@/g, "");
     const wife = wifeLine?.pointer?.replace(/@/g, "");
 
-    // Extract children
     const children: string[] = [];
     const childLines = record.tags.get("CHIL") || [];
     for (const line of childLines) {
@@ -719,14 +701,11 @@ export class GedcomParser {
       }
     }
 
-    // Extract marriage information
     const marriageDate = this.parseDateFromRecord(record, "MARR");
     const marriagePlace = this.getPlaceFromEvent(record, "MARR") || undefined;
 
-    // Extract divorce information
     const divorceDate = this.parseDateFromRecord(record, "DIV");
 
-    // Extract notes (skip empty notes)
     const notes: string[] = [];
     const noteLines = record.tags.get("NOTE") || [];
     for (const line of noteLines) {
@@ -757,14 +736,11 @@ export class GedcomParser {
   ): string | undefined {
     const eventLines = record.tags.get(eventTag) || [];
     for (const eventLine of eventLines) {
-      // Look for DATE substructure
       const eventIndex = record.lines.indexOf(eventLine);
 
-      // Find DATE lines that are children of this event
       for (let i = eventIndex + 1; i < record.lines.length; i++) {
         const line = record.lines[i];
 
-        // Stop if we reach a line at the same or lower level as the event
         if (line.level <= eventLine.level) {
           break;
         }
@@ -790,7 +766,6 @@ export class GedcomParser {
   ): string | undefined {
     const eventLines = record.tags.get(eventTag) || [];
     for (const eventLine of eventLines) {
-      // Look for PLAC substructure
       const eventIndex = record.lines.indexOf(eventLine);
       for (let i = eventIndex + 1; i < record.lines.length; i++) {
         const line = record.lines[i];
@@ -811,39 +786,30 @@ export class GedcomParser {
   parseRepository(record: GedcomRecord): ParsedRepository {
     const id = record.id || "unknown";
 
-    // Extract name (NAME tag)
     const nameLine = record.tags.get("NAME")?.[0];
     const name = nameLine?.value || "";
 
-    // Extract address components
     const addrLine = record.tags.get("ADDR")?.[0];
     const address = addrLine?.value;
 
-    // Extract city (CITY tag)
     const cityLine = record.tags.get("CITY")?.[0];
     const city = cityLine?.value;
 
-    // Extract state (STAE tag)
     const stateLine = record.tags.get("STAE")?.[0];
     const state = stateLine?.value;
 
-    // Extract country (CTRY tag)
     const countryLine = record.tags.get("CTRY")?.[0];
     const country = countryLine?.value;
 
-    // Extract phone (PHON tag)
     const phoneLine = record.tags.get("PHON")?.[0];
     const phone = phoneLine?.value;
 
-    // Extract email (EMAIL tag)
     const emailLine = record.tags.get("EMAIL")?.[0];
     const email = emailLine?.value;
 
-    // Extract website (WWW tag)
     const websiteLine = record.tags.get("WWW")?.[0];
     const website = websiteLine?.value;
 
-    // Extract notes (NOTE tag, skip empty notes)
     const notes: string[] = [];
     const noteLines = record.tags.get("NOTE") || [];
     for (const line of noteLines) {
@@ -873,23 +839,18 @@ export class GedcomParser {
   parseSubmitter(record: GedcomRecord): ParsedSubmitter {
     const id = record.id || "unknown";
 
-    // Extract name (NAME tag)
     const nameLine = record.tags.get("NAME")?.[0];
     const name = nameLine?.value || "";
 
-    // Extract address (ADDR tag)
     const addrLine = record.tags.get("ADDR")?.[0];
     const address = addrLine?.value;
 
-    // Extract phone (PHON tag)
     const phoneLine = record.tags.get("PHON")?.[0];
     const phone = phoneLine?.value;
 
-    // Extract email (EMAIL tag)
     const emailLine = record.tags.get("EMAIL")?.[0];
     const email = emailLine?.value;
 
-    // Extract notes (NOTE tag, skip empty notes)
     const notes: string[] = [];
     const noteLines = record.tags.get("NOTE") || [];
     for (const line of noteLines) {

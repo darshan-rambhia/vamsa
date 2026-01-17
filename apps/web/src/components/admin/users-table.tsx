@@ -86,7 +86,7 @@ export function UsersTable({
     setLoading(userId);
     setError(null);
     try {
-      await deleteUser({ data: { userId } });
+      await deleteUser({ data: { id: userId } });
       onUserUpdated?.();
       setDeleteDialogUser(null);
     } catch (err) {

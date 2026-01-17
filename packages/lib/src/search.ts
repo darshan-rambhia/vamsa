@@ -122,7 +122,10 @@ export function sanitizeQuery(query: string): string {
  * @param config - Search configuration
  * @returns PostgreSQL tsquery string
  */
-export function buildTsQuery(query: string, config: SearchConfig = {}): string {
+export function buildTsQuery(
+  query: string,
+  _config: SearchConfig = {}
+): string {
   const sanitized = sanitizeQuery(query);
   if (!sanitized) return "";
 

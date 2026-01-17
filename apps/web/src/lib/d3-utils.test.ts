@@ -14,8 +14,7 @@
  * - Error handling and edge cases
  */
 
-import { describe, it, expect, beforeEach, mock, spyOn } from "bun:test";
-import * as d3 from "d3";
+import { describe, it, expect, mock } from "bun:test";
 import type { ChartNode } from "~/server/charts";
 import {
   groupByGeneration,

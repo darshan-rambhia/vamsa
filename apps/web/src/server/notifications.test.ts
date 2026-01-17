@@ -290,18 +290,14 @@ describe("Notification Server Functions", () => {
     it("should select correct template for suggestion created", () => {
       const type = "SUGGESTION_CREATED";
       const template =
-        type === "SUGGESTION_CREATED"
-          ? "suggestion-created-email"
-          : "unknown";
+        type === "SUGGESTION_CREATED" ? "suggestion-created-email" : "unknown";
       expect(template).toEqual("suggestion-created-email");
     });
 
     it("should select correct template for suggestion updated", () => {
       const type = "SUGGESTION_UPDATED";
       const template =
-        type === "SUGGESTION_UPDATED"
-          ? "suggestion-updated-email"
-          : "unknown";
+        type === "SUGGESTION_UPDATED" ? "suggestion-updated-email" : "unknown";
       expect(template).toEqual("suggestion-updated-email");
     });
 
@@ -367,8 +363,7 @@ describe("Notification Server Functions", () => {
         birthdayReminders: true,
       };
 
-      const shouldSendSuggestionNotif =
-        preferences.suggestionsCreated === true;
+      const shouldSendSuggestionNotif = preferences.suggestionsCreated === true;
       expect(shouldSendSuggestionNotif).toBe(false);
     });
 

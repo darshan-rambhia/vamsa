@@ -17,6 +17,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@vamsa/ui/primitives";
+import type { PersonDetail } from "~/server/persons";
 import { OverviewTab } from "~/components/person/overview-tab";
 import { RelationshipsTab } from "~/components/person/relationships-tab";
 import { EventsTab } from "~/components/person/events-tab";
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/people/$personId")({
 function PersonDetailComponent() {
   const { personId } = Route.useParams();
 
-  const { data: person, isLoading } = useQuery({
+  const { data: person, isLoading } = useQuery<PersonDetail>({
     queryKey: ["person", personId],
     queryFn: () => getPerson({ data: { id: personId } }),
   });

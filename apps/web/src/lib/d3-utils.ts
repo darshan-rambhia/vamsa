@@ -91,9 +91,10 @@ export function fitToContainer<T extends Element>(
   const bounds = g.node()?.getBBox();
   if (!bounds) return;
 
+  // Calculate scale to fit content with some padding (90% of available space)
   const scale = Math.min(
-    containerWidth / (bounds.width + margin.left + margin.right),
-    containerHeight / (bounds.height + margin.top + margin.bottom),
+    (containerWidth * 0.9) / (bounds.width + margin.left + margin.right),
+    (containerHeight * 0.9) / (bounds.height + margin.top + margin.bottom),
     maxScale
   );
 
@@ -122,9 +123,10 @@ export function fitToContainerTop<T extends Element>(
   const bounds = g.node()?.getBBox();
   if (!bounds) return;
 
+  // Calculate scale to fit content with some padding (90% of available space)
   const scale = Math.min(
-    containerWidth / (bounds.width + margin.left + margin.right),
-    containerHeight / (bounds.height + margin.top + margin.bottom),
+    (containerWidth * 0.9) / (bounds.width + margin.left + margin.right),
+    (containerHeight * 0.9) / (bounds.height + margin.top + margin.bottom),
     maxScale
   );
 

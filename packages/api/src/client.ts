@@ -4,6 +4,7 @@ import { Pool, type PoolConfig } from "pg";
 import { config } from "dotenv";
 import { resolve, dirname } from "path";
 import { fileURLToPath } from "url";
+import { logger } from "@vamsa/lib/logger";
 
 // Load .env from monorepo root (traverse up from packages/api/src)
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -86,21 +87,21 @@ function createPool(): Pool {
   // Log pool events in development
   if (process.env.NODE_ENV === "development") {
     pool.on("connect", () => {
-      console.log("[DB Pool] New client connected");
+      logger.debug("DB Pool: New client connected");
     });
 
     pool.on("remove", () => {
-      console.log("[DB Pool] Client removed from pool");
+      logger.debug("DB Pool: Client removed from pool");
     });
 
     pool.on("error", (err) => {
-      console.error("[DB Pool] Unexpected error on idle client:", err.message);
+      logger.error({ error: err }, "DB Pool: Unexpected error on idle client");
     });
   }
 
   // Always log errors in production
   pool.on("error", (err) => {
-    console.error("[DB Pool] Pool error:", err.message);
+    logger.error({ error: err }, "DB Pool: Pool error");
   });
 
   return pool;
@@ -182,9 +183,9 @@ export async function shutdown(): Promise<void> {
       globalForPrisma.pool = undefined;
     }
 
-    console.log("[DB] Connection pool closed gracefully");
+    logger.info("DB: Connection pool closed gracefully");
   } catch (error) {
-    console.error("[DB] Error during shutdown:", error);
+    logger.error({ error }, "DB: Error during shutdown");
     throw error;
   }
 }
@@ -193,13 +194,13 @@ export async function shutdown(): Promise<void> {
 if (typeof process !== "undefined") {
   // Handle graceful shutdown signals
   process.on("SIGTERM", async () => {
-    console.log("[DB] SIGTERM received, closing connections...");
+    logger.info("DB: SIGTERM received, closing connections...");
     await shutdown();
     process.exit(0);
   });
 
   process.on("SIGINT", async () => {
-    console.log("[DB] SIGINT received, closing connections...");
+    logger.info("DB: SIGINT received, closing connections...");
     await shutdown();
     process.exit(0);
   });

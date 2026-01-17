@@ -16,6 +16,11 @@ interface ChartContainerProps {
    * Custom height class override
    */
   heightClass?: string;
+  /**
+   * Immersive mode - fills almost the entire viewport
+   * Use for maximizing chart viewing area
+   */
+  immersive?: boolean;
 }
 
 /**
@@ -27,15 +32,24 @@ interface ChartContainerProps {
  * - Fills width and height of parent
  */
 export const ChartContainer = forwardRef<HTMLDivElement, ChartContainerProps>(
-  ({ children, className, fillHeight = false, heightClass }, ref) => {
+  (
+    { children, className, fillHeight = false, heightClass, immersive = false },
+    ref
+  ) => {
     return (
       <div
         ref={ref}
         className={cn(
           // Base container styles - matches tree view aesthetic
           "bg-card relative w-full overflow-hidden rounded-lg border",
-          // Height handling
-          heightClass ? heightClass : fillHeight ? "h-full" : "min-h-[60vh]",
+          // Height handling - immersive mode takes priority
+          immersive
+            ? "h-[calc(100vh-8rem)]" // Full viewport minus minimal header
+            : heightClass
+              ? heightClass
+              : fillHeight
+                ? "h-full"
+                : "min-h-[70vh]",
           className
         )}
       >

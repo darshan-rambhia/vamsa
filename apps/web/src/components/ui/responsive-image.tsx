@@ -76,6 +76,7 @@ export function ResponsiveImage({
     return (
       <picture>
         <source srcSet={srcSet} sizes={sizes} type="image/webp" />
+        {/* eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */}
         <img
           src={fallbackSrc}
           alt={alt}
@@ -96,6 +97,7 @@ export function ResponsiveImage({
 
   // Fallback to simple img tag
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <img
       src={fallbackSrc}
       alt={alt}

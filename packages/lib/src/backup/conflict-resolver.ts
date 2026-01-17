@@ -3,12 +3,79 @@
 
 export type ConflictResolutionStrategy = "skip" | "replace" | "merge";
 
+type IsoDateString = string;
+
+export interface PersonImport {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string | null;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
+}
+
+export interface UserImport {
+  id: string;
+  email: string;
+  name?: string | null;
+  personId?: string | null;
+  role: string;
+  isActive?: boolean;
+  mustChangePassword?: boolean;
+  invitedById?: string | null;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
+  lastLoginAt?: IsoDateString | null;
+}
+
+export interface RelationshipImport {
+  id: string;
+  personId: string;
+  relatedPersonId: string;
+  type: string;
+  createdAt: IsoDateString;
+  updatedAt: IsoDateString;
+}
+
+export interface SettingsImport {
+  familyName?: string;
+  description?: string | null;
+  locale?: string;
+}
+
+export interface SuggestionImport {
+  id: string;
+  type: string;
+  targetPersonId?: string;
+  suggestedData: Record<string, unknown>;
+  reason: string;
+  status: string;
+  submittedById: string;
+  reviewedById?: string | null;
+  reviewNote?: string | null;
+  submittedAt: IsoDateString;
+  reviewedAt?: IsoDateString | null;
+}
+
+export interface AuditLogImport {
+  id: string;
+  userId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  previousData: Record<string, unknown>;
+  newData: Record<string, unknown>;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  createdAt: IsoDateString;
+}
+
 export interface Conflict {
   type: "person" | "user" | "relationship" | "suggestion" | "settings";
   action: "create" | "update";
   existingId?: string;
-  existingData?: Record<string, any>;
-  newData: Record<string, any>;
+  existingData?: Record<string, unknown>;
+  newData: Record<string, unknown>;
   conflictFields: string[];
   severity: "low" | "medium" | "high";
   description: string;
@@ -31,33 +98,109 @@ export interface ImportedBy {
   name: string | null;
 }
 
+export interface PersonRecord {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface UserRecord {
+  id: string;
+  email: string;
+  name: string | null;
+  personId: string | null;
+  role: string;
+  isActive: boolean;
+  mustChangePassword: boolean;
+  invitedById: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  lastLoginAt: Date | null;
+}
+
+export interface RelationshipRecord {
+  id: string;
+  personId: string;
+  relatedPersonId: string;
+  type: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SettingsRecord {
+  id?: string;
+  familyName: string;
+  description: string | null;
+  locale: string;
+}
+
+export interface SuggestionRecord {
+  id: string;
+  type: string;
+  targetPersonId?: string;
+  suggestedData: Record<string, unknown>;
+  reason: string;
+  status: string;
+  submittedById: string;
+  reviewedById: string | null;
+  reviewNote: string | null;
+  submittedAt: Date;
+  reviewedAt: Date | null;
+}
+
+export interface AuditLogRecord {
+  id: string;
+  userId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  previousData: Record<string, unknown>;
+  newData: Record<string, unknown>;
+  ipAddress?: string | null;
+  userAgent?: string | null;
+  createdAt: Date;
+}
+
+type FindUniqueArgs = { where: { id: string } };
+type UpdateArgs<T> = { where: { id: string }; data: Partial<T> };
+type CreateArgs<T> = { data: T };
+
 export interface DatabaseInterface {
   person: {
-    findUnique: (args: any) => Promise<any>;
-    create: (args: any) => Promise<any>;
-    update: (args: any) => Promise<any>;
+    findUnique: (args: FindUniqueArgs) => Promise<PersonRecord | null>;
+    create: (args: CreateArgs<PersonRecord>) => Promise<PersonRecord>;
+    update: (args: UpdateArgs<PersonRecord>) => Promise<PersonRecord>;
   };
   user: {
-    findUnique: (args: any) => Promise<any>;
-    create: (args: any) => Promise<any>;
-    update: (args: any) => Promise<any>;
+    findUnique: (args: FindUniqueArgs) => Promise<UserRecord | null>;
+    create: (args: CreateArgs<UserRecord>) => Promise<UserRecord>;
+    update: (args: UpdateArgs<UserRecord>) => Promise<UserRecord>;
   };
   relationship: {
-    findUnique: (args: any) => Promise<any>;
-    findFirst: (args: any) => Promise<any>;
-    create: (args: any) => Promise<any>;
-    update: (args: any) => Promise<any>;
+    findUnique: (args: FindUniqueArgs) => Promise<RelationshipRecord | null>;
+    findFirst: (args: {
+      where: { id: string };
+    }) => Promise<RelationshipRecord | null>;
+    create: (
+      args: CreateArgs<RelationshipRecord>
+    ) => Promise<RelationshipRecord>;
+    update: (
+      args: UpdateArgs<RelationshipRecord>
+    ) => Promise<RelationshipRecord>;
   };
   suggestion: {
-    create: (args: any) => Promise<any>;
+    create: (args: CreateArgs<SuggestionRecord>) => Promise<SuggestionRecord>;
   };
   familySettings: {
-    findFirst: () => Promise<any>;
-    create: (args: any) => Promise<any>;
-    update: (args: any) => Promise<any>;
+    findFirst: () => Promise<SettingsRecord | null>;
+    create: (args: CreateArgs<SettingsRecord>) => Promise<SettingsRecord>;
+    update: (args: UpdateArgs<SettingsRecord>) => Promise<SettingsRecord>;
   };
   auditLog: {
-    create: (args: any) => Promise<any>;
+    create: (args: CreateArgs<AuditLogRecord>) => Promise<AuditLogRecord>;
   };
 }
 
@@ -87,7 +230,7 @@ export class ConflictResolver {
   }
 
   async importData(
-    extractedFiles: Map<string, any>,
+    extractedFiles: Map<string, unknown>,
     conflicts: Conflict[]
   ): Promise<{
     statistics: ImportStatistics;
@@ -101,7 +244,11 @@ export class ConflictResolver {
       // Create conflict lookup for quick access
       const conflictMap = new Map<string, Conflict[]>();
       for (const conflict of conflicts) {
-        const key = `${conflict.type}-${conflict.newData.id || conflict.existingId}`;
+        const newId =
+          typeof conflict.newData.id === "string"
+            ? conflict.newData.id
+            : undefined;
+        const key = `${conflict.type}-${newId ?? conflict.existingId ?? "unknown"}`;
         if (!conflictMap.has(key)) {
           conflictMap.set(key, []);
         }
@@ -145,8 +292,8 @@ export class ConflictResolver {
   }
 
   private async importSettings(
-    extractedFiles: Map<string, any>,
-    conflictMap: Map<string, Conflict[]>,
+    extractedFiles: Map<string, unknown>,
+    _conflictMap: Map<string, Conflict[]>,
     errors: string[],
     warnings: string[]
   ): Promise<void> {
@@ -155,9 +302,11 @@ export class ConflictResolver {
     }
 
     const settingsData = extractedFiles.get("data/settings.json");
-    if (!settingsData) {
+    if (!settingsData || typeof settingsData !== "object") {
       return;
     }
+
+    const typedSettings = settingsData as SettingsImport;
 
     try {
       const existingSettings = await this.db.familySettings.findFirst();
@@ -171,19 +320,19 @@ export class ConflictResolver {
 
         if (this.strategy === "replace") {
           await this.db.familySettings.update({
-            where: { id: existingSettings.id },
-            data: this.prepareSettingsData(settingsData),
+            where: { id: existingSettings.id as string },
+            data: this.prepareSettingsData(typedSettings),
           });
           this.statistics.conflictsResolved++;
         } else if (this.strategy === "merge") {
           const updateData = this.mergeSettingsData(
             existingSettings,
-            settingsData
+            typedSettings
           );
 
           if (Object.keys(updateData).length > 0) {
             await this.db.familySettings.update({
-              where: { id: existingSettings.id },
+              where: { id: existingSettings.id as string },
               data: updateData,
             });
             this.statistics.conflictsResolved++;
@@ -191,7 +340,7 @@ export class ConflictResolver {
         }
       } else {
         await this.db.familySettings.create({
-          data: this.prepareSettingsData(settingsData),
+          data: this.prepareSettingsData(typedSettings),
         });
       }
     } catch (error) {
@@ -202,7 +351,7 @@ export class ConflictResolver {
   }
 
   private async importPeople(
-    extractedFiles: Map<string, any>,
+    extractedFiles: Map<string, unknown>,
     conflictMap: Map<string, Conflict[]>,
     errors: string[],
     warnings: string[]
@@ -216,7 +365,9 @@ export class ConflictResolver {
       return;
     }
 
-    for (const person of peopleData) {
+    const typedPeople = peopleData as PersonImport[];
+
+    for (const person of typedPeople) {
       try {
         const conflictKey = `person-${person.id}`;
         const personConflicts = conflictMap.get(conflictKey) || [];
@@ -287,7 +438,7 @@ export class ConflictResolver {
   }
 
   private async importUsers(
-    extractedFiles: Map<string, any>,
+    extractedFiles: Map<string, unknown>,
     conflictMap: Map<string, Conflict[]>,
     errors: string[],
     warnings: string[]
@@ -301,7 +452,9 @@ export class ConflictResolver {
       return;
     }
 
-    for (const user of usersData) {
+    const typedUsers = usersData as UserImport[];
+
+    for (const user of typedUsers) {
       try {
         const conflictKey = `user-${user.id}`;
         const userConflicts = conflictMap.get(conflictKey) || [];
@@ -363,7 +516,7 @@ export class ConflictResolver {
   }
 
   private async importRelationships(
-    extractedFiles: Map<string, any>,
+    extractedFiles: Map<string, unknown>,
     conflictMap: Map<string, Conflict[]>,
     errors: string[],
     warnings: string[]
@@ -377,7 +530,9 @@ export class ConflictResolver {
       return;
     }
 
-    for (const relationship of relationshipsData) {
+    const typedRelationships = relationshipsData as RelationshipImport[];
+
+    for (const relationship of typedRelationships) {
       try {
         const conflictKey = `relationship-${relationship.id}`;
         const relationshipConflicts = conflictMap.get(conflictKey) || [];
@@ -444,7 +599,7 @@ export class ConflictResolver {
   }
 
   private async importSuggestions(
-    extractedFiles: Map<string, any>,
+    extractedFiles: Map<string, unknown>,
     conflictMap: Map<string, Conflict[]>,
     errors: string[],
     warnings: string[]
@@ -458,7 +613,9 @@ export class ConflictResolver {
       return;
     }
 
-    for (const suggestion of suggestionsData) {
+    const typedSuggestions = suggestionsData as SuggestionImport[];
+
+    for (const suggestion of typedSuggestions) {
       try {
         // Skip suggestions that reference non-existent users or people
         const submitterExists = await this.db.user.findUnique({
@@ -494,8 +651,8 @@ export class ConflictResolver {
             reason: suggestion.reason,
             status: suggestion.status,
             submittedById: suggestion.submittedById,
-            reviewedById: suggestion.reviewedById,
-            reviewNote: suggestion.reviewNote,
+            reviewedById: suggestion.reviewedById ?? null,
+            reviewNote: suggestion.reviewNote ?? null,
             submittedAt: new Date(suggestion.submittedAt),
             reviewedAt: suggestion.reviewedAt
               ? new Date(suggestion.reviewedAt)
@@ -512,8 +669,8 @@ export class ConflictResolver {
   }
 
   private async importAuditLogs(
-    extractedFiles: Map<string, any>,
-    conflictMap: Map<string, Conflict[]>,
+    extractedFiles: Map<string, unknown>,
+    _conflictMap: Map<string, Conflict[]>,
     errors: string[],
     warnings: string[]
   ): Promise<void> {
@@ -526,7 +683,9 @@ export class ConflictResolver {
       return;
     }
 
-    for (const auditLog of auditLogsData) {
+    const typedAuditLogs = auditLogsData as AuditLogImport[];
+
+    for (const auditLog of typedAuditLogs) {
       try {
         // Skip audit logs for non-existent users
         const userExists = await this.db.user.findUnique({
@@ -561,7 +720,7 @@ export class ConflictResolver {
     }
   }
 
-  private preparePeopleData(person: any) {
+  private preparePeopleData(person: PersonImport): PersonRecord {
     return {
       id: person.id,
       firstName: person.firstName,
@@ -572,7 +731,7 @@ export class ConflictResolver {
     };
   }
 
-  private prepareUserData(user: any) {
+  private prepareUserData(user: UserImport): UserRecord {
     return {
       id: user.id,
       email: user.email,
@@ -588,7 +747,9 @@ export class ConflictResolver {
     };
   }
 
-  private prepareRelationshipData(relationship: any) {
+  private prepareRelationshipData(
+    relationship: RelationshipImport
+  ): RelationshipRecord {
     return {
       id: relationship.id,
       personId: relationship.personId,
@@ -599,7 +760,7 @@ export class ConflictResolver {
     };
   }
 
-  private prepareSettingsData(settings: any) {
+  private prepareSettingsData(settings: SettingsImport): SettingsRecord {
     return {
       familyName: settings.familyName || "My Family",
       description: settings.description || null,
@@ -607,8 +768,11 @@ export class ConflictResolver {
     };
   }
 
-  private mergePeopleData(existing: any, incoming: any) {
-    const merged: any = { ...existing };
+  private mergePeopleData(
+    existing: PersonRecord,
+    incoming: PersonImport
+  ): PersonRecord {
+    const merged: PersonRecord = { ...existing };
 
     if (incoming.firstName) merged.firstName = incoming.firstName;
     if (incoming.lastName) merged.lastName = incoming.lastName;
@@ -617,8 +781,11 @@ export class ConflictResolver {
     return merged;
   }
 
-  private mergeUserData(existing: any, incoming: any) {
-    const merged: any = { ...existing };
+  private mergeUserData(
+    existing: UserRecord,
+    incoming: UserImport
+  ): UserRecord {
+    const merged: UserRecord = { ...existing };
 
     if (incoming.name) merged.name = incoming.name;
     if (incoming.personId) merged.personId = incoming.personId;
@@ -633,16 +800,22 @@ export class ConflictResolver {
     return merged;
   }
 
-  private mergeRelationshipData(existing: any, incoming: any) {
-    const merged: any = { ...existing };
+  private mergeRelationshipData(
+    existing: RelationshipRecord,
+    incoming: RelationshipImport
+  ): RelationshipRecord {
+    const merged: RelationshipRecord = { ...existing };
 
     if (incoming.type) merged.type = incoming.type;
 
     return merged;
   }
 
-  private mergeSettingsData(existing: any, incoming: any) {
-    const merged: any = { ...existing };
+  private mergeSettingsData(
+    existing: SettingsRecord,
+    incoming: SettingsImport
+  ): SettingsRecord {
+    const merged: SettingsRecord = { ...existing };
 
     if (incoming.familyName) merged.familyName = incoming.familyName;
     if (incoming.description) merged.description = incoming.description;

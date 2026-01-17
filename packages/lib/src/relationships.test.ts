@@ -1,6 +1,5 @@
 import { describe, it, expect } from "bun:test";
 import {
-  type RelationshipType,
   BLOOD_RELATIONSHIPS,
   MARRIAGE_RELATIONSHIPS,
   INLAW_RELATIONSHIPS,

@@ -190,14 +190,18 @@ function BowtieLegend() {
         <div className="bg-chart-1/30 border-chart-1 h-12 w-12 rounded-lg border-2" />
         <div>
           <p className="text-sm font-medium">Paternal Side</p>
-          <p className="text-muted-foreground text-xs">Father's ancestors</p>
+          <p className="text-muted-foreground text-xs">
+            Father&apos;s ancestors
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-3">
         <div className="bg-chart-3/30 border-chart-3 h-12 w-12 rounded-lg border-2" />
         <div>
           <p className="text-sm font-medium">Maternal Side</p>
-          <p className="text-muted-foreground text-xs">Mother's ancestors</p>
+          <p className="text-muted-foreground text-xs">
+            Mother&apos;s ancestors
+          </p>
         </div>
       </div>
     </>

@@ -8,33 +8,140 @@ import {
 
 // Mock database interface
 function createMockDb(): DatabaseInterface {
+  const now = new Date();
+
   return {
     person: {
       findUnique: mock(() => Promise.resolve(null)),
-      create: mock(() => Promise.resolve({ id: "p1" })),
-      update: mock(() => Promise.resolve({ id: "p1" })),
+      create: mock(() =>
+        Promise.resolve({
+          id: "p1",
+          firstName: "Test",
+          lastName: "Person",
+          email: null,
+          createdAt: now,
+          updatedAt: now,
+        })
+      ),
+      update: mock(() =>
+        Promise.resolve({
+          id: "p1",
+          firstName: "Test",
+          lastName: "Person",
+          email: null,
+          createdAt: now,
+          updatedAt: now,
+        })
+      ),
     },
     user: {
       findUnique: mock(() => Promise.resolve(null)),
-      create: mock(() => Promise.resolve({ id: "u1" })),
-      update: mock(() => Promise.resolve({ id: "u1" })),
+      create: mock(() =>
+        Promise.resolve({
+          id: "u1",
+          email: "test@example.com",
+          name: null,
+          personId: null,
+          role: "USER",
+          isActive: true,
+          mustChangePassword: false,
+          invitedById: null,
+          createdAt: now,
+          updatedAt: now,
+          lastLoginAt: null,
+        })
+      ),
+      update: mock(() =>
+        Promise.resolve({
+          id: "u1",
+          email: "test@example.com",
+          name: null,
+          personId: null,
+          role: "USER",
+          isActive: true,
+          mustChangePassword: false,
+          invitedById: null,
+          createdAt: now,
+          updatedAt: now,
+          lastLoginAt: null,
+        })
+      ),
     },
     relationship: {
       findUnique: mock(() => Promise.resolve(null)),
       findFirst: mock(() => Promise.resolve(null)),
-      create: mock(() => Promise.resolve({ id: "r1" })),
-      update: mock(() => Promise.resolve({ id: "r1" })),
+      create: mock(() =>
+        Promise.resolve({
+          id: "r1",
+          personId: "p1",
+          relatedPersonId: "p2",
+          type: "PARENT",
+          createdAt: now,
+          updatedAt: now,
+        })
+      ),
+      update: mock(() =>
+        Promise.resolve({
+          id: "r1",
+          personId: "p1",
+          relatedPersonId: "p2",
+          type: "PARENT",
+          createdAt: now,
+          updatedAt: now,
+        })
+      ),
     },
     suggestion: {
-      create: mock(() => Promise.resolve({ id: "s1" })),
+      create: mock(() =>
+        Promise.resolve({
+          id: "s1",
+          type: "PERSON_UPDATE",
+          targetPersonId: "p1",
+          suggestedData: {},
+          reason: "Test suggestion",
+          status: "PENDING",
+          submittedById: "u1",
+          reviewedById: null,
+          reviewNote: null,
+          submittedAt: now,
+          reviewedAt: null,
+        })
+      ),
     },
     familySettings: {
       findFirst: mock(() => Promise.resolve(null)),
-      create: mock(() => Promise.resolve({ id: "fs1" })),
-      update: mock(() => Promise.resolve({ id: "fs1" })),
+      create: mock(() =>
+        Promise.resolve({
+          id: "fs1",
+          familyName: "Test Family",
+          description: null,
+          locale: "en",
+        })
+      ),
+      update: mock(() =>
+        Promise.resolve({
+          id: "fs1",
+          familyName: "Test Family",
+          description: null,
+          locale: "en",
+        })
+      ),
     },
     auditLog: {
-      create: mock(() => Promise.resolve({ id: "al1" })),
+      create: mock(() =>
+        Promise.resolve({
+          id: "al1",
+          userId: "u1",
+          action: "CREATE",
+          entityType: "PERSON",
+          entityId: "p1",
+          previousData: {},
+          newData: {},
+          ipAddress: null,
+          userAgent: null,
+          createdAt: now,
+        })
+      ),
     },
   };
 }
@@ -44,6 +151,58 @@ const mockImportedBy: ImportedBy = {
   email: "admin@test.com",
   name: "Test Admin",
 };
+
+// Helper functions to create complete mock records
+const createMockPersonRecord = (
+  overrides: Partial<import("./conflict-resolver").PersonRecord> = {}
+): import("./conflict-resolver").PersonRecord => ({
+  id: "p1",
+  firstName: "Test",
+  lastName: "Person",
+  email: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  ...overrides,
+});
+
+const createMockUserRecord = (
+  overrides: Partial<import("./conflict-resolver").UserRecord> = {}
+): import("./conflict-resolver").UserRecord => ({
+  id: "u1",
+  email: "test@example.com",
+  name: null,
+  personId: null,
+  role: "USER",
+  isActive: true,
+  mustChangePassword: false,
+  invitedById: null,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  lastLoginAt: null,
+  ...overrides,
+});
+
+const createMockRelationshipRecord = (
+  overrides: Partial<import("./conflict-resolver").RelationshipRecord> = {}
+): import("./conflict-resolver").RelationshipRecord => ({
+  id: "r1",
+  personId: "p1",
+  relatedPersonId: "p2",
+  type: "PARENT",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  ...overrides,
+});
+
+const createMockSettingsRecord = (
+  overrides: Partial<import("./conflict-resolver").SettingsRecord> = {}
+): import("./conflict-resolver").SettingsRecord => ({
+  id: "fs1",
+  familyName: "Test Family",
+  description: null,
+  locale: "en",
+  ...overrides,
+});
 
 describe("ConflictResolver", () => {
   let mockDb: DatabaseInterface;
@@ -201,7 +360,9 @@ describe("ConflictResolver", () => {
 
     it("skips existing settings when strategy is skip", async () => {
       mockDb.familySettings.findFirst = mock(() =>
-        Promise.resolve({ id: "fs1", familyName: "Existing" })
+        Promise.resolve(
+          createMockSettingsRecord({ id: "fs1", familyName: "Existing" })
+        )
       );
 
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);
@@ -219,7 +380,9 @@ describe("ConflictResolver", () => {
 
     it("replaces existing settings when strategy is replace", async () => {
       mockDb.familySettings.findFirst = mock(() =>
-        Promise.resolve({ id: "fs1", familyName: "Existing" })
+        Promise.resolve(
+          createMockSettingsRecord({ id: "fs1", familyName: "Existing" })
+        )
       );
 
       const resolver = new ConflictResolver("replace", mockImportedBy, mockDb);
@@ -299,7 +462,9 @@ describe("ConflictResolver", () => {
   describe("strategy: skip", () => {
     it("handles skip strategy for settings", async () => {
       mockDb.familySettings.findFirst = mock(() =>
-        Promise.resolve({ id: "fs1", familyName: "Existing Family" })
+        Promise.resolve(
+          createMockSettingsRecord({ id: "fs1", familyName: "Existing Family" })
+        )
       );
 
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);
@@ -388,7 +553,9 @@ describe("ConflictResolver", () => {
   describe("strategy: replace", () => {
     it("handles replace strategy for settings", async () => {
       mockDb.familySettings.findFirst = mock(() =>
-        Promise.resolve({ id: "fs1", familyName: "Existing Family" })
+        Promise.resolve(
+          createMockSettingsRecord({ id: "fs1", familyName: "Existing Family" })
+        )
       );
 
       const resolver = new ConflictResolver("replace", mockImportedBy, mockDb);
@@ -405,7 +572,13 @@ describe("ConflictResolver", () => {
 
     it("replaces existing person with conflict", async () => {
       mockDb.person.findUnique = mock(() =>
-        Promise.resolve({ id: "p1", firstName: "Old", lastName: "Name" })
+        Promise.resolve(
+          createMockPersonRecord({
+            id: "p1",
+            firstName: "Old",
+            lastName: "Name",
+          })
+        )
       );
 
       const resolver = new ConflictResolver("replace", mockImportedBy, mockDb);
@@ -433,7 +606,13 @@ describe("ConflictResolver", () => {
 
     it("replaces existing user with conflict", async () => {
       mockDb.user.findUnique = mock(() =>
-        Promise.resolve({ id: "u1", email: "old@example.com", role: "MEMBER" })
+        Promise.resolve(
+          createMockUserRecord({
+            id: "u1",
+            email: "old@example.com",
+            role: "MEMBER",
+          })
+        )
       );
 
       const resolver = new ConflictResolver("replace", mockImportedBy, mockDb);
@@ -461,7 +640,9 @@ describe("ConflictResolver", () => {
 
     it("replaces existing relationship with conflict", async () => {
       mockDb.relationship.findUnique = mock(() =>
-        Promise.resolve({ id: "r1", type: "PARENT" })
+        Promise.resolve(
+          createMockRelationshipRecord({ id: "r1", type: "PARENT" })
+        )
       );
 
       const resolver = new ConflictResolver("replace", mockImportedBy, mockDb);
@@ -516,11 +697,13 @@ describe("ConflictResolver", () => {
   describe("strategy: merge", () => {
     it("merges existing settings with incoming data", async () => {
       mockDb.familySettings.findFirst = mock(() =>
-        Promise.resolve({
-          id: "fs1",
-          familyName: "Existing Family",
-          description: "Old description",
-        })
+        Promise.resolve(
+          createMockSettingsRecord({
+            id: "fs1",
+            familyName: "Existing Family",
+            description: "Old description",
+          })
+        )
       );
 
       const resolver = new ConflictResolver("merge", mockImportedBy, mockDb);
@@ -538,12 +721,14 @@ describe("ConflictResolver", () => {
 
     it("merges existing person with incoming data", async () => {
       mockDb.person.findUnique = mock(() =>
-        Promise.resolve({
-          id: "p1",
-          firstName: "John",
-          lastName: "Doe",
-          email: "john@example.com",
-        })
+        Promise.resolve(
+          createMockPersonRecord({
+            id: "p1",
+            firstName: "John",
+            lastName: "Doe",
+            email: "john@example.com",
+          })
+        )
       );
 
       const resolver = new ConflictResolver("merge", mockImportedBy, mockDb);
@@ -571,12 +756,14 @@ describe("ConflictResolver", () => {
 
     it("merges existing user with incoming data", async () => {
       mockDb.user.findUnique = mock(() =>
-        Promise.resolve({
-          id: "u1",
-          email: "test@example.com",
-          name: "Old Name",
-          role: "MEMBER",
-        })
+        Promise.resolve(
+          createMockUserRecord({
+            id: "u1",
+            email: "test@example.com",
+            name: "Old Name",
+            role: "MEMBER",
+          })
+        )
       );
 
       const resolver = new ConflictResolver("merge", mockImportedBy, mockDb);
@@ -609,12 +796,14 @@ describe("ConflictResolver", () => {
 
     it("merges existing relationship with incoming data", async () => {
       mockDb.relationship.findUnique = mock(() =>
-        Promise.resolve({
-          id: "r1",
-          personId: "p1",
-          relatedPersonId: "p2",
-          type: "PARENT",
-        })
+        Promise.resolve(
+          createMockRelationshipRecord({
+            id: "r1",
+            personId: "p1",
+            relatedPersonId: "p2",
+            type: "PARENT",
+          })
+        )
       );
 
       const resolver = new ConflictResolver("merge", mockImportedBy, mockDb);
@@ -667,12 +856,14 @@ describe("ConflictResolver", () => {
 
     it("preserves existing values when incoming is empty", async () => {
       mockDb.person.findUnique = mock(() =>
-        Promise.resolve({
-          id: "p1",
-          firstName: "John",
-          lastName: "Doe",
-          email: "john@example.com",
-        })
+        Promise.resolve(
+          createMockPersonRecord({
+            id: "p1",
+            firstName: "John",
+            lastName: "Doe",
+            email: "john@example.com",
+          })
+        )
       );
 
       const resolver = new ConflictResolver("merge", mockImportedBy, mockDb);
@@ -803,7 +994,9 @@ describe("ConflictResolver", () => {
 
     it("skips suggestion when target person not found", async () => {
       mockDb.user.findUnique = mock(() =>
-        Promise.resolve({ id: "u1", email: "test@example.com" })
+        Promise.resolve(
+          createMockUserRecord({ id: "u1", email: "test@example.com" })
+        )
       );
       mockDb.person.findUnique = mock(() => Promise.resolve(null));
 
@@ -831,10 +1024,12 @@ describe("ConflictResolver", () => {
 
     it("imports suggestion when all references exist", async () => {
       mockDb.user.findUnique = mock(() =>
-        Promise.resolve({ id: "u1", email: "test@example.com" })
+        Promise.resolve(
+          createMockUserRecord({ id: "u1", email: "test@example.com" })
+        )
       );
       mockDb.person.findUnique = mock(() =>
-        Promise.resolve({ id: "p1", firstName: "John" })
+        Promise.resolve(createMockPersonRecord({ id: "p1", firstName: "John" }))
       );
 
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);
@@ -886,7 +1081,9 @@ describe("ConflictResolver", () => {
 
     it("imports audit log when user exists", async () => {
       mockDb.user.findUnique = mock(() =>
-        Promise.resolve({ id: "u1", email: "test@example.com" })
+        Promise.resolve(
+          createMockUserRecord({ id: "u1", email: "test@example.com" })
+        )
       );
 
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);
@@ -971,7 +1168,7 @@ describe("ConflictResolver", () => {
         if (callCount === 1) {
           return Promise.reject(new Error("First person error"));
         }
-        return Promise.resolve({ id: "p2" });
+        return Promise.resolve(createMockPersonRecord({ id: "p2" }));
       });
 
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);

@@ -1,18 +1,27 @@
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, beforeAll } from "bun:test";
 import {
   initializeServerI18n,
   getServerI18n,
   t,
   tMultiple,
   getActiveInstance,
-} from "./i18n";
+} from "@vamsa/lib/server";
 
 describe("i18n Server Module", () => {
   let i18nInstance: Awaited<ReturnType<typeof getServerI18n>>;
 
+  beforeAll(async () => {
+    // Ensure i18n is initialized before any tests in this suite run
+    await initializeServerI18n();
+  });
+
   beforeEach(async () => {
     // Initialize a fresh instance before each test
     i18nInstance = await getServerI18n();
+    // Reset language to English for each test
+    if (i18nInstance.language !== "en") {
+      i18nInstance.changeLanguage("en");
+    }
   });
 
   describe("initializeServerI18n", () => {

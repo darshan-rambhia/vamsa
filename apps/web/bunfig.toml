@@ -1,5 +1,0 @@
-[test]
-
-# Exclude E2E tests from unit test runner (they use Playwright)
-# Exclude integration tests that require database connection
-exclude = ["**/e2e/**", "**/integration-tests/**"]

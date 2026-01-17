@@ -6,9 +6,9 @@ import {
   successResponseSchema,
 } from "@vamsa/schemas";
 import {
-  login as serverLogin,
-  register as serverRegister,
-} from "../../src/server/auth";
+  loginUser as serverLogin,
+  registerUser as serverRegister,
+} from "@vamsa/lib/server/business";
 import { logger } from "@vamsa/lib/logger";
 
 const authRouter = new OpenAPIHono();

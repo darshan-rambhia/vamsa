@@ -1,50 +1,137 @@
+/**
+ * Dashboard Server Functions - Framework Wrappers
+ *
+ * This module contains thin `createServerFn` wrappers that call the business logic
+ * functions from dashboard.server.ts. These wrappers handle:
+ * - Input validation with Zod schemas (for POST operations with filters)
+ * - Calling the corresponding server function
+ * - Authentication (delegated to server layer via requireAuth)
+ * - Error handling
+ *
+ * This layer is excluded from unit test coverage as it's framework integration code.
+ */
+
 import { createServerFn } from "@tanstack/react-start";
-import { prisma } from "./db";
+import { z } from "zod";
+import { requireAuth } from "./middleware/require-auth";
+import {
+  getDashboardStatsData,
+  getRecentActivityData,
+  getActivityFilterOptionsData,
+  type DashboardStats,
+  type ActivityLog,
+  type ActivityFilterOption,
+  type ActivityFilters,
+} from "@vamsa/lib/server/business";
 
-// Get dashboard stats
+// Validation schemas
+const activityFiltersSchema = z.object({
+  limit: z.number().int().min(1).max(200).optional(),
+  dateFrom: z.number().optional(),
+  dateTo: z.number().optional(),
+  actionTypes: z.array(z.string()).optional(),
+  entityTypes: z.array(z.string()).optional(),
+  userId: z.string().optional(),
+  searchQuery: z.string().optional(),
+});
+
+/**
+ * Get dashboard statistics - family counts and recent additions
+ *
+ * GET endpoint that requires authentication. No input needed as this
+ * returns aggregate statistics across the entire family database.
+ *
+ * @returns DashboardStats with totalPeople, livingPeople, deceasedPeople, totalRelationships, recentAdditions
+ *
+ * @example
+ * const stats = await getDashboardStats()
+ */
 export const getDashboardStats = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const [
-      totalPeople,
-      livingPeople,
-      deceasedPeople,
-      totalRelationships,
-      recentAdditions,
-    ] = await Promise.all([
-      prisma.person.count(),
-      prisma.person.count({ where: { isLiving: true } }),
-      prisma.person.count({ where: { isLiving: false } }),
-      prisma.relationship.count(),
-      prisma.person.findMany({
-        orderBy: { createdAt: "desc" },
-        take: 5,
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          createdAt: true,
-        },
-      }),
-    ]);
-
-    return {
-      totalPeople,
-      livingPeople,
-      deceasedPeople,
-      totalRelationships,
-      recentAdditions: recentAdditions.map((p) => ({
-        id: p.id,
-        firstName: p.firstName,
-        lastName: p.lastName,
-        createdAt: p.createdAt.getTime(),
-      })),
-    };
+  async (): Promise<DashboardStats> => {
+    await requireAuth("VIEWER");
+    return getDashboardStatsData();
   }
 );
 
-// Get pending suggestions count
+/**
+ * Get recent activity logs with optional filtering
+ *
+ * POST endpoint that requires authentication. Accepts optional filters
+ * to narrow down activity logs by date, action type, entity type, user, or search query.
+ *
+ * Supports filtering by:
+ * - Date range (dateFrom, dateTo as timestamps in milliseconds)
+ * - Action type(s) (CREATE, UPDATE, DELETE, LOGIN, LOGOUT, etc.)
+ * - Entity type(s) (PERSON, RELATIONSHIP, USER, SETTINGS, etc.)
+ * - User who performed the action
+ * - Free-text search across descriptions and user names
+ *
+ * @param filters - Optional activity filters
+ * @returns Array of ActivityLog entries
+ *
+ * @example
+ * const logs = await getRecentActivity({
+ *   limit: 20,
+ *   actionTypes: ['CREATE', 'UPDATE'],
+ *   dateFrom: Date.now() - 86400000
+ * })
+ */
+export const getRecentActivity = createServerFn({ method: "POST" })
+  .inputValidator((data: z.infer<typeof activityFiltersSchema>) => {
+    return activityFiltersSchema.parse(data);
+  })
+  .handler(async ({ data }): Promise<ActivityLog[]> => {
+    await requireAuth("VIEWER");
+
+    const filters: ActivityFilters = {
+      limit: data.limit,
+      dateFrom: data.dateFrom,
+      dateTo: data.dateTo,
+      actionTypes: data.actionTypes,
+      entityTypes: data.entityTypes,
+      userId: data.userId,
+      searchQuery: data.searchQuery,
+    };
+
+    return getRecentActivityData(filters);
+  });
+
+/**
+ * Get available filter options for activity logs
+ *
+ * GET endpoint that requires authentication. Returns all available options
+ * for filtering activity logs (action types, entity types, users with counts).
+ *
+ * Used to populate filter UI dropdowns and comboboxes.
+ *
+ * @returns ActivityFilterOption with actionTypes, entityTypes, and users
+ *
+ * @example
+ * const options = await getActivityFilterOptions()
+ */
+export const getActivityFilterOptions = createServerFn({
+  method: "GET",
+}).handler(async (): Promise<ActivityFilterOption> => {
+  await requireAuth("VIEWER");
+  return getActivityFilterOptionsData();
+});
+
+/**
+ * Get pending suggestions count (legacy function)
+ *
+ * GET endpoint that requires authentication. Returns list of pending suggestions
+ * submitted by family members.
+ *
+ * @returns Array of pending suggestions with submitter information
+ *
+ * @example
+ * const suggestions = await getPendingSuggestions()
+ */
 export const getPendingSuggestions = createServerFn({ method: "GET" }).handler(
   async () => {
+    await requireAuth();
+
+    const { prisma } = await import("@vamsa/lib/server");
     const suggestions = await prisma.suggestion.findMany({
       where: { status: "PENDING" },
       include: {
@@ -55,217 +142,24 @@ export const getPendingSuggestions = createServerFn({ method: "GET" }).handler(
       orderBy: { submittedAt: "desc" },
     });
 
-    return suggestions.map((s) => ({
-      id: s.id,
-      type: s.type,
-      status: s.status,
-      reason: s.reason,
-      submittedAt: s.submittedAt.getTime(),
-      submittedBy: s.submittedBy
-        ? { name: s.submittedBy.name, email: s.submittedBy.email }
-        : null,
-    }));
+    return suggestions.map(
+      (s: {
+        id: string;
+        type: string;
+        status: string;
+        reason: string | null;
+        submittedAt: Date;
+        submittedBy: { name: string | null; email: string } | null;
+      }) => ({
+        id: s.id,
+        type: s.type,
+        status: s.status,
+        reason: s.reason,
+        submittedAt: s.submittedAt.getTime(),
+        submittedBy: s.submittedBy
+          ? { name: s.submittedBy.name, email: s.submittedBy.email }
+          : null,
+      })
+    );
   }
 );
-
-// Activity filter input type
-interface ActivityFilters {
-  limit?: number;
-  dateFrom?: number; // timestamp
-  dateTo?: number; // timestamp
-  actionTypes?: string[]; // CREATE, UPDATE, DELETE, etc.
-  entityTypes?: string[]; // PERSON, RELATIONSHIP, USER, etc.
-  userId?: string; // filter by user who performed action
-  searchQuery?: string; // free text search
-}
-
-// Get recent activity with filters
-export const getRecentActivity = createServerFn({ method: "GET" })
-  .inputValidator((data: ActivityFilters) => data)
-  .handler(async ({ data }) => {
-    // Build where clause dynamically - use type assertion to avoid strict type issues
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const where: any = {};
-
-    // Date range filter
-    if (data.dateFrom || data.dateTo) {
-      where.createdAt = {};
-      if (data.dateFrom) {
-        where.createdAt.gte = new Date(data.dateFrom);
-      }
-      if (data.dateTo) {
-        where.createdAt.lte = new Date(data.dateTo);
-      }
-    }
-
-    // Action type filter
-    if (data.actionTypes && data.actionTypes.length > 0) {
-      where.action = { in: data.actionTypes };
-    }
-
-    // Entity type filter
-    if (data.entityTypes && data.entityTypes.length > 0) {
-      where.entityType = { in: data.entityTypes };
-    }
-
-    // User filter
-    if (data.userId) {
-      where.userId = data.userId;
-    }
-
-    // Note: searchQuery would require full-text search capabilities
-    // For now, we'll do a basic implementation in the application layer
-
-    const logs = await prisma.auditLog.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      take: data.limit ?? 50,
-      include: {
-        user: {
-          select: { id: true, name: true },
-        },
-      },
-    });
-
-    // If search query is provided, filter in application layer
-    let filteredLogs = logs;
-    if (data.searchQuery) {
-      const query = data.searchQuery.toLowerCase();
-      filteredLogs = logs.filter((log) => {
-        const description = getActivityDescription(
-          log.action,
-          log.entityType,
-          log.newData
-        ).toLowerCase();
-        const userName = log.user?.name?.toLowerCase() ?? "";
-        return description.includes(query) || userName.includes(query);
-      });
-    }
-
-    return filteredLogs.map((log) => ({
-      id: log.id,
-      actionType: log.action,
-      entityType: log.entityType,
-      entityId: log.entityId,
-      description: getActivityDescription(
-        log.action,
-        log.entityType,
-        log.newData
-      ),
-      timestamp: log.createdAt.getTime(),
-      user: log.user
-        ? { id: log.user.id, name: log.user.name ?? "Unknown" }
-        : null,
-    }));
-  });
-
-// Get available filter options
-export const getActivityFilterOptions = createServerFn({
-  method: "GET",
-}).handler(async () => {
-  // Get distinct action types and entity types from audit logs
-  const [actionTypes, entityTypes, users] = await Promise.all([
-    prisma.auditLog.groupBy({
-      by: ["action"],
-      _count: true,
-    }),
-    prisma.auditLog.groupBy({
-      by: ["entityType"],
-      _count: true,
-    }),
-    prisma.user.findMany({
-      select: { id: true, name: true },
-      where: {
-        auditLogs: { some: {} },
-      },
-      orderBy: { name: "asc" },
-    }),
-  ]);
-
-  return {
-    actionTypes: actionTypes.map((a) => ({
-      value: a.action,
-      label: formatActionType(a.action),
-      count: a._count,
-    })),
-    entityTypes: entityTypes.map((e) => ({
-      value: e.entityType,
-      label: formatEntityType(e.entityType),
-      count: e._count,
-    })),
-    users: users.map((u) => ({
-      value: u.id,
-      label: u.name ?? "Unknown",
-    })),
-  };
-});
-
-// Helper to format action type for display
-function formatActionType(action: string): string {
-  const labels: Record<string, string> = {
-    CREATE: "Created",
-    UPDATE: "Updated",
-    DELETE: "Deleted",
-    LOGIN: "Login",
-    LOGOUT: "Logout",
-    EXPORT: "Export",
-    IMPORT: "Import",
-    INVITE: "Invite Sent",
-    BACKUP: "Backup",
-  };
-  return labels[action] ?? action.charAt(0) + action.slice(1).toLowerCase();
-}
-
-// Helper to format entity type for display
-function formatEntityType(entityType: string): string {
-  const labels: Record<string, string> = {
-    PERSON: "Person",
-    RELATIONSHIP: "Relationship",
-    USER: "User",
-    SETTINGS: "Settings",
-    INVITATION: "Invitation",
-    BACKUP: "Backup",
-    MEDIA: "Media",
-  };
-  return (
-    labels[entityType] ??
-    entityType.charAt(0) + entityType.slice(1).toLowerCase()
-  );
-}
-
-function getActivityDescription(
-  action: string,
-  entityType: string,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  newData: any
-): string {
-  const entityName = entityType.charAt(0) + entityType.slice(1).toLowerCase();
-
-  if (action === "CREATE") {
-    if (entityType === "PERSON" && newData?.firstName && newData?.lastName) {
-      return `Added ${newData.firstName} ${newData.lastName} to the family tree`;
-    }
-    return `Created a new ${entityName}`;
-  }
-
-  if (action === "UPDATE") {
-    if (entityType === "PERSON" && newData?.firstName && newData?.lastName) {
-      return `Updated ${newData.firstName} ${newData.lastName}'s profile`;
-    }
-    return `Updated a ${entityName}`;
-  }
-
-  if (action === "DELETE") {
-    return `Removed a ${entityName}`;
-  }
-
-  if (action === "LOGIN") {
-    return "Logged in";
-  }
-
-  if (action === "LOGOUT") {
-    return "Logged out";
-  }
-
-  return `${action} ${entityName}`;
-}

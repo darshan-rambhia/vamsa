@@ -17,7 +17,7 @@ const sizeClasses = {
 
 const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
   ({ className, src, alt, fallback, size = "md", ...props }, ref) => {
-    const [hasError, setHasError] = React.useState(false);
+    const [hasError] = React.useState(false);
 
     const initials = React.useMemo(() => {
       if (fallback) return fallback.slice(0, 2).toUpperCase();
@@ -53,7 +53,6 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
           <img
             src={src}
             alt={alt || "Avatar"}
-            onError={() => setHasError(true)}
             className="h-full w-full object-cover"
           />
         ) : (

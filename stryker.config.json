@@ -1,0 +1,49 @@
+{
+  "$schema": "https://raw.githubusercontent.com/stryker-mutator/stryker-js/master/packages/core/schema/stryker-schema.json",
+  "packageManager": "pnpm",
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "bun test packages/lib"
+  },
+  "checkers": ["typescript"],
+  "plugins": ["@stryker-mutator/typescript-checker"],
+  "tsconfigFile": "packages/lib/tsconfig.json",
+  "typescriptChecker": {
+    "prioritizePerformanceOverAccuracy": true
+  },
+  "mutate": [
+    "packages/lib/src/**/*.ts",
+    "!packages/lib/src/**/*.test.ts",
+    "!packages/lib/src/**/index.ts"
+  ],
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    ".git",
+    ".stryker-tmp",
+    ".beads",
+    ".claude",
+    "apps",
+    "packages/ui",
+    "packages/api",
+    "packages/schemas",
+    "coverage",
+    "test-output",
+    "docker",
+    "docs",
+    "scripts",
+    "data",
+    "bunfig.toml"
+  ],
+  "reporters": ["html", "clear-text", "progress"],
+  "htmlReporter": {
+    "fileName": "test-output/mutation/index.html"
+  },
+  "concurrency": 4,
+  "tempDirName": ".stryker-tmp",
+  "coverageAnalysis": "off",
+  "timeoutMS": 30000,
+  "timeoutFactor": 2.5,
+  "disableBail": false,
+  "cleanTempDir": "always"
+}

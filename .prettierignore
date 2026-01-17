@@ -1,0 +1,45 @@
+# Dependencies
+node_modules
+
+# Build outputs
+dist
+build
+out
+.next
+.vinxi
+.turbo
+
+# Documentation (generated and manual)
+docs
+
+# Testing
+coverage
+test-output
+test-results
+playwright-report
+.playwright-mcp
+
+# Generated files
+**/convex/_generated
+*.tsbuildinfo
+
+# Prisma
+**/prisma/*.db
+**/prisma/*.db-journal
+
+# Lock files
+pnpm-lock.yaml
+bun.lock
+package-lock.json
+yarn.lock
+
+# IDE
+.idea
+.vscode
+
+# Cache
+apps/web/.ladle/.cache
+.cache
+
+# Beads (project management)
+.beads

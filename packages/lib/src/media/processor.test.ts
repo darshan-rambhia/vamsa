@@ -257,7 +257,7 @@ describe("Image Processing Pipeline", () => {
         await fs.stat(webpDir);
         await fs.stat(thumbDir);
         await fs.stat(responsiveDir);
-      } catch (error) {
+      } catch (_error) {
         expect(false).toBe(true); // Should not throw
       }
     });
@@ -265,11 +265,7 @@ describe("Image Processing Pipeline", () => {
     it("writes files to disk", async () => {
       const imageBuffer = await createTestImageFile();
       const mediaId = "test-image-files";
-      const result = await processUploadedImage(
-        imageBuffer,
-        mediaId,
-        testMediaDir
-      );
+      await processUploadedImage(imageBuffer, mediaId, testMediaDir);
 
       // Check if files exist
       const webpPath = path.join(testMediaDir, "webp", `${mediaId}.webp`);

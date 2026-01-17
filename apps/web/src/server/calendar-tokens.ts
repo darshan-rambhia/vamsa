@@ -1,195 +1,103 @@
-"use server";
-
 import { createServerFn } from "@tanstack/react-start";
-import { prisma } from "./db";
 import { requireAuth } from "./middleware/require-auth";
-import { logger } from "@vamsa/lib/logger";
-import { addYears } from "date-fns";
 import {
-  generateSecureToken,
-  rotateToken,
-  revokeToken,
-} from "../../server/auth/token-rotation";
+  getCalendarTokensData,
+  createCalendarTokenData,
+  rotateCalendarTokenData,
+  revokeCalendarTokenData,
+  updateTokenNameData,
+  deleteCalendarTokenData,
+  getAllCalendarTokensData,
+  type CreateCalendarTokenInput,
+  type UpdateTokenNameResult,
+  type DeleteCalendarTokenResult,
+} from "@vamsa/lib/server/business";
 
 /**
- * Get current user's calendar tokens
+ * Server function: Get current user's calendar tokens
+ * @returns List of calendar tokens for the authenticated user
+ * @requires MEMBER role or higher
  */
 export const getCalendarTokens = createServerFn({ method: "GET" }).handler(
   async () => {
     const user = await requireAuth("MEMBER");
-
-    return prisma.calendarToken.findMany({
-      where: { userId: user.id },
-      orderBy: { createdAt: "desc" },
-    });
+    return getCalendarTokensData(user.id);
   }
 );
 
 /**
- * Create new calendar token
+ * Server function: Create new calendar token
+ * @returns Created calendar token
+ * @requires MEMBER role or higher
  */
 export const createCalendarToken = createServerFn({ method: "POST" })
   .inputValidator((data: { name?: string; rotationPolicy?: string }) => data)
   .handler(async ({ data }) => {
     const user = await requireAuth("MEMBER");
-
-    const token = await prisma.calendarToken.create({
-      data: {
-        userId: user.id,
-        token: generateSecureToken(),
-        name: data.name,
-        rotationPolicy: data.rotationPolicy || "annual",
-        expiresAt: addYears(new Date(), 1),
-        isActive: true,
-      },
-    });
-
-    logger.info(
-      { userId: user.id, tokenId: token.id, tokenName: token.name },
-      "Calendar token created"
-    );
-
-    return token;
+    const input: CreateCalendarTokenInput = {
+      name: data.name,
+      rotationPolicy: data.rotationPolicy,
+    };
+    return createCalendarTokenData(user.id, input);
   });
 
 /**
- * Rotate a calendar token
+ * Server function: Rotate a calendar token
+ * @returns Newly created token after rotation
+ * @requires MEMBER role or higher
  */
 export const rotateCalendarToken = createServerFn({ method: "POST" })
   .inputValidator((data: { tokenId: string }) => data)
   .handler(async ({ data }) => {
     const user = await requireAuth("MEMBER");
-
-    // Verify user owns this token
-    const existingToken = await prisma.calendarToken.findFirst({
-      where: { id: data.tokenId, userId: user.id },
-    });
-
-    if (!existingToken) {
-      throw new Error("Token not found");
-    }
-
-    const newToken = await rotateToken(data.tokenId);
-
-    logger.info(
-      { userId: user.id, oldTokenId: data.tokenId, newTokenId: newToken.id },
-      "Calendar token rotated manually"
-    );
-
-    return newToken;
+    return rotateCalendarTokenData(data.tokenId, user.id);
   });
 
 /**
- * Revoke a calendar token
+ * Server function: Revoke a calendar token
+ * @returns The revoked token
+ * @requires MEMBER role or higher
  */
 export const revokeCalendarToken = createServerFn({ method: "POST" })
   .inputValidator((data: { tokenId: string }) => data)
   .handler(async ({ data }) => {
     const user = await requireAuth("MEMBER");
-
-    // Verify user owns this token
-    const existingToken = await prisma.calendarToken.findFirst({
-      where: { id: data.tokenId, userId: user.id },
-    });
-
-    if (!existingToken) {
-      throw new Error("Token not found");
-    }
-
-    const revokedToken = await revokeToken(data.tokenId);
-
-    logger.info(
-      { userId: user.id, tokenId: data.tokenId },
-      "Calendar token revoked"
-    );
-
-    return revokedToken;
+    return revokeCalendarTokenData(data.tokenId, user.id);
   });
 
 /**
- * Update calendar token name
+ * Server function: Update calendar token name
+ * @returns Updated token with name and timestamp
+ * @requires MEMBER role or higher
  */
 export const updateTokenName = createServerFn({ method: "POST" })
   .inputValidator((data: { tokenId: string; name: string }) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<UpdateTokenNameResult> => {
     const user = await requireAuth("MEMBER");
-
-    // Verify user owns this token
-    const existingToken = await prisma.calendarToken.findFirst({
-      where: { id: data.tokenId, userId: user.id },
-    });
-
-    if (!existingToken) {
-      throw new Error("Token not found");
-    }
-
-    const updatedToken = await prisma.calendarToken.update({
-      where: { id: data.tokenId },
-      data: { name: data.name },
-    });
-
-    logger.info(
-      { userId: user.id, tokenId: data.tokenId, newName: data.name },
-      "Calendar token name updated"
-    );
-
-    return updatedToken;
+    return updateTokenNameData(data.tokenId, data.name, user.id);
   });
 
 /**
- * Delete a revoked calendar token (permanent deletion)
+ * Server function: Delete a revoked calendar token (permanent deletion)
  * Only revoked (inactive) tokens can be deleted
+ * @returns Success status with deleted token ID
+ * @requires MEMBER role or higher
  */
 export const deleteCalendarToken = createServerFn({ method: "POST" })
   .inputValidator((data: { tokenId: string }) => data)
-  .handler(async ({ data }) => {
+  .handler(async ({ data }): Promise<DeleteCalendarTokenResult> => {
     const user = await requireAuth("MEMBER");
-
-    // Verify user owns this token
-    const existingToken = await prisma.calendarToken.findFirst({
-      where: { id: data.tokenId, userId: user.id },
-    });
-
-    if (!existingToken) {
-      throw new Error("Token not found");
-    }
-
-    // Only allow deletion of revoked (inactive) tokens
-    if (existingToken.isActive) {
-      throw new Error("Cannot delete an active token. Please revoke it first.");
-    }
-
-    // Permanently delete the token
-    await prisma.calendarToken.delete({
-      where: { id: data.tokenId },
-    });
-
-    logger.info(
-      { userId: user.id, tokenId: data.tokenId },
-      "Calendar token permanently deleted"
-    );
-
-    return { success: true, deletedId: data.tokenId };
+    return deleteCalendarTokenData(data.tokenId, user.id);
   });
 
 /**
- * Get all calendar tokens across all users (Admin only)
+ * Server function: Get all calendar tokens across all users (Admin only)
+ * @returns List of all calendar tokens with user information
+ * @requires ADMIN role
  */
 export const getAllCalendarTokens = createServerFn({ method: "GET" }).handler(
   async () => {
     await requireAuth("ADMIN");
-
-    return prisma.calendarToken.findMany({
-      include: {
-        user: {
-          select: {
-            id: true,
-            email: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    return getAllCalendarTokensData();
   }
 );

@@ -244,8 +244,8 @@ function ErrorShowcase() {
             </CardHeader>
             <CardContent className="text-muted-foreground text-sm">
               <p>
-                When a route doesn't exist, the <code>NotFound</code> component
-                displays a themed 404 page with navigation options.
+                When a route doesn&apos;t exist, the <code>NotFound</code>{" "}
+                component displays a themed 404 page with navigation options.
               </p>
               <p className="mt-2">
                 Test by visiting:{" "}
@@ -281,8 +281,8 @@ function ErrorTriggerComponent({ shouldError }: { shouldError: boolean }) {
       data-testid="healthy-component"
     >
       <p className="text-sm text-green-700 dark:text-green-300">
-        This component is working normally. Click "Trigger Error" to simulate a
-        component crash.
+        This component is working normally. Click &quot;Trigger Error&quot; to
+        simulate a component crash.
       </p>
     </div>
   );

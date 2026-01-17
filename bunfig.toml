@@ -1,6 +1,6 @@
 [test]
 # Preload test setup to configure jsdom and DOM globals
-preload = ["./packages/ui/src/test-setup.ts"]
+preload = ["./apps/web/tests/setup/test-logger-mock.ts"]
 
 # Exclude test setup files and test files from coverage
 coveragePathIgnorePatterns = [
@@ -10,13 +10,6 @@ coveragePathIgnorePatterns = [
   "**/*.test.tsx",
   "**/*.spec.tsx",
   "**/*.function.ts"  # TanStack React Start server function wrappers (not unit testable)
-]
-
-# Exclude E2E tests from unit test runner (they use Playwright)
-# Exclude integration tests that require database connection (now in e2e/integration/)
-# Exclude framework wrapper files (not unit testable - TanStack React Start createServerFn)
-testPathIgnorePatterns = [
-  "**/e2e/**"
 ]
 
 # Coverage thresholds to maintain code quality

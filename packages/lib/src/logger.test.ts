@@ -102,7 +102,7 @@ describe("Logger", () => {
       const serialized = serializeError(error) as Record<string, unknown>;
 
       expect(serialized).toBeDefined();
-      expect(serialized.message).toBe("Test error");
+      expect(serialized.message, `${serialized}`).toBe("Test error");
       expect(serialized.name).toBe("Error");
       expect(serialized.stack).toBeDefined();
     });

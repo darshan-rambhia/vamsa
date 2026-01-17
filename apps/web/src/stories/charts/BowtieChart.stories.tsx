@@ -5,6 +5,7 @@ import {
   createMockPerson,
   createBowtieNodes,
 } from "~/stories/mocks/chart-data";
+import { logger } from "@vamsa/lib/logger";
 
 export default {
   title: "Charts/BowtieChart",
@@ -29,7 +30,9 @@ export const Default: Story = () => {
         nodes={nodes}
         edges={edges}
         rootPersonId={rootPerson.id}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in BowtieChart story")
+        }
       />
     </StoryDecorator>
   );
@@ -46,7 +49,9 @@ export const PaternalOnly: Story = () => {
         nodes={nodes}
         edges={edges}
         rootPersonId={rootPerson.id}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in BowtieChart story")
+        }
       />
     </StoryDecorator>
   );
@@ -63,7 +68,9 @@ export const MaternalOnly: Story = () => {
         nodes={nodes}
         edges={edges}
         rootPersonId={rootPerson.id}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in BowtieChart story")
+        }
       />
     </StoryDecorator>
   );
@@ -80,7 +87,9 @@ export const SingleParent: Story = () => {
         nodes={nodes}
         edges={edges}
         rootPersonId={rootPerson.id}
-        onNodeClick={(id) => console.log("Clicked:", id)}
+        onNodeClick={(id) =>
+          logger.info({ nodeId: id }, "Node clicked in BowtieChart story")
+        }
       />
     </StoryDecorator>
   );

@@ -35,17 +35,26 @@ CardHeader.displayName = "CardHeader";
 const CardTitle = React.forwardRef<
   HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
-  <h3
-    ref={ref}
-    className={cn(
-      // Editorial display font
-      "font-display text-xl leading-tight font-medium tracking-tight",
-      className
-    )}
-    {...props}
-  />
-));
+>(({ className, children, "aria-label": ariaLabel, ...props }, ref) => {
+  const titleContent = children ?? (
+    <span className="sr-only">{ariaLabel ?? "Card title"}</span>
+  );
+
+  return (
+    <h3
+      ref={ref}
+      aria-label={ariaLabel}
+      className={cn(
+        // Editorial display font
+        "font-display text-xl leading-tight font-medium tracking-tight",
+        className
+      )}
+      {...props}
+    >
+      {titleContent}
+    </h3>
+  );
+});
 CardTitle.displayName = "CardTitle";
 
 const CardDescription = React.forwardRef<

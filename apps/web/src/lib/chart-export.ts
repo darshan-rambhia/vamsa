@@ -16,6 +16,7 @@ export async function exportToPDF(
 ): Promise<void> {
   // Dynamic import to handle CommonJS module
   const svg2pdfModule = await import("svg2pdf.js");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const svg2pdf = svg2pdfModule.svg2pdf || (svg2pdfModule as any).default;
 
   const { title, orientation, includeMetadata = true, scale = 1 } = options;

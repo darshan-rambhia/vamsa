@@ -43,19 +43,22 @@ export function generateCronExpression(schedule: BackupSchedule): string {
   const [hours, minutes] = schedule.time.split(":").map(Number);
 
   switch (schedule.type) {
-    case "DAILY":
+    case "DAILY": {
       // Every day at specified time
       return `${minutes} ${hours} * * *`;
+    }
 
-    case "WEEKLY":
+    case "WEEKLY": {
       // Every week on specified day at specified time
       const weekday = schedule.day ?? 0; // Default to Sunday
       return `${minutes} ${hours} * * ${weekday}`;
+    }
 
-    case "MONTHLY":
+    case "MONTHLY": {
       // Every month on specified day at specified time
       const monthDay = schedule.day ?? 1; // Default to 1st
       return `${minutes} ${hours} ${monthDay} * *`;
+    }
 
     default:
       throw new Error(`Unknown schedule type: ${schedule.type}`);
@@ -118,11 +121,12 @@ export function getNextScheduledTime(
   // If the time has already passed today, move to next occurrence
   if (next <= from) {
     switch (schedule.type) {
-      case "DAILY":
+      case "DAILY": {
         next.setUTCDate(next.getUTCDate() + 1);
         break;
+      }
 
-      case "WEEKLY":
+      case "WEEKLY": {
         // Find next occurrence of the specified weekday
         const targetDay = schedule.day ?? 0;
         const currentDay = next.getUTCDay();
@@ -130,17 +134,19 @@ export function getNextScheduledTime(
         if (daysUntil <= 0) daysUntil += 7;
         next.setUTCDate(next.getUTCDate() + daysUntil);
         break;
+      }
 
-      case "MONTHLY":
+      case "MONTHLY": {
         // Move to next month
         next.setUTCMonth(next.getUTCMonth() + 1);
         next.setUTCDate(schedule.day ?? 1);
         break;
+      }
     }
   } else {
     // Adjust for weekly/monthly schedules
     switch (schedule.type) {
-      case "WEEKLY":
+      case "WEEKLY": {
         const targetDay = schedule.day ?? 0;
         const currentDay = next.getUTCDay();
         if (currentDay !== targetDay) {
@@ -149,8 +155,9 @@ export function getNextScheduledTime(
           next.setUTCDate(next.getUTCDate() + daysUntil);
         }
         break;
+      }
 
-      case "MONTHLY":
+      case "MONTHLY": {
         const targetDate = schedule.day ?? 1;
         if (next.getUTCDate() !== targetDate) {
           next.setUTCDate(targetDate);
@@ -160,6 +167,7 @@ export function getNextScheduledTime(
           }
         }
         break;
+      }
     }
   }
 
@@ -209,18 +217,21 @@ export function describeSchedule(schedule: BackupSchedule): string {
   const timeStr = formatTimeString(hours, minutes);
 
   switch (schedule.type) {
-    case "DAILY":
+    case "DAILY": {
       return `Daily at ${timeStr} UTC`;
+    }
 
-    case "WEEKLY":
+    case "WEEKLY": {
       const weekday = getWeekdayName(schedule.day ?? 0);
       return `Weekly on ${weekday} at ${timeStr} UTC`;
+    }
 
-    case "MONTHLY":
+    case "MONTHLY": {
       const day = schedule.day ?? 1;
       const suffix =
         day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th";
       return `Monthly on the ${day}${suffix} at ${timeStr} UTC`;
+    }
 
     default:
       return "Unknown schedule";

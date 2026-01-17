@@ -1,25 +1,64 @@
-import { createServerFn } from "@tanstack/react-start";
-import { prisma } from "./db";
-import { z } from "zod";
-import { randomBytes } from "crypto";
-import bcrypt from "bcryptjs";
-import { logger } from "@vamsa/lib/logger";
-import { requireAuth } from "./middleware/require-auth";
-import type { Prisma } from "@vamsa/api";
-import { createPaginationMeta } from "@vamsa/schemas";
+/**
+ * Invites Server Functions - Framework Wrappers
+ *
+ * This module contains thin `createServerFn` wrappers that call the business logic
+ * functions from invites.server.ts. These wrappers handle:
+ * - Input validation with Zod schemas
+ * - Calling the corresponding server function
+ * - Authentication (delegated to server layer via requireAuth)
+ * - Error handling
+ *
+ * This layer is excluded from unit test coverage as it's framework integration code.
+ */
 
-// Invite list input schema (extends pagination with status filter)
+import { createServerFn } from "@tanstack/react-start";
+import { z } from "zod";
+import { requireAuth } from "./middleware/require-auth";
+import {
+  getInvitesData,
+  createInviteData,
+  acceptInviteData,
+  revokeInviteData,
+  deleteInviteData,
+  getInviteByTokenData,
+  resendInviteData,
+} from "@vamsa/lib/server/business";
+
+// Validation schemas
 const inviteListInputSchema = z.object({
   page: z.number().int().min(1).default(1),
   limit: z.number().int().min(1).max(100).default(50),
   sortOrder: z.enum(["asc", "desc"]).default("asc"),
   status: z.enum(["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"]).optional(),
 });
-type InviteListInput = z.infer<typeof inviteListInputSchema>;
 
-// Get invites with pagination (admin only)
+const createInviteSchema = z.object({
+  email: z.string().email("Invalid email address"),
+  role: z.enum(["ADMIN", "MEMBER", "VIEWER"]),
+  personId: z.string().nullable().optional(),
+});
+
+const acceptInviteSchema = z.object({
+  token: z.string(),
+  name: z.string().min(1, "Name is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
+});
+
+const inviteIdSchema = z.object({
+  inviteId: z.string(),
+});
+
+const tokenSchema = z.object({
+  token: z.string(),
+});
+
+/**
+ * Get invites with pagination (admin only)
+ *
+ * Retrieves a paginated list of invites with optional status filtering.
+ */
 export const getInvites = createServerFn({ method: "GET" })
-  .inputValidator((data: Partial<InviteListInput>) => {
+  .inputValidator((data: Partial<z.infer<typeof inviteListInputSchema>>) => {
     return inviteListInputSchema.parse(data);
   })
   .handler(async ({ data }) => {
@@ -27,57 +66,15 @@ export const getInvites = createServerFn({ method: "GET" })
 
     const { page, limit, sortOrder, status } = data;
 
-    // Build where clause
-    const where: Prisma.InviteWhereInput = {};
-    if (status) {
-      where.status = status;
-    }
-
-    // Get total count
-    const total = await prisma.invite.count({ where });
-
-    // Get paginated results
-    const invites = await prisma.invite.findMany({
-      where,
-      orderBy: { createdAt: sortOrder === "asc" ? "asc" : "desc" },
-      skip: (page - 1) * limit,
-      take: limit,
-      include: {
-        person: {
-          select: { id: true, firstName: true, lastName: true },
-        },
-        invitedBy: {
-          select: { id: true, name: true, email: true },
-        },
-      },
-    });
-
-    return {
-      items: invites.map((invite) => ({
-        id: invite.id,
-        email: invite.email,
-        role: invite.role,
-        status: invite.status,
-        token: invite.token,
-        personId: invite.personId,
-        person: invite.person,
-        invitedBy: invite.invitedBy,
-        expiresAt: invite.expiresAt.toISOString(),
-        acceptedAt: invite.acceptedAt?.toISOString() ?? null,
-        createdAt: invite.createdAt.toISOString(),
-      })),
-      pagination: createPaginationMeta(page, limit, total),
-    };
+    return getInvitesData(page, limit, sortOrder, status);
   });
 
-// Create invite schema
-const createInviteSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  role: z.enum(["ADMIN", "MEMBER", "VIEWER"]),
-  personId: z.string().nullable().optional(),
-});
-
-// Create invite (admin only)
+/**
+ * Create invite (admin only)
+ *
+ * Generates a unique token and creates an invite record.
+ * Email must not already have an active invite or user account.
+ */
 export const createInvite = createServerFn({ method: "POST" })
   .inputValidator((data: z.infer<typeof createInviteSchema>) => {
     return createInviteSchema.parse(data);
@@ -85,331 +82,83 @@ export const createInvite = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const currentUser = await requireAuth("ADMIN");
 
-    // Check if email already has an active invite
-    const existingInvite = await prisma.invite.findFirst({
-      where: {
-        email: data.email.toLowerCase(),
-        status: "PENDING",
-      },
-    });
-
-    if (existingInvite) {
-      throw new Error("An active invite already exists for this email");
-    }
-
-    // Check if user already exists with this email
-    const existingUser = await prisma.user.findUnique({
-      where: { email: data.email.toLowerCase() },
-    });
-
-    if (existingUser) {
-      throw new Error("A user already exists with this email");
-    }
-
-    // If personId provided, verify it exists and isn't already linked
-    if (data.personId) {
-      const person = await prisma.person.findUnique({
-        where: { id: data.personId },
-      });
-
-      if (!person) {
-        throw new Error("Person not found");
-      }
-
-      const userWithPerson = await prisma.user.findFirst({
-        where: { personId: data.personId },
-      });
-
-      if (userWithPerson) {
-        throw new Error("This person is already linked to a user");
-      }
-    }
-
-    // Generate unique token
-    const token = randomBytes(32).toString("hex");
-
-    // Set expiration to 7 days from now
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    // Create invite
-    const invite = await prisma.invite.create({
-      data: {
-        email: data.email.toLowerCase(),
-        role: data.role,
-        personId: data.personId ?? null,
-        invitedById: currentUser.id,
-        token,
-        expiresAt,
-        status: "PENDING",
-      },
-      include: {
-        person: {
-          select: { id: true, firstName: true, lastName: true },
-        },
-      },
-    });
-
-    logger.info(
-      { email: data.email, createdBy: currentUser.id },
-      "Created invite"
+    return createInviteData(
+      data.email,
+      data.role,
+      data.personId,
+      currentUser.id
     );
-
-    return {
-      id: invite.id,
-      email: invite.email,
-      role: invite.role,
-      token: invite.token,
-      personId: invite.personId,
-      person: invite.person,
-      expiresAt: invite.expiresAt.toISOString(),
-    };
   });
 
-// Revoke invite schema
-const revokeInviteSchema = z.object({
-  inviteId: z.string(),
-});
-
-// Revoke invite (admin only)
-export const revokeInvite = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof revokeInviteSchema>) => {
-    return revokeInviteSchema.parse(data);
+/**
+ * Get invite by token (public)
+ *
+ * Fetches and validates invite by token.
+ * No authentication required.
+ */
+export const getInviteByToken = createServerFn({ method: "GET" })
+  .inputValidator((data: z.infer<typeof tokenSchema>) => {
+    return tokenSchema.parse(data);
   })
   .handler(async ({ data }) => {
-    const currentUser = await requireAuth("ADMIN");
-
-    const invite = await prisma.invite.findUnique({
-      where: { id: data.inviteId },
-    });
-
-    if (!invite) {
-      throw new Error("Invite not found");
-    }
-
-    if (invite.status !== "PENDING") {
-      throw new Error("Can only revoke pending invites");
-    }
-
-    await prisma.invite.update({
-      where: { id: data.inviteId },
-      data: { status: "REVOKED" },
-    });
-
-    logger.info(
-      { inviteId: data.inviteId, revokedBy: currentUser.id },
-      "Revoked invite"
-    );
-
-    return { success: true };
+    return getInviteByTokenData(data.token);
   });
 
-// Get invite by token (public - for invite accept page)
-export const getInviteByToken = createServerFn({ method: "GET" })
-  .inputValidator((data: { token: string }) => data)
-  .handler(async ({ data }) => {
-    const invite = await prisma.invite.findUnique({
-      where: { token: data.token },
-      include: {
-        person: {
-          select: { id: true, firstName: true, lastName: true },
-        },
-      },
-    });
-
-    if (!invite) {
-      return { valid: false, error: "Invite not found", invite: null };
-    }
-
-    if (invite.status === "ACCEPTED") {
-      return { valid: false, error: "Invite already accepted", invite: null };
-    }
-
-    if (invite.status === "REVOKED") {
-      return { valid: false, error: "Invite has been revoked", invite: null };
-    }
-
-    if (invite.status === "EXPIRED" || invite.expiresAt < new Date()) {
-      // Update status if expired
-      if (invite.status === "PENDING") {
-        await prisma.invite.update({
-          where: { id: invite.id },
-          data: { status: "EXPIRED" },
-        });
-      }
-      return { valid: false, error: "Invite has expired", invite: null };
-    }
-
-    return {
-      valid: true,
-      error: null,
-      invite: {
-        id: invite.id,
-        email: invite.email,
-        role: invite.role,
-        personId: invite.personId,
-        person: invite.person,
-        expiresAt: invite.expiresAt.toISOString(),
-      },
-    };
-  });
-
-// Accept invite schema
-const acceptInviteSchema = z.object({
-  token: z.string(),
-  name: z.string().min(1, "Name is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-
-// Accept invite (public)
+/**
+ * Accept invite (public)
+ *
+ * Accepts an invite and creates a new user account.
+ * No authentication required.
+ */
 export const acceptInvite = createServerFn({ method: "POST" })
   .inputValidator((data: z.infer<typeof acceptInviteSchema>) => {
     return acceptInviteSchema.parse(data);
   })
   .handler(async ({ data }) => {
-    const invite = await prisma.invite.findUnique({
-      where: { token: data.token },
-    });
-
-    if (!invite) {
-      throw new Error("Invite not found");
-    }
-
-    if (invite.status !== "PENDING") {
-      throw new Error(
-        `Invite is ${invite.status.toLowerCase()}, cannot accept`
-      );
-    }
-
-    if (invite.expiresAt < new Date()) {
-      await prisma.invite.update({
-        where: { id: invite.id },
-        data: { status: "EXPIRED" },
-      });
-      throw new Error("Invite has expired");
-    }
-
-    // Check if email is already taken
-    const existingUser = await prisma.user.findUnique({
-      where: { email: invite.email },
-    });
-
-    if (existingUser) {
-      throw new Error("An account already exists with this email");
-    }
-
-    // Hash password
-    const passwordHash = await bcrypt.hash(data.password, 12);
-
-    // Create user and update invite in transaction
-    const user = await prisma.$transaction(async (tx) => {
-      // Create user
-      const newUser = await tx.user.create({
-        data: {
-          email: invite.email,
-          name: data.name,
-          passwordHash,
-          role: invite.role,
-          personId: invite.personId,
-          invitedById: invite.invitedById,
-          isActive: true,
-        },
-      });
-
-      // Update invite status
-      await tx.invite.update({
-        where: { id: invite.id },
-        data: {
-          status: "ACCEPTED",
-          acceptedAt: new Date(),
-        },
-      });
-
-      return newUser;
-    });
-
-    logger.info(
-      { inviteId: invite.id, userId: user.id },
-      "Invite accepted, user created"
-    );
-
-    return { success: true, userId: user.id };
+    return acceptInviteData(data.token, data.name, data.password);
   });
 
-// Resend invite (admin only) - just creates a new token and extends expiration
-const resendInviteSchema = z.object({
-  inviteId: z.string(),
-});
+/**
+ * Revoke invite (admin only)
+ *
+ * Changes a pending invite status to REVOKED, preventing further acceptance.
+ */
+export const revokeInvite = createServerFn({ method: "POST" })
+  .inputValidator((data: z.infer<typeof inviteIdSchema>) => {
+    return inviteIdSchema.parse(data);
+  })
+  .handler(async ({ data }) => {
+    const user = await requireAuth("ADMIN");
 
+    return revokeInviteData(data.inviteId, user.id);
+  });
+
+/**
+ * Delete invite (admin only)
+ *
+ * Permanently deletes a revoked invite record.
+ */
+export const deleteInvite = createServerFn({ method: "POST" })
+  .inputValidator((data: z.infer<typeof inviteIdSchema>) => {
+    return inviteIdSchema.parse(data);
+  })
+  .handler(async ({ data }) => {
+    const user = await requireAuth("ADMIN");
+
+    return deleteInviteData(data.inviteId, user.id);
+  });
+
+/**
+ * Resend invite (admin only)
+ *
+ * Generates a new token and extends expiration to 7 days from now.
+ */
 export const resendInvite = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof resendInviteSchema>) => {
-    return resendInviteSchema.parse(data);
+  .inputValidator((data: z.infer<typeof inviteIdSchema>) => {
+    return inviteIdSchema.parse(data);
   })
   .handler(async ({ data }) => {
     await requireAuth("ADMIN");
 
-    const invite = await prisma.invite.findUnique({
-      where: { id: data.inviteId },
-    });
-
-    if (!invite) {
-      throw new Error("Invite not found");
-    }
-
-    if (invite.status === "ACCEPTED") {
-      throw new Error("Cannot resend an accepted invite");
-    }
-
-    // Generate new token and extend expiration
-    const newToken = randomBytes(32).toString("hex");
-    const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    const updated = await prisma.invite.update({
-      where: { id: data.inviteId },
-      data: {
-        token: newToken,
-        expiresAt: newExpiresAt,
-        status: "PENDING",
-      },
-    });
-
-    logger.info({ inviteId: data.inviteId }, "Resent invite");
-
-    return {
-      success: true,
-      token: updated.token,
-      expiresAt: updated.expiresAt.toISOString(),
-    };
-  });
-
-/**
- * Delete an invite permanently (only allowed for revoked invites)
- */
-export const deleteInvite = createServerFn({ method: "POST" })
-  .inputValidator((data: { inviteId: string }) => data)
-  .handler(async ({ data }) => {
-    const user = await requireAuth("ADMIN");
-
-    const invite = await prisma.invite.findUnique({
-      where: { id: data.inviteId },
-    });
-
-    if (!invite) {
-      throw new Error("Invite not found");
-    }
-
-    // Only allow deleting revoked invites
-    if (invite.status !== "REVOKED") {
-      throw new Error("Only revoked invites can be deleted");
-    }
-
-    await prisma.invite.delete({
-      where: { id: data.inviteId },
-    });
-
-    logger.info(
-      { inviteId: data.inviteId, deletedBy: user.id },
-      "Invite deleted"
-    );
-
-    return { success: true };
+    return resendInviteData(data.inviteId);
   });

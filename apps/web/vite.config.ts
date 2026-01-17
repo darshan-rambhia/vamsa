@@ -20,6 +20,30 @@ export default defineConfig({
       "@vamsa/schemas": path.resolve(__dirname, "../../packages/schemas/src"),
     },
   },
+  ssr: {
+    external: [
+      // Server-only dependencies from packages/lib that shouldn't be bundled
+      "archiver",
+      "arctic",
+      "bcryptjs",
+      "i18next",
+      "i18next-fs-backend",
+      "node-cron",
+    ],
+  },
+  build: {
+    rollupOptions: {
+      external: [
+        // Server-only dependencies from packages/lib that shouldn't be bundled
+        "archiver",
+        "arctic",
+        "bcryptjs",
+        "i18next",
+        "i18next-fs-backend",
+        "node-cron",
+      ],
+    },
+  },
   plugins: [
     // Add API routes in dev mode for dev/prod parity
     vamsaDevApiPlugin(),

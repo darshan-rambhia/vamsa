@@ -5,6 +5,7 @@ import {
   type ChartType,
 } from "~/components/charts/ChartControls";
 import { ThemeDecorator } from "~/stories/decorators";
+import { logger } from "@vamsa/lib/logger";
 
 export default {
   title: "Charts/UI/ChartControls",
@@ -31,11 +32,19 @@ export const Default: Story = () => {
           onGenerationsChange={setGenerations}
           onAncestorGenerationsChange={setAncestorGens}
           onDescendantGenerationsChange={setDescendantGens}
-          onExportPDF={() => console.log("Export PDF")}
-          onExportPNG={() => console.log("Export PNG")}
-          onExportSVG={() => console.log("Export SVG")}
-          onPrint={() => console.log("Print")}
-          onResetView={() => console.log("Reset view")}
+          onExportPDF={() =>
+            logger.info("Export PDF clicked in ChartControls story")
+          }
+          onExportPNG={() =>
+            logger.info("Export PNG clicked in ChartControls story")
+          }
+          onExportSVG={() =>
+            logger.info("Export SVG clicked in ChartControls story")
+          }
+          onPrint={() => logger.info("Print clicked in ChartControls story")}
+          onResetView={() =>
+            logger.info("Reset view clicked in ChartControls story")
+          }
         />
       </div>
     </ThemeDecorator>
@@ -70,11 +79,19 @@ export const AllOptions: Story = () => {
           onDescendantGenerationsChange={setDescendantGens}
           onMaxPeopleChange={setMaxPeople}
           onSortByChange={setSortBy}
-          onExportPDF={() => console.log("Export PDF")}
-          onExportPNG={() => console.log("Export PNG")}
-          onExportSVG={() => console.log("Export SVG")}
-          onPrint={() => console.log("Print")}
-          onResetView={() => console.log("Reset view")}
+          onExportPDF={() =>
+            logger.info("Export PDF clicked in ChartControls story")
+          }
+          onExportPNG={() =>
+            logger.info("Export PNG clicked in ChartControls story")
+          }
+          onExportSVG={() =>
+            logger.info("Export SVG clicked in ChartControls story")
+          }
+          onPrint={() => logger.info("Print clicked in ChartControls story")}
+          onResetView={() =>
+            logger.info("Reset view clicked in ChartControls story")
+          }
           activeContextLabel="John Doe"
         />
       </div>
@@ -100,7 +117,9 @@ export const MinimalOptions: Story = () => {
           hideChartTypeSelector={true}
           onGenerationsChange={setGenerations}
           onAncestorGenerationsChange={setAncestorGens}
-          onResetView={() => console.log("Reset view")}
+          onResetView={() =>
+            logger.info("Reset view clicked in ChartControls story")
+          }
         />
       </div>
     </ThemeDecorator>

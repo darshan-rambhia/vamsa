@@ -13,7 +13,7 @@
  *   bun run apps/web/e2e/scripts/analyze-coverage.ts --output coverage-report.md
  */
 
-import { readFileSync, writeFileSync, existsSync, readdirSync } from "fs";
+import { readFileSync, writeFileSync, existsSync } from "fs";
 import { join } from "path";
 
 interface TestResult {

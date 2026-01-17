@@ -1,6 +1,7 @@
 ---
 name: vamsa-design
 description: Enforce Vamsa's design system - professional, minimalistic, and organic. Use this skill when building family tree interfaces, person profiles, relationship visualizations, or any UI in the Vamsa app. Clean, restrained, and alive.
+license: MIT
 ---
 
 # Vamsa Design System
