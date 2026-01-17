@@ -3,15 +3,14 @@ import {
   personCreateSchema,
   errorResponseSchema,
   paginatedResponseSchema,
-  successResponseSchema,
 } from "@vamsa/schemas";
 import {
-  listPersons as serverListPersons,
-  getPerson as serverGetPerson,
-  createPerson as serverCreatePerson,
-  updatePerson as serverUpdatePerson,
-  deletePerson as serverDeletePerson,
-} from "../../src/server/persons";
+  listPersonsData as serverListPersons,
+  getPersonData as serverGetPerson,
+  createPersonData as serverCreatePerson,
+  updatePersonData as serverUpdatePerson,
+  deletePersonData as serverDeletePerson,
+} from "@vamsa/lib/server/business";
 import { logger } from "@vamsa/lib/logger";
 
 const personsRouter = new OpenAPIHono();
@@ -81,6 +80,15 @@ const personSchema = z
     }),
   })
   .openapi("Person");
+
+const personCreateResponseSchema = z
+  .object({
+    id: z.string().openapi({
+      description: "Created person ID",
+      example: "person_123",
+    }),
+  })
+  .openapi("PersonCreateResponse");
 
 const personUpdateSchema = personCreateSchema.partial();
 
@@ -174,21 +182,27 @@ personsRouter.openapi(listPersonsRoute, async (c) => {
     }
 
     const result = await serverListPersons({
-      data: {
-        page,
-        limit,
-        search,
-        sortBy: sortBy as
-          | "lastName"
-          | "firstName"
-          | "dateOfBirth"
-          | "createdAt",
-        sortOrder: sortOrder as "asc" | "desc",
-        isLiving,
-      },
+      page,
+      limit,
+      search,
+      sortBy: sortBy as
+        | "lastName"
+        | "firstName"
+        | "dateOfBirth"
+        | "createdAt",
+      sortOrder: sortOrder as "asc" | "desc",
+      isLiving,
     });
 
-    return c.json(result, { status: 200 });
+    const response = {
+      ...result,
+      pagination: {
+        ...result.pagination,
+        pages: result.pagination.totalPages,
+      },
+    };
+
+    return c.json(response, { status: 200 });
   } catch (error) {
     logger.error({ error }, "Error listing persons");
     return c.json({ error: "Failed to list persons" }, { status: 500 });
@@ -229,7 +243,7 @@ const createPersonRoute = createRoute({
       description: "Person created successfully",
       content: {
         "application/json": {
-          schema: personSchema,
+          schema: personCreateResponseSchema,
         },
       },
     },
@@ -263,7 +277,9 @@ const createPersonRoute = createRoute({
 personsRouter.openapi(createPersonRoute, async (c) => {
   try {
     const data = c.req.valid("json");
-    const result = await serverCreatePerson({ data });
+    // Use a system user ID for API-created persons (would be replaced with actual auth in production)
+    const userId = "system";
+    const result = await serverCreatePerson(data, userId);
     return c.json(result, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -352,7 +368,7 @@ personsRouter.openapi(getPersonRoute, async (c) => {
       return c.json({ error: "Person ID is required" }, { status: 400 });
     }
 
-    const result = await serverGetPerson({ data: { id } });
+    const result = await serverGetPerson(id);
 
     if (!result) {
       return c.json({ error: "Person not found" }, { status: 404 });
@@ -410,7 +426,7 @@ const updatePersonRoute = createRoute({
       description: "Person updated successfully",
       content: {
         "application/json": {
-          schema: personSchema,
+          schema: personCreateResponseSchema,
         },
       },
     },
@@ -458,9 +474,9 @@ personsRouter.openapi(updatePersonRoute, async (c) => {
     }
 
     const data = c.req.valid("json");
-    const result = await serverUpdatePerson({
-      data: { id, ...data },
-    });
+    // Use a system user ID for API updates (would be replaced with actual auth in production)
+    const userId = "system";
+    const result = await serverUpdatePerson(id, data, userId);
 
     if (!result) {
       return c.json({ error: "Person not found" }, { status: 404 });
@@ -561,7 +577,9 @@ personsRouter.openapi(deletePersonRoute, async (c) => {
       return c.json({ error: "Person ID is required" }, { status: 400 });
     }
 
-    await serverDeletePerson({ data: { id } });
+    // Use a system user ID for API deletes (would be replaced with actual auth in production)
+    const userId = "system";
+    await serverDeletePerson(id, userId);
 
     return c.body(null, 204);
   } catch (error) {
