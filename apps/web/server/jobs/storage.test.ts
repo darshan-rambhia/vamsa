@@ -8,11 +8,23 @@
 
 import { describe, it, expect, mock, beforeEach } from "bun:test";
 
-// Use shared mock from test setup (logger is already mocked globally in preload)
+// Mock logger for this test file
 import {
   mockLogger,
+  mockSerializeError,
+  mockCreateContextLogger,
+  mockCreateRequestLogger,
+  mockStartTimer,
   clearAllMocks,
 } from "../../tests/setup/shared-mocks";
+
+mock.module("@vamsa/lib/logger", () => ({
+  logger: mockLogger,
+  serializeError: mockSerializeError,
+  createContextLogger: mockCreateContextLogger,
+  createRequestLogger: mockCreateRequestLogger,
+  startTimer: mockStartTimer,
+}));
 
 // Create mock S3Client and commands before mocking the module
 const mockS3Send = mock(async () => ({}));
@@ -34,8 +46,6 @@ mock.module("@aws-sdk/client-s3", () => ({
     }
   },
 }));
-
-// Note: @vamsa/lib/logger is mocked globally in test setup (preload file)
 
 // Import after mocks are set up
 import { uploadToStorage, deleteFromStorage } from "./storage";

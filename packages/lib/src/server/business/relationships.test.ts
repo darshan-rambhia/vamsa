@@ -1020,7 +1020,11 @@ describe("Relationship Server Functions", () => {
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.objectContaining({
           personId: "person-1",
-          error: "DB error",
+          type: undefined,
+          error: expect.objectContaining({
+            message: "DB error",
+            name: "Error",
+          }),
         }),
         "Failed to list relationships"
       );

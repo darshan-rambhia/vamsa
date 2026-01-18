@@ -6,15 +6,27 @@
  * - Formatting utilities and error handling
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 
-// Use shared mock from test setup (logger is already mocked globally in preload)
+// Mock logger for this test file
 import {
   mockLogger,
+  mockSerializeError,
+  mockCreateContextLogger,
+  mockCreateRequestLogger,
+  mockStartTimer,
   clearAllMocks,
 } from "../../tests/setup/shared-mocks";
 
-// Import the module (logger mock is already applied by test setup)
+mock.module("@vamsa/lib/logger", () => ({
+  logger: mockLogger,
+  serializeError: mockSerializeError,
+  createContextLogger: mockCreateContextLogger,
+  createRequestLogger: mockCreateRequestLogger,
+  startTimer: mockStartTimer,
+}));
+
+// Import the module (logger mock is applied by this file)
 import { sendBackupNotification } from "./notifications";
 import type {
   NotificationType,

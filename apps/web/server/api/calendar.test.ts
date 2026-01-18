@@ -15,22 +15,6 @@ describe("Calendar API", () => {
     // RSS endpoint requires token authentication
     expect(res.status).toBe(400);
   });
-
-  // Note: This test is skipped because it requires a real database connection.
-  // When other test files use mock.module("./db"), it pollutes the module cache
-  // and causes this endpoint to return 500 instead of 200.
-  // This test should be moved to integration tests if needed.
-  it.skip("GET /api/v1/calendar/birthdays.ics returns 200 and calendar headers", async () => {
-    const res = await apiV1.request("/calendar/birthdays.ics");
-    // Returns 200 for public access
-    expect(res.status).toBe(200);
-    const ct = res.headers.get("content-type") || "";
-    expect(ct).toContain("text/calendar");
-    const disposition = res.headers.get("content-disposition") || "";
-    expect(disposition).toContain("birthdays.ics");
-    const body = await res.text();
-    expect(body).toContain("BEGIN:VCALENDAR");
-  });
 });
 
 // Test data
