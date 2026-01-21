@@ -82,6 +82,7 @@ describe("OIDC Authentication Server Functions", () => {
     let mockDb: AuthOidcDb;
 
     beforeEach(() => {
+      // Cast to unknown first to avoid Prisma's complex method type constraints
       mockDb = {
         oAuthState: {
           create: mock(async () => ({
@@ -115,7 +116,7 @@ describe("OIDC Authentication Server Functions", () => {
             expiresAt: new Date(Date.now() + TOKEN_MAX_AGE * 1000),
           })),
         },
-      };
+      } as unknown as AuthOidcDb;
     });
 
     it("should accept custom database client for testing", async () => {

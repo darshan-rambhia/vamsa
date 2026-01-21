@@ -36,6 +36,17 @@ import {
 } from "@vamsa/lib/server/business";
 
 /**
+ * Result type for exportBackup function
+ */
+export type ExportBackupResult = {
+  success: boolean;
+  message: string;
+  zipBase64?: string;
+  filename?: string;
+  metadata?: BackupMetadata;
+};
+
+/**
  * Export backup server function
  *
  * Creates a complete backup export including:
@@ -507,3 +518,6 @@ export const scheduleBackup = createServerFn({ method: "POST" })
       return { success: true, id: created.id };
     }
   });
+
+// Alias for backward compatibility - scheduleBackup updates backup settings
+export const updateBackupSettings = scheduleBackup;

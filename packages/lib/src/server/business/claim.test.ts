@@ -52,9 +52,15 @@ describe("Claim Server DI Pattern", () => {
         oidcProvider: "google",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockUser);
-      (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockUser
+      );
+      (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       const result = await module.getClaimableProfilesData("user-1", mockDb);
 
@@ -84,7 +90,9 @@ describe("Claim Server DI Pattern", () => {
       (mockDb.user.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce(mockUser)
         .mockResolvedValueOnce(null); // For existing claim check
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
       (mockDb.user.update as ReturnType<typeof mock>).mockResolvedValueOnce({
         ...mockUser,
         personId: "person-1",
@@ -92,7 +100,11 @@ describe("Claim Server DI Pattern", () => {
       });
 
       try {
-        const result = await module.claimProfileForOIDCData("user-1", "person-1", mockDb);
+        const result = await module.claimProfileForOIDCData(
+          "user-1",
+          "person-1",
+          mockDb
+        );
         expect(result).toBeDefined();
       } catch (_err) {
         // May fail due to notification dependency, but DI part works
@@ -110,7 +122,9 @@ describe("Claim Server DI Pattern", () => {
         profileClaimStatus: "PENDING",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockUser);
+      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockUser
+      );
       (mockDb.user.update as ReturnType<typeof mock>).mockResolvedValueOnce({
         ...mockUser,
         profileClaimStatus: "SKIPPED",
@@ -143,8 +157,12 @@ describe("Claim Server DI Pattern", () => {
         email: "john@example.com",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockUser);
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
+      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockUser
+      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
 
       const result = await module.getOIDCClaimStatusData("user-1", mockDb);
 
@@ -157,7 +175,9 @@ describe("Claim Server DI Pattern", () => {
     it("should throw error when user not found", async () => {
       const module = await import("@vamsa/lib/server/business");
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+        null
+      );
 
       try {
         await module.getClaimableProfilesData("nonexistent-user", mockDb);
@@ -176,7 +196,9 @@ describe("Claim Server DI Pattern", () => {
         oidcProvider: null, // Not an OIDC user
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockUser);
+      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockUser
+      );
 
       try {
         await module.getClaimableProfilesData("user-1", mockDb);
@@ -209,9 +231,15 @@ describe("Claim Server DI Pattern", () => {
       };
 
       // Test getClaimableProfilesData
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(initialUser);
-      (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+        initialUser
+      );
+      (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       const profiles = await module.getClaimableProfilesData("user-1", mockDb);
       expect(profiles).toBeDefined();

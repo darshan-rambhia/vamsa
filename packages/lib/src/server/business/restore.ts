@@ -14,7 +14,12 @@ import { logger, serializeError } from "@vamsa/lib/logger";
  */
 export type RestoreDb = Pick<
   PrismaClient,
-  "person" | "user" | "relationship" | "suggestion" | "auditLog" | "$transaction"
+  | "person"
+  | "user"
+  | "relationship"
+  | "suggestion"
+  | "auditLog"
+  | "$transaction"
 >;
 
 /**
@@ -171,7 +176,12 @@ export async function importBackupData(
     // 7. Create audit log
     // 8. Commit transaction
 
-    const result = await (db as any).$transaction(async (tx: RestoreDb) => {
+    // Type assertion needed because Pick<PrismaClient, '$transaction'> loses the callable signature
+    const result = await (
+      db as RestoreDb & {
+        $transaction: <T>(fn: (tx: RestoreDb) => Promise<T>) => Promise<T>;
+      }
+    ).$transaction(async (tx: RestoreDb) => {
       // Log the import action
       await tx.auditLog.create({
         data: {

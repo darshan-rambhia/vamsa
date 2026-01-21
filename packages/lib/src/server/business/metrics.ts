@@ -19,7 +19,43 @@
 import { prisma as defaultPrisma } from "../db";
 import type { PrismaClient } from "@vamsa/api";
 import { logger } from "@vamsa/lib/logger";
-import type { MetricSnapshot } from "./metrics";
+
+/**
+ * Prometheus API response structure
+ */
+interface PrometheusResponse {
+  status: string;
+  data: {
+    result: Array<{
+      metric: Record<string, string>;
+      value: [number, string];
+    }>;
+  };
+}
+
+/**
+ * Metrics snapshot containing aggregated system metrics
+ */
+export interface MetricSnapshot {
+  timestamp: string;
+  http: {
+    requestRate: number;
+    errorRate: number;
+    p95Latency: number;
+    activeConnections: number;
+  };
+  database: {
+    queryRate: number;
+    slowQueryCount: number;
+    p95QueryTime: number;
+  };
+  application: {
+    activeUsers: number;
+    chartViews: Record<string, number>;
+    searchQueries: number;
+  };
+  status: "healthy" | "degraded" | "unavailable";
+}
 
 /**
  * Type for the database client used by metrics functions.
@@ -53,7 +89,7 @@ export async function queryPrometheus(query: string): Promise<number> {
       return 0;
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as PrometheusResponse;
 
     if (data.status === "success" && data.data.result.length > 0) {
       const value = parseFloat(data.data.result[0].value[1]);
@@ -91,7 +127,7 @@ export async function queryPrometheusVector(
       return {};
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as PrometheusResponse;
     const result: Record<string, number> = {};
 
     if (data.status === "success") {

@@ -3,18 +3,7 @@
  */
 import { describe, test, expect } from "bun:test";
 import { render } from "@testing-library/react";
-import {
-  Dialog,
-  DialogPortal,
-  DialogOverlay,
-  DialogClose,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
-} from "./dialog";
+import { Dialog, DialogTrigger, DialogHeader, DialogFooter } from "./dialog";
 
 describe("Dialog", () => {
   describe("Dialog Root", () => {
@@ -48,7 +37,12 @@ describe("Dialog", () => {
     test("supports onOpenChange callback", () => {
       let openState = false;
       const { getByRole } = render(
-        <Dialog open={openState} onOpenChange={(state) => { openState = state; }}>
+        <Dialog
+          open={openState}
+          onOpenChange={(state) => {
+            openState = state;
+          }}
+        >
           <DialogTrigger>Open</DialogTrigger>
         </Dialog>
       );
@@ -131,26 +125,20 @@ describe("Dialog", () => {
     });
 
     test("applies flex column layout", () => {
-      const { getByTestId } = render(
-        <DialogHeader data-testid="header" />
-      );
+      const { getByTestId } = render(<DialogHeader data-testid="header" />);
       const header = getByTestId("header");
       expect(header.className).toContain("flex");
       expect(header.className).toContain("flex-col");
     });
 
     test("applies spacing between children", () => {
-      const { getByTestId } = render(
-        <DialogHeader data-testid="header" />
-      );
+      const { getByTestId } = render(<DialogHeader data-testid="header" />);
       const header = getByTestId("header");
       expect(header.className).toContain("space-y-1.5");
     });
 
     test("applies text alignment", () => {
-      const { getByTestId } = render(
-        <DialogHeader data-testid="header" />
-      );
+      const { getByTestId } = render(<DialogHeader data-testid="header" />);
       const header = getByTestId("header");
       expect(header.className).toContain("text-center");
       expect(header.className).toContain("sm:text-left");
@@ -165,9 +153,7 @@ describe("Dialog", () => {
     });
 
     test("is a div element", () => {
-      const { getByTestId } = render(
-        <DialogHeader data-testid="header" />
-      );
+      const { getByTestId } = render(<DialogHeader data-testid="header" />);
       const header = getByTestId("header");
       expect(header.tagName).toBe("DIV");
     });
@@ -208,41 +194,31 @@ describe("Dialog", () => {
     });
 
     test("applies flex layout", () => {
-      const { getByTestId } = render(
-        <DialogFooter data-testid="footer" />
-      );
+      const { getByTestId } = render(<DialogFooter data-testid="footer" />);
       const footer = getByTestId("footer");
       expect(footer.className).toContain("flex");
     });
 
     test("applies reverse flex direction on mobile", () => {
-      const { getByTestId } = render(
-        <DialogFooter data-testid="footer" />
-      );
+      const { getByTestId } = render(<DialogFooter data-testid="footer" />);
       const footer = getByTestId("footer");
       expect(footer.className).toContain("flex-col-reverse");
     });
 
     test("applies row layout on tablet and up", () => {
-      const { getByTestId } = render(
-        <DialogFooter data-testid="footer" />
-      );
+      const { getByTestId } = render(<DialogFooter data-testid="footer" />);
       const footer = getByTestId("footer");
       expect(footer.className).toContain("sm:flex-row");
     });
 
     test("applies button spacing", () => {
-      const { getByTestId } = render(
-        <DialogFooter data-testid="footer" />
-      );
+      const { getByTestId } = render(<DialogFooter data-testid="footer" />);
       const footer = getByTestId("footer");
       expect(footer.className).toContain("sm:space-x-2");
     });
 
     test("applies justify-end on larger screens", () => {
-      const { getByTestId } = render(
-        <DialogFooter data-testid="footer" />
-      );
+      const { getByTestId } = render(<DialogFooter data-testid="footer" />);
       const footer = getByTestId("footer");
       expect(footer.className).toContain("sm:justify-end");
     });
@@ -256,9 +232,7 @@ describe("Dialog", () => {
     });
 
     test("is a div element", () => {
-      const { getByTestId } = render(
-        <DialogFooter data-testid="footer" />
-      );
+      const { getByTestId } = render(<DialogFooter data-testid="footer" />);
       const footer = getByTestId("footer");
       expect(footer.tagName).toBe("DIV");
     });
@@ -287,7 +261,6 @@ describe("Dialog", () => {
       expect(footer.className).toContain("flex");
     });
   });
-
 
   describe("Dialog composition", () => {
     test("renders complete dialog structure with trigger", () => {
@@ -352,7 +325,9 @@ describe("Dialog", () => {
   describe("HTML attributes", () => {
     test("DialogHeader passes through data attributes", () => {
       const { getByTestId } = render(
-        <DialogHeader data-testid="header" data-custom="value">Header</DialogHeader>
+        <DialogHeader data-testid="header" data-custom="value">
+          Header
+        </DialogHeader>
       );
       expect(getByTestId("header")).toBeDefined();
       expect(getByTestId("header").getAttribute("data-custom")).toBe("value");
@@ -360,7 +335,9 @@ describe("Dialog", () => {
 
     test("DialogFooter passes through data attributes", () => {
       const { getByTestId } = render(
-        <DialogFooter data-testid="footer" data-custom="value">Footer</DialogFooter>
+        <DialogFooter data-testid="footer" data-custom="value">
+          Footer
+        </DialogFooter>
       );
       expect(getByTestId("footer")).toBeDefined();
       expect(getByTestId("footer").getAttribute("data-custom")).toBe("value");
@@ -388,7 +365,9 @@ describe("Dialog", () => {
 
     test("DialogHeader supports custom className", () => {
       const { getByTestId } = render(
-        <DialogHeader data-testid="header" className="custom-header">Header</DialogHeader>
+        <DialogHeader data-testid="header" className="custom-header">
+          Header
+        </DialogHeader>
       );
       const header = getByTestId("header");
       expect(header.className).toContain("custom-header");
@@ -396,7 +375,9 @@ describe("Dialog", () => {
 
     test("DialogFooter supports custom className", () => {
       const { getByTestId } = render(
-        <DialogFooter data-testid="footer" className="custom-footer">Footer</DialogFooter>
+        <DialogFooter data-testid="footer" className="custom-footer">
+          Footer
+        </DialogFooter>
       );
       const footer = getByTestId("footer");
       expect(footer.className).toContain("custom-footer");

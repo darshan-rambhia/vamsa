@@ -386,7 +386,7 @@ describe("Mock Data Factories", () => {
       const stats = createStatisticsData();
 
       expect(stats.surnameFrequency.length).toBeGreaterThan(0);
-      stats.surnameFrequency.forEach((item) => {
+      stats.surnameFrequency.forEach((item: { surname: string; count: number; percentage: number }) => {
         expect(item.surname).toBeDefined();
         expect(item.count).toBeGreaterThan(0);
         expect(item.percentage).toBeGreaterThan(0);

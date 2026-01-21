@@ -12,6 +12,9 @@ permission:
     "bd *": allow
     "bun run *": allow
     "bunx prisma validate": allow
+    "pnpm test:*": allow
+    "pnpm lint": allow
+    "pnpm build": allow
     "*": ask
 ---
 

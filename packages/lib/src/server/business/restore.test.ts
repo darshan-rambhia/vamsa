@@ -25,7 +25,7 @@ import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
   mockStartTimer,
-} from "../../../tests/setup/shared-mocks";
+} from "../../testing/shared-mocks";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -34,7 +34,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
 
 // Import the functions to test
 import {
@@ -72,7 +71,7 @@ function createMockDb(): RestoreDb {
       };
       return callback(tx);
     }),
-  } as unknown as RestoreDb & { $transaction: Function };
+  } as unknown as RestoreDb & { $transaction: (fn: (tx: RestoreDb) => Promise<unknown>) => Promise<unknown> };
 }
 
 describe("Restore Server Functions", () => {
@@ -128,16 +127,14 @@ describe("Restore Server Functions", () => {
 
   describe("previewImportData", () => {
     it("should preview import data for admin user", async () => {
-      (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(
-        5
-      );
+      (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(5);
       (mockDb.user.count as ReturnType<typeof mock>).mockResolvedValueOnce(2);
-      (mockDb.relationship.count as ReturnType<typeof mock>).mockResolvedValueOnce(
-        8
-      );
-      (mockDb.suggestion.count as ReturnType<typeof mock>).mockResolvedValueOnce(
-        0
-      );
+      (
+        mockDb.relationship.count as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(8);
+      (
+        mockDb.suggestion.count as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(0);
 
       const result = await previewImportData(adminUser, mockDb);
 
@@ -150,25 +147,21 @@ describe("Restore Server Functions", () => {
     });
 
     it("should reject non-admin users", async () => {
-      const error = await previewImportData(memberUser, mockDb).catch(
-        (e) => e
-      );
+      const error = await previewImportData(memberUser, mockDb).catch((e) => e);
 
       expect(error).toBeInstanceOf(Error);
       expect(error.message).toContain("Only administrators");
     });
 
     it("should handle empty database", async () => {
-      (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(
-        0
-      );
+      (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(0);
       (mockDb.user.count as ReturnType<typeof mock>).mockResolvedValueOnce(0);
-      (mockDb.relationship.count as ReturnType<typeof mock>).mockResolvedValueOnce(
-        0
-      );
-      (mockDb.suggestion.count as ReturnType<typeof mock>).mockResolvedValueOnce(
-        0
-      );
+      (
+        mockDb.relationship.count as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(0);
+      (
+        mockDb.suggestion.count as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(0);
 
       const result = await previewImportData(adminUser, mockDb);
 
@@ -180,11 +173,7 @@ describe("Restore Server Functions", () => {
 
   describe("importBackupData", () => {
     it("should import backup data for admin user", async () => {
-      const result = await importBackupData(
-        adminUser,
-        "skip",
-        mockDb
-      );
+      const result = await importBackupData(adminUser, "skip", mockDb);
 
       expect(result.success).toBe(true);
       expect(result.importedAt).toBeTruthy();
@@ -202,21 +191,13 @@ describe("Restore Server Functions", () => {
     });
 
     it("should support replace strategy", async () => {
-      const result = await importBackupData(
-        adminUser,
-        "replace",
-        mockDb
-      );
+      const result = await importBackupData(adminUser, "replace", mockDb);
 
       expect(result.strategy).toBe("replace");
     });
 
     it("should support merge strategy", async () => {
-      const result = await importBackupData(
-        adminUser,
-        "merge",
-        mockDb
-      );
+      const result = await importBackupData(adminUser, "merge", mockDb);
 
       expect(result.strategy).toBe("merge");
     });
@@ -282,9 +263,9 @@ describe("Restore Server Functions", () => {
         },
       ] as any;
 
-      (mockDb.auditLog.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockAuditLogs
-      );
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockAuditLogs);
 
       const result = await getImportHistoryData(adminUser, mockDb);
 
@@ -297,9 +278,9 @@ describe("Restore Server Functions", () => {
     });
 
     it("should handle empty history", async () => {
-      (mockDb.auditLog.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        []
-      );
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       const result = await getImportHistoryData(adminUser, mockDb);
 
@@ -318,13 +299,14 @@ describe("Restore Server Functions", () => {
 
     it("should handle query errors gracefully", async () => {
       const mockDbWithError = createMockDb();
-      (mockDbWithError.auditLog.findMany as ReturnType<typeof mock>).mockRejectedValueOnce(
-        new Error("Database error")
-      );
+      (
+        mockDbWithError.auditLog.findMany as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(new Error("Database error"));
 
-      const error = await getImportHistoryData(adminUser, mockDbWithError).catch(
-        (e) => e
-      );
+      const error = await getImportHistoryData(
+        adminUser,
+        mockDbWithError
+      ).catch((e) => e);
 
       expect(error).toBeInstanceOf(Error);
       expect(error.message).toContain("History retrieval failed");
@@ -358,9 +340,9 @@ describe("Restore Server Functions", () => {
         },
       ] as any;
 
-      (mockDb.auditLog.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockAuditLogs
-      );
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockAuditLogs);
 
       const result = await getImportHistoryData(adminUser, mockDb);
 

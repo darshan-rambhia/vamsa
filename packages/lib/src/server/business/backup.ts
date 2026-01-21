@@ -180,10 +180,10 @@ export async function createBackupArchive(
   let archiveError: Error | null = null;
 
   // Collect all archive data chunks
-  archive.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+  archive.on("data", (chunk: Buffer) => chunks.push(Buffer.from(chunk)));
 
   // Track archive errors
-  archive.on("error", (err) => {
+  archive.on("error", (err: Error) => {
     archiveError = err;
   });
 
@@ -249,7 +249,7 @@ export async function createBackupArchive(
       }
     });
 
-    archive.on("error", (err) => {
+    archive.on("error", (err: Error) => {
       reject(err);
     });
   });

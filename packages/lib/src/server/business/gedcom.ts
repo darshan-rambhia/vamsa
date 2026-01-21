@@ -34,7 +34,12 @@ import {
  */
 export type GedcomDb = Pick<
   PrismaClient,
-  "person" | "relationship" | "auditLog" | "mediaObject" | "user" | "$transaction"
+  | "person"
+  | "relationship"
+  | "auditLog"
+  | "mediaObject"
+  | "user"
+  | "$transaction"
 >;
 
 /**
@@ -292,10 +297,9 @@ export async function importGedcomData(
     // Record metrics
     const duration = Date.now() - start;
     recordGedcomImport(
-      result.people.length,
-      result.relationships.length,
-      duration,
+      result.people.length + result.relationships.length,
       mapped.errors.length,
+      duration,
       fileContent.length
     );
 
@@ -463,7 +467,7 @@ export async function exportGedcomDataZip(
     });
 
     const chunks: Buffer[] = [];
-    archive.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+    archive.on("data", (chunk: Buffer) => chunks.push(Buffer.from(chunk)));
 
     // Add GEDCOM file
     const gedcomFileName = formatGedcomFileName();

@@ -2,7 +2,7 @@
  * Feature: User Registration
  * Tests registration flow with form validation and error handling
  */
-import { test, expect, bdd } from "./fixtures";
+import { test, expect, bdd, formValidation } from "./fixtures";
 
 class RegisterPage {
   readonly page;
@@ -79,75 +79,108 @@ test.describe("Feature: User Registration", () => {
     });
 
     test("should validate empty form submission", async ({ page }) => {
-      await bdd.given("user is on registration form", async () => {
-        const registerPage = new RegisterPage(page);
-        await registerPage.goto();
-      });
-
-      await bdd.when("user submits empty form", async () => {
-        const registerPage = new RegisterPage(page);
-        await registerPage.submitButton.click();
-      });
-
-      await bdd.then("form validation prevents submission", async () => {
-        await expect(page).toHaveURL(/\/register/);
+      await formValidation.testEmptySubmission(page, {
+        formUrl: "/register",
+        formTestId: "register-form",
+        submitButtonTestId: "register-submit-button",
+        fields: [
+          {
+            testId: "register-name-input",
+            fieldName: "name",
+            testValue: "John Doe",
+          },
+          {
+            testId: "register-email-input",
+            fieldName: "email",
+            testValue: "test@example.com",
+          },
+          {
+            testId: "register-password-input",
+            fieldName: "password",
+            testValue: "TestPassword123!",
+          },
+          {
+            testId: "register-confirm-password-input",
+            fieldName: "confirm password",
+            testValue: "TestPassword123!",
+          },
+        ],
       });
     });
 
     test("should reject mismatched passwords", async ({ page }) => {
-      await bdd.given("user is on registration form", async () => {
-        const registerPage = new RegisterPage(page);
-        await registerPage.goto();
-      });
-
-      await bdd.when("user enters mismatched passwords", async () => {
-        const registerPage = new RegisterPage(page);
-        const mismatchEmail = `test-mismatch-${Date.now()}@example.com`;
-        await registerPage.register(
-          "John Doe",
-          mismatchEmail,
-          "TestPassword123!",
-          "DifferentPassword123!"
-        );
-      });
-
-      await bdd.then("form prevents submission or shows error", async () => {
-        const isOnRegisterPage = page.url().includes("/register");
-        const registerPage = new RegisterPage(page);
-        const hasError = await registerPage.errorMessage
-          .isVisible()
-          .catch(() => false);
-
-        expect(isOnRegisterPage || hasError).toBeTruthy();
-      });
+      await formValidation.testPasswordMismatch(
+        page,
+        {
+          formUrl: "/register",
+          formTestId: "register-form",
+          submitButtonTestId: "register-submit-button",
+          errorMessageTestId: "register-error",
+          fields: [
+            {
+              testId: "register-name-input",
+              fieldName: "name",
+              testValue: "John Doe",
+            },
+            {
+              testId: "register-email-input",
+              fieldName: "email",
+              testValue: `test-mismatch-${Date.now()}@example.com`,
+            },
+            {
+              testId: "register-password-input",
+              fieldName: "password",
+              testValue: "TestPassword123!",
+            },
+            {
+              testId: "register-confirm-password-input",
+              fieldName: "confirm password",
+              testValue: "DifferentPassword123!",
+            },
+          ],
+        },
+        "register-password-input",
+        "register-confirm-password-input",
+        "TestPassword123!",
+        "DifferentPassword123!"
+      );
     });
 
     test("should reject password that is too short", async ({ page }) => {
-      await bdd.given("user is on registration form", async () => {
-        const registerPage = new RegisterPage(page);
-        await registerPage.goto();
-      });
-
-      await bdd.when("user enters password that is too short", async () => {
-        const registerPage = new RegisterPage(page);
-        const shortPasswordEmail = `test-short-${Date.now()}@example.com`;
-        await registerPage.register(
-          "John Doe",
-          shortPasswordEmail,
-          "short",
-          "short"
-        );
-      });
-
-      await bdd.then("form prevents submission or shows error", async () => {
-        const isOnRegisterPage = page.url().includes("/register");
-        const registerPage = new RegisterPage(page);
-        const hasError = await registerPage.errorMessage
-          .isVisible()
-          .catch(() => false);
-
-        expect(isOnRegisterPage || hasError).toBeTruthy();
-      });
+      await formValidation.testPasswordValidation(
+        page,
+        {
+          formUrl: "/register",
+          formTestId: "register-form",
+          submitButtonTestId: "register-submit-button",
+          errorMessageTestId: "register-error",
+          fields: [
+            {
+              testId: "register-name-input",
+              fieldName: "name",
+              testValue: "John Doe",
+            },
+            {
+              testId: "register-email-input",
+              fieldName: "email",
+              testValue: `test-short-${Date.now()}@example.com`,
+            },
+            {
+              testId: "register-password-input",
+              fieldName: "password",
+              testValue: "TestPassword123!",
+            },
+            {
+              testId: "register-confirm-password-input",
+              fieldName: "confirm password",
+              testValue: "TestPassword123!",
+            },
+          ],
+        },
+        "register-password-input",
+        "register-confirm-password-input",
+        "short"
+      );
     });
 
     test("should reject duplicate email", async ({ page }) => {

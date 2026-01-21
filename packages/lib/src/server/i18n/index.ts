@@ -41,7 +41,7 @@ function getLocalesPath(): string {
   const cwd = process.cwd();
 
   // Check if we're already in the apps/web directory
-  if (cwd.endsWith('/apps/web') || cwd.endsWith('\\apps\\web')) {
+  if (cwd.endsWith("/apps/web") || cwd.endsWith("\\apps\\web")) {
     // Running from apps/web directory
     return path.join(cwd, "src/i18n/locales/{{lng}}/{{ns}}.json");
   }

@@ -10,16 +10,13 @@ import {
   generateCodeVerifier,
 } from "arctic";
 import { t } from "../i18n";
-import { TOKEN_COOKIE_NAME, TOKEN_MAX_AGE, hashToken } from "./auth";
+import { TOKEN_MAX_AGE, hashToken } from "./auth";
 
 /**
  * Type for the database client used by OIDC auth functions.
  * This allows dependency injection for testing.
  */
-export type AuthOidcDb = Pick<
-  PrismaClient,
-  "oAuthState" | "user" | "session"
->;
+export type AuthOidcDb = Pick<PrismaClient, "oAuthState" | "user" | "session">;
 
 // Constants
 export const OAUTH_STATE_EXPIRY = 10 * 60 * 1000; // 10 minutes
@@ -310,7 +307,7 @@ export async function handleGoogleCallbackData(
     throw new Error("Failed to fetch user info from Google");
   }
 
-  const userInfo: GoogleUserInfo = await userInfoResponse.json();
+  const userInfo = (await userInfoResponse.json()) as GoogleUserInfo;
 
   // Find or create user
   let user = await db.user.findFirst({
@@ -472,7 +469,7 @@ export async function handleMicrosoftCallbackData(
     throw new Error("Failed to fetch user info from Microsoft");
   }
 
-  const userInfo: MicrosoftUserInfo = await userInfoResponse.json();
+  const userInfo = (await userInfoResponse.json()) as MicrosoftUserInfo;
   const email = userInfo.email || userInfo.preferred_username;
 
   if (!email) {
@@ -643,7 +640,7 @@ export async function handleGitHubCallbackData(
     throw new Error("Failed to fetch user info from GitHub");
   }
 
-  const userInfo: GitHubUserInfo = await userInfoResponse.json();
+  const userInfo = (await userInfoResponse.json()) as GitHubUserInfo;
 
   // Get user's primary email
   let email = userInfo.email;
@@ -656,7 +653,7 @@ export async function handleGitHubCallbackData(
     });
 
     if (emailsResponse.ok) {
-      const emails: GitHubEmail[] = await emailsResponse.json();
+      const emails = (await emailsResponse.json()) as GitHubEmail[];
       const primaryEmail = emails.find((e) => e.primary && e.verified);
       email = primaryEmail?.email;
     }

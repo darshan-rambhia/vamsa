@@ -20,7 +20,7 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 import type {
   PersonCreateInput,
   PersonUpdateInput,
-  PersonListOptions,
+  PersonListInput,
 } from "@vamsa/schemas";
 import type { PersonDb } from "@vamsa/lib/server/business";
 
@@ -33,7 +33,7 @@ import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
   mockStartTimer,
-} from "../../../tests/setup/shared-mocks";
+} from "../../testing/shared-mocks";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -42,7 +42,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
 
 // Import the functions to test
 import {
@@ -121,7 +120,7 @@ describe("Person Server Functions", () => {
 
   describe("listPersonsData", () => {
     it("should list persons with pagination", async () => {
-      const options: PersonListOptions = {
+      const options: PersonListInput = {
         page: 1,
         limit: 10,
         sortBy: "lastName",
@@ -138,7 +137,7 @@ describe("Person Server Functions", () => {
           dateOfPassing: null,
           birthPlace: "New York",
           nativePlace: "USA",
-          gender: "M",
+          gender: "MALE",
           photoUrl: null,
           bio: null,
           email: "john@example.com",
@@ -152,7 +151,9 @@ describe("Person Server Functions", () => {
       ];
 
       (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(1);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockPersons);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockPersons
+      );
 
       const result = await listPersonsData(options, mockDb);
 
@@ -165,7 +166,7 @@ describe("Person Server Functions", () => {
     });
 
     it("should apply search filter", async () => {
-      const options: PersonListOptions = {
+      const options: PersonListInput = {
         page: 1,
         limit: 10,
         sortBy: "lastName",
@@ -174,16 +175,19 @@ describe("Person Server Functions", () => {
       };
 
       (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(5);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       await listPersonsData(options, mockDb);
 
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>).mock.calls[0];
+      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(findManyCall?.[0]?.where?.OR).toBeDefined();
     });
 
     it("should apply isLiving filter", async () => {
-      const options: PersonListOptions = {
+      const options: PersonListInput = {
         page: 1,
         limit: 10,
         sortBy: "lastName",
@@ -192,16 +196,19 @@ describe("Person Server Functions", () => {
       };
 
       (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(3);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       await listPersonsData(options, mockDb);
 
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>).mock.calls[0];
+      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(findManyCall?.[0]?.where?.isLiving).toBe(true);
     });
 
     it("should sort by lastName", async () => {
-      const options: PersonListOptions = {
+      const options: PersonListInput = {
         page: 1,
         limit: 10,
         sortBy: "lastName",
@@ -209,11 +216,14 @@ describe("Person Server Functions", () => {
       };
 
       (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(0);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       await listPersonsData(options, mockDb);
 
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>).mock.calls[0];
+      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(findManyCall?.[0]?.orderBy).toEqual([
         { lastName: "asc" },
         { firstName: "asc" },
@@ -221,7 +231,7 @@ describe("Person Server Functions", () => {
     });
 
     it("should sort by firstName", async () => {
-      const options: PersonListOptions = {
+      const options: PersonListInput = {
         page: 1,
         limit: 10,
         sortBy: "firstName",
@@ -229,11 +239,14 @@ describe("Person Server Functions", () => {
       };
 
       (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(0);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       await listPersonsData(options, mockDb);
 
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>).mock.calls[0];
+      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(findManyCall?.[0]?.orderBy).toEqual([
         { firstName: "desc" },
         { lastName: "desc" },
@@ -241,7 +254,7 @@ describe("Person Server Functions", () => {
     });
 
     it("should sort by dateOfBirth", async () => {
-      const options: PersonListOptions = {
+      const options: PersonListInput = {
         page: 1,
         limit: 10,
         sortBy: "dateOfBirth",
@@ -249,16 +262,19 @@ describe("Person Server Functions", () => {
       };
 
       (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(0);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       await listPersonsData(options, mockDb);
 
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>).mock.calls[0];
+      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(findManyCall?.[0]?.orderBy).toEqual([{ dateOfBirth: "asc" }]);
     });
 
     it("should sort by createdAt", async () => {
-      const options: PersonListOptions = {
+      const options: PersonListInput = {
         page: 1,
         limit: 10,
         sortBy: "createdAt",
@@ -266,34 +282,42 @@ describe("Person Server Functions", () => {
       };
 
       (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(0);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       await listPersonsData(options, mockDb);
 
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>).mock.calls[0];
+      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(findManyCall?.[0]?.orderBy).toEqual([{ createdAt: "desc" }]);
     });
 
     it("should apply pagination skip/take", async () => {
-      const options: PersonListOptions = {
+      const options: PersonListInput = {
         page: 3,
         limit: 25,
         sortBy: "lastName",
         sortOrder: "asc",
       };
 
-      (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(100);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(
+        100
+      );
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       await listPersonsData(options, mockDb);
 
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>).mock.calls[0];
+      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(findManyCall?.[0]?.skip).toBe(50); // (3 - 1) * 25
       expect(findManyCall?.[0]?.take).toBe(25);
     });
 
     it("should format dates correctly", async () => {
-      const options: PersonListOptions = {
+      const options: PersonListInput = {
         page: 1,
         limit: 10,
         sortBy: "lastName",
@@ -310,7 +334,7 @@ describe("Person Server Functions", () => {
           dateOfPassing: new Date("2020-03-10"),
           birthPlace: "New York",
           nativePlace: "USA",
-          gender: "M",
+          gender: "MALE",
           photoUrl: null,
           bio: null,
           email: null,
@@ -324,7 +348,9 @@ describe("Person Server Functions", () => {
       ];
 
       (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(1);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockPersons);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockPersons
+      );
 
       const result = await listPersonsData(options, mockDb);
 
@@ -335,7 +361,7 @@ describe("Person Server Functions", () => {
     });
 
     it("should handle null dates", async () => {
-      const options: PersonListOptions = {
+      const options: PersonListInput = {
         page: 1,
         limit: 10,
         sortBy: "lastName",
@@ -366,7 +392,9 @@ describe("Person Server Functions", () => {
       ];
 
       (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(1);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockPersons);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockPersons
+      );
 
       const result = await listPersonsData(options, mockDb);
 
@@ -375,7 +403,7 @@ describe("Person Server Functions", () => {
     });
 
     it("should return empty list when no persons found", async () => {
-      const options: PersonListOptions = {
+      const options: PersonListInput = {
         page: 1,
         limit: 10,
         sortBy: "lastName",
@@ -383,7 +411,9 @@ describe("Person Server Functions", () => {
       };
 
       (mockDb.person.count as ReturnType<typeof mock>).mockResolvedValueOnce(0);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       const result = await listPersonsData(options, mockDb);
 
@@ -404,7 +434,7 @@ describe("Person Server Functions", () => {
         dateOfPassing: null,
         birthPlace: "New York",
         nativePlace: "USA",
-        gender: "M",
+        gender: "MALE",
         photoUrl: "http://example.com/photo.jpg",
         bio: "A person",
         email: "john@example.com",
@@ -433,7 +463,9 @@ describe("Person Server Functions", () => {
         ],
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
 
       const result = await getPersonData(personId, mockDb);
 
@@ -470,7 +502,9 @@ describe("Person Server Functions", () => {
         relationshipsFrom: [],
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
 
       const result = await getPersonData("person-1", mockDb);
 
@@ -517,7 +551,9 @@ describe("Person Server Functions", () => {
         ],
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
 
       const result = await getPersonData("person-1", mockDb);
 
@@ -564,7 +600,9 @@ describe("Person Server Functions", () => {
         ],
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
 
       const result = await getPersonData("person-1", mockDb);
 
@@ -598,7 +636,9 @@ describe("Person Server Functions", () => {
         relationshipsFrom: [],
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
 
       const result = await getPersonData("person-1", mockDb);
 
@@ -609,7 +649,9 @@ describe("Person Server Functions", () => {
     });
 
     it("should throw error when person not found", async () => {
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await getPersonData("person-nonexistent", mockDb);
@@ -626,11 +668,11 @@ describe("Person Server Functions", () => {
         firstName: "John",
         lastName: "Doe",
         maidenName: "Smith",
-        dateOfBirth: "1990-01-15",
+        dateOfBirth: new Date("1990-01-15"),
         dateOfPassing: null,
         birthPlace: "New York",
         nativePlace: "USA",
-        gender: "M",
+        gender: "MALE",
         bio: "A person",
         email: "john@example.com",
         phone: "555-1234",
@@ -646,8 +688,12 @@ describe("Person Server Functions", () => {
         maidenName: input.maidenName,
       };
 
-      (mockDb.person.create as ReturnType<typeof mock>).mockResolvedValueOnce(mockCreated);
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.person.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockCreated
+      );
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       const result = await createPersonData(input, "user-1", mockDb);
 
@@ -660,16 +706,20 @@ describe("Person Server Functions", () => {
       const input: PersonCreateInput = {
         firstName: "Jane",
         lastName: "Doe",
+        isLiving: true,
       };
 
       (mockDb.person.create as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await createPersonData(input, "user-1", mockDb);
 
-      const auditCall = (mockDb.auditLog.create as ReturnType<typeof mock>).mock.calls[0];
+      const auditCall = (mockDb.auditLog.create as ReturnType<typeof mock>).mock
+        .calls[0];
       expect(auditCall?.[0]?.data?.action).toBe("CREATE");
       expect(auditCall?.[0]?.data?.entityType).toBe("Person");
     });
@@ -678,16 +728,20 @@ describe("Person Server Functions", () => {
       const input: PersonCreateInput = {
         firstName: "John",
         lastName: "Doe",
+        isLiving: true,
       };
 
       (mockDb.person.create as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await createPersonData(input, "user-1", mockDb);
 
-      const createCall = (mockDb.person.create as ReturnType<typeof mock>).mock.calls[0];
+      const createCall = (mockDb.person.create as ReturnType<typeof mock>).mock
+        .calls[0];
       expect(createCall?.[0]?.data?.firstName).toBe("John");
       expect(createCall?.[0]?.data?.maidenName).toBeNull();
       expect(createCall?.[0]?.data?.isLiving).toBe(true);
@@ -697,18 +751,22 @@ describe("Person Server Functions", () => {
       const input: PersonCreateInput = {
         firstName: "John",
         lastName: "Doe",
-        dateOfBirth: "1990-01-15",
-        dateOfPassing: "2020-03-10",
+        dateOfBirth: new Date("1990-01-15"),
+        dateOfPassing: new Date("2020-03-10"),
+        isLiving: false,
       };
 
       (mockDb.person.create as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await createPersonData(input, "user-1", mockDb);
 
-      const createCall = (mockDb.person.create as ReturnType<typeof mock>).mock.calls[0];
+      const createCall = (mockDb.person.create as ReturnType<typeof mock>).mock
+        .calls[0];
       expect(createCall?.[0]?.data?.dateOfBirth).toBeInstanceOf(Date);
       expect(createCall?.[0]?.data?.dateOfPassing).toBeInstanceOf(Date);
     });
@@ -717,16 +775,20 @@ describe("Person Server Functions", () => {
       const input: PersonCreateInput = {
         firstName: "John",
         lastName: "Doe",
+        isLiving: true,
       };
 
       (mockDb.person.create as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await createPersonData(input, "user-123", mockDb);
 
-      const createCall = (mockDb.person.create as ReturnType<typeof mock>).mock.calls[0];
+      const createCall = (mockDb.person.create as ReturnType<typeof mock>).mock
+        .calls[0];
       expect(createCall?.[0]?.data?.createdById).toBe("user-123");
     });
   });
@@ -745,13 +807,23 @@ describe("Person Server Functions", () => {
         user: null,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
       (mockDb.person.update as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
-      const result = await updatePersonData("person-1", input, "user-1", undefined, mockDb);
+      const result = await updatePersonData(
+        "person-1",
+        input,
+        "user-1",
+        undefined,
+        mockDb
+      );
 
       expect(result.id).toBe("person-1");
       expect(mockDb.person.update).toHaveBeenCalled();
@@ -759,7 +831,7 @@ describe("Person Server Functions", () => {
 
     it("should convert date strings to Date objects on update", async () => {
       const input: PersonUpdateInput = {
-        dateOfBirth: "1990-01-15",
+        dateOfBirth: new Date("1990-01-15"),
       };
 
       const mockExisting = {
@@ -769,15 +841,20 @@ describe("Person Server Functions", () => {
         user: null,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
       (mockDb.person.update as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await updatePersonData("person-1", input, "user-1", undefined, mockDb);
 
-      const updateCall = (mockDb.person.update as ReturnType<typeof mock>).mock.calls[0];
+      const updateCall = (mockDb.person.update as ReturnType<typeof mock>).mock
+        .calls[0];
       expect(updateCall?.[0]?.data?.dateOfBirth).toBeInstanceOf(Date);
     });
 
@@ -793,14 +870,26 @@ describe("Person Server Functions", () => {
         user: { id: "user-1", personId: "person-1", role: "USER" },
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting.user);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockExisting.user
+      );
       (mockDb.person.update as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
-      const result = await updatePersonData("person-1", input, "user-1", "user-1", mockDb);
+      const result = await updatePersonData(
+        "person-1",
+        input,
+        "user-1",
+        "user-1",
+        mockDb
+      );
 
       expect(result.id).toBe("person-1");
     });
@@ -817,17 +906,29 @@ describe("Person Server Functions", () => {
         user: { id: "user-1", personId: "person-1", role: "USER" },
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce({
-        id: "user-2",
-        role: "ADMIN",
-      });
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {
+          id: "user-2",
+          role: "ADMIN",
+        }
+      );
       (mockDb.person.update as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
-      const result = await updatePersonData("person-1", input, "user-2", "user-1", mockDb);
+      const result = await updatePersonData(
+        "person-1",
+        input,
+        "user-2",
+        "user-1",
+        mockDb
+      );
 
       expect(result.id).toBe("person-1");
     });
@@ -844,11 +945,15 @@ describe("Person Server Functions", () => {
         user: { id: "user-1", personId: "person-1", role: "USER" },
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce({
-        id: "user-2",
-        role: "USER",
-      });
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {
+          id: "user-2",
+          role: "USER",
+        }
+      );
 
       try {
         await updatePersonData("person-1", input, "user-2", "user-1", mockDb);
@@ -859,10 +964,18 @@ describe("Person Server Functions", () => {
     });
 
     it("should throw error when person not found", async () => {
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
-        await updatePersonData("person-nonexistent", {}, "user-1", undefined, mockDb);
+        await updatePersonData(
+          "person-nonexistent",
+          {},
+          "user-1",
+          undefined,
+          mockDb
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -881,15 +994,20 @@ describe("Person Server Functions", () => {
         user: null,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
       (mockDb.person.update as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await updatePersonData("person-1", input, "user-1", undefined, mockDb);
 
-      const auditCall = (mockDb.auditLog.create as ReturnType<typeof mock>).mock.calls[0];
+      const auditCall = (mockDb.auditLog.create as ReturnType<typeof mock>).mock
+        .calls[0];
       expect(auditCall?.[0]?.data?.action).toBe("UPDATE");
     });
   });
@@ -903,9 +1021,15 @@ describe("Person Server Functions", () => {
         lastName: "Doe",
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
-      (mockDb.person.delete as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
+      (mockDb.person.delete as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockPerson
+      );
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       const result = await deletePersonData(personId, "user-1", mockDb);
 
@@ -922,18 +1046,27 @@ describe("Person Server Functions", () => {
         lastName: "Doe",
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
-      (mockDb.person.delete as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
+      (mockDb.person.delete as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockPerson
+      );
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await deletePersonData("person-1", "user-1", mockDb);
 
-      const auditCall = (mockDb.auditLog.create as ReturnType<typeof mock>).mock.calls[0];
+      const auditCall = (mockDb.auditLog.create as ReturnType<typeof mock>).mock
+        .calls[0];
       expect(auditCall?.[0]?.data?.action).toBe("DELETE");
     });
 
     it("should throw error when person not found", async () => {
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await deletePersonData("person-nonexistent", "user-1", mockDb);
@@ -957,7 +1090,9 @@ describe("Person Server Functions", () => {
         },
       ];
 
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockPersons);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockPersons
+      );
 
       const result = await searchPersonsData(query, undefined, mockDb);
 
@@ -977,7 +1112,9 @@ describe("Person Server Functions", () => {
         },
       ];
 
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockPersons);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockPersons
+      );
 
       const result = await searchPersonsData(query, undefined, mockDb);
 
@@ -988,13 +1125,16 @@ describe("Person Server Functions", () => {
     it("should exclude specified person from results", async () => {
       const query = "John";
       const excludeId = "person-1";
-      const mockPersons = [];
+      const mockPersons: unknown[] = [];
 
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockPersons);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockPersons
+      );
 
       await searchPersonsData(query, excludeId, mockDb);
 
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>).mock.calls[0];
+      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
       const whereClause = findManyCall?.[0]?.where;
       expect(whereClause?.AND?.[1]?.id?.not).toBe(excludeId);
     });
@@ -1002,22 +1142,28 @@ describe("Person Server Functions", () => {
     it("should limit results to 10", async () => {
       const query = "John";
 
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       await searchPersonsData(query, undefined, mockDb);
 
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>).mock.calls[0];
+      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(findManyCall?.[0]?.take).toBe(10);
     });
 
     it("should sort by lastName then firstName", async () => {
       const query = "John";
 
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
       await searchPersonsData(query, undefined, mockDb);
 
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>).mock.calls[0];
+      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(findManyCall?.[0]?.orderBy).toEqual([
         { lastName: "asc" },
         { firstName: "asc" },
@@ -1025,9 +1171,15 @@ describe("Person Server Functions", () => {
     });
 
     it("should return empty array when no matches", async () => {
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
-      const result = await searchPersonsData("NonexistentName", undefined, mockDb);
+      const result = await searchPersonsData(
+        "NonexistentName",
+        undefined,
+        mockDb
+      );
 
       expect(result).toHaveLength(0);
     });
@@ -1043,7 +1195,9 @@ describe("Person Server Functions", () => {
         },
       ];
 
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockPersons);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        mockPersons
+      );
 
       const result = await searchPersonsData("John", undefined, mockDb);
 
@@ -1056,11 +1210,14 @@ describe("Person Server Functions", () => {
       const userId = "user-1";
       const data = { firstName: "John", lastName: "Doe" };
 
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await logAuditAction(userId, "CREATE", "person-1", null, data, mockDb);
 
-      const createCall = (mockDb.auditLog.create as ReturnType<typeof mock>).mock.calls[0];
+      const createCall = (mockDb.auditLog.create as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(createCall?.[0]?.data?.action).toBe("CREATE");
       expect(createCall?.[0]?.data?.entityType).toBe("Person");
     });
@@ -1070,11 +1227,21 @@ describe("Person Server Functions", () => {
       const previousData = { firstName: "John" };
       const newData = { firstName: "Jane" };
 
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
-      await logAuditAction(userId, "UPDATE", "person-1", previousData, newData, mockDb);
+      await logAuditAction(
+        userId,
+        "UPDATE",
+        "person-1",
+        previousData,
+        newData,
+        mockDb
+      );
 
-      const createCall = (mockDb.auditLog.create as ReturnType<typeof mock>).mock.calls[0];
+      const createCall = (mockDb.auditLog.create as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(createCall?.[0]?.data?.action).toBe("UPDATE");
     });
 
@@ -1082,11 +1249,21 @@ describe("Person Server Functions", () => {
       const userId = "user-1";
       const previousData = { firstName: "John", lastName: "Doe" };
 
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
-      await logAuditAction(userId, "DELETE", "person-1", previousData, null, mockDb);
+      await logAuditAction(
+        userId,
+        "DELETE",
+        "person-1",
+        previousData,
+        null,
+        mockDb
+      );
 
-      const createCall = (mockDb.auditLog.create as ReturnType<typeof mock>).mock.calls[0];
+      const createCall = (mockDb.auditLog.create as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(createCall?.[0]?.data?.action).toBe("DELETE");
     });
 
@@ -1149,9 +1326,9 @@ describe("Person Server Functions", () => {
 
     it("should handle findUnique failures for getPersonData", async () => {
       const originalError = new Error("Original error");
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockRejectedValueOnce(
-        originalError
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(originalError);
 
       try {
         await getPersonData("person-1", mockDb);
@@ -1165,6 +1342,7 @@ describe("Person Server Functions", () => {
       const input: PersonCreateInput = {
         firstName: "John",
         lastName: "Doe",
+        isLiving: true,
       };
 
       (mockDb.person.create as ReturnType<typeof mock>).mockRejectedValueOnce(
@@ -1185,17 +1363,21 @@ describe("Person Server Functions", () => {
       const input: PersonCreateInput = {
         firstName: "John",
         lastName: "Doe",
-        dateOfBirth: "1990-01-15",
+        dateOfBirth: new Date("1990-01-15"),
+        isLiving: true,
       };
 
       (mockDb.person.create as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await createPersonData(input, "user-1", mockDb);
 
-      const createCall = (mockDb.person.create as ReturnType<typeof mock>).mock.calls[0];
+      const createCall = (mockDb.person.create as ReturnType<typeof mock>).mock
+        .calls[0];
       const dateOfBirth = createCall?.[0]?.data?.dateOfBirth;
       expect(dateOfBirth).toBeInstanceOf(Date);
       expect(dateOfBirth?.getFullYear?.()).toBe(1990);
@@ -1206,16 +1388,20 @@ describe("Person Server Functions", () => {
         firstName: "John",
         lastName: "Doe",
         dateOfBirth: null,
+        isLiving: true,
       };
 
       (mockDb.person.create as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await createPersonData(input, "user-1", mockDb);
 
-      const createCall = (mockDb.person.create as ReturnType<typeof mock>).mock.calls[0];
+      const createCall = (mockDb.person.create as ReturnType<typeof mock>).mock
+        .calls[0];
       expect(createCall?.[0]?.data?.dateOfBirth).toBeNull();
     });
   });
@@ -1233,15 +1419,20 @@ describe("Person Server Functions", () => {
         user: null,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
       (mockDb.person.update as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await updatePersonData("person-1", input, "user-1", undefined, mockDb);
 
-      const updateCall = (mockDb.person.update as ReturnType<typeof mock>).mock.calls[0];
+      const updateCall = (mockDb.person.update as ReturnType<typeof mock>).mock
+        .calls[0];
       expect(updateCall?.[0]?.data?.currentAddress).toBeDefined();
     });
 
@@ -1257,15 +1448,20 @@ describe("Person Server Functions", () => {
         user: null,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
       (mockDb.person.update as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await updatePersonData("person-1", input, "user-1", undefined, mockDb);
 
-      const updateCall = (mockDb.person.update as ReturnType<typeof mock>).mock.calls[0];
+      const updateCall = (mockDb.person.update as ReturnType<typeof mock>).mock
+        .calls[0];
       expect(updateCall?.[0]?.data?.socialLinks).toBeDefined();
     });
 
@@ -1281,15 +1477,20 @@ describe("Person Server Functions", () => {
         user: null,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
       (mockDb.person.update as ReturnType<typeof mock>).mockResolvedValueOnce({
         id: "person-1",
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await updatePersonData("person-1", input, "user-1", undefined, mockDb);
 
-      const updateCall = (mockDb.person.update as ReturnType<typeof mock>).mock.calls[0];
+      const updateCall = (mockDb.person.update as ReturnType<typeof mock>).mock
+        .calls[0];
       expect(updateCall?.[0]?.data?.currentAddress).toBeUndefined();
     });
   });

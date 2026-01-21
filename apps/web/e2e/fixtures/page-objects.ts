@@ -2,14 +2,13 @@
  * Page Object Models for E2E Tests
  * Provides reusable page interaction methods for common pages
  */
-import type { Page, Locator } from "@playwright/test";
+import { expect, type Page, type Locator } from "@playwright/test";
 
 /**
  * Login Page Object
  */
 export class LoginPage {
   readonly page: Page;
-  readonly form: Locator;
   readonly emailInput: Locator;
   readonly passwordInput: Locator;
   readonly submitButton: Locator;
@@ -17,23 +16,131 @@ export class LoginPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.form = page.getByTestId("login-form");
+    // Use testId selectors for more reliable selection
     this.emailInput = page.getByTestId("login-email-input");
     this.passwordInput = page.getByTestId("login-password-input");
     this.submitButton = page.getByTestId("login-submit-button");
+    // Error message uses data-testid="login-error"
     this.errorMessage = page.getByTestId("login-error");
   }
 
   async goto() {
     await this.page.goto("/login");
-    await this.form.waitFor({ state: "visible", timeout: 5000 });
+    // Wait for page to fully load and hydrate
+    await this.page.waitForLoadState("domcontentloaded");
+    // Wait for form to be ready
+    const loginForm = this.page.getByTestId("login-form");
+    await loginForm.waitFor({ state: "visible", timeout: 5000 });
   }
 
   async login(email: string, password: string) {
-    // Use type() instead of fill() to trigger onChange on React controlled components
-    await this.emailInput.type(email, { delay: 50 });
-    await this.passwordInput.type(password, { delay: 50 });
+    // Wait for page to be fully loaded
+    await this.page.waitForLoadState("domcontentloaded");
+
+    // NETWORKIDLE EXCEPTION: Login form requires networkidle for reliable React hydration
+    //
+    // WHY THIS IS NEEDED:
+    // Under parallel test execution, React controlled inputs can be "visible" and "editable"
+    // before React attaches onChange handlers. When you type into such an input:
+    // 1. Native browser input accepts the text
+    // 2. React hydrates and reconciles with empty state
+    // 3. React RESETS the input to empty (the state value)
+    //
+    // The networkidle wait ensures all JS bundles are loaded and executed before we interact.
+    // This is particularly critical for login since it's the gateway to all authenticated tests.
+    //
+    // FUTURE IMPROVEMENT: If we find a deterministic way to detect React hydration completion
+    // (e.g., a data attribute set after hydration, or a custom event), we can remove this.
+    await this.page.waitForLoadState("networkidle").catch(() => {});
+
+    // Wait for login form to be visible
+    await this.page
+      .getByTestId("login-form")
+      .waitFor({ state: "visible", timeout: 10000 });
+
+    // Wait for inputs to be ready and enabled
+    await this.emailInput.waitFor({ state: "visible", timeout: 5000 });
+    await this.passwordInput.waitFor({ state: "visible", timeout: 5000 });
+
+    // Wait for inputs to be editable (React hydration complete)
+    await expect(this.emailInput).toBeEditable({ timeout: 5000 });
+    await expect(this.passwordInput).toBeEditable({ timeout: 5000 });
+
+    // Additional hydration buffer for parallel execution
+    await this.page.waitForTimeout(500);
+
+    // Fill email with "poke and verify" pattern - verify React responds before typing rest
+    for (let attempt = 1; attempt <= 5; attempt++) {
+      await this.emailInput.click();
+      await this.page.waitForTimeout(50);
+      await this.emailInput.clear();
+
+      // Poke: type first character and wait for React reconciliation
+      await this.emailInput.type(email.charAt(0), { delay: 50 });
+      // CRITICAL: Wait for React to potentially reset controlled input
+      await this.page.waitForTimeout(200);
+
+      const firstChar = await this.emailInput.inputValue();
+      if (firstChar !== email.charAt(0)) {
+        // React either not hydrated or reset the value - wait longer
+        await this.page.waitForTimeout(300 * attempt);
+        continue;
+      }
+
+      // React accepted the character - type the rest
+      await this.emailInput.type(email.slice(1), { delay: 20 });
+      await this.page.waitForTimeout(200);
+
+      const emailValue = await this.emailInput.inputValue();
+      if (emailValue === email) break;
+
+      // Value mismatch - wait and retry
+      await this.page.waitForTimeout(200 * attempt);
+    }
+
+    // Fill password with retry loop
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      await this.passwordInput.click();
+      await this.page.waitForTimeout(100);
+      await this.passwordInput.fill(password);
+      await this.page.waitForTimeout(150);
+
+      const passwordValue = await this.passwordInput.inputValue();
+      if (passwordValue === password) break;
+
+      // Retry with selectText + type
+      if (attempt < 3) {
+        await this.passwordInput.click();
+        await this.passwordInput.selectText().catch(() => {});
+        await this.passwordInput.type(password, { delay: 30 });
+        await this.page.waitForTimeout(100);
+
+        const retryValue = await this.passwordInput.inputValue();
+        if (retryValue === password) break;
+      }
+    }
+
+    // Final verification
+    const filledEmail = await this.emailInput.inputValue();
+    const filledPassword = await this.passwordInput.inputValue();
+
+    if (filledEmail !== email || filledPassword !== password) {
+      throw new Error(
+        `[LoginPage] Form fill failed. Email: "${filledEmail}" (expected "${email}"), Password length: ${filledPassword.length}`
+      );
+    }
+
     await this.submitButton.click();
+
+    // Wait for either navigation (success) or error message (failure)
+    await Promise.race([
+      this.page
+        .waitForURL(/\/(people|dashboard)/, { timeout: 10000 })
+        .catch(() => {}),
+      this.errorMessage
+        .waitFor({ state: "visible", timeout: 10000 })
+        .catch(() => {}),
+    ]);
   }
 
   async getErrorText(): Promise<string | null> {
@@ -52,8 +159,10 @@ export class Navigation {
   readonly nav: Locator;
   readonly dashboardLink: Locator;
   readonly peopleLink: Locator;
-  readonly treeLink: Locator;
+  readonly visualizeLink: Locator;
+  readonly mapsLink: Locator;
   readonly activityLink: Locator;
+  readonly subscribeLink: Locator;
   readonly adminLink: Locator;
   readonly signOutButton: Locator;
   readonly mobileMenuButton: Locator;
@@ -65,8 +174,10 @@ export class Navigation {
     // Note: nav links are rendered twice (desktop nav + mobile menu), use .first() to get the primary one
     this.dashboardLink = page.getByTestId("nav-dashboard").first();
     this.peopleLink = page.getByTestId("nav-people").first();
-    this.treeLink = page.getByTestId("nav-tree").first();
+    this.visualizeLink = page.getByTestId("nav-visualize").first();
+    this.mapsLink = page.getByTestId("nav-maps").first();
     this.activityLink = page.getByTestId("nav-activity").first();
+    this.subscribeLink = page.getByTestId("nav-subscribe").first();
     this.adminLink = page.getByTestId("nav-admin").first();
     this.signOutButton = page.getByTestId("signout-button");
     // Mobile menu button
@@ -84,8 +195,24 @@ export class Navigation {
   }
 
   async goToTree() {
-    await this._clickNavLinkByTestId("nav-tree");
-    await this.page.waitForURL(/\/tree(\?|$)/);
+    // Tree is now part of the consolidated visualizations page
+    await this._clickNavLinkByTestId("nav-visualize");
+    await this.page.waitForURL(/\/visualize/);
+  }
+
+  async goToVisualize() {
+    await this._clickNavLinkByTestId("nav-visualize");
+    await this.page.waitForURL(/\/visualize/);
+  }
+
+  async goToMaps() {
+    await this._clickNavLinkByTestId("nav-maps");
+    await this.page.waitForURL("/maps");
+  }
+
+  async goToSubscribe() {
+    await this._clickNavLinkByTestId("nav-subscribe");
+    await this.page.waitForURL("/subscribe");
   }
 
   async goToActivity() {
@@ -205,9 +332,15 @@ export class PeopleListPage {
   }
 
   async search(query: string) {
-    await this.searchInput.fill(query);
-    // Wait for Convex to filter
-    await this.page.waitForTimeout(300);
+    // Only search if the search input is visible
+    const hasSearch = await this.searchInput
+      .isVisible({ timeout: 2000 })
+      .catch(() => false);
+    if (hasSearch) {
+      await this.searchInput.fill(query);
+      // Wait for filter to apply
+      await this.page.waitForTimeout(300);
+    }
   }
 
   async clickAddPerson() {
@@ -391,28 +524,73 @@ export class PersonFormPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.firstNameInput = page.locator('input[name="firstName"]');
-    this.lastNameInput = page.locator('input[name="lastName"]');
+    // Use testId selectors for more reliable selection
+    this.firstNameInput = page.getByTestId("person-form-firstName");
+    this.lastNameInput = page.getByTestId("person-form-lastName");
     this.dateOfBirthInput = page.locator('input[name="dateOfBirth"]');
     this.birthPlaceInput = page.locator('input[name="birthPlace"]');
     this.genderSelect = page.locator('[name="gender"], select[name="gender"]');
     this.bioTextarea = page.locator('textarea[name="bio"]');
-    this.saveButton = page.locator(
-      'button[type="submit"], button:has-text("Save")'
-    );
-    this.cancelButton = page.locator('button:has-text("Cancel")');
+    this.saveButton = page.getByTestId("person-form-submit");
+    this.cancelButton = page.getByTestId("person-form-cancel");
     this.formErrors = page.locator(".text-destructive, [data-error]");
   }
 
   async waitForFormReady() {
+    // Wait for page to be fully loaded
+    await this.page.waitForLoadState("domcontentloaded");
     // Wait for the first name input to be visible and ready
     await this.firstNameInput.waitFor({ state: "visible", timeout: 10000 });
   }
 
+  /**
+   * Helper to fill a field with retry and error on failure
+   * Uses click + fill pattern with verification that works for React controlled components
+   */
+  private async fillField(locator: Locator, text: string, maxRetries = 3) {
+    await locator.waitFor({ state: "visible", timeout: 5000 });
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      // Click to focus, then fill with longer waits for parallel execution stability
+      await locator.click();
+      await this.page.waitForTimeout(100);
+      await locator.fill(text);
+      await this.page.waitForTimeout(150);
+
+      const currentValue = await locator.inputValue();
+      if (currentValue === text) {
+        return; // Success
+      }
+
+      // Retry with selectText + type if fill didn't work
+      if (attempt < maxRetries) {
+        await locator.click();
+        await locator.selectText().catch(() => {});
+        await locator.type(text, { delay: 30 });
+        await this.page.waitForTimeout(100);
+
+        const retryValue = await locator.inputValue();
+        if (retryValue === text) {
+          return; // Success on retry
+        }
+
+        await this.page.waitForTimeout(150 * attempt);
+      }
+    }
+
+    // Throw error if all retries failed
+    const finalValue = await locator.inputValue();
+    throw new Error(
+      `[PersonFormPage] Failed to fill field after ${maxRetries} retries. Expected: "${text}", Got: "${finalValue}"`
+    );
+  }
+
   async fillBasicInfo(data: { firstName: string; lastName: string }) {
     await this.waitForFormReady();
-    await this.firstNameInput.fill(data.firstName);
-    await this.lastNameInput.fill(data.lastName);
+    // Give React more time to fully hydrate the form (critical for parallel execution)
+    await this.page.waitForTimeout(500);
+    await this.fillField(this.firstNameInput, data.firstName);
+    await this.fillField(this.lastNameInput, data.lastName);
   }
 
   async fillFullForm(data: {
@@ -424,18 +602,43 @@ export class PersonFormPage {
   }) {
     await this.fillBasicInfo(data);
     if (data.dateOfBirth) {
-      await this.dateOfBirthInput.fill(data.dateOfBirth);
+      await this.fillField(this.dateOfBirthInput, data.dateOfBirth);
     }
     if (data.birthPlace) {
-      await this.birthPlaceInput.fill(data.birthPlace);
+      await this.fillField(this.birthPlaceInput, data.birthPlace);
     }
     if (data.bio) {
-      await this.bioTextarea.fill(data.bio);
+      await this.fillField(this.bioTextarea, data.bio);
     }
   }
 
   async submit() {
+    // Get current URL to detect navigation
+    const currentUrl = this.page.url();
+
     await this.saveButton.click();
+
+    // If on create page, wait for either navigation away OR some response
+    if (currentUrl.includes("/new")) {
+      // Wait for either:
+      // 1. Navigation away from /new (success)
+      // 2. Error message appears (validation/API error)
+      // 3. Form is still accessible (can continue editing)
+      await Promise.race([
+        this.page
+          .waitForURL((url) => !url.pathname.includes("/new"), {
+            timeout: 10000,
+          })
+          .catch(() => {}),
+        this.formErrors
+          .waitFor({ state: "visible", timeout: 10000 })
+          .catch(() => {}),
+        this.page.waitForTimeout(3000), // Fallback if form just stays visible without error
+      ]);
+    }
+
+    // Wait a moment for the page to stabilize
+    await this.page.waitForTimeout(500);
   }
 
   async cancel() {

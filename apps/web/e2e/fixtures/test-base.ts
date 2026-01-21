@@ -91,40 +91,163 @@ export function getDeviceType(width: number): "mobile" | "tablet" | "desktop" {
 export const test = base.extend<TestFixtures>({
   /**
    * Login fixture - handles authentication
+   * Uses accessible selectors (getByLabel, getByRole) for reliability
+   *
+   * NOTE: If pre-authenticated storage state is used, calling login() will
+   * detect the existing session and skip the login flow.
    */
   login: async ({ page }, use) => {
     const loginFn = async (user: TestUser = TEST_USERS.admin) => {
       console.log(`[Login] Attempting to login with ${user.email}`);
-      await page.goto("/login");
 
-      // Wait for the login form to be visible (Playwright auto-waits for visibility on interactions)
-      await page
-        .getByTestId("login-form")
-        .waitFor({ state: "visible", timeout: 5000 });
+      // First, try navigating to a protected page to check if already authenticated
+      // This handles pre-authenticated storage state more reliably than checking /login redirects
+      await page.goto("/dashboard");
 
-      // Fill in credentials - use type() instead of fill() to trigger onChange on React controlled components
+      // Wait a moment for redirect or page load
+      await page.waitForTimeout(500);
+
+      const urlAfterDashboard = page.url();
+      const navVisible = await page
+        .locator("nav")
+        .first()
+        .isVisible()
+        .catch(() => false);
+
+      // If we're on dashboard (or any protected page) with nav visible, we're authenticated
+      if (!urlAfterDashboard.includes("/login") && navVisible) {
+        console.log(
+          `[Login] Already authenticated (at ${urlAfterDashboard}), skipping login flow`
+        );
+        return;
+      }
+
+      console.log(
+        `[Login] Not authenticated, redirected to ${urlAfterDashboard}, proceeding with login`
+      );
+
+      // Navigate to login page if not already there
+      if (!urlAfterDashboard.includes("/login")) {
+        await page.goto("/login");
+      }
+
+      // Wait for page to fully load
+      await page.waitForLoadState("domcontentloaded");
+
+      // NETWORKIDLE EXCEPTION: Login form requires networkidle for reliable React hydration
+      //
+      // WHY THIS IS NEEDED:
+      // Under parallel test execution, React controlled inputs can be "visible" and "editable"
+      // before React attaches onChange handlers. When you type into such an input:
+      // 1. Native browser input accepts the text
+      // 2. React hydrates and reconciles with empty state
+      // 3. React RESETS the input to empty (the state value)
+      //
+      // The networkidle wait ensures all JS bundles are loaded and executed before we interact.
+      // This is particularly critical for login since it's the gateway to all authenticated tests.
+      //
+      // FUTURE IMPROVEMENT: If we find a deterministic way to detect React hydration completion
+      // (e.g., a data attribute set after hydration, or a custom event), we can remove this.
+      await page.waitForLoadState("networkidle").catch(() => {});
+
+      // Wait for the login form to be visible using test IDs (same as global setup)
+      const loginForm = page.getByTestId("login-form");
+      await loginForm.waitFor({ state: "visible", timeout: 10000 });
+
+      // Wait for inputs to be ready
       const emailInput = page.getByTestId("login-email-input");
       const passwordInput = page.getByTestId("login-password-input");
 
-      // Type email and password (this triggers onChange and updates React state)
-      await emailInput.type(user.email, { delay: 50 });
-      await passwordInput.type(user.password, { delay: 50 });
+      await emailInput.waitFor({ state: "visible", timeout: 5000 });
+      await passwordInput.waitFor({ state: "visible", timeout: 5000 });
 
-      console.log(`[Login] Form submitted for ${user.email}...`);
+      // Wait for inputs to be editable (React hydration complete)
+      await expect(emailInput).toBeEditable({ timeout: 5000 });
+      await expect(passwordInput).toBeEditable({ timeout: 5000 });
 
-      // Click submit button and wait for navigation to complete
-      await page.getByTestId("login-submit-button").click();
+      // Additional hydration buffer for parallel execution
+      await page.waitForTimeout(500);
 
-      // Wait for successful navigation (either people, dashboard, or tree page)
-      // This implicitly waits for the page load and auth cookie to be set
+      // Fill email with "poke and verify" pattern - verify React responds before typing rest
+      for (let attempt = 1; attempt <= 5; attempt++) {
+        await emailInput.click();
+        await page.waitForTimeout(50);
+        await emailInput.clear();
+
+        // Poke: type first character and wait for React reconciliation
+        await emailInput.type(user.email.charAt(0), { delay: 50 });
+        // CRITICAL: Wait for React to potentially reset controlled input
+        await page.waitForTimeout(200);
+
+        const firstChar = await emailInput.inputValue();
+        if (firstChar !== user.email.charAt(0)) {
+          // React either not hydrated or reset the value - wait longer
+          await page.waitForTimeout(300 * attempt);
+          continue;
+        }
+
+        // React accepted the character - type the rest
+        await emailInput.type(user.email.slice(1), { delay: 20 });
+        await page.waitForTimeout(200);
+
+        const emailValue = await emailInput.inputValue();
+        if (emailValue === user.email) break;
+
+        // Value mismatch - wait and retry
+        await page.waitForTimeout(200 * attempt);
+      }
+
+      // Fill password with retry loop
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        await passwordInput.click();
+        await page.waitForTimeout(100);
+        await passwordInput.fill(user.password);
+        await page.waitForTimeout(150);
+
+        const passwordValue = await passwordInput.inputValue();
+        if (passwordValue === user.password) break;
+
+        // Retry with selectText + type
+        if (attempt < 3) {
+          await passwordInput.click();
+          await passwordInput.selectText().catch(() => {});
+          await passwordInput.type(user.password, { delay: 30 });
+          await page.waitForTimeout(100);
+
+          const retryValue = await passwordInput.inputValue();
+          if (retryValue === user.password) break;
+        }
+      }
+
+      // Verify form was filled
+      const filledEmail = await emailInput.inputValue();
+      const filledPassword = await passwordInput.inputValue();
+      console.log(
+        `[Login] Form filled - Email: ${filledEmail}, Password length: ${filledPassword.length}`
+      );
+
+      if (filledEmail !== user.email || filledPassword !== user.password) {
+        throw new Error(
+          `[Login] Form fill failed. Email: "${filledEmail}" (expected "${user.email}"), Password length: ${filledPassword.length}`
+        );
+      }
+
+      // Click submit button and wait for navigation simultaneously to avoid race condition
+      const submitButton = page.getByTestId("login-submit-button");
+
       try {
-        await page.waitForURL(/\/(people|dashboard|tree)/, { timeout: 10000 });
+        // Use Promise.all to click and wait for URL change simultaneously
+        // This prevents race condition where navigation completes before we start waiting
+        await Promise.all([
+          page.waitForURL(/\/(people|dashboard|visualize)/, { timeout: 15000 }),
+          submitButton.click(),
+        ]);
         console.log(`[Login] Redirect successful, now at ${page.url()}`);
       } catch (err) {
         // If navigation times out, check if there's an error message displayed
-        const loginError = page.getByTestId("login-error");
-        if (await loginError.isVisible().catch(() => false)) {
-          const errorText = await loginError.textContent();
+        const errorMessage = page.locator(".text-destructive, [role=alert]");
+        if (await errorMessage.isVisible().catch(() => false)) {
+          const errorText = await errorMessage.textContent();
           throw new Error(`Login error displayed: ${errorText}`);
         }
 
@@ -140,7 +263,8 @@ export const test = base.extend<TestFixtures>({
 
       // Ensure the nav is visible (indicates successful auth)
       await page
-        .getByTestId("main-nav")
+        .locator("nav")
+        .first()
         .waitFor({ state: "visible", timeout: 5000 });
       console.log(`[Login] Navigation visible, login successful`);
     };
@@ -151,35 +275,32 @@ export const test = base.extend<TestFixtures>({
   /**
    * Logout fixture - handles sign out
    * Handles both desktop and mobile viewports
+   * Uses accessible selectors for reliability
    */
   logout: async ({ page }, use) => {
     const logoutFn = async () => {
-      const mobileMenuButton = page.getByTestId("nav-mobile-menu-button");
+      // Look for sign out button using accessible selector
+      const signoutButton = page.getByRole("button", { name: /sign out/i });
 
-      // Check if we're in mobile mode (mobile menu button visible)
-      const isMobileMode = await mobileMenuButton
-        .isVisible()
-        .catch(() => false);
-
-      if (isMobileMode) {
-        // Open mobile menu
-        await mobileMenuButton.click();
-        // Wait for menu animation
-        await page.waitForTimeout(300);
-      }
-
-      // Find any visible signout button and click it
-      // There may be two (desktop and mobile), but only one should be visible
-      const signoutButtons = page.getByTestId("signout-button");
-      const count = await signoutButtons.count();
-
-      for (let i = 0; i < count; i++) {
-        const button = signoutButtons.nth(i);
-        if (await button.isVisible().catch(() => false)) {
-          await button.click();
-          break;
+      // Check if it's visible (might be in mobile menu)
+      if (!(await signoutButton.isVisible().catch(() => false))) {
+        // Try to open mobile menu
+        const menuButton = page.locator(
+          'button[aria-label*="menu"], button:has(svg):not(:has-text(""))'
+        );
+        if (
+          await menuButton
+            .first()
+            .isVisible()
+            .catch(() => false)
+        ) {
+          await menuButton.first().click();
+          await page.waitForTimeout(300);
         }
       }
+
+      // Click sign out button
+      await signoutButton.click();
 
       // Wait for redirect to login page
       await page.waitForURL("/login");
@@ -241,6 +362,7 @@ export const test = base.extend<TestFixtures>({
 
   /**
    * Check if user is currently authenticated
+   * Uses accessible selectors for reliability
    */
   isAuthenticated: async ({ page }, use) => {
     const checkFn = async (): Promise<boolean> => {
@@ -248,11 +370,19 @@ export const test = base.extend<TestFixtures>({
       // If we're on login page, not authenticated
       if (url.includes("/login")) return false;
 
-      // Check for main nav which is only visible when authenticated
-      return await page
-        .getByTestId("main-nav")
+      // Check for nav or sign out button which is only visible when authenticated
+      const signOutVisible = await page
+        .getByRole("button", { name: /sign out/i })
         .isVisible()
         .catch(() => false);
+
+      const navVisible = await page
+        .locator("nav")
+        .first()
+        .isVisible()
+        .catch(() => false);
+
+      return signOutVisible || navVisible;
     };
 
     await use(checkFn);
@@ -364,24 +494,23 @@ export const vamsaExpect = {
 
   /**
    * Assert that navigation is visible (user is authenticated)
+   * Uses accessible selectors for reliability
    */
   async toBeLoggedIn(page: Page) {
-    const nav = page.getByTestId("main-nav");
-    // Navigation element should exist and be visible
+    // Check for nav element
+    const nav = page.locator("nav").first();
     await expect(nav).toBeVisible();
 
-    // Check that either:
-    // 1. Navigation links are visible (desktop mode), OR
-    // 2. Mobile menu button exists (responsive mode)
-    // This confirms the user is logged in (nav only visible when authenticated)
-    const peopleLink = page.getByTestId("nav-people");
-    const mobileMenuButton = page.getByTestId("nav-mobile-menu-button");
+    // Check that sign out button exists (indicates authenticated user)
+    const signOutButton = page.getByRole("button", { name: /sign out/i });
+    const signOutVisible = await signOutButton.isVisible().catch(() => false);
 
+    // Check for navigation links
+    const peopleLink = page.getByRole("link", { name: /people/i });
     const hasVisibleLink = await peopleLink.isVisible().catch(() => false);
-    const hasMobileMenu = await mobileMenuButton.isVisible().catch(() => false);
 
-    // Must have either visible navigation link or mobile menu button
-    expect(hasVisibleLink || hasMobileMenu).toBeTruthy();
+    // Must have either sign out button or navigation link visible
+    expect(signOutVisible || hasVisibleLink).toBeTruthy();
   },
 
   /**

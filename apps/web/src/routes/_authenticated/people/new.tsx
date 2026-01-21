@@ -9,8 +9,13 @@ export const Route = createFileRoute("/_authenticated/people/new")({
 function NewPersonComponent() {
   const navigate = useNavigate();
 
-  const handleSuccess = () => {
-    navigate({ to: "/people" });
+  const handleSuccess = (createdId?: string) => {
+    if (createdId) {
+      // Navigate to the newly created person's detail page
+      navigate({ to: "/people/$personId", params: { personId: createdId } });
+    } else {
+      navigate({ to: "/people" });
+    }
   };
 
   const handleCancel = () => {

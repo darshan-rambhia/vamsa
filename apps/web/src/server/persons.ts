@@ -18,6 +18,9 @@ import {
   type PersonSearchResult,
 } from "@vamsa/lib/server/business";
 
+// Re-export types for use by route loaders
+export type { PersonDetail };
+
 // Person list input schema with pagination, search, and filters
 const personListInputSchema = z.object({
   page: z.number().int().min(1).default(1),

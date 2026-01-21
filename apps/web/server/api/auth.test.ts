@@ -14,27 +14,25 @@ import authRouter from "./auth";
 
 // Mock the server auth functions from @vamsa/lib/server/business
 mock.module("@vamsa/lib/server/business", () => ({
-  loginUser: mock(
-    async (email: string, password: string) => {
-      if (email === "valid@test.com" && password === "password123") {
-        return {
-          success: true,
-          user: {
-            id: "user-123",
-            email: "valid@test.com",
-            name: "Test User",
-            role: "MEMBER",
-            mustChangePassword: false,
-            oidcProvider: null,
-            profileClaimStatus: null,
-          },
-        };
-      }
-      return { error: "Invalid credentials" };
+  loginUser: mock(async (email: string, password: string) => {
+    if (email === "valid@test.com" && password === "password123") {
+      return {
+        success: true,
+        user: {
+          id: "user-123",
+          email: "valid@test.com",
+          name: "Test User",
+          role: "MEMBER",
+          mustChangePassword: false,
+          oidcProvider: null,
+          profileClaimStatus: null,
+        },
+      };
     }
-  ),
+    return { error: "Invalid credentials" };
+  }),
   registerUser: mock(
-    async (email: string, name: string, password: string) => {
+    async (email: string, _name: string, _password: string) => {
       if (email === "newuser@test.com") {
         return { success: true, userId: "user-456" };
       }

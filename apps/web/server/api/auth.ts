@@ -112,7 +112,7 @@ authRouter.openapi(loginRoute, async (c) => {
   try {
     const { email, password } = c.req.valid("json");
 
-    const result = await serverLogin({ data: { email, password } });
+    const result = await serverLogin(email, password);
 
     if (!result || typeof result !== "object" || "error" in result) {
       return c.json({ error: "Invalid email or password" }, { status: 401 });
@@ -209,21 +209,19 @@ const registerRoute = createRoute({
 
 authRouter.openapi(registerRoute, async (c) => {
   try {
-    const { email, name, password, confirmPassword } = c.req.valid("json");
+    const { email, name, password, confirmPassword: _confirmPassword } = c.req.valid("json");
 
-    const result = await serverRegister({
-      data: { email, name, password, confirmPassword },
-    });
+    const userId = await serverRegister(email, name, password);
 
-    if (!result || typeof result !== "object" || "error" in result) {
+    if (!userId) {
       return c.json({ error: "Registration failed" }, { status: 400 });
     }
 
-    // Server returns { success, userId } - create minimal user response
+    // Server returns the user ID - create minimal user response
     return c.json(
       {
         user: {
-          id: result.userId,
+          id: userId,
           email,
           name,
           role: "VIEWER",

@@ -296,7 +296,10 @@ export function AddRelationshipButton({
               type="button"
               variant="outline"
               data-testid="add-relationship-cancel"
-              onClick={() => setOpen(false)}
+              onClick={() => {
+                setOpen(false);
+                resetForm();
+              }}
               disabled={isLoading}
             >
               Cancel

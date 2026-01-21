@@ -63,7 +63,9 @@ describe("Maps Server Functions", () => {
       (mockDb.event.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockEvents
       );
-      (mockDb.placePersonLink.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (
+        mockDb.placePersonLink.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       const result = await calculateTimeRange(placeId, mockDb);
 
@@ -78,10 +80,12 @@ describe("Maps Server Functions", () => {
         { fromYear: 2012, toYear: 2018 },
       ];
 
-      (mockDb.event.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
-      (mockDb.placePersonLink.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockLinks
+      (mockDb.event.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
       );
+      (
+        mockDb.placePersonLink.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockLinks);
 
       const result = await calculateTimeRange(placeId, mockDb);
 
@@ -91,8 +95,12 @@ describe("Maps Server Functions", () => {
 
     it("should handle null dates", async () => {
       const placeId = "place-1";
-      (mockDb.event.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
-      (mockDb.placePersonLink.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.event.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
+      (
+        mockDb.placePersonLink.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       const result = await calculateTimeRange(placeId, mockDb);
 
@@ -107,9 +115,9 @@ describe("Maps Server Functions", () => {
       (mockDb.event.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockEvents
       );
-      (mockDb.placePersonLink.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockLinks
-      );
+      (
+        mockDb.placePersonLink.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockLinks);
 
       const result = await calculateTimeRange("place-1", mockDb);
 
@@ -136,13 +144,14 @@ describe("Maps Server Functions", () => {
       (mockDb.place.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockPlaces
       );
-      (mockDb.event.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
-      (mockDb.placePersonLink.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
-
-      const result = await getPlacesForMapData(
-        { includeEmpty: false },
-        mockDb
+      (mockDb.event.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
       );
+      (
+        mockDb.placePersonLink.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
+
+      const result = await getPlacesForMapData({ includeEmpty: false }, mockDb);
 
       expect(result.markers).toHaveLength(1);
       expect(result.markers[0].name).toBe("New York");
@@ -158,11 +167,7 @@ describe("Maps Server Functions", () => {
           longitude: -71.0589,
           placeType: "CITY",
           description: null,
-          events: [
-            { type: "BIRTH" },
-            { type: "MARRIAGE" },
-            { type: "BIRTH" },
-          ],
+          events: [{ type: "BIRTH" }, { type: "MARRIAGE" }, { type: "BIRTH" }],
           personLinks: [],
         },
       ];
@@ -170,13 +175,14 @@ describe("Maps Server Functions", () => {
       (mockDb.place.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockPlaces
       );
-      (mockDb.event.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
-      (mockDb.placePersonLink.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
-
-      const result = await getPlacesForMapData(
-        { includeEmpty: true },
-        mockDb
+      (mockDb.event.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
       );
+      (
+        mockDb.placePersonLink.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
+
+      const result = await getPlacesForMapData({ includeEmpty: true }, mockDb);
 
       expect(result.markers[0].eventTypes).toEqual(["BIRTH", "MARRIAGE"]);
       expect(result.markers[0].eventCount).toBe(3);
@@ -200,10 +206,7 @@ describe("Maps Server Functions", () => {
         mockPlaces
       );
 
-      const result = await getPlacesForMapData(
-        { includeEmpty: false },
-        mockDb
-      );
+      const result = await getPlacesForMapData({ includeEmpty: false }, mockDb);
 
       expect(result.markers).toHaveLength(0);
       expect(result.total).toBe(0);
@@ -212,9 +215,9 @@ describe("Maps Server Functions", () => {
 
   describe("getPersonLocationsData", () => {
     it("should throw error when person not found", async () => {
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await getPersonLocationsData("person-nonexistent", mockDb);
@@ -232,12 +235,12 @@ describe("Maps Server Functions", () => {
         lastName: "Doe",
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
-      (mockDb.placePersonLink.findMany as ReturnType<
-        typeof mock
-      >).mockResolvedValueOnce([]);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.placePersonLink.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
       (mockDb.event.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
@@ -252,10 +255,7 @@ describe("Maps Server Functions", () => {
 
   describe("getFamilyLocationsData", () => {
     it("should get family locations", async () => {
-      const mockPersons = [
-        { id: "person-1" },
-        { id: "person-2" },
-      ];
+      const mockPersons = [{ id: "person-1" }, { id: "person-2" }];
 
       (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockPersons

@@ -30,7 +30,7 @@ import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
   mockStartTimer,
-} from "../../../tests/setup/shared-mocks";
+} from "../../testing/shared-mocks";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -39,7 +39,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
 
 // Import the functions to test
 import {
@@ -96,7 +95,9 @@ describe("Relationship Server Functions", () => {
         },
       ];
 
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockRelationships);
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockRelationships);
 
       const result = await listRelationshipsData(personId, undefined, mockDb);
 
@@ -127,7 +128,9 @@ describe("Relationship Server Functions", () => {
         },
       ];
 
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockRelationships);
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockRelationships);
 
       const result = await listRelationshipsData(personId, type, mockDb);
 
@@ -145,7 +148,9 @@ describe("Relationship Server Functions", () => {
     });
 
     it("should return empty array when no relationships exist", async () => {
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       const result = await listRelationshipsData("person-1", undefined, mockDb);
 
@@ -195,7 +200,9 @@ describe("Relationship Server Functions", () => {
         },
       ];
 
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockRelationships);
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockRelationships);
 
       const result = await listRelationshipsData("person-1", undefined, mockDb);
 
@@ -222,7 +229,9 @@ describe("Relationship Server Functions", () => {
         },
       ];
 
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockRelationships);
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockRelationships);
 
       const result = await listRelationshipsData("person-1", undefined, mockDb);
 
@@ -247,7 +256,9 @@ describe("Relationship Server Functions", () => {
         },
       ];
 
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(mockRelationships);
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockRelationships);
 
       const result = await listRelationshipsData("person-1", undefined, mockDb);
 
@@ -257,7 +268,9 @@ describe("Relationship Server Functions", () => {
 
     it("should throw and log error on database failure", async () => {
       const error = new Error("Database error");
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockRejectedValueOnce(error);
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(error);
 
       try {
         await listRelationshipsData("person-1", undefined, mockDb);
@@ -287,7 +300,9 @@ describe("Relationship Server Functions", () => {
         },
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockRelationship);
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockRelationship);
 
       const result = await getRelationshipData(relationshipId, mockDb);
 
@@ -314,7 +329,9 @@ describe("Relationship Server Functions", () => {
         },
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockRelationship);
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockRelationship);
 
       const result = await getRelationshipData("rel-1", mockDb);
 
@@ -323,7 +340,9 @@ describe("Relationship Server Functions", () => {
     });
 
     it("should throw error when relationship not found", async () => {
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await getRelationshipData("rel-nonexistent", mockDb);
@@ -350,7 +369,9 @@ describe("Relationship Server Functions", () => {
         },
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockRelationship);
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockRelationship);
 
       const result = await getRelationshipData("rel-1", mockDb);
 
@@ -362,7 +383,9 @@ describe("Relationship Server Functions", () => {
 
     it("should throw and log error on database failure", async () => {
       const error = new Error("Database error");
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockRejectedValueOnce(error);
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(error);
 
       try {
         await getRelationshipData("rel-1", mockDb);
@@ -385,7 +408,9 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       const mockCreated = {
         id: "rel-1",
@@ -396,7 +421,9 @@ describe("Relationship Server Functions", () => {
         divorceDate: null,
         isActive: true,
       };
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue(mockCreated);
+      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue(
+        mockCreated
+      );
 
       const result = await createRelationshipData(input, mockDb);
 
@@ -415,7 +442,9 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       const mockCreated = {
         id: "rel-1",
@@ -426,7 +455,9 @@ describe("Relationship Server Functions", () => {
         divorceDate: null,
         isActive: true,
       };
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue(mockCreated);
+      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue(
+        mockCreated
+      );
 
       const result = await createRelationshipData(input, mockDb);
 
@@ -445,9 +476,13 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockImplementation((args: any) => {
+      (
+        mockDb.relationship.create as ReturnType<typeof mock>
+      ).mockImplementation((args: any) => {
         return Promise.resolve({
           id: "rel-1",
           ...args.data,
@@ -456,7 +491,8 @@ describe("Relationship Server Functions", () => {
 
       await createRelationshipData(input, mockDb);
 
-      const firstCall = (mockDb.relationship.create as ReturnType<typeof mock>).mock.calls[0];
+      const firstCall = (mockDb.relationship.create as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(firstCall?.[0]?.data?.isActive).toBe(false);
     });
 
@@ -470,9 +506,13 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValueOnce({
+      (
+        mockDb.relationship.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({
         id: "rel-1",
         personId: input.personId,
         relatedPersonId: input.relatedPersonId,
@@ -484,7 +524,8 @@ describe("Relationship Server Functions", () => {
 
       await createRelationshipData(input, mockDb);
 
-      const firstCall = (mockDb.relationship.create as ReturnType<typeof mock>).mock.calls[0];
+      const firstCall = (mockDb.relationship.create as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(firstCall?.[0]?.data?.isActive).toBe(true);
     });
 
@@ -538,7 +579,9 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce({
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({
         id: "rel-existing",
       });
 
@@ -563,12 +606,17 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue({ id: "rel-1" });
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue(
+        { id: "rel-1" }
+      );
 
       await createRelationshipData(input, mockDb);
 
-      const calls = (mockDb.relationship.create as ReturnType<typeof mock>).mock.calls;
+      const calls = (mockDb.relationship.create as ReturnType<typeof mock>).mock
+        .calls;
       expect(calls).toHaveLength(2);
 
       const inverseCall = calls[1];
@@ -587,12 +635,17 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue({ id: "rel-1" });
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue(
+        { id: "rel-1" }
+      );
 
       await createRelationshipData(input, mockDb);
 
-      const calls = (mockDb.relationship.create as ReturnType<typeof mock>).mock.calls;
+      const calls = (mockDb.relationship.create as ReturnType<typeof mock>).mock
+        .calls;
       const inverseCall = calls[1];
       expect(inverseCall?.[0]?.data?.type).toBe("PARENT");
     });
@@ -607,12 +660,17 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue({ id: "rel-1" });
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue(
+        { id: "rel-1" }
+      );
 
       await createRelationshipData(input, mockDb);
 
-      const calls = (mockDb.relationship.create as ReturnType<typeof mock>).mock.calls;
+      const calls = (mockDb.relationship.create as ReturnType<typeof mock>).mock
+        .calls;
       const inverseCall = calls[1];
       expect(inverseCall?.[0]?.data?.type).toBe("SPOUSE");
     });
@@ -627,12 +685,17 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue({ id: "rel-1" });
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue(
+        { id: "rel-1" }
+      );
 
       await createRelationshipData(input, mockDb);
 
-      const calls = (mockDb.relationship.create as ReturnType<typeof mock>).mock.calls;
+      const calls = (mockDb.relationship.create as ReturnType<typeof mock>).mock
+        .calls;
       const inverseCall = calls[1];
       expect(inverseCall?.[0]?.data?.type).toBe("SIBLING");
     });
@@ -647,11 +710,17 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValueOnce({ id: "rel-1" });
+      (
+        mockDb.relationship.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({ id: "rel-1" });
       const error = new Error("Bidirectional sync failed");
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockRejectedValueOnce(error);
+      (
+        mockDb.relationship.create as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(error);
 
       try {
         await createRelationshipData(input, mockDb);
@@ -674,12 +743,17 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue({ id: "rel-1" });
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue(
+        { id: "rel-1" }
+      );
 
       await createRelationshipData(input, mockDb);
 
-      const firstCall = (mockDb.relationship.create as ReturnType<typeof mock>).mock.calls[0];
+      const firstCall = (mockDb.relationship.create as ReturnType<typeof mock>)
+        .mock.calls[0];
       expect(firstCall?.[0]?.data?.marriageDate).toBeInstanceOf(Date);
       expect(firstCall?.[0]?.data?.divorceDate).toBeInstanceOf(Date);
     });
@@ -694,8 +768,12 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue({ id: "rel-abc123" });
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue(
+        { id: "rel-abc123" }
+      );
 
       const result = await createRelationshipData(input, mockDb);
 
@@ -721,8 +799,12 @@ describe("Relationship Server Functions", () => {
         divorceDate: null,
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.update as ReturnType<typeof mock>).mockResolvedValueOnce({
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({
         ...mockExisting,
         id: relationshipId,
         marriageDate: new Date("2010-06-15"),
@@ -754,11 +836,17 @@ describe("Relationship Server Functions", () => {
         divorceDate: null,
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.update as ReturnType<typeof mock>).mockResolvedValueOnce({
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({
         id: relationshipId,
       });
-      (mockDb.relationship.updateMany as ReturnType<typeof mock>).mockResolvedValueOnce({ count: 1 });
+      (
+        mockDb.relationship.updateMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({ count: 1 });
 
       await updateRelationshipData(relationshipId, input, mockDb);
 
@@ -790,15 +878,21 @@ describe("Relationship Server Functions", () => {
         divorceDate: null,
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
 
       let updateData: any = null;
-      (mockDb.relationship.update as ReturnType<typeof mock>).mockImplementation((args: any) => {
+      (
+        mockDb.relationship.update as ReturnType<typeof mock>
+      ).mockImplementation((args: any) => {
         updateData = args.data;
         return Promise.resolve({ id: relationshipId });
       });
 
-      (mockDb.relationship.updateMany as ReturnType<typeof mock>).mockResolvedValueOnce({ count: 1 });
+      (
+        mockDb.relationship.updateMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({ count: 1 });
 
       await updateRelationshipData(relationshipId, input, mockDb);
 
@@ -821,8 +915,12 @@ describe("Relationship Server Functions", () => {
         divorceDate: null,
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.update as ReturnType<typeof mock>).mockResolvedValueOnce({
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({
         id: relationshipId,
       });
 
@@ -832,7 +930,9 @@ describe("Relationship Server Functions", () => {
     });
 
     it("should throw error when relationship not found", async () => {
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await updateRelationshipData("rel-nonexistent", {}, mockDb);
@@ -857,9 +957,13 @@ describe("Relationship Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
       const error = new Error("Database error");
-      (mockDb.relationship.update as ReturnType<typeof mock>).mockRejectedValueOnce(error);
+      (
+        mockDb.relationship.update as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(error);
 
       try {
         await updateRelationshipData(relationshipId, input, mockDb);
@@ -884,9 +988,15 @@ describe("Relationship Server Functions", () => {
         divorceDate: null,
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.delete as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.deleteMany as ReturnType<typeof mock>).mockResolvedValueOnce({ count: 1 });
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.delete as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.deleteMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({ count: 1 });
 
       const result = await deleteRelationshipData(relationshipId, mockDb);
 
@@ -908,9 +1018,15 @@ describe("Relationship Server Functions", () => {
         divorceDate: null,
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.delete as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.deleteMany as ReturnType<typeof mock>).mockResolvedValueOnce({ count: 1 });
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.delete as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.deleteMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({ count: 1 });
 
       await deleteRelationshipData(relationshipId, mockDb);
 
@@ -935,9 +1051,15 @@ describe("Relationship Server Functions", () => {
         divorceDate: null,
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.delete as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.deleteMany as ReturnType<typeof mock>).mockResolvedValueOnce({ count: 1 });
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.delete as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.deleteMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({ count: 1 });
 
       await deleteRelationshipData(relationshipId, mockDb);
 
@@ -951,7 +1073,9 @@ describe("Relationship Server Functions", () => {
     });
 
     it("should throw error when relationship not found", async () => {
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await deleteRelationshipData("rel-nonexistent", mockDb);
@@ -972,9 +1096,13 @@ describe("Relationship Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
       const error = new Error("Database error");
-      (mockDb.relationship.delete as ReturnType<typeof mock>).mockRejectedValueOnce(error);
+      (
+        mockDb.relationship.delete as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(error);
 
       try {
         await deleteRelationshipData(relationshipId, mockDb);
@@ -995,9 +1123,15 @@ describe("Relationship Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.delete as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.deleteMany as ReturnType<typeof mock>).mockResolvedValueOnce({ count: 1 });
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.delete as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.deleteMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({ count: 1 });
 
       const result = await deleteRelationshipData(relationshipId, mockDb);
 
@@ -1007,9 +1141,9 @@ describe("Relationship Server Functions", () => {
 
   describe("Error handling across all functions", () => {
     it("should log errors with context", async () => {
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockRejectedValueOnce(
-        new Error("DB error")
-      );
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(new Error("DB error"));
 
       try {
         await listRelationshipsData("person-1", undefined, mockDb);
@@ -1032,7 +1166,9 @@ describe("Relationship Server Functions", () => {
 
     it("should preserve original error when throwing", async () => {
       const originalError = new Error("Original error");
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockRejectedValueOnce(originalError);
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(originalError);
 
       try {
         await getRelationshipData("rel-1", mockDb);
@@ -1054,12 +1190,17 @@ describe("Relationship Server Functions", () => {
       (mockDb.person.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "parent" })
         .mockResolvedValueOnce({ id: "child" });
-      (mockDb.relationship.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
-      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue({ id: "rel-1" });
+      (
+        mockDb.relationship.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (mockDb.relationship.create as ReturnType<typeof mock>).mockResolvedValue(
+        { id: "rel-1" }
+      );
 
       await createRelationshipData(input, mockDb);
 
-      const calls = (mockDb.relationship.create as ReturnType<typeof mock>).mock.calls;
+      const calls = (mockDb.relationship.create as ReturnType<typeof mock>).mock
+        .calls;
 
       const parentCall = calls[0]?.[0];
       const childCall = calls[1]?.[0];
@@ -1087,13 +1228,21 @@ describe("Relationship Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.relationship.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockExisting);
-      (mockDb.relationship.update as ReturnType<typeof mock>).mockResolvedValueOnce({ id: relationshipId });
-      (mockDb.relationship.updateMany as ReturnType<typeof mock>).mockResolvedValueOnce({ count: 1 });
+      (
+        mockDb.relationship.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.relationship.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({ id: relationshipId });
+      (
+        mockDb.relationship.updateMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({ count: 1 });
 
       await updateRelationshipData(relationshipId, input, mockDb);
 
-      const updateCall = (mockDb.relationship.updateMany as ReturnType<typeof mock>).mock.calls[0];
+      const updateCall = (
+        mockDb.relationship.updateMany as ReturnType<typeof mock>
+      ).mock.calls[0];
       expect(updateCall?.[0]?.data?.marriageDate).toBeInstanceOf(Date);
     });
   });

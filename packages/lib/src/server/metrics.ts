@@ -121,26 +121,3 @@ export function recordGedcomExport(
 ): void {
   // No-op by default. Can be extended with OpenTelemetry integration if needed.
 }
-
-/**
- * Create a histogram metric for tracking durations
- *
- * @param _name - Histogram name
- * @param _unit - Unit of measurement (ms, s, bytes, etc.)
- * @returns Histogram instance or no-op mock
- */
-export function createHistogram(_name: string, _unit: string = "ms"): any {
-  // No-op implementation. Can be extended with OpenTelemetry integration if needed.
-  return { record: () => {} };
-}
-
-/**
- * Create a counter metric for tracking occurrences
- *
- * @param _name - Counter name
- * @returns Counter instance or no-op mock
- */
-export function createCounter(_name: string): any {
-  // No-op implementation. Can be extended with OpenTelemetry integration if needed.
-  return { add: () => {} };
-}

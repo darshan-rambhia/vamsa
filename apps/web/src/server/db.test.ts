@@ -162,9 +162,8 @@ describe("Database Module", () => {
 
   describe("Database utilities interface", () => {
     it("provides all required database utilities", async () => {
-      const { prisma, getPool, getPoolStats, shutdown } = await import(
-        "@vamsa/api"
-      );
+      const { prisma, getPool, getPoolStats, shutdown } =
+        await import("@vamsa/api");
 
       expect(prisma).toBeDefined();
       expect(typeof getPool).toBe("function");
@@ -252,7 +251,9 @@ describe("Database Module", () => {
       // Check for common models from Vamsa schema
       // (if they exist, they should be accessible)
       const hasModels =
-        typeof prisma === "object" && prisma !== null && Object.keys(prisma).length > 0;
+        typeof prisma === "object" &&
+        prisma !== null &&
+        Object.keys(prisma).length > 0;
       expect(hasModels).toBe(true);
     });
   });

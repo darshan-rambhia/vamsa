@@ -25,7 +25,7 @@ import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
   mockStartTimer,
-} from "../../../tests/setup/shared-mocks";
+} from "../../testing/shared-mocks";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -268,9 +268,9 @@ describe("Authentication Server Functions", () => {
         },
       };
 
-      (mockDb.session.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockSession
-      );
+      (
+        mockDb.session.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockSession);
 
       const result = await verifySessionToken(token, mockDb);
 
@@ -299,9 +299,9 @@ describe("Authentication Server Functions", () => {
     });
 
     it("should return null when session not found", async () => {
-      (mockDb.session.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.session.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       const result = await verifySessionToken("invalid-token", mockDb);
 
@@ -326,10 +326,12 @@ describe("Authentication Server Functions", () => {
         },
       };
 
-      (mockDb.session.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockSession
+      (
+        mockDb.session.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockSession);
+      (mockDb.session.delete as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
       );
-      (mockDb.session.delete as ReturnType<typeof mock>).mockResolvedValueOnce({});
 
       const result = await verifySessionToken(token, mockDb);
 
@@ -357,9 +359,9 @@ describe("Authentication Server Functions", () => {
         },
       };
 
-      (mockDb.session.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockSession
-      );
+      (
+        mockDb.session.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockSession);
 
       const result = await verifySessionToken(token, mockDb);
 
@@ -375,9 +377,9 @@ describe("Authentication Server Functions", () => {
 
     it("should throw and log error on database failure", async () => {
       const error = new Error("Database error");
-      (mockDb.session.findFirst as ReturnType<typeof mock>).mockRejectedValueOnce(
-        error
-      );
+      (
+        mockDb.session.findFirst as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(error);
 
       try {
         await verifySessionToken("token", mockDb);
@@ -1069,9 +1071,9 @@ describe("Authentication Server Functions", () => {
         role: "MEMBER",
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
       (mockDb.user.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -1079,7 +1081,12 @@ describe("Authentication Server Functions", () => {
         mockCreatedUser
       );
 
-      const result = await claimProfileAsUser(email, personId, password, mockDb);
+      const result = await claimProfileAsUser(
+        email,
+        personId,
+        password,
+        mockDb
+      );
 
       expect(result).toBe("user-new");
     });
@@ -1088,9 +1095,9 @@ describe("Authentication Server Functions", () => {
       const email = "jane@test.com";
       const personId = "person-nonexistent";
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await claimProfileAsUser(email, personId, "password123", mockDb);
@@ -1109,12 +1116,17 @@ describe("Authentication Server Functions", () => {
         isLiving: false,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
 
       try {
-        await claimProfileAsUser("jane@test.com", personId, "password123", mockDb);
+        await claimProfileAsUser(
+          "jane@test.com",
+          personId,
+          "password123",
+          mockDb
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -1132,15 +1144,20 @@ describe("Authentication Server Functions", () => {
 
       const mockExistingUser = { id: "user-existing" };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
       (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockExistingUser
       );
 
       try {
-        await claimProfileAsUser("jane@test.com", personId, "password123", mockDb);
+        await claimProfileAsUser(
+          "jane@test.com",
+          personId,
+          "password123",
+          mockDb
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -1157,9 +1174,9 @@ describe("Authentication Server Functions", () => {
         isLiving: true,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
       (mockDb.user.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce({ id: "user-existing" });
@@ -1181,9 +1198,9 @@ describe("Authentication Server Functions", () => {
         isLiving: true,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
       (mockDb.user.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -1191,7 +1208,12 @@ describe("Authentication Server Functions", () => {
         id: "user-1",
       });
 
-      await claimProfileAsUser("jane@test.com", personId, "password123", mockDb);
+      await claimProfileAsUser(
+        "jane@test.com",
+        personId,
+        "password123",
+        mockDb
+      );
 
       const call = (mockDb.user.create as ReturnType<typeof mock>).mock
         .calls[0];
@@ -1207,9 +1229,9 @@ describe("Authentication Server Functions", () => {
         isLiving: true,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
       (mockDb.user.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -1217,7 +1239,12 @@ describe("Authentication Server Functions", () => {
         id: "user-1",
       });
 
-      await claimProfileAsUser("jane@test.com", personId, "password123", mockDb);
+      await claimProfileAsUser(
+        "jane@test.com",
+        personId,
+        "password123",
+        mockDb
+      );
 
       const call = (mockDb.user.create as ReturnType<typeof mock>).mock
         .calls[0];
@@ -1233,9 +1260,9 @@ describe("Authentication Server Functions", () => {
         isLiving: true,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
       (mockDb.user.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -1243,7 +1270,12 @@ describe("Authentication Server Functions", () => {
         id: "user-1",
       });
 
-      await claimProfileAsUser("jane@test.com", personId, "password123", mockDb);
+      await claimProfileAsUser(
+        "jane@test.com",
+        personId,
+        "password123",
+        mockDb
+      );
 
       const call = (mockDb.user.create as ReturnType<typeof mock>).mock
         .calls[0];
@@ -1259,9 +1291,9 @@ describe("Authentication Server Functions", () => {
         isLiving: true,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
       (mockDb.user.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -1269,7 +1301,12 @@ describe("Authentication Server Functions", () => {
         id: "user-1",
       });
 
-      await claimProfileAsUser("jane@test.com", personId, "password123", mockDb);
+      await claimProfileAsUser(
+        "jane@test.com",
+        personId,
+        "password123",
+        mockDb
+      );
 
       const call = (mockDb.user.create as ReturnType<typeof mock>).mock
         .calls[0];
@@ -1287,9 +1324,9 @@ describe("Authentication Server Functions", () => {
         isLiving: true,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
       (mockDb.user.findUnique as ReturnType<typeof mock>)
         .mockResolvedValueOnce(null)
         .mockResolvedValueOnce(null);
@@ -1297,7 +1334,12 @@ describe("Authentication Server Functions", () => {
         id: "user-1",
       });
 
-      await claimProfileAsUser("jane@test.com", personId, "password123", mockDb);
+      await claimProfileAsUser(
+        "jane@test.com",
+        personId,
+        "password123",
+        mockDb
+      );
 
       const call = (mockDb.user.create as ReturnType<typeof mock>).mock
         .calls[0];
@@ -1342,7 +1384,12 @@ describe("Authentication Server Functions", () => {
 
     it("should throw error when token is undefined", async () => {
       try {
-        await changeUserPassword(undefined, "oldPassword", "newPassword", mockDb);
+        await changeUserPassword(
+          undefined,
+          "oldPassword",
+          "newPassword",
+          mockDb
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -1355,7 +1402,12 @@ describe("Authentication Server Functions", () => {
       );
 
       try {
-        await changeUserPassword("invalid-token", "oldPassword", "newPassword", mockDb);
+        await changeUserPassword(
+          "invalid-token",
+          "oldPassword",
+          "newPassword",
+          mockDb
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -1374,7 +1426,12 @@ describe("Authentication Server Functions", () => {
       );
 
       try {
-        await changeUserPassword("valid-token", "oldPassword", "newPassword", mockDb);
+        await changeUserPassword(
+          "valid-token",
+          "oldPassword",
+          "newPassword",
+          mockDb
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);

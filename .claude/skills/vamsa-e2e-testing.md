@@ -15,7 +15,7 @@ This skill enforces Vamsa's E2E testing philosophy: **user workflow-focused test
 - **Complete user journeys**: Login → navigate → perform action → verify result
 - **Real functionality validation**: Does the feature work from the user's perspective?
 - **Cross-page flows**: Multi-step workflows that span multiple routes
-- **Error states**: What happens when things go wrong?
+- **Error states**: What happens when things go wrong - db state is invalid, network fails, etc.
 - **Permission checks**: Can the right users access the right things?
 - **State persistence**: Does data survive navigation and page refresh?
 

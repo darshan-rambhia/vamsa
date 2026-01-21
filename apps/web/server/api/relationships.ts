@@ -148,7 +148,7 @@ relationshipsRouter.openapi(listRelationshipsRoute, async (c) => {
     if (personId) {
       const result = await serverGetRelationships(personId, type);
 
-      let items = result || [];
+      const items = result || [];
 
       const total = items.length;
       const start = (page - 1) * limit;
@@ -485,10 +485,7 @@ relationshipsRouter.openapi(updateRelationshipRoute, async (c) => {
       }
     }
 
-    const result = await serverUpdateRelationship(
-      id,
-      updateData as any
-    );
+    const result = await serverUpdateRelationship(id, updateData as any);
 
     return c.json(result, { status: 200 });
   } catch (error) {

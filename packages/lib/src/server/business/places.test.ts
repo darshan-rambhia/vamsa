@@ -26,7 +26,7 @@ import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
   mockStartTimer,
-} from "../../../tests/setup/shared-mocks";
+} from "../../testing/shared-mocks";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -36,21 +36,16 @@ mock.module("@vamsa/lib/logger", () => ({
   startTimer: mockStartTimer,
 }));
 
-
 // Import the functions to test
 import {
   getPlaceData,
   searchPlacesData,
-  getPlaceHierarchyData,
   getPersonPlacesData,
   createPlaceData,
   updatePlaceData,
   deletePlaceData,
   linkPersonToPlaceData,
   getPlaceHierarchyPathData,
-  getPlaceChildrenData,
-  updatePlacePersonLinkData,
-  unlinkPersonFromPlaceData,
 } from "@vamsa/lib/server/business";
 
 // Create mock database client - no mock.module() needed!
@@ -118,9 +113,9 @@ describe("Place Server Functions", () => {
         personLinks: [{ id: "link-1" }],
       };
 
-      (mockDb.place.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPlace
-      );
+      (
+        mockDb.place.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPlace);
 
       const result = await getPlaceData("place-1", mockDb);
 
@@ -133,9 +128,9 @@ describe("Place Server Functions", () => {
     });
 
     it("should throw error when place not found", async () => {
-      (mockDb.place.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.place.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await getPlaceData("place-nonexistent", mockDb);
@@ -210,9 +205,9 @@ describe("Place Server Functions", () => {
     });
 
     it("should validate parent place exists", async () => {
-      (mockDb.place.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.place.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await createPlaceData(
@@ -310,9 +305,9 @@ describe("Place Server Functions", () => {
         personLinks: [],
       };
 
-      (mockDb.place.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPlace
-      );
+      (
+        mockDb.place.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPlace);
       (mockDb.place.delete as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockPlace
       );
@@ -339,9 +334,9 @@ describe("Place Server Functions", () => {
         personLinks: [],
       };
 
-      (mockDb.place.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPlace
-      );
+      (
+        mockDb.place.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPlace);
 
       try {
         await deletePlaceData("place-1", mockDb);
@@ -381,18 +376,18 @@ describe("Place Server Functions", () => {
         place: mockPlace,
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
-      (mockDb.place.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPlace
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.place.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPlace);
       (
         mockDb.placePersonLink.findUnique as ReturnType<typeof mock>
       ).mockResolvedValueOnce(null);
-      (mockDb.placePersonLink.create as ReturnType<typeof mock>).mockResolvedValueOnce(
-        { id: "link-1" }
-      );
+      (
+        mockDb.placePersonLink.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({ id: "link-1" });
       (
         mockDb.placePersonLink.findUnique as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockLink);
@@ -470,9 +465,9 @@ describe("Place Server Functions", () => {
         personLinks: [],
       };
 
-      (mockDb.place.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPlace
-      );
+      (
+        mockDb.place.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPlace);
 
       // Call without db parameter to verify it accepts default
       const result = await getPlaceData("place-1", mockDb);
@@ -494,12 +489,12 @@ describe("Place Server Functions", () => {
         updatedAt: new Date(),
       };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
-      (mockDb.place.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPlace
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.place.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPlace);
 
       await getPersonPlacesData("person-1", mockDb);
 

@@ -178,7 +178,6 @@ describe("Cloud Storage Integration", () => {
 
       try {
         const buffer = Buffer.from("small");
-        const config = { bucket: "backups" };
 
         expect(buffer.length).toBeGreaterThan(0);
       } finally {

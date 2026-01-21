@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeAll } from "bun:test";
-import { t, tMultiple, getServerI18n, initializeServerI18n } from "@vamsa/lib/server";
+import {
+  t,
+  tMultiple,
+  getServerI18n,
+  initializeServerI18n,
+} from "@vamsa/lib/server";
 
 /**
  * Integration tests for auth server function error messages with i18n

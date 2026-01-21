@@ -66,9 +66,9 @@ describe("Media Server Functions", () => {
 
   describe("getPersonMediaLogic", () => {
     it("should throw error when person not found", async () => {
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await getPersonMediaLogic("person-nonexistent", mockDb);
@@ -109,12 +109,12 @@ describe("Media Server Functions", () => {
         },
       ];
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
-      (mockDb.personMedia.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockMedia
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.personMedia.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockMedia);
 
       const result = await getPersonMediaLogic("person-1", mockDb);
 
@@ -127,9 +127,9 @@ describe("Media Server Functions", () => {
 
   describe("getMediaObjectLogic", () => {
     it("should throw error when media not found", async () => {
-      (mockDb.mediaObject.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.mediaObject.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await getMediaObjectLogic("media-nonexistent", mockDb);
@@ -164,9 +164,9 @@ describe("Media Server Functions", () => {
         personMedia: [],
       };
 
-      (mockDb.mediaObject.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockMedia
-      );
+      (
+        mockDb.mediaObject.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockMedia);
 
       const result = await getMediaObjectLogic("media-1", mockDb);
 
@@ -179,9 +179,9 @@ describe("Media Server Functions", () => {
 
   describe("deleteMediaLogic", () => {
     it("should throw error when media not found", async () => {
-      (mockDb.mediaObject.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.mediaObject.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await deleteMediaLogic("media-nonexistent", mockDb);
@@ -195,12 +195,12 @@ describe("Media Server Functions", () => {
     it("should delete media", async () => {
       const mockMedia = { id: "media-1" };
 
-      (mockDb.mediaObject.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockMedia
-      );
-      (mockDb.mediaObject.delete as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockMedia
-      );
+      (
+        mockDb.mediaObject.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockMedia);
+      (
+        mockDb.mediaObject.delete as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockMedia);
 
       const result = await deleteMediaLogic("media-1", mockDb);
 
@@ -213,9 +213,9 @@ describe("Media Server Functions", () => {
 
   describe("updateMediaMetadataLogic", () => {
     it("should throw error when media not found", async () => {
-      (mockDb.mediaObject.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.mediaObject.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await updateMediaMetadataLogic(
@@ -255,12 +255,12 @@ describe("Media Server Functions", () => {
         updatedAt: new Date(),
       };
 
-      (mockDb.mediaObject.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockMedia
-      );
-      (mockDb.mediaObject.update as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockUpdated
-      );
+      (
+        mockDb.mediaObject.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockMedia);
+      (
+        mockDb.mediaObject.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockUpdated);
 
       const result = await updateMediaMetadataLogic(
         "media-1",
@@ -278,9 +278,9 @@ describe("Media Server Functions", () => {
 
   describe("setPrimaryPhotoLogic", () => {
     it("should throw error when person not found", async () => {
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await setPrimaryPhotoLogic("person-nonexistent", "media-1", mockDb);
@@ -294,12 +294,12 @@ describe("Media Server Functions", () => {
     it("should throw error when media not found for person", async () => {
       const mockPerson = { id: "person-1" };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
-      (mockDb.personMedia.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.personMedia.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await setPrimaryPhotoLogic("person-1", "media-nonexistent", mockDb);
@@ -316,16 +316,20 @@ describe("Media Server Functions", () => {
       const mockPerson = { id: "person-1" };
       const mockPersonMedia = { id: "pm-1", personId: "person-1" };
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
-      (mockDb.personMedia.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPersonMedia
-      );
-      (mockDb.personMedia.updateMany as ReturnType<typeof mock>).mockResolvedValueOnce({
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
+      (
+        mockDb.personMedia.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPersonMedia);
+      (
+        mockDb.personMedia.updateMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({
         count: 1,
       });
-      (mockDb.personMedia.update as ReturnType<typeof mock>).mockResolvedValueOnce({
+      (
+        mockDb.personMedia.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({
         ...mockPersonMedia,
         isPrimary: true,
       });
@@ -338,9 +342,9 @@ describe("Media Server Functions", () => {
 
   describe("reorderMediaLogic", () => {
     it("should throw error when person not found", async () => {
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await reorderMediaLogic("person-nonexistent", [], mockDb);
@@ -358,13 +362,15 @@ describe("Media Server Functions", () => {
         { mediaId: "media-2", order: 1 },
       ];
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockPerson
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
       (mockDb.personMedia.findFirst as ReturnType<typeof mock>)
         .mockResolvedValueOnce({ id: "pm-1" })
         .mockResolvedValueOnce({ id: "pm-2" });
-      (mockDb.personMedia.update as ReturnType<typeof mock>).mockResolvedValue({});
+      (mockDb.personMedia.update as ReturnType<typeof mock>).mockResolvedValue(
+        {}
+      );
 
       const result = await reorderMediaLogic("person-1", ordering, mockDb);
 
@@ -374,9 +380,9 @@ describe("Media Server Functions", () => {
 
   describe("linkMediaToEventLogic", () => {
     it("should throw error when media not found", async () => {
-      (mockDb.mediaObject.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.mediaObject.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await linkMediaToEventLogic("media-nonexistent", "event-1", mockDb);
@@ -390,12 +396,12 @@ describe("Media Server Functions", () => {
     it("should throw error when event not found", async () => {
       const mockMedia = { id: "media-1" };
 
-      (mockDb.mediaObject.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockMedia
-      );
-      (mockDb.event.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.mediaObject.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockMedia);
+      (
+        mockDb.event.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await linkMediaToEventLogic("media-1", "event-nonexistent", mockDb);
@@ -416,18 +422,18 @@ describe("Media Server Functions", () => {
         eventType: "BIRTH",
       };
 
-      (mockDb.mediaObject.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockMedia
-      );
-      (mockDb.event.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockEvent
-      );
-      (mockDb.eventMedia.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
-      (mockDb.eventMedia.create as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockLink
-      );
+      (
+        mockDb.mediaObject.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockMedia);
+      (
+        mockDb.event.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockEvent);
+      (
+        mockDb.eventMedia.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (
+        mockDb.eventMedia.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockLink);
 
       const result = await linkMediaToEventLogic("media-1", "event-1", mockDb);
 
@@ -440,15 +446,15 @@ describe("Media Server Functions", () => {
       const mockEvent = { id: "event-1", personId: "person-1", type: "BIRTH" };
       const existingLink = { id: "em-existing" };
 
-      (mockDb.mediaObject.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockMedia
-      );
-      (mockDb.event.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockEvent
-      );
-      (mockDb.eventMedia.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        existingLink
-      );
+      (
+        mockDb.mediaObject.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockMedia);
+      (
+        mockDb.event.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockEvent);
+      (
+        mockDb.eventMedia.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(existingLink);
 
       try {
         await linkMediaToEventLogic("media-1", "event-1", mockDb);

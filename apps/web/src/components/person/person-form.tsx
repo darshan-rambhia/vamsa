@@ -35,7 +35,8 @@ interface PersonFormProps {
     employer?: string | null;
     isLiving: boolean;
   };
-  onSuccess?: () => void;
+  /** Called on successful save. For new persons, receives the created person's ID. */
+  onSuccess?: (createdId?: string) => void;
   onCancel?: () => void;
 }
 
@@ -108,11 +109,12 @@ export function PersonForm({ person, onSuccess, onCancel }: PersonFormProps) {
       if (person) {
         // Update existing person
         await updatePerson({ data: { id: person.id, ...submitData } });
+        onSuccess?.();
       } else {
         // Create new person
-        await createPerson({ data: submitData });
+        const result = await createPerson({ data: submitData });
+        onSuccess?.(result.id);
       }
-      onSuccess?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save");
       setIsLoading(false);

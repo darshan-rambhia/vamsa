@@ -12,7 +12,10 @@ import type {
  * Type for the database client used by event functions.
  * This allows dependency injection for testing.
  */
-export type EventsDb = Pick<PrismaClient, "event" | "eventParticipant" | "person">;
+export type EventsDb = Pick<
+  PrismaClient,
+  "event" | "eventParticipant" | "person"
+>;
 
 /**
  * Formatted event participant representation

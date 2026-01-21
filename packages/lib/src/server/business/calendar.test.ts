@@ -25,7 +25,7 @@ import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
   mockStartTimer,
-} from "../../../tests/setup/shared-mocks";
+} from "../../testing/shared-mocks";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -34,7 +34,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
 
 // Import the functions to test
 import {
@@ -88,8 +87,12 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.create as ReturnType<typeof mock>).mockResolvedValueOnce(mockToken);
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (
+        mockDb.calendarToken.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       const result = await generateCalendarTokenLogic(
         userId,
@@ -115,12 +118,18 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.create as ReturnType<typeof mock>).mockResolvedValueOnce(mockToken);
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (
+        mockDb.calendarToken.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await generateCalendarTokenLogic("user-1", undefined, 90, mockDb);
 
-      const createCall = (mockDb.calendarToken.create as ReturnType<typeof mock>).mock.calls[0];
+      const createCall = (
+        mockDb.calendarToken.create as ReturnType<typeof mock>
+      ).mock.calls[0];
       const expiresAt = createCall?.[0]?.data?.expiresAt as Date;
 
       expect(expiresAt).toBeInstanceOf(Date);
@@ -137,8 +146,12 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.create as ReturnType<typeof mock>).mockResolvedValueOnce(mockToken);
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (
+        mockDb.calendarToken.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await generateCalendarTokenLogic("user-1", "Test", 30, mockDb);
 
@@ -165,8 +178,12 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.create as ReturnType<typeof mock>).mockResolvedValueOnce(mockToken);
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (
+        mockDb.calendarToken.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       await generateCalendarTokenLogic("user-1", undefined, 30, mockDb);
 
@@ -191,9 +208,9 @@ describe("Calendar Server Functions", () => {
         },
       };
 
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       const result = await validateCalendarTokenLogic("abc123", mockDb);
 
@@ -218,9 +235,9 @@ describe("Calendar Server Functions", () => {
         },
       };
 
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       const result = await validateCalendarTokenLogic("abc123", mockDb);
 
@@ -242,9 +259,9 @@ describe("Calendar Server Functions", () => {
         },
       };
 
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       const result = await validateCalendarTokenLogic("abc123", mockDb);
 
@@ -253,7 +270,9 @@ describe("Calendar Server Functions", () => {
     });
 
     it("should return invalid for non-existent token", async () => {
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       const result = await validateCalendarTokenLogic("nonexistent", mockDb);
 
@@ -263,7 +282,9 @@ describe("Calendar Server Functions", () => {
 
     it("should handle database errors gracefully", async () => {
       const error = new Error("Database error");
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockRejectedValueOnce(error);
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(error);
 
       const result = await validateCalendarTokenLogic("abc123", mockDb);
 
@@ -284,14 +305,18 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
-      (mockDb.calendarToken.update as ReturnType<typeof mock>).mockResolvedValueOnce({
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
+      (
+        mockDb.calendarToken.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({
         ...mockToken,
         isActive: false,
       });
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
+      );
 
       const result = await revokeCalendarTokenLogic(tokenId, userId, mockDb);
 
@@ -303,14 +328,18 @@ describe("Calendar Server Functions", () => {
     });
 
     it("should throw error if token not found", async () => {
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await revokeCalendarTokenLogic("token-nonexistent", "user-1", mockDb);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
-        expect((err as Error).message).toContain("Token not found or unauthorized");
+        expect((err as Error).message).toContain(
+          "Token not found or unauthorized"
+        );
       }
     });
 
@@ -321,16 +350,18 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       try {
         await revokeCalendarTokenLogic("token-1", "user-1", mockDb);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
-        expect((err as Error).message).toContain("Token not found or unauthorized");
+        expect((err as Error).message).toContain(
+          "Token not found or unauthorized"
+        );
       }
     });
 
@@ -344,11 +375,15 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
+      (
+        mockDb.calendarToken.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
       );
-      (mockDb.calendarToken.update as ReturnType<typeof mock>).mockResolvedValueOnce({});
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
 
       await revokeCalendarTokenLogic(tokenId, userId, mockDb);
 
@@ -385,9 +420,9 @@ describe("Calendar Server Functions", () => {
         },
       ];
 
-      (mockDb.calendarToken.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockTokens
-      );
+      (
+        mockDb.calendarToken.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockTokens);
 
       const result = await listCalendarTokensLogic(userId, mockDb);
 
@@ -397,7 +432,9 @@ describe("Calendar Server Functions", () => {
     });
 
     it("should return empty list if no tokens exist", async () => {
-      (mockDb.calendarToken.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (
+        mockDb.calendarToken.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       const result = await listCalendarTokensLogic("user-1", mockDb);
 
@@ -407,12 +444,15 @@ describe("Calendar Server Functions", () => {
     it("should order tokens by creation date descending", async () => {
       const userId = "user-1";
 
-      (mockDb.calendarToken.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (
+        mockDb.calendarToken.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       await listCalendarTokensLogic(userId, mockDb);
 
-      const findManyCall = (mockDb.calendarToken.findMany as ReturnType<typeof mock>).mock
-        .calls[0];
+      const findManyCall = (
+        mockDb.calendarToken.findMany as ReturnType<typeof mock>
+      ).mock.calls[0];
       expect(findManyCall?.[0]).toEqual({
         where: { userId },
         select: {
@@ -439,11 +479,15 @@ describe("Calendar Server Functions", () => {
         isActive: false,
       };
 
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
+      (
+        mockDb.calendarToken.delete as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
       );
-      (mockDb.calendarToken.delete as ReturnType<typeof mock>).mockResolvedValueOnce({});
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
 
       const result = await deleteCalendarTokenLogic(tokenId, userId, mockDb);
 
@@ -454,14 +498,18 @@ describe("Calendar Server Functions", () => {
     });
 
     it("should throw error if token not found", async () => {
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await deleteCalendarTokenLogic("token-nonexistent", "user-1", mockDb);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
-        expect((err as Error).message).toContain("Token not found or unauthorized");
+        expect((err as Error).message).toContain(
+          "Token not found or unauthorized"
+        );
       }
     });
 
@@ -472,16 +520,18 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       try {
         await deleteCalendarTokenLogic("token-1", "user-1", mockDb);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
-        expect((err as Error).message).toContain("Only revoked tokens can be deleted");
+        expect((err as Error).message).toContain(
+          "Only revoked tokens can be deleted"
+        );
       }
     });
 
@@ -492,16 +542,18 @@ describe("Calendar Server Functions", () => {
         isActive: false,
       };
 
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       try {
         await deleteCalendarTokenLogic("token-1", "user-1", mockDb);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
-        expect((err as Error).message).toContain("Token not found or unauthorized");
+        expect((err as Error).message).toContain(
+          "Token not found or unauthorized"
+        );
       }
     });
 
@@ -515,11 +567,15 @@ describe("Calendar Server Functions", () => {
         isActive: false,
       };
 
-      (mockDb.calendarToken.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
+      (
+        mockDb.calendarToken.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
+      (
+        mockDb.calendarToken.delete as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({});
+      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce(
+        {}
       );
-      (mockDb.calendarToken.delete as ReturnType<typeof mock>).mockResolvedValueOnce({});
-      (mockDb.auditLog.create as ReturnType<typeof mock>).mockResolvedValueOnce({});
 
       await deleteCalendarTokenLogic(tokenId, userId, mockDb);
 

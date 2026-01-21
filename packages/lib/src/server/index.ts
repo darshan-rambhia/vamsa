@@ -63,7 +63,14 @@ export {
 // ============================================================================
 // Metrics & Monitoring
 // ============================================================================
-export { recordChartMetrics, recordSearchMetrics, recordMediaUpload, recordGedcomValidation, recordGedcomImport, recordGedcomExport, createHistogram, createCounter } from "./metrics";
+export {
+  recordChartMetrics,
+  recordSearchMetrics,
+  recordMediaUpload,
+  recordGedcomValidation,
+  recordGedcomImport,
+  recordGedcomExport,
+} from "./metrics";
 
 // ============================================================================
 // Helper functions

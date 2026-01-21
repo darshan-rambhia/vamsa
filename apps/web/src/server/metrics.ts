@@ -15,8 +15,11 @@ import { requireAuth } from "./middleware/require-auth";
 import {
   getMetricsSnapshotData,
   getPrometheusStatusData,
+  type MetricSnapshot,
 } from "@vamsa/lib/server/business";
-import type { MetricSnapshot } from "./metrics";
+
+// Re-export type for use by components
+export type { MetricSnapshot };
 
 /**
  * Get a snapshot of current metrics from Prometheus

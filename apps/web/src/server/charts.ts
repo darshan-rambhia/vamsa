@@ -27,13 +27,35 @@ import {
   getTreeChartData,
   exportChartAsPDF,
   exportChartAsSVG,
+  type ChartNode,
+  type ChartEdge,
   type ChartLayoutResult,
+  type TimelineEntry,
   type TimelineChartResult,
+  type MatrixCell,
+  type MatrixPerson,
   type RelationshipMatrixResult,
+  type BowtieNode,
   type BowtieChartResult,
   type CompactTreeResult,
   type StatisticsResult,
 } from "@vamsa/lib/server/business";
+
+// Re-export types for use by stories and other client code
+export type {
+  ChartNode,
+  ChartEdge,
+  ChartLayoutResult,
+  TimelineEntry,
+  TimelineChartResult,
+  MatrixCell,
+  MatrixPerson,
+  RelationshipMatrixResult,
+  BowtieNode,
+  BowtieChartResult,
+  CompactTreeResult,
+  StatisticsResult,
+};
 
 // Validation schemas
 const ancestorChartSchema = z.object({

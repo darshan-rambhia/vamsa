@@ -27,7 +27,7 @@ import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
   mockStartTimer,
-} from "../../../tests/setup/shared-mocks";
+} from "../../testing/shared-mocks";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -36,7 +36,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
 
 // Import the functions to test
 import {
@@ -85,9 +84,9 @@ describe("Calendar Tokens Server Functions", () => {
         },
       ];
 
-      (mockDb.calendarToken.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockTokens
-      );
+      (
+        mockDb.calendarToken.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockTokens);
 
       const result = await getCalendarTokensData(userId, mockDb);
 
@@ -100,7 +99,9 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should return empty array if no tokens exist", async () => {
-      (mockDb.calendarToken.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (
+        mockDb.calendarToken.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       const result = await getCalendarTokensData("user-1", mockDb);
 
@@ -123,7 +124,9 @@ describe("Calendar Tokens Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.create as ReturnType<typeof mock>).mockResolvedValueOnce(mockToken);
+      (
+        mockDb.calendarToken.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       const result = await createCalendarTokenData(userId, input, mockDb);
 
@@ -144,11 +147,15 @@ describe("Calendar Tokens Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.create as ReturnType<typeof mock>).mockResolvedValueOnce(mockToken);
+      (
+        mockDb.calendarToken.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       await createCalendarTokenData("user-1", { name: "Test" }, mockDb);
 
-      const createCall = (mockDb.calendarToken.create as ReturnType<typeof mock>).mock.calls[0];
+      const createCall = (
+        mockDb.calendarToken.create as ReturnType<typeof mock>
+      ).mock.calls[0];
       expect(createCall?.[0]?.data?.rotationPolicy).toBe("annual");
     });
   });
@@ -163,9 +170,9 @@ describe("Calendar Tokens Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       const result = await verifyTokenOwnership(tokenId, userId, mockDb);
 
@@ -176,7 +183,9 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should throw error if token not found", async () => {
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await verifyTokenOwnership("token-nonexistent", "user-1", mockDb);
@@ -188,7 +197,9 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should throw error if token does not belong to user", async () => {
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await verifyTokenOwnership("token-1", "user-2", mockDb);
@@ -211,9 +222,9 @@ describe("Calendar Tokens Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       // Note: rotateToken is an external dependency that calls the real database
       // This test documents that verifyTokenOwnership is called first via DI
@@ -230,7 +241,9 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should throw error if token not found", async () => {
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await rotateCalendarTokenData("token-nonexistent", "user-1", mockDb);
@@ -253,9 +266,9 @@ describe("Calendar Tokens Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       // Note: revokeToken is an external dependency that calls the real database
       // This test documents that verifyTokenOwnership is called first via DI
@@ -272,7 +285,9 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should throw error if token not found", async () => {
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await revokeCalendarTokenData("token-nonexistent", "user-1", mockDb);
@@ -284,7 +299,9 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should throw error if token does not belong to user", async () => {
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await revokeCalendarTokenData("token-1", "user-2", mockDb);
@@ -313,14 +330,19 @@ describe("Calendar Tokens Server Functions", () => {
         name: newName,
       };
 
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
-      (mockDb.calendarToken.update as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockUpdated
-      );
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
+      (
+        mockDb.calendarToken.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockUpdated);
 
-      const result = await updateTokenNameData(tokenId, newName, userId, mockDb);
+      const result = await updateTokenNameData(
+        tokenId,
+        newName,
+        userId,
+        mockDb
+      );
 
       expect(result.id).toBe(tokenId);
       expect(result.name).toBe(newName);
@@ -331,10 +353,17 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should throw error if token not found", async () => {
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
-        await updateTokenNameData("token-nonexistent", "New Name", "user-1", mockDb);
+        await updateTokenNameData(
+          "token-nonexistent",
+          "New Name",
+          "user-1",
+          mockDb
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -343,7 +372,9 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should throw error if token does not belong to user", async () => {
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await updateTokenNameData("token-1", "New Name", "user-2", mockDb);
@@ -366,10 +397,12 @@ describe("Calendar Tokens Server Functions", () => {
         isActive: false,
       };
 
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
-      (mockDb.calendarToken.delete as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
+      (
+        mockDb.calendarToken.delete as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({});
 
       const result = await deleteCalendarTokenData(tokenId, userId, mockDb);
 
@@ -387,9 +420,9 @@ describe("Calendar Tokens Server Functions", () => {
         isActive: true,
       };
 
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
       try {
         await deleteCalendarTokenData("token-1", "user-1", mockDb);
@@ -403,7 +436,9 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should throw error if token not found", async () => {
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await deleteCalendarTokenData("token-nonexistent", "user-1", mockDb);
@@ -415,7 +450,9 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should throw error if token does not belong to user", async () => {
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await deleteCalendarTokenData("token-1", "user-2", mockDb);
@@ -433,10 +470,12 @@ describe("Calendar Tokens Server Functions", () => {
         isActive: false,
       };
 
-      (mockDb.calendarToken.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockToken
-      );
-      (mockDb.calendarToken.delete as ReturnType<typeof mock>).mockResolvedValueOnce({});
+      (
+        mockDb.calendarToken.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
+      (
+        mockDb.calendarToken.delete as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({});
 
       await deleteCalendarTokenData("token-1", "user-1", mockDb);
 
@@ -481,9 +520,9 @@ describe("Calendar Tokens Server Functions", () => {
         },
       ];
 
-      (mockDb.calendarToken.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockTokens
-      );
+      (
+        mockDb.calendarToken.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockTokens);
 
       const result = await getAllCalendarTokensData(mockDb);
 
@@ -493,12 +532,15 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should include user information", async () => {
-      (mockDb.calendarToken.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (
+        mockDb.calendarToken.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       await getAllCalendarTokensData(mockDb);
 
-      const findManyCall = (mockDb.calendarToken.findMany as ReturnType<typeof mock>).mock
-        .calls[0];
+      const findManyCall = (
+        mockDb.calendarToken.findMany as ReturnType<typeof mock>
+      ).mock.calls[0];
       expect(findManyCall?.[0]).toEqual({
         include: {
           user: {
@@ -514,12 +556,15 @@ describe("Calendar Tokens Server Functions", () => {
     });
 
     it("should order tokens by creation date descending", async () => {
-      (mockDb.calendarToken.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (
+        mockDb.calendarToken.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       await getAllCalendarTokensData(mockDb);
 
-      const findManyCall = (mockDb.calendarToken.findMany as ReturnType<typeof mock>).mock
-        .calls[0];
+      const findManyCall = (
+        mockDb.calendarToken.findMany as ReturnType<typeof mock>
+      ).mock.calls[0];
       expect(findManyCall?.[0]?.orderBy).toEqual({ createdAt: "desc" });
     });
   });

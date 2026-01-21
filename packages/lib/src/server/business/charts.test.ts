@@ -58,9 +58,15 @@ describe("Charts Server DI Pattern", () => {
 
       // Mock a person for testing
       const mockPerson = { id: "test-person-1" };
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([mockPerson]);
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        [mockPerson]
+      );
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       // This should work without errors - the functions accept the db parameter
       try {
@@ -77,9 +83,15 @@ describe("Charts Server DI Pattern", () => {
       const _module = await import("@vamsa/lib/server/business");
 
       const mockPerson = { id: "test-person-1" };
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([mockPerson]);
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        [mockPerson]
+      );
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       try {
         await _module.getDescendantChartData("test-person-1", 3, mockDb);
@@ -94,9 +106,15 @@ describe("Charts Server DI Pattern", () => {
       const _module = await import("@vamsa/lib/server/business");
 
       const mockPerson = { id: "test-person-1" };
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(mockPerson);
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([mockPerson]);
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockPerson);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        [mockPerson]
+      );
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       try {
         await _module.getHourglassChartData("test-person-1", 2, 2, mockDb);
@@ -110,9 +128,16 @@ describe("Charts Server DI Pattern", () => {
     it("should accept mock database for timeline chart", async () => {
       const module = await import("@vamsa/lib/server/business");
 
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
 
-      const result = await module.getTimelineChartData(undefined, undefined, "birth", mockDb);
+      const result = await module.getTimelineChartData(
+        undefined,
+        undefined,
+        "birth",
+        mockDb
+      );
 
       expect(result).toBeDefined();
       expect(result.entries).toEqual([]);
@@ -122,10 +147,18 @@ describe("Charts Server DI Pattern", () => {
     it("should accept mock database for relationship matrix", async () => {
       const module = await import("@vamsa/lib/server/business");
 
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
-      const result = await module.getRelationshipMatrixData(undefined, 20, mockDb);
+      const result = await module.getRelationshipMatrixData(
+        undefined,
+        20,
+        mockDb
+      );
 
       expect(result).toBeDefined();
       expect(result.people).toEqual([]);
@@ -135,8 +168,12 @@ describe("Charts Server DI Pattern", () => {
     it("should accept mock database for statistics", async () => {
       const module = await import("@vamsa/lib/server/business");
 
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce([]);
+      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+        []
+      );
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
 
       const result = await module.getStatisticsData(true, mockDb);
 
@@ -148,7 +185,9 @@ describe("Charts Server DI Pattern", () => {
     it("should throw error when person not found", async () => {
       const module = await import("@vamsa/lib/server/business");
 
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(null);
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       try {
         await module.getAncestorChartData("nonexistent-person", 3, mockDb);

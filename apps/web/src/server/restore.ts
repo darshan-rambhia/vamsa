@@ -6,6 +6,10 @@ import type {
   ImportPreview,
   ConflictResolutionStrategy,
 } from "@vamsa/schemas";
+
+// Re-export types for use by components
+export type { ValidationResult, ImportResult, ImportPreview };
+
 import { requireAuth } from "./middleware/require-auth";
 import {
   validateBackupData,

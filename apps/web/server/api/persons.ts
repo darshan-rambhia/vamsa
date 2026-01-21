@@ -185,11 +185,7 @@ personsRouter.openapi(listPersonsRoute, async (c) => {
       page,
       limit,
       search,
-      sortBy: sortBy as
-        | "lastName"
-        | "firstName"
-        | "dateOfBirth"
-        | "createdAt",
+      sortBy: sortBy as "lastName" | "firstName" | "dateOfBirth" | "createdAt",
       sortOrder: sortOrder as "asc" | "desc",
       isLiving,
     });

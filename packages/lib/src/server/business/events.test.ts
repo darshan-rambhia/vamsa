@@ -30,7 +30,7 @@ import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
   mockStartTimer,
-} from "../../../tests/setup/shared-mocks";
+} from "../../testing/shared-mocks";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -39,7 +39,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
 
 // Import the functions to test
 import {
@@ -370,7 +369,11 @@ describe("Event Server Functions", () => {
         participants: [],
       });
 
-      const result = await updateEventData("event-1", { place: "New Place" }, mockDb);
+      const result = await updateEventData(
+        "event-1",
+        { place: "New Place" },
+        mockDb
+      );
 
       expect(result.id).toBe("event-1");
     });
@@ -612,9 +615,9 @@ describe("Event Server Functions", () => {
   describe("Error handling", () => {
     it("should handle database errors in getPersonEventsData", async () => {
       const error = new Error("Database error");
-      (mockDb.person.findUnique as ReturnType<typeof mock>).mockRejectedValueOnce(
-        error
-      );
+      (
+        mockDb.person.findUnique as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(error);
 
       try {
         await getPersonEventsData("person-1", mockDb);

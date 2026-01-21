@@ -24,7 +24,7 @@ import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
   mockStartTimer,
-} from "../../../tests/setup/shared-mocks";
+} from "../../testing/shared-mocks";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -33,7 +33,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
 
 // Import the functions to test
 import {
@@ -70,9 +69,9 @@ describe("Settings Server Functions", () => {
 
   describe("getFamilySettingsData", () => {
     it("should return defaults when no settings exist", async () => {
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       const result = await getFamilySettingsData(mockDb);
 
@@ -94,9 +93,9 @@ describe("Settings Server Functions", () => {
         metricsApiUrl: "https://api.example.com",
       };
 
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockSettings
-      );
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockSettings);
 
       const result = await getFamilySettingsData(mockDb);
 
@@ -117,9 +116,9 @@ describe("Settings Server Functions", () => {
         metricsApiUrl: null,
       };
 
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockSettings
-      );
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockSettings);
 
       const result = await getFamilySettingsData(mockDb);
 
@@ -150,12 +149,12 @@ describe("Settings Server Functions", () => {
         metricsApiUrl: "https://api.example.com",
       };
 
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockExisting
-      );
-      (mockDb.familySettings.update as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockUpdated
-      );
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.familySettings.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockUpdated);
 
       const result = await updateFamilySettingsData(
         {
@@ -186,12 +185,12 @@ describe("Settings Server Functions", () => {
         metricsApiUrl: null,
       };
 
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
-      (mockDb.familySettings.create as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockCreated
-      );
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (
+        mockDb.familySettings.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockCreated);
 
       const result = await updateFamilySettingsData(
         {
@@ -220,12 +219,12 @@ describe("Settings Server Functions", () => {
         metricsApiUrl: null,
       };
 
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockExisting
-      );
-      (mockDb.familySettings.update as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockExisting
-      );
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.familySettings.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
 
       await updateFamilySettingsData(
         {
@@ -258,12 +257,12 @@ describe("Settings Server Functions", () => {
         metricsApiUrl: null,
       };
 
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
-      (mockDb.familySettings.create as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockCreated
-      );
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (
+        mockDb.familySettings.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockCreated);
 
       const result = await updateFamilySettingsData(
         {
@@ -439,9 +438,9 @@ describe("Settings Server Functions", () => {
         metricsApiUrl: null,
       };
 
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockSettings
-      );
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockSettings);
 
       // Call with mock to verify DI works
       const result = await getFamilySettingsData(mockDb);
@@ -461,12 +460,12 @@ describe("Settings Server Functions", () => {
 
       const mockUpdated = { ...mockExisting, familyName: "Updated Family" };
 
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockExisting
-      );
-      (mockDb.familySettings.update as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockUpdated
-      );
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockExisting);
+      (
+        mockDb.familySettings.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockUpdated);
 
       await updateFamilySettingsData(
         {

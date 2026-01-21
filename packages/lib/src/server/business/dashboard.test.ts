@@ -23,7 +23,7 @@ import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
   mockStartTimer,
-} from "../../../tests/setup/shared-mocks";
+} from "../../testing/shared-mocks";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -32,7 +32,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
 
 // Import the functions to test
 import {
@@ -144,8 +143,7 @@ describe("Dashboard Server Functions", () => {
 
       await getDashboardStatsData(mockDb);
 
-      const calls = (mockDb.person.count as ReturnType<typeof mock>).mock
-        .calls;
+      const calls = (mockDb.person.count as ReturnType<typeof mock>).mock.calls;
       expect(calls).toHaveLength(3);
       expect(calls[1]?.[0]).toEqual({ where: { isLiving: true } });
       expect(calls[2]?.[0]).toEqual({ where: { isLiving: false } });
@@ -243,7 +241,10 @@ describe("Dashboard Server Functions", () => {
         []
       );
 
-      await getRecentActivityData({ entityTypes: ["PERSON", "RELATIONSHIP"] }, mockDb);
+      await getRecentActivityData(
+        { entityTypes: ["PERSON", "RELATIONSHIP"] },
+        mockDb
+      );
 
       const call = (mockDb.auditLog.findMany as ReturnType<typeof mock>).mock
         .calls[0];
@@ -311,7 +312,10 @@ describe("Dashboard Server Functions", () => {
         },
       ]);
 
-      const result = await getRecentActivityData({ searchQuery: "John" }, mockDb);
+      const result = await getRecentActivityData(
+        { searchQuery: "John" },
+        mockDb
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe("log-1");
@@ -359,7 +363,9 @@ describe("Dashboard Server Functions", () => {
 
   describe("getActivityFilterOptionsData", () => {
     it("should return empty options when no data exists", async () => {
-      (mockDb.auditLog.groupBy as ReturnType<typeof mock>).mockResolvedValue([]);
+      (mockDb.auditLog.groupBy as ReturnType<typeof mock>).mockResolvedValue(
+        []
+      );
       (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValue([]);
 
       const result = await getActivityFilterOptionsData(mockDb);
@@ -418,7 +424,9 @@ describe("Dashboard Server Functions", () => {
     });
 
     it("should list users who performed actions", async () => {
-      (mockDb.auditLog.groupBy as ReturnType<typeof mock>).mockResolvedValue([]);
+      (mockDb.auditLog.groupBy as ReturnType<typeof mock>).mockResolvedValue(
+        []
+      );
       (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValue([
         { id: "user-1", name: "Admin" },
         { id: "user-2", name: "Editor" },
@@ -436,7 +444,9 @@ describe("Dashboard Server Functions", () => {
     });
 
     it("should order users by name", async () => {
-      (mockDb.auditLog.groupBy as ReturnType<typeof mock>).mockResolvedValue([]);
+      (mockDb.auditLog.groupBy as ReturnType<typeof mock>).mockResolvedValue(
+        []
+      );
       (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValue([]);
 
       await getActivityFilterOptionsData(mockDb);
@@ -464,9 +474,9 @@ describe("Dashboard Server Functions", () => {
 
     it("should handle database errors in getRecentActivityData", async () => {
       const error = new Error("Database error");
-      (mockDb.auditLog.findMany as ReturnType<typeof mock>).mockRejectedValueOnce(
-        error
-      );
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(error);
 
       try {
         await getRecentActivityData({}, mockDb);
@@ -478,9 +488,9 @@ describe("Dashboard Server Functions", () => {
 
     it("should handle database errors in getActivityFilterOptionsData", async () => {
       const error = new Error("Database error");
-      (mockDb.auditLog.groupBy as ReturnType<typeof mock>).mockRejectedValueOnce(
-        error
-      );
+      (
+        mockDb.auditLog.groupBy as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(error);
 
       try {
         await getActivityFilterOptionsData(mockDb);

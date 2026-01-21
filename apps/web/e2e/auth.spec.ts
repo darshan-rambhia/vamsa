@@ -2,7 +2,14 @@
  * Feature: User Authentication
  * Tests login, logout, and protected route access
  */
-import { test, expect, bdd, TEST_USERS, vamsaExpect } from "./fixtures";
+import {
+  test,
+  expect,
+  bdd,
+  TEST_USERS,
+  vamsaExpect,
+  formValidation,
+} from "./fixtures";
 import { LoginPage } from "./fixtures/page-objects";
 
 test.describe("Feature: User Authentication", () => {
@@ -16,26 +23,31 @@ test.describe("Feature: User Authentication", () => {
       });
 
       await bdd.then("login form is displayed", async () => {
-        await expect(page.locator('input[name="email"]')).toBeVisible();
-        await expect(page.locator('input[name="password"]')).toBeVisible();
-        await expect(page.locator('button[type="submit"]')).toBeVisible();
+        // Use test IDs for React controlled components
+        await expect(page.getByTestId("login-email-input")).toBeVisible();
+        await expect(page.getByTestId("login-password-input")).toBeVisible();
+        await expect(page.getByTestId("login-submit-button")).toBeVisible();
         await expect(page.locator("text=Vamsa")).toBeVisible();
       });
     });
 
     test("should validate empty form submission on login", async ({ page }) => {
-      await bdd.given("user is on login page", async () => {
-        const loginPage = new LoginPage(page);
-        await loginPage.goto();
-      });
-
-      await bdd.when("user submits empty form", async () => {
-        const loginPage = new LoginPage(page);
-        await loginPage.submitButton.click();
-      });
-
-      await bdd.then("form validation prevents submission", async () => {
-        await expect(page).toHaveURL(/\/login/);
+      await formValidation.testEmptySubmission(page, {
+        formUrl: "/login",
+        formTestId: "login-form",
+        submitButtonTestId: "login-submit-button",
+        fields: [
+          {
+            testId: "login-email-input",
+            fieldName: "email",
+            testValue: "test@example.com",
+          },
+          {
+            testId: "login-password-input",
+            fieldName: "password",
+            testValue: "TestPassword123!",
+          },
+        ],
       });
     });
 
@@ -65,7 +77,7 @@ test.describe("Feature: User Authentication", () => {
         "/people",
         "/dashboard",
         "/admin",
-        "/tree",
+        "/visualize",
         "/activity",
       ];
 
@@ -94,8 +106,9 @@ test.describe("Feature: User Authentication", () => {
       });
 
       await bdd.then("login form is visible on mobile", async () => {
-        await expect(page.locator('input[name="email"]')).toBeVisible();
-        await expect(page.locator('input[name="password"]')).toBeVisible();
+        // Use test IDs for React controlled components
+        await expect(page.getByTestId("login-email-input")).toBeVisible();
+        await expect(page.getByTestId("login-password-input")).toBeVisible();
       });
 
       await bdd.and("form card has proper width on mobile", async () => {
@@ -109,6 +122,9 @@ test.describe("Feature: User Authentication", () => {
   });
 
   test.describe("Authenticated tests", () => {
+    // Clear pre-authenticated storage state to test actual login flow
+    test.use({ storageState: { cookies: [], origins: [] } });
+
     test("should successfully login with valid credentials", async ({
       page,
       login,
@@ -182,8 +198,8 @@ test.describe("Feature: User Authentication", () => {
         await page.goto("/people");
         await expect(page).toHaveURL("/people");
 
-        await page.goto("/tree");
-        await expect(page).toHaveURL(/\/tree(\?|$)/);
+        await page.goto("/visualize");
+        await expect(page).toHaveURL(/\/visualize/);
       });
 
       await bdd.then("session remains active", async () => {

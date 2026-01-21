@@ -28,10 +28,7 @@ mock.module("@vamsa/lib/logger", () => ({
 
 // Import the module (logger mock is applied by this file)
 import { sendBackupNotification } from "./notifications";
-import type {
-  NotificationType,
-  BackupNotificationInput,
-} from "./notifications";
+import type { BackupNotificationInput } from "./notifications";
 
 describe("Backup Notifications", () => {
   beforeEach(() => {
@@ -309,15 +306,15 @@ describe("Backup Notifications", () => {
 
       await sendBackupNotification(input);
 
-      const calls = mockLogger.info.mock.calls;
+      const calls = mockLogger.info.mock.calls as unknown[][];
       const subjectCall = calls.find((call) => {
         const args = call[0];
         return (
           typeof args === "object" &&
           args !== null &&
           "subject" in args &&
-          typeof (args as any).subject === "string" &&
-          (args as any).subject.includes("Completed")
+          typeof (args as Record<string, unknown>).subject === "string" &&
+          ((args as Record<string, unknown>).subject as string).includes("Completed")
         );
       });
 
@@ -334,15 +331,15 @@ describe("Backup Notifications", () => {
 
       await sendBackupNotification(input);
 
-      const calls = mockLogger.info.mock.calls;
+      const calls = mockLogger.info.mock.calls as unknown[][];
       const subjectCall = calls.find((call) => {
         const args = call[0];
         return (
           typeof args === "object" &&
           args !== null &&
           "subject" in args &&
-          typeof (args as any).subject === "string" &&
-          (args as any).subject.includes("Failed")
+          typeof (args as Record<string, unknown>).subject === "string" &&
+          ((args as Record<string, unknown>).subject as string).includes("Failed")
         );
       });
 

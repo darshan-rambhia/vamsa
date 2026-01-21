@@ -2,7 +2,7 @@
  * Feature: Password Management
  * Tests password change functionality with validation and error handling
  */
-import { test, expect, bdd } from "./fixtures";
+import { test, expect, bdd, formValidation } from "./fixtures";
 
 class ChangePasswordPage {
   readonly page;
@@ -13,7 +13,7 @@ class ChangePasswordPage {
   readonly submitButton;
   readonly errorMessage;
 
-  constructor(page) {
+  constructor(page: any) {
     this.page = page;
     this.form = page.getByTestId("change-password-form");
     this.currentPasswordInput = page.getByTestId(
@@ -70,45 +70,60 @@ test.describe("Feature: Password Management", () => {
   });
 
   test("should validate empty form submission", async ({ page }) => {
-    await bdd.given("user is on change password form", async () => {
-      const changePasswordPage = new ChangePasswordPage(page);
-      await changePasswordPage.goto();
-    });
-
-    await bdd.when("user submits form without filling fields", async () => {
-      const changePasswordPage = new ChangePasswordPage(page);
-      await changePasswordPage.submitButton.click();
-    });
-
-    await bdd.then("form validation prevents submission", async () => {
-      await expect(page).toHaveURL(/\/change-password/);
+    await formValidation.testEmptySubmission(page, {
+      formUrl: "/change-password",
+      formTestId: "change-password-form",
+      submitButtonTestId: "change-password-submit-button",
+      fields: [
+        {
+          testId: "change-password-current-input",
+          fieldName: "current password",
+          testValue: "TestAdmin123!",
+        },
+        {
+          testId: "change-password-new-input",
+          fieldName: "new password",
+          testValue: "NewPassword123!",
+        },
+        {
+          testId: "change-password-confirm-input",
+          fieldName: "confirm password",
+          testValue: "NewPassword123!",
+        },
+      ],
     });
   });
 
   test("should reject password that is too short", async ({ page }) => {
-    await bdd.given("user is on change password form", async () => {
-      const changePasswordPage = new ChangePasswordPage(page);
-      await changePasswordPage.goto();
-    });
-
-    await bdd.when("user submits form with short password", async () => {
-      const changePasswordPage = new ChangePasswordPage(page);
-      await changePasswordPage.changePassword(
-        "TestAdmin123!",
-        "short",
-        "short"
-      );
-    });
-
-    await bdd.then("form prevents submission or shows error", async () => {
-      const isOnChangePasswordPage = page.url().includes("/change-password");
-      const changePasswordPage = new ChangePasswordPage(page);
-      const hasError = await changePasswordPage.errorMessage
-        .isVisible()
-        .catch(() => false);
-
-      expect(isOnChangePasswordPage || hasError).toBeTruthy();
-    });
+    await formValidation.testPasswordValidation(
+      page,
+      {
+        formUrl: "/change-password",
+        formTestId: "change-password-form",
+        submitButtonTestId: "change-password-submit-button",
+        errorMessageTestId: "change-password-error",
+        fields: [
+          {
+            testId: "change-password-current-input",
+            fieldName: "current password",
+            testValue: "TestAdmin123!",
+          },
+          {
+            testId: "change-password-new-input",
+            fieldName: "new password",
+            testValue: "NewPassword123!",
+          },
+          {
+            testId: "change-password-confirm-input",
+            fieldName: "confirm password",
+            testValue: "NewPassword123!",
+          },
+        ],
+      },
+      "change-password-new-input",
+      "change-password-confirm-input",
+      "short"
+    );
   });
 
   test("should reject incorrect current password", async ({ page }) => {
@@ -166,5 +181,33 @@ test.describe("Feature: Password Management", () => {
         expect(boundingBox?.width || 0).toBeGreaterThan(300);
       }
     });
+  });
+
+  test("form keyboard navigation", async ({ page }) => {
+    await page.goto("/change-password");
+
+    // Navigate to form and verify keyboard navigation works
+    const changePasswordPage = new ChangePasswordPage(page);
+    await changePasswordPage.form.waitFor({ state: "visible", timeout: 5000 });
+
+    // Focus first field and tab through form
+    await changePasswordPage.currentPasswordInput.focus();
+    await page.keyboard.type("test");
+    await page.keyboard.press("Tab");
+    await page.waitForTimeout(100);
+
+    // Tab to next field
+    await page.keyboard.type("test2");
+    await page.keyboard.press("Tab");
+    await page.waitForTimeout(100);
+
+    // Tab to confirm field
+    await page.keyboard.type("test2");
+    await page.keyboard.press("Tab");
+    await page.waitForTimeout(100);
+
+    // Page should remain functional after keyboard navigation
+    await expect(page).toHaveURL(/change-password/);
+    await expect(changePasswordPage.form).toBeVisible();
   });
 });

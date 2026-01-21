@@ -35,7 +35,10 @@ export type ClaimDb = Pick<PrismaClient, "user" | "person">;
  * @returns Object with all unclaimed profiles and suggested matches
  * @throws Error if user not found or not an OIDC user
  */
-export async function getClaimableProfilesData(userId: string, db: ClaimDb = defaultPrisma) {
+export async function getClaimableProfilesData(
+  userId: string,
+  db: ClaimDb = defaultPrisma
+) {
   const user = await db.user.findUnique({
     where: { id: userId },
   });
@@ -231,7 +234,10 @@ export async function claimProfileForOIDCData(
  * @returns Object with success status
  * @throws Error if user not found, already claimed, or not an OIDC user
  */
-export async function skipProfileClaimData(userId: string, db: ClaimDb = defaultPrisma) {
+export async function skipProfileClaimData(
+  userId: string,
+  db: ClaimDb = defaultPrisma
+) {
   const user = await db.user.findUnique({
     where: { id: userId },
   });
@@ -276,7 +282,10 @@ export async function skipProfileClaimData(userId: string, db: ClaimDb = default
  * @param db - Optional database client (defaults to prisma)
  * @returns Claim status object with user and person details, or null if not OIDC user
  */
-export async function getOIDCClaimStatusData(userId: string, db: ClaimDb = defaultPrisma) {
+export async function getOIDCClaimStatusData(
+  userId: string,
+  db: ClaimDb = defaultPrisma
+) {
   const user = await db.user.findUnique({
     where: { id: userId },
   });

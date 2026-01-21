@@ -24,7 +24,7 @@ import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
   mockStartTimer,
-} from "../../../tests/setup/shared-mocks";
+} from "../../testing/shared-mocks";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -97,18 +97,18 @@ describe("Backup Server Functions", () => {
       (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockPeople
       );
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockRelationships
-      );
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockRelationships);
       (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUsers
       );
-      (mockDb.suggestion.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        []
-      );
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockSettings
-      );
+      (
+        mockDb.suggestion.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockSettings);
 
       const options: BackupExportInput = {
         auditLogDays: 90,
@@ -140,21 +140,21 @@ describe("Backup Server Functions", () => {
       (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        []
-      );
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
       (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
-      (mockDb.suggestion.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        []
-      );
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
-      (mockDb.auditLog.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockAuditLogs
-      );
+      (
+        mockDb.suggestion.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockAuditLogs);
 
       const options: BackupExportInput = {
         auditLogDays: 90,
@@ -175,21 +175,21 @@ describe("Backup Server Functions", () => {
       (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        []
-      );
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
       (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
-      (mockDb.suggestion.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        []
-      );
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
-      (mockDb.mediaObject.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockMedia
-      );
+      (
+        mockDb.suggestion.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
+      (
+        mockDb.mediaObject.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockMedia);
 
       const options: BackupExportInput = {
         auditLogDays: 90,
@@ -206,18 +206,18 @@ describe("Backup Server Functions", () => {
       (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
-      (mockDb.relationship.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        []
-      );
+      (
+        mockDb.relationship.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
       (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
-      (mockDb.suggestion.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
-        []
-      );
-      (mockDb.familySettings.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDb.suggestion.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
+      (
+        mockDb.familySettings.findFirst as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(null);
 
       const options: BackupExportInput = {
         auditLogDays: 90,
@@ -251,7 +251,11 @@ describe("Backup Server Functions", () => {
       const metadata = {
         version: "1.0.0",
         exportedAt: new Date().toISOString(),
-        exportedBy: { id: "u1", email: "admin@example.com", name: null as string | null },
+        exportedBy: {
+          id: "u1",
+          email: "admin@example.com",
+          name: null as string | null,
+        },
         statistics: {
           totalPeople: 0,
           totalRelationships: 0,

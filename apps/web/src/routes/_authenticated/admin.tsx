@@ -9,7 +9,15 @@ import { Container, PageHeader, Badge } from "@vamsa/ui";
 import { cn } from "@vamsa/ui";
 
 export const Route = createFileRoute("/_authenticated/admin")({
-  beforeLoad: ({ location }) => {
+  beforeLoad: ({ location, context }) => {
+    // Security: Verify user has admin role
+    // The parent _authenticated route provides user in context
+    const user = context?.user as { role?: string } | undefined;
+    if (!user || user.role !== "ADMIN") {
+      // Redirect non-admin users to dashboard
+      throw redirect({ to: "/dashboard" });
+    }
+
     // Redirect /admin to /admin/settings as the default view
     if (location.pathname === "/admin" || location.pathname === "/admin/") {
       throw redirect({ to: "/admin/settings" });

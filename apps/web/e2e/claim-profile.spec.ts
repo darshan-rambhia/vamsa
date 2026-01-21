@@ -2,7 +2,7 @@
  * Feature: Profile Claiming
  * Tests profile claiming functionality with validation and error handling
  */
-import { test, expect, bdd } from "./fixtures";
+import { test, expect, bdd, formValidation } from "./fixtures";
 
 class ClaimProfilePage {
   readonly page;
@@ -78,29 +78,28 @@ test.describe("Feature: Profile Claiming", () => {
     });
 
     test("should validate empty form submission", async ({ page }) => {
-      await bdd.given("user is on claim profile form", async () => {
-        const claimProfilePage = new ClaimProfilePage(page);
-        await claimProfilePage.goto();
-      });
-
-      await bdd.when("user submits form without filling fields", async () => {
-        const claimProfilePage = new ClaimProfilePage(page);
-        const selectVisible = await claimProfilePage.profileSelect
-          .isVisible()
-          .catch(() => false);
-
-        if (!selectVisible) {
-          test.skip();
-        }
-
-        const isDisabled = await claimProfilePage.submitButton.isDisabled();
-        expect(isDisabled).toBeFalsy();
-
-        await claimProfilePage.submitButton.click();
-      });
-
-      await bdd.then("form validation prevents submission", async () => {
-        await expect(page).toHaveURL(/\/claim-profile/);
+      await formValidation.testEmptySubmission(page, {
+        formUrl: "/claim-profile",
+        formTestId: "claim-profile-form",
+        submitButtonTestId: "claim-profile-submit-button",
+        errorMessageTestId: "claim-profile-error",
+        fields: [
+          {
+            testId: "claim-profile-select",
+            fieldName: "profile",
+            testValue: "",
+          },
+          {
+            testId: "claim-profile-email-input",
+            fieldName: "email",
+            testValue: "test@example.com",
+          },
+          {
+            testId: "claim-profile-password-input",
+            fieldName: "password",
+            testValue: "TestPassword123!",
+          },
+        ],
       });
     });
 
@@ -110,42 +109,25 @@ test.describe("Feature: Profile Claiming", () => {
         await claimProfilePage.goto();
       });
 
-      await bdd.when("user submits form with short password", async () => {
-        const claimProfilePage = new ClaimProfilePage(page);
-        const selectVisible = await claimProfilePage.profileSelect
-          .isVisible()
-          .catch(() => false);
-
-        if (!selectVisible) {
-          test.skip();
-        }
-
-        await claimProfilePage.profileSelect.click();
-        await page.waitForTimeout(200);
-
-        const firstOption = page.getByRole("option").first();
-        const optionCount = await page.getByRole("option").count();
-
-        if (optionCount === 0) {
-          test.skip();
-        }
-
-        await firstOption.click();
-
-        const shortPasswordEmail = `test-short-${Date.now()}@example.com`;
-        await claimProfilePage.emailInput.fill(shortPasswordEmail);
-        await claimProfilePage.passwordInput.fill("short");
-        await claimProfilePage.submitButton.click();
+      await bdd.when("user enters a short password and submits", async () => {
+        // Fill email with valid email
+        await page
+          .getByTestId("claim-profile-email-input")
+          .fill("test@example.com");
+        // Fill password with short value
+        await page.getByTestId("claim-profile-password-input").fill("short");
+        // Submit
+        await page.getByTestId("claim-profile-submit-button").click();
       });
 
       await bdd.then("form prevents submission or shows error", async () => {
-        const isOnClaimProfilePage = page.url().includes("/claim-profile");
-        const claimProfilePage = new ClaimProfilePage(page);
-        const hasError = await claimProfilePage.errorMessage
+        // Should stay on form page or show error
+        const isOnFormPage = page.url().includes("/claim-profile");
+        const errorVisible = await page
+          .getByTestId("claim-profile-error")
           .isVisible()
           .catch(() => false);
-
-        expect(isOnClaimProfilePage || hasError).toBeTruthy();
+        expect(isOnFormPage || errorVisible).toBeTruthy();
       });
     });
 
