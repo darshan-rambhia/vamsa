@@ -287,8 +287,8 @@ describe("Authentication Server Functions", () => {
 
   describe("Token Constants", () => {
     it("should have correct token cookie name", () => {
-      const TOKEN_COOKIE_NAME = "vamsa-session";
-      expect(TOKEN_COOKIE_NAME).toEqual("vamsa-session");
+      const TOKEN_COOKIE_NAME = "better-auth.session_token";
+      expect(TOKEN_COOKIE_NAME).toEqual("better-auth.session_token");
     });
 
     it("should have correct token max age (30 days)", () => {

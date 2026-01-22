@@ -14,7 +14,8 @@
     "./logger": "./src/logger.ts",
     "./server": "./src/server/index.ts",
     "./server/business": "./src/server/business/index.ts",
-    "./media": "./src/media/processor.ts"
+    "./media": "./src/media/processor.ts",
+    "./stories": "./src/stories/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -24,7 +25,6 @@
   },
   "dependencies": {
     "archiver": "^7.0.1",
-    "arctic": "^3.7.0",
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.1.0",
     "i18next": "^25.7.4",
@@ -39,6 +39,7 @@
     "@types/i18next": "^13.0.0",
     "@types/i18next-fs-backend": "^1.2.0",
     "@types/stream-buffers": "^3.0.8",
+    "better-auth": "^1.4.17",
     "i18next": "^25.7.4",
     "i18next-fs-backend": "^2.6.1",
     "typescript": "^5.9.3"

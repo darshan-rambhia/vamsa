@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { register } from "~/server/auth";
+import { signUp } from "~/lib/auth-client";
 import {
   Button,
   Card,
@@ -31,10 +31,19 @@ function RegisterComponent() {
     setError(null);
     setIsLoading(true);
 
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      await register({
-        data: { name, email, password, confirmPassword },
-      });
+      const result = await signUp.email({ email, name, password });
+      if (result.error) {
+        setError(result.error.message || "Registration failed");
+        setIsLoading(false);
+        return;
+      }
       navigate({ to: "/login", search: { registered: true } });
     } catch (err) {
       const errorMessage =

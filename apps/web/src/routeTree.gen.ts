@@ -23,9 +23,6 @@ import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
 import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
 import { Route as AuthenticatedMapsIndexRouteImport } from './routes/_authenticated/maps/index'
-import { Route as AuthMicrosoftCallbackRouteImport } from './routes/auth/microsoft/callback'
-import { Route as AuthGoogleCallbackRouteImport } from './routes/auth/google/callback'
-import { Route as AuthGithubCallbackRouteImport } from './routes/auth/github/callback'
 import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
 import { Route as AuthenticatedSettingsCalendarTokensRouteImport } from './routes/_authenticated/settings/calendar-tokens'
 import { Route as AuthenticatedPeopleNewRouteImport } from './routes/_authenticated/people/new'
@@ -111,21 +108,6 @@ const AuthenticatedMapsIndexRoute = AuthenticatedMapsIndexRouteImport.update({
   id: '/maps/',
   path: '/maps/',
   getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthMicrosoftCallbackRoute = AuthMicrosoftCallbackRouteImport.update({
-  id: '/auth/microsoft/callback',
-  path: '/auth/microsoft/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthGoogleCallbackRoute = AuthGoogleCallbackRouteImport.update({
-  id: '/auth/google/callback',
-  path: '/auth/google/callback',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthGithubCallbackRoute = AuthGithubCallbackRouteImport.update({
-  id: '/auth/github/callback',
-  path: '/auth/github/callback',
-  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedSettingsProfileRoute =
   AuthenticatedSettingsProfileRouteImport.update({
@@ -234,9 +216,6 @@ export interface FileRoutesByFullPath {
   '/people/new': typeof AuthenticatedPeopleNewRoute
   '/settings/calendar-tokens': typeof AuthenticatedSettingsCalendarTokensRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
-  '/auth/github/callback': typeof AuthGithubCallbackRoute
-  '/auth/google/callback': typeof AuthGoogleCallbackRoute
-  '/auth/microsoft/callback': typeof AuthMicrosoftCallbackRoute
   '/maps': typeof AuthenticatedMapsIndexRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
   '/people/$personId/edit': typeof AuthenticatedPeoplePersonIdEditRoute
@@ -266,9 +245,6 @@ export interface FileRoutesByTo {
   '/people/new': typeof AuthenticatedPeopleNewRoute
   '/settings/calendar-tokens': typeof AuthenticatedSettingsCalendarTokensRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
-  '/auth/github/callback': typeof AuthGithubCallbackRoute
-  '/auth/google/callback': typeof AuthGoogleCallbackRoute
-  '/auth/microsoft/callback': typeof AuthMicrosoftCallbackRoute
   '/maps': typeof AuthenticatedMapsIndexRoute
   '/people': typeof AuthenticatedPeopleIndexRoute
   '/people/$personId/edit': typeof AuthenticatedPeoplePersonIdEditRoute
@@ -300,9 +276,6 @@ export interface FileRoutesById {
   '/_authenticated/people/new': typeof AuthenticatedPeopleNewRoute
   '/_authenticated/settings/calendar-tokens': typeof AuthenticatedSettingsCalendarTokensRoute
   '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
-  '/auth/github/callback': typeof AuthGithubCallbackRoute
-  '/auth/google/callback': typeof AuthGoogleCallbackRoute
-  '/auth/microsoft/callback': typeof AuthMicrosoftCallbackRoute
   '/_authenticated/maps/': typeof AuthenticatedMapsIndexRoute
   '/_authenticated/people/': typeof AuthenticatedPeopleIndexRoute
   '/_authenticated/people/$personId_/edit': typeof AuthenticatedPeoplePersonIdEditRoute
@@ -334,9 +307,6 @@ export interface FileRouteTypes {
     | '/people/new'
     | '/settings/calendar-tokens'
     | '/settings/profile'
-    | '/auth/github/callback'
-    | '/auth/google/callback'
-    | '/auth/microsoft/callback'
     | '/maps'
     | '/people'
     | '/people/$personId/edit'
@@ -366,9 +336,6 @@ export interface FileRouteTypes {
     | '/people/new'
     | '/settings/calendar-tokens'
     | '/settings/profile'
-    | '/auth/github/callback'
-    | '/auth/google/callback'
-    | '/auth/microsoft/callback'
     | '/maps'
     | '/people'
     | '/people/$personId/edit'
@@ -399,9 +366,6 @@ export interface FileRouteTypes {
     | '/_authenticated/people/new'
     | '/_authenticated/settings/calendar-tokens'
     | '/_authenticated/settings/profile'
-    | '/auth/github/callback'
-    | '/auth/google/callback'
-    | '/auth/microsoft/callback'
     | '/_authenticated/maps/'
     | '/_authenticated/people/'
     | '/_authenticated/people/$personId_/edit'
@@ -414,9 +378,6 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
   InviteTokenRoute: typeof InviteTokenRoute
-  AuthGithubCallbackRoute: typeof AuthGithubCallbackRoute
-  AuthGoogleCallbackRoute: typeof AuthGoogleCallbackRoute
-  AuthMicrosoftCallbackRoute: typeof AuthMicrosoftCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -518,27 +479,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/maps'
       preLoaderRoute: typeof AuthenticatedMapsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
-    }
-    '/auth/microsoft/callback': {
-      id: '/auth/microsoft/callback'
-      path: '/auth/microsoft/callback'
-      fullPath: '/auth/microsoft/callback'
-      preLoaderRoute: typeof AuthMicrosoftCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/google/callback': {
-      id: '/auth/google/callback'
-      path: '/auth/google/callback'
-      fullPath: '/auth/google/callback'
-      preLoaderRoute: typeof AuthGoogleCallbackRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth/github/callback': {
-      id: '/auth/github/callback'
-      path: '/auth/github/callback'
-      fullPath: '/auth/github/callback'
-      preLoaderRoute: typeof AuthGithubCallbackRouteImport
-      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/settings/profile': {
       id: '/_authenticated/settings/profile'
@@ -712,9 +652,6 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   InviteTokenRoute: InviteTokenRoute,
-  AuthGithubCallbackRoute: AuthGithubCallbackRoute,
-  AuthGoogleCallbackRoute: AuthGoogleCallbackRoute,
-  AuthMicrosoftCallbackRoute: AuthMicrosoftCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

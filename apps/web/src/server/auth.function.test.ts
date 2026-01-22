@@ -299,8 +299,8 @@ describe("Authentication Server Functions (auth.function.ts)", () => {
 
   describe("Cookie Configuration & Constants", () => {
     it("should define correct token cookie name", () => {
-      const TOKEN_COOKIE_NAME = "vamsa-session";
-      expect(TOKEN_COOKIE_NAME).toBe("vamsa-session");
+      const TOKEN_COOKIE_NAME = "better-auth.session_token";
+      expect(TOKEN_COOKIE_NAME).toBe("better-auth.session_token");
     });
 
     it("should define correct token max age (30 days)", () => {
@@ -659,11 +659,11 @@ describe("Authentication Server Functions (auth.function.ts)", () => {
 
     it("should clear cookies on logout", () => {
       const cookies: { [key: string]: string | null } = {
-        "vamsa-session": "token-value",
+        "better-auth.session_token": "token-value",
       };
 
-      cookies["vamsa-session"] = null;
-      expect(cookies["vamsa-session"]).toBeNull();
+      cookies["better-auth.session_token"] = null;
+      expect(cookies["better-auth.session_token"]).toBeNull();
     });
 
     it("should delete sessions from database on logout", () => {

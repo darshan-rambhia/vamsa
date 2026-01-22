@@ -1,190 +1,28 @@
 "use server";
 
 import { createServerFn } from "@tanstack/react-start";
+import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
 import {
-  getCookie,
-  setCookie,
-  deleteCookie,
-} from "./test-helpers/react-start-server";
-import {
-  loginUser,
-  registerUser,
-  claimProfileAsUser,
-  changeUserPassword,
-  verifySessionToken,
-  createSessionToken,
-  hashToken,
-  TOKEN_COOKIE_NAME,
-  TOKEN_MAX_AGE,
+  betterAuthGetSessionWithUserFromCookie,
+  betterAuthChangePassword,
+  betterAuthSignOut,
+  getBetterAuthProviders,
+  betterAuthRegister,
 } from "@vamsa/lib/server/business";
 import {
-  loginSchema,
-  registerSchema,
-  claimProfileSchema,
   changePasswordSchema,
+  claimProfileSchema,
 } from "@vamsa/schemas";
 import { prisma } from "@vamsa/lib/server";
 import { logger } from "@vamsa/lib/logger";
 import { t } from "@vamsa/lib/server";
 import {
   checkRateLimit,
-  resetRateLimit,
   getClientIP,
 } from "./middleware/rate-limiter";
 import { notifyNewMemberJoined } from "@vamsa/lib/server/business";
 
-/**
- * Get the current session token from cookie
- * Wrapper function for retrieving session token without validation
- *
- * @returns Current session token or null if not set
- *
- * @example
- * const token = await getSessionToken();
- */
-export const getSessionToken = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const token = getCookie(TOKEN_COOKIE_NAME);
-    return token ?? null;
-  }
-);
-
-/**
- * Set a session token in cookie
- * Raw cookie operation - typically used internally
- *
- * @param token - Session token to store
- * @returns Success confirmation
- *
- * @example
- * await setSessionToken(token);
- */
-export const setSessionToken = createServerFn({ method: "POST" })
-  .inputValidator((data: { token: string }) => data)
-  .handler(async ({ data }) => {
-    setCookie(TOKEN_COOKIE_NAME, data.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: TOKEN_MAX_AGE,
-      path: "/",
-    });
-    return { success: true };
-  });
-
-/**
- * Clear the session token from cookie
- * Used during logout
- *
- * @returns Success confirmation
- *
- * @example
- * await clearSessionToken();
- */
-export const clearSessionToken = createServerFn({ method: "POST" }).handler(
-  async () => {
-    deleteCookie(TOKEN_COOKIE_NAME);
-    return { success: true };
-  }
-);
-
-/**
- * Login user with email and password
- * Validates credentials, handles account lockout, and creates session
- *
- * @param email - User email
- * @param password - User password
- * @returns Authenticated user object
- * @throws Error for invalid credentials, disabled account, or lockout
- *
- * @example
- * const { user } = await login({ email: "john@example.com", password: "pass123" });
- */
-export const login = createServerFn({ method: "POST" })
-  .inputValidator((data: { email: string; password: string }) => {
-    return loginSchema.parse(data);
-  })
-  .handler(async ({ data }) => {
-    const { email, password } = data;
-
-    // Rate limit by IP address
-    const clientIP = getClientIP();
-    checkRateLimit("login", clientIP);
-
-    try {
-      const { user, token } = await loginUser(email, password);
-
-      // Set cookie
-      logger.debug({ userId: user.id }, "Setting session cookie");
-      setCookie(TOKEN_COOKIE_NAME, token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: TOKEN_MAX_AGE,
-        path: "/",
-      });
-
-      // Reset rate limit on successful login
-      resetRateLimit("login", clientIP);
-
-      return {
-        success: true,
-        user,
-      };
-    } catch (error) {
-      logger.warn({ email: email.toLowerCase(), error }, "Login failed");
-      throw error;
-    }
-  });
-
-/**
- * Register new user with email, name, and password
- * Creates VIEWER role account, requires self-registration to be enabled
- *
- * @param email - User email
- * @param name - User full name
- * @param password - User password (min 8 chars)
- * @param confirmPassword - Password confirmation (validated in schema)
- * @returns New user ID
- * @throws Error if email exists, self-registration disabled, or validation fails
- *
- * @example
- * const { userId } = await register({
- *   email: "jane@example.com",
- *   name: "Jane Doe",
- *   password: "newpass123",
- *   confirmPassword: "newpass123"
- * });
- */
-export const register = createServerFn({ method: "POST" })
-  .inputValidator(
-    (data: {
-      email: string;
-      name: string;
-      password: string;
-      confirmPassword: string;
-    }) => {
-      return registerSchema.parse(data);
-    }
-  )
-  .handler(async ({ data }) => {
-    const { email, name, password } = data;
-
-    // Rate limit by IP address
-    const clientIP = getClientIP();
-    checkRateLimit("register", clientIP);
-
-    try {
-      const userId = await registerUser(email, name, password);
-
-      logger.info({ userId }, "Registration successful");
-
-      return { success: true, userId };
-    } catch (error) {
-      logger.warn({ email: email.toLowerCase(), error }, "Registration failed");
-      throw error;
-    }
-  });
+const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 
 /**
  * Get unclaimed living profiles available for claiming
@@ -263,14 +101,70 @@ export const claimProfile = createServerFn({ method: "POST" })
     checkRateLimit("claimProfile", clientIP);
 
     try {
-      const userId = await claimProfileAsUser(email, personId, password);
+      // Validate person exists and is living
+      const person = await prisma.person.findUnique({
+        where: { id: personId },
+      });
+
+      if (!person || !person.isLiving) {
+        logger.warn({ personId }, "Profile not found or cannot be claimed");
+        throw new Error(await t("errors:person.notFound"));
+      }
+
+      // Check if already claimed
+      const existingUser = await prisma.user.findUnique({
+        where: { personId },
+      });
+
+      if (existingUser) {
+        logger.warn({ personId }, "Profile is already claimed");
+        throw new Error("This profile is already claimed");
+      }
+
+      // Check if email already exists
+      const existingEmail = await prisma.user.findUnique({
+        where: { email: email.toLowerCase() },
+      });
+
+      if (existingEmail) {
+        logger.warn({ email: email.toLowerCase() }, "Email already in use");
+        throw new Error(await t("errors:user.alreadyExists"));
+      }
+
+      // Create user via Better Auth - note: can't pass headers directly from server function
+      // Better Auth will create user and set cookie via tanstackStartCookies plugin
+      const result = await betterAuthRegister(
+        email,
+        `${person.firstName} ${person.lastName}`,
+        password
+      );
+
+      if (!result?.user) {
+        logger.warn({ email }, "Failed to create user via Better Auth");
+        throw new Error("Failed to create user");
+      }
+
+      // Update user with Vamsa-specific fields
+      await prisma.user.update({
+        where: { id: result.user.id },
+        data: {
+          personId,
+          role: "MEMBER",
+          profileClaimStatus: "CLAIMED",
+          profileClaimedAt: new Date(),
+        },
+      });
+
+      logger.info({ userId: result.user.id, personId }, "Profile claimed successfully");
 
       // Send notification about new family member joined
-      await notifyNewMemberJoined(userId);
+      try {
+        await notifyNewMemberJoined(result.user.id);
+      } catch (error) {
+        logger.warn({ userId: result.user.id, error }, "Failed to send notification");
+      }
 
-      logger.info({ userId, personId }, "Profile claimed successfully");
-
-      return { success: true, userId };
+      return { success: true, userId: result.user.id };
     } catch (error) {
       logger.warn(
         { email: email.toLowerCase(), personId, error },
@@ -307,10 +201,15 @@ export const changePassword = createServerFn({ method: "POST" })
     }
   )
   .handler(async ({ data }) => {
-    const token = getCookie(TOKEN_COOKIE_NAME);
-
     try {
-      await changeUserPassword(token, data.currentPassword, data.newPassword);
+      const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
+      await betterAuthChangePassword(
+        data.currentPassword,
+        data.newPassword,
+        new Headers({
+          cookie: cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : "",
+        })
+      );
 
       logger.info("Password changed successfully");
 
@@ -320,40 +219,6 @@ export const changePassword = createServerFn({ method: "POST" })
       throw error;
     }
   });
-
-/**
- * Logout user by deleting session from database and clearing cookie
- * Safe to call even if user is not authenticated
- *
- * @returns Success confirmation
- *
- * @example
- * await logout();
- */
-export const logout = createServerFn({ method: "POST" }).handler(async () => {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-
-  if (token) {
-    try {
-      // Delete session from database (hash token for lookup)
-      const tokenHash = hashToken(token);
-      await prisma.session.deleteMany({
-        where: { token: tokenHash },
-      });
-      logger.debug("Session deleted from database");
-    } catch (error) {
-      logger.warn({ error }, "Failed to delete session from database");
-      // Continue with cookie deletion even if DB deletion fails
-    }
-  }
-
-  // Clear cookie
-  deleteCookie(TOKEN_COOKIE_NAME);
-
-  logger.info("Logout completed");
-
-  return { success: true };
-});
 
 /**
  * Get current authenticated user from session
@@ -369,16 +234,16 @@ export const logout = createServerFn({ method: "POST" }).handler(async () => {
  */
 export const getSession = createServerFn({ method: "GET" }).handler(
   async () => {
-    const token = getCookie(TOKEN_COOKIE_NAME);
-    const user = await verifySessionToken(token);
-
-    if (!user) {
-      // Session invalid or expired, ensure cookie is cleared
-      deleteCookie(TOKEN_COOKIE_NAME);
+    try {
+      const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
+      const user = await betterAuthGetSessionWithUserFromCookie(
+        cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
+      );
+      return user;
+    } catch (error) {
+      logger.debug({ error }, "Failed to get session");
       return null;
     }
-
-    return user;
   }
 );
 
@@ -395,68 +260,65 @@ export const getSession = createServerFn({ method: "GET" }).handler(
  * }
  */
 export const checkAuth = createServerFn({ method: "GET" }).handler(async () => {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  const user = await verifySessionToken(token);
+  try {
+    const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
+    const user = await betterAuthGetSessionWithUserFromCookie(
+      cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
+    );
 
-  if (!user) {
+    if (!user) {
+      return { valid: false, user: null };
+    }
+
+    return {
+      valid: true,
+      user,
+    };
+  } catch (error) {
+    logger.debug({ error }, "Auth check failed");
     return { valid: false, user: null };
   }
-
-  return {
-    valid: true,
-    user,
-  };
 });
 
 /**
- * Refresh session token by creating a new one
- * Invalidates old session and sets new cookie
- * Useful for extending session timeout on activity
+ * Logout user by invalidating session
+ * Safe to call even if user is not authenticated
  *
- * @returns New session token
- * @throws Error if user is not authenticated
+ * @returns Success confirmation
  *
  * @example
- * const { token } = await refreshSession();
+ * await logout();
  */
-export const refreshSession = createServerFn({ method: "POST" }).handler(
+export const logout = createServerFn({ method: "POST" }).handler(async () => {
+  try {
+    const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
+    await betterAuthSignOut(
+      new Headers({
+        cookie: cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : "",
+      })
+    );
+    logger.info("Logout completed");
+  } catch (error) {
+    logger.warn({ error }, "Logout failed");
+    // Continue even if logout fails (e.g., no active session)
+  }
+
+  return { success: true };
+});
+
+/**
+ * Get available Better Auth providers
+ * Returns which OAuth/OIDC providers are configured
+ *
+ * @returns Object with boolean flags for each provider
+ *
+ * @example
+ * const providers = await getAvailableProviders();
+ * // { google: true, github: false, microsoft: false, oidc: true }
+ */
+export const getAvailableProviders = createServerFn({ method: "GET" }).handler(
   async () => {
-    const token = getCookie(TOKEN_COOKIE_NAME);
-
-    // Verify current session
-    const user = await verifySessionToken(token);
-    if (!user) {
-      throw new Error(await t("errors:auth.notAuthenticated"));
-    }
-
-    logger.debug({ userId: user.id }, "Refreshing session token");
-
-    // Delete old session if token exists
-    if (token) {
-      const tokenHash = hashToken(token);
-      await prisma.session.deleteMany({
-        where: { token: tokenHash },
-      });
-    }
-
-    // Create new session token
-    const { token: newToken } = await createSessionToken(user.id);
-
-    // Set new cookie
-    setCookie(TOKEN_COOKIE_NAME, newToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: TOKEN_MAX_AGE,
-      path: "/",
-    });
-
-    logger.info({ userId: user.id }, "Session token refreshed");
-
-    return {
-      success: true,
-      token: newToken,
-    };
+    return getBetterAuthProviders();
   }
 );
 

@@ -57,6 +57,8 @@ export const ModelName = {
   Person: "Person",
   Relationship: "Relationship",
   User: "User",
+  Account: "Account",
+  Verification: "Verification",
   Session: "Session",
   CalendarToken: "CalendarToken",
   OAuthState: "OAuthState",
@@ -144,6 +146,7 @@ export const UserScalarFieldEnum = {
   id: "id",
   email: "email",
   name: "name",
+  image: "image",
   passwordHash: "passwordHash",
   personId: "personId",
   role: "role",
@@ -168,11 +171,46 @@ export const UserScalarFieldEnum = {
 export type UserScalarFieldEnum =
   (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum];
 
+export const AccountScalarFieldEnum = {
+  id: "id",
+  userId: "userId",
+  accountId: "accountId",
+  providerId: "providerId",
+  accessToken: "accessToken",
+  refreshToken: "refreshToken",
+  accessTokenExpiresAt: "accessTokenExpiresAt",
+  refreshTokenExpiresAt: "refreshTokenExpiresAt",
+  scope: "scope",
+  idToken: "idToken",
+  password: "password",
+  createdAt: "createdAt",
+  updatedAt: "updatedAt",
+} as const;
+
+export type AccountScalarFieldEnum =
+  (typeof AccountScalarFieldEnum)[keyof typeof AccountScalarFieldEnum];
+
+export const VerificationScalarFieldEnum = {
+  id: "id",
+  identifier: "identifier",
+  value: "value",
+  expiresAt: "expiresAt",
+  createdAt: "createdAt",
+  updatedAt: "updatedAt",
+} as const;
+
+export type VerificationScalarFieldEnum =
+  (typeof VerificationScalarFieldEnum)[keyof typeof VerificationScalarFieldEnum];
+
 export const SessionScalarFieldEnum = {
   id: "id",
   token: "token",
   userId: "userId",
   expiresAt: "expiresAt",
+  ipAddress: "ipAddress",
+  userAgent: "userAgent",
+  createdAt: "createdAt",
+  updatedAt: "updatedAt",
 } as const;
 
 export type SessionScalarFieldEnum =

@@ -701,7 +701,7 @@ describe("Security Schemes Documentation", () => {
       const cookieAuth = spec.components.securitySchemes.cookieAuth;
       expect(cookieAuth.type).toBe("apiKey");
       expect(cookieAuth.in).toBe("cookie");
-      expect(cookieAuth.name).toBe("vamsa-session");
+      expect(cookieAuth.name).toBe("better-auth.session_token");
       expect(cookieAuth.description).toBeDefined();
     } else {
       // Security scheme is defined in doc() but library may not auto-merge

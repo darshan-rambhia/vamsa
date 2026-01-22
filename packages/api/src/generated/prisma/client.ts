@@ -60,6 +60,16 @@ export type Relationship = Prisma.RelationshipModel;
  */
 export type User = Prisma.UserModel;
 /**
+ * Model Account
+ *
+ */
+export type Account = Prisma.AccountModel;
+/**
+ * Model Verification
+ *
+ */
+export type Verification = Prisma.VerificationModel;
+/**
  * Model Session
  *
  */

@@ -5,7 +5,8 @@ import {
   useLocation,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { validateSession, logout } from "~/server/auth";
+import { validateSession } from "~/server/auth";
+import { signOut } from "~/lib/auth-client";
 import { Nav, NavLink, Button } from "@vamsa/ui";
 import { LanguageSwitcher } from "~/components/layout/language-switcher";
 import { OIDCProfileClaimModal } from "~/components/auth/oidc-profile-claim-modal";
@@ -51,7 +52,7 @@ function AuthenticatedErrorComponent(props: ErrorComponentProps) {
  */
 function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
   const handleSignOut = async () => {
-    await logout();
+    await signOut();
     window.location.href = "/login";
   };
 
@@ -129,7 +130,7 @@ function AuthenticatedLayout() {
   const { user } = Route.useRouteContext();
 
   const handleSignOut = async () => {
-    await logout();
+    await signOut();
     window.location.href = "/login";
   };
 

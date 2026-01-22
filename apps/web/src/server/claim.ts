@@ -4,7 +4,7 @@
  * This module provides TanStack React Start server function wrappers
  * for OIDC profile claiming operations. Each function handles:
  * - Input validation with Zod schemas
- * - Auth context retrieval (session token)
+ * - Auth context retrieval (Better Auth session)
  * - Delegation to business logic in claim.server.ts
  *
  * The actual business logic is separated to claim.server.ts for testability
@@ -12,43 +12,34 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
+import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import {
   getClaimableProfilesData,
   claimProfileForOIDCData,
   skipProfileClaimData,
   getOIDCClaimStatusData,
+  betterAuthGetSessionWithUserFromCookie,
 } from "@vamsa/lib/server/business";
-import { hashToken } from "@vamsa/lib/server/business";
-import { prisma } from "@vamsa/lib/server";
 
-// Constants
-const TOKEN_COOKIE_NAME = "vamsa-session";
+const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 
 /**
- * Get current authenticated user from session token
+ * Get current authenticated user from Better Auth session
  * @returns User object with ID, email, name, and OIDC provider info
  * @throws Error if not authenticated or session expired
  */
 async function getCurrentAuthenticatedUser() {
-  const token = getCookie(TOKEN_COOKIE_NAME);
+  const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
+  const user = await betterAuthGetSessionWithUserFromCookie(
+    cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
+  );
 
-  if (!token) {
+  if (!user) {
     throw new Error("Not authenticated");
   }
 
-  const tokenHash = hashToken(token);
-  const session = await prisma.session.findFirst({
-    where: { token: tokenHash },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error("Session expired");
-  }
-
-  return session.user;
+  return user;
 }
 
 // Zod schemas

@@ -10,6 +10,8 @@
 export type * from "./models/Person";
 export type * from "./models/Relationship";
 export type * from "./models/User";
+export type * from "./models/Account";
+export type * from "./models/Verification";
 export type * from "./models/Session";
 export type * from "./models/CalendarToken";
 export type * from "./models/OAuthState";

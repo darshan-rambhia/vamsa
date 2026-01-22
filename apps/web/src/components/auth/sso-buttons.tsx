@@ -3,12 +3,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@vamsa/ui";
-import {
-  getAvailableProviders,
-  initiateGoogleLogin,
-  initiateMicrosoftLogin,
-  initiateGitHubLogin,
-} from "~/server/auth-oidc";
+import { getAvailableProviders } from "~/server/auth";
+import { signIn } from "~/lib/auth-client";
 
 // Google icon
 function GoogleIcon({ className }: { className?: string }) {
@@ -59,6 +55,15 @@ function GitHubIcon({ className }: { className?: string }) {
   );
 }
 
+// OIDC icon
+function OIDCIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+    </svg>
+  );
+}
+
 interface SSOButtonsProps {
   redirectTo?: string;
   disabled?: boolean;
@@ -79,8 +84,10 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
     setLoading("google");
     setError(null);
     try {
-      const result = await initiateGoogleLogin({ data: { redirectTo } });
-      window.location.href = result.url;
+      await signIn.social({
+        provider: "google",
+        callbackURL: redirectTo || "/people",
+      });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to initiate Google login"
@@ -93,8 +100,10 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
     setLoading("microsoft");
     setError(null);
     try {
-      const result = await initiateMicrosoftLogin({ data: { redirectTo } });
-      window.location.href = result.url;
+      await signIn.social({
+        provider: "microsoft",
+        callbackURL: redirectTo || "/people",
+      });
     } catch (err) {
       setError(
         err instanceof Error
@@ -109,11 +118,29 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
     setLoading("github");
     setError(null);
     try {
-      const result = await initiateGitHubLogin({ data: { redirectTo } });
-      window.location.href = result.url;
+      await signIn.social({
+        provider: "github",
+        callbackURL: redirectTo || "/people",
+      });
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to initiate GitHub login"
+      );
+      setLoading(null);
+    }
+  };
+
+  const handleOIDCLogin = async () => {
+    setLoading("oidc");
+    setError(null);
+    try {
+      await signIn.social({
+        provider: "oidc",
+        callbackURL: redirectTo || "/people",
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to initiate SSO login"
       );
       setLoading(null);
     }
@@ -125,7 +152,10 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
   }
 
   const hasAnyProvider =
-    providers?.google || providers?.microsoft || providers?.github;
+    providers?.google ||
+    providers?.microsoft ||
+    providers?.github ||
+    providers?.oidc;
 
   if (!hasAnyProvider) {
     return null;
@@ -256,6 +286,41 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
               <GitHubIcon className="mr-2 h-4 w-4" />
             )}
             GitHub
+          </Button>
+        )}
+
+        {providers?.oidc && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleOIDCLogin}
+            disabled={disabled || loading !== null}
+            className="w-full"
+          >
+            {loading === "oidc" ? (
+              <svg
+                className="mr-2 h-4 w-4 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                />
+              </svg>
+            ) : (
+              <OIDCIcon className="mr-2 h-4 w-4" />
+            )}
+            SSO
           </Button>
         )}
       </div>

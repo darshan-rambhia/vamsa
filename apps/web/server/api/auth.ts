@@ -6,8 +6,9 @@ import {
   successResponseSchema,
 } from "@vamsa/schemas";
 import {
-  loginUser as serverLogin,
-  registerUser as serverRegister,
+  betterAuthLogin,
+  betterAuthRegister,
+  betterAuthSignOut,
 } from "@vamsa/lib/server/business";
 import { logger } from "@vamsa/lib/logger";
 
@@ -112,16 +113,22 @@ authRouter.openapi(loginRoute, async (c) => {
   try {
     const { email, password } = c.req.valid("json");
 
-    const result = await serverLogin(email, password);
+    // Use Better Auth for login - pass request headers for cookie handling
+    const result = await betterAuthLogin(email, password, c.req.raw.headers);
 
-    if (!result || typeof result !== "object" || "error" in result) {
+    if (!result?.user) {
       return c.json({ error: "Invalid email or password" }, { status: 401 });
     }
 
-    // Server function returns { success, user } - token is set as cookie by server function
+    // Better Auth handles session cookies automatically
     return c.json(
       {
-        user: result.user,
+        user: {
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          role: (result.user as Record<string, unknown>).role as string || "VIEWER",
+        },
         token: "", // Token is in HttpOnly cookie, not exposed to JS
       },
       { status: 200 }
@@ -138,7 +145,7 @@ authRouter.openapi(loginRoute, async (c) => {
     }
 
     logger.error({ error }, "Login error");
-    return c.json({ error: "Login failed" }, { status: 500 });
+    return c.json({ error: "Invalid email or password" }, { status: 401 });
   }
 });
 
@@ -209,24 +216,30 @@ const registerRoute = createRoute({
 
 authRouter.openapi(registerRoute, async (c) => {
   try {
-    const { email, name, password, confirmPassword: _confirmPassword } = c.req.valid("json");
+    const {
+      email,
+      name,
+      password,
+      confirmPassword: _confirmPassword,
+    } = c.req.valid("json");
 
-    const userId = await serverRegister(email, name, password);
+    // Use Better Auth for registration - pass request headers for cookie handling
+    const result = await betterAuthRegister(email, name, password, c.req.raw.headers);
 
-    if (!userId) {
+    if (!result?.user) {
       return c.json({ error: "Registration failed" }, { status: 400 });
     }
 
-    // Server returns the user ID - create minimal user response
+    // Better Auth handles session cookies automatically
     return c.json(
       {
         user: {
-          id: userId,
-          email,
-          name,
-          role: "VIEWER",
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          role: (result.user as Record<string, unknown>).role as string || "VIEWER",
         },
-        token: "", // No token returned on registration
+        token: "", // Token is in HttpOnly cookie, not exposed to JS
       },
       { status: 201 }
     );
@@ -243,7 +256,7 @@ authRouter.openapi(registerRoute, async (c) => {
 
     if (
       error instanceof Error &&
-      error.message.includes("Email already exists")
+      error.message.includes("already exists")
     ) {
       return c.json({ error: "Email already in use" }, { status: 409 });
     }
@@ -286,15 +299,24 @@ const logoutRoute = createRoute({
 
 authRouter.openapi(logoutRoute, async (c) => {
   try {
+    // Use Better Auth for logout
+    await betterAuthSignOut(c.req.raw.headers);
+
+    // Clear the Better Auth session cookie
     c.header(
       "Set-Cookie",
-      "vamsa-session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0"
+      "better-auth.session_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0"
     );
 
     return c.json({ success: true as const }, { status: 200 });
   } catch (error) {
     logger.error({ error }, "Logout error");
-    return c.json({ error: "Logout failed" }, { status: 500 });
+    // Still clear cookie even if signOut fails (user may already be logged out)
+    c.header(
+      "Set-Cookie",
+      "better-auth.session_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0"
+    );
+    return c.json({ success: true as const }, { status: 200 });
   }
 });
 

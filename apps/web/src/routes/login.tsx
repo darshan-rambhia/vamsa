@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
-import { login } from "~/server/auth";
+import { signIn } from "~/lib/auth-client";
 import {
   Button,
   Card,
@@ -45,7 +45,12 @@ function LoginComponent() {
     setIsLoading(true);
 
     try {
-      await login({ data: { email, password } });
+      const result = await signIn.email({ email, password });
+      if (result.error) {
+        setError(result.error.message || "Login failed");
+        setIsLoading(false);
+        return;
+      }
       navigate({ to: "/people" });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Login failed";

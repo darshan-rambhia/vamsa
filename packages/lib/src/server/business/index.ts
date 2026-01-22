@@ -21,10 +21,10 @@
  */
 
 // ============================================================================
-// Authentication & Authorization
+// Authentication & Authorization (Better Auth)
 // ============================================================================
-export * from "./auth";
-export * from "./auth-oidc";
+export * from "./auth-better";
+export * from "./auth-better-api";
 
 // ============================================================================
 // Backup & Restore

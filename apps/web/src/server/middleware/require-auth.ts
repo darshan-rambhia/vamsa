@@ -1,46 +1,33 @@
 /**
  * Shared authentication middleware for server functions
  *
- * Centralizes session validation logic with proper token hashing.
+ * Centralizes session validation logic using Better Auth.
  */
 
-import { getCookie } from "@tanstack/react-start/server";
-import { createHash } from "crypto";
-import { prisma, t } from "@vamsa/lib/server";
-
-const TOKEN_COOKIE_NAME = "vamsa-session";
-
-/**
- * Hash a session token for secure database lookup
- */
-function hashToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
+import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
+import { betterAuthGetSessionWithUserFromCookie } from "@vamsa/lib/server/business";
+import { prisma } from "@vamsa/lib/server";
+import { t } from "@vamsa/lib/server";
 
 export type UserRole = "VIEWER" | "MEMBER" | "ADMIN";
+
+const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 
 /**
  * Require authentication for a server function
  *
  * @param requiredRole - Minimum role required (defaults to VIEWER)
- * @returns The authenticated user
+ * @returns The authenticated user (full Prisma User object)
  * @throws Error if not authenticated or insufficient role
  */
 export async function requireAuth(requiredRole: UserRole = "VIEWER") {
-  const token = getCookie(TOKEN_COOKIE_NAME);
-  if (!token) {
+  const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
+  const sessionUser = await betterAuthGetSessionWithUserFromCookie(
+    cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
+  );
+
+  if (!sessionUser) {
     throw new Error(await t("errors:auth.notAuthenticated"));
-  }
-
-  // Hash token for secure database lookup
-  const tokenHash = hashToken(token);
-  const session = await prisma.session.findFirst({
-    where: { token: tokenHash },
-    include: { user: true },
-  });
-
-  if (!session || session.expiresAt < new Date()) {
-    throw new Error(await t("errors:auth.sessionExpired"));
   }
 
   const roleHierarchy: Record<UserRole, number> = {
@@ -49,9 +36,18 @@ export async function requireAuth(requiredRole: UserRole = "VIEWER") {
     ADMIN: 2,
   };
 
-  if (roleHierarchy[session.user.role] < roleHierarchy[requiredRole]) {
+  if (roleHierarchy[sessionUser.role as UserRole] < roleHierarchy[requiredRole]) {
     throw new Error(`Requires ${requiredRole} role or higher`);
   }
 
-  return session.user;
+  // Fetch full user object from database for business logic that needs all fields
+  const user = await prisma.user.findUnique({
+    where: { id: sessionUser.id },
+  });
+
+  if (!user) {
+    throw new Error(await t("errors:auth.notAuthenticated"));
+  }
+
+  return user;
 }
