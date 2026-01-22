@@ -1,7 +1,7 @@
 import type { Story } from "@ladle/react";
 import { RelationshipMatrix } from "~/components/charts/RelationshipMatrix";
 import { StoryDecorator } from "~/stories/decorators";
-import { createMatrixData } from "~/stories/mocks/chart-data";
+import { createMatrixData } from "@vamsa/lib";
 import { logger } from "@vamsa/lib/logger";
 
 export default {

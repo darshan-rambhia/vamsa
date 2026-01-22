@@ -110,81 +110,8 @@ test.describe("Feature: Admin Operations", () => {
       });
     });
 
-    test("admin can navigate to other admin sections", async ({ page }) => {
-      await bdd.given("admin is on users tab", async () => {
-        const admin = new AdminPage(page);
-        await admin.goto();
-        await admin.selectUsersTab();
-      });
-
-      await bdd.when("admin clicks on settings tab", async () => {
-        const admin = new AdminPage(page);
-        await admin.settingsTab.click();
-        await page.waitForURL(/\/admin.*settings/, { timeout: 5000 });
-      });
-
-      await bdd.then("admin is navigated to settings page", async () => {
-        await expect(page).toHaveURL(/\/admin.*settings/);
-        const mainContent = page.locator("main").first();
-        await expect(mainContent).toBeVisible({ timeout: 5000 });
-      });
-    });
-  });
-
-  test.describe("Admin Sections Navigation", () => {
-    test("admin can navigate to invites section", async ({ page }) => {
-      await bdd.given("admin is on admin panel", async () => {
-        const admin = new AdminPage(page);
-        await admin.goto();
-      });
-
-      await bdd.when("admin clicks on invites tab", async () => {
-        const admin = new AdminPage(page);
-        await admin.selectInvitesTab();
-      });
-
-      await bdd.then("invites section is displayed", async () => {
-        await expect(page).toHaveURL(/\/admin.*invites/);
-        const mainContent = page.locator("main").first();
-        await expect(mainContent).toBeVisible({ timeout: 5000 });
-      });
-    });
-
-    test("admin can navigate to backup section", async ({ page }) => {
-      await bdd.given("admin is on admin panel", async () => {
-        const admin = new AdminPage(page);
-        await admin.goto();
-      });
-
-      await bdd.when("admin clicks on backup tab", async () => {
-        const admin = new AdminPage(page);
-        await admin.selectBackupTab();
-      });
-
-      await bdd.then("backup section is displayed", async () => {
-        await expect(page).toHaveURL(/\/admin.*backup/);
-        const mainContent = page.locator("main").first();
-        await expect(mainContent).toBeVisible({ timeout: 5000 });
-      });
-    });
-
-    test("admin can navigate to settings section", async ({ page }) => {
-      await bdd.given("admin is on admin panel", async () => {
-        const admin = new AdminPage(page);
-        await admin.goto();
-      });
-
-      await bdd.when("admin clicks on settings tab", async () => {
-        await page.locator('a[href="/admin/settings"]').click();
-        await page.waitForURL(/\/admin.*settings/, { timeout: 5000 });
-      });
-
-      await bdd.then("settings section is displayed", async () => {
-        await expect(page).toHaveURL(/\/admin.*settings/);
-        const mainContent = page.locator("main").first();
-        await expect(mainContent).toBeVisible({ timeout: 5000 });
-      });
-    });
+    // NOTE: Individual section navigation tests removed - covered by
+    // "admin can navigate through all admin sections" test in Admin Navigation Flow
   });
 
   test.describe("Role-Based Access Control", () => {
@@ -411,43 +338,8 @@ test.describe("Feature: Admin Operations", () => {
     });
   });
 
-  test.describe("Admin Page Layout", () => {
-    test("admin pages display proper header and navigation", async ({
-      page,
-    }) => {
-      await bdd.given("admin is on admin panel", async () => {
-        const admin = new AdminPage(page);
-        await admin.goto();
-      });
-
-      await bdd.when("admin views the page layout", async () => {
-        // Page layout is rendered
-        await page.waitForTimeout(500);
-      });
-
-      await bdd.then(
-        "administration header and navigation tabs are visible",
-        async () => {
-          // Check for administration heading
-          const adminHeader = page.locator(
-            "text=Administration, h1:has-text('Administration')"
-          );
-          const hasHeader = await adminHeader.isVisible().catch(() => false);
-
-          // Check for navigation tabs
-          const usersTab = page.locator('a[href="/admin/users"]');
-          const invitesTab = page.locator('a[href="/admin/invites"]');
-
-          const hasNav =
-            (await usersTab.isVisible().catch(() => false)) ||
-            (await invitesTab.isVisible().catch(() => false));
-
-          // At least one of these should be true
-          expect(hasHeader || hasNav).toBeTruthy();
-        }
-      );
-    });
-  });
+  // NOTE: Admin Page Layout tests removed - header and navigation
+  // visibility is implicitly tested by Admin Panel Access tests
 
   test.describe("Admin to Main Navigation", () => {
     test("admin can navigate back to main pages from admin", async ({

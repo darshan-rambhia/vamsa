@@ -1,7 +1,7 @@
 import type { Story } from "@ladle/react";
 import { CompactTree } from "~/components/charts/CompactTree";
 import { StoryDecorator } from "~/stories/decorators";
-import { createCompactTreeData } from "~/stories/mocks/chart-data";
+import { createCompactTreeData } from "@vamsa/lib";
 import { logger } from "@vamsa/lib/logger";
 
 export default {

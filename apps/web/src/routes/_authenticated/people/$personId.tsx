@@ -23,7 +23,7 @@ import { RelationshipsTab } from "~/components/person/relationships-tab";
 import { EventsTab } from "~/components/person/events-tab";
 import { PlacesTab } from "~/components/person/places-tab";
 import { SourcesManagementTab } from "~/components/person/sources-management-tab";
-import { MediaTab } from "~/components/person/media-tab";
+import { MediaTab } from "~/components/media/media-tab";
 
 export const Route = createFileRoute("/_authenticated/people/$personId")({
   component: PersonDetailComponent,

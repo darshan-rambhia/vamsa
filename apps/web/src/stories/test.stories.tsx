@@ -1,6 +1,6 @@
 import type { Story } from "@ladle/react";
 import { StoryDecorator } from "./decorators";
-import { SMALL_FAMILY } from "./mocks/chart-data";
+import { SMALL_FAMILY } from "@vamsa/lib";
 
 export const TestSetup: Story = () => {
   return (

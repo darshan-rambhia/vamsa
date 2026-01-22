@@ -1,7 +1,7 @@
 import type { Story } from "@ladle/react";
 import { TimelineChart } from "~/components/charts/TimelineChart";
 import { StoryDecorator } from "~/stories/decorators";
-import { createTimelineEntries } from "~/stories/mocks/chart-data";
+import { createTimelineEntries } from "@vamsa/lib";
 import { logger } from "@vamsa/lib/logger";
 
 export default {

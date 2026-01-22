@@ -1,3 +1,20 @@
+/**
+ * Chart Data Fixtures
+ *
+ * Mock data generators for chart components, stories, and tests.
+ * Provides factory functions and pre-built datasets for consistent test data.
+ *
+ * @example
+ * import { createMockNodes, SMALL_FAMILY } from "@vamsa/lib/fixtures";
+ *
+ * // Create custom data
+ * const nodes = createMockNodes(10, { generations: 3 });
+ * const edges = createMockEdges(nodes);
+ *
+ * // Use presets
+ * const { nodes, edges } = SMALL_FAMILY;
+ */
+
 import type {
   ChartNode,
   ChartEdge,
@@ -7,7 +24,7 @@ import type {
   MatrixCell,
   CompactTreeResult,
   StatisticsResult,
-} from "~/server/charts";
+} from "../server/business/charts";
 
 // Helper to generate unique IDs
 let idCounter = 0;
@@ -249,8 +266,14 @@ export function createMatrixData(count: number): {
     "CHILD_IN_LAW",
   ];
 
-  people.forEach((person) => {
-    people.forEach((relatedPerson) => {
+  // Use deterministic random based on indices for consistent test data
+  const seededRandom = (i: number, j: number) => {
+    const seed = (i * 1000 + j) % 100;
+    return seed / 100;
+  };
+
+  people.forEach((person, i) => {
+    people.forEach((relatedPerson, j) => {
       if (person.id === relatedPerson.id) {
         matrix.push({
           personId: person.id,
@@ -258,16 +281,16 @@ export function createMatrixData(count: number): {
           relationshipType: "SELF",
           strength: 1,
         });
-      } else if (Math.random() > 0.7) {
+      } else if (seededRandom(i, j) > 0.7) {
         // 30% chance of relationship
         matrix.push({
           personId: person.id,
           relatedPersonId: relatedPerson.id,
           relationshipType:
             relationshipTypes[
-              Math.floor(Math.random() * relationshipTypes.length)
+              Math.floor(seededRandom(i, j) * 10) % relationshipTypes.length
             ],
-          strength: Math.random() > 0.5 ? 1 : 0.5,
+          strength: seededRandom(i, j) > 0.85 ? 1 : 0.5,
         });
       } else {
         matrix.push({
@@ -411,7 +434,10 @@ export function createStatisticsData(
   };
 }
 
-// Presets
+// ==========================================
+// Presets - Pre-built datasets
+// ==========================================
+
 export const EMPTY_DATA = {
   nodes: [] as ChartNode[],
   edges: [] as ChartEdge[],

@@ -27,18 +27,8 @@ test.describe("Dashboard", () => {
     await expect(statsSection).toBeVisible();
   });
 
-  test("navigates to other pages", async ({ page }) => {
-    const dashboard = new DashboardPage(page);
-    await dashboard.goto();
-
-    const nav = new Navigation(page);
-
-    await nav.goToPeople();
-    await expect(page).toHaveURL("/people");
-
-    await nav.goToDashboard();
-    await expect(page).toHaveURL("/dashboard");
-  });
+  // NOTE: Simple navigation test removed - covered by
+  // "navigates through all main pages" in Navigation Flow section
 });
 
 test.describe("Activity Feed", () => {

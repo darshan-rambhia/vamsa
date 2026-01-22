@@ -7,7 +7,7 @@ import {
   LARGE_FAMILY,
   DEEP_ANCESTRY,
   LONG_NAMES,
-} from "~/stories/mocks/chart-data";
+} from "@vamsa/lib";
 import { logger } from "@vamsa/lib/logger";
 
 export default {

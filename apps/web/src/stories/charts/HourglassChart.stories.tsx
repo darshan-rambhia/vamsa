@@ -2,11 +2,7 @@ import type { Story } from "@ladle/react";
 import { HourglassChart } from "~/components/charts/HourglassChart";
 import { StoryDecorator } from "~/stories/decorators";
 import type { ChartNode, ChartEdge } from "~/server/charts";
-import {
-  createMockEdges,
-  resetIdCounter,
-  createMockPerson,
-} from "~/stories/mocks/chart-data";
+import { createMockEdges, resetIdCounter, createMockPerson } from "@vamsa/lib";
 import { logger } from "@vamsa/lib/logger";
 
 export default {

@@ -1,10 +1,7 @@
 import type { Story } from "@ladle/react";
 import { BowtieChart } from "~/components/charts/BowtieChart";
 import { StoryDecorator } from "~/stories/decorators";
-import {
-  createMockPerson,
-  createBowtieNodes,
-} from "~/stories/mocks/chart-data";
+import { createMockPerson, createBowtieNodes } from "@vamsa/lib";
 import { logger } from "@vamsa/lib/logger";
 
 export default {

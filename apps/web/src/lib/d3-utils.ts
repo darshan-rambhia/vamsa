@@ -2,23 +2,27 @@ import * as d3 from "d3";
 import type { ChartNode } from "~/server/charts";
 
 /**
- * Common D3 utility functions for chart components
- * Extracted to reduce code duplication across chart visualizations
+ * D3 utility functions for chart components
+ *
+ * This module contains D3-specific DOM manipulation utilities.
+ * For platform-agnostic chart types and utilities, use @vamsa/lib/charts.
  */
 
-// Type definitions
-export interface Position {
-  x: number;
-  y: number;
-}
+// Re-export platform-agnostic types and utilities from @vamsa/lib
+export {
+  type Position,
+  type Margin,
+  type ScaleExtent,
+  type EdgeStyle,
+  CHART_DEFAULTS,
+  groupByGeneration,
+  calculateBoundingBox,
+  calculateFitScale,
+  generateGenerationRange,
+  getSortedGenerations,
+} from "@vamsa/lib";
 
-export interface Margin {
-  top: number;
-  right: number;
-  bottom: number;
-  left: number;
-}
-
+// D3-specific interfaces that extend the base types with callbacks
 export interface RectNodeOptions {
   width: number;
   height: number;
@@ -33,12 +37,6 @@ export interface CircleNodeOptions {
   isRoot?: boolean;
   onMouseEnter?: (node: ChartNode) => void;
   onMouseLeave?: (node: ChartNode) => void;
-}
-
-export interface EdgeStyle {
-  stroke?: string;
-  strokeWidth?: string;
-  strokeDasharray?: string;
 }
 
 /**
@@ -84,7 +82,7 @@ export function fitToContainer<T extends Element>(
   zoom: d3.ZoomBehavior<T, unknown>,
   containerWidth: number,
   containerHeight: number,
-  margin: Margin,
+  margin: { top: number; right: number; bottom: number; left: number },
   maxScale = 1,
   duration = 750
 ): void {
@@ -116,7 +114,7 @@ export function fitToContainerTop<T extends Element>(
   zoom: d3.ZoomBehavior<T, unknown>,
   containerWidth: number,
   containerHeight: number,
-  margin: Margin,
+  margin: { top: number; right: number; bottom: number; left: number },
   maxScale = 1,
   duration = 750
 ): void {
@@ -139,27 +137,6 @@ export function fitToContainerTop<T extends Element>(
 }
 
 /**
- * Groups nodes by generation
- * @param nodes - Array of chart nodes
- * @returns Map of generation number to array of nodes
- */
-export function groupByGeneration<T extends { generation?: number | null }>(
-  nodes: T[]
-): Map<number, T[]> {
-  const generations = new Map<number, T[]>();
-
-  nodes.forEach((node) => {
-    const gen = node.generation ?? 0;
-    if (!generations.has(gen)) {
-      generations.set(gen, []);
-    }
-    generations.get(gen)!.push(node);
-  });
-
-  return generations;
-}
-
-/**
  * Renders a rectangular node with standard styling
  * @param nodeG - D3 selection of node group
  * @param node - Chart node data
@@ -169,7 +146,7 @@ export function groupByGeneration<T extends { generation?: number | null }>(
 export function renderRectNode(
   nodeG: d3.Selection<SVGGElement, unknown, null, undefined>,
   node: ChartNode,
-  position: Position,
+  position: { x: number; y: number },
   options: RectNodeOptions
 ): void {
   const { width, height, borderRadius = 8, isRoot = false } = options;
@@ -395,10 +372,10 @@ export function renderCircleNode(
  */
 export function renderParentChildEdge(
   edgeGroup: d3.Selection<SVGGElement, unknown, null, undefined>,
-  source: Position,
-  target: Position,
+  source: { x: number; y: number },
+  target: { x: number; y: number },
   nodeHeight: number,
-  style?: EdgeStyle
+  style?: { stroke?: string; strokeWidth?: string; strokeDasharray?: string }
 ): void {
   edgeGroup
     .append("line")
@@ -421,10 +398,10 @@ export function renderParentChildEdge(
  */
 export function renderSpouseEdge(
   edgeGroup: d3.Selection<SVGGElement, unknown, null, undefined>,
-  source: Position,
-  target: Position,
+  source: { x: number; y: number },
+  target: { x: number; y: number },
   nodeWidth: number,
-  style?: EdgeStyle
+  style?: { stroke?: string; strokeWidth?: string; strokeDasharray?: string }
 ): void {
   edgeGroup
     .append("line")

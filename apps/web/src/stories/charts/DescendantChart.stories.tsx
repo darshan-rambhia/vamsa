@@ -8,7 +8,7 @@ import {
   createMockNodes,
   createMockEdges,
   resetIdCounter,
-} from "~/stories/mocks/chart-data";
+} from "@vamsa/lib";
 import { logger } from "@vamsa/lib/logger";
 
 export default {
