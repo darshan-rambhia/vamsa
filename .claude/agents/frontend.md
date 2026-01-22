@@ -10,7 +10,7 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 
 ## Design System
 
-**CRITICAL:** Before writing any UI code, read and internalize the Vamsa design system at `.claude/skills/vamsa-design.md`.
+**CRITICAL:** Before writing any UI code, read and internalize the Vamsa design system at `.claude/skills/design/SKILL.md`. Also read `tokens.md` and `patterns.md` in the same directory for specific design tokens and component patterns.
 
 ### Design Philosophy: Professional + Minimalistic + Organic
 

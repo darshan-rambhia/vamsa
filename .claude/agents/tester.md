@@ -10,7 +10,9 @@ tools: Read, Write, Edit, Bash, Glob, Grep
 
 ## E2E Testing Guide
 
-**CRITICAL:** Before writing E2E tests, read `.claude/skills/vamsa-e2e-testing.md`.
+**CRITICAL:** Before writing tests, read `.claude/skills/testing/SKILL.md` for core testing principles. Also read:
+- `unit-recipes.md` - Patterns for React, GEDCOM, Charts, and Server Function testing
+- `e2e-recipes.md` - Page Objects, form validation, accessibility, and responsive testing patterns
 
 Key principles:
 

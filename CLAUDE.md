@@ -114,65 +114,26 @@ bd sync                 # Sync beads with git
 pnpm clean              # Remove all node_modules
 ```
 
-## E2E Testing Guidelines
+## Skills
 
-### Waiting for Elements (Important)
+Skills provide domain-specific knowledge and patterns. Use the Skill tool to invoke them.
 
-**DO NOT use `waitForLoadState("networkidle")` in regular E2E tests.** It is non-deterministic, slow, and can be flaky with polling/websockets.
+### Available Skills
 
-Instead, use **element visibility + hydration timeout**:
+| Skill | When to Use | Files |
+|-------|-------------|-------|
+| `testing` | Writing unit tests (Bun) or E2E tests (Playwright) | `.claude/skills/testing/SKILL.md`, `unit-recipes.md`, `e2e-recipes.md` |
+| `design` | Building UI components, applying design system | `.claude/skills/design/SKILL.md`, `tokens.md`, `patterns.md` |
 
-```typescript
-// Good: Wait for specific element, then hydration timeout
-await element.waitFor({ state: "visible", timeout: 10000 });
-await page.waitForTimeout(500); // React hydration
+### When to Invoke Skills
 
-// Bad: Don't use networkidle for regular tests
-await page.waitForLoadState("networkidle"); // Avoid this
-```
+- **`/testing`**: Before writing any test file. Contains patterns for React components, GEDCOM parsing, Charts, Server Functions (unit), and Page Objects, form validation, accessibility, responsive testing (E2E).
+- **`/design`**: Before building UI. Contains Vamsa's editorial + earth tones aesthetic, typography, colors, spacing, and component patterns.
 
-**When `networkidle` IS used (documented exceptions):**
+### Skill Invocation
 
-1. **Login form** (`test-base.ts`, `page-objects.ts` LoginPage)
-   - **Why**: Under parallel execution, React controlled inputs can be "visible" and "editable" before React attaches `onChange` handlers. The native input accepts text, then React hydrates and resets the input to empty state.
-   - **Impact**: Login is critical infrastructure - all authenticated tests depend on it working reliably.
-   - **Future fix**: Add a deterministic React hydration detection (e.g., `data-hydrated` attribute, custom event).
+Skills are automatically available to agents. When working on:
 
-2. **Person creation form** (`relationships.spec.ts`, `person-forms.spec.ts`)
-   - **Why**: Same React hydration issue as login - form inputs appear ready but onChange handlers aren't attached yet.
-   - **Impact**: Relationship tests and edit tests depend on successfully creating a person first.
-   - **Future fix**: Same as login - deterministic hydration detection.
-
-**When `networkidle` might be acceptable (general):**
-
-- Testing specific network behavior
-- Waiting for all assets to load for performance testing
-- Explicit requirement for full page load verification
-
-### React Form Fills (Parallel Execution)
-
-React controlled components need time to hydrate before event handlers are attached. Use this pattern:
-
-```typescript
-// 1. Wait for element visibility
-await input.waitFor({ state: "visible", timeout: 5000 });
-
-// 2. Wait for React hydration (500ms for parallel execution)
-await page.waitForTimeout(500);
-
-// 3. Fill with retry loop
-for (let attempt = 1; attempt <= 3; attempt++) {
-  await input.click();
-  await page.waitForTimeout(100);
-  await input.fill(value);
-  await page.waitForTimeout(150);
-
-  if ((await input.inputValue()) === value) break;
-
-  // Retry with selectText + type if fill didn't work
-  if (attempt < 3) {
-    await input.selectText().catch(() => {});
-    await input.type(value, { delay: 30 });
-  }
-}
-```
+- **Frontend work**: Read `.claude/skills/design/` before writing components
+- **Test work**: Read `.claude/skills/testing/` before writing tests
+- **Both**: The relevant agent files already reference these skills
