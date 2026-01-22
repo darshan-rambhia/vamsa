@@ -18,6 +18,24 @@ import type { VamsaPerson, VamsaRelationship } from "@vamsa/lib";
 import archiver from "archiver";
 import * as fs from "fs";
 import * as path from "path";
+
+/**
+ * Interface for file system operations used by GEDCOM export.
+ * This allows dependency injection for testing.
+ */
+export interface GedcomFileSystem {
+  existsSync(filePath: string): boolean;
+  basename(filePath: string): string;
+}
+
+/**
+ * Default file system implementation using Node.js fs and path modules
+ */
+export const defaultFileSystem: GedcomFileSystem = {
+  existsSync: fs.existsSync,
+  basename: path.basename,
+};
+
 import {
   parseGedcomFile,
   validateGedcomImportPrerequisites,
@@ -415,6 +433,7 @@ export async function exportGedcomData(
  * @param userId - User ID performing the export
  * @param includeMedia - Whether to include media files (default: true)
  * @param db - Optional database client (defaults to prisma)
+ * @param fileSystem - Optional file system interface for testing (defaults to Node fs/path)
  * @returns Export result with base64-encoded zip and manifest
  *
  * @example
@@ -427,7 +446,8 @@ export async function exportGedcomData(
 export async function exportGedcomDataZip(
   userId: string,
   includeMedia: boolean = true,
-  db: GedcomDb = defaultPrisma
+  db: GedcomDb = defaultPrisma,
+  fileSystem: GedcomFileSystem = defaultFileSystem
 ): Promise<ExportZipResult> {
   const start = Date.now();
 
@@ -483,8 +503,8 @@ export async function exportGedcomDataZip(
         const filePath = media.filePath;
 
         // Check if file exists
-        if (fs.existsSync(filePath)) {
-          const fileName = path.basename(filePath);
+        if (fileSystem.existsSync(filePath)) {
+          const fileName = fileSystem.basename(filePath);
           const archivePath = `media/${fileName}`;
 
           archive.file(filePath, { name: archivePath });
