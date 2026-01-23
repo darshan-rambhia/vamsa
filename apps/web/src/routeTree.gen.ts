@@ -216,8 +216,8 @@ export interface FileRoutesByFullPath {
   '/people/new': typeof AuthenticatedPeopleNewRoute
   '/settings/calendar-tokens': typeof AuthenticatedSettingsCalendarTokensRoute
   '/settings/profile': typeof AuthenticatedSettingsProfileRoute
-  '/maps': typeof AuthenticatedMapsIndexRoute
-  '/people': typeof AuthenticatedPeopleIndexRoute
+  '/maps/': typeof AuthenticatedMapsIndexRoute
+  '/people/': typeof AuthenticatedPeopleIndexRoute
   '/people/$personId/edit': typeof AuthenticatedPeoplePersonIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -307,8 +307,8 @@ export interface FileRouteTypes {
     | '/people/new'
     | '/settings/calendar-tokens'
     | '/settings/profile'
-    | '/maps'
-    | '/people'
+    | '/maps/'
+    | '/people/'
     | '/people/$personId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -406,7 +406,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -469,14 +469,14 @@ declare module '@tanstack/react-router' {
     '/_authenticated/people/': {
       id: '/_authenticated/people/'
       path: '/people'
-      fullPath: '/people'
+      fullPath: '/people/'
       preLoaderRoute: typeof AuthenticatedPeopleIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/maps/': {
       id: '/_authenticated/maps/'
       path: '/maps'
-      fullPath: '/maps'
+      fullPath: '/maps/'
       preLoaderRoute: typeof AuthenticatedMapsIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
