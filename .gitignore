@@ -45,9 +45,9 @@ next-env.d.ts
 **/prisma/*.db
 **/prisma/*.db-journal
 
-# Uploads
-data/uploads/*
-!data/uploads/.gitkeep
+# Uploads (any data/uploads directory in the repo)
+**/data/uploads/*
+!**/data/uploads/.gitkeep
 
 # Lockfiles (use pnpm)
 bun.lock

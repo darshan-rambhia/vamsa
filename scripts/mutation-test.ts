@@ -3,139 +3,66 @@
  * Mutation Testing Script
  *
  * Runs Stryker mutation testing for individual packages in the monorepo.
+ * Each package has its own stryker.config.json that extends the root config.
  *
  * Usage:
- *   bun scripts/mutation-test.ts <package> [--file <pattern>] [--concurrency <n>]
+ *   bun scripts/mutation-test.ts [package] [--file <pattern>] [--concurrency <n>]
  *
  * Examples:
+ *   bun scripts/mutation-test.ts                        # Test all packages
  *   bun scripts/mutation-test.ts lib                    # Test all of @vamsa/lib
  *   bun scripts/mutation-test.ts lib --file date.ts     # Test specific file
- *   bun scripts/mutation-test.ts ui                     # Test @vamsa/ui
- *   bun scripts/mutation-test.ts web                    # Test apps/web server code
- *   bun scripts/mutation-test.ts api                    # Test @vamsa/api
+ *   bun scripts/mutation-test.ts schemas --concurrency 8 # Test with 8 workers
  */
 
 import { $ } from "bun";
-import { existsSync, writeFileSync, unlinkSync } from "fs";
-import { join } from "path";
-import { logger } from "@vamsa/lib/logger";
+import { existsSync } from "fs";
+import { logger } from "../packages/lib/src/logger";
 
-interface PackageConfig {
+interface PackageInfo {
   name: string;
-  mutate: string[];
-  testCommand: string;
-  tsconfigFile: string;
-  ignorePatterns: string[];
+  directory: string;
 }
 
-const PACKAGES: Record<string, PackageConfig> = {
+const PACKAGES: Record<string, PackageInfo> = {
   lib: {
     name: "@vamsa/lib",
-    mutate: [
-      "packages/lib/src/**/*.ts",
-      "!packages/lib/src/**/*.test.ts",
-      "!packages/lib/src/**/index.ts",
-    ],
-    testCommand: "bun test packages/lib",
-    tsconfigFile: "packages/lib/tsconfig.json",
-    ignorePatterns: ["apps", "packages/ui", "packages/api", "packages/schemas"],
+    directory: "packages/lib",
   },
   ui: {
     name: "@vamsa/ui",
-    mutate: [
-      "packages/ui/src/**/*.ts",
-      "packages/ui/src/**/*.tsx",
-      "!packages/ui/src/**/*.test.ts",
-      "!packages/ui/src/**/*.test.tsx",
-      "!packages/ui/src/**/index.ts",
-      "!packages/ui/src/test-setup.ts",
-    ],
-    testCommand:
-      "bun test --preload ./packages/ui/src/test-setup.ts packages/ui",
-    tsconfigFile: "packages/ui/tsconfig.json",
-    ignorePatterns: [
-      "apps",
-      "packages/lib",
-      "packages/api",
-      "packages/schemas",
-    ],
+    directory: "packages/ui",
   },
   api: {
     name: "@vamsa/api",
-    mutate: [
-      "packages/api/src/**/*.ts",
-      "!packages/api/src/**/*.test.ts",
-      "!packages/api/src/**/index.ts",
-    ],
-    testCommand: "bun test packages/api",
-    tsconfigFile: "packages/api/tsconfig.json",
-    ignorePatterns: ["apps", "packages/lib", "packages/ui", "packages/schemas"],
+    directory: "packages/api",
   },
   schemas: {
     name: "@vamsa/schemas",
-    mutate: [
-      "packages/schemas/src/**/*.ts",
-      "!packages/schemas/src/**/*.test.ts",
-      "!packages/schemas/src/**/index.ts",
-    ],
-    testCommand: "bun test packages/schemas",
-    tsconfigFile: "packages/schemas/tsconfig.json",
-    ignorePatterns: ["apps", "packages/lib", "packages/ui", "packages/api"],
+    directory: "packages/schemas",
   },
   web: {
     name: "@vamsa/web (server)",
-    mutate: [
-      "apps/web/src/server/**/*.ts",
-      "apps/web/server/**/*.ts",
-      "!apps/web/src/server/**/*.test.ts",
-      "!apps/web/server/**/*.test.ts",
-      "!apps/web/src/server/**/*.function.ts", // Server function wrappers
-    ],
-    testCommand:
-      "bun test --preload ./packages/ui/src/test-setup.ts apps/web/src/server apps/web/server",
-    tsconfigFile: "apps/web/tsconfig.json",
-    ignorePatterns: [
-      "apps/web/src/components",
-      "apps/web/src/routes",
-      "apps/web/src/hooks",
-      "apps/web/src/stories",
-      "apps/web/e2e",
-      "packages",
-    ],
+    directory: "apps/web",
   },
 };
 
-// Common ignore patterns for all packages
-const COMMON_IGNORE_PATTERNS = [
-  "node_modules",
-  "dist",
-  ".git",
-  ".stryker-tmp",
-  ".beads",
-  ".claude",
-  "coverage",
-  "test-output",
-  "docker",
-  "docs",
-  "scripts",
-  "data",
-  "bunfig.toml",
-  "*.config.*",
-  "*.spec.ts",
-  "*.spec.tsx",
-];
-
-function parseArgs(): { package: string; file?: string; concurrency: number } {
+function parseArgs(): {
+  packages: string[];
+  file?: string;
+  concurrency?: number;
+} {
   const args = process.argv.slice(2);
 
-  if (args.length === 0 || args[0] === "--help" || args[0] === "-h") {
+  if (args[0] === "--help" || args[0] === "-h") {
     logger.info(`
 Mutation Testing Script
 
 Usage:
-  bun scripts/mutation-test.ts <package> [options]
+  bun scripts/mutation-test.ts [package] [options]
 
 Packages:
+  (none)    Test all packages
   lib       Test @vamsa/lib (business logic, utilities)
   ui        Test @vamsa/ui (UI components)
   api       Test @vamsa/api (database/Prisma utilities)
@@ -144,10 +71,11 @@ Packages:
 
 Options:
   --file <pattern>      Only mutate files matching pattern (e.g., "date.ts")
-  --concurrency <n>     Number of parallel test runners (default: 4)
+  --concurrency <n>     Number of parallel test runners (default: from config)
   --help, -h            Show this help message
 
 Examples:
+  bun scripts/mutation-test.ts              # Test all packages
   bun scripts/mutation-test.ts lib
   bun scripts/mutation-test.ts lib --file date.ts
   bun scripts/mutation-test.ts ui --file button.tsx
@@ -156,11 +84,21 @@ Examples:
     process.exit(0);
   }
 
-  const packageName = args[0];
-  let file: string | undefined;
-  let concurrency = 4;
+  // If no package specified, run all packages
+  let packages: string[];
+  let startIndex = 0;
 
-  for (let i = 1; i < args.length; i++) {
+  if (args.length === 0 || args[0].startsWith("--")) {
+    packages = Object.keys(PACKAGES);
+  } else {
+    packages = [args[0]];
+    startIndex = 1;
+  }
+
+  let file: string | undefined;
+  let concurrency: number | undefined;
+
+  for (let i = startIndex; i < args.length; i++) {
     if (args[i] === "--file" && args[i + 1]) {
       file = args[i + 1];
       i++;
@@ -170,104 +108,110 @@ Examples:
     }
   }
 
-  return { package: packageName, file, concurrency };
+  return { packages, file, concurrency };
 }
 
-function generateStrykerConfig(
-  pkg: PackageConfig,
+async function runMutationTestsForPackage(
+  packageName: string,
   file: string | undefined,
-  concurrency: number
-): object {
-  let mutatePatterns = [...pkg.mutate];
-
-  // If a specific file is requested, filter mutate patterns
-  if (file) {
-    // Find the base path from the first mutate pattern
-    const basePath = pkg.mutate[0].split("/**")[0];
-    mutatePatterns = [
-      `${basePath}/**/*${file}*`,
-      ...pkg.mutate.filter((p) => p.startsWith("!")),
-    ];
-  }
-
-  return {
-    $schema:
-      "https://raw.githubusercontent.com/stryker-mutator/stryker-js/master/packages/core/schema/stryker-schema.json",
-    packageManager: "pnpm",
-    testRunner: "command",
-    commandRunner: {
-      command: pkg.testCommand,
-    },
-    checkers: ["typescript"],
-    plugins: ["@stryker-mutator/typescript-checker"],
-    tsconfigFile: pkg.tsconfigFile,
-    typescriptChecker: {
-      prioritizePerformanceOverAccuracy: true,
-    },
-    mutate: mutatePatterns,
-    ignorePatterns: [...COMMON_IGNORE_PATTERNS, ...pkg.ignorePatterns],
-    reporters: ["html", "clear-text", "progress"],
-    htmlReporter: {
-      fileName: `test-output/mutation/${pkg.name.replace("@vamsa/", "").replace(/[^a-z0-9]/g, "-")}/index.html`,
-    },
-    concurrency,
-    tempDirName: ".stryker-tmp",
-    coverageAnalysis: "off",
-    timeoutMS: 30000,
-    timeoutFactor: 2.5,
-    disableBail: false,
-    cleanTempDir: "always",
-  };
-}
-
-async function main() {
-  const { package: packageName, file, concurrency } = parseArgs();
-
+  concurrency: number | undefined
+): Promise<boolean> {
   const pkg = PACKAGES[packageName];
   if (!pkg) {
     logger.error(`Unknown package: ${packageName}`);
     logger.error(`Available packages: ${Object.keys(PACKAGES).join(", ")}`);
-    process.exit(1);
+    return false;
   }
 
-  // Check if tsconfig exists
-  if (!existsSync(pkg.tsconfigFile)) {
-    logger.error(`tsconfig not found: ${pkg.tsconfigFile}`);
-    process.exit(1);
+  const configPath = `${pkg.directory}/stryker.config.json`;
+  if (!existsSync(configPath)) {
+    logger.error(`Stryker config not found: ${configPath}`);
+    logger.error(
+      "Each package should have its own stryker.config.json that extends the root config."
+    );
+    return false;
   }
 
   logger.info(`\n🧬 Running mutation tests for ${pkg.name}`);
   if (file) {
     logger.info(`   Filtering to files matching: ${file}`);
   }
-  logger.info(`   Concurrency: ${concurrency}`);
-  logger.info(`   Test command: ${pkg.testCommand}`);
+  if (concurrency) {
+    logger.info(`   Concurrency: ${concurrency}`);
+  }
+  logger.info(`   Directory: ${pkg.directory}`);
   logger.info("");
 
-  // Generate temporary stryker config
-  const config = generateStrykerConfig(pkg, file, concurrency);
-  const tempConfigPath = join(process.cwd(), ".stryker-tmp-config.json");
+  // Build Stryker CLI arguments
+  const args = ["stryker", "run"];
+
+  // Add file filter if specified
+  if (file) {
+    args.push("--mutate", `src/**/*${file}*`);
+  }
+
+  // Add concurrency if specified
+  if (concurrency) {
+    args.push("--concurrency", concurrency.toString());
+  }
 
   try {
-    writeFileSync(tempConfigPath, JSON.stringify(config, null, 2));
-
-    // Run stryker with the temporary config (configFile is a positional argument)
-    const result = await $`pnpm stryker run ${tempConfigPath}`.nothrow();
+    // Run stryker in the package directory
+    const result = await $`cd ${pkg.directory} && pnpm ${args}`.nothrow();
 
     if (result.exitCode !== 0) {
-      logger.error("\n❌ Mutation testing failed");
-      process.exit(result.exitCode);
+      logger.error(`\n❌ Mutation testing failed for ${pkg.name}`);
+      return false;
     }
 
-    logger.info("\n✅ Mutation testing complete");
+    logger.info(`\n✅ Mutation testing complete for ${pkg.name}`);
+    const outputDir = pkg.directory.replace(/^(packages|apps)\//, "");
+    logger.info(`   Report: test-output/mutation/${outputDir}/index.html`);
+    return true;
+  } catch (error) {
+    logger.error({ error }, `Failed to run mutation tests for ${pkg.name}`);
+    return false;
+  }
+}
+
+async function main() {
+  const { packages, file, concurrency } = parseArgs();
+
+  if (packages.length > 1) {
     logger.info(
-      `   Report: test-output/mutation/${pkg.name.replace("@vamsa/", "").replace(/[^a-z0-9]/g, "-")}/index.html`
+      `\n🧬 Running mutation tests for all packages: ${packages.join(", ")}`
     );
-  } finally {
-    // Clean up temporary config
-    if (existsSync(tempConfigPath)) {
-      unlinkSync(tempConfigPath);
+  }
+
+  const results: { package: string; success: boolean }[] = [];
+
+  for (const packageName of packages) {
+    const success = await runMutationTestsForPackage(
+      packageName,
+      file,
+      concurrency
+    );
+    results.push({ package: packageName, success });
+  }
+
+  // Summary for multiple packages
+  if (packages.length > 1) {
+    logger.info("\n📊 Mutation Testing Summary");
+    logger.info("─".repeat(40));
+    for (const result of results) {
+      const status = result.success ? "✅" : "❌";
+      logger.info(`   ${status} ${result.package}`);
     }
+
+    const failed = results.filter((r) => !r.success);
+    if (failed.length > 0) {
+      logger.error(`\n❌ ${failed.length} package(s) failed mutation testing`);
+      process.exit(1);
+    }
+
+    logger.info(`\n✅ All ${packages.length} packages passed mutation testing`);
+  } else if (!results[0].success) {
+    process.exit(1);
   }
 }
 

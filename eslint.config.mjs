@@ -34,6 +34,7 @@ export default tseslint.config(
       "docs/**", // Documentation
       "site/**", // Ladle build output
       ".beads/**", // Project management
+      "**/.stryker-tmp/**", // Stryker temp files
     ],
   },
 
