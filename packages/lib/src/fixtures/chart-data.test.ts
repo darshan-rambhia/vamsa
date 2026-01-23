@@ -226,13 +226,13 @@ describe("createMatrixData", () => {
   });
 
   it("creates matrix with all person combinations", () => {
-    const { people, matrix } = createMatrixData(3);
+    const { people: _people, matrix } = createMatrixData(3);
     // 3x3 matrix = 9 cells
     expect(matrix.length).toBe(9);
   });
 
   it("creates SELF relationships on diagonal", () => {
-    const { people, matrix } = createMatrixData(3);
+    const { people: _people, matrix } = createMatrixData(3);
 
     const selfRelationships = matrix.filter(
       (cell) =>

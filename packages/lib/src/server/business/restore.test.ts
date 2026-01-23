@@ -71,7 +71,9 @@ function createMockDb(): RestoreDb {
       };
       return callback(tx);
     }),
-  } as unknown as RestoreDb & { $transaction: (fn: (tx: RestoreDb) => Promise<unknown>) => Promise<unknown> };
+  } as unknown as RestoreDb & {
+    $transaction: (fn: (tx: RestoreDb) => Promise<unknown>) => Promise<unknown>;
+  };
 }
 
 describe("Restore Server Functions", () => {
@@ -122,6 +124,28 @@ describe("Restore Server Functions", () => {
 
       expect(error).toBeInstanceOf(Error);
       expect(error.message).toContain("Only administrators");
+    });
+
+    it("should include user name in exported metadata", async () => {
+      const userWithName = {
+        ...adminUser,
+        name: "Test Admin",
+      };
+
+      const result = await validateBackupData(userWithName, mockDb);
+
+      expect(result.metadata.exportedBy.name).toBe("Test Admin");
+    });
+
+    it("should handle null user name", async () => {
+      const userNoName = {
+        ...adminUser,
+        name: null,
+      };
+
+      const result = await validateBackupData(userNoName, mockDb);
+
+      expect(result.metadata.exportedBy.name).toBeNull();
     });
   });
 
@@ -226,6 +250,120 @@ describe("Restore Server Functions", () => {
 
       expect(error).toBeInstanceOf(Error);
       expect(error.message).toContain("Import failed");
+    });
+
+    it("should handle errors when logging import failure", async () => {
+      const mockDbWithError = createMockDb();
+      // Mock $transaction to reject
+      (mockDbWithError as any).$transaction = mock(() => {
+        return Promise.reject(new Error("Database error"));
+      });
+      // Mock auditLog.create to also reject
+      (
+        mockDbWithError.auditLog.create as ReturnType<typeof mock>
+      ).mockRejectedValueOnce(new Error("Audit log error"));
+
+      const error = await importBackupData(
+        adminUser,
+        "skip",
+        mockDbWithError
+      ).catch((e) => e);
+
+      expect(error).toBeInstanceOf(Error);
+      expect(error.message).toContain("Import failed");
+      // Logger should be called for the secondary error
+      expect(mockLogger.error).toHaveBeenCalled();
+    });
+
+    it("should log error to audit trail when import fails", async () => {
+      const mockDbWithError = createMockDb();
+      (mockDbWithError as any).$transaction = mock(() => {
+        return Promise.reject(new Error("Database error"));
+      });
+
+      await importBackupData(adminUser, "skip", mockDbWithError).catch(
+        () => {}
+      );
+
+      // Check that audit log was created for failed import
+      const auditCreateCall = (
+        mockDbWithError.auditLog.create as ReturnType<typeof mock>
+      ).mock.calls.find((call) => {
+        const data = call[0]?.data;
+        return data?.entityType === "BACKUP_IMPORT_FAILED";
+      });
+
+      expect(auditCreateCall).toBeDefined();
+    });
+
+    it("should create audit log for successful import in transaction", async () => {
+      const mockDbWithTx = createMockDb();
+      const txAuditCreate = mock(() => Promise.resolve({}));
+      const tx = {
+        auditLog: {
+          create: txAuditCreate,
+        },
+      };
+
+      (mockDbWithTx as any).$transaction = mock(
+        (fn: (tx: any) => Promise<unknown>) => {
+          return fn(tx);
+        }
+      );
+
+      const result = await importBackupData(adminUser, "skip", mockDbWithTx);
+
+      expect(result.success).toBe(true);
+      expect(txAuditCreate).toHaveBeenCalled();
+      const call = (txAuditCreate as ReturnType<typeof mock>).mock.calls[0];
+      expect(call?.[0]?.data?.entityType).toBe("BACKUP_IMPORT");
+    });
+
+    it("should include strategy in transaction audit log data", async () => {
+      const mockDbWithTx = createMockDb();
+      const txAuditCreate = mock(() => Promise.resolve({}));
+      const tx = {
+        auditLog: {
+          create: txAuditCreate,
+        },
+      };
+
+      (mockDbWithTx as any).$transaction = mock(
+        (fn: (tx: any) => Promise<unknown>) => {
+          return fn(tx);
+        }
+      );
+
+      await importBackupData(adminUser, "merge", mockDbWithTx);
+
+      const call = (txAuditCreate as ReturnType<typeof mock>).mock.calls[0];
+      const newData = call?.[0]?.data?.newData as Record<string, unknown>;
+      expect(newData?.strategy).toBe("merge");
+    });
+
+    it("should include statistics in audit log", async () => {
+      const mockDbWithTx = createMockDb();
+      const txAuditCreate = mock(() => Promise.resolve({}));
+      const tx = {
+        auditLog: {
+          create: txAuditCreate,
+        },
+      };
+
+      (mockDbWithTx as any).$transaction = mock(
+        (fn: (tx: any) => Promise<unknown>) => {
+          return fn(tx);
+        }
+      );
+
+      await importBackupData(adminUser, "skip", mockDbWithTx);
+
+      const call = (txAuditCreate as ReturnType<typeof mock>).mock.calls[0];
+      const newData = call?.[0]?.data?.newData as Record<string, unknown>;
+      const stats = newData?.statistics as Record<string, unknown>;
+      expect(stats?.peopleImported).toBe(0);
+      expect(stats?.relationshipsImported).toBe(0);
+      expect(stats?.usersImported).toBe(0);
     });
   });
 
@@ -348,6 +486,182 @@ describe("Restore Server Functions", () => {
 
       expect(result[0].importedBy).toBe("Admin User");
       expect(result[1].importedBy).toBe("admin2@example.com");
+    });
+
+    it("should limit history to 50 records", async () => {
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
+
+      await getImportHistoryData(adminUser, mockDb);
+
+      const findManyCall = (mockDb.auditLog.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
+      expect(findManyCall?.[0]?.take).toBe(50);
+    });
+
+    it("should filter for BACKUP_IMPORT and BACKUP_IMPORT_FAILED events", async () => {
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
+
+      await getImportHistoryData(adminUser, mockDb);
+
+      const findManyCall = (mockDb.auditLog.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
+      expect(findManyCall?.[0]?.where?.entityType?.in).toEqual([
+        "BACKUP_IMPORT",
+        "BACKUP_IMPORT_FAILED",
+      ]);
+    });
+
+    it("should order history by createdAt descending", async () => {
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
+
+      await getImportHistoryData(adminUser, mockDb);
+
+      const findManyCall = (mockDb.auditLog.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
+      expect(findManyCall?.[0]?.orderBy).toEqual({ createdAt: "desc" });
+    });
+
+    it("should include user relationship in query", async () => {
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce([]);
+
+      await getImportHistoryData(adminUser, mockDb);
+
+      const findManyCall = (mockDb.auditLog.findMany as ReturnType<typeof mock>)
+        .mock.calls[0];
+      expect(findManyCall?.[0]?.include?.user).toBeDefined();
+    });
+
+    it("should format createdAt to ISO string", async () => {
+      const mockAuditLogs = [
+        {
+          id: "log-1",
+          userId: "admin-1",
+          action: "CREATE",
+          entityType: "BACKUP_IMPORT",
+          newData: { strategy: "skip", statistics: {} },
+          createdAt: new Date("2024-01-15T10:30:00Z"),
+          user: {
+            name: "Admin User",
+            email: "admin@example.com",
+          },
+        },
+      ] as any;
+
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockAuditLogs);
+
+      const result = await getImportHistoryData(adminUser, mockDb);
+
+      expect(result[0].importedAt).toBe("2024-01-15T10:30:00.000Z");
+    });
+
+    it("should mark successful imports correctly", async () => {
+      const mockAuditLogs = [
+        {
+          id: "log-1",
+          userId: "admin-1",
+          action: "CREATE",
+          entityType: "BACKUP_IMPORT",
+          newData: { strategy: "skip", statistics: {} },
+          createdAt: new Date(),
+          user: {
+            name: "Admin",
+            email: "admin@example.com",
+          },
+        },
+      ] as any;
+
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockAuditLogs);
+
+      const result = await getImportHistoryData(adminUser, mockDb);
+
+      expect(result[0].success).toBe(true);
+    });
+
+    it("should mark failed imports correctly", async () => {
+      const mockAuditLogs = [
+        {
+          id: "log-1",
+          userId: "admin-1",
+          action: "CREATE",
+          entityType: "BACKUP_IMPORT_FAILED",
+          newData: { error: "Validation failed", statistics: {} },
+          createdAt: new Date(),
+          user: {
+            name: "Admin",
+            email: "admin@example.com",
+          },
+        },
+      ] as any;
+
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockAuditLogs);
+
+      const result = await getImportHistoryData(adminUser, mockDb);
+
+      expect(result[0].success).toBe(false);
+    });
+
+    it("should handle missing statistics in audit log", async () => {
+      const mockAuditLogs = [
+        {
+          id: "log-1",
+          userId: "admin-1",
+          action: "CREATE",
+          entityType: "BACKUP_IMPORT",
+          newData: { strategy: "skip" }, // No statistics
+          createdAt: new Date(),
+          user: {
+            name: "Admin",
+            email: "admin@example.com",
+          },
+        },
+      ] as any;
+
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockAuditLogs);
+
+      const result = await getImportHistoryData(adminUser, mockDb);
+
+      expect(result[0].statistics).toEqual({});
+    });
+
+    it("should handle missing strategy in audit log", async () => {
+      const mockAuditLogs = [
+        {
+          id: "log-1",
+          userId: "admin-1",
+          action: "CREATE",
+          entityType: "BACKUP_IMPORT",
+          newData: { statistics: { peopleImported: 5 } }, // No strategy
+          createdAt: new Date(),
+          user: {
+            name: "Admin",
+            email: "admin@example.com",
+          },
+        },
+      ] as any;
+
+      (
+        mockDb.auditLog.findMany as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockAuditLogs);
+
+      const result = await getImportHistoryData(adminUser, mockDb);
+
+      expect(result[0].strategy).toBe("unknown");
     });
   });
 });

@@ -55,6 +55,7 @@ function createMockDb(): CalendarTokensDb {
     calendarToken: {
       findMany: mock(() => Promise.resolve([])),
       findFirst: mock(() => Promise.resolve(null)),
+      findUniqueOrThrow: mock(() => Promise.resolve({})),
       create: mock(() => Promise.resolve({})),
       update: mock(() => Promise.resolve({})),
       delete: mock(() => Promise.resolve({})),
@@ -219,22 +220,42 @@ describe("Calendar Tokens Server Functions", () => {
       const mockToken = {
         id: tokenId,
         userId,
+        name: "Test Token",
+        scopes: ["all"],
+        rotationPolicy: "annual",
         isActive: true,
+        createdAt: new Date(),
+      };
+
+      const mockNewToken = {
+        id: "token-2",
+        token: "new-token-value",
+        userId,
+        name: "Test Token",
       };
 
       (
         mockDb.calendarToken.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockToken);
 
-      // Note: rotateToken is an external dependency that calls the real database
-      // This test documents that verifyTokenOwnership is called first via DI
-      // Full integration testing is covered in E2E tests
-      try {
-        await rotateCalendarTokenData(tokenId, userId, mockDb);
-      } catch {
-        // Expected - rotateToken is an external function not mocked in unit tests
-      }
+      // Mock for rotateToken - findUniqueOrThrow
+      (
+        mockDb.calendarToken.findUniqueOrThrow as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockToken);
 
+      // Mock for rotateToken - create (new token)
+      (
+        mockDb.calendarToken.create as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockNewToken);
+
+      // Mock for rotateToken - update (old token grace period)
+      (
+        mockDb.calendarToken.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce({ ...mockToken, name: "Test Token (rotated)" });
+
+      const result = await rotateCalendarTokenData(tokenId, userId, mockDb);
+
+      expect(result.id).toBe("token-2");
       expect(mockDb.calendarToken.findFirst).toHaveBeenCalledWith({
         where: { id: tokenId, userId },
       });
@@ -266,19 +287,25 @@ describe("Calendar Tokens Server Functions", () => {
         isActive: true,
       };
 
+      const mockRevokedToken = {
+        id: tokenId,
+        userId,
+        isActive: false,
+        expiresAt: new Date(),
+      };
+
       (
         mockDb.calendarToken.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockToken);
 
-      // Note: revokeToken is an external dependency that calls the real database
-      // This test documents that verifyTokenOwnership is called first via DI
-      // Full integration testing is covered in E2E tests
-      try {
-        await revokeCalendarTokenData(tokenId, userId, mockDb);
-      } catch {
-        // Expected - revokeToken is an external function not mocked in unit tests
-      }
+      // Mock for revokeToken - update
+      (
+        mockDb.calendarToken.update as ReturnType<typeof mock>
+      ).mockResolvedValueOnce(mockRevokedToken);
 
+      const result = await revokeCalendarTokenData(tokenId, userId, mockDb);
+
+      expect(result.isActive).toBe(false);
       expect(mockDb.calendarToken.findFirst).toHaveBeenCalledWith({
         where: { id: tokenId, userId },
       });

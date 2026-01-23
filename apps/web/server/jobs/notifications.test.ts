@@ -314,7 +314,9 @@ describe("Backup Notifications", () => {
           args !== null &&
           "subject" in args &&
           typeof (args as Record<string, unknown>).subject === "string" &&
-          ((args as Record<string, unknown>).subject as string).includes("Completed")
+          ((args as Record<string, unknown>).subject as string).includes(
+            "Completed"
+          )
         );
       });
 
@@ -339,7 +341,9 @@ describe("Backup Notifications", () => {
           args !== null &&
           "subject" in args &&
           typeof (args as Record<string, unknown>).subject === "string" &&
-          ((args as Record<string, unknown>).subject as string).includes("Failed")
+          ((args as Record<string, unknown>).subject as string).includes(
+            "Failed"
+          )
         );
       });
 

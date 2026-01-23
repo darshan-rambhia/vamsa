@@ -8,7 +8,7 @@
  * - Request/response format and status codes
  */
 
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect } from "bun:test";
 import authRouter from "./auth";
 
 describe("Authentication API Routes", () => {
