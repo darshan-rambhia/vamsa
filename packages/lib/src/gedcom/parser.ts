@@ -183,30 +183,87 @@ export class GedcomParser {
   /**
    * Parse a single GEDCOM line
    * Format: <level> <tag> [<xref>] [<value>]
+   *
+   * Uses deterministic string parsing to avoid ReDoS vulnerabilities
    */
   private parseLine(line: string): GedcomLine | null {
-    // Match GEDCOM line pattern
-    // Level is required, tag is required, xref/value are optional
-    const match = line.match(
-      /^(\d+)\s+(@[\w#]+@)?\s*(\w+)(?:\s+(@[\w#]+@|.*))?$/
-    );
+    const trimmed = line.trim();
+    if (!trimmed) return null;
 
-    if (!match) {
-      return null;
+    // Parse using deterministic approach: split on first whitespace sequences
+    // Find level (digits at start)
+    let i = 0;
+    while (i < trimmed.length && trimmed[i] >= "0" && trimmed[i] <= "9") {
+      i++;
+    }
+    if (i === 0) return null; // No level found
+
+    const levelStr = trimmed.slice(0, i);
+    const level = parseInt(levelStr, 10);
+
+    // Skip whitespace after level
+    while (i < trimmed.length && (trimmed[i] === " " || trimmed[i] === "\t")) {
+      i++;
+    }
+    if (i >= trimmed.length) return null; // No content after level
+
+    // Check for optional xref at level 0 (format: @ID@)
+    let xref: string | undefined;
+    if (trimmed[i] === "@") {
+      const xrefStart = i;
+      i++; // skip opening @
+      // Find closing @
+      while (i < trimmed.length && trimmed[i] !== "@") {
+        i++;
+      }
+      if (i >= trimmed.length) return null; // Unclosed xref
+      i++; // skip closing @
+      xref = trimmed.slice(xrefStart, i);
+
+      // Skip whitespace after xref
+      while (i < trimmed.length && (trimmed[i] === " " || trimmed[i] === "\t")) {
+        i++;
+      }
     }
 
-    const [, levelStr, xref, tag, valueOrPointer] = match;
-    const level = parseInt(levelStr, 10);
+    // Parse tag (word characters)
+    const tagStart = i;
+    while (
+      i < trimmed.length &&
+      ((trimmed[i] >= "A" && trimmed[i] <= "Z") ||
+        (trimmed[i] >= "a" && trimmed[i] <= "z") ||
+        (trimmed[i] >= "0" && trimmed[i] <= "9") ||
+        trimmed[i] === "_")
+    ) {
+      i++;
+    }
+    if (i === tagStart) return null; // No tag found
+
+    const tag = trimmed.slice(tagStart, i);
+
+    // Skip whitespace after tag
+    while (i < trimmed.length && (trimmed[i] === " " || trimmed[i] === "\t")) {
+      i++;
+    }
+
+    // Rest is value or pointer (optional)
+    const valueOrPointer = i < trimmed.length ? trimmed.slice(i) : "";
 
     // Determine if valueOrPointer is a pointer or value
     let pointer: string | undefined;
     let value: string;
 
-    if (valueOrPointer?.match(/^@[\w#]+@$/)) {
+    // Check if it's a pointer (format: @ID@)
+    if (
+      valueOrPointer.startsWith("@") &&
+      valueOrPointer.endsWith("@") &&
+      valueOrPointer.length > 2 &&
+      !valueOrPointer.slice(1, -1).includes("@")
+    ) {
       pointer = valueOrPointer;
       value = "";
     } else {
-      value = valueOrPointer || "";
+      value = valueOrPointer;
     }
 
     return {

@@ -207,25 +207,36 @@ const ANSEL_COMBINING: Record<string, string> = {
 /**
  * Detect GEDCOM file encoding from CHAR tag in HEAD record
  * Returns detected encoding or 'UTF-8' as default
+ *
+ * Uses deterministic parsing to avoid ReDoS vulnerabilities
  */
 export function detectEncoding(content: string): string {
   // Find HEAD record and CHAR tag
   const lines = content.split(/\r?\n/);
 
   for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const match = line.match(/^1\s+CHAR\s+(.+)$/);
-    if (match) {
-      const charset = match[1].trim().toUpperCase();
-      // Normalize encoding names
-      if (charset.includes("ANSEL")) {
-        return "ANSEL";
-      }
-      if (charset.includes("UTF")) {
-        return "UTF-8";
-      }
-      return charset;
+    const line = lines[i].trim();
+
+    // Check if line starts with "1" followed by whitespace
+    if (!line.startsWith("1")) continue;
+
+    // Parse: "1 CHAR <charset>"
+    // Use split and filter to handle variable whitespace without ReDoS
+    const parts = line.split(/\s/).filter((s) => s.length > 0);
+    if (parts.length < 3) continue;
+    if (parts[0] !== "1" || parts[1] !== "CHAR") continue;
+
+    // Rest is the charset (join in case charset has spaces, though unusual)
+    const charset = parts.slice(2).join(" ").toUpperCase();
+
+    // Normalize encoding names
+    if (charset.includes("ANSEL")) {
+      return "ANSEL";
     }
+    if (charset.includes("UTF")) {
+      return "UTF-8";
+    }
+    return charset;
   }
 
   // Default to UTF-8

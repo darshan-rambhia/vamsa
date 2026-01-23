@@ -14,6 +14,13 @@ import { Page, expect } from "@playwright/test";
 import { bdd } from "./bdd-helpers";
 
 /**
+ * Escapes special regex characters in a string for safe use in RegExp constructor
+ */
+function escapeRegExp(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
  * Configuration for a form field validation test
  */
 export interface FormFieldConfig {
@@ -87,7 +94,7 @@ export const formValidation = {
     await bdd.then("form validation prevents submission", async () => {
       // Should still be on the same page
       await expect(page).toHaveURL(
-        new RegExp(config.formUrl.replace(/\//g, "\\/"))
+        new RegExp(escapeRegExp(config.formUrl))
       );
     });
   },
@@ -153,7 +160,7 @@ export const formValidation = {
     await bdd.then("form validation prevents submission", async () => {
       // Should still be on the same page
       await expect(page).toHaveURL(
-        new RegExp(config.formUrl.replace(/\//g, "\\/"))
+        new RegExp(escapeRegExp(config.formUrl))
       );
     });
   },

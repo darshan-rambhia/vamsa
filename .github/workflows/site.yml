@@ -9,6 +9,10 @@ on:
       - "apps/web/.ladle/**"
   workflow_dispatch:
 
+# Explicit permissions following principle of least privilege
+permissions:
+  contents: read # Required for actions/checkout
+
 jobs:
   build:
     runs-on: ubuntu-latest

@@ -137,10 +137,14 @@ export function scoreProfileMatch(
  * - Removes common titles/suffixes
  */
 function normalizeName(name: string): string {
-  return name
+  // Use split/filter/join instead of regex for whitespace normalization to avoid ReDoS
+  const normalized = name
     .toLowerCase()
-    .replace(/\s+/g, " ")
-    .trim()
+    .split(/\s/)
+    .filter((s) => s.length > 0)
+    .join(" ");
+  // Remove common titles and suffixes
+  return normalized
     .replace(/^(mr|mrs|ms|dr|prof)\.\s*/i, "")
     .replace(/\s*(jr|sr|ii|iii|iv|v)\.?\s*$/i, "");
 }
