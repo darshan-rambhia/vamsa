@@ -1,11 +1,11 @@
 {
   "cookies": [
     {
-      "name": "vamsa-session",
-      "value": "22e221557f035ae8f566632c61146b94b831a5aa1c17c7169a4e35a38bc5752b",
+      "name": "better-auth.session_token",
+      "value": "UYBovBnQu3jXK4WyelTJSoLL4jWPBrBI.YsBYwPqPg8qEPAl8f7FlsD9bQs5njVj%2FYeCkqqtSL8o%3D",
       "domain": "localhost",
       "path": "/",
-      "expires": 1771617261.462349,
+      "expires": 1771730137.058599,
       "httpOnly": true,
       "secure": false,
       "sameSite": "Lax"
