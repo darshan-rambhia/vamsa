@@ -2,6 +2,10 @@
   "name": "vamsa",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "bun": ">=1.0.0",
+    "node": ">=20.0.0"
+  },
   "scripts": {
     "// === Development ===": "",
     "dev": "bun scripts/dev.ts",
@@ -11,6 +15,7 @@
     "build:web": "turbo run build --filter=@vamsa/web",
     "preview": "turbo run preview --filter=@vamsa/web",
     "// === Code Quality ===": "",
+    "check": "bun scripts/check-all.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -20,7 +25,6 @@
     "test": "turbo run test",
     "test:unit": "turbo run test --filter=@vamsa/lib --filter=@vamsa/ui",
     "test:e2e": "turbo run test:e2e --filter=@vamsa/web",
-    "test:coverage": "turbo run test:coverage",
     "test:mutation": "bun scripts/mutation-test.ts",
     "test:mutation:lib": "bun scripts/mutation-test.ts lib",
     "test:mutation:ui": "bun scripts/mutation-test.ts ui",
@@ -46,6 +50,15 @@
     "// === Utilities ===": "",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
   },
+  "dependencies": {
+    "@hono/swagger-ui": "^0.5.3",
+    "@hono/zod-openapi": "^1.2.0",
+    "date-fns": "^4.1.0",
+    "html2canvas": "^1.4.1",
+    "ical-generator": "^10.0.0",
+    "maplibre-gl": "^5.16.0",
+    "rss": "^1.2.2"
+  },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@stryker-mutator/core": "^9.4.0",
@@ -68,14 +81,6 @@
     "overrides": {
       "@react-email/render": "^2.0.2"
     }
-  },
-  "dependencies": {
-    "@hono/swagger-ui": "^0.5.3",
-    "@hono/zod-openapi": "^1.2.0",
-    "date-fns": "^4.1.0",
-    "html2canvas": "^1.4.1",
-    "ical-generator": "^10.0.0",
-    "maplibre-gl": "^5.16.0",
-    "rss": "^1.2.2"
   }
+
 }
