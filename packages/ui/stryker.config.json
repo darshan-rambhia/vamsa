@@ -1,40 +1,36 @@
 {
-  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "$schema": "../../node_modules/@stryker-mutator/core/schema/stryker-schema.json",
   "packageManager": "pnpm",
   "testRunner": "command",
   "commandRunner": {
-    "command": "bun test"
+    "command": "bun test --preload ./src/test-setup.ts"
   },
   "checkers": ["typescript"],
   "plugins": ["@stryker-mutator/typescript-checker"],
-  "tsconfigFile": "packages/lib/tsconfig.json",
+  "tsconfigFile": "./tsconfig.json",
   "typescriptChecker": {
     "prioritizePerformanceOverAccuracy": true
   },
   "mutate": [
-    "packages/lib/src/**/*.ts",
-    "!packages/lib/src/**/*.test.ts",
-    "!packages/lib/src/**/index.ts"
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/index.ts",
+    "!src/test-setup.ts"
   ],
   "ignorePatterns": [
     "node_modules",
     "dist",
     ".git",
-    ".stryker-tmp",
-    ".beads",
-    ".claude",
-    "packages/schemas",
-    "coverage",
-    "test-output",
-    "docker",
-    "docs",
-    "scripts",
-    "data",
-    "bunfig.toml"
+    ".stryker-tmp"
   ],
   "reporters": ["html", "clear-text", "progress", "json"],
   "htmlReporter": {
-    "fileName": "test-output/mutation/index.html"
+    "fileName": "../../test-output/mutation/ui/index.html"
+  },
+  "jsonReporter": {
+    "fileName": "../../test-output/mutation/ui/mutation-report.json"
   },
   "concurrency": 10,
   "tempDirName": ".stryker-tmp",
