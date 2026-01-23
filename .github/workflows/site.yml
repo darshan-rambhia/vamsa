@@ -18,13 +18,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
         with:
-          node-version: 20
-          cache: "pnpm"
-      - run: pnpm install
-      - run: pnpm --filter @vamsa/web ladle:build
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build Ladle
+        run: bun run --filter @vamsa/web ladle:build
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs/site
