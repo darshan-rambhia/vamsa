@@ -30,7 +30,7 @@ A modern web application for managing family genealogy with server-side renderin
 - **Backend API**: TanStack React Start server functions
 - **Database**: PostgreSQL 18 with Prisma ORM
 - **Runtime**: Bun
-- **Monorepo**: pnpm workspaces + Turborepo
+- **Monorepo**: Bun workspaces
 - **UI**: Tailwind CSS + shadcn/ui components
 - **Tree Visualization**: React Flow
 - **State Management**: TanStack Query
@@ -134,7 +134,7 @@ bun run dev              # Start dev server
 bun run build            # Build for production
 bun run preview          # Preview production build locally
 bun run typecheck        # Run TypeScript checks
-pnpm lint               # Run ESLint
+bun run lint               # Run ESLint
 ```
 
 ### Database
@@ -151,7 +151,7 @@ bun run db:seed         # Seed initial data
 bun run test            # Run unit tests
 bun run test:e2e        # Run E2E tests
 bun run test:ui         # Run tests with UI
-pnpm test:coverage      # Generate coverage report
+bun run test:coverage      # Generate coverage report
 ```
 
 ### Project Management
@@ -182,7 +182,7 @@ This approach ensures:
 
 ### Monorepo Structure
 
-Using **pnpm workspaces** + **Turborepo** for:
+Using **Bun workspaces** for:
 
 - Shared packages (`ui`, `schemas`, `lib`) usable across clients
 - Efficient builds with caching

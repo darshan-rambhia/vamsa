@@ -16,7 +16,7 @@ Vamsa is a family genealogy application built with:
 - **Backend API**: TanStack React Start server functions
 - **Database**: PostgreSQL (via Prisma ORM)
 - **Runtime**: Bun (non-negotiable)
-- **Monorepo**: pnpm workspaces + Turborepo
+- **Monorepo**: Bun workspaces
 
 ## Package Structure
 
@@ -48,20 +48,20 @@ Editorial + Earth Tones aesthetic:
 ### Development
 
 ```bash
-pnpm dev                # Start web development server (TanStack Start on port 3000+)
-pnpm dev:web-only       # Start only web app (skip API/UI builds)
-pnpm build              # Build all packages for production
-pnpm build:web          # Build web app only
-pnpm preview            # Preview production build locally
+bun run dev             # Start web development server (TanStack Start on port 3000+)
+bun run dev:web-only    # Start only web app (skip API/UI builds)
+bun run build           # Build all packages for production
+bun run build:web       # Build web app only
+bun run preview         # Preview production build locally
 ```
 
 ### Production Server
 
 ```bash
 cd apps/web
-pnpm build              # Build the app first
-pnpm start              # Start Bun + Hono production server
-pnpm start:prod         # Start with NODE_ENV=production
+bun run build           # Build the app first
+bun run start           # Start Bun + Hono production server
+bun run start:prod      # Start with NODE_ENV=production
 ```
 
 The production server (`apps/web/server/index.ts`) uses:
@@ -73,35 +73,35 @@ The production server (`apps/web/server/index.ts`) uses:
 ### Code Quality
 
 ```bash
-pnpm check              # Run all checks in parallel (lint, format, typecheck, test)
-pnpm lint               # Run ESLint
-pnpm lint:fix           # Fix ESLint issues
-pnpm format             # Format code with Prettier
-pnpm format:check       # Check formatting without modifying
-pnpm typecheck          # Run TypeScript type checks
-pnpm test               # Run all unit tests
-pnpm test:unit          # Run lib and ui unit tests
-pnpm test:e2e           # Run E2E tests with Playwright
+bun run check           # Run all checks in parallel (lint, format, typecheck, test)
+bun run lint            # Run ESLint
+bun run lint:fix        # Fix ESLint issues
+bun run format          # Format code with Prettier
+bun run format:check    # Check formatting without modifying
+bun run typecheck       # Run TypeScript type checks
+bun run test            # Run all unit tests
+bun run test:unit       # Run lib and ui unit tests
+bun run test:e2e        # Run E2E tests with Playwright
 ```
 
 ### Database
 
 ```bash
-pnpm db:generate        # Generate Prisma client
-pnpm db:migrate         # Run pending Prisma migrations
-pnpm db:migrate:deploy  # Deploy migrations (production)
-pnpm db:push            # Push Prisma schema to database
-pnpm db:seed            # Seed database with initial data
-pnpm db:studio          # Open Prisma Studio GUI
+bun run db:generate        # Generate Prisma client
+bun run db:migrate         # Run pending Prisma migrations
+bun run db:migrate:deploy  # Deploy migrations (production)
+bun run db:push            # Push Prisma schema to database
+bun run db:seed            # Seed database with initial data
+bun run db:studio          # Open Prisma Studio GUI
 ```
 
 ### Docker
 
 ```bash
-pnpm docker             # Start all production services (PostgreSQL + app + nginx)
-pnpm docker:down        # Stop all Docker services
-pnpm docker:logs        # View logs from all services
-pnpm docker:build       # Rebuild Docker images
+bun run docker          # Start all production services (PostgreSQL + app + nginx)
+bun run docker:down     # Stop all Docker services
+bun run docker:logs     # View logs from all services
+bun run docker:build    # Rebuild Docker images
 ```
 
 See [DOCKER.md](./DOCKER.md) for complete Docker documentation.
@@ -111,7 +111,7 @@ See [DOCKER.md](./DOCKER.md) for complete Docker documentation.
 ```bash
 bd ready                # Show beads ready to work
 bd sync                 # Sync beads with git
-pnpm clean              # Remove all node_modules
+bun run clean           # Remove all node_modules
 ```
 
 ## Skills

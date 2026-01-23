@@ -26,23 +26,23 @@ You MUST run ALL of these commands and ALL must pass before closing any bead:
 
 ```bash
 # 1. Unit Tests
-pnpm test
+bun run test
 # Expected: All tests pass, no failures
 
 # 2. Linting
-pnpm lint
+bun run lint
 # Expected: No errors (warnings acceptable)
 
 # 3. TypeScript
-pnpm typecheck
+bun run typecheck
 # Expected: No type errors
 
 # 4. Production Build
-pnpm build
+bun run build
 # Expected: Build succeeds without errors
 
 # 5. Development Server
-pnpm dev &
+bun run dev &
 sleep 15
 curl -s http://localhost:3000 > /dev/null && echo "Dev server OK" || echo "Dev server FAILED"
 # Kill the dev server after check
@@ -65,11 +65,11 @@ docker stop vamsa-review-container
 
 | Gate         | Command             | Must Pass |
 | ------------ | ------------------- | --------- |
-| Unit Tests   | `pnpm test`         | YES       |
-| Lint         | `pnpm lint`         | YES       |
-| TypeScript   | `pnpm typecheck`    | YES       |
-| Build        | `pnpm build`        | YES       |
-| Dev Server   | `pnpm dev` + curl   | YES       |
+| Unit Tests   | `bun run test`         | YES       |
+| Lint         | `bun run lint`         | YES       |
+| TypeScript   | `bun run typecheck`    | YES       |
+| Build        | `bun run build`        | YES       |
+| Dev Server   | `bun run dev` + curl   | YES       |
 | Docker Build | `docker build`      | YES       |
 | Docker Run   | `docker run` + curl | YES       |
 
@@ -80,8 +80,8 @@ docker stop vamsa-review-container
 ### 1. Code Quality
 
 ```bash
-pnpm typecheck
-pnpm lint
+bun run typecheck
+bun run lint
 ```
 
 - [ ] No `as any`, `@ts-ignore`, `@ts-expect-error`
@@ -92,8 +92,8 @@ pnpm lint
 ### 2. Tests
 
 ```bash
-pnpm test
-pnpm test:e2e  # If E2E tests exist for feature
+bun run test
+bun run test:e2e  # If E2E tests exist for feature
 ```
 
 - [ ] All tests pass
@@ -103,7 +103,7 @@ pnpm test:e2e  # If E2E tests exist for feature
 ### 3. Build Verification
 
 ```bash
-pnpm build
+bun run build
 ```
 
 - [ ] Build succeeds
@@ -113,7 +113,7 @@ pnpm build
 
 ```bash
 # Dev server
-pnpm dev &
+bun run dev &
 sleep 15
 curl -s http://localhost:3000
 pkill -f "next dev" || pkill -f "vinxi" || true
@@ -169,7 +169,7 @@ When quality gates fail or acceptance criteria not met:
 bd comment {bead-id} --body "Review FAILED. Issues found:
 
 ## Failed Gates
-- [ ] pnpm typecheck - 3 errors
+- [ ] bun run typecheck - 3 errors
 - [ ] docker build - Dockerfile syntax error
 
 ## Details
@@ -192,11 +192,11 @@ Reassign to @backend for fixes."
 
 | Gate         | Command        | Status    | Details           |
 | ------------ | -------------- | --------- | ----------------- |
-| Unit Tests   | pnpm test      | PASS/FAIL | X tests, Y passed |
-| Lint         | pnpm lint      | PASS/FAIL | X errors          |
-| TypeScript   | pnpm typecheck | PASS/FAIL | X errors          |
-| Build        | pnpm build     | PASS/FAIL | -                 |
-| Dev Server   | pnpm dev       | PASS/FAIL | Responds: yes/no  |
+| Unit Tests   | bun run test      | PASS/FAIL | X tests, Y passed |
+| Lint         | bun run lint      | PASS/FAIL | X errors          |
+| TypeScript   | bun run typecheck | PASS/FAIL | X errors          |
+| Build        | bun run build     | PASS/FAIL | -                 |
+| Dev Server   | bun run dev       | PASS/FAIL | Responds: yes/no  |
 | Docker Build | docker build   | PASS/FAIL | -                 |
 | Docker Run   | docker run     | PASS/FAIL | Responds: yes/no  |
 
