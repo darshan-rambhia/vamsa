@@ -204,7 +204,9 @@ export async function betterAuthSignOut(headers: Headers) {
  *   console.log(`Logged in as: ${user.email}, Role: ${user.role}`);
  * }
  */
-export async function betterAuthGetSessionWithUserFromCookie(cookieString?: string) {
+export async function betterAuthGetSessionWithUserFromCookie(
+  cookieString?: string
+) {
   if (!cookieString) {
     return null;
   }
@@ -227,11 +229,11 @@ export async function betterAuthGetSessionWithUserFromCookie(cookieString?: stri
     id: session.user.id,
     email: session.user.email,
     name: session.user.name,
-    role: (session.user as any).role || "VIEWER",
-    personId: (session.user as any).personId || null,
-    mustChangePassword: (session.user as any).mustChangePassword || false,
-    oidcProvider: (session.user as any).oidcProvider || null,
-    profileClaimStatus: (session.user as any).profileClaimStatus || "PENDING",
+    role: session.user.role || "VIEWER",
+    personId: session.user.personId || null,
+    mustChangePassword: session.user.mustChangePassword || false,
+    oidcProvider: session.user?.oidcProvider ?? null,
+    profileClaimStatus: session.user.profileClaimStatus || "PENDING",
   };
 }
 
@@ -264,11 +266,11 @@ export async function betterAuthGetSessionWithUser(headers: Headers) {
     id: session.user.id,
     email: session.user.email,
     name: session.user.name,
-    role: (session.user as any).role || "VIEWER",
-    personId: (session.user as any).personId || null,
-    mustChangePassword: (session.user as any).mustChangePassword || false,
-    oidcProvider: (session.user as any).oidcProvider || null,
-    profileClaimStatus: (session.user as any).profileClaimStatus || "PENDING",
+    role: session.user.role || "VIEWER",
+    personId: session.user.personId || null,
+    mustChangePassword: session.user.mustChangePassword || false,
+    profileClaimStatus: session.user.profileClaimStatus || "PENDING",
+    oidcProvider: session.user?.oidcProvider ?? null,
   };
 }
 

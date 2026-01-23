@@ -1,6 +1,8 @@
 // Conflict resolver utility for handling backup import conflicts
 // This utility is designed to work with any database interface
 
+import { logger, serializeError } from "@vamsa/lib/logger";
+
 export type ConflictResolutionStrategy = "skip" | "replace" | "merge";
 
 type IsoDateString = string;
@@ -279,7 +281,7 @@ export class ConflictResolver {
         warnings,
       };
     } catch (error) {
-      console.error("Import error:", error);
+      logger.error({ error: serializeError(error) }, "Import error");
       errors.push(
         `Import failed: ${error instanceof Error ? error.message : "Unknown error"}`
       );

@@ -106,7 +106,7 @@ export async function rotateCalendarTokenData(
   // Verify user owns this token
   await verifyTokenOwnership(tokenId, userId, db);
 
-  const newToken = await rotateToken(tokenId);
+  const newToken = await rotateToken(tokenId, db);
 
   logger.info(
     { userId, oldTokenId: tokenId, newTokenId: newToken.id },
@@ -132,7 +132,7 @@ export async function revokeCalendarTokenData(
   // Verify user owns this token
   await verifyTokenOwnership(tokenId, userId, db);
 
-  const revokedToken = await revokeToken(tokenId);
+  const revokedToken = await revokeToken(tokenId, db);
 
   logger.info({ userId, tokenId }, "Calendar token revoked");
 

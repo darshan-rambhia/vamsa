@@ -36,7 +36,9 @@ export async function requireAuth(requiredRole: UserRole = "VIEWER") {
     ADMIN: 2,
   };
 
-  if (roleHierarchy[sessionUser.role as UserRole] < roleHierarchy[requiredRole]) {
+  if (
+    roleHierarchy[sessionUser.role as UserRole] < roleHierarchy[requiredRole]
+  ) {
     throw new Error(`Requires ${requiredRole} role or higher`);
   }
 

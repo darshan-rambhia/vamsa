@@ -1,7 +1,14 @@
-import { prisma } from "@vamsa/lib/server";
+import type { PrismaClient } from "@vamsa/api";
+import { prisma as defaultPrisma } from "@vamsa/lib/server";
 import { logger } from "@vamsa/lib/logger";
 import { addYears, addDays } from "date-fns";
 import crypto from "crypto";
+
+/**
+ * Database interface for token rotation operations.
+ * Allows dependency injection for testing.
+ */
+export type TokenRotationDb = Pick<PrismaClient, "calendarToken">;
 
 type RotationEvent = "password_change" | "manual" | "annual_check";
 
@@ -13,13 +20,21 @@ export function generateSecureToken(): string {
 }
 
 /**
+ * Calculate days since a date
+ */
+export function daysSinceCreation(createdAt: Date): number {
+  return Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+/**
  * Enforce token rotation policies for a user
  */
 export async function enforceRotationPolicy(
   userId: string,
-  event: RotationEvent
+  event: RotationEvent,
+  db: TokenRotationDb = defaultPrisma
 ): Promise<{ rotated: number; tokens: string[] }> {
-  const tokens = await prisma.calendarToken.findMany({
+  const tokens = await db.calendarToken.findMany({
     where: { userId, isActive: true },
   });
 
@@ -36,7 +51,7 @@ export async function enforceRotationPolicy(
       event === "manual";
 
     if (shouldRotate) {
-      const newToken = await rotateToken(token.id);
+      const newToken = await rotateToken(token.id, db);
       rotatedTokens.push(newToken.token);
       rotatedCount++;
 
@@ -53,13 +68,16 @@ export async function enforceRotationPolicy(
 /**
  * Rotate a single token with grace period
  */
-export async function rotateToken(oldTokenId: string) {
-  const oldToken = await prisma.calendarToken.findUniqueOrThrow({
+export async function rotateToken(
+  oldTokenId: string,
+  db: TokenRotationDb = defaultPrisma
+) {
+  const oldToken = await db.calendarToken.findUniqueOrThrow({
     where: { id: oldTokenId },
   });
 
   // Create new token with same settings
-  const newToken = await prisma.calendarToken.create({
+  const newToken = await db.calendarToken.create({
     data: {
       userId: oldToken.userId,
       token: generateSecureToken(),
@@ -74,7 +92,7 @@ export async function rotateToken(oldTokenId: string) {
   });
 
   // Grace period: old token valid for 30 days
-  await prisma.calendarToken.update({
+  await db.calendarToken.update({
     where: { id: oldTokenId },
     data: {
       expiresAt: addDays(new Date(), 30),
@@ -88,16 +106,15 @@ export async function rotateToken(oldTokenId: string) {
 /**
  * Revoke a token immediately (no grace period)
  */
-export async function revokeToken(tokenId: string) {
-  return prisma.calendarToken.update({
+export async function revokeToken(
+  tokenId: string,
+  db: TokenRotationDb = defaultPrisma
+) {
+  return db.calendarToken.update({
     where: { id: tokenId },
     data: {
       isActive: false,
       expiresAt: new Date(), // Expire immediately
     },
   });
-}
-
-function daysSinceCreation(createdAt: Date): number {
-  return Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
 }

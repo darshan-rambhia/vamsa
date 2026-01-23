@@ -127,7 +127,9 @@ authRouter.openapi(loginRoute, async (c) => {
           id: result.user.id,
           email: result.user.email,
           name: result.user.name,
-          role: (result.user as Record<string, unknown>).role as string || "VIEWER",
+          role:
+            ((result.user as Record<string, unknown>).role as string) ||
+            "VIEWER",
         },
         token: "", // Token is in HttpOnly cookie, not exposed to JS
       },
@@ -224,7 +226,12 @@ authRouter.openapi(registerRoute, async (c) => {
     } = c.req.valid("json");
 
     // Use Better Auth for registration - pass request headers for cookie handling
-    const result = await betterAuthRegister(email, name, password, c.req.raw.headers);
+    const result = await betterAuthRegister(
+      email,
+      name,
+      password,
+      c.req.raw.headers
+    );
 
     if (!result?.user) {
       return c.json({ error: "Registration failed" }, { status: 400 });
@@ -237,7 +244,9 @@ authRouter.openapi(registerRoute, async (c) => {
           id: result.user.id,
           email: result.user.email,
           name: result.user.name,
-          role: (result.user as Record<string, unknown>).role as string || "VIEWER",
+          role:
+            ((result.user as Record<string, unknown>).role as string) ||
+            "VIEWER",
         },
         token: "", // Token is in HttpOnly cookie, not exposed to JS
       },
@@ -254,10 +263,7 @@ authRouter.openapi(registerRoute, async (c) => {
       );
     }
 
-    if (
-      error instanceof Error &&
-      error.message.includes("already exists")
-    ) {
+    if (error instanceof Error && error.message.includes("already exists")) {
       return c.json({ error: "Email already in use" }, { status: 409 });
     }
 

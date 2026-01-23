@@ -20,6 +20,7 @@ import {
   getMediaDir,
 } from "@vamsa/lib/server";
 import { recordMediaUpload } from "../metrics";
+import { logger, serializeError } from "@vamsa/lib/logger";
 
 /**
  * Type for the database client used by media functions.
@@ -214,9 +215,9 @@ export async function deleteMediaLogic(
     const mediaDir = getMediaDir();
     await cleanupOldImages(mediaId, mediaDir);
   } catch (error) {
-    console.error(
-      "Failed to cleanup processed images:",
-      error instanceof Error ? error.message : String(error)
+    logger.error(
+      { error: serializeError(error) },
+      "Failed to cleanup processed images"
     );
     // Continue - deletion succeeded even if cleanup failed
   }
@@ -569,10 +570,7 @@ export async function uploadMediaLogic(
       thumb800Path = processedImage.responsive[1]?.path || null;
       thumb1200Path = processedImage.responsive[2]?.path || null;
     } catch (error) {
-      console.error(
-        "Failed to process image:",
-        error instanceof Error ? error.message : String(error)
-      );
+      logger.error({ error: serializeError(error) }, "Failed to process image");
       // Continue without processed images - still save original
     }
   }

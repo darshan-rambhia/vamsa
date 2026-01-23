@@ -9,17 +9,11 @@ import {
   getBetterAuthProviders,
   betterAuthRegister,
 } from "@vamsa/lib/server/business";
-import {
-  changePasswordSchema,
-  claimProfileSchema,
-} from "@vamsa/schemas";
+import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
 import { prisma } from "@vamsa/lib/server";
 import { logger } from "@vamsa/lib/logger";
 import { t } from "@vamsa/lib/server";
-import {
-  checkRateLimit,
-  getClientIP,
-} from "./middleware/rate-limiter";
+import { checkRateLimit, getClientIP } from "./middleware/rate-limiter";
 import { notifyNewMemberJoined } from "@vamsa/lib/server/business";
 
 const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
@@ -155,13 +149,19 @@ export const claimProfile = createServerFn({ method: "POST" })
         },
       });
 
-      logger.info({ userId: result.user.id, personId }, "Profile claimed successfully");
+      logger.info(
+        { userId: result.user.id, personId },
+        "Profile claimed successfully"
+      );
 
       // Send notification about new family member joined
       try {
         await notifyNewMemberJoined(result.user.id);
       } catch (error) {
-        logger.warn({ userId: result.user.id, error }, "Failed to send notification");
+        logger.warn(
+          { userId: result.user.id, error },
+          "Failed to send notification"
+        );
       }
 
       return { success: true, userId: result.user.id };
