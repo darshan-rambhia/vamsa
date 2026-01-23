@@ -8,11 +8,11 @@ Domain-specific testing patterns and fixtures for Vamsa. Use these as templates 
 
 ### Package Capabilities
 
-| Package | Test Utilities |
-|---------|---------------|
-| `@vamsa/ui` | `@testing-library/react`, `jsdom` |
-| `@vamsa/lib` | Bun test only (no DOM) |
-| `apps/web` | Bun test + Playwright E2E |
+| Package      | Test Utilities                    |
+| ------------ | --------------------------------- |
+| `@vamsa/ui`  | `@testing-library/react`, `jsdom` |
+| `@vamsa/lib` | Bun test only (no DOM)            |
+| `apps/web`   | Bun test + Playwright E2E         |
 
 ### Pattern: Component with Mock Data
 
@@ -274,7 +274,9 @@ describe("GedcomMapper", () => {
       const mapper = new GedcomMapper();
       const result = mapper.mapFromGedcom(file);
 
-      const spouseRels = result.relationships.filter((r) => r.type === "SPOUSE");
+      const spouseRels = result.relationships.filter(
+        (r) => r.type === "SPOUSE"
+      );
       expect(spouseRels.length).toBe(2); // Bidirectional
     });
 
@@ -284,7 +286,9 @@ describe("GedcomMapper", () => {
       const mapper = new GedcomMapper();
       const result = mapper.mapFromGedcom(file);
 
-      const parentRels = result.relationships.filter((r) => r.type === "PARENT");
+      const parentRels = result.relationships.filter(
+        (r) => r.type === "PARENT"
+      );
       expect(parentRels.length).toBe(2);
     });
   });
@@ -416,12 +420,90 @@ function createCollectionState() {
  */
 function createThreeGenerationFamily() {
   const people = new Map([
-    ["gp1", { id: "gp1", firstName: "Grandpa", lastName: "Elder", gender: "MALE", generation: 2, dateOfBirth: new Date("1940-01-01"), dateOfPassing: null, isLiving: false, photoUrl: null }],
-    ["gp2", { id: "gp2", firstName: "Grandma", lastName: "Elder", gender: "FEMALE", generation: 2, dateOfBirth: new Date("1942-01-01"), dateOfPassing: null, isLiving: false, photoUrl: null }],
-    ["p1", { id: "p1", firstName: "Dad", lastName: "Elder", gender: "MALE", generation: 1, dateOfBirth: new Date("1965-01-01"), dateOfPassing: null, isLiving: true, photoUrl: null }],
-    ["p2", { id: "p2", firstName: "Mom", lastName: "Smith", gender: "FEMALE", generation: 1, dateOfBirth: new Date("1967-01-01"), dateOfPassing: null, isLiving: true, photoUrl: null }],
-    ["c1", { id: "c1", firstName: "Son", lastName: "Elder", gender: "MALE", generation: 0, dateOfBirth: new Date("1990-01-01"), dateOfPassing: null, isLiving: true, photoUrl: null }],
-    ["c2", { id: "c2", firstName: "Daughter", lastName: "Elder", gender: "FEMALE", generation: 0, dateOfBirth: new Date("1992-01-01"), dateOfPassing: null, isLiving: true, photoUrl: null }],
+    [
+      "gp1",
+      {
+        id: "gp1",
+        firstName: "Grandpa",
+        lastName: "Elder",
+        gender: "MALE",
+        generation: 2,
+        dateOfBirth: new Date("1940-01-01"),
+        dateOfPassing: null,
+        isLiving: false,
+        photoUrl: null,
+      },
+    ],
+    [
+      "gp2",
+      {
+        id: "gp2",
+        firstName: "Grandma",
+        lastName: "Elder",
+        gender: "FEMALE",
+        generation: 2,
+        dateOfBirth: new Date("1942-01-01"),
+        dateOfPassing: null,
+        isLiving: false,
+        photoUrl: null,
+      },
+    ],
+    [
+      "p1",
+      {
+        id: "p1",
+        firstName: "Dad",
+        lastName: "Elder",
+        gender: "MALE",
+        generation: 1,
+        dateOfBirth: new Date("1965-01-01"),
+        dateOfPassing: null,
+        isLiving: true,
+        photoUrl: null,
+      },
+    ],
+    [
+      "p2",
+      {
+        id: "p2",
+        firstName: "Mom",
+        lastName: "Smith",
+        gender: "FEMALE",
+        generation: 1,
+        dateOfBirth: new Date("1967-01-01"),
+        dateOfPassing: null,
+        isLiving: true,
+        photoUrl: null,
+      },
+    ],
+    [
+      "c1",
+      {
+        id: "c1",
+        firstName: "Son",
+        lastName: "Elder",
+        gender: "MALE",
+        generation: 0,
+        dateOfBirth: new Date("1990-01-01"),
+        dateOfPassing: null,
+        isLiving: true,
+        photoUrl: null,
+      },
+    ],
+    [
+      "c2",
+      {
+        id: "c2",
+        firstName: "Daughter",
+        lastName: "Elder",
+        gender: "FEMALE",
+        generation: 0,
+        dateOfBirth: new Date("1992-01-01"),
+        dateOfPassing: null,
+        isLiving: true,
+        photoUrl: null,
+      },
+    ],
   ]);
 
   const relationships = [
@@ -567,8 +649,12 @@ describe("collectAncestors", () => {
     const collected = createCollectionState();
 
     collectAncestors(
-      "person1", 0, 3,
-      new Map(), personMap, new Map(),
+      "person1",
+      0,
+      3,
+      new Map(),
+      personMap,
+      new Map(),
       collected
     );
 
@@ -580,7 +666,10 @@ describe("collectAncestors", () => {
     const personMap = new Map([
       ["child", createMockPerson({ id: "child", firstName: "Child" })],
       ["parent", createMockPerson({ id: "parent", firstName: "Parent" })],
-      ["grandparent", createMockPerson({ id: "grandparent", firstName: "Grandparent" })],
+      [
+        "grandparent",
+        createMockPerson({ id: "grandparent", firstName: "Grandparent" }),
+      ],
     ]);
 
     const childToParents = new Map([
@@ -591,8 +680,12 @@ describe("collectAncestors", () => {
     const collected = createCollectionState();
 
     collectAncestors(
-      "child", 0, 2,
-      childToParents, personMap, new Map(),
+      "child",
+      0,
+      2,
+      childToParents,
+      personMap,
+      new Map(),
       collected
     );
 
@@ -619,12 +712,16 @@ describe("collectAncestors", () => {
     const collected = createCollectionState();
 
     collectAncestors(
-      "child", 0, 1,  // Only 1 generation
-      childToParents, personMap, new Map(),
+      "child",
+      0,
+      1, // Only 1 generation
+      childToParents,
+      personMap,
+      new Map(),
       collected
     );
 
-    expect(collected.nodeIds.size).toBe(2);  // child + parent only
+    expect(collected.nodeIds.size).toBe(2); // child + parent only
     expect(collected.nodeIds.has("grandparent")).toBe(false);
   });
 
@@ -635,9 +732,7 @@ describe("collectAncestors", () => {
       ["mother", createMockPerson({ id: "mother", gender: "FEMALE" })],
     ]);
 
-    const childToParents = new Map([
-      ["child", new Set(["father"])],
-    ]);
+    const childToParents = new Map([["child", new Set(["father"])]]);
 
     const spouseMap = new Map([
       ["father", new Set(["mother"])],
@@ -647,8 +742,12 @@ describe("collectAncestors", () => {
     const collected = createCollectionState();
 
     collectAncestors(
-      "child", 0, 2,
-      childToParents, personMap, spouseMap,
+      "child",
+      0,
+      2,
+      childToParents,
+      personMap,
+      spouseMap,
       collected
     );
 
@@ -682,8 +781,10 @@ describe("D3 Utilities", () => {
       const contentHeight = 300;
       const margin: Margin = { top: 20, right: 20, bottom: 20, left: 20 };
 
-      const scaleX = containerWidth / (contentWidth + margin.left + margin.right);
-      const scaleY = containerHeight / (contentHeight + margin.top + margin.bottom);
+      const scaleX =
+        containerWidth / (contentWidth + margin.left + margin.right);
+      const scaleY =
+        containerHeight / (contentHeight + margin.top + margin.bottom);
       const scale = Math.min(scaleX, scaleY, 1);
 
       expect(scale).toBeGreaterThan(0);
@@ -707,11 +808,11 @@ describe("D3 Utilities", () => {
 
 ## Coverage Targets by Module
 
-| Module | Target | Notes |
-|--------|--------|-------|
-| GEDCOM helpers | 90%+ | Pure functions, high coverage expected |
-| GEDCOM business | 70%+ | Some DB paths tested via E2E |
-| Chart helpers | 90%+ | Pure functions |
-| Chart business | Export only | Tested via E2E |
-| UI components | 80%+ | Focus on user-facing behavior |
-| D3 utilities | 70%+ | Calculations testable, DOM via E2E |
+| Module          | Target      | Notes                                  |
+| --------------- | ----------- | -------------------------------------- |
+| GEDCOM helpers  | 90%+        | Pure functions, high coverage expected |
+| GEDCOM business | 70%+        | Some DB paths tested via E2E           |
+| Chart helpers   | 90%+        | Pure functions                         |
+| Chart business  | Export only | Tested via E2E                         |
+| UI components   | 80%+        | Focus on user-facing behavior          |
+| D3 utilities    | 70%+        | Calculations testable, DOM via E2E     |

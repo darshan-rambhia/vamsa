@@ -53,11 +53,6 @@ pnpm dev:web-only       # Start only web app (skip API/UI builds)
 pnpm build              # Build all packages for production
 pnpm build:web          # Build web app only
 pnpm preview            # Preview production build locally
-pnpm typecheck          # Run TypeScript checks
-pnpm test               # Run all unit tests
-pnpm test:unit          # Run lib and ui unit tests
-pnpm test:e2e           # Run E2E tests with Playwright
-pnpm test:coverage      # Generate coverage report
 ```
 
 ### Production Server
@@ -75,13 +70,18 @@ The production server (`apps/web/server/index.ts`) uses:
 - **Hono**: Ultrafast web framework for middleware and routing
 - **nginx**: Reverse proxy for static files and load balancing (Docker only)
 
-### Linting & Formatting
+### Code Quality
 
 ```bash
+pnpm check              # Run all checks in parallel (lint, format, typecheck, test)
 pnpm lint               # Run ESLint
 pnpm lint:fix           # Fix ESLint issues
 pnpm format             # Format code with Prettier
 pnpm format:check       # Check formatting without modifying
+pnpm typecheck          # Run TypeScript type checks
+pnpm test               # Run all unit tests
+pnpm test:unit          # Run lib and ui unit tests
+pnpm test:e2e           # Run E2E tests with Playwright
 ```
 
 ### Database
@@ -120,10 +120,10 @@ Skills provide domain-specific knowledge and patterns. Use the Skill tool to inv
 
 ### Available Skills
 
-| Skill | When to Use | Files |
-|-------|-------------|-------|
+| Skill     | When to Use                                        | Files                                                                  |
+| --------- | -------------------------------------------------- | ---------------------------------------------------------------------- |
 | `testing` | Writing unit tests (Bun) or E2E tests (Playwright) | `.claude/skills/testing/SKILL.md`, `unit-recipes.md`, `e2e-recipes.md` |
-| `design` | Building UI components, applying design system | `.claude/skills/design/SKILL.md`, `tokens.md`, `patterns.md` |
+| `design`  | Building UI components, applying design system     | `.claude/skills/design/SKILL.md`, `tokens.md`, `patterns.md`           |
 
 ### When to Invoke Skills
 
