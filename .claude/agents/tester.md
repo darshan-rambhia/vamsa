@@ -174,14 +174,14 @@ Before completing any task, ALWAYS run these commands in sequence:
 
 ```bash
 # 1. Verify unit tests pass
-pnpm test
+bun run test
 
 # 2. Verify coverage meets thresholds
-pnpm test:coverage
+bun run test:coverage
 
 # 3. Verify E2E tests pass (requires dev server)
 # Note: E2E tests auto-start the dev server via webServer config in playwright.config.ts
-pnpm test:e2e
+bun run test:e2e
 ```
 
 ## Rules

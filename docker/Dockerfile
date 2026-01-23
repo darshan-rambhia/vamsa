@@ -1,64 +1,86 @@
-# Build stage
+# Multi-stage Dockerfile for Vamsa
+#
+# For environments with corporate proxies (Zscaler), see DOCKER.md for workarounds.
+
+# =============================================================================
+# Stage 1: Build
+# =============================================================================
 FROM oven/bun:1-alpine AS builder
 
 WORKDIR /app
 
-# Install pnpm (still using pnpm for monorepo management)
-RUN apk add --no-cache curl
-RUN curl -fsSL https://get.pnpm.io/install.sh | ENV="$HOME/.shrc" SHELL="$(which sh)" sh -
-ENV PNPM_HOME=/root/.local/share/pnpm
-ENV PATH=$PNPM_HOME:$PATH
+# Copy package files for dependency installation
+COPY package.json bun.lock* bunfig.toml ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/api/package.json ./packages/api/
+COPY packages/lib/package.json ./packages/lib/
+COPY packages/schemas/package.json ./packages/schemas/
+COPY packages/ui/package.json ./packages/ui/
 
-# Copy all source code and configuration files
+# Install all dependencies
+RUN bun install
+
+# Copy source code
 COPY . .
 
-# Install dependencies (including devDependencies needed for build)
-RUN pnpm install --frozen-lockfile --prod=false
-
-# Generate Prisma client (with dummy DATABASE_URL since it's only needed for build)
+# Generate Prisma client
 WORKDIR /app/packages/api
 ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
-RUN bunx prisma generate || true
+RUN bunx prisma generate
 
 # Build the web app
 WORKDIR /app/apps/web
-RUN pnpm run build
-ENV NODE_ENV=production
+RUN bun run build
 
-# Production stage
-FROM oven/bun:1-alpine AS runner
+# =============================================================================
+# Stage 2: Production dependencies
+# =============================================================================
+FROM oven/bun:1-alpine AS prod-deps
 
 WORKDIR /app
 
-# Install pnpm for production
-RUN apk add --no-cache curl
-RUN curl -fsSL https://get.pnpm.io/install.sh | ENV="$HOME/.shrc" SHELL="$(which sh)" sh -
-ENV PNPM_HOME=/root/.local/share/pnpm
-ENV PATH=$PNPM_HOME:$PATH
+COPY package.json bun.lock* bunfig.toml ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/api/package.json ./packages/api/
+COPY packages/lib/package.json ./packages/lib/
+COPY packages/schemas/package.json ./packages/schemas/
+COPY packages/ui/package.json ./packages/ui/
+
+# Production dependencies only (excludes devDependencies)
+RUN bun install --production
+
+# Copy generated Prisma client
+COPY --from=builder /app/packages/api/src/generated ./packages/api/src/generated
+
+# =============================================================================
+# Stage 3: Production runtime
+# =============================================================================
+FROM oven/bun:1-alpine AS runner
+
+WORKDIR /app
 
 # Create non-root user
 RUN addgroup --system --gid 1001 bunuser && \
     adduser --system --uid 1001 --ingroup bunuser vamsa
 
+# Copy production node_modules
+COPY --from=prod-deps --chown=vamsa:bunuser /app/node_modules ./node_modules
+COPY --from=builder --chown=vamsa:bunuser /app/apps/web/node_modules ./apps/web/node_modules
+
 # Copy built application
 COPY --from=builder --chown=vamsa:bunuser /app/apps/web/dist ./apps/web/dist
 COPY --from=builder --chown=vamsa:bunuser /app/apps/web/server ./apps/web/server
-# Copy src directory for server imports (i18n, server functions, db)
 COPY --from=builder --chown=vamsa:bunuser /app/apps/web/src ./apps/web/src
-COPY --from=builder --chown=vamsa:bunuser /app/node_modules ./node_modules
-COPY --from=builder --chown=vamsa:bunuser /app/apps/web/node_modules ./apps/web/node_modules
 COPY --from=builder --chown=vamsa:bunuser /app/packages ./packages
 
-# Copy workspace configuration for runtime
+# Copy config files
 COPY --from=builder --chown=vamsa:bunuser /app/package.json ./
-COPY --from=builder --chown=vamsa:bunuser /app/pnpm-workspace.yaml ./
 COPY --from=builder --chown=vamsa:bunuser /app/apps/web/package.json ./apps/web/
 
-# Create data directory for uploads
+# Create uploads directory
 RUN mkdir -p /app/data/uploads && chown -R vamsa:bunuser /app/data
 
 USER vamsa
-
 EXPOSE 3000
 
 ENV NODE_ENV=production
@@ -66,5 +88,4 @@ ENV PORT=3000
 ENV HOST=0.0.0.0
 
 WORKDIR /app/apps/web
-
 CMD ["bun", "run", "server/index.ts"]

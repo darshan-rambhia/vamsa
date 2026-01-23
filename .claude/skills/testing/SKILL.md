@@ -309,15 +309,15 @@ await expect(page.getByText("Success")).toBeVisible({ timeout: 3000 });
 
 ```bash
 # Unit tests
-pnpm test                # All unit tests
-pnpm test:unit           # lib and ui only
-pnpm test:coverage       # With coverage report
+bun run test                # All unit tests
+bun run test:unit           # lib and ui only
+bun run test:coverage       # With coverage report
 
 # E2E tests
-pnpm test:e2e            # All E2E tests
-pnpm test:e2e --ui       # Interactive mode
-pnpm test:e2e auth.spec.ts  # Specific file
-pnpm test:e2e --grep "login"  # Pattern match
+bun run test:e2e            # All E2E tests
+bun run test:e2e --ui       # Interactive mode
+bun run test:e2e auth.spec.ts  # Specific file
+bun run test:e2e --grep "login"  # Pattern match
 
 # Specific package
 cd packages/lib && bun test

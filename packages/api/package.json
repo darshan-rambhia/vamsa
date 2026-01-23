@@ -28,8 +28,6 @@
     "@prisma/adapter-pg": "7.2.0",
     "@prisma/client": "7.2.0",
     "@vamsa/schemas": "workspace:*",
-    "bcryptjs": "^3.0.3",
-    "dotenv": "^17.2.3",
     "pg": "^8.17.1",
     "resend": "^6.7.0"
   },

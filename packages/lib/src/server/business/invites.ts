@@ -21,7 +21,6 @@
 import { prisma as defaultPrisma } from "../db";
 import type { PrismaClient } from "@vamsa/api";
 import { randomBytes } from "crypto";
-import bcrypt from "bcryptjs";
 import { logger } from "@vamsa/lib/logger";
 import type { InviteStatus, Prisma, UserRole } from "@vamsa/api";
 import { createPaginationMeta } from "@vamsa/schemas";
@@ -279,7 +278,7 @@ export async function getInviteByTokenData(
  * - Email is not already taken
  *
  * Creates user and updates invite status in a transaction to ensure atomicity.
- * Hashes password using bcrypt with 12 rounds.
+ * Hashes password using Bun.password (argon2id algorithm).
  *
  * @param token - Invite token
  * @param name - New user's name
@@ -323,8 +322,8 @@ export async function acceptInviteData(
     throw new Error("An account already exists with this email");
   }
 
-  // Hash password
-  const passwordHash = await bcrypt.hash(password, 12);
+  // Hash password using Bun's native password hashing (argon2id by default)
+  const passwordHash = await Bun.password.hash(password);
 
   // Create user and update invite in transaction
   const user = await db.$transaction(async (tx) => {

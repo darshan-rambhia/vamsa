@@ -45,11 +45,11 @@ This tells the hook:
 - ✓ Implementation agents completed their work
 - ✓ Tester wrote tests for each bead
 - ✓ Reviewer ran ALL quality gates for each bead:
-  - ✓ pnpm test passed
-  - ✓ pnpm lint passed
-  - ✓ pnpm typecheck passed
-  - ✓ pnpm build succeeded
-  - ✓ pnpm dev started successfully
+  - ✓ bun run test passed
+  - ✓ bun run lint passed
+  - ✓ bun run typecheck passed
+  - ✓ bun run build succeeded
+  - ✓ bun run dev started successfully
   - ✓ docker build succeeded
   - ✓ docker run verified container works
 - ✓ All beads closed by reviewer
@@ -149,13 +149,13 @@ The reviewer agent must verify ALL of these pass before closing any bead:
 
 ```bash
 # Core quality gates
-pnpm test           # Unit tests must pass
-pnpm lint           # No lint errors
-pnpm typecheck      # No type errors
-pnpm build          # Build must succeed
+bun run test           # Unit tests must pass
+bun run lint           # No lint errors
+bun run typecheck      # No type errors
+bun run build          # Build must succeed
 
 # Runtime verification
-pnpm dev &          # Dev server must start
+bun run dev &          # Dev server must start
 sleep 10            # Wait for server
 curl localhost:3000 # Must respond
 

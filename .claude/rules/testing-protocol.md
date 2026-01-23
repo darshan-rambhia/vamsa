@@ -19,8 +19,8 @@ TypeScript and build checks are necessary but NOT sufficient for testing fixes.
 ## Before Committing Code Changes
 
 1. Make the code change
-2. Run `pnpm typecheck` and `pnpm build`
-3. **Start dev server (`pnpm dev`)**
+2. Run `bun run typecheck` and `bun run build`
+3. **Start dev server (`bun run dev`)**
 4. **Navigate to the affected page/feature**
 5. **Verify the page loads successfully**
 6. **Check server logs for errors (ECONNRESET, etc.)**

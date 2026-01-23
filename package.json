@@ -2,41 +2,41 @@
   "name": "vamsa",
   "version": "0.1.0",
   "private": true,
+  "workspaces": ["apps/*", "packages/*"],
   "engines": {
-    "bun": ">=1.0.0",
-    "node": ">=20.0.0"
+    "bun": ">=1.0.0"
   },
   "scripts": {
     "// === Development ===": "",
     "dev": "bun scripts/dev.ts",
-    "dev:web-only": "turbo run dev --filter=@vamsa/web",
+    "dev:web-only": "bun run --filter @vamsa/web dev",
     "// === Build ===": "",
-    "build": "turbo run build",
-    "build:web": "turbo run build --filter=@vamsa/web",
-    "preview": "turbo run preview --filter=@vamsa/web",
+    "build": "bun run --filter '*' build",
+    "build:web": "bun run --filter @vamsa/web build",
+    "preview": "bun run --filter @vamsa/web preview",
     "// === Code Quality ===": "",
     "check": "bun scripts/check-all.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "turbo run typecheck",
+    "typecheck": "bun run --filter '*' typecheck",
     "// === Testing ===": "",
-    "test": "turbo run test",
-    "test:unit": "turbo run test --filter=@vamsa/lib --filter=@vamsa/ui",
-    "test:e2e": "turbo run test:e2e --filter=@vamsa/web",
+    "test": "bun run --filter '*' test",
+    "test:unit": "bun run --filter @vamsa/lib --filter @vamsa/ui test",
+    "test:e2e": "bun run --filter @vamsa/web test:e2e",
     "test:mutation": "bun scripts/mutation-test.ts",
     "test:mutation:lib": "bun scripts/mutation-test.ts lib",
     "test:mutation:ui": "bun scripts/mutation-test.ts ui",
     "test:mutation:api": "bun scripts/mutation-test.ts api",
     "test:mutation:web": "bun scripts/mutation-test.ts web",
     "// === Database ===": "",
-    "db:generate": "pnpm --filter=@vamsa/api db:generate",
-    "db:push": "pnpm --filter=@vamsa/api db:push",
-    "db:migrate": "pnpm --filter=@vamsa/api db:migrate",
-    "db:migrate:deploy": "pnpm --filter=@vamsa/api db:migrate:deploy",
-    "db:seed": "pnpm --filter=@vamsa/api db:seed",
-    "db:studio": "pnpm --filter=@vamsa/api db:studio",
+    "db:generate": "bun run --filter @vamsa/api db:generate",
+    "db:push": "bun run --filter @vamsa/api db:push",
+    "db:migrate": "bun run --filter @vamsa/api db:migrate",
+    "db:migrate:deploy": "bun run --filter @vamsa/api db:migrate:deploy",
+    "db:seed": "bun run --filter @vamsa/api db:seed",
+    "db:studio": "bun run --filter @vamsa/api db:studio",
     "// === Docker ===": "",
     "docker": "docker compose -f docker/docker-compose.yml up -d",
     "docker:down": "docker compose -f docker/docker-compose.yml down",
@@ -46,9 +46,9 @@
     "observability:start": "./scripts/start-observability.sh",
     "observability:stop": "docker-compose -f docker/docker-compose.observability.yml down",
     "observability:logs": "docker-compose -f docker/docker-compose.observability.yml logs -f",
-    "observability:restart": "pnpm observability:stop && pnpm observability:start",
+    "observability:restart": "bun run observability:stop && bun run observability:start",
     "// === Utilities ===": "",
-    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules bun.lock"
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.5.3",
@@ -63,6 +63,7 @@
     "@eslint/js": "^9.39.2",
     "@stryker-mutator/core": "^9.4.0",
     "@stryker-mutator/typescript-checker": "^9.4.0",
+    "@types/bun": "latest",
     "@types/node": "^25.0.9",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
@@ -72,17 +73,13 @@
     "globals": "^17.0.0",
     "prettier": "^3.8.0",
     "prettier-plugin-tailwindcss": "^0.7.2",
-    "turbo": "^2.7.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.53.1"
   },
-  "packageManager": "pnpm@10.28.0",
-  "pnpm": {
-    "overrides": {
-      "@react-email/render": "^2.0.2",
-      "hono": ">=4.11.4",
-      "lodash": ">=4.17.23"
-    }
-  }
-
+  "overrides": {
+    "@react-email/render": "^2.0.2",
+    "hono": ">=4.11.4",
+    "lodash": ">=4.17.23"
+  },
+  "trustedDependencies": ["prisma", "@prisma/client", "@prisma/engines"]
 }
