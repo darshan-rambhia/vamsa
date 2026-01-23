@@ -24,6 +24,7 @@ import { etagMiddleware, getETagMetrics } from "./middleware/etag";
 import { telemetryMiddleware } from "./middleware/telemetry";
 import { initializeServerI18n } from "@vamsa/lib/server";
 import { serveMedia } from "./middleware/media-server";
+import { auth } from "@vamsa/lib/server/business";
 
 const app = new Hono();
 
@@ -222,6 +223,16 @@ apiRouter.get("/", (c) =>
     docs: "/api/v1/docs",
   })
 );
+
+// ============================================
+// Better Auth Handler
+// ============================================
+
+// Mount Better Auth SDK endpoints at /api/auth/*
+// This handles authentication flows from the Better Auth React client
+app.on(["POST", "GET"], "/api/auth/**", (c) => {
+  return auth.handler(c.req.raw);
+});
 
 app.route("/api", apiRouter);
 

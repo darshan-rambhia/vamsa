@@ -2383,13 +2383,21 @@ async function main() {
       passwordHash,
       role: UserRole.ADMIN,
       isActive: true,
+      emailVerified: true, // Production admin has verified email
       personId: parentArjun.id, // Link admin to Arjun
+      accounts: {
+        create: {
+          accountId: adminEmail.toLowerCase(), // Better Auth uses email as accountId for credentials
+          providerId: "credential", // Better Auth's identifier for email/password
+          password: passwordHash, // Better Auth stores password in Account table
+        },
+      },
     },
   });
 
   logger.info(
     { email: adminEmail },
-    "Admin user created (linked to Arjun Sharma)"
+    "Admin user created with credential account (linked to Arjun Sharma)"
   );
 
   // Create test users for E2E tests - link them to persons in the family tree
@@ -2428,12 +2436,20 @@ async function main() {
         passwordHash: hash,
         role: user.role,
         isActive: true,
+        emailVerified: true, // Test users have verified emails
         personId: user.personId, // Link to the person
+        accounts: {
+          create: {
+            accountId: user.email, // Better Auth uses email as accountId for credentials
+            providerId: "credential", // Better Auth's identifier for email/password
+            password: hash, // Better Auth stores password in Account table
+          },
+        },
       },
     });
     logger.info(
       { email: user.email, userId: createdUser.id },
-      "Test user created"
+      "Test user created with credential account"
     );
   }
 

@@ -55,6 +55,9 @@ export function vamsaDevApiPlugin(): Plugin {
       });
     });
 
+    // Better Auth handler is mounted in the middleware above
+    // (before body consumption to avoid JSON parsing errors)
+
     // Import and mount API routes using Vite's ssrLoadModule
     // This properly resolves workspace packages
     try {
@@ -125,6 +128,81 @@ export function vamsaDevApiPlugin(): Plugin {
           initPromise = initializeApi(server);
         }
         await initPromise;
+
+        // Handle Better Auth requests separately to avoid body consumption issues
+        if (url.startsWith("/api/auth")) {
+          try {
+            const authModule = await server.ssrLoadModule(
+              "@vamsa/lib/server/business"
+            );
+            const { auth } = authModule;
+
+            // Create a native Request from the Node.js IncomingMessage
+            // Use Bun's built-in Request handling which properly streams the body
+            const protocol =
+              (req.headers["x-forwarded-proto"] as string) || "http";
+            const host = req.headers.host || "localhost:3000";
+            const fullUrl = `${protocol}://${host}${url}`;
+
+            // Read body for POST requests
+            let bodyText: string | undefined;
+            if (req.method !== "GET" && req.method !== "HEAD") {
+              const chunks: Buffer[] = [];
+              for await (const chunk of req) {
+                chunks.push(chunk as Buffer);
+              }
+              if (chunks.length > 0) {
+                bodyText = Buffer.concat(chunks).toString("utf-8");
+              }
+            }
+
+            logger.info({ url, method: req.method, bodyText }, "Better Auth request");
+
+            // Create a minimal headers object
+            const headers = new Headers();
+            if (req.headers["content-type"]) {
+              headers.set("content-type", req.headers["content-type"] as string);
+            }
+            if (req.headers["cookie"]) {
+              headers.set("cookie", req.headers["cookie"] as string);
+            }
+            if (req.headers["origin"]) {
+              headers.set("origin", req.headers["origin"] as string);
+            }
+
+            const request = new Request(fullUrl, {
+              method: req.method,
+              headers,
+              body: bodyText,
+            });
+
+            // Call Better Auth handler
+            const response = await auth.handler(request);
+
+            // Get response body
+            const responseBody = await response.text();
+            logger.info({ status: response.status, responseBody: responseBody.substring(0, 500) }, "Better Auth response");
+
+            // Send response
+            res.statusCode = response.status;
+            response.headers.forEach((value, key) => {
+              res.setHeader(key, value);
+            });
+            res.end(responseBody);
+            return;
+          } catch (error) {
+            logger.error({ error, url }, "Better Auth handler error");
+            res.statusCode = 500;
+            res.setHeader("Content-Type", "application/json");
+            res.end(
+              JSON.stringify({
+                error: "Internal Server Error",
+                message: error instanceof Error ? error.message : String(error),
+              })
+            );
+            return;
+          }
+        }
 
         if (!apiApp) {
           res.statusCode = 503;

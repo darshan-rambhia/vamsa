@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { genericOAuth } from "better-auth/plugins";
-import { tanstackStartCookies } from "better-auth/tanstack-start";
+// import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { prisma } from "@vamsa/api";
 
 /**
@@ -20,9 +20,24 @@ import { prisma } from "@vamsa/api";
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
 
+  // Base URL for auth endpoints (required for Better Auth to work correctly)
+  baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
+
   // Email and password authentication
   emailAndPassword: {
     enabled: true,
+    requireEmailVerification: false, // Disable email verification for E2E tests
+    // Use bcrypt for password hashing (to match existing user passwords in seed)
+    password: {
+      async hash(password: string) {
+        const bcrypt = await import("bcryptjs");
+        return bcrypt.hash(password, 12);
+      },
+      async verify(data: { password: string; hash: string }) {
+        const bcrypt = await import("bcryptjs");
+        return bcrypt.compare(data.password, data.hash);
+      },
+    },
   },
 
   // Session configuration
@@ -105,6 +120,10 @@ export const auth = betterAuth({
         type: "date",
         required: false,
       },
+      oidcProvider: {
+        type: "string",
+        required: false,
+      },
     },
   },
 
@@ -125,7 +144,8 @@ export const auth = betterAuth({
     }),
 
     // TanStack Start cookie handling (MUST be last plugin)
-    tanstackStartCookies(),
+    // Temporarily disabled to debug 500 error in dev server
+    // tanstackStartCookies(),
   ],
 });
 

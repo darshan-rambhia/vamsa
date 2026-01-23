@@ -55,10 +55,8 @@ const webServerConfig = {
   stderr: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
   env: {
     ...process.env,
-    // Ensure DATABASE_URL is set for test environment
-    DATABASE_URL:
-      process.env.DATABASE_URL ||
-      "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
+    // Force test database URL (override any .env setting)
+    DATABASE_URL: "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
     // Disable rate limiting for E2E tests to prevent flaky tests
     E2E_TESTING: "true",
   },
@@ -86,11 +84,11 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 15,
   fullyParallel: true,
-  outputDir: "test-output/results/",
+  outputDir: "../../test-output/e2e/results/",
   reporter: [
-    ["html", { outputFolder: "test-output/playwright/" }],
+    ["html", { outputFolder: "../../test-output/e2e/playwright/" }],
     ["list"],
-    ["json", { outputFile: "test-output/results.json" }],
+    ["json", { outputFile: "../../test-output/e2e/results.json" }],
   ],
   globalSetup: "./e2e/global-setup.ts",
   globalTeardown: "./e2e/global-teardown.ts",
