@@ -20,8 +20,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
-    "test": "bun test",
-    "test:coverage": "bun test --coverage"
+    "test": "bun test"
   },
   "dependencies": {
     "archiver": "^7.0.1",

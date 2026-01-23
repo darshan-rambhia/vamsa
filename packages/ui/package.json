@@ -13,8 +13,7 @@
   "scripts": {
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
-    "test:coverage": "bun test --coverage"
+    "test": "bun test"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",
