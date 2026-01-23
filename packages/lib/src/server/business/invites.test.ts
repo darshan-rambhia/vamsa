@@ -37,23 +37,13 @@ mock.module("@vamsa/lib/logger", () => ({
   startTimer: mockStartTimer,
 }));
 
-// Mock crypto and bcryptjs
+// Mock crypto
 const mockRandomBytes = mock((size: number) => ({
   toString: mock((_encoding: string) => "mock-token-" + size),
 }));
 
-const mockBcryptHash = mock(
-  async (password: string, _rounds: number) => "hashed-" + password
-);
-
 mock.module("crypto", () => ({
   randomBytes: mockRandomBytes,
-}));
-
-mock.module("bcryptjs", () => ({
-  default: {
-    hash: mockBcryptHash,
-  },
 }));
 
 // Import the functions to test
@@ -102,7 +92,6 @@ describe("Invite Server Functions", () => {
     mockLogger.info.mockClear();
     mockLogger.error.mockClear();
     mockRandomBytes.mockClear();
-    mockBcryptHash.mockClear();
   });
 
   describe("getInvitesData", () => {
@@ -889,7 +878,7 @@ describe("Invite Server Functions", () => {
       }
     });
 
-    it("should hash password with bcrypt", async () => {
+    it("should hash password with Bun.password (argon2id)", async () => {
       const mockInvite = {
         id: "invite-1",
         email: "john@example.com",
@@ -909,13 +898,33 @@ describe("Invite Server Functions", () => {
       (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
         null
       );
-      (mockDb.$transaction as ReturnType<typeof mock>).mockResolvedValueOnce(
-        mockUser
+
+      // Capture the password hash from the transaction callback
+      let capturedPasswordHash: string | undefined;
+      (mockDb.$transaction as ReturnType<typeof mock>).mockImplementationOnce(
+        async (callback: (tx: unknown) => Promise<unknown>) => {
+          const txMock = {
+            user: {
+              create: mock((args: { data: { passwordHash: string } }) => {
+                capturedPasswordHash = args.data.passwordHash;
+                return Promise.resolve(mockUser);
+              }),
+            },
+            invite: {
+              update: mock(() => Promise.resolve({})),
+            },
+          };
+          return callback(txMock);
+        }
       );
 
       await acceptInviteData("token-1", "John Doe", "password123", mockDb);
 
-      expect(mockBcryptHash).toHaveBeenCalledWith("password123", 12);
+      // Verify password was hashed (Bun.password produces argon2id hashes starting with $argon2id$)
+      expect(capturedPasswordHash).toBeDefined();
+      expect(capturedPasswordHash).toContain("$argon2id$");
+      // Verify hash is different from plain password
+      expect(capturedPasswordHash).not.toBe("password123");
     });
   });
 

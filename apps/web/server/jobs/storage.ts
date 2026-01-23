@@ -1,17 +1,12 @@
 /**
  * Cloud storage integration for backups
  *
- * Supports S3-compatible providers:
+ * Supports S3-compatible providers using Bun's native S3 client:
  * - Amazon S3
  * - Cloudflare R2
  * - Backblaze B2
  */
 
-import {
-  S3Client,
-  PutObjectCommand,
-  DeleteObjectCommand,
-} from "@aws-sdk/client-s3";
 import { logger, serializeError } from "@vamsa/lib/logger";
 
 export type StorageProvider = "LOCAL" | "S3" | "R2" | "B2";
@@ -23,37 +18,37 @@ export interface StorageConfig {
 }
 
 // Lazy-initialized S3 client
-let s3Client: S3Client | null = null;
+let s3Client: ReturnType<typeof createS3Client> | null = null;
+
+/**
+ * Create a Bun S3 client with environment configuration
+ */
+function createS3Client() {
+  const endpoint = process.env.S3_ENDPOINT;
+  const region = process.env.S3_REGION || "auto";
+  const accessKeyId = process.env.S3_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
+
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error(
+      "S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY environment variables are required"
+    );
+  }
+
+  return new Bun.S3Client({
+    accessKeyId,
+    secretAccessKey,
+    region,
+    endpoint,
+  });
+}
 
 /**
  * Get or initialize the S3 client
  */
-function getS3Client(): S3Client {
+function getS3Client() {
   if (!s3Client) {
-    const endpoint = process.env.S3_ENDPOINT;
-    const region = process.env.S3_REGION || "auto";
-    const accessKeyId = process.env.S3_ACCESS_KEY_ID;
-    const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY;
-
-    if (!accessKeyId || !secretAccessKey) {
-      throw new Error(
-        "S3_ACCESS_KEY_ID and S3_SECRET_ACCESS_KEY environment variables are required"
-      );
-    }
-
-    const config: Record<string, unknown> = {
-      region,
-      credentials: {
-        accessKeyId,
-        secretAccessKey,
-      },
-    };
-
-    if (endpoint) {
-      config.endpoint = endpoint;
-    }
-
-    s3Client = new S3Client(config);
+    s3Client = createS3Client();
   }
   return s3Client;
 }
@@ -74,14 +69,10 @@ export async function uploadToStorage(
     case "R2": // R2 is S3-compatible
     case "B2": // B2 is also S3-compatible
       try {
-        await getS3Client().send(
-          new PutObjectCommand({
-            Bucket: config.bucket,
-            Key: key,
-            Body: buffer,
-            ContentType: "application/zip",
-          })
-        );
+        const client = getS3Client();
+        await client.write(`${config.bucket}/${key}`, buffer, {
+          type: "application/zip",
+        });
         logger.info(
           { provider, bucket: config.bucket, key, size: buffer.length },
           "Uploaded backup to cloud storage"
@@ -119,12 +110,8 @@ export async function deleteFromStorage(
     case "R2":
     case "B2":
       try {
-        await getS3Client().send(
-          new DeleteObjectCommand({
-            Bucket: config.bucket,
-            Key: key,
-          })
-        );
+        const client = getS3Client();
+        await client.unlink(`${config.bucket}/${key}`);
         logger.info(
           { provider, bucket: config.bucket, key },
           "Deleted backup from cloud storage"

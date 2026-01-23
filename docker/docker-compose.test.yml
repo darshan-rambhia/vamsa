@@ -1,7 +1,7 @@
 name: vamsa-test
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: vamsa_test
       POSTGRES_PASSWORD: vamsa_test

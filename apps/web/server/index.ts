@@ -244,13 +244,22 @@ app.get("/media/*", serveMedia);
 // TanStack Start Handler
 // ============================================
 
+// Type for TanStack Start server handler
+type FetchHandler = (request: Request) => Promise<Response>;
+interface TanStackHandler {
+  default?: { fetch?: FetchHandler };
+  fetch?: FetchHandler;
+}
+
 // Use dynamic import to prevent Bun from auto-starting the TanStack server
 async function setupRoutes() {
-  // @ts-expect-error - Dynamic import of generated bundle (may not exist before build)
-  const handler = await import("../dist/server/server.js");
+  // Dynamic import of generated bundle - type assertion needed as bundle structure varies
+  const handler = (await import(
+    "../dist/server/server.js"
+  )) as unknown as TanStackHandler;
 
   // Extract the fetch handler from TanStack Start
-  const tanstackFetch = handler.default?.fetch || handler.fetch;
+  const tanstackFetch = handler.default?.fetch ?? handler.fetch;
 
   if (!tanstackFetch) {
     logger.error("Could not find fetch handler in TanStack Start build");

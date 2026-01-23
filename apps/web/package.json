@@ -22,7 +22,6 @@
     "ladle:build": "ladle build"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.971.0",
     "better-auth": "^1.4.17",
     "@hookform/resolvers": "^5.2.2",
     "@opentelemetry/api": "^1.9.0",
@@ -45,7 +44,6 @@
     "@vamsa/ui": "workspace:*",
     "archiver": "^7.0.1",
     "arctic": "^3.7.0",
-    "bcryptjs": "^3.0.3",
     "d3": "^7.9.0",
     "hono": "^4.11.4",
     "hono-rate-limiter": "^0.5.3",
@@ -78,7 +76,6 @@
     "@types/react-dom": "^19.2.3",
     "@types/rss": "^0.0.32",
     "@vitejs/plugin-react": "^5.1.2",
-    "dotenv": "^17.2.3",
     "tailwindcss": "^4.1.18",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.9.3",

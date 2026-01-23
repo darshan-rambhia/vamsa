@@ -5,15 +5,9 @@ import {
   RelationshipType,
 } from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
-import bcrypt from "bcryptjs";
-import { config } from "dotenv";
-import { resolve, dirname } from "path";
-import { fileURLToPath } from "url";
 import { logger } from "@vamsa/lib";
 
-// Load .env from monorepo root
-const __dirname = dirname(fileURLToPath(import.meta.url));
-config({ path: resolve(__dirname, "../../../.env") });
+// Bun automatically loads .env files from the cwd
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -2374,7 +2368,7 @@ async function main() {
 
   const adminEmail = process.env.ADMIN_EMAIL || "arjun@sharma.family";
   const adminPassword = process.env.ADMIN_PASSWORD || "admin123";
-  const passwordHash = await bcrypt.hash(adminPassword, 12);
+  const passwordHash = await Bun.password.hash(adminPassword);
 
   await prisma.user.create({
     data: {
@@ -2428,7 +2422,7 @@ async function main() {
   ];
 
   for (const user of testUsers) {
-    const hash = await bcrypt.hash(user.password, 12);
+    const hash = await Bun.password.hash(user.password);
     const createdUser = await prisma.user.create({
       data: {
         email: user.email,
