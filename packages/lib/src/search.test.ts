@@ -265,21 +265,39 @@ describe("SEARCH_FIELD_WEIGHTS", () => {
     expect(SEARCH_FIELD_WEIGHTS.Person.lastName).toBe("A");
     expect(SEARCH_FIELD_WEIGHTS.Person.maidenName).toBe("B");
     expect(SEARCH_FIELD_WEIGHTS.Person.bio).toBe("C");
+    expect(SEARCH_FIELD_WEIGHTS.Person.profession).toBe("D");
   });
 
   it("has Place weights defined", () => {
     expect(SEARCH_FIELD_WEIGHTS.Place).toBeDefined();
     expect(SEARCH_FIELD_WEIGHTS.Place.name).toBe("A");
+    expect(SEARCH_FIELD_WEIGHTS.Place.description).toBe("B");
   });
 
   it("has Event weights defined", () => {
     expect(SEARCH_FIELD_WEIGHTS.Event).toBeDefined();
     expect(SEARCH_FIELD_WEIGHTS.Event.description).toBe("A");
+    expect(SEARCH_FIELD_WEIGHTS.Event.place).toBe("B");
   });
 
   it("has Source weights defined", () => {
     expect(SEARCH_FIELD_WEIGHTS.Source).toBeDefined();
     expect(SEARCH_FIELD_WEIGHTS.Source.title).toBe("A");
     expect(SEARCH_FIELD_WEIGHTS.Source.author).toBe("B");
+    expect(SEARCH_FIELD_WEIGHTS.Source.description).toBe("C");
+  });
+});
+
+describe("buildCombinedSearchQuery fallback", () => {
+  it("falls back to fuzzy when tsquery is empty string", () => {
+    const { sql } = buildCombinedSearchQuery("   ");
+    expect(sql).toContain("similarity");
+    expect(sql).not.toContain("fts_results");
+  });
+
+  it("includes both FTS and fuzzy for valid queries", () => {
+    const { sql } = buildCombinedSearchQuery("john doe");
+    expect(sql).toContain("fts_results");
+    expect(sql).toContain("fuzzy_results");
   });
 });

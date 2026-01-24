@@ -1,11 +1,47 @@
 import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { genericOAuth } from "better-auth/plugins";
 // import { tanstackStartCookies } from "better-auth/tanstack-start";
-import { prisma } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+
+// Cross-runtime password hashing that works in both Node.js (Vite dev) and Bun
+const isBunRuntime = typeof globalThis.Bun !== "undefined";
+
+async function hashPassword(password: string): Promise<string> {
+  // Use Node.js crypto scrypt for cross-runtime compatibility
+  const { scrypt, randomBytes } = await import("crypto");
+  const salt = randomBytes(16).toString("hex");
+  return new Promise((resolve, reject) => {
+    scrypt(password, salt, 64, (err, derivedKey) => {
+      if (err) reject(err);
+      resolve(`scrypt:${salt}:${derivedKey.toString("hex")}`);
+    });
+  });
+}
+
+async function verifyPassword(password: string, hash: string): Promise<boolean> {
+  // Handle our scrypt format
+  if (hash.startsWith("scrypt:")) {
+    const { scrypt, timingSafeEqual } = await import("crypto");
+    const [, salt, storedHash] = hash.split(":");
+    return new Promise((resolve, reject) => {
+      scrypt(password, salt, 64, (err, derivedKey) => {
+        if (err) reject(err);
+        resolve(timingSafeEqual(Buffer.from(storedHash, "hex"), derivedKey));
+      });
+    });
+  }
+
+  // For argon2id hashes created by Bun (legacy support)
+  if (isBunRuntime && hash.startsWith("$argon2")) {
+    return globalThis.Bun.password.verify(password, hash);
+  }
+
+  return false;
+}
 
 /**
- * Better Auth instance with Prisma adapter
+ * Better Auth instance with Drizzle adapter
  *
  * This is the new authentication system being migrated to.
  * Currently runs alongside existing auth.ts for gradual migration.
@@ -18,7 +54,10 @@ import { prisma } from "@vamsa/api";
  * - TanStack Start cookie integration
  */
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, { provider: "postgresql" }),
+  database: drizzleAdapter(drizzleDb, {
+    provider: "pg",
+    schema: drizzleSchema,
+  }),
 
   // Base URL for auth endpoints (required for Better Auth to work correctly)
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
@@ -27,15 +66,11 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false, // Disable email verification for E2E tests
-    // Use bcrypt for password hashing (to match existing user passwords in seed)
+    // Cross-runtime password hashing (works in both Node.js/Vite and Bun)
     password: {
-      async hash(password: string) {
-        const bcrypt = await import("bcryptjs");
-        return bcrypt.hash(password, 12);
-      },
-      async verify(data: { password: string; hash: string }) {
-        const bcrypt = await import("bcryptjs");
-        return bcrypt.compare(data.password, data.hash);
+      hash: hashPassword,
+      verify: async (data: { password: string; hash: string }) => {
+        return verifyPassword(data.password, data.hash);
       },
     },
   },

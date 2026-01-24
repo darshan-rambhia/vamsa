@@ -131,35 +131,38 @@ export const getPendingSuggestions = createServerFn({ method: "GET" }).handler(
   async () => {
     await requireAuth();
 
-    const { prisma } = await import("@vamsa/lib/server");
-    const suggestions = await prisma.suggestion.findMany({
-      where: { status: "PENDING" },
-      include: {
-        submittedBy: {
-          select: { id: true, name: true, email: true },
-        },
-      },
-      orderBy: { submittedAt: "desc" },
-    });
+    const { drizzleDb, drizzleSchema } = await import("@vamsa/lib/server");
+    const { eq } = await import("drizzle-orm");
 
-    return suggestions.map(
-      (s: {
-        id: string;
-        type: string;
-        status: string;
-        reason: string | null;
-        submittedAt: Date;
-        submittedBy: { name: string | null; email: string } | null;
-      }) => ({
-        id: s.id,
-        type: s.type,
-        status: s.status,
-        reason: s.reason,
-        submittedAt: s.submittedAt.getTime(),
-        submittedBy: s.submittedBy
-          ? { name: s.submittedBy.name, email: s.submittedBy.email }
-          : null,
+    const suggestions = await drizzleDb
+      .select({
+        id: drizzleSchema.suggestions.id,
+        type: drizzleSchema.suggestions.type,
+        status: drizzleSchema.suggestions.status,
+        reason: drizzleSchema.suggestions.reason,
+        submittedAt: drizzleSchema.suggestions.submittedAt,
+        submittedBy: {
+          name: drizzleSchema.users.name,
+          email: drizzleSchema.users.email,
+        },
       })
-    );
+      .from(drizzleSchema.suggestions)
+      .leftJoin(
+        drizzleSchema.users,
+        eq(drizzleSchema.suggestions.submittedById, drizzleSchema.users.id)
+      )
+      .where(eq(drizzleSchema.suggestions.status, "PENDING"))
+      .orderBy(drizzleSchema.suggestions.submittedAt);
+
+    return suggestions.map((s) => ({
+      id: s.id,
+      type: s.type,
+      status: s.status,
+      reason: s.reason,
+      submittedAt: s.submittedAt?.getTime() ?? 0,
+      submittedBy: s.submittedBy?.email
+        ? { name: s.submittedBy.name, email: s.submittedBy.email }
+        : null,
+    }));
   }
 );

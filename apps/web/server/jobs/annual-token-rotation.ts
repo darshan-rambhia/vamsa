@@ -1,5 +1,6 @@
 import cron from "node-cron";
-import { prisma } from "@vamsa/lib/server";
+import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
+import { eq, and, inArray } from "drizzle-orm";
 import { logger } from "@vamsa/lib/logger";
 import { enforceRotationPolicy } from "@vamsa/lib/server/business";
 
@@ -12,17 +13,19 @@ export function startAnnualRotationJob() {
     try {
       logger.info("Running annual token rotation check");
 
-      const users = await prisma.user.findMany({
-        where: {
-          calendarTokens: {
-            some: {
-              isActive: true,
-              rotationPolicy: "annual",
-            },
-          },
-        },
-        select: { id: true },
-      });
+      // Find users who have active tokens with annual rotation policy
+      const tokensWithAnnualRotation = await drizzleDb
+        .select({ userId: drizzleSchema.calendarTokens.userId })
+        .from(drizzleSchema.calendarTokens)
+        .where(
+          and(
+            eq(drizzleSchema.calendarTokens.isActive, true),
+            eq(drizzleSchema.calendarTokens.rotationPolicy, "annual")
+          )
+        );
+
+      const userIds = [...new Set(tokensWithAnnualRotation.map((t) => t.userId))];
+      const users = userIds.map((id) => ({ id }));
 
       let totalRotated = 0;
 

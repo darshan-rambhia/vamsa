@@ -7,8 +7,8 @@
  * server function layer.
  */
 
-import { prisma as defaultPrisma } from "../db";
-import type { PrismaClient } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { eq, and, notInArray, asc, isNotNull } from "drizzle-orm";
 import { logger } from "@vamsa/lib/logger";
 import {
   findSuggestedMatches,
@@ -18,11 +18,6 @@ import {
 } from "@vamsa/lib";
 import { notifyNewMemberJoined } from "./notifications";
 
-/**
- * Type for the database client used by claim functions.
- * This allows dependency injection for testing.
- */
-export type ClaimDb = Pick<PrismaClient, "user" | "person">;
 
 /**
  * Fetch claimable profiles for an OIDC user
@@ -31,16 +26,12 @@ export type ClaimDb = Pick<PrismaClient, "user" | "person">;
  * along with suggested matches based on the user's email and name.
  *
  * @param userId - ID of the OIDC user
- * @param db - Optional database client (defaults to prisma)
  * @returns Object with all unclaimed profiles and suggested matches
  * @throws Error if user not found or not an OIDC user
  */
-export async function getClaimableProfilesData(
-  userId: string,
-  db: ClaimDb = defaultPrisma
-) {
-  const user = await db.user.findUnique({
-    where: { id: userId },
+export async function getClaimableProfilesData(userId: string) {
+  const user = await drizzleDb.query.users.findFirst({
+    where: eq(drizzleSchema.users.id, userId),
   });
 
   if (!user) {
@@ -57,9 +48,9 @@ export async function getClaimableProfilesData(
   );
 
   // Get all personIds that are already claimed
-  const usersWithPeople = await db.user.findMany({
-    where: { personId: { not: null } },
-    select: { personId: true },
+  const usersWithPeople = await drizzleDb.query.users.findMany({
+    where: isNotNull(drizzleSchema.users.personId),
+    columns: { personId: true },
   });
 
   const claimedPersonIds = usersWithPeople
@@ -69,19 +60,22 @@ export async function getClaimableProfilesData(
   logger.debug({ count: claimedPersonIds.length }, "Claimed person IDs");
 
   // Get all living persons not yet claimed
-  const profiles = await db.person.findMany({
-    where: {
-      isLiving: true,
-      id: { notIn: claimedPersonIds },
-    },
-    select: {
+  const profiles = await drizzleDb.query.persons.findMany({
+    where: and(
+      eq(drizzleSchema.persons.isLiving, true),
+      notInArray(drizzleSchema.persons.id, claimedPersonIds)
+    ),
+    columns: {
       id: true,
       firstName: true,
       lastName: true,
       email: true,
       dateOfBirth: true,
     },
-    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+    orderBy: [
+      asc(drizzleSchema.persons.lastName),
+      asc(drizzleSchema.persons.firstName),
+    ],
   });
 
   logger.debug({ count: profiles.length }, "Unclaimed living profiles found");
@@ -128,18 +122,13 @@ export async function getClaimableProfilesData(
  *
  * @param userId - ID of the OIDC user claiming
  * @param personId - ID of the person profile to claim
- * @param db - Optional database client (defaults to prisma)
  * @returns Object with success status and updated user ID
  * @throws Error if user/person not found, already claimed, or validation fails
  */
-export async function claimProfileForOIDCData(
-  userId: string,
-  personId: string,
-  db: ClaimDb = defaultPrisma
-) {
+export async function claimProfileForOIDCData(userId: string, personId: string) {
   // Fetch user with current state
-  const user = await db.user.findUnique({
-    where: { id: userId },
+  const user = await drizzleDb.query.users.findFirst({
+    where: eq(drizzleSchema.users.id, userId),
   });
 
   if (!user) {
@@ -168,8 +157,8 @@ export async function claimProfileForOIDCData(
   }
 
   // Verify person exists and is living
-  const person = await db.person.findUnique({
-    where: { id: personId },
+  const person = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, personId),
   });
 
   if (!person) {
@@ -188,8 +177,8 @@ export async function claimProfileForOIDCData(
   );
 
   // Verify no other user has claimed this person
-  const existingClaim = await db.user.findUnique({
-    where: { personId },
+  const existingClaim = await drizzleDb.query.users.findFirst({
+    where: eq(drizzleSchema.users.personId, personId),
   });
 
   if (existingClaim) {
@@ -199,15 +188,17 @@ export async function claimProfileForOIDCData(
 
   // Link user to person and promote to MEMBER
   logger.debug({ userId: user.id, personId }, "Linking user to person");
-  const updatedUser = await db.user.update({
-    where: { id: user.id },
-    data: {
+  const [updatedUser] = await drizzleDb
+    .update(drizzleSchema.users)
+    .set({
       personId,
       role: "MEMBER",
       profileClaimStatus: "CLAIMED",
       profileClaimedAt: new Date(),
-    },
-  });
+      updatedAt: new Date(),
+    })
+    .where(eq(drizzleSchema.users.id, user.id))
+    .returning();
 
   logger.info({ userId: user.id, personId }, "Profile claimed successfully");
 
@@ -230,16 +221,12 @@ export async function claimProfileForOIDCData(
  * still claim a profile later if they choose.
  *
  * @param userId - ID of the OIDC user skipping
- * @param db - Optional database client (defaults to prisma)
  * @returns Object with success status
  * @throws Error if user not found, already claimed, or not an OIDC user
  */
-export async function skipProfileClaimData(
-  userId: string,
-  db: ClaimDb = defaultPrisma
-) {
-  const user = await db.user.findUnique({
-    where: { id: userId },
+export async function skipProfileClaimData(userId: string) {
+  const user = await drizzleDb.query.users.findFirst({
+    where: eq(drizzleSchema.users.id, userId),
   });
 
   if (!user) {
@@ -262,10 +249,13 @@ export async function skipProfileClaimData(
   }
 
   // Update status to SKIPPED
-  await db.user.update({
-    where: { id: user.id },
-    data: { profileClaimStatus: "SKIPPED" },
-  });
+  await drizzleDb
+    .update(drizzleSchema.users)
+    .set({
+      profileClaimStatus: "SKIPPED",
+      updatedAt: new Date(),
+    })
+    .where(eq(drizzleSchema.users.id, user.id));
 
   logger.info({ userId: user.id }, "Profile claim skipped");
 
@@ -279,15 +269,11 @@ export async function skipProfileClaimData(
  * claimed a profile, which profile they claimed, and their OIDC provider.
  *
  * @param userId - ID of the OIDC user
- * @param db - Optional database client (defaults to prisma)
  * @returns Claim status object with user and person details, or null if not OIDC user
  */
-export async function getOIDCClaimStatusData(
-  userId: string,
-  db: ClaimDb = defaultPrisma
-) {
-  const user = await db.user.findUnique({
-    where: { id: userId },
+export async function getOIDCClaimStatusData(userId: string) {
+  const user = await drizzleDb.query.users.findFirst({
+    where: eq(drizzleSchema.users.id, userId),
   });
 
   if (!user) {
@@ -301,9 +287,9 @@ export async function getOIDCClaimStatusData(
   logger.debug({ userId: user.id }, "Fetching OIDC claim status");
 
   const person = user.personId
-    ? await db.person.findUnique({
-        where: { id: user.personId },
-        select: {
+    ? await drizzleDb.query.persons.findFirst({
+        where: eq(drizzleSchema.persons.id, user.personId),
+        columns: {
           id: true,
           firstName: true,
           lastName: true,

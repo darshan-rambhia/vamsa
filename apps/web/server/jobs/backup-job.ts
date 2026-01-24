@@ -8,7 +8,8 @@
  * - Backup metadata and status tracking
  */
 
-import { prisma } from "../db";
+import { db, drizzleSchema } from "../db";
+import { eq, and, isNull, desc } from "drizzle-orm";
 import {
   uploadToStorage,
   deleteFromStorage,
@@ -29,21 +30,27 @@ const BACKUP_DIR = process.env.BACKUP_DIR || "./backups";
  */
 export async function performBackup(type: BackupType): Promise<string> {
   const startTime = Date.now();
-  const settings = await prisma.backupSettings.findFirst();
+  const [settings] = await db
+    .select()
+    .from(drizzleSchema.backupSettings)
+    .limit(1);
 
   // Generate filename with timestamp
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const filename = `vamsa-backup-${type.toLowerCase()}-${timestamp}.zip`;
 
   // Create pending backup record
-  const backup = await prisma.backup.create({
-    data: {
+  const backupId = crypto.randomUUID();
+  const [backup] = await db
+    .insert(drizzleSchema.backups)
+    .values({
+      id: backupId,
       filename,
       type,
       status: "IN_PROGRESS",
       location: settings?.storageProvider || "LOCAL",
-    },
-  });
+    })
+    .returning();
 
   try {
     // Generate backup using existing export function
@@ -57,57 +64,60 @@ export async function performBackup(type: BackupType): Promise<string> {
       relationships,
       users,
       suggestions,
-      familySettings,
+      familySettingsArr,
       auditLogs,
       mediaObjects,
       events,
       places,
     ] = await Promise.all([
-      prisma.person.findMany({
-        orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-      }),
-      prisma.relationship.findMany({
-        orderBy: { createdAt: "asc" },
-      }),
-      prisma.user.findMany({
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          personId: true,
-          role: true,
-          isActive: true,
-          mustChangePassword: true,
-          invitedById: true,
-          createdAt: true,
-          updatedAt: true,
-          lastLoginAt: true,
-          preferredLanguage: true,
-        },
-        orderBy: { createdAt: "asc" },
-      }),
-      prisma.suggestion.findMany({
-        orderBy: { submittedAt: "desc" },
-      }),
-      prisma.familySettings.findFirst(),
+      db
+        .select()
+        .from(drizzleSchema.persons)
+        .orderBy(drizzleSchema.persons.lastName, drizzleSchema.persons.firstName),
+      db
+        .select()
+        .from(drizzleSchema.relationships)
+        .orderBy(drizzleSchema.relationships.createdAt),
+      db
+        .select({
+          id: drizzleSchema.users.id,
+          email: drizzleSchema.users.email,
+          name: drizzleSchema.users.name,
+          personId: drizzleSchema.users.personId,
+          role: drizzleSchema.users.role,
+          isActive: drizzleSchema.users.isActive,
+          mustChangePassword: drizzleSchema.users.mustChangePassword,
+          invitedById: drizzleSchema.users.invitedById,
+          createdAt: drizzleSchema.users.createdAt,
+          updatedAt: drizzleSchema.users.updatedAt,
+          lastLoginAt: drizzleSchema.users.lastLoginAt,
+          preferredLanguage: drizzleSchema.users.preferredLanguage,
+        })
+        .from(drizzleSchema.users)
+        .orderBy(drizzleSchema.users.createdAt),
+      db
+        .select()
+        .from(drizzleSchema.suggestions)
+        .orderBy(desc(drizzleSchema.suggestions.submittedAt)),
+      db.select().from(drizzleSchema.familySettings).limit(1),
       type === "MONTHLY" && (settings?.includeAuditLogs ?? false)
-        ? prisma.auditLog.findMany({
-            orderBy: { createdAt: "desc" },
-            take: 10000, // Limit for monthly
-          })
+        ? db
+            .select()
+            .from(drizzleSchema.auditLogs)
+            .orderBy(desc(drizzleSchema.auditLogs.createdAt))
+            .limit(10000)
         : Promise.resolve([]),
       (settings?.includePhotos ?? true)
-        ? prisma.mediaObject.findMany({
-            orderBy: { uploadedAt: "asc" },
-          })
+        ? db
+            .select()
+            .from(drizzleSchema.mediaObjects)
+            .orderBy(drizzleSchema.mediaObjects.uploadedAt)
         : Promise.resolve([]),
-      prisma.event.findMany({
-        orderBy: { date: "asc" },
-      }),
-      prisma.place.findMany({
-        orderBy: { name: "asc" },
-      }),
+      db.select().from(drizzleSchema.events).orderBy(drizzleSchema.events.date),
+      db.select().from(drizzleSchema.places).orderBy(drizzleSchema.places.name),
     ]);
+
+    const familySettings = familySettingsArr[0] || null;
 
     // Create backup metadata
     const metadata = {
@@ -250,18 +260,18 @@ export async function performBackup(type: BackupType): Promise<string> {
 
     // Update backup record with success
     const duration = Date.now() - startTime;
-    await prisma.backup.update({
-      where: { id: backup.id },
-      data: {
+    await db
+      .update(drizzleSchema.backups)
+      .set({
         status: "COMPLETED",
-        size: BigInt(zipBuffer.length),
+        size: zipBuffer.length,
         personCount: people.length,
         relationshipCount: relationships.length,
         eventCount: events.length,
         mediaCount: mediaObjects.length,
         duration,
-      },
-    });
+      })
+      .where(eq(drizzleSchema.backups.id, backup.id));
 
     // Rotate old backups
     await rotateBackups(type, settings);
@@ -269,9 +279,12 @@ export async function performBackup(type: BackupType): Promise<string> {
     // Send success notification
     if (settings?.notifyOnSuccess) {
       try {
-        const emails = settings.notificationEmails
-          ? JSON.parse(settings.notificationEmails)
-          : [];
+        const emails =
+          typeof settings.notificationEmails === "string"
+            ? JSON.parse(settings.notificationEmails)
+            : Array.isArray(settings.notificationEmails)
+              ? settings.notificationEmails
+              : [];
         await sendBackupNotification({
           type: "success",
           filename,
@@ -297,21 +310,24 @@ export async function performBackup(type: BackupType): Promise<string> {
     const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    await prisma.backup.update({
-      where: { id: backup.id },
-      data: {
+    await db
+      .update(drizzleSchema.backups)
+      .set({
         status: "FAILED",
         error: errorMessage,
         duration,
-      },
-    });
+      })
+      .where(eq(drizzleSchema.backups.id, backup.id));
 
     // Send failure notification
     if (settings?.notifyOnFailure) {
       try {
-        const emails = settings.notificationEmails
-          ? JSON.parse(settings.notificationEmails)
-          : [];
+        const emails =
+          typeof settings.notificationEmails === "string"
+            ? JSON.parse(settings.notificationEmails)
+            : Array.isArray(settings.notificationEmails)
+              ? settings.notificationEmails
+              : [];
         await sendBackupNotification({
           type: "failure",
           filename,
@@ -350,14 +366,17 @@ async function rotateBackups(
   const keepCount = retentionMap[type];
 
   // Get all completed backups of this type, ordered newest first
-  const allBackups = await prisma.backup.findMany({
-    where: {
-      type,
-      status: "COMPLETED",
-      deletedAt: null,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const allBackups = await db
+    .select()
+    .from(drizzleSchema.backups)
+    .where(
+      and(
+        eq(drizzleSchema.backups.type, type),
+        eq(drizzleSchema.backups.status, "COMPLETED"),
+        isNull(drizzleSchema.backups.deletedAt)
+      )
+    )
+    .orderBy(desc(drizzleSchema.backups.createdAt));
 
   // Skip the first keepCount backups, delete the rest
   const backupsToDelete = allBackups.slice(keepCount);
@@ -394,10 +413,10 @@ async function rotateBackups(
     }
 
     // Soft delete in database
-    await prisma.backup.update({
-      where: { id: backupToDelete.id },
-      data: { deletedAt: new Date() },
-    });
+    await db
+      .update(drizzleSchema.backups)
+      .set({ deletedAt: new Date() })
+      .where(eq(drizzleSchema.backups.id, backupToDelete.id));
   }
 
   if (backupsToDelete.length > 0) {

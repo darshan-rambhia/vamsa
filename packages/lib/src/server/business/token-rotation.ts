@@ -1,14 +1,8 @@
-import type { PrismaClient } from "@vamsa/api";
-import { prisma as defaultPrisma } from "@vamsa/lib/server";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { eq, and } from "drizzle-orm";
 import { logger } from "@vamsa/lib/logger";
 import { addYears, addDays } from "date-fns";
 import crypto from "crypto";
-
-/**
- * Database interface for token rotation operations.
- * Allows dependency injection for testing.
- */
-export type TokenRotationDb = Pick<PrismaClient, "calendarToken">;
 
 type RotationEvent = "password_change" | "manual" | "annual_check";
 
@@ -31,11 +25,13 @@ export function daysSinceCreation(createdAt: Date): number {
  */
 export async function enforceRotationPolicy(
   userId: string,
-  event: RotationEvent,
-  db: TokenRotationDb = defaultPrisma
+  event: RotationEvent
 ): Promise<{ rotated: number; tokens: string[] }> {
-  const tokens = await db.calendarToken.findMany({
-    where: { userId, isActive: true },
+  const tokens = await drizzleDb.query.calendarTokens.findMany({
+    where: and(
+      eq(drizzleSchema.calendarTokens.userId, userId),
+      eq(drizzleSchema.calendarTokens.isActive, true)
+    ),
   });
 
   const rotatedTokens: string[] = [];
@@ -51,7 +47,7 @@ export async function enforceRotationPolicy(
       event === "manual";
 
     if (shouldRotate) {
-      const newToken = await rotateToken(token.id, db);
+      const newToken = await rotateToken(token.id);
       rotatedTokens.push(newToken.token);
       rotatedCount++;
 
@@ -68,17 +64,21 @@ export async function enforceRotationPolicy(
 /**
  * Rotate a single token with grace period
  */
-export async function rotateToken(
-  oldTokenId: string,
-  db: TokenRotationDb = defaultPrisma
-) {
-  const oldToken = await db.calendarToken.findUniqueOrThrow({
-    where: { id: oldTokenId },
+export async function rotateToken(oldTokenId: string) {
+  const oldToken = await drizzleDb.query.calendarTokens.findFirst({
+    where: eq(drizzleSchema.calendarTokens.id, oldTokenId),
   });
 
+  if (!oldToken) {
+    throw new Error("Calendar token not found");
+  }
+
   // Create new token with same settings
-  const newToken = await db.calendarToken.create({
-    data: {
+  const newTokenId = crypto.randomUUID();
+  const [newToken] = await drizzleDb
+    .insert(drizzleSchema.calendarTokens)
+    .values({
+      id: newTokenId,
       userId: oldToken.userId,
       token: generateSecureToken(),
       name: oldToken.name,
@@ -88,17 +88,17 @@ export async function rotateToken(
       expiresAt: addYears(new Date(), 1),
       rotationPolicy: oldToken.rotationPolicy,
       isActive: true,
-    },
-  });
+    })
+    .returning();
 
   // Grace period: old token valid for 30 days
-  await db.calendarToken.update({
-    where: { id: oldTokenId },
-    data: {
+  await drizzleDb
+    .update(drizzleSchema.calendarTokens)
+    .set({
       expiresAt: addDays(new Date(), 30),
       name: oldToken.name ? `${oldToken.name} (rotated)` : null,
-    },
-  });
+    })
+    .where(eq(drizzleSchema.calendarTokens.id, oldTokenId));
 
   return newToken;
 }
@@ -106,15 +106,15 @@ export async function rotateToken(
 /**
  * Revoke a token immediately (no grace period)
  */
-export async function revokeToken(
-  tokenId: string,
-  db: TokenRotationDb = defaultPrisma
-) {
-  return db.calendarToken.update({
-    where: { id: tokenId },
-    data: {
+export async function revokeToken(tokenId: string) {
+  const [result] = await drizzleDb
+    .update(drizzleSchema.calendarTokens)
+    .set({
       isActive: false,
       expiresAt: new Date(), // Expire immediately
-    },
-  });
+    })
+    .where(eq(drizzleSchema.calendarTokens.id, tokenId))
+    .returning();
+
+  return result;
 }

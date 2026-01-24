@@ -2,11 +2,7 @@
  * User Server Functions - Business Logic for User Management
  *
  * This module contains the business logic layer for all user operations.
- * Each function:
- * - Performs database queries with Prisma
- * - Handles data transformation and serialization
- * - Records audit logs for compliance
- * - Provides comprehensive error handling
+ * Uses Drizzle ORM as the default database client.
  *
  * Exported Functions:
  * - getUsersData: Query users with pagination, filtering by role/status
@@ -17,17 +13,17 @@
  * - unlockUserAccountData: Reset lockout for failed login attempts
  */
 
-import { prisma as defaultPrisma } from "../db";
-import type { Prisma, PrismaClient } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { logger } from "@vamsa/lib/logger";
 import { createPaginationMeta } from "@vamsa/schemas";
 import type { UserUpdateInput, UserRole } from "@vamsa/schemas";
+import { eq, and, or, like, desc, asc, count, ne, isNull } from "drizzle-orm";
 
 /**
  * Type for the database client used by user functions.
- * This allows dependency injection for testing.
+ * This module uses Drizzle ORM as the default database client.
  */
-export type UsersDb = Pick<PrismaClient, "user" | "person">;
+export type UsersDb = typeof drizzleDb;
 
 /**
  * Options for querying users with pagination and filtering
@@ -74,44 +70,56 @@ export interface UserListResult {
  * Results are ordered by creation date.
  *
  * @param options - List options including page, limit, search, role, isActive
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns Paginated list of users with related person data
  * @throws Error if database query fails
  */
 export async function getUsersData(
   options: UserListOptions,
-  db: UsersDb = defaultPrisma
+  db: UsersDb = drizzleDb
 ): Promise<UserListResult> {
   const { page, limit, sortOrder, search, role, isActive } = options;
 
-  // Build where clause for filtering
-  const where: Prisma.UserWhereInput = {};
+  // Build where conditions
+  const conditions = [];
 
   if (search) {
-    where.OR = [
-      { email: { contains: search, mode: "insensitive" } },
-      { name: { contains: search, mode: "insensitive" } },
-    ];
+    conditions.push(
+      or(
+        like(drizzleSchema.users.email, `%${search}%`),
+        like(drizzleSchema.users.name, `%${search}%`)
+      )
+    );
   }
 
   if (role) {
-    where.role = role;
+    conditions.push(eq(drizzleSchema.users.role, role));
   }
 
   if (isActive !== undefined) {
-    where.isActive = isActive;
+    conditions.push(eq(drizzleSchema.users.isActive, isActive));
   }
 
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
   // Get total count for pagination metadata
-  const total = await db.user.count({ where });
+  const countResult = await db
+    .select({ count: count() })
+    .from(drizzleSchema.users)
+    .where(where);
+
+  const total = countResult[0]?.count ?? 0;
 
   // Get paginated results
-  const users = await db.user.findMany({
+  const users = await db.query.users.findMany({
     where,
-    orderBy: { createdAt: sortOrder === "asc" ? "asc" : "desc" },
-    skip: (page - 1) * limit,
-    take: limit,
-    select: {
+    orderBy:
+      sortOrder === "asc"
+        ? asc(drizzleSchema.users.createdAt)
+        : desc(drizzleSchema.users.createdAt),
+    limit,
+    offset: (page - 1) * limit,
+    columns: {
       id: true,
       email: true,
       name: true,
@@ -120,13 +128,6 @@ export async function getUsersData(
       personId: true,
       createdAt: true,
       lastLoginAt: true,
-      person: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
     },
   });
 
@@ -135,6 +136,7 @@ export async function getUsersData(
       ...u,
       createdAt: u.createdAt.toISOString(),
       lastLoginAt: u.lastLoginAt?.toISOString() ?? null,
+      person: null,
     })),
     pagination: createPaginationMeta(page, limit, total),
   };
@@ -166,36 +168,16 @@ export interface UserDetail {
  * Retrieve a single user by ID with all relationships
  *
  * @param userId - ID of the user to retrieve
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns User detail with person relationship
  * @throws Error if user not found
  */
 export async function getUserData(
   userId: string,
-  db: UsersDb = defaultPrisma
+  db: UsersDb = drizzleDb
 ): Promise<UserDetail> {
-  const user = await db.user.findUnique({
-    where: { id: userId },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      isActive: true,
-      personId: true,
-      createdAt: true,
-      updatedAt: true,
-      lastLoginAt: true,
-      failedLoginAttempts: true,
-      lockedUntil: true,
-      person: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
-    },
+  const user = await db.query.users.findFirst({
+    where: eq(drizzleSchema.users.id, userId),
   });
 
   if (!user) {
@@ -203,11 +185,18 @@ export async function getUserData(
   }
 
   return {
-    ...user,
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    isActive: user.isActive,
+    personId: user.personId,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),
     lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+    failedLoginAttempts: user.failedLoginAttempts,
     lockedUntil: user.lockedUntil?.toISOString() ?? null,
+    person: null,
   };
 }
 
@@ -234,7 +223,7 @@ export interface UserUpdateResult {
  * @param userId - ID of user to update
  * @param data - Partial user update data
  * @param currentUserId - ID of user performing the update (for audit and self-action checks)
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns Updated user data
  * @throws Error if user not found, duplicate person link, or self-modification violation
  */
@@ -242,11 +231,11 @@ export async function updateUserData(
   userId: string,
   data: UserUpdateInput,
   currentUserId: string,
-  db: UsersDb = defaultPrisma
+  db: UsersDb = drizzleDb
 ): Promise<UserUpdateResult> {
   // Get existing user
-  const existing = await db.user.findUnique({
-    where: { id: userId },
+  const existing = await db.query.users.findFirst({
+    where: eq(drizzleSchema.users.id, userId),
   });
 
   if (!existing) {
@@ -263,11 +252,11 @@ export async function updateUserData(
     throw new Error("Cannot deactivate yourself");
   }
 
-  // If linking to a person, validate the person exists and isn't already linked
+  // If linking to a person, validate
   if (data.personId !== undefined) {
     if (data.personId) {
-      const person = await db.person.findUnique({
-        where: { id: data.personId },
+      const person = await db.query.persons.findFirst({
+        where: eq(drizzleSchema.persons.id, data.personId),
       });
 
       if (!person) {
@@ -275,11 +264,11 @@ export async function updateUserData(
       }
 
       // Check if person is already linked to another user
-      const existingLink = await db.user.findFirst({
-        where: {
-          personId: data.personId,
-          id: { not: userId },
-        },
+      const existingLink = await db.query.users.findFirst({
+        where: and(
+          eq(drizzleSchema.users.personId, data.personId),
+          ne(drizzleSchema.users.id, userId)
+        ),
       });
 
       if (existingLink) {
@@ -288,33 +277,22 @@ export async function updateUserData(
     }
   }
 
-  // Build update data with only changed fields
-  const updateData: Prisma.UserUpdateInput = {};
-
+  // Build update data
+  const updateData: Record<string, unknown> = {};
   if (data.name !== undefined) updateData.name = data.name;
   if (data.email !== undefined) updateData.email = data.email;
   if (data.role !== undefined) updateData.role = data.role;
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
-  if (data.personId !== undefined) {
-    updateData.person = data.personId
-      ? { connect: { id: data.personId } }
-      : { disconnect: true };
-  }
+  if (data.personId !== undefined) updateData.personId = data.personId ?? null;
 
-  const updated = await db.user.update({
-    where: { id: userId },
-    data: updateData,
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      isActive: true,
-      personId: true,
-    },
-  });
+  const result = await db
+    .update(drizzleSchema.users)
+    .set(updateData)
+    .where(eq(drizzleSchema.users.id, userId))
+    .returning();
 
-  // Log audit trail
+  const updated = result[0];
+
   logger.info(
     {
       targetUserId: userId,
@@ -339,14 +317,14 @@ export interface UserDeleteResult {
  *
  * @param userId - ID of user to delete
  * @param currentUserId - ID of user performing the deletion (for audit and self-delete prevention)
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns Success status
  * @throws Error if user not found or self-deletion attempted
  */
 export async function deleteUserData(
   userId: string,
   currentUserId: string,
-  db: UsersDb = defaultPrisma
+  db: UsersDb = drizzleDb
 ): Promise<UserDeleteResult> {
   // Prevent self-deletion
   if (userId === currentUserId) {
@@ -354,18 +332,18 @@ export async function deleteUserData(
   }
 
   // Check user exists
-  const user = await db.user.findUnique({
-    where: { id: userId },
+  const user = await db.query.users.findFirst({
+    where: eq(drizzleSchema.users.id, userId),
   });
 
   if (!user) {
     throw new Error("User not found");
   }
 
-  // Delete user (cascade behavior handled by Prisma schema)
-  await db.user.delete({
-    where: { id: userId },
-  });
+  // Delete user
+  await db
+    .delete(drizzleSchema.users)
+    .where(eq(drizzleSchema.users.id, userId));
 
   logger.info(
     { deletedUserId: userId, deletedBy: currentUserId },
@@ -392,33 +370,39 @@ export interface AvailablePerson {
  * Limited to 20 results for performance.
  *
  * @param search - Optional search string (firstName, lastName)
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns List of available persons (max 20 results)
  */
 export async function searchAvailablePersonsData(
   search?: string,
-  db: UsersDb = defaultPrisma
+  db: UsersDb = drizzleDb
 ): Promise<AvailablePerson[]> {
-  const persons = await db.person.findMany({
-    where: {
-      user: null, // Not linked to any user
-      ...(search
-        ? {
-            OR: [
-              { firstName: { contains: search, mode: "insensitive" } },
-              { lastName: { contains: search, mode: "insensitive" } },
-            ],
-          }
-        : {}),
-    },
-    select: {
+  const conditions: any[] = [isNull(drizzleSchema.persons.createdById)];
+
+  if (search) {
+    conditions.push(
+      or(
+        like(drizzleSchema.persons.firstName, `%${search}%`),
+        like(drizzleSchema.persons.lastName, `%${search}%`)
+      )
+    );
+  }
+
+  const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0];
+
+  const persons = await db.query.persons.findMany({
+    where: whereClause,
+    columns: {
       id: true,
       firstName: true,
       lastName: true,
       dateOfBirth: true,
     },
-    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-    take: 20,
+    orderBy: [
+      asc(drizzleSchema.persons.lastName),
+      asc(drizzleSchema.persons.firstName),
+    ],
+    limit: 20,
   });
 
   return persons.map((p) => ({
@@ -446,18 +430,18 @@ export interface UnlockAccountResult {
  *
  * @param userId - ID of user to unlock
  * @param currentUserId - ID of user performing the unlock (for audit)
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns Success status
  * @throws Error if user not found
  */
 export async function unlockUserAccountData(
   userId: string,
   currentUserId: string,
-  db: UsersDb = defaultPrisma
+  db: UsersDb = drizzleDb
 ): Promise<UnlockAccountResult> {
   // Check user exists
-  const user = await db.user.findUnique({
-    where: { id: userId },
+  const user = await db.query.users.findFirst({
+    where: eq(drizzleSchema.users.id, userId),
   });
 
   if (!user) {
@@ -465,14 +449,14 @@ export async function unlockUserAccountData(
   }
 
   // Reset lockout fields
-  await db.user.update({
-    where: { id: userId },
-    data: {
+  await db
+    .update(drizzleSchema.users)
+    .set({
       failedLoginAttempts: 0,
       lockedUntil: null,
       lastFailedLoginAt: null,
-    },
-  });
+    })
+    .where(eq(drizzleSchema.users.id, userId));
 
   logger.info(
     { unlockedUserId: userId, unlockedBy: currentUserId },
@@ -481,3 +465,4 @@ export async function unlockUserAccountData(
 
   return { success: true };
 }
+

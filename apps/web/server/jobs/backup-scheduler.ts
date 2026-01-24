@@ -9,7 +9,7 @@
  */
 
 import cron, { type ScheduledTask } from "node-cron";
-import { prisma } from "../db";
+import { db, drizzleSchema } from "../db";
 import { performBackup } from "./backup-job";
 import { logger, serializeError } from "@vamsa/lib/logger";
 
@@ -24,7 +24,7 @@ export async function initBackupScheduler(): Promise<void> {
     // Stop any existing jobs
     stopBackupScheduler();
 
-    const settings = await prisma.backupSettings.findFirst();
+    const [settings] = await db.select().from(drizzleSchema.backupSettings).limit(1);
     if (!settings) {
       logger.info(
         "No backup settings found, skipping scheduler initialization"

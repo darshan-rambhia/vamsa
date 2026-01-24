@@ -1,13 +1,8 @@
-import { prisma as defaultPrisma } from "../db";
+import { drizzleDb, drizzleSchema } from "../db";
 import { logger } from "@vamsa/lib/logger";
 import type { UserRole } from "@vamsa/schemas";
-import type { FamilySettings, PrismaClient } from "@vamsa/api";
+import { eq } from "drizzle-orm";
 
-/**
- * Type for the database client used by settings functions.
- * This allows dependency injection for testing.
- */
-export type SettingsDb = Pick<PrismaClient, "familySettings" | "user">;
 
 /**
  * Family settings data transfer object
@@ -36,25 +31,24 @@ export interface UpdateFamilySettingsInput {
   metricsApiUrl?: string | null;
 }
 
+
+
+
+
 /**
  * Retrieves family settings from the database
  * Returns default settings if no settings exist in the database
  *
- * @param db - Optional database client (defaults to prisma)
  * @returns {Promise<FamilySettingsData>} Family settings data with defaults
  * @throws {Error} If database query fails
- *
- * @example
- * const settings = await getFamilySettingsData();
- * console.log(settings.familyName); // "Our Family" or configured name
  */
-export async function getFamilySettingsData(
-  db: SettingsDb = defaultPrisma
-): Promise<FamilySettingsData> {
-  const settings = await db.familySettings.findFirst();
+export async function getFamilySettingsData(): Promise<FamilySettingsData> {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
+  const settings = await drizzleDb.query.familySettings.findFirst();
 
   if (!settings) {
-    // Return defaults if no settings exist
     logger.debug("No family settings found, returning defaults");
     return {
       id: null,
@@ -85,65 +79,63 @@ export async function getFamilySettingsData(
  * @param {UpdateFamilySettingsInput} data - The settings data to update
  * @param {UserRole} userRole - The role of the user making the update (for audit logging)
  * @param {string} userId - The ID of the user making the update (for audit logging)
- * @param db - Optional database client (defaults to prisma)
  * @returns {Promise<FamilySettingsData>} Updated family settings data
  * @throws {Error} If database operation fails
- *
- * @example
- * const updated = await updateFamilySettingsData(
- *   {
- *     familyName: "Smith Family",
- *     allowSelfRegistration: false,
- *     requireApprovalForEdits: true,
- *   },
- *   "ADMIN",
- *   "user-123"
- * );
  */
 export async function updateFamilySettingsData(
   data: UpdateFamilySettingsInput,
   userRole: UserRole,
-  userId: string,
-  db: SettingsDb = defaultPrisma
+  userId: string
 ): Promise<FamilySettingsData> {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
   logger.info(
     { userId, userRole, updates: Object.keys(data) },
     "Updating family settings"
   );
 
   // Check if settings exist
-  const existing = await db.familySettings.findFirst();
+  const existing = await drizzleDb.query.familySettings.findFirst();
 
-  let settings: FamilySettings;
+  let settings;
 
   if (existing) {
     // Update existing settings
-    settings = await db.familySettings.update({
-      where: { id: existing.id },
-      data: {
+    const [updated] = await drizzleDb
+      .update(drizzleSchema.familySettings)
+      .set({
         familyName: data.familyName,
         description: data.description ?? null,
         allowSelfRegistration: data.allowSelfRegistration,
         requireApprovalForEdits: data.requireApprovalForEdits,
         metricsDashboardUrl: data.metricsDashboardUrl ?? null,
         metricsApiUrl: data.metricsApiUrl ?? null,
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .where(eq(drizzleSchema.familySettings.id, existing.id))
+      .returning();
 
+    settings = updated;
     logger.info({ settingsId: settings.id }, "Family settings updated");
   } else {
     // Create new settings
-    settings = await db.familySettings.create({
-      data: {
+    const newId = crypto.randomUUID();
+    const [created] = await drizzleDb
+      .insert(drizzleSchema.familySettings)
+      .values({
+        id: newId,
         familyName: data.familyName,
         description: data.description ?? null,
         allowSelfRegistration: data.allowSelfRegistration,
         requireApprovalForEdits: data.requireApprovalForEdits,
         metricsDashboardUrl: data.metricsDashboardUrl ?? null,
         metricsApiUrl: data.metricsApiUrl ?? null,
-      },
-    });
+        updatedAt: new Date(),
+      })
+      .returning();
 
+    settings = created;
     logger.info({ settingsId: settings.id }, "Family settings created");
   }
 
@@ -162,21 +154,18 @@ export async function updateFamilySettingsData(
  * Retrieves a user's language preference
  *
  * @param {string} userId - The ID of the user
- * @param db - Optional database client (defaults to prisma)
  * @returns {Promise<string>} The user's preferred language code (defaults to "en")
  * @throws {Error} If user not found or database query fails
- *
- * @example
- * const language = await getUserLanguagePreferenceData("user-123");
- * console.log(language); // "hi" or "en" or "es"
  */
 export async function getUserLanguagePreferenceData(
-  userId: string,
-  db: SettingsDb = defaultPrisma
+  userId: string
 ): Promise<string> {
-  const userData = await db.user.findUnique({
-    where: { id: userId },
-    select: { preferredLanguage: true },
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
+  const userData = await drizzleDb.query.users.findFirst({
+    where: eq(drizzleSchema.users.id, userId),
+    columns: { preferredLanguage: true },
   });
 
   if (!userData) {
@@ -192,29 +181,23 @@ export async function getUserLanguagePreferenceData(
  *
  * @param {string} userId - The ID of the user
  * @param {string} language - The language code to set ("en", "hi", or "es")
- * @param db - Optional database client (defaults to prisma)
  * @returns {Promise<string>} The updated language preference
  * @throws {Error} If database update fails
- *
- * @example
- * const language = await setUserLanguagePreferenceData("user-123", "hi");
- * console.log(language); // "hi"
  */
 export async function setUserLanguagePreferenceData(
   userId: string,
-  language: string,
-  db: SettingsDb = defaultPrisma
+  language: string
 ): Promise<string> {
-  const updated = await db.user.update({
-    where: { id: userId },
-    data: {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
+  const [updated] = await drizzleDb
+    .update(drizzleSchema.users)
+    .set({
       preferredLanguage: language,
-    },
-    select: {
-      id: true,
-      preferredLanguage: true,
-    },
-  });
+    })
+    .where(eq(drizzleSchema.users.id, userId))
+    .returning({ id: drizzleSchema.users.id, preferredLanguage: drizzleSchema.users.preferredLanguage });
 
   logger.info({ userId, language }, "Language preference updated");
 

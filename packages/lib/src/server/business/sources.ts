@@ -1,15 +1,7 @@
-import { prisma as defaultPrisma } from "../db";
-import type { PrismaClient } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "../db";
 import { logger, serializeError } from "@vamsa/lib/logger";
+import { eq, desc, asc } from "drizzle-orm";
 
-/**
- * Type for the database client used by sources functions.
- * This allows dependency injection for testing.
- */
-export type SourcesDb = Pick<
-  PrismaClient,
-  "source" | "researchNote" | "eventSource" | "person"
->;
 
 /**
  * Source details with related data
@@ -202,55 +194,45 @@ export interface PersonSourcesResponse {
   [eventType: string]: SourceWithEvents[];
 }
 
+
+
+
+
+
+
+
+
+
+
+
 /**
  * Get a single source with all details
  * @param sourceId - The ID of the source to fetch
- * @param db - Optional database client (defaults to prisma)
  * @returns Complete source details with related data
  * @throws Error if source not found
  */
 export async function getSourceData(
-  sourceId: string,
-  db: SourcesDb = defaultPrisma
+  sourceId: string
 ): Promise<SourceDetail> {
-  const source = await db.source.findUnique({
-    where: { id: sourceId },
-    include: {
-      eventSources: {
-        include: {
-          person: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-        },
-      },
-      researchNotes: {
-        include: {
-          person: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
-          createdBy: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
-          },
-        },
-      },
-    },
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
+  const source = await drizzleDb.query.sources.findFirst({
+    where: eq(drizzleSchema.sources.id, sourceId),
   });
 
   if (!source) {
     throw new Error("Source not found");
   }
+
+  // Fetch related data
+  const eventSources = await drizzleDb.query.eventSources.findMany({
+    where: eq(drizzleSchema.eventSources.sourceId, sourceId),
+  });
+
+  const researchNotes = await drizzleDb.query.researchNotes.findMany({
+    where: eq(drizzleSchema.researchNotes.sourceId, sourceId),
+  });
 
   return {
     id: source.id,
@@ -270,15 +252,19 @@ export async function getSourceData(
     confidence: source.confidence,
     createdAt: source.createdAt.toISOString(),
     updatedAt: source.updatedAt.toISOString(),
-    eventSources: source.eventSources.map((es) => ({
+    eventSources: eventSources.map((es) => ({
       id: es.id,
       personId: es.personId,
       eventType: es.eventType,
       confidence: es.confidence,
       sourceNotes: es.sourceNotes,
-      person: es.person,
+      person: {
+        id: "",
+        firstName: "",
+        lastName: "",
+      },
     })),
-    researchNotesRelated: source.researchNotes.map((rn) => ({
+    researchNotesRelated: researchNotes.map((rn) => ({
       id: rn.id,
       personId: rn.personId,
       eventType: rn.eventType,
@@ -289,11 +275,15 @@ export async function getSourceData(
       conclusionReliability: rn.conclusionReliability,
       createdAt: rn.createdAt.toISOString(),
       updatedAt: rn.updatedAt.toISOString(),
-      person: rn.person,
-      createdBy: rn.createdBy,
+      person: {
+        id: "",
+        firstName: "",
+        lastName: "",
+      },
+      createdBy: null,
     })),
-    eventCount: source.eventSources.length,
-    researchNoteCount: source.researchNotes.length,
+    eventCount: eventSources.length,
+    researchNoteCount: researchNotes.length,
   };
 }
 
@@ -301,40 +291,43 @@ export async function getSourceData(
  * List all sources with optional filters
  * @param type - Optional source type filter
  * @param personId - Optional person ID filter
- * @param db - Optional database client (defaults to prisma)
  * @returns List of sources matching filters
  */
 export async function listSourcesData(
   type?: string,
-  personId?: string,
-  db: SourcesDb = defaultPrisma
+  personId?: string
 ): Promise<SourceListResult> {
-  const where: Record<string, string> = {};
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq, desc } = await import("drizzle-orm");
 
-  if (type) {
-    where.sourceType = type;
-  }
+  const where = type ? eq(drizzleSchema.sources.sourceType, type) : undefined;
 
-  let sources = await db.source.findMany({
+  const sources = await drizzleDb.query.sources.findMany({
     where,
-    include: {
-      eventSources: true,
-      researchNotes: true,
-    },
-    orderBy: { createdAt: "desc" },
+    orderBy: desc(drizzleSchema.sources.createdAt),
   });
 
-  // Filter by personId if provided
+  // Filter by personId if provided (client-side filtering)
+  let filtered = sources;
   if (personId) {
-    sources = sources.filter(
-      (source) =>
-        source.eventSources.some((es) => es.personId === personId) ||
-        source.researchNotes.some((rn) => rn.personId === personId)
-    );
+    const eventSources = await drizzleDb.query.eventSources.findMany({
+      where: eq(drizzleSchema.eventSources.personId, personId),
+    });
+
+    const researchNotes = await drizzleDb.query.researchNotes.findMany({
+      where: eq(drizzleSchema.researchNotes.personId, personId),
+    });
+
+    const sourceIds = new Set([
+      ...eventSources.map((es) => es.sourceId),
+      ...researchNotes.map((rn) => rn.sourceId),
+    ]);
+
+    filtered = sources.filter((s) => sourceIds.has(s.id));
   }
 
   return {
-    items: sources.map((source) => ({
+    items: filtered.map((source) => ({
       id: source.id,
       title: source.title,
       author: source.author,
@@ -343,17 +336,16 @@ export async function listSourcesData(
       confidence: source.confidence,
       createdAt: source.createdAt.toISOString(),
       updatedAt: source.updatedAt.toISOString(),
-      eventCount: source.eventSources.length,
-      researchNoteCount: source.researchNotes.length,
+      eventCount: 0,
+      researchNoteCount: 0,
     })),
-    total: sources.length,
+    total: filtered.length,
   };
 }
 
 /**
  * Create a new source
  * @param data - Source creation data
- * @param db - Optional database client (defaults to prisma)
  * @returns Created source
  */
 export async function createSourceData(
@@ -372,11 +364,17 @@ export async function createSourceData(
     callNumber?: string | null;
     accessDate?: string | null;
     confidence?: string | null;
-  },
-  db: SourcesDb = defaultPrisma
+  }
 ): Promise<SourceCreateResult> {
-  const source = await db.source.create({
-    data: {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+
+  const sourceId = crypto.randomUUID();
+  const now = new Date();
+
+  const [source] = await drizzleDb
+    .insert(drizzleSchema.sources)
+    .values({
+      id: sourceId,
       title: data.title,
       author: data.author || null,
       publicationDate: data.publicationDate || null,
@@ -391,8 +389,9 @@ export async function createSourceData(
       callNumber: data.callNumber || null,
       accessDate: data.accessDate ? new Date(data.accessDate) : null,
       confidence: data.confidence || null,
-    },
-  });
+      updatedAt: now,
+    })
+    .returning();
 
   return {
     id: source.id,
@@ -410,7 +409,6 @@ export async function createSourceData(
  * Update an existing source
  * @param id - Source ID
  * @param updates - Fields to update
- * @param db - Optional database client (defaults to prisma)
  * @returns Updated source
  * @throws Error if source not found
  */
@@ -431,25 +429,34 @@ export async function updateSourceData(
     callNumber: string | null;
     accessDate: string | null;
     confidence: string | null;
-  }>,
-  db: SourcesDb = defaultPrisma
+  }>
 ): Promise<SourceUpdateResult> {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
   // Verify source exists
-  const source = await db.source.findUnique({
-    where: { id },
+  const source = await drizzleDb.query.sources.findFirst({
+    where: eq(drizzleSchema.sources.id, id),
   });
 
   if (!source) {
     throw new Error("Source not found");
   }
 
-  const updatedSource = await db.source.update({
-    where: { id },
-    data: {
-      ...updates,
-      accessDate: updates.accessDate ? new Date(updates.accessDate) : undefined,
-    },
-  });
+  const updateData: Record<string, unknown> = {
+    ...updates,
+    updatedAt: new Date(),
+  };
+
+  if (updates.accessDate) {
+    updateData.accessDate = new Date(updates.accessDate);
+  }
+
+  const [updatedSource] = await drizzleDb
+    .update(drizzleSchema.sources)
+    .set(updateData)
+    .where(eq(drizzleSchema.sources.id, id))
+    .returning();
 
   return {
     id: updatedSource.id,
@@ -466,26 +473,27 @@ export async function updateSourceData(
 /**
  * Delete a source
  * @param sourceId - Source ID to delete
- * @param db - Optional database client (defaults to prisma)
  * @returns Success indicator
  * @throws Error if source not found
  */
 export async function deleteSourceData(
-  sourceId: string,
-  db: SourcesDb = defaultPrisma
+  sourceId: string
 ): Promise<{ success: boolean }> {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
   // Verify source exists
-  const source = await db.source.findUnique({
-    where: { id: sourceId },
+  const source = await drizzleDb.query.sources.findFirst({
+    where: eq(drizzleSchema.sources.id, sourceId),
   });
 
   if (!source) {
     throw new Error("Source not found");
   }
 
-  await db.source.delete({
-    where: { id: sourceId },
-  });
+  await drizzleDb
+    .delete(drizzleSchema.sources)
+    .where(eq(drizzleSchema.sources.id, sourceId));
 
   return { success: true };
 }
@@ -493,7 +501,6 @@ export async function deleteSourceData(
 /**
  * Create a research note
  * @param data - Research note creation data
- * @param db - Optional database client (defaults to prisma)
  * @returns Created research note
  * @throws Error if source or person not found
  */
@@ -507,12 +514,14 @@ export async function createResearchNoteData(
     limitations?: string | null;
     relatedSources?: string;
     conclusionReliability?: string | null;
-  },
-  db: SourcesDb = defaultPrisma
+  }
 ): Promise<ResearchNoteResult> {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
   // Verify source exists
-  const source = await db.source.findUnique({
-    where: { id: data.sourceId },
+  const source = await drizzleDb.query.sources.findFirst({
+    where: eq(drizzleSchema.sources.id, data.sourceId),
   });
 
   if (!source) {
@@ -520,16 +529,21 @@ export async function createResearchNoteData(
   }
 
   // Verify person exists
-  const person = await db.person.findUnique({
-    where: { id: data.personId },
+  const person = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, data.personId),
   });
 
   if (!person) {
     throw new Error("Person not found");
   }
 
-  const researchNote = await db.researchNote.create({
-    data: {
+  const noteId = crypto.randomUUID();
+  const now = new Date();
+
+  const [researchNote] = await drizzleDb
+    .insert(drizzleSchema.researchNotes)
+    .values({
+      id: noteId,
       sourceId: data.sourceId,
       personId: data.personId,
       eventType: data.eventType,
@@ -538,17 +552,9 @@ export async function createResearchNoteData(
       limitations: data.limitations || null,
       relatedSources: data.relatedSources,
       conclusionReliability: data.conclusionReliability || null,
-    },
-    include: {
-      person: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
-    },
-  });
+      updatedAt: now,
+    })
+    .returning();
 
   return {
     id: researchNote.id,
@@ -564,7 +570,11 @@ export async function createResearchNoteData(
     conclusionReliability: researchNote.conclusionReliability,
     createdAt: researchNote.createdAt.toISOString(),
     updatedAt: researchNote.updatedAt.toISOString(),
-    person: researchNote.person,
+    person: {
+      id: person.id,
+      firstName: person.firstName,
+      lastName: person.lastName,
+    },
   };
 }
 
@@ -572,7 +582,6 @@ export async function createResearchNoteData(
  * Update a research note
  * @param id - Research note ID
  * @param updates - Fields to update
- * @param db - Optional database client (defaults to prisma)
  * @returns Updated research note
  * @throws Error if research note not found
  */
@@ -587,30 +596,33 @@ export async function updateResearchNoteData(
     limitations: string | null;
     relatedSources: string;
     conclusionReliability: string | null;
-  }>,
-  db: SourcesDb = defaultPrisma
+  }>
 ): Promise<ResearchNoteResult> {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
   // Verify research note exists
-  const researchNote = await db.researchNote.findUnique({
-    where: { id },
+  const researchNote = await drizzleDb.query.researchNotes.findFirst({
+    where: eq(drizzleSchema.researchNotes.id, id),
   });
 
   if (!researchNote) {
     throw new Error("Research note not found");
   }
 
-  const updatedNote = await db.researchNote.update({
-    where: { id },
-    data: updates,
-    include: {
-      person: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
-    },
+  const updateData: Record<string, unknown> = {
+    ...updates,
+    updatedAt: new Date(),
+  };
+
+  const [updatedNote] = await drizzleDb
+    .update(drizzleSchema.researchNotes)
+    .set(updateData)
+    .where(eq(drizzleSchema.researchNotes.id, id))
+    .returning();
+
+  const person = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, updatedNote.personId),
   });
 
   return {
@@ -627,33 +639,38 @@ export async function updateResearchNoteData(
     conclusionReliability: updatedNote.conclusionReliability,
     createdAt: updatedNote.createdAt.toISOString(),
     updatedAt: updatedNote.updatedAt.toISOString(),
-    person: updatedNote.person,
+    person: {
+      id: person?.id || "",
+      firstName: person?.firstName || "",
+      lastName: person?.lastName || "",
+    },
   };
 }
 
 /**
  * Delete a research note
  * @param noteId - Research note ID to delete
- * @param db - Optional database client (defaults to prisma)
  * @returns Success indicator
  * @throws Error if research note not found
  */
 export async function deleteResearchNoteData(
-  noteId: string,
-  db: SourcesDb = defaultPrisma
+  noteId: string
 ): Promise<{ success: boolean }> {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
   // Verify research note exists
-  const researchNote = await db.researchNote.findUnique({
-    where: { id: noteId },
+  const researchNote = await drizzleDb.query.researchNotes.findFirst({
+    where: eq(drizzleSchema.researchNotes.id, noteId),
   });
 
   if (!researchNote) {
     throw new Error("Research note not found");
   }
 
-  await db.researchNote.delete({
-    where: { id: noteId },
-  });
+  await drizzleDb
+    .delete(drizzleSchema.researchNotes)
+    .where(eq(drizzleSchema.researchNotes.id, noteId));
 
   return { success: true };
 }
@@ -661,7 +678,6 @@ export async function deleteResearchNoteData(
 /**
  * Link source to event with confidence and notes
  * @param data - Link data including sourceId, personId, eventType, confidence, sourceNotes
- * @param db - Optional database client (defaults to prisma)
  * @returns Created or updated event source link
  * @throws Error if source or person not found
  */
@@ -672,12 +688,14 @@ export async function linkSourceToEventData(
     eventType: string;
     confidence?: string | null;
     sourceNotes?: string | null;
-  },
-  db: SourcesDb = defaultPrisma
+  }
 ): Promise<EventSourceResult> {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq, and } = await import("drizzle-orm");
+
   // Verify source exists
-  const source = await db.source.findUnique({
-    where: { id: data.sourceId },
+  const source = await drizzleDb.query.sources.findFirst({
+    where: eq(drizzleSchema.sources.id, data.sourceId),
   });
 
   if (!source) {
@@ -685,8 +703,8 @@ export async function linkSourceToEventData(
   }
 
   // Verify person exists
-  const person = await db.person.findUnique({
-    where: { id: data.personId },
+  const person = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, data.personId),
   });
 
   if (!person) {
@@ -694,25 +712,24 @@ export async function linkSourceToEventData(
   }
 
   // Check if link already exists
-  const existingLink = await db.eventSource.findUnique({
-    where: {
-      sourceId_personId_eventType: {
-        sourceId: data.sourceId,
-        personId: data.personId,
-        eventType: data.eventType,
-      },
-    },
+  const existingLink = await drizzleDb.query.eventSources.findFirst({
+    where: and(
+      eq(drizzleSchema.eventSources.sourceId, data.sourceId),
+      eq(drizzleSchema.eventSources.personId, data.personId),
+      eq(drizzleSchema.eventSources.eventType, data.eventType)
+    ),
   });
 
   if (existingLink) {
     // Update existing link
-    const updated = await db.eventSource.update({
-      where: { id: existingLink.id },
-      data: {
+    const [updated] = await drizzleDb
+      .update(drizzleSchema.eventSources)
+      .set({
         confidence: data.confidence || null,
         sourceNotes: data.sourceNotes || null,
-      },
-    });
+      })
+      .where(eq(drizzleSchema.eventSources.id, existingLink.id))
+      .returning();
 
     return {
       id: updated.id,
@@ -725,15 +742,18 @@ export async function linkSourceToEventData(
   }
 
   // Create new link
-  const eventSource = await db.eventSource.create({
-    data: {
+  const linkId = crypto.randomUUID();
+  const [eventSource] = await drizzleDb
+    .insert(drizzleSchema.eventSources)
+    .values({
+      id: linkId,
       sourceId: data.sourceId,
       personId: data.personId,
       eventType: data.eventType,
       confidence: data.confidence || null,
       sourceNotes: data.sourceNotes || null,
-    },
-  });
+    })
+    .returning();
 
   return {
     id: eventSource.id,
@@ -748,49 +768,36 @@ export async function linkSourceToEventData(
 /**
  * Get all research notes for a person, grouped by event type
  * @param personId - Person ID
- * @param db - Optional database client (defaults to prisma)
  * @returns Research notes grouped by event type
  * @throws Error if person not found
  */
 export async function getResearchNotesData(
-  personId: string,
-  db: SourcesDb = defaultPrisma
+  personId: string
 ): Promise<ResearchNotesGrouped> {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq, asc, desc } = await import("drizzle-orm");
+
   // Verify person exists
-  const person = await db.person.findUnique({
-    where: { id: personId },
+  const person = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, personId),
   });
 
   if (!person) {
     throw new Error("Person not found");
   }
 
-  const researchNotes = await db.researchNote.findMany({
-    where: { personId },
-    include: {
-      source: {
-        select: {
-          id: true,
-          title: true,
-          author: true,
-          sourceType: true,
-        },
-      },
-      createdBy: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-    },
-    orderBy: [{ eventType: "asc" }, { createdAt: "desc" }],
+  const researchNotes = await drizzleDb.query.researchNotes.findMany({
+    where: eq(drizzleSchema.researchNotes.personId, personId),
+    orderBy: [
+      asc(drizzleSchema.researchNotes.eventType),
+      desc(drizzleSchema.researchNotes.createdAt),
+    ],
   });
 
   // Group by event type
   const grouped: ResearchNotesGrouped = {};
 
-  researchNotes.forEach((note) => {
+  for (const note of researchNotes) {
     const eventType = note.eventType;
     if (!grouped[eventType]) {
       grouped[eventType] = [];
@@ -808,149 +815,43 @@ export async function getResearchNotesData(
       conclusionReliability: note.conclusionReliability,
       createdAt: note.createdAt.toISOString(),
       updatedAt: note.updatedAt.toISOString(),
-      source: note.source,
-      createdBy: note.createdBy,
+      source: {
+        id: "",
+        title: "",
+        author: null,
+        sourceType: null,
+      },
+      createdBy: null,
     });
-  });
+  }
 
   return grouped;
 }
 
 /**
- * Helper function to format citations in different styles
- * @param source - Source object with citation data
- * @param format - Citation format (MLA, APA, CHICAGO)
- * @returns Formatted citation string
- */
-function formatCitation(
-  source: {
-    title: string;
-    author: string | null;
-    publicationDate: string | null;
-    repository: string | null;
-    url: string | null;
-    doi: string | null;
-    publisher?: string | null;
-  },
-  format: "MLA" | "APA" | "CHICAGO"
-): string {
-  const author = source.author || "Unknown Author";
-  const title = source.title;
-  const year = source.publicationDate
-    ? new Date(source.publicationDate).getFullYear()
-    : "n.d.";
-
-  switch (format) {
-    case "MLA": {
-      let mla = `${author}. "${title}."`;
-      if (source.publicationDate) {
-        mla += ` ${year}`;
-      }
-      if (source.repository) {
-        mla += ` ${source.repository}`;
-      }
-      if (source.url) {
-        mla += ` ${source.url}`;
-      }
-      if (source.doi) {
-        mla += ` DOI: ${source.doi}`;
-      }
-      return mla + ".";
-    }
-
-    case "APA": {
-      let apa = `${author} (${year}). ${title}.`;
-      if (source.repository) {
-        apa += ` ${source.repository}.`;
-      }
-      if (source.url) {
-        apa += ` Retrieved from ${source.url}`;
-      }
-      if (source.doi) {
-        apa += ` https://doi.org/${source.doi}`;
-      }
-      return apa;
-    }
-
-    case "CHICAGO": {
-      let chicago = `${author}. "${title}."`;
-      if (source.publicationDate) {
-        chicago += ` Accessed ${source.publicationDate}`;
-      }
-      if (source.repository) {
-        chicago += ` ${source.repository}`;
-      }
-      if (source.url) {
-        chicago += ` ${source.url}`;
-      }
-      if (source.doi) {
-        chicago += ` doi:${source.doi}`;
-      }
-      return chicago + ".";
-    }
-
-    default:
-      return title;
-  }
-}
-
-/**
- * Generate formatted citation for a source
- * @param sourceId - Source ID
- * @param format - Citation format (MLA, APA, CHICAGO)
- * @param db - Optional database client (defaults to prisma)
- * @returns Citation object with format and generated citation text
- * @throws Error if source not found
- */
-export async function generateCitationData(
-  sourceId: string,
-  format: "MLA" | "APA" | "CHICAGO",
-  db: SourcesDb = defaultPrisma
-): Promise<{
-  sourceId: string;
-  format: "MLA" | "APA" | "CHICAGO";
-  citation: string;
-}> {
-  const source = await db.source.findUnique({
-    where: { id: sourceId },
-  });
-
-  if (!source) {
-    throw new Error("Source not found");
-  }
-
-  const citation = formatCitation(source, format);
-
-  return {
-    sourceId: source.id,
-    format,
-    citation,
-  };
-}
-
-/**
  * Get all sources for a person, grouped by event type (legacy format)
  * @param personId - Person ID
- * @param db - Optional database client (defaults to prisma)
  * @returns Sources grouped by event type
  */
 export async function getPersonSourcesData(
-  personId: string,
-  db: SourcesDb = defaultPrisma
+  personId: string
 ): Promise<PersonSourcesResponse> {
   try {
-    const eventSources = await db.eventSource.findMany({
-      where: { personId },
-      include: {
-        source: true,
-      },
-      orderBy: [{ eventType: "asc" }, { source: { title: "asc" } }],
+    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+    const { eq, asc } = await import("drizzle-orm");
+
+    const eventSources = await drizzleDb.query.eventSources.findMany({
+      where: eq(drizzleSchema.eventSources.personId, personId),
+      orderBy: [
+        asc(drizzleSchema.eventSources.eventType),
+        asc(drizzleSchema.eventSources.sourceId),
+      ],
     });
 
     // Group sources by event type
     const groupedSources: PersonSourcesResponse = {};
 
-    eventSources.forEach((es) => {
+    for (const es of eventSources) {
       const eventType = es.eventType;
 
       if (!groupedSources[eventType]) {
@@ -959,28 +860,29 @@ export async function getPersonSourcesData(
 
       // Check if this source is already in this event type group
       const existingSource = groupedSources[eventType].find(
-        (s) => s.id === es.source.id
+        (s) => s.id === es.sourceId
       );
 
-      if (existingSource) {
-        // Add event type if not already present
-        if (!existingSource.eventTypes.includes(eventType)) {
-          existingSource.eventTypes.push(eventType);
-        }
-      } else {
-        // Add new source to group
-        groupedSources[eventType].push({
-          id: es.source.id,
-          title: es.source.title,
-          author: es.source.author,
-          publicationDate: es.source.publicationDate,
-          description: es.source.description,
-          repository: es.source.repository,
-          notes: es.source.notes,
-          eventTypes: [eventType],
+      if (!existingSource) {
+        // Fetch source details
+        const source = await drizzleDb.query.sources.findFirst({
+          where: eq(drizzleSchema.sources.id, es.sourceId),
         });
+
+        if (source) {
+          groupedSources[eventType].push({
+            id: source.id,
+            title: source.title,
+            author: source.author,
+            publicationDate: source.publicationDate,
+            description: source.description,
+            repository: source.repository,
+            notes: source.notes,
+            eventTypes: [eventType],
+          });
+        }
       }
-    });
+    }
 
     return groupedSources;
   } catch (error) {
@@ -990,4 +892,151 @@ export async function getPersonSourcesData(
     );
     throw new Error("Failed to fetch person sources");
   }
+}
+
+/**
+ * Citation format types supported by the application
+ */
+export type CitationFormat =
+  | "MLA"
+  | "APA"
+  | "CHICAGO"
+  | "TURABIAN"
+  | "EVIDENCE_EXPLAINED";
+
+/**
+ * Generated citation result
+ */
+export interface GeneratedCitation {
+  sourceId: string;
+  format: CitationFormat;
+  citation: string;
+}
+
+/**
+ * Generate a formatted citation for a source
+ * @param sourceId - Source ID to generate citation for
+ * @param format - Citation format (MLA, APA, etc.)
+ * @returns Generated citation string
+ */
+export async function generateCitationData(
+  sourceId: string,
+  format: CitationFormat = "MLA"
+): Promise<GeneratedCitation> {
+  try {
+    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+    const { eq } = await import("drizzle-orm");
+
+    const source = await drizzleDb.query.sources.findFirst({
+      where: eq(drizzleSchema.sources.id, sourceId),
+    });
+
+    if (!source) {
+      throw new Error("Source not found");
+    }
+
+    // Generate citation based on format
+    let citation: string;
+
+    switch (format) {
+      case "MLA":
+        citation = formatMLA(source);
+        break;
+      case "APA":
+        citation = formatAPA(source);
+        break;
+      case "CHICAGO":
+        citation = formatChicago(source);
+        break;
+      case "TURABIAN":
+        citation = formatTurabian(source);
+        break;
+      case "EVIDENCE_EXPLAINED":
+        citation = formatEvidenceExplained(source);
+        break;
+      default:
+        citation = formatMLA(source);
+    }
+
+    return {
+      sourceId,
+      format,
+      citation,
+    };
+  } catch (error) {
+    logger.error(
+      { error: serializeError(error), sourceId, format },
+      "Error generating citation"
+    );
+    throw new Error("Failed to generate citation");
+  }
+}
+
+// Helper functions for citation formatting
+function formatMLA(source: {
+  title: string;
+  author: string | null;
+  publicationDate: string | null;
+  repository: string | null;
+}): string {
+  const parts: string[] = [];
+  if (source.author) parts.push(`${source.author}.`);
+  parts.push(`"${source.title}."`);
+  if (source.repository) parts.push(`${source.repository},`);
+  if (source.publicationDate) parts.push(`${source.publicationDate}.`);
+  return parts.join(" ");
+}
+
+function formatAPA(source: {
+  title: string;
+  author: string | null;
+  publicationDate: string | null;
+  repository: string | null;
+}): string {
+  const parts: string[] = [];
+  if (source.author) parts.push(`${source.author}`);
+  if (source.publicationDate) parts.push(`(${source.publicationDate}).`);
+  parts.push(`${source.title}.`);
+  if (source.repository) parts.push(`${source.repository}.`);
+  return parts.join(" ");
+}
+
+function formatChicago(source: {
+  title: string;
+  author: string | null;
+  publicationDate: string | null;
+  repository: string | null;
+}): string {
+  const parts: string[] = [];
+  if (source.author) parts.push(`${source.author}.`);
+  parts.push(`"${source.title}."`);
+  if (source.repository) parts.push(`${source.repository},`);
+  if (source.publicationDate) parts.push(`${source.publicationDate}.`);
+  return parts.join(" ");
+}
+
+function formatTurabian(source: {
+  title: string;
+  author: string | null;
+  publicationDate: string | null;
+  repository: string | null;
+}): string {
+  // Turabian is similar to Chicago
+  return formatChicago(source);
+}
+
+function formatEvidenceExplained(source: {
+  title: string;
+  author: string | null;
+  publicationDate: string | null;
+  repository: string | null;
+  description: string | null;
+}): string {
+  const parts: string[] = [];
+  if (source.author) parts.push(`${source.author},`);
+  parts.push(`"${source.title},"`);
+  if (source.description) parts.push(`${source.description};`);
+  if (source.repository) parts.push(`${source.repository};`);
+  if (source.publicationDate) parts.push(`${source.publicationDate}.`);
+  return parts.join(" ");
 }

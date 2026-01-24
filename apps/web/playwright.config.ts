@@ -56,7 +56,8 @@ const webServerConfig = {
   env: {
     ...process.env,
     // Force test database URL (override any .env setting)
-    DATABASE_URL: "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
+    DATABASE_URL:
+      "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
     // Disable rate limiting for E2E tests to prevent flaky tests
     E2E_TESTING: "true",
   },

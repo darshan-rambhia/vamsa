@@ -1,17 +1,11 @@
-import { prisma as defaultPrisma } from "../db";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { eq, and } from "drizzle-orm";
 import { logger, serializeError } from "@vamsa/lib/logger";
-import type { Prisma, PrismaClient } from "@vamsa/api";
 import type {
   RelationshipCreateInput,
   RelationshipType,
   RelationshipUpdateInput,
 } from "@vamsa/schemas";
-
-/**
- * Type for the database client used by relationship functions.
- * This allows dependency injection for testing.
- */
-export type RelationshipDb = Pick<PrismaClient, "relationship" | "person">;
 
 /**
  * List relationships for a person with optional filtering.
@@ -21,27 +15,22 @@ export type RelationshipDb = Pick<PrismaClient, "relationship" | "person">;
  *
  * @param personId - The ID of the person to get relationships for
  * @param type - Optional relationship type filter
- * @param db - Optional database client (defaults to prisma)
  * @returns Array of relationships with related person information
  * @throws Error if person not found
  */
 export async function listRelationshipsData(
   personId: string,
-  type?: RelationshipType,
-  db: RelationshipDb = defaultPrisma
+  type?: RelationshipType
 ) {
   try {
-    const where: Prisma.RelationshipWhereInput = {
-      personId,
-    };
-
+    const whereConditions = [eq(drizzleSchema.relationships.personId, personId)];
     if (type) {
-      where.type = type;
+      whereConditions.push(eq(drizzleSchema.relationships.type, type));
     }
 
-    const relationships = await db.relationship.findMany({
-      where,
-      include: {
+    const relationships = await drizzleDb.query.relationships.findMany({
+      where: whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0],
+      with: {
         relatedPerson: true,
       },
     });
@@ -71,18 +60,14 @@ export async function listRelationshipsData(
  * Get a single relationship by ID.
  *
  * @param relationshipId - The ID of the relationship
- * @param db - Optional database client (defaults to prisma)
  * @returns Relationship with related person information
  * @throws Error if relationship not found
  */
-export async function getRelationshipData(
-  relationshipId: string,
-  db: RelationshipDb = defaultPrisma
-) {
+export async function getRelationshipData(relationshipId: string) {
   try {
-    const relationship = await db.relationship.findUnique({
-      where: { id: relationshipId },
-      include: {
+    const relationship = await drizzleDb.query.relationships.findFirst({
+      where: eq(drizzleSchema.relationships.id, relationshipId),
+      with: {
         relatedPerson: true,
       },
     });
@@ -128,7 +113,6 @@ export async function getRelationshipData(
  * @param marriageDate - Optional marriage date
  * @param divorceDate - Optional divorce date
  * @param isActive - Whether the relationship is active
- * @param db - Database client
  * @throws Error if inverse relationship cannot be created
  */
 async function ensureBidirectional(
@@ -137,8 +121,7 @@ async function ensureBidirectional(
   type: string,
   marriageDate: Date | null,
   divorceDate: Date | null,
-  isActive: boolean,
-  db: RelationshipDb
+  isActive: boolean
 ) {
   try {
     // Determine inverse type and target type
@@ -152,15 +135,16 @@ async function ensureBidirectional(
     // SPOUSE and SIBLING are symmetric
 
     // Create the inverse relationship
-    await db.relationship.create({
-      data: {
-        personId: relatedPersonId,
-        relatedPersonId: personId,
-        type: inverseType as RelationshipType,
-        marriageDate,
-        divorceDate,
-        isActive,
-      },
+    await drizzleDb.insert(drizzleSchema.relationships).values({
+      id: crypto.randomUUID(),
+      personId: relatedPersonId,
+      relatedPersonId: personId,
+      type: inverseType as RelationshipType,
+      marriageDate,
+      divorceDate,
+      isActive,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     });
   } catch (error) {
     logger.error(
@@ -185,14 +169,10 @@ async function ensureBidirectional(
  * - SPOUSE/SIBLING -> creates inverse with same type
  *
  * @param input - Relationship creation input with personId, relatedPersonId, type, and optional dates
- * @param db - Optional database client (defaults to prisma)
  * @returns Created relationship ID
  * @throws Error if validation fails (self-relationship, duplicate, persons not found)
  */
-export async function createRelationshipData(
-  input: RelationshipCreateInput,
-  db: RelationshipDb = defaultPrisma
-) {
+export async function createRelationshipData(input: RelationshipCreateInput) {
   try {
     // Prevent self-relationship
     if (input.personId === input.relatedPersonId) {
@@ -201,8 +181,12 @@ export async function createRelationshipData(
 
     // Check that both persons exist
     const [person, relatedPerson] = await Promise.all([
-      db.person.findUnique({ where: { id: input.personId } }),
-      db.person.findUnique({ where: { id: input.relatedPersonId } }),
+      drizzleDb.query.persons.findFirst({
+        where: eq(drizzleSchema.persons.id, input.personId),
+      }),
+      drizzleDb.query.persons.findFirst({
+        where: eq(drizzleSchema.persons.id, input.relatedPersonId),
+      }),
     ]);
 
     if (!person || !relatedPerson) {
@@ -210,12 +194,12 @@ export async function createRelationshipData(
     }
 
     // Check for duplicate relationship
-    const existing = await db.relationship.findFirst({
-      where: {
-        personId: input.personId,
-        relatedPersonId: input.relatedPersonId,
-        type: input.type,
-      },
+    const existing = await drizzleDb.query.relationships.findFirst({
+      where: and(
+        eq(drizzleSchema.relationships.personId, input.personId),
+        eq(drizzleSchema.relationships.relatedPersonId, input.relatedPersonId),
+        eq(drizzleSchema.relationships.type, input.type)
+      ),
     });
 
     if (existing) {
@@ -225,16 +209,20 @@ export async function createRelationshipData(
     // Determine isActive based on divorceDate (only for SPOUSE type)
     const isActive = input.type === "SPOUSE" ? !input.divorceDate : true;
 
+    const relationshipId = crypto.randomUUID();
+    const now = new Date();
+
     // Create the primary relationship
-    const relationship = await db.relationship.create({
-      data: {
-        personId: input.personId,
-        relatedPersonId: input.relatedPersonId,
-        type: input.type,
-        marriageDate: input.marriageDate ? new Date(input.marriageDate) : null,
-        divorceDate: input.divorceDate ? new Date(input.divorceDate) : null,
-        isActive,
-      },
+    await drizzleDb.insert(drizzleSchema.relationships).values({
+      id: relationshipId,
+      personId: input.personId,
+      relatedPersonId: input.relatedPersonId,
+      type: input.type,
+      marriageDate: input.marriageDate ? new Date(input.marriageDate) : null,
+      divorceDate: input.divorceDate ? new Date(input.divorceDate) : null,
+      isActive,
+      createdAt: now,
+      updatedAt: now,
     });
 
     // Create the bidirectional relationship
@@ -244,11 +232,10 @@ export async function createRelationshipData(
       input.type,
       input.marriageDate ? new Date(input.marriageDate) : null,
       input.divorceDate ? new Date(input.divorceDate) : null,
-      isActive,
-      db
+      isActive
     );
 
-    return { id: relationship.id };
+    return { id: relationshipId };
   } catch (error) {
     logger.error(
       { input, error: serializeError(error) },
@@ -266,19 +253,17 @@ export async function createRelationshipData(
  *
  * @param relationshipId - The ID of the relationship to update
  * @param input - Update input with optional marriageDate and divorceDate
- * @param db - Optional database client (defaults to prisma)
  * @returns Updated relationship ID
  * @throws Error if relationship not found
  */
 export async function updateRelationshipData(
   relationshipId: string,
-  input: RelationshipUpdateInput,
-  db: RelationshipDb = defaultPrisma
+  input: RelationshipUpdateInput
 ) {
   try {
     // Find the relationship
-    const relationship = await db.relationship.findUnique({
-      where: { id: relationshipId },
+    const relationship = await drizzleDb.query.relationships.findFirst({
+      where: eq(drizzleSchema.relationships.id, relationshipId),
     });
 
     if (!relationship) {
@@ -289,35 +274,41 @@ export async function updateRelationshipData(
     const isActive =
       relationship.type === "SPOUSE" && input.divorceDate ? false : true;
 
+    const now = new Date();
+
     // Update primary relationship
-    const updated = await db.relationship.update({
-      where: { id: relationshipId },
-      data: {
+    await drizzleDb
+      .update(drizzleSchema.relationships)
+      .set({
         marriageDate: input.marriageDate ? new Date(input.marriageDate) : null,
         divorceDate: input.divorceDate ? new Date(input.divorceDate) : null,
         isActive,
-      },
-    });
+        updatedAt: now,
+      })
+      .where(eq(drizzleSchema.relationships.id, relationshipId));
 
     // BIDIRECTIONAL SYNC for SPOUSE type
     if (relationship.type === "SPOUSE") {
-      await db.relationship.updateMany({
-        where: {
-          personId: relationship.relatedPersonId,
-          relatedPersonId: relationship.personId,
-          type: "SPOUSE",
-        },
-        data: {
+      await drizzleDb
+        .update(drizzleSchema.relationships)
+        .set({
           marriageDate: input.marriageDate
             ? new Date(input.marriageDate)
             : null,
           divorceDate: input.divorceDate ? new Date(input.divorceDate) : null,
           isActive,
-        },
-      });
+          updatedAt: now,
+        })
+        .where(
+          and(
+            eq(drizzleSchema.relationships.personId, relationship.relatedPersonId),
+            eq(drizzleSchema.relationships.relatedPersonId, relationship.personId),
+            eq(drizzleSchema.relationships.type, "SPOUSE")
+          )
+        );
     }
 
-    return { id: updated.id };
+    return { id: relationshipId };
   } catch (error) {
     logger.error(
       { relationshipId, input, error: serializeError(error) },
@@ -336,16 +327,12 @@ export async function updateRelationshipData(
  * - SPOUSE/SIBLING relationships also delete their inverse with same type
  *
  * @param relationshipId - The ID of the relationship to delete
- * @param db - Optional database client (defaults to prisma)
  * @throws Error if relationship not found
  */
-export async function deleteRelationshipData(
-  relationshipId: string,
-  db: RelationshipDb = defaultPrisma
-) {
+export async function deleteRelationshipData(relationshipId: string) {
   try {
-    const relationship = await db.relationship.findUnique({
-      where: { id: relationshipId },
+    const relationship = await drizzleDb.query.relationships.findFirst({
+      where: eq(drizzleSchema.relationships.id, relationshipId),
     });
 
     if (!relationship) {
@@ -363,18 +350,20 @@ export async function deleteRelationshipData(
     // SPOUSE and SIBLING are symmetric
 
     // Delete the primary relationship
-    await db.relationship.delete({
-      where: { id: relationshipId },
-    });
+    await drizzleDb
+      .delete(drizzleSchema.relationships)
+      .where(eq(drizzleSchema.relationships.id, relationshipId));
 
     // Delete the reciprocal relationship if it exists
-    await db.relationship.deleteMany({
-      where: {
-        personId: relationship.relatedPersonId,
-        relatedPersonId: relationship.personId,
-        type: inverseType,
-      },
-    });
+    await drizzleDb
+      .delete(drizzleSchema.relationships)
+      .where(
+        and(
+          eq(drizzleSchema.relationships.personId, relationship.relatedPersonId),
+          eq(drizzleSchema.relationships.relatedPersonId, relationship.personId),
+          eq(drizzleSchema.relationships.type, inverseType)
+        )
+      );
 
     return { success: true };
   } catch (error) {

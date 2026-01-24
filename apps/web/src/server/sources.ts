@@ -29,6 +29,8 @@ import {
   type ResearchNotesGrouped,
   type PersonSourcesResponse,
   type SourceWithEvents,
+  type CitationFormat,
+  type GeneratedCitation,
 } from "@vamsa/lib/server/business";
 
 /**
@@ -170,17 +172,9 @@ export const generateCitation = createServerFn({ method: "POST" })
   .inputValidator((data) => {
     return citationGenerateSchema.parse(data);
   })
-  .handler(
-    async ({
-      data,
-    }): Promise<{
-      sourceId: string;
-      format: "MLA" | "APA" | "CHICAGO";
-      citation: string;
-    }> => {
-      return generateCitationData(data.sourceId, data.format);
-    }
-  );
+  .handler(async ({ data }): Promise<GeneratedCitation> => {
+    return generateCitationData(data.sourceId, data.format as CitationFormat);
+  });
 
 /**
  * Server function: Get all sources for a person, grouped by event type (legacy format)

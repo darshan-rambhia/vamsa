@@ -24,8 +24,8 @@
  * - exportChartAsSVG: SVG export orchestration
  */
 
-import { prisma as defaultPrisma } from "../db";
-import type { PrismaClient } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { eq, and, inArray, desc } from "drizzle-orm";
 import { recordChartMetrics } from "../metrics";
 import {
   buildRelationshipMaps,
@@ -38,12 +38,6 @@ import {
   type PersonData,
   type CollectionState,
 } from "../helpers/charts";
-
-/**
- * Type for the database client used by chart functions.
- * This allows dependency injection for testing.
- */
-export type ChartsDb = Pick<PrismaClient, "person" | "relationship">;
 
 // Re-export types from the original file
 export interface ChartNode {
@@ -265,7 +259,6 @@ function dateToISOString(date: Date | null): string | null {
  *
  * @param personId - ID of the root person
  * @param generations - Number of generations to include (1-10)
- * @param db - Optional database client (defaults to prisma)
  * @returns ChartLayoutResult with nodes, edges, and metadata
  * @throws Error if person not found
  *
@@ -274,14 +267,13 @@ function dateToISOString(date: Date | null): string | null {
  */
 export async function getAncestorChartData(
   personId: string,
-  generations: number,
-  db: ChartsDb = defaultPrisma
+  generations: number
 ): Promise<ChartLayoutResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await db.person.findUnique({
-    where: { id: personId },
+  const rootPerson = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, personId),
   });
 
   if (!rootPerson) {
@@ -289,8 +281,8 @@ export async function getAncestorChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await db.person.findMany();
-  const relationships = await db.relationship.findMany();
+  const persons = await drizzleDb.query.persons.findMany();
+  const relationships = await drizzleDb.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -378,7 +370,6 @@ export async function getAncestorChartData(
  *
  * @param personId - ID of the root person
  * @param generations - Number of generations to include (1-10)
- * @param db - Optional database client (defaults to prisma)
  * @returns ChartLayoutResult with nodes, edges, and metadata
  * @throws Error if person not found
  *
@@ -387,14 +378,13 @@ export async function getAncestorChartData(
  */
 export async function getDescendantChartData(
   personId: string,
-  generations: number,
-  db: ChartsDb = defaultPrisma
+  generations: number
 ): Promise<ChartLayoutResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await db.person.findUnique({
-    where: { id: personId },
+  const rootPerson = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, personId),
   });
 
   if (!rootPerson) {
@@ -402,8 +392,8 @@ export async function getDescendantChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await db.person.findMany();
-  const relationships = await db.relationship.findMany();
+  const persons = await drizzleDb.query.persons.findMany();
+  const relationships = await drizzleDb.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -485,7 +475,6 @@ export async function getDescendantChartData(
  * @param personId - ID of the root person
  * @param ancestorGenerations - Number of ancestor generations (1-10)
  * @param descendantGenerations - Number of descendant generations (1-10)
- * @param db - Optional database client (defaults to prisma)
  * @returns ChartLayoutResult with nodes, edges, and metadata
  * @throws Error if person not found
  *
@@ -495,14 +484,13 @@ export async function getDescendantChartData(
 export async function getHourglassChartData(
   personId: string,
   ancestorGenerations: number,
-  descendantGenerations: number,
-  db: ChartsDb = defaultPrisma
+  descendantGenerations: number
 ): Promise<ChartLayoutResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await db.person.findUnique({
-    where: { id: personId },
+  const rootPerson = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, personId),
   });
 
   if (!rootPerson) {
@@ -510,8 +498,8 @@ export async function getHourglassChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await db.person.findMany();
-  const relationships = await db.relationship.findMany();
+  const persons = await drizzleDb.query.persons.findMany();
+  const relationships = await drizzleDb.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -605,7 +593,6 @@ export async function getHourglassChartData(
  *
  * @param personId - ID of the root person
  * @param generations - Number of generations to include (1-10)
- * @param db - Optional database client (defaults to prisma)
  * @returns ChartLayoutResult with nodes (including angles), edges, and metadata
  * @throws Error if person not found
  *
@@ -614,14 +601,13 @@ export async function getHourglassChartData(
  */
 export async function getFanChartData(
   personId: string,
-  generations: number,
-  db: ChartsDb = defaultPrisma
+  generations: number
 ): Promise<ChartLayoutResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await db.person.findUnique({
-    where: { id: personId },
+  const rootPerson = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, personId),
   });
 
   if (!rootPerson) {
@@ -629,8 +615,8 @@ export async function getFanChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await db.person.findMany();
-  const relationships = await db.relationship.findMany();
+  const persons = await drizzleDb.query.persons.findMany();
+  const relationships = await drizzleDb.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -716,7 +702,6 @@ export async function getFanChartData(
  * @param startYear - Optional start year filter
  * @param endYear - Optional end year filter
  * @param sortBy - Sort order: "birth", "death", or "name"
- * @param db - Optional database client (defaults to prisma)
  * @returns TimelineChartResult with entries and metadata
  *
  * @example
@@ -725,20 +710,16 @@ export async function getFanChartData(
 export async function getTimelineChartData(
   startYear: number | undefined,
   endYear: number | undefined,
-  sortBy: "birth" | "death" | "name",
-  db: ChartsDb = defaultPrisma
+  sortBy: "birth" | "death" | "name"
 ): Promise<TimelineChartResult> {
   const start = Date.now();
 
-  // Fetch all persons with dates
-  const persons = await db.person.findMany({
-    where: {
-      OR: [{ dateOfBirth: { not: null } }, { dateOfPassing: { not: null } }],
-    },
-  });
+  // Fetch all persons
+  const allPersons = await drizzleDb.query.persons.findMany();
 
-  // Convert to timeline entries
-  const entries: TimelineEntry[] = persons
+  // Filter to only those with dates and convert to timeline entries
+  const entries: TimelineEntry[] = allPersons
+    .filter((person) => person.dateOfBirth || person.dateOfPassing)
     .map((person) => ({
       id: person.id,
       firstName: person.firstName,
@@ -807,7 +788,6 @@ export async function getTimelineChartData(
  *
  * @param personIds - Optional specific person IDs to include
  * @param maxPeople - Maximum number of people to include (1-50)
- * @param db - Optional database client (defaults to prisma)
  * @returns RelationshipMatrixResult with people, matrix, and metadata
  *
  * @example
@@ -815,35 +795,33 @@ export async function getTimelineChartData(
  */
 export async function getRelationshipMatrixData(
   personIds: string[] | undefined,
-  maxPeople: number,
-  db: ChartsDb = defaultPrisma
+  maxPeople: number
 ): Promise<RelationshipMatrixResult> {
   const start = Date.now();
 
   // Fetch persons
   let persons;
   if (personIds && personIds.length > 0) {
-    persons = await db.person.findMany({
-      where: { id: { in: personIds } },
-      take: maxPeople,
+    persons = await drizzleDb.query.persons.findMany({
+      where: inArray(drizzleSchema.persons.id, personIds),
+      limit: maxPeople,
     });
   } else {
-    persons = await db.person.findMany({
-      take: maxPeople,
-      orderBy: { lastName: "asc" },
-    });
+    // Get all persons and sort in memory, then slice
+    const allPersons = await drizzleDb.query.persons.findMany();
+    persons = allPersons
+      .sort((a, b) => a.lastName.localeCompare(b.lastName))
+      .slice(0, maxPeople);
   }
 
   // Fetch all relationships between these people
   const personIdSet = new Set(persons.map((p) => p.id));
   const personIdArray = Array.from(personIdSet) as string[];
-  const relationships = await db.relationship.findMany({
-    where: {
-      AND: [
-        { personId: { in: personIdArray } },
-        { relatedPersonId: { in: personIdArray } },
-      ],
-    },
+  const relationships = await drizzleDb.query.relationships.findMany({
+    where: and(
+      inArray(drizzleSchema.relationships.personId, personIdArray),
+      inArray(drizzleSchema.relationships.relatedPersonId, personIdArray)
+    ),
   });
 
   // Build relationship lookup map
@@ -910,7 +888,6 @@ export async function getRelationshipMatrixData(
  *
  * @param personId - ID of the root person
  * @param generations - Number of generations to include (1-10)
- * @param db - Optional database client (defaults to prisma)
  * @returns BowtieChartResult with nodes, edges, and metadata
  * @throws Error if person not found
  *
@@ -919,14 +896,13 @@ export async function getRelationshipMatrixData(
  */
 export async function getBowtieChartData(
   personId: string,
-  generations: number,
-  db: ChartsDb = defaultPrisma
+  generations: number
 ): Promise<BowtieChartResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await db.person.findUnique({
-    where: { id: personId },
+  const rootPerson = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, personId),
   });
 
   if (!rootPerson) {
@@ -934,8 +910,8 @@ export async function getBowtieChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await db.person.findMany();
-  const relationships = await db.relationship.findMany();
+  const persons = await drizzleDb.query.persons.findMany();
+  const relationships = await drizzleDb.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -1053,7 +1029,6 @@ export async function getBowtieChartData(
  *
  * @param personId - ID of the root person
  * @param generations - Number of generations to include (1-10)
- * @param db - Optional database client (defaults to prisma)
  * @returns CompactTreeResult with nested tree and flat list
  * @throws Error if person not found
  *
@@ -1062,14 +1037,13 @@ export async function getBowtieChartData(
  */
 export async function getCompactTreeData(
   personId: string,
-  generations: number,
-  db: ChartsDb = defaultPrisma
+  generations: number
 ): Promise<CompactTreeResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await db.person.findUnique({
-    where: { id: personId },
+  const rootPerson = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, personId),
   });
 
   if (!rootPerson) {
@@ -1077,8 +1051,8 @@ export async function getCompactTreeData(
   }
 
   // Fetch all persons and relationships
-  const persons = await db.person.findMany();
-  const relationships = await db.relationship.findMany();
+  const persons = await drizzleDb.query.persons.findMany();
+  const relationships = await drizzleDb.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -1204,26 +1178,29 @@ export async function getCompactTreeData(
  * 6. Lifespan trends by decade
  *
  * @param includeDeceased - Whether to include deceased persons
- * @param db - Optional database client (defaults to prisma)
  * @returns StatisticsResult with various statistical breakdowns
  *
  * @example
  * const result = await getStatisticsData(true)
  */
 export async function getStatisticsData(
-  includeDeceased: boolean,
-  db: ChartsDb = defaultPrisma
+  includeDeceased: boolean
 ): Promise<StatisticsResult> {
   const start = Date.now();
 
   // Fetch all persons
-  const persons = await db.person.findMany({
-    where: includeDeceased ? {} : { isLiving: true },
-  });
+  let persons;
+  if (includeDeceased) {
+    persons = await drizzleDb.query.persons.findMany();
+  } else {
+    persons = await drizzleDb.query.persons.findMany({
+      where: eq(drizzleSchema.persons.isLiving, true),
+    });
+  }
 
   // Fetch relationships to determine generations
-  const relationships = await db.relationship.findMany({
-    where: { type: "PARENT" },
+  const relationships = await drizzleDb.query.relationships.findMany({
+    where: eq(drizzleSchema.relationships.type, "PARENT"),
   });
 
   const total = persons.length;
@@ -1496,7 +1473,6 @@ export async function getStatisticsData(
  * @param personId - ID of the root person
  * @param ancestorGenerations - Number of ancestor generations (1-10)
  * @param descendantGenerations - Number of descendant generations (1-10)
- * @param db - Optional database client (defaults to prisma)
  * @returns ChartLayoutResult with nodes, edges, and metadata
  * @throws Error if person not found
  *
@@ -1506,14 +1482,13 @@ export async function getStatisticsData(
 export async function getTreeChartData(
   personId: string,
   ancestorGenerations: number,
-  descendantGenerations: number,
-  db: ChartsDb = defaultPrisma
+  descendantGenerations: number
 ): Promise<ChartLayoutResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await db.person.findUnique({
-    where: { id: personId },
+  const rootPerson = await drizzleDb.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, personId),
   });
 
   if (!rootPerson) {
@@ -1521,8 +1496,8 @@ export async function getTreeChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await db.person.findMany();
-  const relationships = await db.relationship.findMany();
+  const persons = await drizzleDb.query.persons.findMany();
+  const relationships = await drizzleDb.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])

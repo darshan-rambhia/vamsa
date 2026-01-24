@@ -63,15 +63,15 @@ docker stop vamsa-review-container
 
 ### Quality Gate Summary Table
 
-| Gate         | Command             | Must Pass |
-| ------------ | ------------------- | --------- |
-| Unit Tests   | `bun run test`         | YES       |
-| Lint         | `bun run lint`         | YES       |
-| TypeScript   | `bun run typecheck`    | YES       |
-| Build        | `bun run build`        | YES       |
-| Dev Server   | `bun run dev` + curl   | YES       |
-| Docker Build | `docker build`      | YES       |
-| Docker Run   | `docker run` + curl | YES       |
+| Gate         | Command              | Must Pass |
+| ------------ | -------------------- | --------- |
+| Unit Tests   | `bun run test`       | YES       |
+| Lint         | `bun run lint`       | YES       |
+| TypeScript   | `bun run typecheck`  | YES       |
+| Build        | `bun run build`      | YES       |
+| Dev Server   | `bun run dev` + curl | YES       |
+| Docker Build | `docker build`       | YES       |
+| Docker Run   | `docker run` + curl  | YES       |
 
 **ALL 7 gates must pass. No exceptions.**
 
@@ -190,15 +190,15 @@ Reassign to @backend for fixes."
 
 ### Quality Gates
 
-| Gate         | Command        | Status    | Details           |
-| ------------ | -------------- | --------- | ----------------- |
+| Gate         | Command           | Status    | Details           |
+| ------------ | ----------------- | --------- | ----------------- |
 | Unit Tests   | bun run test      | PASS/FAIL | X tests, Y passed |
 | Lint         | bun run lint      | PASS/FAIL | X errors          |
 | TypeScript   | bun run typecheck | PASS/FAIL | X errors          |
 | Build        | bun run build     | PASS/FAIL | -                 |
 | Dev Server   | bun run dev       | PASS/FAIL | Responds: yes/no  |
-| Docker Build | docker build   | PASS/FAIL | -                 |
-| Docker Run   | docker run     | PASS/FAIL | Responds: yes/no  |
+| Docker Build | docker build      | PASS/FAIL | -                 |
+| Docker Run   | docker run        | PASS/FAIL | Responds: yes/no  |
 
 ### Acceptance Criteria
 

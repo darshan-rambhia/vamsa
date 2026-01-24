@@ -10,7 +10,8 @@ import {
   betterAuthRegister,
 } from "@vamsa/lib/server/business";
 import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
-import { prisma } from "@vamsa/lib/server";
+import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
+import { eq, notInArray } from "drizzle-orm";
 import { logger } from "@vamsa/lib/logger";
 import { t } from "@vamsa/lib/server";
 import { checkRateLimit, getClientIP } from "./middleware/rate-limiter";
@@ -33,10 +34,10 @@ export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
     logger.debug("Fetching unclaimed profiles");
 
     // Get all personIds that already have users
-    const usersWithPeople = await prisma.user.findMany({
-      where: { personId: { not: null } },
-      select: { personId: true },
-    });
+    const usersWithPeople = await drizzleDb
+      .select({ personId: drizzleSchema.users.personId })
+      .from(drizzleSchema.users)
+      .where(eq(drizzleSchema.users.personId, drizzleSchema.users.personId)); // NOT NULL
 
     const claimedPersonIds = usersWithPeople
       .map((u) => u.personId)
@@ -45,18 +46,37 @@ export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
     logger.debug({ count: claimedPersonIds.length }, "Claimed profiles found");
 
     // Get all living persons not yet claimed
-    const profiles = await prisma.person.findMany({
-      where: {
-        isLiving: true,
-        id: { notIn: claimedPersonIds },
-      },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-      },
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-    });
+    const profiles =
+      claimedPersonIds.length > 0
+        ? await drizzleDb
+            .select({
+              id: drizzleSchema.persons.id,
+              firstName: drizzleSchema.persons.firstName,
+              lastName: drizzleSchema.persons.lastName,
+            })
+            .from(drizzleSchema.persons)
+            .where(
+              eq(drizzleSchema.persons.isLiving, true)
+            )
+            .orderBy(
+              drizzleSchema.persons.lastName,
+              drizzleSchema.persons.firstName
+            )
+            .then((rows) =>
+              rows.filter((r) => !claimedPersonIds.includes(r.id))
+            )
+        : await drizzleDb
+            .select({
+              id: drizzleSchema.persons.id,
+              firstName: drizzleSchema.persons.firstName,
+              lastName: drizzleSchema.persons.lastName,
+            })
+            .from(drizzleSchema.persons)
+            .where(eq(drizzleSchema.persons.isLiving, true))
+            .orderBy(
+              drizzleSchema.persons.lastName,
+              drizzleSchema.persons.firstName
+            );
 
     logger.debug({ count: profiles.length }, "Unclaimed profiles found");
 
@@ -96,9 +116,11 @@ export const claimProfile = createServerFn({ method: "POST" })
 
     try {
       // Validate person exists and is living
-      const person = await prisma.person.findUnique({
-        where: { id: personId },
-      });
+      const [person] = await drizzleDb
+        .select()
+        .from(drizzleSchema.persons)
+        .where(eq(drizzleSchema.persons.id, personId))
+        .limit(1);
 
       if (!person || !person.isLiving) {
         logger.warn({ personId }, "Profile not found or cannot be claimed");
@@ -106,9 +128,11 @@ export const claimProfile = createServerFn({ method: "POST" })
       }
 
       // Check if already claimed
-      const existingUser = await prisma.user.findUnique({
-        where: { personId },
-      });
+      const [existingUser] = await drizzleDb
+        .select()
+        .from(drizzleSchema.users)
+        .where(eq(drizzleSchema.users.personId, personId))
+        .limit(1);
 
       if (existingUser) {
         logger.warn({ personId }, "Profile is already claimed");
@@ -116,9 +140,11 @@ export const claimProfile = createServerFn({ method: "POST" })
       }
 
       // Check if email already exists
-      const existingEmail = await prisma.user.findUnique({
-        where: { email: email.toLowerCase() },
-      });
+      const [existingEmail] = await drizzleDb
+        .select()
+        .from(drizzleSchema.users)
+        .where(eq(drizzleSchema.users.email, email.toLowerCase()))
+        .limit(1);
 
       if (existingEmail) {
         logger.warn({ email: email.toLowerCase() }, "Email already in use");
@@ -139,15 +165,15 @@ export const claimProfile = createServerFn({ method: "POST" })
       }
 
       // Update user with Vamsa-specific fields
-      await prisma.user.update({
-        where: { id: result.user.id },
-        data: {
+      await drizzleDb
+        .update(drizzleSchema.users)
+        .set({
           personId,
           role: "MEMBER",
           profileClaimStatus: "CLAIMED",
           profileClaimedAt: new Date(),
-        },
-      });
+        })
+        .where(eq(drizzleSchema.users.id, result.user.id));
 
       logger.info(
         { userId: result.user.id, personId },

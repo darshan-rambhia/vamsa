@@ -5,11 +5,22 @@
  *
  * This script handles all steps needed to run E2E tests:
  * 1. Start PostgreSQL via Docker
- * 2. Run Prisma migrations
- * 3. Run Playwright tests
- * 4. Clean up Docker containers
+ * 2. Run Drizzle migrations (push schema)
+ * 3. Seed test data
+ * 4. Run Playwright tests
+ * 5. Clean up Docker containers
  *
  * Usage: bun run scripts/run-e2e.ts [playwright-args...]
+ *
+ * Flags:
+ *   --logs         Show webserver output
+ *   --bun-runtime  Run Playwright with Bun runtime (experimental, not yet working)
+ *
+ * Note: The --bun-runtime flag doesn't work yet because Playwright's TypeScript
+ * loader conflicts with Bun's loader. Playwright uses .esm.preflight files for
+ * ESM module loading which Bun doesn't support. Setting PW_DISABLE_TS_ESM=1
+ * doesn't fully resolve this. Once Playwright adds native Bun support, this
+ * flag should work.
  */
 
 import { spawn } from "bun";
@@ -25,7 +36,7 @@ const WEB_DIR = resolve(ROOT_DIR, "apps/web");
 const E2E_COMPOSE = `
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     ports:
       - "5433:5432"
     environment:
@@ -76,10 +87,19 @@ async function main() {
   // Check if --logs flag is present to enable webserver logs
   const hasServerLogs = playwrightArgs.includes("--logs");
 
-  // Remove our custom flags from playwright args (playwright doesn't know about --logs)
-  const filteredArgs = playwrightArgs.filter((arg) => arg !== "--logs");
+  // Check if --bun-runtime flag is present to use Bun runtime for Playwright
+  const useBunRuntime = playwrightArgs.includes("--bun-runtime");
+
+  // Remove our custom flags from playwright args (playwright doesn't know about them)
+  const filteredArgs = playwrightArgs.filter(
+    (arg) => arg !== "--logs" && arg !== "--bun-runtime"
+  );
 
   console.log("🚀 Starting E2E test runner...\n");
+  if (useBunRuntime) {
+    console.log("⚡ Running Playwright with Bun runtime (experimental)");
+    console.log("⚠️  Warning: This may not work due to Playwright's ESM loader conflict with Bun\n");
+  }
 
   // Create temp docker-compose file for E2E
   writeFileSync(composeFile, E2E_COMPOSE);
@@ -107,48 +127,57 @@ async function main() {
     }
     console.log("✅ PostgreSQL is ready\n");
 
-    // Step 2: Run migrations and seed
-    console.log("🔄 Step 2/4: Running Prisma migrations and seeding...");
+    // Step 2: Run Drizzle migrations and seed
+    console.log("🔄 Step 2/4: Running Drizzle migrations and seeding...");
 
-    // Push schema to database (handles migrations)
-    console.log("   - Applying database schema...");
+    // Push schema to database using Drizzle
+    console.log("   - Applying database schema with Drizzle...");
     const pushResult = await run(
-      ["bunx", "prisma", "db", "push", "--accept-data-loss"],
+      ["bunx", "drizzle-kit", "push", "--force"],
       {
         cwd: API_DIR,
         env: { DATABASE_URL: E2E_DATABASE_URL },
       }
     );
     if (pushResult !== 0) {
-      throw new Error(`Prisma db push failed with exit code ${pushResult}`);
+      throw new Error(`Drizzle push failed with exit code ${pushResult}`);
     }
     console.log("✅ Database schema applied");
 
     // Run seed to create test users
     console.log("   - Seeding test data...");
-    const seedResult = await run(["bunx", "tsx", "prisma/seed.ts"], {
-      cwd: API_DIR,
-      env: { DATABASE_URL: E2E_DATABASE_URL },
-    });
+    const seedResult = await run(
+      ["bun", "run", "src/drizzle/seed.ts"],
+      {
+        cwd: API_DIR,
+        env: { DATABASE_URL: E2E_DATABASE_URL },
+      }
+    );
     if (seedResult !== 0) {
-      throw new Error(`Prisma seed failed with exit code ${seedResult}`);
+      throw new Error(`Database seed failed with exit code ${seedResult}`);
     }
     console.log("✅ Test data seeded\n");
 
     // Step 3: Run Playwright tests
     console.log("🧪 Step 3/4: Running Playwright tests...\n");
-    const testResult = await run(
-      ["bunx", "playwright", "test", ...filteredArgs],
-      {
-        cwd: WEB_DIR,
-        env: {
-          ...process.env,
-          DATABASE_URL: E2E_DATABASE_URL,
-          // Pass server logs flag to Playwright config
-          PLAYWRIGHT_LOGS: hasServerLogs ? "true" : "false",
-        },
-      }
-    );
+
+    // Build the playwright command
+    // Using `bun --bun x` runs the command with Bun as the JavaScript runtime
+    const playwrightCmd = useBunRuntime
+      ? ["bun", "--bun", "x", "playwright", "test", ...filteredArgs]
+      : ["bunx", "playwright", "test", ...filteredArgs];
+
+    const testResult = await run(playwrightCmd, {
+      cwd: WEB_DIR,
+      env: {
+        ...process.env,
+        DATABASE_URL: E2E_DATABASE_URL,
+        // Pass server logs flag to Playwright config
+        PLAYWRIGHT_LOGS: hasServerLogs ? "true" : "false",
+        // Disable Playwright's ESM transform when using Bun runtime
+        ...(useBunRuntime && { PW_DISABLE_TS_ESM: "1" }),
+      },
+    });
 
     // Step 4: Cleanup
     console.log("\n🧹 Step 4/4: Cleaning up...");

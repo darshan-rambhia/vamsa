@@ -8,8 +8,8 @@
  * This layer is designed for testability and reusability.
  */
 
-import { prisma as defaultPrisma } from "../db";
-import type { PrismaClient } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { eq, and } from "drizzle-orm";
 import { writeFile, mkdir } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
@@ -24,89 +24,71 @@ import { logger, serializeError } from "@vamsa/lib/logger";
 
 /**
  * Type for the database client used by media functions.
- * This allows dependency injection for testing.
+ * This module uses Drizzle ORM as the default database client.
  */
-export type MediaDb = Pick<
-  PrismaClient,
-  "person" | "mediaObject" | "personMedia" | "event" | "eventMedia"
->;
+export type MediaDb = typeof drizzleDb;
 
 /**
  * Retrieve all media associated with a person
  *
  * @param personId - The ID of the person
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Optional database client (defaults to drizzleDb)
  * @returns Object containing array of person media items and total count
  * @throws Error if person not found
  */
 export async function getPersonMediaLogic(
   personId: string,
-  db: MediaDb = defaultPrisma
+  db: MediaDb = drizzleDb
 ) {
   // Verify person exists
-  const person = await db.person.findUnique({
-    where: { id: personId },
-  });
+  const person = await db
+    .select()
+    .from(drizzleSchema.persons)
+    .where(eq(drizzleSchema.persons.id, personId))
+    .limit(1);
 
-  if (!person) {
+  if (person.length === 0) {
     throw new Error("Person not found");
   }
 
-  // Get all media for this person
-  const personMedia = await db.personMedia.findMany({
-    where: { personId },
-    include: {
-      media: {
-        select: {
-          id: true,
-          filePath: true,
-          format: true,
-          mimeType: true,
-          fileSize: true,
-          title: true,
-          description: true,
-          source: true,
-          width: true,
-          height: true,
-          thumbnailPath: true,
-          webpPath: true,
-          thumb400Path: true,
-          thumb800Path: true,
-          thumb1200Path: true,
-          uploadedAt: true,
-        },
-      },
-    },
-    orderBy: [
-      { isPrimary: "desc" },
-      { displayOrder: "asc" },
-      { createdAt: "desc" },
-    ],
-  });
+  // Get all media for this person with related media object data
+  const personMedia = await db
+    .select()
+    .from(drizzleSchema.personMedias)
+    .leftJoin(
+      drizzleSchema.mediaObjects,
+      eq(drizzleSchema.personMedias.mediaId, drizzleSchema.mediaObjects.id)
+    )
+    .where(eq(drizzleSchema.personMedias.personId, personId))
+    .orderBy(
+      drizzleSchema.personMedias.isPrimary,
+      drizzleSchema.personMedias.displayOrder,
+      drizzleSchema.personMedias.createdAt
+    );
 
   return {
     items: personMedia.map((pm) => ({
-      id: pm.id,
-      mediaId: pm.media.id,
-      filePath: pm.media.filePath,
-      format: pm.media.format,
-      mimeType: pm.media.mimeType,
-      fileSize: pm.media.fileSize,
-      title: pm.media.title,
-      description: pm.media.description,
-      source: pm.media.source,
-      width: pm.media.width,
-      height: pm.media.height,
-      thumbnailPath: pm.media.thumbnailPath,
-      webpPath: pm.media.webpPath,
-      thumb400Path: pm.media.thumb400Path,
-      thumb800Path: pm.media.thumb800Path,
-      thumb1200Path: pm.media.thumb1200Path,
-      uploadedAt: pm.media.uploadedAt.toISOString(),
-      caption: pm.caption,
-      isPrimary: pm.isPrimary,
-      displayOrder: pm.displayOrder,
-      createdAt: pm.createdAt.toISOString(),
+      id: pm.PersonMedia.id,
+      mediaId: pm.MediaObject?.id ?? "",
+      filePath: pm.MediaObject?.filePath ?? "",
+      format: pm.MediaObject?.format ?? "",
+      mimeType: pm.MediaObject?.mimeType ?? "",
+      fileSize: pm.MediaObject?.fileSize ?? 0,
+      title: pm.MediaObject?.title ?? "",
+      description: pm.MediaObject?.description ?? null,
+      source: pm.MediaObject?.source ?? null,
+      width: pm.MediaObject?.width ?? null,
+      height: pm.MediaObject?.height ?? null,
+      thumbnailPath: pm.MediaObject?.thumbnailPath ?? null,
+      webpPath: pm.MediaObject?.webpPath ?? null,
+      thumb400Path: pm.MediaObject?.thumb400Path ?? null,
+      thumb800Path: pm.MediaObject?.thumb800Path ?? null,
+      thumb1200Path: pm.MediaObject?.thumb1200Path ?? null,
+      uploadedAt: pm.MediaObject?.uploadedAt?.toISOString() ?? "",
+      caption: pm.PersonMedia.caption,
+      isPrimary: pm.PersonMedia.isPrimary,
+      displayOrder: pm.PersonMedia.displayOrder,
+      createdAt: pm.PersonMedia.createdAt.toISOString(),
     })),
     total: personMedia.length,
   };
@@ -116,65 +98,63 @@ export async function getPersonMediaLogic(
  * Retrieve a single media object with all its associations
  *
  * @param mediaId - The ID of the media object
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Optional database client (defaults to drizzleDb)
  * @returns Media object with event and person associations
  * @throws Error if media not found
  */
 export async function getMediaObjectLogic(
   mediaId: string,
-  db: MediaDb = defaultPrisma
+  db: MediaDb = drizzleDb
 ) {
-  const media = await db.mediaObject.findUnique({
-    where: { id: mediaId },
-    include: {
-      eventMedia: {
-        select: {
-          id: true,
-          eventType: true,
-          personId: true,
-        },
-      },
-      personMedia: {
-        select: {
-          id: true,
-          personId: true,
-          isPrimary: true,
-          caption: true,
-          displayOrder: true,
-        },
-      },
-    },
-  });
+  const media = await db
+    .select()
+    .from(drizzleSchema.mediaObjects)
+    .where(eq(drizzleSchema.mediaObjects.id, mediaId))
+    .limit(1);
 
-  if (!media) {
+  if (media.length === 0) {
     throw new Error("Media not found");
   }
 
+  const mediaObject = media[0];
+
+  // Get event media associations
+  const eventMedia = await db
+    .select()
+    .from(drizzleSchema.eventMedias)
+    .where(eq(drizzleSchema.eventMedias.mediaId, mediaId));
+
+  // Get person media associations
+  const personMedia = await db
+    .select()
+    .from(drizzleSchema.personMedias)
+    .where(eq(drizzleSchema.personMedias.mediaId, mediaId));
+
   return {
-    id: media.id,
-    filePath: media.filePath,
-    format: media.format,
-    mimeType: media.mimeType,
-    fileSize: media.fileSize,
-    title: media.title,
-    description: media.description,
-    source: media.source,
-    width: media.width,
-    height: media.height,
-    thumbnailPath: media.thumbnailPath,
-    webpPath: media.webpPath,
-    thumb400Path: media.thumb400Path,
-    thumb800Path: media.thumb800Path,
-    thumb1200Path: media.thumb1200Path,
-    uploadedAt: media.uploadedAt.toISOString(),
-    createdAt: media.createdAt.toISOString(),
-    updatedAt: media.updatedAt.toISOString(),
-    eventMedia: media.eventMedia.map((em) => ({
+    id: mediaObject.id,
+    filePath: mediaObject.filePath,
+    format: mediaObject.format,
+    mimeType: mediaObject.mimeType,
+    fileSize: mediaObject.fileSize,
+    title: mediaObject.title,
+    description: mediaObject.description,
+    source: mediaObject.source,
+    width: mediaObject.width,
+    height: mediaObject.height,
+    thumbnailPath: mediaObject.thumbnailPath,
+    webpPath: mediaObject.webpPath,
+    thumb400Path: mediaObject.thumb400Path,
+    thumb800Path: mediaObject.thumb800Path,
+    thumb1200Path: mediaObject.thumb1200Path,
+    uploadedAt: mediaObject.uploadedAt.toISOString(),
+    createdAt: mediaObject.createdAt.toISOString(),
+    updatedAt: mediaObject.updatedAt.toISOString(),
+    eventMedia: eventMedia.map((em) => ({
       id: em.id,
       eventType: em.eventType,
       personId: em.personId,
     })),
-    personMedia: media.personMedia.map((pm) => ({
+    personMedia: personMedia.map((pm) => ({
       id: pm.id,
       personId: pm.personId,
       isPrimary: pm.isPrimary,
@@ -189,26 +169,28 @@ export async function getMediaObjectLogic(
  * Cascades to PersonMedia and EventMedia via foreign key constraints
  *
  * @param mediaId - The ID of the media to delete
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Optional database client (defaults to drizzleDb)
  * @throws Error if media not found
  */
 export async function deleteMediaLogic(
   mediaId: string,
-  db: MediaDb = defaultPrisma
+  db: MediaDb = drizzleDb
 ) {
   // Verify media exists
-  const media = await db.mediaObject.findUnique({
-    where: { id: mediaId },
-  });
+  const media = await db
+    .select()
+    .from(drizzleSchema.mediaObjects)
+    .where(eq(drizzleSchema.mediaObjects.id, mediaId))
+    .limit(1);
 
-  if (!media) {
+  if (media.length === 0) {
     throw new Error("Media not found");
   }
 
   // Delete the media object (will cascade delete PersonMedia and EventMedia)
-  await db.mediaObject.delete({
-    where: { id: mediaId },
-  });
+  await db
+    .delete(drizzleSchema.mediaObjects)
+    .where(eq(drizzleSchema.mediaObjects.id, mediaId));
 
   // Clean up processed images
   try {
@@ -233,7 +215,7 @@ export async function deleteMediaLogic(
  * @param description - New description (optional)
  * @param caption - New caption for primary person (optional)
  * @param source - New source (optional)
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Optional database client (defaults to drizzleDb)
  * @returns Updated media object
  * @throws Error if media not found
  */
@@ -243,56 +225,71 @@ export async function updateMediaMetadataLogic(
   description: string | undefined,
   caption: string | undefined,
   source: string | undefined,
-  db: MediaDb = defaultPrisma
+  db: MediaDb = drizzleDb
 ) {
   // Verify media exists
-  const media = await db.mediaObject.findUnique({
-    where: { id: mediaId },
-  });
+  const media = await db
+    .select()
+    .from(drizzleSchema.mediaObjects)
+    .where(eq(drizzleSchema.mediaObjects.id, mediaId))
+    .limit(1);
 
-  if (!media) {
+  if (media.length === 0) {
     throw new Error("Media not found");
   }
 
+  const mediaObject = media[0];
+
   // Update media metadata
-  const updated = await db.mediaObject.update({
-    where: { id: mediaId },
-    data: {
-      title: title ?? media.title,
-      description: description ?? media.description,
-      source: source ?? media.source,
-    },
-  });
+  await db
+    .update(drizzleSchema.mediaObjects)
+    .set({
+      title: title ?? mediaObject.title,
+      description: description ?? mediaObject.description,
+      source: source ?? mediaObject.source,
+    })
+    .where(eq(drizzleSchema.mediaObjects.id, mediaId));
 
   // Update caption in PersonMedia if provided
   if (caption !== undefined) {
-    const personMedia = await db.personMedia.findFirst({
-      where: { mediaId },
-    });
+    const personMedia = await db
+      .select()
+      .from(drizzleSchema.personMedias)
+      .where(eq(drizzleSchema.personMedias.mediaId, mediaId))
+      .limit(1);
 
-    if (personMedia) {
-      await db.personMedia.update({
-        where: { id: personMedia.id },
-        data: { caption },
-      });
+    if (personMedia.length > 0) {
+      await db
+        .update(drizzleSchema.personMedias)
+        .set({ caption })
+        .where(eq(drizzleSchema.personMedias.id, personMedia[0].id));
     }
   }
 
+  // Fetch updated media
+  const updated = await db
+    .select()
+    .from(drizzleSchema.mediaObjects)
+    .where(eq(drizzleSchema.mediaObjects.id, mediaId))
+    .limit(1);
+
+  const updatedMedia = updated[0];
+
   return {
-    id: updated.id,
-    filePath: updated.filePath,
-    format: updated.format,
-    mimeType: updated.mimeType,
-    fileSize: updated.fileSize,
-    title: updated.title,
-    description: updated.description,
-    source: updated.source,
-    width: updated.width,
-    height: updated.height,
-    thumbnailPath: updated.thumbnailPath,
-    uploadedAt: updated.uploadedAt.toISOString(),
-    createdAt: updated.createdAt.toISOString(),
-    updatedAt: updated.updatedAt.toISOString(),
+    id: updatedMedia.id,
+    filePath: updatedMedia.filePath,
+    format: updatedMedia.format,
+    mimeType: updatedMedia.mimeType,
+    fileSize: updatedMedia.fileSize,
+    title: updatedMedia.title,
+    description: updatedMedia.description,
+    source: updatedMedia.source,
+    width: updatedMedia.width,
+    height: updatedMedia.height,
+    thumbnailPath: updatedMedia.thumbnailPath,
+    uploadedAt: updatedMedia.uploadedAt.toISOString(),
+    createdAt: updatedMedia.createdAt.toISOString(),
+    updatedAt: updatedMedia.updatedAt.toISOString(),
   };
 }
 
@@ -302,43 +299,57 @@ export async function updateMediaMetadataLogic(
  *
  * @param personId - The ID of the person
  * @param mediaId - The ID of the media to set as primary
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Optional database client (defaults to drizzleDb)
  * @throws Error if person or media not found, or media doesn't belong to person
  */
 export async function setPrimaryPhotoLogic(
   personId: string,
   mediaId: string,
-  db: MediaDb = defaultPrisma
+  db: MediaDb = drizzleDb
 ) {
   // Verify person exists
-  const person = await db.person.findUnique({
-    where: { id: personId },
-  });
+  const person = await db
+    .select()
+    .from(drizzleSchema.persons)
+    .where(eq(drizzleSchema.persons.id, personId))
+    .limit(1);
 
-  if (!person) {
+  if (person.length === 0) {
     throw new Error("Person not found");
   }
 
   // Verify media exists and belongs to person
-  const personMedia = await db.personMedia.findFirst({
-    where: { personId, mediaId },
-  });
+  const personMedia = await db
+    .select()
+    .from(drizzleSchema.personMedias)
+    .where(
+      and(
+        eq(drizzleSchema.personMedias.personId, personId),
+        eq(drizzleSchema.personMedias.mediaId, mediaId)
+      )
+    )
+    .limit(1);
 
-  if (!personMedia) {
+  if (personMedia.length === 0) {
     throw new Error("Media not found for this person");
   }
 
   // Unset previous primary photo
-  await db.personMedia.updateMany({
-    where: { personId, isPrimary: true },
-    data: { isPrimary: false },
-  });
+  await db
+    .update(drizzleSchema.personMedias)
+    .set({ isPrimary: false })
+    .where(
+      and(
+        eq(drizzleSchema.personMedias.personId, personId),
+        eq(drizzleSchema.personMedias.isPrimary, true)
+      )
+    );
 
   // Set new primary photo
-  await db.personMedia.update({
-    where: { id: personMedia.id },
-    data: { isPrimary: true },
-  });
+  await db
+    .update(drizzleSchema.personMedias)
+    .set({ isPrimary: true })
+    .where(eq(drizzleSchema.personMedias.id, personMedia[0].id));
 
   return { success: true };
 }
@@ -348,34 +359,43 @@ export async function setPrimaryPhotoLogic(
  *
  * @param personId - The ID of the person
  * @param ordering - Array of {mediaId, order} pairs
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Optional database client (defaults to drizzleDb)
  * @throws Error if person not found
  */
 export async function reorderMediaLogic(
   personId: string,
   ordering: Array<{ mediaId: string; order: number }>,
-  db: MediaDb = defaultPrisma
+  db: MediaDb = drizzleDb
 ) {
   // Verify person exists
-  const person = await db.person.findUnique({
-    where: { id: personId },
-  });
+  const person = await db
+    .select()
+    .from(drizzleSchema.persons)
+    .where(eq(drizzleSchema.persons.id, personId))
+    .limit(1);
 
-  if (!person) {
+  if (person.length === 0) {
     throw new Error("Person not found");
   }
 
   // Update display order for each media
   for (const item of ordering) {
-    const personMedia = await db.personMedia.findFirst({
-      where: { personId, mediaId: item.mediaId },
-    });
+    const personMedia = await db
+      .select()
+      .from(drizzleSchema.personMedias)
+      .where(
+        and(
+          eq(drizzleSchema.personMedias.personId, personId),
+          eq(drizzleSchema.personMedias.mediaId, item.mediaId)
+        )
+      )
+      .limit(1);
 
-    if (personMedia) {
-      await db.personMedia.update({
-        where: { id: personMedia.id },
-        data: { displayOrder: item.order },
-      });
+    if (personMedia.length > 0) {
+      await db
+        .update(drizzleSchema.personMedias)
+        .set({ displayOrder: item.order })
+        .where(eq(drizzleSchema.personMedias.id, personMedia[0].id));
     }
   }
 
@@ -388,60 +408,70 @@ export async function reorderMediaLogic(
  *
  * @param mediaId - The ID of the media
  * @param eventId - The ID of the event
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Optional database client (defaults to drizzleDb)
  * @returns Created event media link
  * @throws Error if media or event not found, or link already exists
  */
 export async function linkMediaToEventLogic(
   mediaId: string,
   eventId: string,
-  db: MediaDb = defaultPrisma
+  db: MediaDb = drizzleDb
 ) {
   // Verify media exists
-  const media = await db.mediaObject.findUnique({
-    where: { id: mediaId },
-  });
+  const media = await db
+    .select()
+    .from(drizzleSchema.mediaObjects)
+    .where(eq(drizzleSchema.mediaObjects.id, mediaId))
+    .limit(1);
 
-  if (!media) {
+  if (media.length === 0) {
     throw new Error("Media not found");
   }
 
   // Verify event exists and get its type and person
-  const event = await db.event.findUnique({
-    where: { id: eventId },
-  });
+  const event = await db
+    .select()
+    .from(drizzleSchema.events)
+    .where(eq(drizzleSchema.events.id, eventId))
+    .limit(1);
 
-  if (!event) {
+  if (event.length === 0) {
     throw new Error("Event not found");
   }
 
-  // Check if link already exists
-  const existingLink = await db.eventMedia.findFirst({
-    where: {
-      mediaId,
-      personId: event.personId,
-      eventType: event.type,
-    },
-  });
+  const eventRecord = event[0];
 
-  if (existingLink) {
+  // Check if link already exists
+  const existingLink = await db
+    .select()
+    .from(drizzleSchema.eventMedias)
+    .where(
+      and(
+        eq(drizzleSchema.eventMedias.mediaId, mediaId),
+        eq(drizzleSchema.eventMedias.personId, eventRecord.personId),
+        eq(drizzleSchema.eventMedias.eventType, eventRecord.type)
+      )
+    )
+    .limit(1);
+
+  if (existingLink.length > 0) {
     throw new Error("Media is already linked to this event");
   }
 
   // Create the link
-  const link = await db.eventMedia.create({
-    data: {
-      mediaId,
-      personId: event.personId,
-      eventType: event.type,
-    },
+  const linkId = randomUUID();
+  await db.insert(drizzleSchema.eventMedias).values({
+    id: linkId,
+    mediaId,
+    personId: eventRecord.personId,
+    eventType: eventRecord.type,
   });
 
   return {
-    id: link.id,
-    mediaId: link.mediaId,
-    personId: link.personId,
-    eventType: link.eventType,
+    id: linkId,
+    mediaId,
+    personId: eventRecord.personId,
+    eventType: eventRecord.type,
   };
 }
 
@@ -497,7 +527,7 @@ function getExtension(mimeType: string): string {
  * @param caption - Optional caption for primary person association
  * @param description - Optional detailed description
  * @param source - Optional source attribution
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Optional database client (defaults to drizzleDb)
  * @returns Created person media record with all metadata
  * @throws Error if person not found or upload fails
  */
@@ -511,16 +541,18 @@ export async function uploadMediaLogic(
   caption?: string,
   description?: string,
   source?: string,
-  db: MediaDb = defaultPrisma
+  db: MediaDb = drizzleDb
 ) {
   const uploadStart = Date.now();
 
   // Verify person exists
-  const person = await db.person.findUnique({
-    where: { id: personId },
-  });
+  const person = await db
+    .select()
+    .from(drizzleSchema.persons)
+    .where(eq(drizzleSchema.persons.id, personId))
+    .limit(1);
 
-  if (!person) {
+  if (person.length === 0) {
     throw new Error("Person not found");
   }
 
@@ -576,45 +608,50 @@ export async function uploadMediaLogic(
   }
 
   // Create media object in database
-  const mediaObject = await db.mediaObject.create({
-    data: {
-      filePath: relativePath,
-      format,
-      mimeType,
-      fileSize,
-      title: title || fileName,
-      description: description || null,
-      source: source || null,
-      width: processedImage?.original.width,
-      height: processedImage?.original.height,
-      webpPath,
-      thumb400Path,
-      thumb800Path,
-      thumb1200Path,
-      uploadedAt: new Date(),
-    },
+  const mediaObjectId = randomUUID();
+  const now = new Date();
+  await db.insert(drizzleSchema.mediaObjects).values({
+    id: mediaObjectId,
+    filePath: relativePath,
+    format,
+    mimeType,
+    fileSize,
+    title: title || fileName,
+    description: description || null,
+    source: source || null,
+    width: processedImage?.original.width ?? null,
+    height: processedImage?.original.height ?? null,
+    webpPath,
+    thumb400Path,
+    thumb800Path,
+    thumb1200Path,
+    uploadedAt: now,
+    updatedAt: now,
   });
 
   // Get existing media count for this person
-  const existingMedia = await db.personMedia.findMany({
-    where: { personId },
-    orderBy: { displayOrder: "desc" },
-    take: 1,
-  });
+  const existingMedia = await db
+    .select()
+    .from(drizzleSchema.personMedias)
+    .where(eq(drizzleSchema.personMedias.personId, personId))
+    .orderBy(drizzleSchema.personMedias.displayOrder)
+    .limit(1);
 
   const displayOrder =
     existingMedia.length > 0 ? (existingMedia[0]?.displayOrder ?? 0) + 1 : 0;
   const isPrimary = existingMedia.length === 0;
 
   // Link media to person
-  const personMedia = await db.personMedia.create({
-    data: {
-      personId,
-      mediaId: mediaObject.id,
-      caption: caption || null,
-      isPrimary,
-      displayOrder,
-    },
+  const personMediaId = randomUUID();
+  const personMediaNow = new Date();
+  await db.insert(drizzleSchema.personMedias).values({
+    id: personMediaId,
+    personId,
+    mediaId: mediaObjectId,
+    caption: caption || null,
+    isPrimary,
+    displayOrder,
+    updatedAt: personMediaNow,
   });
 
   // Record metrics
@@ -628,25 +665,25 @@ export async function uploadMediaLogic(
   );
 
   return {
-    id: personMedia.id,
-    mediaId: mediaObject.id,
-    filePath: mediaObject.filePath,
-    format: mediaObject.format,
-    mimeType: mediaObject.mimeType,
-    fileSize: mediaObject.fileSize,
-    title: mediaObject.title,
-    description: mediaObject.description,
-    source: mediaObject.source,
-    width: mediaObject.width,
-    height: mediaObject.height,
-    webpPath: mediaObject.webpPath,
-    thumb400Path: mediaObject.thumb400Path,
-    thumb800Path: mediaObject.thumb800Path,
-    thumb1200Path: mediaObject.thumb1200Path,
-    caption: personMedia.caption,
-    isPrimary: personMedia.isPrimary,
-    displayOrder: personMedia.displayOrder,
-    uploadedAt: mediaObject.uploadedAt.toISOString(),
-    createdAt: personMedia.createdAt.toISOString(),
+    id: personMediaId,
+    mediaId: mediaObjectId,
+    filePath: relativePath,
+    format,
+    mimeType,
+    fileSize,
+    title: title || fileName,
+    description: description || null,
+    source: source || null,
+    width: processedImage?.original.width ?? null,
+    height: processedImage?.original.height ?? null,
+    webpPath,
+    thumb400Path,
+    thumb800Path,
+    thumb1200Path,
+    caption: caption || null,
+    isPrimary,
+    displayOrder,
+    uploadedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
   };
 }

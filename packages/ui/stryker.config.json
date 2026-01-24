@@ -19,12 +19,7 @@
     "!src/**/index.ts",
     "!src/test-setup.ts"
   ],
-  "ignorePatterns": [
-    "node_modules",
-    "dist",
-    ".git",
-    ".stryker-tmp"
-  ],
+  "ignorePatterns": ["node_modules", "dist", ".git", ".stryker-tmp"],
   "reporters": ["html", "clear-text", "progress", "json"],
   "htmlReporter": {
     "fileName": "../../test-output/mutation/ui/index.html"

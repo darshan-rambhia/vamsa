@@ -8,7 +8,7 @@ import {
   type RelationshipUpdateInput,
 } from "@vamsa/schemas";
 import { z } from "zod";
-import { prisma } from "@vamsa/lib/server";
+import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
 import { requireAuth } from "./middleware/require-auth";
 import {
   listRelationshipsData,
@@ -215,12 +215,12 @@ export const getFamilyTree = createServerFn({ method: "GET" }).handler(
   async () => {
     try {
       const [persons, relationships] = await Promise.all([
-        prisma.person.findMany(),
-        prisma.relationship.findMany(),
+        drizzleDb.select().from(drizzleSchema.persons),
+        drizzleDb.select().from(drizzleSchema.relationships),
       ]);
 
       return {
-        nodes: persons.map((p) => ({
+        nodes: persons.map((p: typeof drizzleSchema.persons.$inferSelect) => ({
           id: p.id,
           firstName: p.firstName,
           lastName: p.lastName,
@@ -230,7 +230,7 @@ export const getFamilyTree = createServerFn({ method: "GET" }).handler(
           isLiving: p.isLiving,
           photoUrl: p.photoUrl,
         })),
-        edges: relationships.map((r) => ({
+        edges: relationships.map((r: typeof drizzleSchema.relationships.$inferSelect) => ({
           id: r.id,
           source: r.personId,
           target: r.relatedPersonId,

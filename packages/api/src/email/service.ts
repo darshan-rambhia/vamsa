@@ -1,8 +1,8 @@
 import { Resend } from "resend";
-import { prisma } from "../index";
+import { drizzleDb } from "../client";
+import * as drizzleSchema from "../drizzle/schema";
 import { EMAIL_CONFIG, type NotificationPreferences } from "./config";
 import type { EmailTemplate } from "./templates";
-import type { Prisma } from "../generated/prisma/client";
 
 export class EmailService {
   private resend: Resend | null;
@@ -33,17 +33,15 @@ export class EmailService {
         );
 
         // Still log the attempt
-        await prisma.emailLog.create({
-          data: {
-            recipientEmail: to,
-            subject: template.subject,
-            emailType,
-            status: "sent",
-            createdById: userId,
-            metadata: metadata
-              ? (metadata as Prisma.InputJsonValue)
-              : undefined,
-          },
+        await drizzleDb.insert(drizzleSchema.emailLogs).values({
+          id: crypto.randomUUID(),
+          recipientEmail: to,
+          subject: template.subject,
+          emailType,
+          status: "sent",
+          createdById: userId,
+          metadata: metadata || undefined,
+          sentAt: new Date(),
         });
 
         return { success: true };
@@ -60,18 +58,16 @@ export class EmailService {
 
       if (response.error) {
         // Log failed email
-        await prisma.emailLog.create({
-          data: {
-            recipientEmail: to,
-            subject: template.subject,
-            emailType,
-            status: "failed",
-            error: response.error.message,
-            createdById: userId,
-            metadata: metadata
-              ? (metadata as Prisma.InputJsonValue)
-              : undefined,
-          },
+        await drizzleDb.insert(drizzleSchema.emailLogs).values({
+          id: crypto.randomUUID(),
+          recipientEmail: to,
+          subject: template.subject,
+          emailType,
+          status: "failed",
+          error: response.error.message,
+          createdById: userId,
+          metadata: metadata || undefined,
+          sentAt: new Date(),
         });
 
         return {
@@ -81,16 +77,16 @@ export class EmailService {
       }
 
       // Log successful email
-      await prisma.emailLog.create({
-        data: {
-          recipientEmail: to,
-          subject: template.subject,
-          emailType,
-          status: "sent",
-          resendId: response.data?.id,
-          createdById: userId,
-          metadata: metadata ? (metadata as Prisma.InputJsonValue) : undefined,
-        },
+      await drizzleDb.insert(drizzleSchema.emailLogs).values({
+        id: crypto.randomUUID(),
+        recipientEmail: to,
+        subject: template.subject,
+        emailType,
+        status: "sent",
+        resendId: response.data?.id,
+        createdById: userId,
+        metadata: metadata || undefined,
+        sentAt: new Date(),
       });
 
       return {
@@ -105,18 +101,16 @@ export class EmailService {
 
       // Log the error
       try {
-        await prisma.emailLog.create({
-          data: {
-            recipientEmail: to,
-            subject: template.subject,
-            emailType,
-            status: "failed",
-            error: errorMessage,
-            createdById: userId,
-            metadata: metadata
-              ? (metadata as Prisma.InputJsonValue)
-              : undefined,
-          },
+        await drizzleDb.insert(drizzleSchema.emailLogs).values({
+          id: crypto.randomUUID(),
+          recipientEmail: to,
+          subject: template.subject,
+          emailType,
+          status: "failed",
+          error: errorMessage,
+          createdById: userId,
+          metadata: metadata || undefined,
+          sentAt: new Date(),
         });
       } catch (logError) {
         console.error("[EmailService] Error logging email failure:", logError);

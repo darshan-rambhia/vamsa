@@ -16,8 +16,7 @@
  * - getPrometheusStatusData: Get Prometheus configuration and availability status
  */
 
-import { prisma as defaultPrisma } from "../db";
-import type { PrismaClient } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { logger } from "@vamsa/lib/logger";
 
 /**
@@ -57,11 +56,6 @@ export interface MetricSnapshot {
   status: "healthy" | "degraded" | "unavailable";
 }
 
-/**
- * Type for the database client used by metrics functions.
- * This allows dependency injection for testing.
- */
-export type MetricsDb = Pick<PrismaClient, "familySettings">;
 
 const PROMETHEUS_URL = process.env.PROMETHEUS_URL || "http://localhost:9090";
 
@@ -185,12 +179,9 @@ export async function isPrometheusAvailableAt(url: string): Promise<boolean> {
  *
  * If Prometheus is unavailable, returns a default snapshot with status="unavailable".
  *
- * @param _db - Optional database client (defaults to prisma). Not currently used but available for dependency injection.
  * @returns MetricSnapshot with HTTP, database, and application metrics
  */
-export async function getMetricsSnapshotData(
-  _db: MetricsDb = defaultPrisma
-): Promise<MetricSnapshot> {
+export async function getMetricsSnapshotData(): Promise<MetricSnapshot> {
   // Check Prometheus availability first
   const prometheusAvailable = await isPrometheusAvailable();
 
@@ -295,20 +286,17 @@ export async function getMetricsSnapshotData(
  *
  * Validates that Prometheus is available at the configured URL.
  *
- * @param db - Optional database client (defaults to prisma)
  * @returns Status object with availability, URLs, and custom URL flag
  */
-export async function getPrometheusStatusData(
-  db: MetricsDb = defaultPrisma
-): Promise<{
+export async function getPrometheusStatusData(): Promise<{
   available: boolean;
   url: string;
   grafanaUrl: string;
   usingCustomUrls: boolean;
 }> {
   // Check FamilySettings for custom URLs
-  const settings = await db.familySettings.findFirst({
-    select: {
+  const settings = await drizzleDb.query.familySettings.findFirst({
+    columns: {
       metricsDashboardUrl: true,
       metricsApiUrl: true,
     },

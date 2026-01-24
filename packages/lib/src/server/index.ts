@@ -7,7 +7,7 @@
  * Modules:
  * - ETag/HTTP caching utilities (uses Node.js crypto)
  * - Media processing utilities (server-only due to sharp dependency)
- * - Database utilities (Prisma re-export)
+ * - Database utilities (Drizzle ORM re-export)
  * - i18n configuration and utilities
  * - Business logic functions (Authentication, Backup, Calendar, Charts, etc.)
  * - Metrics recording
@@ -45,7 +45,7 @@ export {
 // ============================================================================
 // Database utilities
 // ============================================================================
-export { prisma } from "./db";
+export { drizzleDb, drizzleSchema } from "./db";
 
 // ============================================================================
 // Internationalization

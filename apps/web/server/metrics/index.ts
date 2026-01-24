@@ -5,34 +5,10 @@
  *
  * Usage:
  *   import {
- *     createPrismaPerformanceMiddleware,
  *     recordChartMetrics,
  *     recordSearchMetrics,
  *   } from './metrics';
  */
-
-// Main middleware
-export {
-  createPrismaPerformanceMiddleware,
-  isSlowQuery,
-} from "./prisma-middleware";
-
-// Prisma metrics recording functions
-export {
-  recordPrismaQuery,
-  recordPrismaError,
-  getPrismaErrorType,
-  SLOW_QUERY_THRESHOLD_MS,
-  // Metric instances (for testing)
-  prismaQueryDuration,
-  prismaQueryCount,
-  prismaSlowQueryCount,
-  prismaErrorCount,
-  prismaResultCount,
-} from "./prisma";
-
-// Tracing middleware
-export { createPrismaTracingMiddleware } from "./prisma-tracing";
 
 // Slow query logging
 export {

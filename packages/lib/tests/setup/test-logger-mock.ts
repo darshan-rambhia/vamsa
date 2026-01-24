@@ -71,48 +71,100 @@ mock.module("../../src/logger", () => ({
   },
 }));
 
-// Create a mock Prisma client that does nothing
-// This prevents real database connections during tests
-const mockPrismaClient = {
-  $connect: () => Promise.resolve(),
-  $disconnect: () => Promise.resolve(),
-  $transaction: (fn: (tx: unknown) => Promise<unknown>) => fn(mockPrismaClient),
-  user: {
-    findUnique: () => Promise.resolve(null),
-    findFirst: () => Promise.resolve(null),
-    findMany: () => Promise.resolve([]),
-    create: () => Promise.resolve({}),
-    update: () => Promise.resolve({}),
-    delete: () => Promise.resolve({}),
-  },
-  person: {
-    findUnique: () => Promise.resolve(null),
-    findFirst: () => Promise.resolve(null),
-    findMany: () => Promise.resolve([]),
-    create: () => Promise.resolve({}),
-    update: () => Promise.resolve({}),
-    delete: () => Promise.resolve({}),
-  },
-  calendarToken: {
-    findUnique: () => Promise.resolve(null),
-    findUniqueOrThrow: () => Promise.resolve({}),
-    findFirst: () => Promise.resolve(null),
-    findMany: () => Promise.resolve([]),
-    create: () => Promise.resolve({}),
-    update: () => Promise.resolve({}),
-    delete: () => Promise.resolve({}),
-  },
-  // Add other models as needed - tests that use DI will override these anyway
+
+// Create a mock Drizzle db that does nothing
+const mockDrizzleDb = {
+  select: () => ({
+    from: () => ({
+      where: () => ({
+        orderBy: () => ({
+          limit: () => ({
+            offset: () => Promise.resolve([]),
+          }),
+        }),
+        limit: () => Promise.resolve([]),
+      }),
+      leftJoin: () => ({
+        where: () => ({
+          orderBy: () => ({
+            limit: () => ({
+              offset: () => Promise.resolve([]),
+            }),
+          }),
+        }),
+      }),
+    }),
+  }),
+  insert: () => ({
+    values: () => ({
+      returning: () => Promise.resolve([]),
+    }),
+  }),
+  update: () => ({
+    set: () => ({
+      where: () => ({
+        returning: () => Promise.resolve([]),
+      }),
+    }),
+  }),
+  delete: () => ({
+    where: () => Promise.resolve(),
+  }),
+  transaction: (fn: (tx: unknown) => Promise<unknown>) => fn(mockDrizzleDb),
+  query: {},
 };
 
-// Mock the database module to prevent real Prisma initialization
-// This prevents the "Called end on pool more than once" error
-mock.module("../src/server/db", () => ({
-  prisma: mockPrismaClient,
-}));
+// Create a mock schema that returns empty tables
+const createMockTable = () => ({
+  id: {},
+  name: {},
+  createdAt: {},
+  updatedAt: {},
+});
 
-mock.module("@vamsa/lib/server/db", () => ({
-  prisma: mockPrismaClient,
+const mockDrizzleSchema = {
+  persons: createMockTable(),
+  users: createMockTable(),
+  invites: createMockTable(),
+  relationships: createMockTable(),
+  events: createMockTable(),
+  places: createMockTable(),
+  mediaObjects: createMockTable(),
+  backups: createMockTable(),
+  familySettings: createMockTable(),
+  auditLogs: createMockTable(),
+  suggestions: createMockTable(),
+  calendarTokens: createMockTable(),
+  sources: createMockTable(),
+  researchNotes: createMockTable(),
+  accounts: createMockTable(),
+  sessions: createMockTable(),
+  verifications: createMockTable(),
+  oauthState: createMockTable(),
+  emailLogs: createMockTable(),
+};
+
+// Mock @vamsa/api to prevent real database initialization
+// Include all exports to prevent import errors
+mock.module("@vamsa/api", () => ({
+  // Drizzle ORM mocks
+  drizzleDb: mockDrizzleDb,
+  drizzleSchema: mockDrizzleSchema,
+  closeDrizzleDb: () => Promise.resolve(),
+  getDrizzlePoolStats: () => ({
+    totalCount: 0,
+    idleCount: 0,
+    waitingCount: 0,
+  }),
+  // Email service mocks
+  emailService: { send: () => Promise.resolve({}) },
+  EmailService: class {},
+  EMAIL_CONFIG: {},
+  DEFAULT_NOTIFICATION_PREFERENCES: {},
+  createSuggestionCreatedEmail: () => ({}),
+  createSuggestionUpdatedEmail: () => ({}),
+  createNewMemberEmail: () => ({}),
+  createBirthdayReminderEmail: () => ({}),
 }));
 
 // Initialize i18n once at setup - this happens after mocking

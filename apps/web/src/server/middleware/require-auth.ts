@@ -6,7 +6,8 @@
 
 import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
 import { betterAuthGetSessionWithUserFromCookie } from "@vamsa/lib/server/business";
-import { prisma } from "@vamsa/lib/server";
+import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
+import { eq } from "drizzle-orm";
 import { t } from "@vamsa/lib/server";
 
 export type UserRole = "VIEWER" | "MEMBER" | "ADMIN";
@@ -43,9 +44,11 @@ export async function requireAuth(requiredRole: UserRole = "VIEWER") {
   }
 
   // Fetch full user object from database for business logic that needs all fields
-  const user = await prisma.user.findUnique({
-    where: { id: sessionUser.id },
-  });
+  const [user] = await drizzleDb
+    .select()
+    .from(drizzleSchema.users)
+    .where(eq(drizzleSchema.users.id, sessionUser.id))
+    .limit(1);
 
   if (!user) {
     throw new Error(await t("errors:auth.notAuthenticated"));

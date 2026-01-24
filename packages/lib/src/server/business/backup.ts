@@ -21,8 +21,8 @@
 import * as fs from "fs";
 import * as path from "path";
 import archiver from "archiver";
-import { prisma as defaultPrisma } from "../db";
-import type { PrismaClient } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { gte } from "drizzle-orm";
 import { logger, serializeError } from "@vamsa/lib/logger";
 import type {
   BackupExportInput,
@@ -35,18 +35,9 @@ import type {
 
 /**
  * Type for the database client used by backup functions.
- * This allows dependency injection for testing.
+ * This module uses Drizzle ORM as the default database client.
  */
-export type BackupDb = Pick<
-  PrismaClient,
-  | "person"
-  | "relationship"
-  | "user"
-  | "suggestion"
-  | "familySettings"
-  | "auditLog"
-  | "mediaObject"
->;
+export type BackupDb = typeof drizzleDb;
 
 /**
  * Gather all family data for backup export
@@ -63,13 +54,13 @@ export type BackupDb = Pick<
  * - Optional: Audit logs and suggestions
  *
  * @param options Export options specifying what to include
- * @param db Optional database client (defaults to prisma)
+ * @param db Optional database client (defaults to drizzleDb)
  * @returns Object containing all collected data
  * @throws Error if database queries fail
  */
 export async function gatherBackupData(
   options: BackupExportInput,
-  db: BackupDb = defaultPrisma as BackupDb
+  db: BackupDb = drizzleDb
 ) {
   // Calculate audit log cutoff date based on days parameter
   const auditLogCutoff = new Date();
@@ -86,57 +77,43 @@ export async function gatherBackupData(
     mediaObjects,
   ] = await Promise.all([
     // People ordered by name for consistency
-    db.person.findMany({
-      orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
-    }),
+    db.select().from(drizzleSchema.persons).orderBy(drizzleSchema.persons.lastName, drizzleSchema.persons.firstName),
 
     // Relationships by creation date
-    db.relationship.findMany({
-      orderBy: { createdAt: "asc" },
-    }),
+    db.select().from(drizzleSchema.relationships).orderBy(drizzleSchema.relationships.createdAt),
 
     // Users WITHOUT password hashes (SECURITY)
-    db.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        personId: true,
-        role: true,
-        isActive: true,
-        mustChangePassword: true,
-        invitedById: true,
-        createdAt: true,
-        updatedAt: true,
-        lastLoginAt: true,
-        preferredLanguage: true,
-        // password field is intentionally excluded for security
-      },
-      orderBy: { createdAt: "asc" },
-    }),
+    db.select({
+      id: drizzleSchema.users.id,
+      email: drizzleSchema.users.email,
+      name: drizzleSchema.users.name,
+      personId: drizzleSchema.users.personId,
+      role: drizzleSchema.users.role,
+      isActive: drizzleSchema.users.isActive,
+      mustChangePassword: drizzleSchema.users.mustChangePassword,
+      invitedById: drizzleSchema.users.invitedById,
+      createdAt: drizzleSchema.users.createdAt,
+      updatedAt: drizzleSchema.users.updatedAt,
+      lastLoginAt: drizzleSchema.users.lastLoginAt,
+      preferredLanguage: drizzleSchema.users.preferredLanguage,
+      // password field is intentionally excluded for security
+    }).from(drizzleSchema.users).orderBy(drizzleSchema.users.createdAt),
 
     // Suggestions for community contributions
-    db.suggestion.findMany({
-      orderBy: { submittedAt: "desc" },
-    }),
+    db.select().from(drizzleSchema.suggestions).orderBy(drizzleSchema.suggestions.submittedAt),
 
     // Family settings
-    db.familySettings.findFirst(),
+    db.select().from(drizzleSchema.familySettings).limit(1),
 
     // Audit logs (filtered by date if requested)
     options.includeAuditLogs
-      ? db.auditLog.findMany({
-          where: { createdAt: { gte: auditLogCutoff } },
-          orderBy: { createdAt: "desc" },
-        })
-      : [],
+      ? db.select().from(drizzleSchema.auditLogs).where(gte(drizzleSchema.auditLogs.createdAt, auditLogCutoff)).orderBy(drizzleSchema.auditLogs.createdAt)
+      : Promise.resolve([]),
 
     // Media objects for photo collection
     options.includePhotos
-      ? db.mediaObject.findMany({
-          orderBy: { uploadedAt: "asc" },
-        })
-      : [],
+      ? db.select().from(drizzleSchema.mediaObjects).orderBy(drizzleSchema.mediaObjects.uploadedAt)
+      : Promise.resolve([]),
   ]);
 
   return {
@@ -144,7 +121,7 @@ export async function gatherBackupData(
     relationships,
     users,
     suggestions,
-    settings,
+    settings: settings.length > 0 ? settings[0] : null,
     auditLogs,
     mediaObjects,
   };
@@ -401,7 +378,7 @@ export async function restoreFromBackup(
   extractedData: Awaited<ReturnType<typeof extractBackupData>>,
   options: BackupImportOptions,
   userId: string,
-  _db: BackupDb = defaultPrisma as BackupDb
+  _db: BackupDb = drizzleDb
 ): Promise<ImportResult> {
   // TODO: Implement restore logic
   // - Validate extracted data

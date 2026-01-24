@@ -1,7 +1,15 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import type { Prisma } from "@vamsa/api";
 import { requireAuth } from "./middleware/require-auth";
+
+// Define JsonValue type locally since we're migrating away from Prisma
+type JsonValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JsonValue[]
+  | { [key: string]: JsonValue };
 import {
   listSuggestionsData,
   getPendingSuggestionsCountData,
@@ -67,17 +75,23 @@ export const createSuggestion = createServerFn({ method: "POST" })
     (data: {
       type: "CREATE" | "UPDATE" | "DELETE" | "ADD_RELATIONSHIP";
       targetPersonId?: string | null;
-      suggestedData: Prisma.JsonValue;
+      suggestedData: JsonValue;
       reason?: string;
     }) => data
   )
   .handler(async ({ data }): Promise<SuggestionCreateResult> => {
     const user = await requireAuth("MEMBER");
 
+    // Ensure suggestedData is a non-null object
+    const suggestedDataRecord =
+      typeof data.suggestedData === "object" && data.suggestedData !== null
+        ? (data.suggestedData as Record<string, unknown>)
+        : {};
+
     return createSuggestionData(
       data.type,
       data.targetPersonId,
-      data.suggestedData,
+      suggestedDataRecord,
       data.reason,
       user.id
     );

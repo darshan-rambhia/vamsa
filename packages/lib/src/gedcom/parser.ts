@@ -221,7 +221,10 @@ export class GedcomParser {
       xref = trimmed.slice(xrefStart, i);
 
       // Skip whitespace after xref
-      while (i < trimmed.length && (trimmed[i] === " " || trimmed[i] === "\t")) {
+      while (
+        i < trimmed.length &&
+        (trimmed[i] === " " || trimmed[i] === "\t")
+      ) {
         i++;
       }
     }

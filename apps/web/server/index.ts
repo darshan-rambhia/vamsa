@@ -254,9 +254,8 @@ interface TanStackHandler {
 // Use dynamic import to prevent Bun from auto-starting the TanStack server
 async function setupRoutes() {
   // Dynamic import of generated bundle - type assertion needed as bundle structure varies
-  const handler = (await import(
-    "../dist/server/server.js"
-  )) as unknown as TanStackHandler;
+  const handler =
+    (await import("../dist/server/server.js")) as unknown as TanStackHandler;
 
   // Extract the fetch handler from TanStack Start
   const tanstackFetch = handler.default?.fetch ?? handler.fetch;

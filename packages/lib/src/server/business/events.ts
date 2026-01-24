@@ -1,5 +1,5 @@
-import { prisma as defaultPrisma } from "../db";
-import type { PrismaClient } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { eq, and } from "drizzle-orm";
 import type {
   EventCreateOutput,
   EventUpdateOutput,
@@ -10,12 +10,9 @@ import type {
 
 /**
  * Type for the database client used by event functions.
- * This allows dependency injection for testing.
+ * This module uses Drizzle ORM as the default database client.
  */
-export type EventsDb = Pick<
-  PrismaClient,
-  "event" | "eventParticipant" | "person"
->;
+export type EventsDb = typeof drizzleDb;
 
 /**
  * Formatted event participant representation
@@ -95,152 +92,219 @@ function formatEvent(event: {
 /**
  * Retrieve all events for a person
  * @param personId - ID of the person
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns Array of events with participants
  * @throws Error if person not found
  */
 export async function getPersonEventsData(
   personId: string,
-  db: EventsDb = defaultPrisma
+  db: EventsDb = drizzleDb
 ): Promise<Event[]> {
-  const person = await db.person.findUnique({
-    where: { id: personId },
+  const person = await db.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, personId),
   });
 
   if (!person) {
     throw new Error("Person not found");
   }
 
-  const events = await db.event.findMany({
-    where: { personId },
-    include: {
+  const events = await db.query.events.findMany({
+    where: eq(drizzleSchema.events.personId, personId),
+    with: {
       participants: {
-        include: {
-          person: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
+        with: {
+          person: true,
         },
       },
     },
-    orderBy: { date: "desc" },
+    orderBy: (events, { desc }) => [desc(events.date)],
   });
 
-  return events.map(formatEvent);
+  return events.map((event) =>
+    formatEvent({
+      ...event,
+      date: event.date,
+      createdAt: event.createdAt,
+      updatedAt: event.updatedAt,
+      participants: event.participants.map((p) => ({
+        ...p,
+        createdAt: p.createdAt,
+        person: {
+          id: p.person.id,
+          firstName: p.person.firstName,
+          lastName: p.person.lastName,
+        },
+      })),
+    })
+  );
 }
 
 /**
  * Create a new event for a person
  * @param data - Event creation data
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns Created event with participants
  * @throws Error if person not found
  */
 export async function createEventData(
   data: EventCreateOutput,
-  db: EventsDb = defaultPrisma
+  db: EventsDb = drizzleDb
 ): Promise<Event> {
-  const person = await db.person.findUnique({
-    where: { id: data.personId },
+  const person = await db.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, data.personId),
   });
 
   if (!person) {
     throw new Error("Person not found");
   }
 
-  const event = await db.event.create({
-    data: {
+  const result = await db
+    .insert(drizzleSchema.events)
+    .values({
+      id: crypto.randomUUID(),
       personId: data.personId,
       type: data.type,
-      date: data.date,
+      date: data.date ? new Date(data.date) : null,
       place: data.place || null,
       description: data.description || null,
-    },
-    include: {
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .returning();
+
+  if (!result[0]) {
+    throw new Error("Failed to create event");
+  }
+
+  const event = await db.query.events.findFirst({
+    where: eq(drizzleSchema.events.id, result[0].id),
+    with: {
       participants: {
-        include: {
-          person: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
+        with: {
+          person: true,
         },
       },
     },
   });
 
-  return formatEvent(event);
+  if (!event) {
+    throw new Error("Failed to retrieve created event");
+  }
+
+  return formatEvent({
+    ...event,
+    date: event.date,
+    createdAt: event.createdAt,
+    updatedAt: event.updatedAt,
+    participants: event.participants.map((p) => ({
+      ...p,
+      createdAt: p.createdAt,
+      person: {
+        id: p.person.id,
+        firstName: p.person.firstName,
+        lastName: p.person.lastName,
+      },
+    })),
+  });
 }
 
 /**
  * Update an existing event
  * @param eventId - ID of the event to update
  * @param data - Event update data
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns Updated event with participants
  * @throws Error if event not found
  */
 export async function updateEventData(
   eventId: string,
   data: Omit<EventUpdateOutput, "id">,
-  db: EventsDb = defaultPrisma
+  db: EventsDb = drizzleDb
 ): Promise<Event> {
-  const event = await db.event.findUnique({
-    where: { id: eventId },
+  const event = await db.query.events.findFirst({
+    where: eq(drizzleSchema.events.id, eventId),
   });
 
   if (!event) {
     throw new Error("Event not found");
   }
 
-  const updatedEvent = await db.event.update({
-    where: { id: eventId },
-    data,
-    include: {
+  const updateData: Record<string, unknown> = {
+    updatedAt: new Date(),
+  };
+
+  if (data.type !== undefined) {
+    updateData.type = data.type;
+  }
+  if (data.date !== undefined) {
+    updateData.date = data.date ? new Date(data.date) : null;
+  }
+  if (data.place !== undefined) {
+    updateData.place = data.place || null;
+  }
+  if (data.description !== undefined) {
+    updateData.description = data.description || null;
+  }
+
+  await db
+    .update(drizzleSchema.events)
+    .set(updateData)
+    .where(eq(drizzleSchema.events.id, eventId));
+
+  const updatedEvent = await db.query.events.findFirst({
+    where: eq(drizzleSchema.events.id, eventId),
+    with: {
       participants: {
-        include: {
-          person: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-            },
-          },
+        with: {
+          person: true,
         },
       },
     },
   });
 
-  return formatEvent(updatedEvent);
+  if (!updatedEvent) {
+    throw new Error("Failed to retrieve updated event");
+  }
+
+  return formatEvent({
+    ...updatedEvent,
+    date: updatedEvent.date,
+    createdAt: updatedEvent.createdAt,
+    updatedAt: updatedEvent.updatedAt,
+    participants: updatedEvent.participants.map((p) => ({
+      ...p,
+      createdAt: p.createdAt,
+      person: {
+        id: p.person.id,
+        firstName: p.person.firstName,
+        lastName: p.person.lastName,
+      },
+    })),
+  });
 }
 
 /**
  * Delete an event
  * @param eventId - ID of the event to delete
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns Success status
  * @throws Error if event not found
  */
 export async function deleteEventData(
   eventId: string,
-  db: EventsDb = defaultPrisma
+  db: EventsDb = drizzleDb
 ): Promise<{ success: boolean }> {
-  const event = await db.event.findUnique({
-    where: { id: eventId },
+  const event = await db.query.events.findFirst({
+    where: eq(drizzleSchema.events.id, eventId),
   });
 
   if (!event) {
     throw new Error("Event not found");
   }
 
-  await db.event.delete({
-    where: { id: eventId },
-  });
+  await db
+    .delete(drizzleSchema.events)
+    .where(eq(drizzleSchema.events.id, eventId));
 
   return { success: true };
 }
@@ -248,65 +312,78 @@ export async function deleteEventData(
 /**
  * Add a participant to an event
  * @param data - Participant creation data (eventId, personId, role)
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns Created participant
  * @throws Error if event or person not found, or participant already exists
  */
 export async function addEventParticipantData(
   data: EventParticipantCreateInput,
-  db: EventsDb = defaultPrisma
+  db: EventsDb = drizzleDb
 ): Promise<EventParticipant> {
-  const event = await db.event.findUnique({
-    where: { id: data.eventId },
+  const event = await db.query.events.findFirst({
+    where: eq(drizzleSchema.events.id, data.eventId),
   });
 
   if (!event) {
     throw new Error("Event not found");
   }
 
-  const person = await db.person.findUnique({
-    where: { id: data.personId },
+  const person = await db.query.persons.findFirst({
+    where: eq(drizzleSchema.persons.id, data.personId),
   });
 
   if (!person) {
     throw new Error("Person not found");
   }
 
-  const existingParticipant = await db.eventParticipant.findUnique({
-    where: {
-      eventId_personId: {
-        eventId: data.eventId,
-        personId: data.personId,
-      },
-    },
-  });
+  const existingParticipant = await db.query.eventParticipants.findFirst(
+    {
+      where: and(
+        eq(drizzleSchema.eventParticipants.eventId, data.eventId),
+        eq(drizzleSchema.eventParticipants.personId, data.personId)
+      ),
+    }
+  );
 
   if (existingParticipant) {
     throw new Error("This person is already a participant in this event");
   }
 
-  const participant = await db.eventParticipant.create({
-    data: {
+  const result = await db
+    .insert(drizzleSchema.eventParticipants)
+    .values({
+      id: crypto.randomUUID(),
       eventId: data.eventId,
       personId: data.personId,
       role: data.role || null,
-    },
-    include: {
-      person: {
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-        },
-      },
+      createdAt: new Date(),
+    })
+    .returning();
+
+  if (!result[0]) {
+    throw new Error("Failed to create participant");
+  }
+
+  const participant = await db.query.eventParticipants.findFirst({
+    where: eq(drizzleSchema.eventParticipants.id, result[0].id),
+    with: {
+      person: true,
     },
   });
+
+  if (!participant) {
+    throw new Error("Failed to retrieve created participant");
+  }
 
   return {
     id: participant.id,
     personId: participant.personId,
     role: participant.role,
-    person: participant.person,
+    person: {
+      id: participant.person.id,
+      firstName: participant.person.firstName,
+      lastName: participant.person.lastName,
+    },
     createdAt: participant.createdAt.toISOString(),
   };
 }
@@ -314,35 +391,34 @@ export async function addEventParticipantData(
 /**
  * Remove a participant from an event
  * @param data - Participant removal data (eventId, personId)
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Drizzle database instance
  * @returns Success status
  * @throws Error if participant not found
  */
 export async function removeEventParticipantData(
   data: EventParticipantRemoveInput,
-  db: EventsDb = defaultPrisma
+  db: EventsDb = drizzleDb
 ): Promise<{ success: boolean }> {
-  const participant = await db.eventParticipant.findUnique({
-    where: {
-      eventId_personId: {
-        eventId: data.eventId,
-        personId: data.personId,
-      },
-    },
+  const participant = await db.query.eventParticipants.findFirst({
+    where: and(
+      eq(drizzleSchema.eventParticipants.eventId, data.eventId),
+      eq(drizzleSchema.eventParticipants.personId, data.personId)
+    ),
   });
 
   if (!participant) {
     throw new Error("Participant not found in this event");
   }
 
-  await db.eventParticipant.delete({
-    where: {
-      eventId_personId: {
-        eventId: data.eventId,
-        personId: data.personId,
-      },
-    },
-  });
+  await db
+    .delete(drizzleSchema.eventParticipants)
+    .where(
+      and(
+        eq(drizzleSchema.eventParticipants.eventId, data.eventId),
+        eq(drizzleSchema.eventParticipants.personId, data.personId)
+      )
+    );
 
   return { success: true };
 }
+

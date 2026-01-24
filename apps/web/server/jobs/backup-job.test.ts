@@ -9,7 +9,9 @@
 import { describe, it, expect, mock } from "bun:test";
 // Note: performBackup is imported dynamically AFTER mocks are set up
 // to avoid loading server/db.ts before it can be mocked
-import type { BackupType } from "@vamsa/api";
+
+// Define BackupType locally since we're testing without real DB
+type BackupType = "DAILY" | "WEEKLY" | "MONTHLY" | "MANUAL";
 
 // Mock filesystem
 mock.module("fs/promises", () => ({
@@ -34,11 +36,36 @@ mock.module("archiver", () => ({
   })),
 }));
 
-// Mock Prisma
+// Mock drizzle db module with chainable query builders
+const createMockQueryBuilder = (data: unknown[]) => ({
+  from: mock(() => createMockQueryBuilder(data)),
+  where: mock(() => createMockQueryBuilder(data)),
+  orderBy: mock(() => createMockQueryBuilder(data)),
+  limit: mock(() => Promise.resolve(data)),
+  offset: mock(() => createMockQueryBuilder(data)),
+  innerJoin: mock(() => createMockQueryBuilder(data)),
+  leftJoin: mock(() => createMockQueryBuilder(data)),
+  then: (resolve: (value: unknown[]) => void) => Promise.resolve(data).then(resolve),
+});
+
+const createMockInsertBuilder = () => ({
+  values: mock(() => ({
+    returning: mock(() => Promise.resolve([{ id: "backup-1" }])),
+  })),
+});
+
+const createMockUpdateBuilder = () => ({
+  set: mock(() => ({
+    where: mock(() => ({
+      returning: mock(() => Promise.resolve([{ id: "backup-1" }])),
+    })),
+  })),
+});
+
 mock.module("../db", () => ({
-  prisma: {
-    backupSettings: {
-      findFirst: mock(async () => ({
+  db: {
+    select: mock(() => createMockQueryBuilder([
+      {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -63,62 +90,23 @@ mock.module("../db", () => ({
         notificationEmails: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      })),
-    },
-    backup: {
-      create: mock(async (args: any) => ({
-        id: "backup-1",
-        filename: args.data.filename,
-        type: args.data.type,
-        status: args.data.status,
-        location: args.data.location,
-        createdAt: new Date(),
-      })),
-      update: mock(async (args: any) => ({
-        id: args.where.id,
-        status: args.data.status,
-        size: args.data.size,
-        personCount: args.data.personCount,
-        relationshipCount: args.data.relationshipCount,
-        eventCount: args.data.eventCount,
-        duration: args.data.duration,
-      })),
-      findMany: mock(async () => []),
-    },
-    person: {
-      findMany: mock(async () => [
-        { id: "p1", firstName: "John", lastName: "Doe" },
-        { id: "p2", firstName: "Jane", lastName: "Doe" },
-      ]),
-    },
-    relationship: {
-      findMany: mock(async () => [
-        { id: "r1", personId: "p1", relatedPersonId: "p2" },
-      ]),
-    },
-    user: {
-      findMany: mock(async () => [
-        { id: "u1", email: "user@example.com", name: "User" },
-      ]),
-    },
-    suggestion: {
-      findMany: mock(async () => []),
-    },
-    familySettings: {
-      findFirst: mock(async () => ({})),
-    },
-    auditLog: {
-      findMany: mock(async () => []),
-    },
-    mediaObject: {
-      findMany: mock(async () => []),
-    },
-    event: {
-      findMany: mock(async () => []),
-    },
-    place: {
-      findMany: mock(async () => []),
-    },
+      },
+    ])),
+    insert: mock(() => createMockInsertBuilder()),
+    update: mock(() => createMockUpdateBuilder()),
+  },
+  drizzleSchema: {
+    backupSettings: {},
+    backups: {},
+    persons: {},
+    relationships: {},
+    users: {},
+    suggestions: {},
+    familySettings: {},
+    auditLogs: {},
+    mediaObjects: {},
+    events: {},
+    places: {},
   },
 }));
 

@@ -197,7 +197,7 @@ function main() {
   }
 
   // Overall summary
-  logger.info("=" .repeat(80));
+  logger.info("=".repeat(80));
   logger.info("📊 PACKAGE SCORES");
   logger.info("=".repeat(80));
 
@@ -218,9 +218,7 @@ function main() {
   logger.info("=".repeat(80));
 
   for (const pkg of packageScores) {
-    const lowScoreFiles = pkg.files.filter(
-      (f) => f.score < 50 && f.total > 0
-    );
+    const lowScoreFiles = pkg.files.filter((f) => f.score < 50 && f.total > 0);
     if (lowScoreFiles.length > 0) {
       logger.info(`\n${pkg.package}:`);
       for (const file of lowScoreFiles.slice(0, 10)) {
@@ -270,7 +268,9 @@ function main() {
     logger.info(
       "  • Overall mutation score is low. Focus on adding tests for:"
     );
-    logger.info("    - Edge cases (boundary values, empty arrays, null checks)");
+    logger.info(
+      "    - Edge cases (boundary values, empty arrays, null checks)"
+    );
     logger.info("    - Error conditions (invalid input, exceptions)");
     logger.info("    - Logical operators (&&, ||, !)");
   }

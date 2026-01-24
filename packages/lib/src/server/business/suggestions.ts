@@ -1,19 +1,11 @@
-import { prisma as defaultPrisma } from "../db";
-import type { Prisma, PrismaClient } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "../db";
 import { createPaginationMeta } from "@vamsa/schemas";
+import { eq, and, desc, asc, count } from "drizzle-orm";
 import {
   notifySuggestionCreated,
   notifySuggestionUpdated,
 } from "./notifications";
 
-/**
- * Type for the database client used by suggestions functions.
- * This allows dependency injection for testing.
- */
-export type SuggestionsDb = Pick<
-  PrismaClient,
-  "suggestion" | "person" | "relationship"
->;
 
 /**
  * Options for listing suggestions with pagination and filtering
@@ -58,79 +50,7 @@ export interface SuggestionListResult {
   pagination: ReturnType<typeof createPaginationMeta>;
 }
 
-/**
- * Query suggestions with pagination and optional status filtering
- * @param options - List options including page, limit, sorting, and status filter
- * @param db - Optional database client (defaults to prisma)
- * @returns Paginated list of suggestions with related data
- */
-export async function listSuggestionsData(
-  options: SuggestionListOptions,
-  db: SuggestionsDb = defaultPrisma
-): Promise<SuggestionListResult> {
-  const { page, limit, sortOrder, status } = options;
 
-  // Build where clause
-  const where: Prisma.SuggestionWhereInput = {};
-  if (status) {
-    where.status = status;
-  }
-
-  // Get total count
-  const total = await db.suggestion.count({ where });
-
-  // Get paginated results
-  const suggestions = await db.suggestion.findMany({
-    where,
-    orderBy: { submittedAt: sortOrder === "asc" ? "asc" : "desc" },
-    skip: (page - 1) * limit,
-    take: limit,
-    include: {
-      targetPerson: {
-        select: { id: true, firstName: true, lastName: true },
-      },
-      submittedBy: {
-        select: { id: true, name: true, email: true },
-      },
-      reviewedBy: {
-        select: { id: true, name: true, email: true },
-      },
-    },
-  });
-
-  return {
-    items: suggestions.map((s) => ({
-      id: s.id,
-      type: s.type,
-      targetPersonId: s.targetPersonId,
-      suggestedData: s.suggestedData as {
-        [key: string]: NonNullable<unknown>;
-      },
-      reason: s.reason,
-      status: s.status,
-      submittedAt: s.submittedAt.toISOString(),
-      reviewedAt: s.reviewedAt?.toISOString() ?? null,
-      reviewNote: s.reviewNote,
-      targetPerson: s.targetPerson,
-      submittedBy: s.submittedBy,
-      reviewedBy: s.reviewedBy,
-    })),
-    pagination: createPaginationMeta(page, limit, total),
-  };
-}
-
-/**
- * Get count of pending suggestions
- * @param db - Optional database client (defaults to prisma)
- * @returns Number of suggestions with PENDING status
- */
-export async function getPendingSuggestionsCountData(
-  db: SuggestionsDb = defaultPrisma
-): Promise<number> {
-  return db.suggestion.count({
-    where: { status: "PENDING" },
-  });
-}
 
 /**
  * Result type for creating a suggestion
@@ -141,6 +61,151 @@ export interface SuggestionCreateResult {
   status: string;
 }
 
+
+/**
+ * Result type for applying/reviewing a suggestion
+ */
+export interface SuggestionReviewResult {
+  success: boolean;
+}
+
+
+
+/**
+ * Query suggestions with pagination and optional status filtering
+ * @param options - List options including page, limit, sorting, and status filter
+ * @param db - Optional database client (defaults to drizzleDb)
+ * @returns Paginated list of suggestions with related data
+ */
+export async function listSuggestionsData(
+  options: SuggestionListOptions,
+  db: typeof drizzleDb = drizzleDb
+): Promise<SuggestionListResult> {
+  const { page, limit, sortOrder, status } = options;
+
+  // Build where conditions
+  const conditions = [];
+  if (status) {
+    conditions.push(eq(drizzleSchema.suggestions.status, status));
+  }
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  // Get total count
+  const totalResult = await db
+    .select({ count: count() })
+    .from(drizzleSchema.suggestions)
+    .where(where);
+  const total = totalResult[0]?.count ?? 0;
+
+  // Get paginated results with joins
+  const suggestions = await db
+    .select()
+    .from(drizzleSchema.suggestions)
+    .leftJoin(
+      drizzleSchema.persons,
+      eq(drizzleSchema.suggestions.targetPersonId, drizzleSchema.persons.id)
+    )
+    .leftJoin(
+      drizzleSchema.users,
+      eq(drizzleSchema.suggestions.submittedById, drizzleSchema.users.id)
+    )
+    .where(where)
+    .orderBy(
+      sortOrder === "asc"
+        ? asc(drizzleSchema.suggestions.submittedAt)
+        : desc(drizzleSchema.suggestions.submittedAt)
+    )
+    .limit(limit)
+    .offset((page - 1) * limit);
+
+  // Get reviewedBy users separately to avoid multi-join complexity
+  const reviewedByIds = suggestions
+    .map((s) => s.Suggestion.reviewedById)
+    .filter((id): id is string => id !== null);
+
+  const reviewedByUsers = await (reviewedByIds.length > 0
+    ? db
+        .select()
+        .from(drizzleSchema.users)
+        .where(
+          reviewedByIds.length === 1
+            ? eq(drizzleSchema.users.id, reviewedByIds[0])
+            : undefined
+        )
+    : Promise.resolve([]));
+
+  const reviewedByMap = new Map(
+    reviewedByUsers.map((u) => [u.id, u])
+  );
+
+  return {
+    items: suggestions.map((row) => {
+      const suggestion = row.Suggestion;
+      const targetPerson = row.Person;
+      const submittedBy = row.User;
+      const reviewedBy = suggestion.reviewedById
+        ? reviewedByMap.get(suggestion.reviewedById)
+        : null;
+
+      return {
+        id: suggestion.id,
+        type: suggestion.type,
+        targetPersonId: suggestion.targetPersonId,
+        suggestedData: (suggestion.suggestedData ?? {}) as {
+          [key: string]: NonNullable<unknown>;
+        },
+        reason: suggestion.reason,
+        status: suggestion.status,
+        submittedAt: suggestion.submittedAt.toISOString(),
+        reviewedAt: suggestion.reviewedAt?.toISOString() ?? null,
+        reviewNote: suggestion.reviewNote,
+        targetPerson: targetPerson
+          ? {
+              id: targetPerson.id,
+              firstName: targetPerson.firstName,
+              lastName: targetPerson.lastName,
+            }
+          : null,
+        submittedBy: submittedBy
+          ? {
+              id: submittedBy.id,
+              name: submittedBy.name,
+              email: submittedBy.email,
+            }
+          : {
+              id: "",
+              name: null,
+              email: "",
+            },
+        reviewedBy: reviewedBy
+          ? {
+              id: reviewedBy.id,
+              name: reviewedBy.name,
+              email: reviewedBy.email,
+            }
+          : null,
+      };
+    }),
+    pagination: createPaginationMeta(page, limit, total),
+  };
+}
+
+/**
+ * Get count of pending suggestions
+ * @param db - Optional database client (defaults to drizzleDb)
+ * @returns Number of suggestions with PENDING status
+ */
+export async function getPendingSuggestionsCountData(
+  db: typeof drizzleDb = drizzleDb
+): Promise<number> {
+  const result = await db
+    .select({ count: count() })
+    .from(drizzleSchema.suggestions)
+    .where(eq(drizzleSchema.suggestions.status, "PENDING"));
+
+  return result[0]?.count ?? 0;
+}
+
 /**
  * Create a new suggestion
  * @param type - Type of suggestion (CREATE, UPDATE, DELETE, ADD_RELATIONSHIP)
@@ -148,42 +213,45 @@ export interface SuggestionCreateResult {
  * @param suggestedData - JSON data for the suggestion
  * @param reason - Optional reason for the suggestion
  * @param userId - ID of user submitting the suggestion
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Optional database client (defaults to drizzleDb)
  * @returns Created suggestion with ID, type, and status
  */
 export async function createSuggestionData(
   type: "CREATE" | "UPDATE" | "DELETE" | "ADD_RELATIONSHIP",
   targetPersonId: string | null | undefined,
-  suggestedData: Prisma.JsonValue,
+  suggestedData: Record<string, unknown>,
   reason: string | undefined,
   userId: string,
-  db: SuggestionsDb = defaultPrisma
+  db: typeof drizzleDb = drizzleDb
 ): Promise<SuggestionCreateResult> {
-  const suggestion = await db.suggestion.create({
-    data: {
+  const suggestionId = crypto.randomUUID();
+
+  const result = await db
+    .insert(drizzleSchema.suggestions)
+    .values({
+      id: suggestionId,
       type,
       targetPersonId: targetPersonId ?? null,
       suggestedData: suggestedData ?? {},
-      reason,
+      reason: reason ?? null,
       submittedById: userId,
-    },
-  });
+      status: "PENDING",
+      submittedAt: new Date(),
+    })
+    .returning({
+      id: drizzleSchema.suggestions.id,
+      type: drizzleSchema.suggestions.type,
+      status: drizzleSchema.suggestions.status,
+    });
+
+  if (!result[0]) {
+    throw new Error("Failed to create suggestion");
+  }
 
   // Send notification to admins about new suggestion
-  await notifySuggestionCreated(suggestion.id);
+  await notifySuggestionCreated(result[0].id);
 
-  return {
-    id: suggestion.id,
-    type: suggestion.type,
-    status: suggestion.status,
-  };
-}
-
-/**
- * Result type for applying/reviewing a suggestion
- */
-export interface SuggestionReviewResult {
-  success: boolean;
+  return result[0];
 }
 
 /**
@@ -196,43 +264,63 @@ async function applySuggestionData(
   suggestion: {
     type: string;
     targetPersonId: string | null;
-    suggestedData: Prisma.JsonValue;
+    suggestedData: unknown;
   },
-  db: SuggestionsDb
+  db: typeof drizzleDb
 ): Promise<void> {
   const data = suggestion.suggestedData as Record<string, unknown>;
 
   switch (suggestion.type) {
-    case "CREATE":
-      await db.person.create({
-        data: data as Parameters<typeof db.person.create>[0]["data"],
-      });
+    case "CREATE": {
+      // For person creation, ensure we have required fields
+      const personData = {
+        id: (data.id as string) || crypto.randomUUID(),
+        firstName: (data.firstName as string) || "",
+        lastName: (data.lastName as string) || "",
+        ...data,
+      } as unknown;
+      await db.insert(drizzleSchema.persons).values(personData as never);
       break;
+    }
 
-    case "UPDATE":
+    case "UPDATE": {
       if (!suggestion.targetPersonId) {
         throw new Error("Target person required for update");
       }
-      await db.person.update({
-        where: { id: suggestion.targetPersonId },
-        data: data as Parameters<typeof db.person.update>[0]["data"],
-      });
+      // Exclude id from update data
+      const updateData = { ...data };
+      delete updateData.id;
+      await db
+        .update(drizzleSchema.persons)
+        .set(updateData as never)
+        .where(eq(drizzleSchema.persons.id, suggestion.targetPersonId));
       break;
+    }
 
-    case "DELETE":
+    case "DELETE": {
       if (!suggestion.targetPersonId) {
         throw new Error("Target person required for delete");
       }
-      await db.person.delete({
-        where: { id: suggestion.targetPersonId },
-      });
+      await db
+        .delete(drizzleSchema.persons)
+        .where(eq(drizzleSchema.persons.id, suggestion.targetPersonId));
       break;
+    }
 
-    case "ADD_RELATIONSHIP":
-      await db.relationship.create({
-        data: data as Parameters<typeof db.relationship.create>[0]["data"],
-      });
+    case "ADD_RELATIONSHIP": {
+      // For relationship creation, ensure we have required fields
+      const relationshipData = {
+        id: (data.id as string) || crypto.randomUUID(),
+        personAId: (data.personAId as string) || "",
+        personBId: (data.personBId as string) || "",
+        type: (data.type as string) || "SIBLING",
+        ...data,
+      } as unknown;
+      await db
+        .insert(drizzleSchema.relationships)
+        .values(relationshipData as never);
       break;
+    }
 
     default:
       throw new Error(`Unknown suggestion type: ${suggestion.type}`);
@@ -245,7 +333,7 @@ async function applySuggestionData(
  * @param status - Review status (APPROVED or REJECTED)
  * @param reviewNote - Optional note from reviewer
  * @param userId - ID of admin reviewing the suggestion
- * @param db - Optional database client (defaults to prisma)
+ * @param db - Optional database client (defaults to drizzleDb)
  * @returns Success status
  * @throws Error if suggestion not found or already reviewed
  */
@@ -254,11 +342,15 @@ export async function reviewSuggestionData(
   status: "APPROVED" | "REJECTED",
   reviewNote: string | undefined,
   userId: string,
-  db: SuggestionsDb = defaultPrisma
+  db: typeof drizzleDb = drizzleDb
 ): Promise<SuggestionReviewResult> {
-  const suggestion = await db.suggestion.findUnique({
-    where: { id: suggestionId },
-  });
+  // Get the suggestion
+  const suggestionResult = await db
+    .select()
+    .from(drizzleSchema.suggestions)
+    .where(eq(drizzleSchema.suggestions.id, suggestionId));
+
+  const suggestion = suggestionResult[0];
 
   if (!suggestion) {
     throw new Error("Suggestion not found");
@@ -274,15 +366,15 @@ export async function reviewSuggestionData(
   }
 
   // Update the suggestion
-  await db.suggestion.update({
-    where: { id: suggestionId },
-    data: {
+  await db
+    .update(drizzleSchema.suggestions)
+    .set({
       status,
       reviewedById: userId,
-      reviewNote: reviewNote || null,
+      reviewNote: reviewNote ?? null,
       reviewedAt: new Date(),
-    },
-  });
+    })
+    .where(eq(drizzleSchema.suggestions.id, suggestionId));
 
   // Send notification to submitter about review outcome
   await notifySuggestionUpdated(suggestionId, status);

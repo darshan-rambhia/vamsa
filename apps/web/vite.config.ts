@@ -18,7 +18,12 @@ export default defineConfig({
       "@vamsa/api": path.resolve(__dirname, "../../packages/api"),
       "@vamsa/lib": path.resolve(__dirname, "../../packages/lib/src"),
       "@vamsa/schemas": path.resolve(__dirname, "../../packages/schemas/src"),
+      // Use react-native-svg-web for web builds
+      "react-native-svg": "react-native-svg-web",
     },
+  },
+  optimizeDeps: {
+    exclude: ["react-native"],
   },
   ssr: {
     external: [
@@ -41,6 +46,8 @@ export default defineConfig({
         "i18next",
         "i18next-fs-backend",
         "node-cron",
+        // Exclude react-native from web builds (react-native-svg-web provides web implementation)
+        "react-native",
       ],
     },
   },

@@ -26,7 +26,8 @@ import {
   type UserUpdateInput,
 } from "@vamsa/schemas";
 import { requireAuth } from "./middleware/require-auth";
-import { prisma } from "@vamsa/lib/server";
+import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
+import { eq } from "drizzle-orm";
 import {
   getUsersData,
   getUserData,
@@ -264,10 +265,15 @@ export const linkUserToPerson = createServerFn({ method: "POST" })
 
       // Fetch person data if personId exists
       if (result.personId) {
-        const person = await prisma.person.findUnique({
-          where: { id: result.personId },
-          select: { id: true, firstName: true, lastName: true },
-        });
+        const [person] = await drizzleDb
+          .select({
+            id: drizzleSchema.persons.id,
+            firstName: drizzleSchema.persons.firstName,
+            lastName: drizzleSchema.persons.lastName,
+          })
+          .from(drizzleSchema.persons)
+          .where(eq(drizzleSchema.persons.id, result.personId))
+          .limit(1);
         return {
           id: result.id,
           personId: result.personId,

@@ -16,26 +16,24 @@
     }
   },
   "scripts": {
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
-    "db:migrate": "prisma migrate dev",
-    "db:migrate:deploy": "prisma migrate deploy",
-    "db:seed": "tsx prisma/seed.ts",
-    "db:studio": "prisma studio",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@prisma/adapter-pg": "7.2.0",
-    "@prisma/client": "7.2.0",
     "@vamsa/schemas": "workspace:*",
+    "drizzle-orm": "0.45.1",
     "pg": "^8.17.1",
     "resend": "^6.7.0"
   },
   "devDependencies": {
+    "@types/bun": "^1.2.18",
     "@types/node": "^25.0.8",
     "@types/pg": "^8.16.0",
     "@vamsa/lib": "workspace:*",
-    "prisma": "7.2.0",
+    "drizzle-kit": "0.31.8",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3"
   }

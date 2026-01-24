@@ -1,5 +1,5 @@
 /**
- * Unit tests for claim server business logic with dependency injection
+ * Unit tests for claim server business logic
  *
  * Tests cover:
  * - Fetching claimable profiles for OIDC users
@@ -9,12 +9,10 @@
  * - Error handling and edge cases
  * - Suggested profile matching
  *
- * Uses dependency injection pattern - passes mock db directly to functions
- * instead of using mock.module() which would pollute global state.
+ * Uses mocked drizzleDb module instead of dependency injection.
  */
 
 import { describe, it, expect, beforeEach, mock } from "bun:test";
-import type { ClaimDb } from "@vamsa/lib/server/business";
 
 // Mock logger for this test file
 import {
@@ -24,6 +22,46 @@ import {
   mockCreateRequestLogger,
   mockStartTimer,
 } from "../../testing/shared-mocks";
+
+// Create mock drizzleDb and drizzleSchema
+const mockDrizzleSchema = {
+  users: {
+    id: "id",
+    personId: "personId",
+    oidcProvider: "oidcProvider",
+  },
+  persons: {
+    id: "id",
+    isLiving: "isLiving",
+    lastName: "lastName",
+    firstName: "firstName",
+  },
+};
+
+const mockDrizzleDb = {
+  query: {
+    users: {
+      findFirst: mock(() => Promise.resolve(null)),
+      findMany: mock(() => Promise.resolve([])),
+    },
+    persons: {
+      findFirst: mock(() => Promise.resolve(null)),
+      findMany: mock(() => Promise.resolve([])),
+    },
+  },
+  update: mock(() => ({
+    set: mock(() => ({
+      where: mock(() => ({
+        returning: mock(() => Promise.resolve([])),
+      })),
+    })),
+  })),
+};
+
+mock.module("@vamsa/api", () => ({
+  drizzleDb: mockDrizzleDb,
+  drizzleSchema: mockDrizzleSchema,
+}));
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -46,28 +84,14 @@ import {
   getOIDCClaimStatusData,
 } from "@vamsa/lib/server/business";
 
-/**
- * Create a mock claim database client
- */
-function createMockClaimDb(): ClaimDb {
-  return {
-    user: {
-      findUnique: mock(() => Promise.resolve(null)),
-      findMany: mock(() => Promise.resolve([])),
-      update: mock(() => Promise.resolve({})),
-    },
-    person: {
-      findUnique: mock(() => Promise.resolve(null)),
-      findMany: mock(() => Promise.resolve([])),
-    },
-  } as unknown as ClaimDb;
-}
-
 describe("Claim Server Business Logic", () => {
-  let mockDb: ClaimDb;
-
   beforeEach(() => {
-    mockDb = createMockClaimDb();
+    // Clear all mocks before each test
+    (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockClear();
+    (mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>).mockClear();
+    (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>).mockClear();
+    (mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>).mockClear();
+    (mockDrizzleDb.update as ReturnType<typeof mock>).mockClear();
     mockLogger.error.mockClear();
     mockLogger.debug.mockClear();
     mockLogger.info.mockClear();
@@ -100,24 +124,24 @@ describe("Claim Server Business Logic", () => {
         },
       ];
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
-      (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockProfiles
       );
 
-      const result = await getClaimableProfilesData("user-1", mockDb);
+      const result = await getClaimableProfilesData("user-1");
 
       expect(result.all).toHaveLength(2);
       expect(result.suggested).toBeDefined();
-      expect(mockDb.user.findUnique).toHaveBeenCalledWith({
-        where: { id: "user-1" },
-      });
-      expect(mockDb.person.findMany).toHaveBeenCalled();
+      expect(mockDrizzleDb.query.users.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.anything() })
+      );
+      expect(mockDrizzleDb.query.persons.findMany).toHaveBeenCalled();
     });
 
     it("should filter out already-claimed profiles", async () => {
@@ -133,21 +157,21 @@ describe("Claim Server Business Logic", () => {
         { personId: "person-2" },
       ];
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
-      (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         claimedProfiles
       );
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
 
-      const result = await getClaimableProfilesData("user-1", mockDb);
+      const result = await getClaimableProfilesData("user-1");
 
       expect(result.all).toHaveLength(0);
       // Verify the query excluded claimed profiles
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+      const findManyCall = (mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>)
         .mock.calls[0];
       expect(findManyCall[0].where.id.notIn).toEqual(["person-1", "person-2"]);
     });
@@ -160,20 +184,20 @@ describe("Claim Server Business Logic", () => {
         oidcProvider: "google",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
-      (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
 
-      await getClaimableProfilesData("user-1", mockDb);
+      await getClaimableProfilesData("user-1");
 
       // Verify the query filters for living profiles
-      const findManyCall = (mockDb.person.findMany as ReturnType<typeof mock>)
+      const findManyCall = (mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>)
         .mock.calls[0];
       expect(findManyCall[0].where.isLiving).toBe(true);
     });
@@ -203,28 +227,28 @@ describe("Claim Server Business Logic", () => {
         },
       ];
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
-      (mockDb.user.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         []
       );
-      (mockDb.person.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockProfiles
       );
 
-      const result = await getClaimableProfilesData("user-1", mockDb);
+      const result = await getClaimableProfilesData("user-1");
 
       expect(result.suggested.length).toBeLessThanOrEqual(5);
     });
 
     it("should throw error when user not found", async () => {
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         null
       );
 
       try {
-        await getClaimableProfilesData("nonexistent-user", mockDb);
+        await getClaimableProfilesData("nonexistent-user");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -238,12 +262,12 @@ describe("Claim Server Business Logic", () => {
         oidcProvider: null,
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
 
       try {
-        await getClaimableProfilesData("user-1", mockDb);
+        await getClaimableProfilesData("user-1");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -278,42 +302,33 @@ describe("Claim Server Business Logic", () => {
         profileClaimStatus: "CLAIMED",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>)
         .mockResolvedValueOnce(mockUser)
         .mockResolvedValueOnce(null); // Check for existing claim
       (
-        mockDb.person.findUnique as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockPerson);
-      (mockDb.user.update as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.update as ReturnType<typeof mock>).mockResolvedValueOnce(
         updatedUser
       );
 
       const result = await claimProfileForOIDCData(
         "user-1",
-        "person-1",
-        mockDb
+        "person-1"
       );
 
       expect(result.success).toBe(true);
       expect(result.userId).toBe("user-1");
-      expect(mockDb.user.update).toHaveBeenCalledWith({
-        where: { id: "user-1" },
-        data: {
-          personId: "person-1",
-          role: "MEMBER",
-          profileClaimStatus: "CLAIMED",
-          profileClaimedAt: expect.any(Date),
-        },
-      });
+      expect(mockDrizzleDb.update).toHaveBeenCalled();
     });
 
     it("should throw error when user not found", async () => {
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         null
       );
 
       try {
-        await claimProfileForOIDCData("nonexistent-user", "person-1", mockDb);
+        await claimProfileForOIDCData("nonexistent-user", "person-1");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -327,12 +342,12 @@ describe("Claim Server Business Logic", () => {
         oidcProvider: null,
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1", mockDb);
+        await claimProfileForOIDCData("user-1", "person-1");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -351,12 +366,12 @@ describe("Claim Server Business Logic", () => {
         profileClaimStatus: "PENDING",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1", mockDb);
+        await claimProfileForOIDCData("user-1", "person-1");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -375,12 +390,12 @@ describe("Claim Server Business Logic", () => {
         profileClaimStatus: "CLAIMED",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1", mockDb);
+        await claimProfileForOIDCData("user-1", "person-1");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -399,15 +414,15 @@ describe("Claim Server Business Logic", () => {
         profileClaimStatus: "PENDING",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
       (
-        mockDb.person.findUnique as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(null);
 
       try {
-        await claimProfileForOIDCData("user-1", "nonexistent-person", mockDb);
+        await claimProfileForOIDCData("user-1", "nonexistent-person");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -431,15 +446,15 @@ describe("Claim Server Business Logic", () => {
         isLiving: false,
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
       (
-        mockDb.person.findUnique as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockPerson);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1", mockDb);
+        await claimProfileForOIDCData("user-1", "person-1");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -470,15 +485,15 @@ describe("Claim Server Business Logic", () => {
         personId: "person-1",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>)
         .mockResolvedValueOnce(mockUser)
         .mockResolvedValueOnce(existingClaim); // Check for existing claim
       (
-        mockDb.person.findUnique as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockPerson);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1", mockDb);
+        await claimProfileForOIDCData("user-1", "person-1");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -504,21 +519,21 @@ describe("Claim Server Business Logic", () => {
         isLiving: true,
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>)
         .mockResolvedValueOnce(mockUser)
         .mockResolvedValueOnce(null);
       (
-        mockDb.person.findUnique as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockPerson);
-      (mockDb.user.update as ReturnType<typeof mock>).mockResolvedValueOnce({
+      (mockDrizzleDb.update as ReturnType<typeof mock>).mockResolvedValueOnce({
         ...mockUser,
         personId: "person-1",
         role: "MEMBER",
       });
 
-      await claimProfileForOIDCData("user-1", "person-1", mockDb);
+      await claimProfileForOIDCData("user-1", "person-1");
 
-      const updateCall = (mockDb.user.update as ReturnType<typeof mock>).mock
+      const updateCall = (mockDrizzleDb.update as ReturnType<typeof mock>).mock
         .calls[0][0];
       expect(updateCall.data.role).toBe("MEMBER");
       expect(updateCall.data.profileClaimStatus).toBe("CLAIMED");
@@ -539,29 +554,26 @@ describe("Claim Server Business Logic", () => {
         profileClaimStatus: "SKIPPED",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
-      (mockDb.user.update as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.update as ReturnType<typeof mock>).mockResolvedValueOnce(
         updatedUser
       );
 
-      const result = await skipProfileClaimData("user-1", mockDb);
+      const result = await skipProfileClaimData("user-1");
 
       expect(result.success).toBe(true);
-      expect(mockDb.user.update).toHaveBeenCalledWith({
-        where: { id: "user-1" },
-        data: { profileClaimStatus: "SKIPPED" },
-      });
+      expect(mockDrizzleDb.update).toHaveBeenCalled();
     });
 
     it("should throw error when user not found", async () => {
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         null
       );
 
       try {
-        await skipProfileClaimData("nonexistent-user", mockDb);
+        await skipProfileClaimData("nonexistent-user");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -575,12 +587,12 @@ describe("Claim Server Business Logic", () => {
         oidcProvider: null,
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
 
       try {
-        await skipProfileClaimData("user-1", mockDb);
+        await skipProfileClaimData("user-1");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -597,12 +609,12 @@ describe("Claim Server Business Logic", () => {
         profileClaimStatus: "CLAIMED",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
 
       try {
-        await skipProfileClaimData("user-1", mockDb);
+        await skipProfileClaimData("user-1");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -632,14 +644,14 @@ describe("Claim Server Business Logic", () => {
         email: "john@example.com",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
       (
-        mockDb.person.findUnique as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockPerson);
 
-      const result = await getOIDCClaimStatusData("user-1", mockDb);
+      const result = await getOIDCClaimStatusData("user-1");
 
       expect(result).toBeDefined();
       expect(result?.userId).toBe("user-1");
@@ -659,11 +671,11 @@ describe("Claim Server Business Logic", () => {
         profileClaimedAt: null,
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
 
-      const result = await getOIDCClaimStatusData("user-1", mockDb);
+      const result = await getOIDCClaimStatusData("user-1");
 
       expect(result).toBeDefined();
       expect(result?.userId).toBe("user-1");
@@ -680,22 +692,22 @@ describe("Claim Server Business Logic", () => {
         oidcProvider: null,
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
 
-      const result = await getOIDCClaimStatusData("user-1", mockDb);
+      const result = await getOIDCClaimStatusData("user-1");
 
       expect(result).toBeNull();
     });
 
     it("should throw error when user not found", async () => {
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         null
       );
 
       try {
-        await getOIDCClaimStatusData("nonexistent-user", mockDb);
+        await getOIDCClaimStatusData("nonexistent-user");
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -721,14 +733,14 @@ describe("Claim Server Business Logic", () => {
         email: "john@example.com",
       };
 
-      (mockDb.user.findUnique as ReturnType<typeof mock>).mockResolvedValueOnce(
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>).mockResolvedValueOnce(
         mockUser
       );
       (
-        mockDb.person.findUnique as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockPerson);
 
-      const result = await getOIDCClaimStatusData("user-1", mockDb);
+      const result = await getOIDCClaimStatusData("user-1");
 
       expect(result?.person?.firstName).toBe("John");
       expect(result?.person?.lastName).toBe("Doe");

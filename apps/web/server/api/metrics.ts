@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
-import { prisma, getPoolStats } from "@vamsa/api/client";
+import { drizzleDb, getDrizzlePoolStats } from "@vamsa/api";
+import { sql } from "drizzle-orm";
 import { logger } from "@vamsa/lib/logger";
 import {
   getSlowQueries,
@@ -329,15 +330,19 @@ metricsRouter.openapi(dbHealthRoute, async (c) => {
   const start = Date.now();
 
   try {
-    await prisma.$queryRaw`SELECT 1 as health_check`;
+    await drizzleDb.execute(sql`SELECT 1 as health_check`);
     const latency = Date.now() - start;
 
-    const poolStats = await getPoolStats();
+    const poolStats = getDrizzlePoolStats();
 
     return c.json({
       status: "healthy",
       database: "connected",
-      pool: poolStats,
+      pool: {
+        totalConnections: poolStats.totalCount,
+        idleConnections: poolStats.idleCount,
+        waitingRequests: poolStats.waitingCount,
+      },
       latency_ms: latency,
       timestamp: new Date().toISOString(),
     });
@@ -407,10 +412,14 @@ const dbPoolRoute = createRoute({
 
 metricsRouter.openapi(dbPoolRoute, async (c) => {
   try {
-    const poolStats = await getPoolStats();
+    const poolStats = getDrizzlePoolStats();
 
     return c.json({
-      pool: poolStats,
+      pool: {
+        totalConnections: poolStats.totalCount,
+        idleConnections: poolStats.idleCount,
+        waitingRequests: poolStats.waitingCount,
+      },
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

@@ -17,18 +17,9 @@
  */
 
 import { randomBytes } from "crypto";
-import { prisma as defaultPrisma } from "../db";
-import type { PrismaClient } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { eq, desc } from "drizzle-orm";
 import { logger } from "@vamsa/lib/logger";
-
-/**
- * Type for the database client used by calendar functions.
- * This allows dependency injection for testing.
- */
-export type CalendarDb = Pick<
-  PrismaClient,
-  "calendarToken" | "auditLog" | "user"
->;
 
 /**
  * Generate a new calendar token with expiration
@@ -39,15 +30,13 @@ export type CalendarDb = Pick<
  * @param userId ID of user requesting token
  * @param name Optional name for the token
  * @param expiryDays Number of days until token expires
- * @param db Optional database client (defaults to prisma)
  * @returns Generated token and metadata
  * @throws Error if database operation fails
  */
 export async function generateCalendarTokenLogic(
   userId: string,
   name: string | undefined,
-  expiryDays: number,
-  db: CalendarDb = defaultPrisma
+  expiryDays: number
 ) {
   // Generate a cryptographically secure token
   const tokenBytes = randomBytes(32);
@@ -55,21 +44,26 @@ export async function generateCalendarTokenLogic(
 
   // Calculate expiration date
   const expiresAt = new Date(Date.now() + expiryDays * 24 * 60 * 60 * 1000);
+  const tokenId = crypto.randomUUID();
 
   // Create the calendar token
-  const calendarToken = await db.calendarToken.create({
-    data: {
+  const [calendarToken] = await drizzleDb
+    .insert(drizzleSchema.calendarTokens)
+    .values({
+      id: tokenId,
       token,
       userId,
       name,
       expiresAt,
       isActive: true,
-    },
-  });
+    })
+    .returning();
 
   // Log the action
-  await db.auditLog.create({
-    data: {
+  await drizzleDb
+    .insert(drizzleSchema.auditLogs)
+    .values({
+      id: crypto.randomUUID(),
       userId,
       action: "CREATE",
       entityType: "CalendarToken",
@@ -78,8 +72,7 @@ export async function generateCalendarTokenLogic(
         name: calendarToken.name,
         expiresAt: calendarToken.expiresAt,
       },
-    },
-  });
+    });
 
   logger.info(`Calendar token generated for user ${userId}`);
 
@@ -97,17 +90,13 @@ export async function generateCalendarTokenLogic(
  * Checks if a token exists, is active, and not expired.
  *
  * @param token Token value to validate
- * @param db Optional database client (defaults to prisma)
  * @returns Validation result with user info if valid
  */
-export async function validateCalendarTokenLogic(
-  token: string,
-  db: CalendarDb = defaultPrisma
-) {
+export async function validateCalendarTokenLogic(token: string) {
   try {
-    const calendarToken = await db.calendarToken.findUnique({
-      where: { token },
-      include: { user: true },
+    const calendarToken = await drizzleDb.query.calendarTokens.findFirst({
+      where: eq(drizzleSchema.calendarTokens.token, token),
+      with: { user: true },
     });
 
     // Check if token exists, is active, and not expired
@@ -140,18 +129,16 @@ export async function validateCalendarTokenLogic(
  *
  * @param tokenId ID of token to revoke
  * @param userId ID of user performing revocation
- * @param db Optional database client (defaults to prisma)
  * @returns Success status
  * @throws Error if token not found or user unauthorized
  */
 export async function revokeCalendarTokenLogic(
   tokenId: string,
-  userId: string,
-  db: CalendarDb = defaultPrisma
+  userId: string
 ) {
   // Find the token by ID and verify it belongs to the current user
-  const calendarToken = await db.calendarToken.findUnique({
-    where: { id: tokenId },
+  const calendarToken = await drizzleDb.query.calendarTokens.findFirst({
+    where: eq(drizzleSchema.calendarTokens.id, tokenId),
   });
 
   if (!calendarToken || calendarToken.userId !== userId) {
@@ -159,20 +146,21 @@ export async function revokeCalendarTokenLogic(
   }
 
   // Revoke the token by marking it as inactive
-  await db.calendarToken.update({
-    where: { id: calendarToken.id },
-    data: { isActive: false },
-  });
+  await drizzleDb
+    .update(drizzleSchema.calendarTokens)
+    .set({ isActive: false })
+    .where(eq(drizzleSchema.calendarTokens.id, calendarToken.id));
 
   // Log the action
-  await db.auditLog.create({
-    data: {
+  await drizzleDb
+    .insert(drizzleSchema.auditLogs)
+    .values({
+      id: crypto.randomUUID(),
       userId,
       action: "DELETE",
       entityType: "CalendarToken",
       entityId: calendarToken.id,
-    },
-  });
+    });
 
   logger.info(`Calendar token revoked for user ${userId}`);
 
@@ -185,17 +173,13 @@ export async function revokeCalendarTokenLogic(
  * Retrieves all tokens associated with a user, ordered by creation date.
  *
  * @param userId ID of user
- * @param db Optional database client (defaults to prisma)
  * @returns Array of token records
  * @throws Error if database query fails
  */
-export async function listCalendarTokensLogic(
-  userId: string,
-  db: CalendarDb = defaultPrisma
-) {
-  const tokens = await db.calendarToken.findMany({
-    where: { userId },
-    select: {
+export async function listCalendarTokensLogic(userId: string) {
+  const tokens = await drizzleDb.query.calendarTokens.findMany({
+    where: eq(drizzleSchema.calendarTokens.userId, userId),
+    columns: {
       id: true,
       token: true,
       name: true,
@@ -203,7 +187,7 @@ export async function listCalendarTokensLogic(
       isActive: true,
       createdAt: true,
     },
-    orderBy: { createdAt: "desc" },
+    orderBy: desc(drizzleSchema.calendarTokens.createdAt),
   });
 
   return tokens;
@@ -217,18 +201,16 @@ export async function listCalendarTokensLogic(
  *
  * @param tokenId ID of token to delete
  * @param userId ID of user performing deletion
- * @param db Optional database client (defaults to prisma)
  * @returns Success status
  * @throws Error if token not found, user unauthorized, or token is still active
  */
 export async function deleteCalendarTokenLogic(
   tokenId: string,
-  userId: string,
-  db: CalendarDb = defaultPrisma
+  userId: string
 ) {
   // Find the token by ID and verify it belongs to the current user
-  const calendarToken = await db.calendarToken.findUnique({
-    where: { id: tokenId },
+  const calendarToken = await drizzleDb.query.calendarTokens.findFirst({
+    where: eq(drizzleSchema.calendarTokens.id, tokenId),
   });
 
   if (!calendarToken || calendarToken.userId !== userId) {
@@ -243,19 +225,20 @@ export async function deleteCalendarTokenLogic(
   }
 
   // Delete the token permanently
-  await db.calendarToken.delete({
-    where: { id: calendarToken.id },
-  });
+  await drizzleDb
+    .delete(drizzleSchema.calendarTokens)
+    .where(eq(drizzleSchema.calendarTokens.id, calendarToken.id));
 
   // Log the action
-  await db.auditLog.create({
-    data: {
+  await drizzleDb
+    .insert(drizzleSchema.auditLogs)
+    .values({
+      id: crypto.randomUUID(),
       userId,
       action: "DELETE",
       entityType: "CalendarToken",
       entityId: calendarToken.id,
-    },
-  });
+    });
 
   logger.info(`Calendar token deleted for user ${userId}`);
 

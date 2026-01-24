@@ -93,9 +93,7 @@ export const formValidation = {
 
     await bdd.then("form validation prevents submission", async () => {
       // Should still be on the same page
-      await expect(page).toHaveURL(
-        new RegExp(escapeRegExp(config.formUrl))
-      );
+      await expect(page).toHaveURL(new RegExp(escapeRegExp(config.formUrl)));
     });
   },
 
@@ -159,9 +157,7 @@ export const formValidation = {
 
     await bdd.then("form validation prevents submission", async () => {
       // Should still be on the same page
-      await expect(page).toHaveURL(
-        new RegExp(escapeRegExp(config.formUrl))
-      );
+      await expect(page).toHaveURL(new RegExp(escapeRegExp(config.formUrl)));
     });
   },
 

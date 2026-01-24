@@ -13,7 +13,8 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { prisma } from "@vamsa/lib/server";
+import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
+import { eq, ne, desc, count } from "drizzle-orm";
 import {
   backupExportSchema,
   backupSettingsSchema,
@@ -108,16 +109,15 @@ export const exportBackup = createServerFn({ method: "POST" })
 
       // Log audit trail
       try {
-        await prisma.auditLog.create({
-          data: {
-            userId: user.id,
-            action: "CREATE",
-            entityType: "BACKUP_EXPORT",
-            entityId: null,
-            newData: {
-              timestamp: new Date().toISOString(),
-              statistics: metadata.statistics,
-            },
+        await drizzleDb.insert(drizzleSchema.auditLogs).values({
+          id: crypto.randomUUID(),
+          userId: user.id,
+          action: "CREATE",
+          entityType: "BACKUP_EXPORT",
+          entityId: null,
+          newData: {
+            timestamp: new Date().toISOString(),
+            statistics: metadata.statistics,
           },
         });
       } catch (err) {
@@ -153,21 +153,21 @@ export const listBackups = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAuth("ADMIN");
 
-    const [backups, total] = await Promise.all([
-      prisma.backup.findMany({
-        orderBy: { createdAt: "desc" },
-        take: data.limit,
-        skip: data.offset,
-        where: {
-          status: { not: "DELETED" },
-        },
-      }),
-      prisma.backup.count({
-        where: {
-          status: { not: "DELETED" },
-        },
-      }),
+    const [backups, totalResult] = await Promise.all([
+      drizzleDb
+        .select()
+        .from(drizzleSchema.backups)
+        .where(ne(drizzleSchema.backups.status, "DELETED"))
+        .orderBy(desc(drizzleSchema.backups.createdAt))
+        .limit(data.limit)
+        .offset(data.offset),
+      drizzleDb
+        .select({ count: count() })
+        .from(drizzleSchema.backups)
+        .where(ne(drizzleSchema.backups.status, "DELETED")),
     ]);
+
+    const total = totalResult[0]?.count ?? 0;
 
     return {
       items: backups.map((b) => ({
@@ -175,7 +175,7 @@ export const listBackups = createServerFn({ method: "POST" })
         filename: b.filename,
         type: b.type,
         status: b.status,
-        size: b.size,
+        size: b.size ? BigInt(b.size) : null,
         location: b.location,
         personCount: b.personCount,
         relationshipCount: b.relationshipCount,
@@ -204,9 +204,11 @@ export const downloadBackup = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAuth("ADMIN");
 
-    const backup = await prisma.backup.findUnique({
-      where: { id: data.backupId },
-    });
+    const [backup] = await drizzleDb
+      .select()
+      .from(drizzleSchema.backups)
+      .where(eq(drizzleSchema.backups.id, data.backupId))
+      .limit(1);
 
     if (!backup) {
       throw new Error("Backup not found");
@@ -240,9 +242,11 @@ export const verifyBackup = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAuth("ADMIN");
 
-    const backup = await prisma.backup.findUnique({
-      where: { id: data.backupId },
-    });
+    const [backup] = await drizzleDb
+      .select()
+      .from(drizzleSchema.backups)
+      .where(eq(drizzleSchema.backups.id, data.backupId))
+      .limit(1);
 
     if (!backup) {
       throw new Error("Backup not found");
@@ -251,7 +255,7 @@ export const verifyBackup = createServerFn({ method: "POST" })
     // Placeholder verification logic
     // In a real implementation, this would check file integrity
     const isValid =
-      backup.status === "COMPLETED" && backup.size && backup.size > 0n;
+      backup.status === "COMPLETED" && backup.size && backup.size > 0;
 
     return {
       success: true,
@@ -274,35 +278,36 @@ export const deleteBackup = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireAuth("ADMIN");
 
-    const backup = await prisma.backup.findUnique({
-      where: { id: data.backupId },
-    });
+    const [backup] = await drizzleDb
+      .select()
+      .from(drizzleSchema.backups)
+      .where(eq(drizzleSchema.backups.id, data.backupId))
+      .limit(1);
 
     if (!backup) {
       throw new Error("Backup not found");
     }
 
     // Soft delete by updating status
-    await prisma.backup.update({
-      where: { id: data.backupId },
-      data: {
+    await drizzleDb
+      .update(drizzleSchema.backups)
+      .set({
         status: "DELETED",
         deletedAt: new Date(),
-      },
-    });
+      })
+      .where(eq(drizzleSchema.backups.id, data.backupId));
 
     // Log the deletion
     try {
-      await prisma.auditLog.create({
-        data: {
-          userId: user.id,
-          action: "DELETE",
-          entityType: "BACKUP",
-          entityId: data.backupId,
-          previousData: {
-            filename: backup.filename,
-            type: backup.type,
-          },
+      await drizzleDb.insert(drizzleSchema.auditLogs).values({
+        id: crypto.randomUUID(),
+        userId: user.id,
+        action: "DELETE",
+        entityType: "BACKUP",
+        entityId: data.backupId,
+        previousData: {
+          filename: backup.filename,
+          type: backup.type,
         },
       });
     } catch (err) {
@@ -378,12 +383,15 @@ export const getBackupSettings = createServerFn({ method: "GET" }).handler(
   async () => {
     await requireAuth("ADMIN");
 
-    const settings = await prisma.backupSettings.findFirst();
+    const [settings] = await drizzleDb
+      .select()
+      .from(drizzleSchema.backupSettings)
+      .limit(1);
 
     if (!settings) {
       // Return defaults if no settings exist
       return {
-        id: null,
+        id: null as string | null,
         dailyEnabled: true,
         dailyTime: "02:00",
         weeklyEnabled: true,
@@ -396,15 +404,15 @@ export const getBackupSettings = createServerFn({ method: "GET" }).handler(
         weeklyRetention: 4,
         monthlyRetention: 12,
         storageProvider: "LOCAL" as const,
-        storageBucket: null,
-        storageRegion: null,
+        storageBucket: null as string | null,
+        storageRegion: null as string | null,
         storagePath: "backups",
         includePhotos: true,
         includeAuditLogs: false,
         compressLevel: 6,
         notifyOnSuccess: false,
         notifyOnFailure: true,
-        notificationEmails: null,
+        notificationEmails: null as string | null,
       };
     }
 
@@ -430,7 +438,12 @@ export const getBackupSettings = createServerFn({ method: "GET" }).handler(
       compressLevel: settings.compressLevel,
       notifyOnSuccess: settings.notifyOnSuccess,
       notifyOnFailure: settings.notifyOnFailure,
-      notificationEmails: settings.notificationEmails,
+      notificationEmails:
+        typeof settings.notificationEmails === "string"
+          ? settings.notificationEmails
+          : settings.notificationEmails
+            ? JSON.stringify(settings.notificationEmails)
+            : null,
     };
   }
 );
@@ -455,12 +468,15 @@ export const scheduleBackup = createServerFn({ method: "POST" })
     // Schedule backup jobs
     await scheduleBackupJob(data, user.id);
 
-    const existing = await prisma.backupSettings.findFirst();
+    const [existing] = await drizzleDb
+      .select()
+      .from(drizzleSchema.backupSettings)
+      .limit(1);
 
     if (existing) {
-      const updated = await prisma.backupSettings.update({
-        where: { id: existing.id },
-        data: {
+      const [updated] = await drizzleDb
+        .update(drizzleSchema.backupSettings)
+        .set({
           dailyEnabled: data.dailyEnabled,
           dailyTime: data.dailyTime,
           weeklyEnabled: data.weeklyEnabled,
@@ -482,14 +498,18 @@ export const scheduleBackup = createServerFn({ method: "POST" })
           notifyOnSuccess: data.notifyOnSuccess,
           notifyOnFailure: data.notifyOnFailure,
           notificationEmails: data.notificationEmails,
-        },
-      });
+          updatedAt: new Date(),
+        })
+        .where(eq(drizzleSchema.backupSettings.id, existing.id))
+        .returning();
 
       logger.info({ settingsId: updated.id }, "Backup settings updated");
       return { success: true, id: updated.id };
     } else {
-      const created = await prisma.backupSettings.create({
-        data: {
+      const [created] = await drizzleDb
+        .insert(drizzleSchema.backupSettings)
+        .values({
+          id: crypto.randomUUID(),
           dailyEnabled: data.dailyEnabled,
           dailyTime: data.dailyTime,
           weeklyEnabled: data.weeklyEnabled,
@@ -511,8 +531,9 @@ export const scheduleBackup = createServerFn({ method: "POST" })
           notifyOnSuccess: data.notifyOnSuccess,
           notifyOnFailure: data.notifyOnFailure,
           notificationEmails: data.notificationEmails,
-        },
-      });
+          updatedAt: new Date(),
+        })
+        .returning();
 
       logger.info({ settingsId: created.id }, "Backup settings created");
       return { success: true, id: created.id };

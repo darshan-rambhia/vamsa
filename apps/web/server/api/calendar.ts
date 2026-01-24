@@ -1,6 +1,7 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
-import { prisma } from "@vamsa/lib/server";
+import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
+import { eq, and, isNotNull, inArray } from "drizzle-orm";
 import { logger } from "@vamsa/lib/logger";
 import ical, { ICalEventRepeatingFreq } from "ical-generator";
 import RSS from "rss";
@@ -67,9 +68,11 @@ calendarRouter.openapi(rssRoute, async (c) => {
     const { token } = c.req.valid("query");
 
     // Validate token - required for RSS feed access
-    const calendarToken = await prisma.calendarToken.findUnique({
-      where: { token },
-    });
+    const [calendarToken] = await drizzleDb
+      .select()
+      .from(drizzleSchema.calendarTokens)
+      .where(eq(drizzleSchema.calendarTokens.token, token))
+      .limit(1);
     if (
       !calendarToken ||
       !calendarToken.isActive ||
@@ -79,10 +82,10 @@ calendarRouter.openapi(rssRoute, async (c) => {
     }
 
     // Update last used timestamp
-    await prisma.calendarToken.update({
-      where: { id: calendarToken.id },
-      data: { lastUsedAt: new Date() },
-    });
+    await drizzleDb
+      .update(drizzleSchema.calendarTokens)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(drizzleSchema.calendarTokens.id, calendarToken.id));
 
     const feed = new RSS({
       title: "Vamsa Family Updates",
@@ -95,15 +98,35 @@ calendarRouter.openapi(rssRoute, async (c) => {
       ttl: 60,
     });
 
-    const recentUpdates = await prisma.auditLog.findMany({
-      where: {
-        action: { in: ["CREATE", "UPDATE"] },
-        entityType: { in: ["Person", "Event", "MediaObject"] },
-      },
-      include: { user: true },
-      orderBy: { createdAt: "desc" },
-      take: 50,
-    });
+    const recentUpdates = await drizzleDb
+      .select({
+        entityType: drizzleSchema.auditLogs.entityType,
+        entityId: drizzleSchema.auditLogs.entityId,
+        action: drizzleSchema.auditLogs.action,
+        newData: drizzleSchema.auditLogs.newData,
+        createdAt: drizzleSchema.auditLogs.createdAt,
+        user: {
+          name: drizzleSchema.users.name,
+          email: drizzleSchema.users.email,
+        },
+      })
+      .from(drizzleSchema.auditLogs)
+      .leftJoin(
+        drizzleSchema.users,
+        eq(drizzleSchema.auditLogs.userId, drizzleSchema.users.id)
+      )
+      .where(
+        and(
+          inArray(drizzleSchema.auditLogs.action, ["CREATE", "UPDATE"]),
+          inArray(drizzleSchema.auditLogs.entityType, [
+            "Person",
+            "Event",
+            "MediaObject",
+          ])
+        )
+      )
+      .orderBy(drizzleSchema.auditLogs.createdAt)
+      .limit(50);
 
     for (const update of recentUpdates) {
       let title = "";
@@ -147,7 +170,7 @@ calendarRouter.openapi(rssRoute, async (c) => {
           url,
           guid,
           date: update.createdAt,
-          author: update.user.name || update.user.email,
+          author: update.user?.name || update.user?.email || "Unknown",
         });
       }
     }
@@ -223,9 +246,11 @@ calendarRouter.openapi(birthdaysRoute, async (c) => {
     const { token } = c.req.valid("query");
 
     if (token) {
-      const calendarToken = await prisma.calendarToken.findUnique({
-        where: { token },
-      });
+      const [calendarToken] = await drizzleDb
+        .select()
+        .from(drizzleSchema.calendarTokens)
+        .where(eq(drizzleSchema.calendarTokens.token, token))
+        .limit(1);
       if (
         !calendarToken ||
         !calendarToken.isActive ||
@@ -242,17 +267,17 @@ calendarRouter.openapi(birthdaysRoute, async (c) => {
       url: `${appUrl}/api/v1/calendar/birthdays.ics`,
     });
 
-    const people = await prisma.person.findMany({
-      where: { dateOfBirth: { not: null } },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        dateOfBirth: true,
-        isLiving: true,
-      },
-      orderBy: { firstName: "asc" },
-    });
+    const people = await drizzleDb
+      .select({
+        id: drizzleSchema.persons.id,
+        firstName: drizzleSchema.persons.firstName,
+        lastName: drizzleSchema.persons.lastName,
+        dateOfBirth: drizzleSchema.persons.dateOfBirth,
+        isLiving: drizzleSchema.persons.isLiving,
+      })
+      .from(drizzleSchema.persons)
+      .where(isNotNull(drizzleSchema.persons.dateOfBirth))
+      .orderBy(drizzleSchema.persons.firstName);
 
     const currentYear = new Date().getFullYear();
 
@@ -363,9 +388,11 @@ calendarRouter.openapi(anniversariesRoute, async (c) => {
     const { token } = c.req.valid("query");
 
     if (token) {
-      const calendarToken = await prisma.calendarToken.findUnique({
-        where: { token },
-      });
+      const [calendarToken] = await drizzleDb
+        .select()
+        .from(drizzleSchema.calendarTokens)
+        .where(eq(drizzleSchema.calendarTokens.token, token))
+        .limit(1);
       if (
         !calendarToken ||
         !calendarToken.isActive ||
@@ -384,29 +411,38 @@ calendarRouter.openapi(anniversariesRoute, async (c) => {
 
     const currentYear = new Date().getFullYear();
 
-    const marriages = await prisma.relationship.findMany({
-      where: {
-        type: "SPOUSE",
-        marriageDate: { not: null },
-      },
-      include: {
+    // Alias tables for self-join
+    const person = drizzleSchema.persons;
+    const relatedPerson = drizzleSchema.persons;
+
+    const marriages = await drizzleDb
+      .select({
+        id: drizzleSchema.relationships.id,
+        marriageDate: drizzleSchema.relationships.marriageDate,
         person: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          id: person.id,
+          firstName: person.firstName,
+          lastName: person.lastName,
         },
         relatedPerson: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          id: relatedPerson.id,
+          firstName: relatedPerson.firstName,
+          lastName: relatedPerson.lastName,
         },
-      },
-      orderBy: { marriageDate: "asc" },
-    });
+      })
+      .from(drizzleSchema.relationships)
+      .innerJoin(person, eq(drizzleSchema.relationships.personId, person.id))
+      .innerJoin(
+        relatedPerson,
+        eq(drizzleSchema.relationships.relatedPersonId, relatedPerson.id)
+      )
+      .where(
+        and(
+          eq(drizzleSchema.relationships.type, "SPOUSE"),
+          isNotNull(drizzleSchema.relationships.marriageDate)
+        )
+      )
+      .orderBy(drizzleSchema.relationships.marriageDate);
 
     for (const marriage of marriages) {
       if (!marriage.marriageDate) continue;
@@ -442,16 +478,16 @@ calendarRouter.openapi(anniversariesRoute, async (c) => {
       }
     }
 
-    const deceased = await prisma.person.findMany({
-      where: { dateOfPassing: { not: null } },
-      select: {
-        id: true,
-        firstName: true,
-        lastName: true,
-        dateOfPassing: true,
-      },
-      orderBy: { dateOfPassing: "asc" },
-    });
+    const deceased = await drizzleDb
+      .select({
+        id: drizzleSchema.persons.id,
+        firstName: drizzleSchema.persons.firstName,
+        lastName: drizzleSchema.persons.lastName,
+        dateOfPassing: drizzleSchema.persons.dateOfPassing,
+      })
+      .from(drizzleSchema.persons)
+      .where(isNotNull(drizzleSchema.persons.dateOfPassing))
+      .orderBy(drizzleSchema.persons.dateOfPassing);
 
     for (const person of deceased) {
       if (!person.dateOfPassing) continue;
@@ -561,9 +597,11 @@ calendarRouter.openapi(eventsRoute, async (c) => {
     const { token } = c.req.valid("query");
 
     if (token) {
-      const calendarToken = await prisma.calendarToken.findUnique({
-        where: { token },
-      });
+      const [calendarToken] = await drizzleDb
+        .select()
+        .from(drizzleSchema.calendarTokens)
+        .where(eq(drizzleSchema.calendarTokens.token, token))
+        .limit(1);
       if (
         !calendarToken ||
         !calendarToken.isActive ||
@@ -580,19 +618,26 @@ calendarRouter.openapi(eventsRoute, async (c) => {
       url: `${appUrl}/api/v1/calendar/events.ics`,
     });
 
-    const events = await prisma.event.findMany({
-      where: { date: { not: null } },
-      include: {
+    const events = await drizzleDb
+      .select({
+        id: drizzleSchema.events.id,
+        type: drizzleSchema.events.type,
+        date: drizzleSchema.events.date,
+        description: drizzleSchema.events.description,
+        place: drizzleSchema.events.place,
         person: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-          },
+          id: drizzleSchema.persons.id,
+          firstName: drizzleSchema.persons.firstName,
+          lastName: drizzleSchema.persons.lastName,
         },
-      },
-      orderBy: { date: "asc" },
-    });
+      })
+      .from(drizzleSchema.events)
+      .innerJoin(
+        drizzleSchema.persons,
+        eq(drizzleSchema.events.personId, drizzleSchema.persons.id)
+      )
+      .where(isNotNull(drizzleSchema.events.date))
+      .orderBy(drizzleSchema.events.date);
 
     for (const event of events) {
       if (!event.date) continue;

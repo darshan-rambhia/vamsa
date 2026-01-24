@@ -45,7 +45,8 @@
   "peerDependencies": {
     "@opentelemetry/api": "^1.9.0",
     "@vamsa/api": "workspace:*",
-    "@vamsa/schemas": "workspace:*"
+    "@vamsa/schemas": "workspace:*",
+    "drizzle-orm": "^0.45.1"
   },
   "peerDependenciesMeta": {
     "@opentelemetry/api": {

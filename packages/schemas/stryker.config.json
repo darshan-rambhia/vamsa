@@ -11,17 +11,8 @@
   "typescriptChecker": {
     "prioritizePerformanceOverAccuracy": true
   },
-  "mutate": [
-    "src/**/*.ts",
-    "!src/**/*.test.ts",
-    "!src/**/index.ts"
-  ],
-  "ignorePatterns": [
-    "node_modules",
-    "dist",
-    ".git",
-    ".stryker-tmp"
-  ],
+  "mutate": ["src/**/*.ts", "!src/**/*.test.ts", "!src/**/index.ts"],
+  "ignorePatterns": ["node_modules", "dist", ".git", ".stryker-tmp"],
   "reporters": ["html", "clear-text", "progress", "json"],
   "htmlReporter": {
     "fileName": "../../test-output/mutation/schemas/index.html"

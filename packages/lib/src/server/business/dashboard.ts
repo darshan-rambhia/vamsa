@@ -14,17 +14,8 @@
  * - calculateFamilyStats: Helper for aggregating stats
  */
 
-import { prisma as defaultPrisma } from "../db";
-import type { PrismaClient } from "@vamsa/api";
-
-/**
- * Type for the database client used by dashboard functions.
- * This allows dependency injection for testing.
- */
-export type DashboardDb = Pick<
-  PrismaClient,
-  "person" | "relationship" | "auditLog" | "user"
->;
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { eq, and, sql, desc, asc, inArray, count } from "drizzle-orm";
 
 /**
  * Dashboard statistics result interface
@@ -102,30 +93,27 @@ export interface ActivityFilters {
  *
  * Used by: getDashboardStatsData
  *
- * @param db - Optional database client (defaults to prisma)
  * @returns DashboardStats with aggregated counts
  *
  * @example
  * const stats = await calculateFamilyStats()
  */
-async function calculateFamilyStats(
-  db: DashboardDb = defaultPrisma
-): Promise<DashboardStats> {
+async function calculateFamilyStats(): Promise<DashboardStats> {
   const [
-    totalPeople,
-    livingPeople,
-    deceasedPeople,
-    totalRelationships,
+    totalPeopleResult,
+    livingPeopleResult,
+    deceasedPeopleResult,
+    totalRelationshipsResult,
     recentAdditions,
   ] = await Promise.all([
-    db.person.count(),
-    db.person.count({ where: { isLiving: true } }),
-    db.person.count({ where: { isLiving: false } }),
-    db.relationship.count(),
-    db.person.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-      select: {
+    drizzleDb.select({ count: count() }).from(drizzleSchema.persons),
+    drizzleDb.select({ count: count() }).from(drizzleSchema.persons).where(eq(drizzleSchema.persons.isLiving, true)),
+    drizzleDb.select({ count: count() }).from(drizzleSchema.persons).where(eq(drizzleSchema.persons.isLiving, false)),
+    drizzleDb.select({ count: count() }).from(drizzleSchema.relationships),
+    drizzleDb.query.persons.findMany({
+      orderBy: desc(drizzleSchema.persons.createdAt),
+      limit: 5,
+      columns: {
         id: true,
         firstName: true,
         lastName: true,
@@ -134,12 +122,17 @@ async function calculateFamilyStats(
     }),
   ]);
 
+  const totalPeople = totalPeopleResult[0]?.count ?? 0;
+  const livingPeople = livingPeopleResult[0]?.count ?? 0;
+  const deceasedPeople = deceasedPeopleResult[0]?.count ?? 0;
+  const totalRelationships = totalRelationshipsResult[0]?.count ?? 0;
+
   return {
     totalPeople,
     livingPeople,
     deceasedPeople,
     totalRelationships,
-    recentAdditions: recentAdditions.map((p) => ({
+    recentAdditions: recentAdditions.map((p: typeof recentAdditions[0]) => ({
       id: p.id,
       firstName: p.firstName,
       lastName: p.lastName,
@@ -156,16 +149,13 @@ async function calculateFamilyStats(
  * 2. Formatting results for display
  * 3. Recording metrics
  *
- * @param db - Optional database client (defaults to prisma)
  * @returns DashboardStats with family overview
  *
  * @example
  * const stats = await getDashboardStatsData()
  */
-export async function getDashboardStatsData(
-  db: DashboardDb = defaultPrisma
-): Promise<DashboardStats> {
-  return calculateFamilyStats(db);
+export async function getDashboardStatsData(): Promise<DashboardStats> {
+  return calculateFamilyStats();
 }
 
 /**
@@ -287,7 +277,6 @@ function getActivityDescription(
  * - Free-text search (applied in application layer)
  *
  * @param filters - Optional activity filters
- * @param db - Optional database client (defaults to prisma)
  * @returns Array of formatted activity logs
  *
  * @example
@@ -298,47 +287,43 @@ function getActivityDescription(
  * })
  */
 export async function getRecentActivityData(
-  filters: ActivityFilters = {},
-  db: DashboardDb = defaultPrisma
+  filters: ActivityFilters = {}
 ): Promise<ActivityLog[]> {
-  // Build where clause dynamically
+  // Build where clause dynamically - collect all conditions
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = {};
+  const whereConditions: any[] = [];
 
   // Date range filter
-  if (filters.dateFrom || filters.dateTo) {
-    where.createdAt = {};
-    if (filters.dateFrom) {
-      where.createdAt.gte = new Date(filters.dateFrom);
-    }
-    if (filters.dateTo) {
-      where.createdAt.lte = new Date(filters.dateTo);
-    }
+  if (filters.dateFrom) {
+    whereConditions.push(sql`${drizzleSchema.auditLogs.createdAt} >= ${new Date(filters.dateFrom)}`);
+  }
+  if (filters.dateTo) {
+    whereConditions.push(sql`${drizzleSchema.auditLogs.createdAt} <= ${new Date(filters.dateTo)}`);
   }
 
   // Action type filter
   if (filters.actionTypes && filters.actionTypes.length > 0) {
-    where.action = { in: filters.actionTypes };
+    whereConditions.push(inArray(drizzleSchema.auditLogs.action, filters.actionTypes as any));
   }
 
   // Entity type filter
   if (filters.entityTypes && filters.entityTypes.length > 0) {
-    where.entityType = { in: filters.entityTypes };
+    whereConditions.push(inArray(drizzleSchema.auditLogs.entityType, filters.entityTypes));
   }
 
   // User filter
   if (filters.userId) {
-    where.userId = filters.userId;
+    whereConditions.push(eq(drizzleSchema.auditLogs.userId, filters.userId));
   }
 
   // Fetch audit logs
-  const logs = await db.auditLog.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    take: filters.limit ?? 50,
-    include: {
+  const logs = await drizzleDb.query.auditLogs.findMany({
+    where: whereConditions.length > 0 ? and(...whereConditions) : undefined,
+    orderBy: desc(drizzleSchema.auditLogs.createdAt),
+    limit: filters.limit ?? 50,
+    with: {
       user: {
-        select: { id: true, name: true },
+        columns: { id: true, name: true },
       },
     },
   });
@@ -347,7 +332,7 @@ export async function getRecentActivityData(
   let filteredLogs = logs;
   if (filters.searchQuery) {
     const query = filters.searchQuery.toLowerCase();
-    filteredLogs = logs.filter((log) => {
+    filteredLogs = logs.filter((log: typeof logs[0]) => {
       const description = getActivityDescription(
         log.action,
         log.entityType,
@@ -359,7 +344,7 @@ export async function getRecentActivityData(
   }
 
   // Format results
-  return filteredLogs.map((log) => ({
+  return filteredLogs.map((log: typeof logs[0]) => ({
     id: log.id,
     actionType: log.action,
     entityType: log.entityType,
@@ -386,46 +371,46 @@ export async function getRecentActivityData(
  *
  * Used to populate filter UI controls.
  *
- * @param db - Optional database client (defaults to prisma)
  * @returns ActivityFilterOption with grouped filter choices
  *
  * @example
  * const options = await getActivityFilterOptionsData()
  */
-export async function getActivityFilterOptionsData(
-  db: DashboardDb = defaultPrisma
-): Promise<ActivityFilterOption> {
-  // Get distinct action types, entity types, and users from audit logs
-  const [actionTypes, entityTypes, users] = await Promise.all([
-    db.auditLog.groupBy({
-      by: ["action"],
-      _count: true,
-    }),
-    db.auditLog.groupBy({
-      by: ["entityType"],
-      _count: true,
-    }),
-    db.user.findMany({
-      select: { id: true, name: true },
-      where: {
-        auditLogs: { some: {} },
-      },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+export async function getActivityFilterOptionsData(): Promise<ActivityFilterOption> {
+  // Get all audit logs to aggregate action and entity types
+  const allLogs = await drizzleDb.query.auditLogs.findMany();
+
+  // Aggregate action types with counts
+  const actionTypeMap = new Map<string, number>();
+  const entityTypeMap = new Map<string, number>();
+
+  allLogs.forEach((log) => {
+    actionTypeMap.set(log.action, (actionTypeMap.get(log.action) ?? 0) + 1);
+    entityTypeMap.set(log.entityType, (entityTypeMap.get(log.entityType) ?? 0) + 1);
+  });
+
+  // Get all users who have performed actions
+  const usersWithLogs = await drizzleDb.query.users.findMany({
+    columns: { id: true, name: true },
+    orderBy: asc(drizzleSchema.users.name),
+  });
+
+  // Filter users to only those who have audit logs
+  const userIdSet = new Set(allLogs.map((log) => log.userId));
+  const usersInLogs = usersWithLogs.filter((u) => userIdSet.has(u.id));
 
   return {
-    actionTypes: actionTypes.map((a) => ({
-      value: a.action,
-      label: formatActionType(a.action),
-      count: a._count,
+    actionTypes: Array.from(actionTypeMap.entries()).map(([action, count]: [string, number]) => ({
+      value: action,
+      label: formatActionType(action),
+      count,
     })),
-    entityTypes: entityTypes.map((e) => ({
-      value: e.entityType,
-      label: formatEntityType(e.entityType),
-      count: e._count,
+    entityTypes: Array.from(entityTypeMap.entries()).map(([entityType, count]: [string, number]) => ({
+      value: entityType,
+      label: formatEntityType(entityType),
+      count,
     })),
-    users: users.map((u) => ({
+    users: usersInLogs.map((u: typeof usersInLogs[0]) => ({
       value: u.id,
       label: u.name ?? "Unknown",
     })),

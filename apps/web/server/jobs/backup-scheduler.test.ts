@@ -20,74 +20,27 @@ type MockSettings = {
 } | null;
 
 // Track mock calls
-const mockFindFirst = mock<() => Promise<MockSettings>>(async () => null);
+let mockSettingsResult: MockSettings = null;
 const mockPerformBackup = mock(async () => "backup-1");
 
-// Mock the modules
-// Note: This mock provides basic functionality for backup-scheduler tests
-// but other test files that import ../db will also get this mock, so we need
-// to ensure all necessary Prisma models are available
-mock.module("../db", () => ({
-  prisma: {
-    backupSettings: {
-      findFirst: mockFindFirst,
+// Mock the modules with Drizzle-style chainable queries
+mock.module("../db", () => {
+  // Create chainable mock for select().from().limit()
+  const createSelectChain = () => ({
+    from: () => ({
+      limit: () => Promise.resolve(mockSettingsResult ? [mockSettingsResult] : []),
+    }),
+  });
+
+  return {
+    db: {
+      select: createSelectChain,
     },
-    backup: {
-      create: mock(async (args: any) => ({
-        id: "backup-1",
-        filename: args.data.filename,
-        type: args.data.type,
-        status: args.data.status,
-        location: args.data.location,
-        createdAt: new Date(),
-      })),
-      update: mock(async (args: any) => ({
-        id: args.where.id,
-        status: args.data.status,
-      })),
-      findMany: mock(async () => []),
+    drizzleSchema: {
+      backupSettings: {},
     },
-    person: {
-      findMany: mock(async () => []),
-    },
-    relationship: {
-      findMany: mock(async () => []),
-    },
-    user: {
-      findMany: mock(async () => []),
-      create: mock(async (args: any) => ({
-        id: `user-${Date.now()}`,
-        email: args.data.email,
-        name: args.data.name,
-        role: args.data.role,
-        createdAt: new Date(),
-      })),
-      deleteMany: mock(async () => ({})),
-    },
-    event: {
-      findMany: mock(async () => []),
-    },
-    mediaObject: {
-      findMany: mock(async () => []),
-    },
-    calendarToken: {
-      create: mock(async (args: any) => ({
-        id: `token-${Date.now()}`,
-        userId: args.data.userId,
-        token: args.data.token,
-        isActive: args.data.isActive,
-        expiresAt: args.data.expiresAt,
-        createdAt: new Date(),
-      })),
-      findMany: mock(async () => []),
-      update: mock(async (args: any) => ({
-        id: args.where.id,
-        ...args.data,
-      })),
-      deleteMany: mock(async () => ({})),
-    },
-  },
-}));
+  };
+});
 
 mock.module("./backup-job", () => ({
   performBackup: mockPerformBackup,
@@ -103,9 +56,8 @@ import {
 
 describe("Backup Scheduler", () => {
   beforeEach(() => {
-    mockFindFirst.mockReset();
+    mockSettingsResult = null;
     mockPerformBackup.mockReset();
-    mockFindFirst.mockImplementation(async () => null);
   });
 
   afterEach(() => {
@@ -114,7 +66,7 @@ describe("Backup Scheduler", () => {
 
   describe("initBackupScheduler", () => {
     it("should create no jobs when no settings exist", async () => {
-      mockFindFirst.mockImplementation(async () => null);
+      mockSettingsResult = null;
 
       await initBackupScheduler();
 
@@ -124,7 +76,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should create daily job when daily backup is enabled", async () => {
-      mockFindFirst.mockImplementation(async () => ({
+      mockSettingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:30",
@@ -134,7 +86,7 @@ describe("Backup Scheduler", () => {
         monthlyEnabled: false,
         monthlyTime: "04:00",
         monthlyDay: 1,
-      }));
+      };
 
       await initBackupScheduler();
 
@@ -145,7 +97,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should create weekly job when weekly backup is enabled", async () => {
-      mockFindFirst.mockImplementation(async () => ({
+      mockSettingsResult = {
         id: "settings-1",
         dailyEnabled: false,
         dailyTime: "02:00",
@@ -155,7 +107,7 @@ describe("Backup Scheduler", () => {
         monthlyEnabled: false,
         monthlyTime: "04:00",
         monthlyDay: 1,
-      }));
+      };
 
       await initBackupScheduler();
 
@@ -165,7 +117,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should create monthly job when monthly backup is enabled", async () => {
-      mockFindFirst.mockImplementation(async () => ({
+      mockSettingsResult = {
         id: "settings-1",
         dailyEnabled: false,
         dailyTime: "02:00",
@@ -175,7 +127,7 @@ describe("Backup Scheduler", () => {
         monthlyEnabled: true,
         monthlyTime: "04:00",
         monthlyDay: 15,
-      }));
+      };
 
       await initBackupScheduler();
 
@@ -185,7 +137,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should create all jobs when all schedules are enabled", async () => {
-      mockFindFirst.mockImplementation(async () => ({
+      mockSettingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -195,7 +147,7 @@ describe("Backup Scheduler", () => {
         monthlyEnabled: true,
         monthlyTime: "04:00",
         monthlyDay: 15,
-      }));
+      };
 
       await initBackupScheduler();
 
@@ -207,7 +159,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should stop existing jobs before reinitializing", async () => {
-      mockFindFirst.mockImplementation(async () => ({
+      mockSettingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -217,7 +169,7 @@ describe("Backup Scheduler", () => {
         monthlyEnabled: false,
         monthlyTime: "04:00",
         monthlyDay: 1,
-      }));
+      };
 
       await initBackupScheduler();
       expect(getSchedulerStatus().jobCount).toBe(1);
@@ -230,7 +182,7 @@ describe("Backup Scheduler", () => {
 
   describe("stopBackupScheduler", () => {
     it("should stop all running jobs", async () => {
-      mockFindFirst.mockImplementation(async () => ({
+      mockSettingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -240,7 +192,7 @@ describe("Backup Scheduler", () => {
         monthlyEnabled: false,
         monthlyTime: "04:00",
         monthlyDay: 1,
-      }));
+      };
 
       await initBackupScheduler();
       expect(getSchedulerStatus().jobCount).toBe(2);
@@ -269,7 +221,7 @@ describe("Backup Scheduler", () => {
 
   describe("refreshBackupScheduler", () => {
     it("should reinitialize with current settings", async () => {
-      mockFindFirst.mockImplementation(async () => ({
+      mockSettingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -279,7 +231,7 @@ describe("Backup Scheduler", () => {
         monthlyEnabled: false,
         monthlyTime: "04:00",
         monthlyDay: 1,
-      }));
+      };
 
       await refreshBackupScheduler();
 
@@ -290,7 +242,7 @@ describe("Backup Scheduler", () => {
 
     it("should pick up changed settings", async () => {
       // Start with daily only
-      mockFindFirst.mockImplementation(async () => ({
+      mockSettingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -300,13 +252,13 @@ describe("Backup Scheduler", () => {
         monthlyEnabled: false,
         monthlyTime: "04:00",
         monthlyDay: 1,
-      }));
+      };
 
       await initBackupScheduler();
       expect(getSchedulerStatus().jobCount).toBe(1);
 
       // Change to weekly only
-      mockFindFirst.mockImplementation(async () => ({
+      mockSettingsResult = {
         id: "settings-1",
         dailyEnabled: false,
         dailyTime: "02:00",
@@ -316,7 +268,7 @@ describe("Backup Scheduler", () => {
         monthlyEnabled: false,
         monthlyTime: "04:00",
         monthlyDay: 1,
-      }));
+      };
 
       await refreshBackupScheduler();
 
@@ -340,7 +292,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should have job count match jobs array length", async () => {
-      mockFindFirst.mockImplementation(async () => ({
+      mockSettingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -350,7 +302,7 @@ describe("Backup Scheduler", () => {
         monthlyEnabled: false,
         monthlyTime: "04:00",
         monthlyDay: 1,
-      }));
+      };
 
       await initBackupScheduler();
       const status = getSchedulerStatus();
@@ -359,7 +311,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should return job objects with name and status", async () => {
-      mockFindFirst.mockImplementation(async () => ({
+      mockSettingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -369,7 +321,7 @@ describe("Backup Scheduler", () => {
         monthlyEnabled: false,
         monthlyTime: "04:00",
         monthlyDay: 1,
-      }));
+      };
 
       await initBackupScheduler();
       const status = getSchedulerStatus();

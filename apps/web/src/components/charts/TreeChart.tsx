@@ -1,18 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, memo, useMemo } from "react";
+import { useState, memo, useMemo, useCallback, useRef } from "react";
+import { Svg, G } from "react-native-svg";
 import type { ChartNode, ChartEdge } from "~/server/charts";
+import { RectNode, ParentChildEdge, SpouseEdge } from "./ChartElements";
+import type { Position } from "~/lib/d3-utils";
 import {
-  setupSVGContainer,
-  createZoomBehavior,
-  renderRectNode,
-  renderParentChildEdge,
-  renderSpouseEdge,
-  fitToContainer,
-  type Position,
-} from "~/lib/d3-utils";
-import {
-  useDebouncedZoom,
   useChartLoadingState,
   usePerformanceMonitor,
 } from "~/lib/chart-performance";
@@ -34,6 +27,7 @@ const NODE_HEIGHT = 60;
 const HORIZONTAL_SPACING = 40;
 const SPOUSE_SPACING = 200;
 const VERTICAL_SPACING = 120;
+const MARGIN = { top: 60, right: 60, bottom: 60, left: 60 };
 
 /**
  * Groups nodes by generation and sorts siblings by birth date
@@ -147,6 +141,25 @@ function calculateTreeLayout(
   return positions;
 }
 
+/**
+ * Calculate bounds for centering and fitting
+ */
+function calculateBounds(positions: Map<string, Position>) {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  positions.forEach((pos) => {
+    minX = Math.min(minX, pos.x - NODE_WIDTH / 2);
+    maxX = Math.max(maxX, pos.x + NODE_WIDTH / 2);
+    minY = Math.min(minY, pos.y - NODE_HEIGHT / 2);
+    maxY = Math.max(maxY, pos.y + NODE_HEIGHT / 2);
+  });
+
+  return { minX, maxX, minY, maxY };
+}
+
 function TreeChartComponent({
   nodes,
   edges,
@@ -154,11 +167,20 @@ function TreeChartComponent({
   rootPersonId,
   resetSignal,
 }: TreeChartProps) {
-  const svgRef = useRef<SVGSVGElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const [isRendering, setIsRendering] = useState(true);
-  const resetViewRef = useRef<(() => void) | undefined>(undefined);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
+
+  // Transform state for zoom/pan
+  const [transform, setTransform] = useState({
+    x: 0,
+    y: 0,
+    scale: 1,
+  });
+
+  // Dragging state
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   // Tooltip state
   const [tooltip, setTooltip] = useState<{
@@ -172,163 +194,193 @@ function TreeChartComponent({
   // Loading state for large datasets
   const loadingState = useChartLoadingState(nodes.length);
 
-  // Debounced zoom handler
-  const debouncedZoomHandler = useDebouncedZoom(() => {
-    // Optional: Handle zoom events if needed
-  }, 16);
+  // Calculate layout positions
+  const nodePositions = useMemo(() => {
+    if (nodes.length === 0) return new Map<string, Position>();
+    const startTime = performance.now();
+    const positions = calculateTreeLayout(nodes, edges);
+    const endTime = performance.now();
+    if (process.env.NODE_ENV === "development") {
+      // eslint-disable-next-line no-console
+      console.log(
+        `[Performance] TreeChart layout calculated in ${(endTime - startTime).toFixed(2)}ms`
+      );
+    }
+    return positions;
+  }, [nodes, edges]);
 
-  // Memoize layout parameters
-  const layoutParams = useMemo(
-    () => ({
-      nodeWidth: NODE_WIDTH,
-      nodeHeight: NODE_HEIGHT,
-      margin: { top: 60, right: 60, bottom: 60, left: 60 },
-    }),
-    []
+  // Calculate initial view transform to center the chart
+  const initialTransform = useMemo(() => {
+    if (nodePositions.size === 0) {
+      return { x: dimensions.width / 2, y: dimensions.height / 2, scale: 1 };
+    }
+
+    const bounds = calculateBounds(nodePositions);
+    const contentWidth = bounds.maxX - bounds.minX + MARGIN.left + MARGIN.right;
+    const contentHeight =
+      bounds.maxY - bounds.minY + MARGIN.top + MARGIN.bottom;
+
+    // Calculate scale to fit content
+    const scaleX = dimensions.width / contentWidth;
+    const scaleY = dimensions.height / contentHeight;
+    const scale = Math.min(scaleX, scaleY, 1); // Don't zoom in beyond 1:1
+
+    // Calculate center offset
+    const centerX = (bounds.minX + bounds.maxX) / 2;
+    const centerY = (bounds.minY + bounds.maxY) / 2;
+
+    return {
+      x: dimensions.width / 2 - centerX * scale,
+      y: dimensions.height / 2 - centerY * scale,
+      scale,
+    };
+  }, [nodePositions, dimensions]);
+
+  // Reset view when resetSignal changes
+  const resetView = useCallback(() => {
+    setTransform(initialTransform);
+  }, [initialTransform]);
+
+  // Initialize transform and reset on signal
+  useMemo(() => {
+    if (resetSignal !== undefined) {
+      resetView();
+    }
+  }, [resetSignal, resetView]);
+
+  // Handle wheel zoom
+  const handleWheel = useCallback(
+    (e: React.WheelEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const rect = containerRef.current?.getBoundingClientRect();
+      if (!rect) return;
+
+      // Calculate mouse position relative to container
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Calculate zoom delta
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      const newScale = Math.max(0.1, Math.min(4, transform.scale * delta));
+
+      // Adjust position to zoom towards mouse
+      const scaleChange = newScale / transform.scale;
+      const newX = mouseX - (mouseX - transform.x) * scaleChange;
+      const newY = mouseY - (mouseY - transform.y) * scaleChange;
+
+      setTransform({
+        x: newX,
+        y: newY,
+        scale: newScale,
+      });
+    },
+    [transform]
   );
 
-  useEffect(() => {
-    if (!svgRef.current || !containerRef.current || nodes.length === 0) return;
+  // Handle mouse down for pan
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.button !== 0) return; // Only left click
+      setIsDragging(true);
+      setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
+    },
+    [transform]
+  );
 
-    const startTime = performance.now();
-    setIsRendering(true);
-
-    const timeoutId = setTimeout(() => {
-      const container = containerRef.current;
-      if (!container || !svgRef.current) return;
-
-      const width = container.clientWidth;
-      const height = Math.max(600, container.clientHeight);
-
-      // Setup SVG container
-      const setup = setupSVGContainer(svgRef, width, height);
-      if (!setup) return;
-
-      const { svg, g } = setup;
-
-      // Create zoom behavior with debounced handler
-      const zoom = createZoomBehavior(svg, g, [0.1, 4], debouncedZoomHandler);
-
-      const { nodeWidth, nodeHeight, margin } = layoutParams;
-
-      // Calculate tree layout positions
-      const nodePositions = calculateTreeLayout(nodes, edges);
-
-      // Draw edges first (so they're behind nodes)
-      const edgeGroup = g.append("g").attr("class", "edges");
-
-      edges.forEach((edge) => {
-        const source = nodePositions.get(edge.source);
-        const target = nodePositions.get(edge.target);
-
-        if (!source || !target) return;
-
-        if (edge.type === "parent-child") {
-          renderParentChildEdge(edgeGroup, source, target, nodeHeight);
-        } else if (edge.type === "spouse") {
-          renderSpouseEdge(edgeGroup, source, target, nodeWidth);
-        }
+  // Handle mouse move for pan
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!isDragging) return;
+      setTransform({
+        ...transform,
+        x: e.clientX - dragStart.x,
+        y: e.clientY - dragStart.y,
       });
+    },
+    [isDragging, dragStart, transform]
+  );
 
-      // Draw nodes
-      const nodeGroup = g.append("g").attr("class", "nodes");
+  // Handle mouse up to stop pan
+  const handleMouseUp = useCallback(() => {
+    setIsDragging(false);
+  }, []);
 
-      nodes.forEach((node) => {
-        const pos = nodePositions.get(node.id);
-        if (!pos) return;
-
-        const isRoot = node.id === rootPersonId;
-        const nodeG = nodeGroup
-          .append("g")
-          .attr("class", "node")
-          .attr(
-            "transform",
-            `translate(${pos.x - nodeWidth / 2}, ${pos.y - nodeHeight / 2})`
-          )
-          .attr("role", "button")
-          .attr("tabindex", 0)
-          .style("cursor", "pointer")
-          .on("click", () => onNodeClick?.(node.id))
-          .on("keydown", (event: KeyboardEvent) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              onNodeClick?.(node.id);
-            }
-          })
-          .on("mouseover", () => {
-            const rect = svgRef.current?.getBoundingClientRect();
-            if (rect) {
-              setTooltip({
-                node,
-                position: {
-                  x: rect.left + pos.x,
-                  y: rect.top + pos.y,
-                },
-              });
-            }
-          })
-          .on("mouseout", () => {
-            setTooltip(null);
-          });
-
-        renderRectNode(nodeG, node, pos, {
-          width: nodeWidth,
-          height: nodeHeight,
-          borderRadius: 8,
-          isRoot,
-        });
-      });
-
-      // Fit to container (center view)
-      fitToContainer(svg, g, zoom, width, height, margin);
-
-      resetViewRef.current = () => {
-        fitToContainer(svg, g, zoom, width, height, margin);
-      };
-
-      // Mark rendering complete
-      const endTime = performance.now();
-      const renderTime = endTime - startTime;
-      if (process.env.NODE_ENV === "development") {
-        // eslint-disable-next-line no-console
-        console.log(
-          `[Performance] TreeChart rendered ${nodes.length} nodes in ${renderTime.toFixed(2)}ms`
-        );
-      }
-      setIsRendering(false);
-    }, 0);
-
-    return () => clearTimeout(timeoutId);
-  }, [
-    nodes,
-    edges,
-    onNodeClick,
-    rootPersonId,
-    layoutParams,
-    debouncedZoomHandler,
-  ]);
-
-  useEffect(() => {
-    if (resetSignal !== undefined && resetViewRef.current) {
-      resetViewRef.current();
+  // Handle mouse leave to stop pan
+  const handleMouseLeave = useCallback(() => {
+    if (isDragging) {
+      setIsDragging(false);
     }
-  }, [resetSignal]);
+  }, [isDragging]);
 
-  const handleViewProfile = (nodeId: string) => {
-    navigate({ to: "/people/$personId", params: { personId: nodeId } });
-    setTooltip(null);
-  };
+  // Handle node interactions
+  const handleNodeMouseEnter = useCallback(
+    (node: ChartNode) => {
+      const rect = containerRef.current?.getBoundingClientRect();
+      const pos = nodePositions.get(node.id);
+      if (rect && pos) {
+        setTooltip({
+          node,
+          position: {
+            x: rect.left + transform.x + pos.x * transform.scale,
+            y: rect.top + transform.y + pos.y * transform.scale,
+          },
+        });
+      }
+    },
+    [nodePositions, transform]
+  );
 
-  const handleSetAsCenter = (nodeId: string) => {
-    onNodeClick?.(nodeId);
+  const handleNodeMouseLeave = useCallback(() => {
     setTooltip(null);
-  };
+  }, []);
+
+  const handleNodeClick = useCallback(
+    (node: ChartNode) => {
+      onNodeClick?.(node.id);
+    },
+    [onNodeClick]
+  );
+
+  // Handle tooltip actions
+  const handleViewProfile = useCallback(
+    (nodeId: string) => {
+      navigate({ to: "/people/$personId", params: { personId: nodeId } });
+      setTooltip(null);
+    },
+    [navigate]
+  );
+
+  const handleSetAsCenter = useCallback(
+    (nodeId: string) => {
+      onNodeClick?.(nodeId);
+      setTooltip(null);
+    },
+    [onNodeClick]
+  );
+
+  // Update dimensions on mount and resize
+  useMemo(() => {
+    if (!containerRef.current) return;
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        setDimensions({
+          width: entry.contentRect.width,
+          height: Math.max(600, entry.contentRect.height),
+        });
+      }
+    });
+    observer.observe(containerRef.current);
+    return () => observer.disconnect();
+  }, []);
 
   // Use provided root or first node
   const effectiveRootId = rootPersonId || nodes[0]?.id;
 
   // Show loading skeleton for large datasets
-  if (isRendering && loadingState.isLoading) {
+  if (loadingState.isLoading) {
     return (
       <ChartSkeleton
         message={loadingState.message || undefined}
@@ -337,12 +389,87 @@ function TreeChartComponent({
     );
   }
 
+  if (nodes.length === 0) {
+    return (
+      <div className="bg-card flex h-full w-full items-center justify-center rounded-lg border">
+        <p className="text-muted-foreground">No data to display</p>
+      </div>
+    );
+  }
+
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       ref={containerRef}
       className="bg-card relative h-full w-full overflow-hidden rounded-lg border"
+      onWheel={handleWheel}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
+      onMouseLeave={handleMouseLeave}
+      style={{ cursor: isDragging ? "grabbing" : "grab" }}
     >
-      <svg ref={svgRef} className="h-full w-full" />
+      <Svg width={dimensions.width} height={dimensions.height}>
+        <G
+          transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}
+        >
+          {/* Render edges first (behind nodes) */}
+          {edges.map((edge, i) => {
+            const source = nodePositions.get(edge.source);
+            const target = nodePositions.get(edge.target);
+
+            if (!source || !target) return null;
+
+            if (edge.type === "parent-child") {
+              return (
+                <ParentChildEdge
+                  key={`edge-${i}-${edge.source}-${edge.target}`}
+                  sourceX={source.x}
+                  sourceY={source.y}
+                  targetX={target.x}
+                  targetY={target.y}
+                  nodeHeight={NODE_HEIGHT}
+                />
+              );
+            } else if (edge.type === "spouse") {
+              return (
+                <SpouseEdge
+                  key={`edge-${i}-${edge.source}-${edge.target}`}
+                  sourceX={source.x}
+                  sourceY={source.y}
+                  targetX={target.x}
+                  targetY={target.y}
+                  nodeWidth={NODE_WIDTH}
+                />
+              );
+            }
+            return null;
+          })}
+
+          {/* Render nodes */}
+          {nodes.map((node) => {
+            const pos = nodePositions.get(node.id);
+            if (!pos) return null;
+
+            const isRoot = node.id === rootPersonId;
+
+            return (
+              <RectNode
+                key={node.id}
+                node={node}
+                x={pos.x - NODE_WIDTH / 2}
+                y={pos.y - NODE_HEIGHT / 2}
+                width={NODE_WIDTH}
+                height={NODE_HEIGHT}
+                isRoot={isRoot}
+                onMouseEnter={handleNodeMouseEnter}
+                onMouseLeave={handleNodeMouseLeave}
+                onClick={handleNodeClick}
+              />
+            );
+          })}
+        </G>
+      </Svg>
 
       {/* Tooltip */}
       {tooltip && effectiveRootId && (

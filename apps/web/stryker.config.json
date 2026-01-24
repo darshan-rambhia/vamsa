@@ -18,12 +18,7 @@
     "!server/**/*.test.ts",
     "!src/server/**/*.function.ts"
   ],
-  "ignorePatterns": [
-    "node_modules",
-    "dist",
-    ".git",
-    ".stryker-tmp"
-  ],
+  "ignorePatterns": ["node_modules", "dist", ".git", ".stryker-tmp"],
   "reporters": ["html", "clear-text", "progress", "json"],
   "htmlReporter": {
     "fileName": "../../test-output/mutation/web/index.html"

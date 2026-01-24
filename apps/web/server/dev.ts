@@ -156,12 +156,18 @@ export function vamsaDevApiPlugin(): Plugin {
               }
             }
 
-            logger.info({ url, method: req.method, bodyText }, "Better Auth request");
+            logger.info(
+              { url, method: req.method, bodyText },
+              "Better Auth request"
+            );
 
             // Create a minimal headers object
             const headers = new Headers();
             if (req.headers["content-type"]) {
-              headers.set("content-type", req.headers["content-type"] as string);
+              headers.set(
+                "content-type",
+                req.headers["content-type"] as string
+              );
             }
             if (req.headers["cookie"]) {
               headers.set("cookie", req.headers["cookie"] as string);
@@ -181,7 +187,13 @@ export function vamsaDevApiPlugin(): Plugin {
 
             // Get response body
             const responseBody = await response.text();
-            logger.info({ status: response.status, responseBody: responseBody.substring(0, 500) }, "Better Auth response");
+            logger.info(
+              {
+                status: response.status,
+                responseBody: responseBody.substring(0, 500),
+              },
+              "Better Auth response"
+            );
 
             // Send response
             res.statusCode = response.status;

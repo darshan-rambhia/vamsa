@@ -220,15 +220,15 @@ Tech Lead (orchestrator)
 
 ## Quality Gates (Reviewer Must Run All)
 
-| Command          | Purpose           | Must Pass |
-| ---------------- | ----------------- | --------- |
+| Command             | Purpose           | Must Pass |
+| ------------------- | ----------------- | --------- |
 | `bun run test`      | Unit tests        | Yes       |
 | `bun run lint`      | ESLint            | Yes       |
 | `bun run typecheck` | TypeScript        | Yes       |
 | `bun run build`     | Production build  | Yes       |
 | `bun run dev`       | Dev server starts | Yes       |
-| `docker build`   | Container builds  | Yes       |
-| `docker run`     | Container runs    | Yes       |
+| `docker build`      | Container builds  | Yes       |
+| `docker run`        | Container runs    | Yes       |
 
 **Bead can only be closed if ALL gates pass.**
 

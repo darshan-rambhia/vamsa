@@ -1,5 +1,5 @@
-import { prisma as defaultPrisma } from "../db";
-import type { User, PrismaClient } from "@vamsa/api";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { eq, count, or, desc } from "drizzle-orm";
 import type {
   ValidationResult,
   ImportResult,
@@ -9,29 +9,23 @@ import type {
 import { logger, serializeError } from "@vamsa/lib/logger";
 
 /**
- * Type for the database client used by restore functions.
- * This allows dependency injection for testing.
+ * User type for restore functions
  */
-export type RestoreDb = Pick<
-  PrismaClient,
-  | "person"
-  | "user"
-  | "relationship"
-  | "suggestion"
-  | "auditLog"
-  | "$transaction"
->;
+export interface User {
+  id: string;
+  email: string;
+  name: string | null;
+  role: "ADMIN" | "MEMBER" | "VIEWER";
+}
 
 /**
  * Validate a backup ZIP file without importing
  * @param user - Authenticated user performing validation
- * @param db Optional database client (defaults to prisma)
  * @returns Validation result with metadata about the backup
  * @throws Error if user lacks admin permissions
  */
 export async function validateBackupData(
-  user: User,
-  _db: RestoreDb = defaultPrisma as RestoreDb
+  user: User
 ): Promise<ValidationResult> {
   try {
     // Verify admin permissions
@@ -86,13 +80,11 @@ export async function validateBackupData(
 /**
  * Preview what would be imported from a backup
  * @param user - Authenticated user requesting preview
- * @param db Optional database client (defaults to prisma)
  * @returns Import preview with existing data counts
  * @throws Error if user lacks admin permissions
  */
 export async function previewImportData(
-  user: User,
-  db: RestoreDb = defaultPrisma as RestoreDb
+  user: User
 ): Promise<ImportPreview> {
   try {
     // Verify admin permissions
@@ -102,16 +94,33 @@ export async function previewImportData(
 
     // Count existing items for comparison
     const [
-      existingPeople,
-      existingUsers,
-      existingRelationships,
-      existingSuggestions,
+      { personCount },
+      { userCount },
+      { relationshipCount },
+      { suggestionCount },
     ] = await Promise.all([
-      db.person.count(),
-      db.user.count(),
-      db.relationship.count(),
-      db.suggestion.count(),
+      drizzleDb
+        .select({ personCount: count() })
+        .from(drizzleSchema.persons)
+        .then((r) => ({ personCount: r[0]?.personCount ?? 0 })),
+      drizzleDb
+        .select({ userCount: count() })
+        .from(drizzleSchema.users)
+        .then((r) => ({ userCount: r[0]?.userCount ?? 0 })),
+      drizzleDb
+        .select({ relationshipCount: count() })
+        .from(drizzleSchema.relationships)
+        .then((r) => ({ relationshipCount: r[0]?.relationshipCount ?? 0 })),
+      drizzleDb
+        .select({ suggestionCount: count() })
+        .from(drizzleSchema.suggestions)
+        .then((r) => ({ suggestionCount: r[0]?.suggestionCount ?? 0 })),
     ]);
+
+    const existingPeople = personCount;
+    const existingUsers = userCount;
+    const existingRelationships = relationshipCount;
+    const existingSuggestions = suggestionCount;
 
     return {
       conflicts: [],
@@ -150,14 +159,12 @@ export async function previewImportData(
  * Execute import with conflict resolution
  * @param user - Authenticated user performing the import
  * @param strategy - Conflict resolution strategy to apply
- * @param db Optional database client (defaults to prisma)
  * @returns Import result with statistics
  * @throws Error if import fails or user lacks admin permissions
  */
 export async function importBackupData(
   user: User,
-  strategy: ConflictResolutionStrategy = "skip",
-  db: RestoreDb = defaultPrisma as RestoreDb
+  strategy: ConflictResolutionStrategy = "skip"
 ): Promise<ImportResult> {
   try {
     // Validate admin permissions
@@ -176,32 +183,26 @@ export async function importBackupData(
     // 7. Create audit log
     // 8. Commit transaction
 
-    // Type assertion needed because Pick<PrismaClient, '$transaction'> loses the callable signature
-    const result = await (
-      db as RestoreDb & {
-        $transaction: <T>(fn: (tx: RestoreDb) => Promise<T>) => Promise<T>;
-      }
-    ).$transaction(async (tx: RestoreDb) => {
+    const result = await drizzleDb.transaction(async (tx) => {
       // Log the import action
-      await tx.auditLog.create({
-        data: {
-          userId: user.id,
-          action: "CREATE",
-          entityType: "BACKUP_IMPORT",
-          entityId: null,
-          newData: {
-            timestamp: new Date().toISOString(),
-            strategy,
-            statistics: {
-              peopleImported: 0,
-              relationshipsImported: 0,
-              usersImported: 0,
-              suggestionsImported: 0,
-              photosImported: 0,
-              auditLogsImported: 0,
-              conflictsResolved: 0,
-              skippedItems: 0,
-            },
+      await tx.insert(drizzleSchema.auditLogs).values({
+        id: crypto.randomUUID(),
+        userId: user.id,
+        action: "CREATE",
+        entityType: "BACKUP_IMPORT",
+        entityId: null,
+        newData: {
+          timestamp: new Date().toISOString(),
+          strategy,
+          statistics: {
+            peopleImported: 0,
+            relationshipsImported: 0,
+            usersImported: 0,
+            suggestionsImported: 0,
+            photosImported: 0,
+            auditLogsImported: 0,
+            conflictsResolved: 0,
+            skippedItems: 0,
           },
         },
       });
@@ -236,16 +237,15 @@ export async function importBackupData(
 
     // Log failed import attempt
     try {
-      await db.auditLog.create({
-        data: {
-          userId: user.id,
-          action: "CREATE",
-          entityType: "BACKUP_IMPORT_FAILED",
-          entityId: null,
-          newData: {
-            timestamp: new Date().toISOString(),
-            error: error instanceof Error ? error.message : "Unknown error",
-          },
+      await drizzleDb.insert(drizzleSchema.auditLogs).values({
+        id: crypto.randomUUID(),
+        userId: user.id,
+        action: "CREATE",
+        entityType: "BACKUP_IMPORT_FAILED",
+        entityId: null,
+        newData: {
+          timestamp: new Date().toISOString(),
+          error: error instanceof Error ? error.message : "Unknown error",
         },
       });
     } catch (logError) {
@@ -264,13 +264,11 @@ export async function importBackupData(
 /**
  * Get import history for audit purposes
  * @param user - Authenticated user requesting history
- * @param db Optional database client (defaults to prisma)
  * @returns List of recent imports (max 50)
  * @throws Error if user lacks admin permissions
  */
 export async function getImportHistoryData(
-  user: User,
-  db: RestoreDb = defaultPrisma as RestoreDb
+  user: User
 ): Promise<
   Array<{
     id: string;
@@ -287,24 +285,22 @@ export async function getImportHistoryData(
       throw new Error("Only administrators can view import history");
     }
 
-    const auditLogs = await db.auditLog.findMany({
-      where: {
-        entityType: {
-          in: ["BACKUP_IMPORT", "BACKUP_IMPORT_FAILED"],
-        },
-      },
-      include: {
+    const auditLogs = await drizzleDb.query.auditLogs.findMany({
+      where: (auditLogsTable) =>
+        or(
+          eq(auditLogsTable.entityType, "BACKUP_IMPORT"),
+          eq(auditLogsTable.entityType, "BACKUP_IMPORT_FAILED")
+        ),
+      with: {
         user: {
-          select: {
+          columns: {
             email: true,
             name: true,
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-      take: 50,
+      orderBy: (auditLogsTable) => [desc(auditLogsTable.createdAt)],
+      limit: 50,
     });
 
     return auditLogs.map((log) => {
@@ -312,7 +308,7 @@ export async function getImportHistoryData(
       return {
         id: log.id,
         importedAt: log.createdAt.toISOString(),
-        importedBy: log.user.name || log.user.email,
+        importedBy: log.user?.name || log.user?.email || "Unknown",
         strategy: (newData?.strategy as string) || "unknown",
         statistics: (newData?.statistics as Record<string, unknown>) || {},
         success: log.entityType === "BACKUP_IMPORT",
