@@ -4,7 +4,18 @@
  * These tests verify that slow query logging and statistics work correctly.
  */
 
-import { describe, test, expect, beforeEach } from "bun:test";
+import { describe, test, expect, beforeEach, mock } from "bun:test";
+
+// Mock the logger to prevent log output during tests
+mock.module("@vamsa/lib/logger", () => ({
+  logger: {
+    debug: mock(() => undefined),
+    info: mock(() => undefined),
+    warn: mock(() => undefined),
+    error: mock(() => undefined),
+  },
+}));
+
 import {
   logSlowQuery,
   getSlowQueries,

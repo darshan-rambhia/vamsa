@@ -26,35 +26,26 @@ mock.module("@vamsa/lib/logger", () => ({
   startTimer: mockStartTimer,
 }));
 
-// Create mock S3Client and commands before mocking the module
-const mockS3Send = mock(async () => ({}));
+// Create mock S3 client functions - these will be used by the mock class
+const mockS3Write = mock(async () => undefined);
+const mockS3Unlink = mock(async () => undefined);
 
-mock.module("@aws-sdk/client-s3", () => ({
-  S3Client: class MockS3Client {
-    send = mockS3Send;
-  },
-  PutObjectCommand: class MockPutObjectCommand {
-    args: unknown;
-    constructor(args: unknown) {
-      this.args = args;
-    }
-  },
-  DeleteObjectCommand: class MockDeleteObjectCommand {
-    args: unknown;
-    constructor(args: unknown) {
-      this.args = args;
-    }
-  },
-}));
+// Mock Bun.S3Client BEFORE importing storage.ts
+// This ensures the lazy-initialized s3Client uses our mock
+(Bun as any).S3Client = class MockS3Client {
+  write = mockS3Write;
+  unlink = mockS3Unlink;
+};
 
-// Import after mocks are set up
+// Import after Bun.S3Client mock is set up
 import { uploadToStorage, deleteFromStorage } from "./storage";
 import type { StorageProvider } from "./storage";
 
 describe("Cloud Storage Integration", () => {
   beforeEach(() => {
     clearAllMocks();
-    mockS3Send.mockClear();
+    mockS3Write.mockClear();
+    mockS3Unlink.mockClear();
   });
 
   describe("uploadToStorage - S3 Providers", () => {
@@ -480,10 +471,10 @@ describe("Cloud Storage Integration", () => {
 
         // All three providers should work with same S3Client
         await uploadToStorage("S3", "backup.zip", buffer, config);
-        mockS3Send.mockClear();
+        mockS3Write.mockClear();
 
         await uploadToStorage("R2", "backup.zip", buffer, config);
-        mockS3Send.mockClear();
+        mockS3Write.mockClear();
 
         await uploadToStorage("B2", "backup.zip", buffer, config);
 

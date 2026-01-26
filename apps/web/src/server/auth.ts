@@ -11,7 +11,7 @@ import {
 } from "@vamsa/lib/server/business";
 import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
-import { eq, notInArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { logger } from "@vamsa/lib/logger";
 import { t } from "@vamsa/lib/server";
 import { checkRateLimit, getClientIP } from "./middleware/rate-limiter";
@@ -55,9 +55,7 @@ export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
               lastName: drizzleSchema.persons.lastName,
             })
             .from(drizzleSchema.persons)
-            .where(
-              eq(drizzleSchema.persons.isLiving, true)
-            )
+            .where(eq(drizzleSchema.persons.isLiving, true))
             .orderBy(
               drizzleSchema.persons.lastName,
               drizzleSchema.persons.firstName

@@ -73,7 +73,10 @@ export async function performBackup(type: BackupType): Promise<string> {
       db
         .select()
         .from(drizzleSchema.persons)
-        .orderBy(drizzleSchema.persons.lastName, drizzleSchema.persons.firstName),
+        .orderBy(
+          drizzleSchema.persons.lastName,
+          drizzleSchema.persons.firstName
+        ),
       db
         .select()
         .from(drizzleSchema.relationships)

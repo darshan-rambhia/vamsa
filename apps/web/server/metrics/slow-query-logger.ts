@@ -1,17 +1,17 @@
 /**
  * Slow Query Logger
  *
- * Tracks and stores slow Prisma queries for monitoring and debugging.
+ * Tracks and stores slow database queries for monitoring and debugging.
  * Maintains an in-memory ring buffer of recent slow queries.
  *
  * Features:
  * - In-memory storage of last N slow queries
- * - Query details including model, operation, and duration
+ * - Query details including table, operation, and duration
  * - Admin endpoint to retrieve slow queries
  *
  * Usage:
  *   import { logSlowQuery, getSlowQueries } from './metrics/slow-query-logger';
- *   logSlowQuery({ model: 'Person', operation: 'findMany', duration: 1500 });
+ *   logSlowQuery({ model: 'Person', operation: 'select', duration: 1500 });
  */
 
 import { logger } from "@vamsa/lib/logger";
@@ -24,9 +24,9 @@ import { logger } from "@vamsa/lib/logger";
  * Represents a slow query record
  */
 export interface SlowQuery {
-  /** Prisma model name */
+  /** Database table/model name */
   model: string;
-  /** Prisma operation (findMany, create, etc.) */
+  /** Query operation (select, insert, update, delete) */
   operation: string;
   /** Query execution time in milliseconds */
   duration: number;
@@ -89,7 +89,7 @@ export function logSlowQuery(query: SlowQuery): void {
       duration: query.duration,
       threshold: SLOW_QUERY_LOG_THRESHOLD_MS,
     },
-    "Slow Prisma query detected"
+    "Slow database query detected"
   );
 }
 

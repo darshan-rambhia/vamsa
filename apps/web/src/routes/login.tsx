@@ -146,6 +146,17 @@ function LoginComponent() {
               </div>
             )}
 
+            {/* Dev credentials hint - check .env for ADMIN_EMAIL/ADMIN_PASSWORD */}
+            {import.meta.env.DEV && (
+              <div className="bg-muted/50 border-muted-foreground/20 rounded-lg border px-4 py-3 text-xs">
+                <div className="text-muted-foreground">
+                  Dev mode: Check <code className="font-mono">.env</code> for{" "}
+                  <code className="font-mono">ADMIN_EMAIL</code> /{" "}
+                  <code className="font-mono">ADMIN_PASSWORD</code>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>

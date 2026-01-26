@@ -4,6 +4,7 @@ import tsConfigPaths from "vite-tsconfig-paths";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import * as crypto from "crypto";
 import { vamsaDevApiPlugin } from "./server/dev";
 
 export default defineConfig({
@@ -58,7 +59,28 @@ export default defineConfig({
     tsConfigPaths({
       projects: ["./tsconfig.json"],
     }),
-    tanstackStart(),
+    tanstackStart({
+      serverFns: {
+        // Generate deterministic function IDs based on filename + functionName
+        // This prevents cache invalidation issues between dev server restarts
+        generateFunctionId: ({
+          filename,
+          functionName,
+        }: {
+          filename: string;
+          functionName: string;
+        }) => {
+          // Normalize the filename to be relative to src/
+          const normalizedPath = filename.replace(/^.*\/src\//, "src/");
+          const input = `${normalizedPath}--${functionName}`;
+          return crypto
+            .createHash("sha1")
+            .update(input)
+            .digest("hex")
+            .slice(0, 16);
+        },
+      },
+    }),
     viteReact(),
   ],
 });

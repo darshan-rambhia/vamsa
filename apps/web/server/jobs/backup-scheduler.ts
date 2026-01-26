@@ -24,7 +24,10 @@ export async function initBackupScheduler(): Promise<void> {
     // Stop any existing jobs
     stopBackupScheduler();
 
-    const [settings] = await db.select().from(drizzleSchema.backupSettings).limit(1);
+    const [settings] = await db
+      .select()
+      .from(drizzleSchema.backupSettings)
+      .limit(1);
     if (!settings) {
       logger.info(
         "No backup settings found, skipping scheduler initialization"

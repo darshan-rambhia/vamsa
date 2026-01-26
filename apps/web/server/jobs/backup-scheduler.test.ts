@@ -28,7 +28,8 @@ mock.module("../db", () => {
   // Create chainable mock for select().from().limit()
   const createSelectChain = () => ({
     from: () => ({
-      limit: () => Promise.resolve(mockSettingsResult ? [mockSettingsResult] : []),
+      limit: () =>
+        Promise.resolve(mockSettingsResult ? [mockSettingsResult] : []),
     }),
   });
 

@@ -230,12 +230,14 @@ export const getFamilyTree = createServerFn({ method: "GET" }).handler(
           isLiving: p.isLiving,
           photoUrl: p.photoUrl,
         })),
-        edges: relationships.map((r: typeof drizzleSchema.relationships.$inferSelect) => ({
-          id: r.id,
-          source: r.personId,
-          target: r.relatedPersonId,
-          type: r.type,
-        })),
+        edges: relationships.map(
+          (r: typeof drizzleSchema.relationships.$inferSelect) => ({
+            id: r.id,
+            source: r.personId,
+            target: r.relatedPersonId,
+            type: r.type,
+          })
+        ),
       };
     } catch (error) {
       logger.error({ error }, "getFamilyTree failed");

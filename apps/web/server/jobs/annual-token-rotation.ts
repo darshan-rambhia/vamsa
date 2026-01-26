@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
-import { eq, and, inArray } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { logger } from "@vamsa/lib/logger";
 import { enforceRotationPolicy } from "@vamsa/lib/server/business";
 
@@ -24,7 +24,9 @@ export function startAnnualRotationJob() {
           )
         );
 
-      const userIds = [...new Set(tokensWithAnnualRotation.map((t) => t.userId))];
+      const userIds = [
+        ...new Set(tokensWithAnnualRotation.map((t) => t.userId)),
+      ];
       const users = userIds.map((id) => ({ id }));
 
       let totalRotated = 0;
