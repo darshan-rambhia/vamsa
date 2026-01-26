@@ -43,3 +43,6 @@ apps/web/.ladle/.cache
 
 # Beads (project management)
 .beads
+
+# Mutation testing
+**/.stryker-tmp

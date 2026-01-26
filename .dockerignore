@@ -20,7 +20,7 @@ test-output/
 playwright.config.ts
 *.test.ts
 *.spec.ts
-.stryker-tmp/
+**/.stryker-tmp/
 stryker.config.json
 
 # E2E tests (not needed for production)

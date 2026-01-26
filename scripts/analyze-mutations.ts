@@ -170,7 +170,7 @@ function main() {
 
   if (!existsSync(mutationDir)) {
     logger.error("No mutation test results found. Run mutation tests first:");
-    logger.error("  pnpm test:mutation");
+    logger.error("  bun run test:mutation");
     process.exit(1);
   }
 
@@ -182,7 +182,7 @@ function main() {
 
   if (packages.length === 0) {
     logger.error("No mutation reports found.");
-    logger.error("Run mutation tests first: pnpm test:mutation");
+    logger.error("Run mutation tests first: bun run test:mutation");
     process.exit(1);
   }
 

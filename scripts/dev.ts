@@ -48,16 +48,17 @@ async function main() {
 
   // Push schema to database (creates tables if they don't exist)
   // This is safe for dev - it syncs the schema without migrations
+  // Using --force to skip interactive confirmation in dev environment
   logger.info("Syncing database schema...");
-  await $`pnpm db:push`;
+  await $`cd packages/api && bunx drizzle-kit push --force`;
 
   // Seed database (ignore errors if already seeded)
   logger.info("Seeding database...");
-  await $`pnpm db:seed`.nothrow();
+  await $`bun run db:seed`.nothrow();
 
   // Start dev server
   logger.info("Starting development server...");
-  await $`turbo run dev --filter=@vamsa/web`;
+  await $`bun run --filter @vamsa/web dev`;
 }
 
 main().catch((error) => {

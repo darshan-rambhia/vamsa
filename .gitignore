@@ -16,7 +16,7 @@ coverage
 playwright-report
 test-results
 .playwright-mcp
-.stryker-tmp
+**/.stryker-tmp
 
 # Misc
 .DS_Store
