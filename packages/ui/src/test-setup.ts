@@ -49,6 +49,34 @@ globalAny.cancelAnimationFrame = (id: number) =>
   window.cancelAnimationFrame(id);
 globalAny.HTMLCollection = window.HTMLCollection;
 globalAny.NodeList = window.NodeList;
+globalAny.NodeFilter = window.NodeFilter;
+globalAny.ResizeObserver =
+  window.ResizeObserver ||
+  class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+
+// Mock localStorage
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+
+  return {
+    getItem: (key: string) => store[key] || null,
+    setItem: (key: string, value: string) => {
+      store[key] = value.toString();
+    },
+    removeItem: (key: string) => {
+      delete store[key];
+    },
+    clear: () => {
+      store = {};
+    },
+  };
+})();
+
+globalAny.localStorage = localStorageMock;
 
 // Cleanup after each test to avoid DOM pollution
 afterEach(() => {
