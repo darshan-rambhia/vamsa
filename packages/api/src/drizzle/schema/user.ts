@@ -14,7 +14,7 @@ import {
   index,
   jsonb,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import { userRoleEnum, profileClaimStatusEnum } from "./enums";
 
 /**
@@ -47,17 +47,17 @@ export const users = pgTable(
     failedLoginAttempts: integer("failedLoginAttempts").notNull().default(0),
     lockedUntil: timestamp("lockedUntil", { mode: "date" }),
     lastFailedLoginAt: timestamp("lastFailedLoginAt", { mode: "date" }),
+    // Use sql`` to match PostgreSQL's exact JSONB normalization (no spaces)
     emailNotificationPreferences: jsonb("emailNotificationPreferences").default(
-      {
-        suggestionsCreated: true,
-        suggestionsUpdated: true,
-        newMemberJoined: true,
-        birthdayReminders: true,
-      }
+      sql`'{"newMemberJoined":true,"birthdayReminders":true,"suggestionsCreated":true,"suggestionsUpdated":true}'::jsonb`
     ),
   },
   (table) => [
-    unique().on(table.oidcProvider, table.oidcSubject),
+    // Column order must match database constraint order
+    unique("User_oidcProvider_oidcSubject_unique").on(
+      table.oidcSubject,
+      table.oidcProvider
+    ),
     index("idx_user_email").on(table.email),
     index("idx_user_personId").on(table.personId),
     index("idx_user_oidcProvider").on(table.oidcProvider),
@@ -88,7 +88,10 @@ export const accounts = pgTable(
   },
   (table) => [
     index("idx_account_userId").on(table.userId),
-    unique().on(table.providerId, table.accountId),
+    unique("Account_providerId_accountId_unique").on(
+      table.providerId,
+      table.accountId
+    ),
   ]
 );
 

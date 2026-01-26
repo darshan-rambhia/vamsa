@@ -53,7 +53,11 @@ export const eventParticipants = pgTable(
     createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
   },
   (table) => [
-    unique().on(table.eventId, table.personId),
+    // Column order must match database constraint order
+    unique("EventParticipant_eventId_personId_unique").on(
+      table.personId,
+      table.eventId
+    ),
     index("idx_eventParticipant_eventId").on(table.eventId),
     index("idx_eventParticipant_personId").on(table.personId),
   ]
@@ -73,7 +77,11 @@ export const eventSources = pgTable(
     sourceNotes: text("sourceNotes"),
   },
   (table) => [
-    unique().on(table.sourceId, table.personId, table.eventType),
+    unique("EventSource_sourceId_personId_eventType_unique").on(
+      table.sourceId,
+      table.personId,
+      table.eventType
+    ),
     index("idx_eventSource_sourceId").on(table.sourceId),
     index("idx_eventSource_personId").on(table.personId),
     index("idx_eventSource_eventType").on(table.eventType),
@@ -92,7 +100,12 @@ export const eventMedias = pgTable(
     eventType: text("eventType").notNull(),
   },
   (table) => [
-    unique().on(table.mediaId, table.personId, table.eventType),
+    // Column order must match database constraint order
+    unique("EventMedia_mediaId_personId_eventType_unique").on(
+      table.personId,
+      table.mediaId,
+      table.eventType
+    ),
     index("idx_eventMedia_mediaId").on(table.mediaId),
     index("idx_eventMedia_personId").on(table.personId),
     index("idx_eventMedia_eventType").on(table.eventType),

@@ -65,7 +65,10 @@ export const personMedias = pgTable(
     updatedAt: timestamp("updatedAt", { mode: "date" }).notNull(),
   },
   (table) => [
-    unique().on(table.personId, table.mediaId),
+    unique("PersonMedia_personId_mediaId_unique").on(
+      table.personId,
+      table.mediaId
+    ),
     index("idx_personMedia_personId").on(table.personId),
     index("idx_personMedia_mediaId").on(table.mediaId),
     index("idx_personMedia_isPrimary").on(table.isPrimary),

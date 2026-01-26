@@ -36,7 +36,12 @@ export const relationships = pgTable(
     updatedAt: timestamp("updatedAt", { mode: "date" }).notNull(),
   },
   (table) => [
-    unique().on(table.personId, table.relatedPersonId, table.type),
+    // Column order must match database constraint order
+    unique("Relationship_personId_relatedPersonId_type_unique").on(
+      table.type,
+      table.relatedPersonId,
+      table.personId
+    ),
     index("idx_relationship_personId").on(table.personId),
     index("idx_relationship_relatedPersonId").on(table.relatedPersonId),
     index("idx_relationship_personId_type").on(table.personId, table.type),

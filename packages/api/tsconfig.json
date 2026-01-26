@@ -13,5 +13,5 @@
     "noEmit": true
   },
   "include": ["src/**/*", "prisma/**/*"],
-  "exclude": ["node_modules", "src/generated"]
+  "exclude": ["node_modules", "src/generated", ".stryker-tmp"]
 }

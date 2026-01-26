@@ -12,7 +12,7 @@ import {
   boolean,
   index,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   privacyLevelEnum,
   auditActionEnum,
@@ -283,6 +283,26 @@ export const emailLogsRelations = relations(emailLogs, ({ one }) => ({
 }));
 
 /**
+ * DashboardPreferences table - user dashboard configuration and layout preferences
+ */
+export const dashboardPreferences = pgTable(
+  "DashboardPreferences",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId").notNull().unique(),
+    layout: jsonb("layout")
+      .notNull()
+      .default(sql`'{"widgets":[]}'::jsonb`),
+    widgets: jsonb("widgets")
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt", { mode: "date" }).notNull(),
+  },
+  (table) => [index("idx_dashboardPreferences_userId").on(table.userId)]
+);
+
+/**
  * Suggestion relations
  */
 export const suggestionsRelations = relations(suggestions, ({ one }) => ({
@@ -302,3 +322,16 @@ export const suggestionsRelations = relations(suggestions, ({ one }) => ({
     relationName: "SuggestionReviewer",
   }),
 }));
+
+/**
+ * DashboardPreferences relations
+ */
+export const dashboardPreferencesRelations = relations(
+  dashboardPreferences,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [dashboardPreferences.userId],
+      references: [users.id],
+    }),
+  })
+);

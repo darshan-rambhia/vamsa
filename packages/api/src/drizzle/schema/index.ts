@@ -23,3 +23,6 @@ export { users as user } from "./user";
 export { sessions as session } from "./user";
 export { accounts as account } from "./user";
 export { verifications as verification } from "./user";
+
+// Dashboard preferences
+export { dashboardPreferences, dashboardPreferencesRelations } from "./misc";

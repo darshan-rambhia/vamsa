@@ -58,7 +58,12 @@ export const placePersonLinks = pgTable(
     createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
   },
   (table) => [
-    unique().on(table.personId, table.placeId, table.type),
+    // Column order must match database constraint order
+    unique("PlacePersonLink_personId_placeId_type_unique").on(
+      table.type,
+      table.placeId,
+      table.personId
+    ),
     index("idx_placePersonLink_personId").on(table.personId),
     index("idx_placePersonLink_placeId").on(table.placeId),
   ]
