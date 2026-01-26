@@ -18,7 +18,6 @@ import {
 } from "@vamsa/lib";
 import { notifyNewMemberJoined } from "./notifications";
 
-
 /**
  * Fetch claimable profiles for an OIDC user
  *
@@ -125,7 +124,10 @@ export async function getClaimableProfilesData(userId: string) {
  * @returns Object with success status and updated user ID
  * @throws Error if user/person not found, already claimed, or validation fails
  */
-export async function claimProfileForOIDCData(userId: string, personId: string) {
+export async function claimProfileForOIDCData(
+  userId: string,
+  personId: string
+) {
   // Fetch user with current state
   const user = await drizzleDb.query.users.findFirst({
     where: eq(drizzleSchema.users.id, userId),

@@ -1,8 +1,5 @@
-import { drizzleDb, drizzleSchema } from "../db";
 import { logger } from "@vamsa/lib/logger";
 import type { UserRole } from "@vamsa/schemas";
-import { eq } from "drizzle-orm";
-
 
 /**
  * Family settings data transfer object
@@ -31,10 +28,6 @@ export interface UpdateFamilySettingsInput {
   metricsApiUrl?: string | null;
 }
 
-
-
-
-
 /**
  * Retrieves family settings from the database
  * Returns default settings if no settings exist in the database
@@ -43,8 +36,7 @@ export interface UpdateFamilySettingsInput {
  * @throws {Error} If database query fails
  */
 export async function getFamilySettingsData(): Promise<FamilySettingsData> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
+  const { drizzleDb } = await import("@vamsa/api");
 
   const settings = await drizzleDb.query.familySettings.findFirst();
 
@@ -197,7 +189,10 @@ export async function setUserLanguagePreferenceData(
       preferredLanguage: language,
     })
     .where(eq(drizzleSchema.users.id, userId))
-    .returning({ id: drizzleSchema.users.id, preferredLanguage: drizzleSchema.users.preferredLanguage });
+    .returning({
+      id: drizzleSchema.users.id,
+      preferredLanguage: drizzleSchema.users.preferredLanguage,
+    });
 
   logger.info({ userId, language }, "Language preference updated");
 

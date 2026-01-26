@@ -17,7 +17,7 @@ import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { logger } from "@vamsa/lib/logger";
 import { createPaginationMeta } from "@vamsa/schemas";
 import type { UserUpdateInput, UserRole } from "@vamsa/schemas";
-import { eq, and, or, like, desc, asc, count, ne, isNull } from "drizzle-orm";
+import { eq, and, or, like, desc, asc, count, ne, isNull, SQL } from "drizzle-orm";
 
 /**
  * Type for the database client used by user functions.
@@ -377,7 +377,7 @@ export async function searchAvailablePersonsData(
   search?: string,
   db: UsersDb = drizzleDb
 ): Promise<AvailablePerson[]> {
-  const conditions: any[] = [isNull(drizzleSchema.persons.createdById)];
+  const conditions: (SQL<unknown> | undefined)[] = [isNull(drizzleSchema.persons.createdById)];
 
   if (search) {
     conditions.push(
@@ -388,7 +388,8 @@ export async function searchAvailablePersonsData(
     );
   }
 
-  const whereClause = conditions.length > 1 ? and(...conditions) : conditions[0];
+  const whereClause =
+    conditions.length > 1 ? and(...conditions) : conditions[0];
 
   const persons = await db.query.persons.findMany({
     where: whereClause,
@@ -465,4 +466,3 @@ export async function unlockUserAccountData(
 
   return { success: true };
 }
-

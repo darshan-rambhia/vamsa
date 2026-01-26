@@ -83,9 +83,7 @@ export async function validateBackupData(
  * @returns Import preview with existing data counts
  * @throws Error if user lacks admin permissions
  */
-export async function previewImportData(
-  user: User
-): Promise<ImportPreview> {
+export async function previewImportData(user: User): Promise<ImportPreview> {
   try {
     // Verify admin permissions
     if (user.role !== "ADMIN") {
@@ -267,9 +265,7 @@ export async function importBackupData(
  * @returns List of recent imports (max 50)
  * @throws Error if user lacks admin permissions
  */
-export async function getImportHistoryData(
-  user: User
-): Promise<
+export async function getImportHistoryData(user: User): Promise<
   Array<{
     id: string;
     importedAt: string;

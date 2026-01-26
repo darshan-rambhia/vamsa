@@ -23,13 +23,18 @@ export async function listRelationshipsData(
   type?: RelationshipType
 ) {
   try {
-    const whereConditions = [eq(drizzleSchema.relationships.personId, personId)];
+    const whereConditions = [
+      eq(drizzleSchema.relationships.personId, personId),
+    ];
     if (type) {
       whereConditions.push(eq(drizzleSchema.relationships.type, type));
     }
 
     const relationships = await drizzleDb.query.relationships.findMany({
-      where: whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0],
+      where:
+        whereConditions.length > 1
+          ? and(...whereConditions)
+          : whereConditions[0],
       with: {
         relatedPerson: true,
       },
@@ -301,8 +306,14 @@ export async function updateRelationshipData(
         })
         .where(
           and(
-            eq(drizzleSchema.relationships.personId, relationship.relatedPersonId),
-            eq(drizzleSchema.relationships.relatedPersonId, relationship.personId),
+            eq(
+              drizzleSchema.relationships.personId,
+              relationship.relatedPersonId
+            ),
+            eq(
+              drizzleSchema.relationships.relatedPersonId,
+              relationship.personId
+            ),
             eq(drizzleSchema.relationships.type, "SPOUSE")
           )
         );
@@ -359,8 +370,14 @@ export async function deleteRelationshipData(relationshipId: string) {
       .delete(drizzleSchema.relationships)
       .where(
         and(
-          eq(drizzleSchema.relationships.personId, relationship.relatedPersonId),
-          eq(drizzleSchema.relationships.relatedPersonId, relationship.personId),
+          eq(
+            drizzleSchema.relationships.personId,
+            relationship.relatedPersonId
+          ),
+          eq(
+            drizzleSchema.relationships.relatedPersonId,
+            relationship.personId
+          ),
           eq(drizzleSchema.relationships.type, inverseType)
         )
       );

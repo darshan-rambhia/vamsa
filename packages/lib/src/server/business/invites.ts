@@ -381,9 +381,7 @@ export async function acceptInviteData(
   const invite = inviteResult[0];
 
   if (invite.status !== "PENDING") {
-    throw new Error(
-      `Invite is ${invite.status.toLowerCase()}, cannot accept`
-    );
+    throw new Error(`Invite is ${invite.status.toLowerCase()}, cannot accept`);
   }
 
   if (invite.expiresAt < new Date()) {
@@ -586,4 +584,3 @@ export async function resendInviteData(
     expiresAt: updated[0].expiresAt.toISOString(),
   };
 }
-

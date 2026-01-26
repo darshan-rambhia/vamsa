@@ -19,23 +19,7 @@
  * - sendBirthdayReminders: Sends birthday reminder emails for today's birthdays
  */
 
-import { drizzleDb, drizzleSchema } from "../db";
-import { eq } from "drizzle-orm";
-import {
-  emailService,
-  createSuggestionCreatedEmail,
-  createSuggestionUpdatedEmail,
-  createNewMemberEmail,
-  createBirthdayReminderEmail,
-} from "@vamsa/api";
 import { logger, serializeError } from "@vamsa/lib/logger";
-
-
-
-
-
-
-
 
 /**
  * Get user's email notification preferences
@@ -192,7 +176,10 @@ export async function notifySuggestionUpdated(
     }
 
     // TODO: Implement email sending logic similar to Prisma version
-    logger.info({ suggestionId, status }, "Suggestion updated notification queued");
+    logger.info(
+      { suggestionId, status },
+      "Suggestion updated notification queued"
+    );
   } catch (error) {
     logger.error(
       { error: serializeError(error) },
@@ -210,7 +197,7 @@ export async function notifySuggestionUpdated(
 export async function notifyNewMemberJoined(userId: string) {
   try {
     const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-    const { eq, ne } = await import("drizzle-orm");
+    const { eq } = await import("drizzle-orm");
 
     const newMember = await drizzleDb.query.users.findFirst({
       where: eq(drizzleSchema.users.id, userId),
@@ -273,11 +260,7 @@ export async function sendBirthdayReminders() {
       return;
     }
 
-    // Get all active users
-    const users = await drizzleDb.query.users.findMany({
-      where: eq(drizzleSchema.users.isActive, true),
-    });
-
+    // Get all system users
     const systemUser = await drizzleDb.query.users.findFirst({
       where: eq(drizzleSchema.users.role, "ADMIN"),
     });

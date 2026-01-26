@@ -1,5 +1,5 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, or, ilike, desc, asc, sql } from "drizzle-orm";
+import { eq, and, or, ilike, desc, asc, sql, SQL } from "drizzle-orm";
 import { logger, serializeError } from "@vamsa/lib/logger";
 import { createPaginationMeta } from "@vamsa/schemas";
 import { t } from "../i18n";
@@ -60,7 +60,7 @@ export async function logAuditAction(
  * @returns Drizzle where condition
  */
 export function buildPersonWhereClause(search?: string, isLiving?: boolean) {
-  const conditions: any[] = [];
+  const conditions: SQL<unknown>[] = [];
 
   if (search) {
     conditions.push(
@@ -134,7 +134,7 @@ export async function listPersonsData(
     .where(where);
 
   // Build order by clause
-  const orderByConditions: any[] = [];
+  const orderByConditions: SQL<unknown>[] = [];
   if (sortBy === "lastName") {
     orderByConditions.push(
       sortOrder === "asc"
@@ -176,7 +176,7 @@ export async function listPersonsData(
     .select()
     .from(drizzleSchema.persons)
     .where(where)
-    .orderBy(...(orderByConditions as any[]))
+    .orderBy(...orderByConditions)
     .limit(limit)
     .offset((page - 1) * limit);
 
@@ -248,6 +248,50 @@ export interface PersonDetail {
 }
 
 /**
+ * Internal type for relationship query result with nested relatedPerson
+ */
+interface RelationshipWithRelatedPerson {
+  id: string;
+  type: string;
+  marriageDate: Date | null;
+  divorceDate: Date | null;
+  isActive: boolean;
+  relatedPerson: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+/**
+ * Internal type for person query result with relationships
+ */
+interface PersonWithRelationships {
+  id: string;
+  firstName: string;
+  lastName: string;
+  maidenName: string | null;
+  dateOfBirth: Date | null;
+  dateOfPassing: Date | null;
+  birthPlace: string | null;
+  nativePlace: string | null;
+  gender: string | null;
+  photoUrl: string | null;
+  bio: string | null;
+  email: string | null;
+  phone: string | null;
+  currentAddress: unknown;
+  workAddress: unknown;
+  profession: string | null;
+  employer: string | null;
+  socialLinks: unknown;
+  isLiving: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  relationshipsFrom: RelationshipWithRelatedPerson[];
+}
+
+/**
  * Retrieve a single person by ID with all relationships
  * @param personId - ID of the person to retrieve
  * @param db - Drizzle database instance
@@ -259,15 +303,15 @@ export async function getPersonData(
   db: PersonDb = drizzleDb
 ): Promise<PersonDetail> {
   // Query person with relationships
-  // Using type assertion because the relationship typing is complex
-  const person = await db.query.persons.findFirst({
+  // Type assertion needed because drizzle's inferred type doesn't include the nested relation
+  const person = (await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
     with: {
       relationshipsFrom: {
-        with: { relatedPerson: true },
-      } as any,
+        with: { relatedPerson: true } as Record<string, boolean>,
+      },
     },
-  } as any);
+  })) as unknown as PersonWithRelationships | undefined;
 
   if (!person) {
     throw new Error(await t("errors:person.notFound"));
@@ -275,7 +319,8 @@ export async function getPersonData(
 
   // Build relationships list
   // Only use relationshipsFrom to avoid duplicates since relationships are stored bidirectionally
-  const relationships = ((person as any).relationshipsFrom as any[] || []).map((r: any) => ({
+  const relationships = (person.relationshipsFrom || []).map(
+    (r: RelationshipWithRelatedPerson) => ({
     id: r.id,
     type: r.type,
     marriageDate: r.marriageDate?.toISOString().split("T")[0] ?? null,
@@ -525,7 +570,7 @@ export async function searchPersonsData(
 ): Promise<PersonSearchResult[]> {
   const start = Date.now();
 
-  const conditions: any[] = [
+  const conditions: SQL<unknown>[] = [
     or(
       ilike(drizzleSchema.persons.firstName, `%${query}%`),
       ilike(drizzleSchema.persons.lastName, `%${query}%`)
@@ -539,7 +584,7 @@ export async function searchPersonsData(
   const persons = await db
     .select()
     .from(drizzleSchema.persons)
-    .where(and(...(conditions as any[])))
+    .where(and(...conditions))
     .orderBy(
       asc(drizzleSchema.persons.lastName),
       asc(drizzleSchema.persons.firstName)
@@ -558,4 +603,3 @@ export async function searchPersonsData(
     isLiving: p.isLiving,
   }));
 }
-

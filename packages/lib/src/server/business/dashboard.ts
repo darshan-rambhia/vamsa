@@ -107,8 +107,14 @@ async function calculateFamilyStats(): Promise<DashboardStats> {
     recentAdditions,
   ] = await Promise.all([
     drizzleDb.select({ count: count() }).from(drizzleSchema.persons),
-    drizzleDb.select({ count: count() }).from(drizzleSchema.persons).where(eq(drizzleSchema.persons.isLiving, true)),
-    drizzleDb.select({ count: count() }).from(drizzleSchema.persons).where(eq(drizzleSchema.persons.isLiving, false)),
+    drizzleDb
+      .select({ count: count() })
+      .from(drizzleSchema.persons)
+      .where(eq(drizzleSchema.persons.isLiving, true)),
+    drizzleDb
+      .select({ count: count() })
+      .from(drizzleSchema.persons)
+      .where(eq(drizzleSchema.persons.isLiving, false)),
     drizzleDb.select({ count: count() }).from(drizzleSchema.relationships),
     drizzleDb.query.persons.findMany({
       orderBy: desc(drizzleSchema.persons.createdAt),
@@ -132,7 +138,7 @@ async function calculateFamilyStats(): Promise<DashboardStats> {
     livingPeople,
     deceasedPeople,
     totalRelationships,
-    recentAdditions: recentAdditions.map((p: typeof recentAdditions[0]) => ({
+    recentAdditions: recentAdditions.map((p: (typeof recentAdditions)[0]) => ({
       id: p.id,
       firstName: p.firstName,
       lastName: p.lastName,
@@ -295,20 +301,28 @@ export async function getRecentActivityData(
 
   // Date range filter
   if (filters.dateFrom) {
-    whereConditions.push(sql`${drizzleSchema.auditLogs.createdAt} >= ${new Date(filters.dateFrom)}`);
+    whereConditions.push(
+      sql`${drizzleSchema.auditLogs.createdAt} >= ${new Date(filters.dateFrom)}`
+    );
   }
   if (filters.dateTo) {
-    whereConditions.push(sql`${drizzleSchema.auditLogs.createdAt} <= ${new Date(filters.dateTo)}`);
+    whereConditions.push(
+      sql`${drizzleSchema.auditLogs.createdAt} <= ${new Date(filters.dateTo)}`
+    );
   }
 
   // Action type filter
   if (filters.actionTypes && filters.actionTypes.length > 0) {
-    whereConditions.push(inArray(drizzleSchema.auditLogs.action, filters.actionTypes as any));
+    whereConditions.push(
+      inArray(drizzleSchema.auditLogs.action, filters.actionTypes as any)
+    );
   }
 
   // Entity type filter
   if (filters.entityTypes && filters.entityTypes.length > 0) {
-    whereConditions.push(inArray(drizzleSchema.auditLogs.entityType, filters.entityTypes));
+    whereConditions.push(
+      inArray(drizzleSchema.auditLogs.entityType, filters.entityTypes)
+    );
   }
 
   // User filter
@@ -332,7 +346,7 @@ export async function getRecentActivityData(
   let filteredLogs = logs;
   if (filters.searchQuery) {
     const query = filters.searchQuery.toLowerCase();
-    filteredLogs = logs.filter((log: typeof logs[0]) => {
+    filteredLogs = logs.filter((log: (typeof logs)[0]) => {
       const description = getActivityDescription(
         log.action,
         log.entityType,
@@ -344,7 +358,7 @@ export async function getRecentActivityData(
   }
 
   // Format results
-  return filteredLogs.map((log: typeof logs[0]) => ({
+  return filteredLogs.map((log: (typeof logs)[0]) => ({
     id: log.id,
     actionType: log.action,
     entityType: log.entityType,
@@ -386,7 +400,10 @@ export async function getActivityFilterOptionsData(): Promise<ActivityFilterOpti
 
   allLogs.forEach((log) => {
     actionTypeMap.set(log.action, (actionTypeMap.get(log.action) ?? 0) + 1);
-    entityTypeMap.set(log.entityType, (entityTypeMap.get(log.entityType) ?? 0) + 1);
+    entityTypeMap.set(
+      log.entityType,
+      (entityTypeMap.get(log.entityType) ?? 0) + 1
+    );
   });
 
   // Get all users who have performed actions
@@ -400,17 +417,21 @@ export async function getActivityFilterOptionsData(): Promise<ActivityFilterOpti
   const usersInLogs = usersWithLogs.filter((u) => userIdSet.has(u.id));
 
   return {
-    actionTypes: Array.from(actionTypeMap.entries()).map(([action, count]: [string, number]) => ({
-      value: action,
-      label: formatActionType(action),
-      count,
-    })),
-    entityTypes: Array.from(entityTypeMap.entries()).map(([entityType, count]: [string, number]) => ({
-      value: entityType,
-      label: formatEntityType(entityType),
-      count,
-    })),
-    users: usersInLogs.map((u: typeof usersInLogs[0]) => ({
+    actionTypes: Array.from(actionTypeMap.entries()).map(
+      ([action, count]: [string, number]) => ({
+        value: action,
+        label: formatActionType(action),
+        count,
+      })
+    ),
+    entityTypes: Array.from(entityTypeMap.entries()).map(
+      ([entityType, count]: [string, number]) => ({
+        value: entityType,
+        label: formatEntityType(entityType),
+        count,
+      })
+    ),
+    users: usersInLogs.map((u: (typeof usersInLogs)[0]) => ({
       value: u.id,
       label: u.name ?? "Unknown",
     })),

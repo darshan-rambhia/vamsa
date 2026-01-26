@@ -60,19 +60,17 @@ export async function generateCalendarTokenLogic(
     .returning();
 
   // Log the action
-  await drizzleDb
-    .insert(drizzleSchema.auditLogs)
-    .values({
-      id: crypto.randomUUID(),
-      userId,
-      action: "CREATE",
-      entityType: "CalendarToken",
-      entityId: calendarToken.id,
-      newData: {
-        name: calendarToken.name,
-        expiresAt: calendarToken.expiresAt,
-      },
-    });
+  await drizzleDb.insert(drizzleSchema.auditLogs).values({
+    id: crypto.randomUUID(),
+    userId,
+    action: "CREATE",
+    entityType: "CalendarToken",
+    entityId: calendarToken.id,
+    newData: {
+      name: calendarToken.name,
+      expiresAt: calendarToken.expiresAt,
+    },
+  });
 
   logger.info(`Calendar token generated for user ${userId}`);
 
@@ -152,15 +150,13 @@ export async function revokeCalendarTokenLogic(
     .where(eq(drizzleSchema.calendarTokens.id, calendarToken.id));
 
   // Log the action
-  await drizzleDb
-    .insert(drizzleSchema.auditLogs)
-    .values({
-      id: crypto.randomUUID(),
-      userId,
-      action: "DELETE",
-      entityType: "CalendarToken",
-      entityId: calendarToken.id,
-    });
+  await drizzleDb.insert(drizzleSchema.auditLogs).values({
+    id: crypto.randomUUID(),
+    userId,
+    action: "DELETE",
+    entityType: "CalendarToken",
+    entityId: calendarToken.id,
+  });
 
   logger.info(`Calendar token revoked for user ${userId}`);
 
@@ -230,15 +226,13 @@ export async function deleteCalendarTokenLogic(
     .where(eq(drizzleSchema.calendarTokens.id, calendarToken.id));
 
   // Log the action
-  await drizzleDb
-    .insert(drizzleSchema.auditLogs)
-    .values({
-      id: crypto.randomUUID(),
-      userId,
-      action: "DELETE",
-      entityType: "CalendarToken",
-      entityId: calendarToken.id,
-    });
+  await drizzleDb.insert(drizzleSchema.auditLogs).values({
+    id: crypto.randomUUID(),
+    userId,
+    action: "DELETE",
+    entityType: "CalendarToken",
+    entityId: calendarToken.id,
+  });
 
   logger.info(`Calendar token deleted for user ${userId}`);
 

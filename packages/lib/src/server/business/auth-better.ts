@@ -1,6 +1,6 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { genericOAuth } from "better-auth/plugins";
+import { bearer, genericOAuth } from "better-auth/plugins";
 // import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 
@@ -19,7 +19,10 @@ async function hashPassword(password: string): Promise<string> {
   });
 }
 
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
+async function verifyPassword(
+  password: string,
+  hash: string
+): Promise<boolean> {
   // Handle our scrypt format
   if (hash.startsWith("scrypt:")) {
     const { scrypt, timingSafeEqual } = await import("crypto");
@@ -163,6 +166,10 @@ export const auth = betterAuth({
   },
 
   plugins: [
+    // Bearer token authentication for mobile apps (React Native)
+    // Enables dual auth: web uses cookies, mobile uses Authorization header
+    bearer(),
+
     // Generic OIDC for self-hosted providers (Authentik, Keycloak, etc.)
     genericOAuth({
       config: process.env.OIDC_DISCOVERY_URL

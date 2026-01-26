@@ -88,7 +88,6 @@ export interface UpdatedPlacePersonLink {
   type: PersonPlaceType | null;
 }
 
-
 /**
  * Format a place object from database to API response * Converts Date objects to ISO strings and handles unknown types
  *
@@ -128,9 +127,7 @@ export function formatPlace(place: {
  * @returns Place with parent reference and counts
  * @throws Error if place not found
  */
-export async function getPlaceData(
-  id: string
-): Promise<PlaceWithChildren> {
+export async function getPlaceData(id: string): Promise<PlaceWithChildren> {
   // Get the place
   const place = await drizzleDb.query.places.findFirst({
     where: eq(drizzleSchema.places.id, id),
@@ -179,9 +176,7 @@ export async function getPlaceData(
  * @param query - Search query string
  * @returns Array of matching places (max 50 results), sorted by type then name
  */
-export async function searchPlacesData(
-  query: string
-): Promise<
+export async function searchPlacesData(query: string): Promise<
   Array<
     PlaceResponse & {
       parentName: string | null;
@@ -309,17 +304,15 @@ export async function getPersonPlacesData(
  * @returns Created place with formatted response
  * @throws Error if parent place not found
  */
-export async function createPlaceData(
-  data: {
-    name: string;
-    placeType: PlaceType;
-    latitude?: number | null;
-    longitude?: number | null;
-    parentId?: string | null;
-    description?: string | null;
-    alternativeNames?: string[] | null;
-  }
-): Promise<PlaceResponse> {
+export async function createPlaceData(data: {
+  name: string;
+  placeType: PlaceType;
+  latitude?: number | null;
+  longitude?: number | null;
+  parentId?: string | null;
+  description?: string | null;
+  alternativeNames?: string[] | null;
+}): Promise<PlaceResponse> {
   // Verify parent place exists if parentId is provided
   if (data.parentId) {
     const parentPlace = await drizzleDb.query.places.findFirst({
@@ -406,8 +399,7 @@ export async function updatePlaceData(
   if (updates.name !== undefined) updateData.name = updates.name;
   if (updates.placeType !== undefined) updateData.placeType = updates.placeType;
   if (updates.latitude !== undefined) updateData.latitude = updates.latitude;
-  if (updates.longitude !== undefined)
-    updateData.longitude = updates.longitude;
+  if (updates.longitude !== undefined) updateData.longitude = updates.longitude;
   if (updates.parentId !== undefined) updateData.parentId = updates.parentId;
   if (updates.description !== undefined)
     updateData.description = updates.description;
@@ -435,9 +427,7 @@ export async function updatePlaceData(
  * @returns Success status
  * @throws Error if place not found or is still in use
  */
-export async function deletePlaceData(
-  id: string
-): Promise<{ success: true }> {
+export async function deletePlaceData(id: string): Promise<{ success: true }> {
   // Verify place exists
   const place = await drizzleDb.query.places.findFirst({
     where: eq(drizzleSchema.places.id, id),
@@ -497,15 +487,13 @@ export async function deletePlaceData(
  * @returns Created link with place details
  * @throws Error if person/place not found or duplicate link exists
  */
-export async function linkPersonToPlaceData(
-  data: {
-    personId: string;
-    placeId: string;
-    fromYear?: number | null;
-    toYear?: number | null;
-    type?: PersonPlaceType | null;
-  }
-): Promise<{
+export async function linkPersonToPlaceData(data: {
+  personId: string;
+  placeId: string;
+  fromYear?: number | null;
+  toYear?: number | null;
+  type?: PersonPlaceType | null;
+}): Promise<{
   id: string;
   place: PlaceResponse;
   fromYear: number | null;
@@ -593,9 +581,7 @@ export async function linkPersonToPlaceData(
  * @returns Comma-separated string of place names from root to target
  * @throws Error if place not found
  */
-export async function getPlaceHierarchyPathData(
-  id: string
-): Promise<string> {
+export async function getPlaceHierarchyPathData(id: string): Promise<string> {
   const place = await drizzleDb.query.places.findFirst({
     where: eq(drizzleSchema.places.id, id),
     with: {

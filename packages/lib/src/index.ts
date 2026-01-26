@@ -80,6 +80,16 @@ export {
   CREATE_PERSON_TRGM_INDEX_SQL,
 } from "./search";
 
+// Natural Language Search (NLP) utilities
+export {
+  classifyIntent,
+  executeSearch,
+  type SearchIntent,
+  type ClassificationResult,
+  type SearchResult as NLPSearchResult,
+  type RelationshipDataMaps,
+} from "./search/index";
+
 // Profile claiming utilities for OIDC users
 export {
   type ProfileClaimStatus,

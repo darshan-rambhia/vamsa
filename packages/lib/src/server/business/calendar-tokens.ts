@@ -1,23 +1,16 @@
-import { drizzleDb, drizzleSchema } from "../db";
 import { logger } from "@vamsa/lib/logger";
 import { addYears } from "date-fns";
-import { eq, desc, and } from "drizzle-orm";
+
 import {
   generateSecureToken,
   rotateToken,
   revokeToken,
 } from "./token-rotation";
 
-
-
 export interface CreateCalendarTokenInput {
   name?: string;
   rotationPolicy?: string;
 }
-
-
-
-
 
 export interface UpdateTokenNameInput {
   tokenId: string;
@@ -29,13 +22,10 @@ export interface UpdateTokenNameResult {
   name: string | null;
 }
 
-
 export interface DeleteCalendarTokenResult {
   success: boolean;
   deletedId: string;
 }
-
-
 
 /**
  * Get current user's calendar tokens
@@ -95,10 +85,7 @@ export async function createCalendarTokenData(
  * @returns The token if it exists and belongs to the user
  * @throws Error if token not found or doesn't belong to user
  */
-export async function verifyTokenOwnership(
-  tokenId: string,
-  userId: string
-) {
+export async function verifyTokenOwnership(tokenId: string, userId: string) {
   const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
   const { eq, and } = await import("drizzle-orm");
 
@@ -123,10 +110,7 @@ export async function verifyTokenOwnership(
  * @returns The newly created token after rotation
  * @throws Error if token not found or doesn't belong to user
  */
-export async function rotateCalendarTokenData(
-  tokenId: string,
-  userId: string
-) {
+export async function rotateCalendarTokenData(tokenId: string, userId: string) {
   // Verify user owns this token
   await verifyTokenOwnership(tokenId, userId);
 
@@ -147,10 +131,7 @@ export async function rotateCalendarTokenData(
  * @returns The revoked token
  * @throws Error if token not found or doesn't belong to user
  */
-export async function revokeCalendarTokenData(
-  tokenId: string,
-  userId: string
-) {
+export async function revokeCalendarTokenData(tokenId: string, userId: string) {
   // Verify user owns this token
   await verifyTokenOwnership(tokenId, userId);
 
@@ -184,7 +165,10 @@ export async function updateTokenNameData(
     .update(drizzleSchema.calendarTokens)
     .set({ name })
     .where(eq(drizzleSchema.calendarTokens.id, tokenId))
-    .returning({ id: drizzleSchema.calendarTokens.id, name: drizzleSchema.calendarTokens.name });
+    .returning({
+      id: drizzleSchema.calendarTokens.id,
+      name: drizzleSchema.calendarTokens.name,
+    });
 
   logger.info(
     { userId, tokenId, newName: name },

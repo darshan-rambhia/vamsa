@@ -6,7 +6,6 @@ import {
   notifySuggestionUpdated,
 } from "./notifications";
 
-
 /**
  * Options for listing suggestions with pagination and filtering
  */
@@ -50,8 +49,6 @@ export interface SuggestionListResult {
   pagination: ReturnType<typeof createPaginationMeta>;
 }
 
-
-
 /**
  * Result type for creating a suggestion
  */
@@ -61,15 +58,12 @@ export interface SuggestionCreateResult {
   status: string;
 }
 
-
 /**
  * Result type for applying/reviewing a suggestion
  */
 export interface SuggestionReviewResult {
   success: boolean;
 }
-
-
 
 /**
  * Query suggestions with pagination and optional status filtering
@@ -134,9 +128,7 @@ export async function listSuggestionsData(
         )
     : Promise.resolve([]));
 
-  const reviewedByMap = new Map(
-    reviewedByUsers.map((u) => [u.id, u])
-  );
+  const reviewedByMap = new Map(reviewedByUsers.map((u) => [u.id, u]));
 
   return {
     items: suggestions.map((row) => {

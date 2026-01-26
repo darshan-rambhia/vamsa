@@ -16,7 +16,7 @@
  * - getPrometheusStatusData: Get Prometheus configuration and availability status
  */
 
-import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { drizzleDb } from "@vamsa/api";
 import { logger } from "@vamsa/lib/logger";
 
 /**
@@ -55,7 +55,6 @@ export interface MetricSnapshot {
   };
   status: "healthy" | "degraded" | "unavailable";
 }
-
 
 const PROMETHEUS_URL = process.env.PROMETHEUS_URL || "http://localhost:9090";
 

@@ -336,14 +336,12 @@ export async function addEventParticipantData(
     throw new Error("Person not found");
   }
 
-  const existingParticipant = await db.query.eventParticipants.findFirst(
-    {
-      where: and(
-        eq(drizzleSchema.eventParticipants.eventId, data.eventId),
-        eq(drizzleSchema.eventParticipants.personId, data.personId)
-      ),
-    }
-  );
+  const existingParticipant = await db.query.eventParticipants.findFirst({
+    where: and(
+      eq(drizzleSchema.eventParticipants.eventId, data.eventId),
+      eq(drizzleSchema.eventParticipants.personId, data.personId)
+    ),
+  });
 
   if (existingParticipant) {
     throw new Error("This person is already a participant in this event");
@@ -421,4 +419,3 @@ export async function removeEventParticipantData(
 
   return { success: true };
 }
-

@@ -1,5 +1,5 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, sql, desc, asc, count, lte, gte, inArray, or } from "drizzle-orm";
+import { eq, and, sql, asc, count, lte, gte, inArray } from "drizzle-orm";
 import { logger, serializeError } from "@vamsa/lib/logger";
 
 /**
@@ -200,7 +200,11 @@ export async function getPlacesForMapData(
       });
 
       // Skip empty places unless includeEmpty is true
-      if (!options.includeEmpty && events.length === 0 && personLinks.length === 0) {
+      if (
+        !options.includeEmpty &&
+        events.length === 0 &&
+        personLinks.length === 0
+      ) {
         continue;
       }
 
@@ -238,9 +242,7 @@ export async function getPlacesForMapData(
  * @param personId - ID of the person to get locations for
  * @returns Object containing person markers and person details
  */
-export async function getPersonLocationsData(
-  personId: string
-): Promise<{
+export async function getPersonLocationsData(personId: string): Promise<{
   markers: PersonLocationMarker[];
   total: number;
   person: {
@@ -292,7 +294,7 @@ export async function getPersonLocationsData(
     }
   >();
 
-  personPlaceLinks.forEach((link: typeof personPlaceLinks[0]) => {
+  personPlaceLinks.forEach((link: (typeof personPlaceLinks)[0]) => {
     if (link.place.latitude && link.place.longitude) {
       placeMap.set(link.placeId, {
         id: link.place.id,
@@ -309,23 +311,22 @@ export async function getPersonLocationsData(
   });
 
   // Get place details for event places
-  const eventPlaceIds = eventPlaces.map((e) => e.placeId).filter((id): id is string => id !== null);
-  const eventPlacesDetails = eventPlaceIds.length > 0
-    ? await drizzleDb.query.places.findMany({
-        where: inArray(drizzleSchema.places.id, eventPlaceIds),
-      })
-    : [];
+  const eventPlaceIds = eventPlaces
+    .map((e) => e.placeId)
+    .filter((id): id is string => id !== null);
+  const eventPlacesDetails =
+    eventPlaceIds.length > 0
+      ? await drizzleDb.query.places.findMany({
+          where: inArray(drizzleSchema.places.id, eventPlaceIds),
+        })
+      : [];
 
   const eventPlacesMap = new Map(eventPlacesDetails.map((p) => [p.id, p]));
 
-  eventPlaces.forEach((event: typeof eventPlaces[0]) => {
+  eventPlaces.forEach((event: (typeof eventPlaces)[0]) => {
     if (event.placeId) {
       const eventPlace = eventPlacesMap.get(event.placeId);
-      if (
-        eventPlace &&
-        eventPlace.latitude &&
-        eventPlace.longitude
-      ) {
+      if (eventPlace && eventPlace.latitude && eventPlace.longitude) {
         if (!placeMap.has(eventPlace.id)) {
           placeMap.set(eventPlace.id, {
             id: eventPlace.id,
@@ -505,7 +506,7 @@ export async function getFamilyLocationsData(): Promise<{
         }
       >();
 
-      personLinks.forEach((link: typeof personLinks[0]) => {
+      personLinks.forEach((link: (typeof personLinks)[0]) => {
         uniquePeople.set(link.personId, {
           id: link.person.id,
           firstName: link.person.firstName,
@@ -514,7 +515,7 @@ export async function getFamilyLocationsData(): Promise<{
         });
       });
 
-      events.forEach((event: typeof events[0]) => {
+      events.forEach((event: (typeof events)[0]) => {
         uniquePeople.set(event.personId, {
           id: event.person.id,
           firstName: event.person.firstName,
@@ -524,12 +525,14 @@ export async function getFamilyLocationsData(): Promise<{
       });
 
       // Get event details with years
-      const eventDetails = events.map((event: typeof events[0]) => ({
+      const eventDetails = events.map((event: (typeof events)[0]) => ({
         type: event.type,
         year: event.date ? event.date.getFullYear() : null,
       }));
 
-      const eventTypes = [...new Set(events.map((e: typeof events[0]) => e.type))];
+      const eventTypes = [
+        ...new Set(events.map((e: (typeof events)[0]) => e.type)),
+      ];
       const timeRange = await calculateTimeRange(place.id);
 
       markers.push({
@@ -626,11 +629,14 @@ export async function getPlacesByTimeRangeData(
       },
     });
 
-    if (eventsInRange.length > 0 || personLinksInRange.some((link) => {
-      const linkStart = link.fromYear || startYear;
-      const linkEnd = link.toYear || endYear;
-      return linkStart <= endYear && linkEnd >= startYear;
-    })) {
+    if (
+      eventsInRange.length > 0 ||
+      personLinksInRange.some((link) => {
+        const linkStart = link.fromYear || startYear;
+        const linkEnd = link.toYear || endYear;
+        return linkStart <= endYear && linkEnd >= startYear;
+      })
+    ) {
       places.push(place);
     }
   }
@@ -775,7 +781,10 @@ export async function getPlaceClustersData(
         .from(drizzleSchema.placePersonLinks)
         .where(eq(drizzleSchema.placePersonLinks.placeId, place.id));
 
-      if ((eventCount[0]?.count ?? 0) === 0 && (personLinkCount[0]?.count ?? 0) === 0) {
+      if (
+        (eventCount[0]?.count ?? 0) === 0 &&
+        (personLinkCount[0]?.count ?? 0) === 0
+      ) {
         continue; // Skip places without events or person links
       }
 

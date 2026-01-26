@@ -1,7 +1,4 @@
-import { drizzleDb, drizzleSchema } from "../db";
 import { logger, serializeError } from "@vamsa/lib/logger";
-import { eq, desc, asc } from "drizzle-orm";
-
 
 /**
  * Source details with related data
@@ -194,26 +191,13 @@ export interface PersonSourcesResponse {
   [eventType: string]: SourceWithEvents[];
 }
 
-
-
-
-
-
-
-
-
-
-
-
 /**
  * Get a single source with all details
  * @param sourceId - The ID of the source to fetch
  * @returns Complete source details with related data
  * @throws Error if source not found
  */
-export async function getSourceData(
-  sourceId: string
-): Promise<SourceDetail> {
+export async function getSourceData(sourceId: string): Promise<SourceDetail> {
   const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
   const { eq } = await import("drizzle-orm");
 
@@ -348,24 +332,22 @@ export async function listSourcesData(
  * @param data - Source creation data
  * @returns Created source
  */
-export async function createSourceData(
-  data: {
-    title: string;
-    author?: string | null;
-    publicationDate?: string | null;
-    description?: string | null;
-    repository?: string | null;
-    notes?: string | null;
-    sourceType?: string | null;
-    citationFormat?: string | null;
-    doi?: string | null;
-    url?: string | null;
-    isbn?: string | null;
-    callNumber?: string | null;
-    accessDate?: string | null;
-    confidence?: string | null;
-  }
-): Promise<SourceCreateResult> {
+export async function createSourceData(data: {
+  title: string;
+  author?: string | null;
+  publicationDate?: string | null;
+  description?: string | null;
+  repository?: string | null;
+  notes?: string | null;
+  sourceType?: string | null;
+  citationFormat?: string | null;
+  doi?: string | null;
+  url?: string | null;
+  isbn?: string | null;
+  callNumber?: string | null;
+  accessDate?: string | null;
+  confidence?: string | null;
+}): Promise<SourceCreateResult> {
   const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
 
   const sourceId = crypto.randomUUID();
@@ -504,18 +486,16 @@ export async function deleteSourceData(
  * @returns Created research note
  * @throws Error if source or person not found
  */
-export async function createResearchNoteData(
-  data: {
-    sourceId: string;
-    personId: string;
-    eventType: string;
-    findings: string;
-    methodology?: string | null;
-    limitations?: string | null;
-    relatedSources?: string;
-    conclusionReliability?: string | null;
-  }
-): Promise<ResearchNoteResult> {
+export async function createResearchNoteData(data: {
+  sourceId: string;
+  personId: string;
+  eventType: string;
+  findings: string;
+  methodology?: string | null;
+  limitations?: string | null;
+  relatedSources?: string;
+  conclusionReliability?: string | null;
+}): Promise<ResearchNoteResult> {
   const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
   const { eq } = await import("drizzle-orm");
 
@@ -681,15 +661,13 @@ export async function deleteResearchNoteData(
  * @returns Created or updated event source link
  * @throws Error if source or person not found
  */
-export async function linkSourceToEventData(
-  data: {
-    sourceId: string;
-    personId: string;
-    eventType: string;
-    confidence?: string | null;
-    sourceNotes?: string | null;
-  }
-): Promise<EventSourceResult> {
+export async function linkSourceToEventData(data: {
+  sourceId: string;
+  personId: string;
+  eventType: string;
+  confidence?: string | null;
+  sourceNotes?: string | null;
+}): Promise<EventSourceResult> {
   const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
   const { eq, and } = await import("drizzle-orm");
 

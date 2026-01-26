@@ -144,9 +144,7 @@ describe("Calendar Server Functions", () => {
       });
       (mockDrizzleDb.insert as any).mockReturnValueOnce(insertChain);
 
-      const before = Date.now();
       await generateCalendarTokenLogic("user-1", undefined, 90);
-      const after = Date.now();
 
       // Verify that drizzle insert was called
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
@@ -191,9 +189,9 @@ describe("Calendar Server Functions", () => {
         },
       };
 
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(mockToken);
 
       const result = await validateCalendarTokenLogic("abc123");
 
@@ -218,9 +216,9 @@ describe("Calendar Server Functions", () => {
         },
       };
 
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(mockToken);
 
       const result = await validateCalendarTokenLogic("abc123");
 
@@ -242,9 +240,9 @@ describe("Calendar Server Functions", () => {
         },
       };
 
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(mockToken);
 
       const result = await validateCalendarTokenLogic("abc123");
 
@@ -253,9 +251,9 @@ describe("Calendar Server Functions", () => {
     });
 
     it("should return invalid for non-existent token", async () => {
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(null);
 
       const result = await validateCalendarTokenLogic("nonexistent");
 
@@ -265,9 +263,9 @@ describe("Calendar Server Functions", () => {
 
     it("should handle database errors gracefully", async () => {
       const error = new Error("Database error");
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockRejectedValueOnce(
-        error
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockRejectedValueOnce(error);
 
       const result = await validateCalendarTokenLogic("abc123");
 
@@ -288,9 +286,9 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(mockToken);
 
       const updateChain = createMockUpdateChain();
       (updateChain.set as any).mockReturnValueOnce({
@@ -305,9 +303,9 @@ describe("Calendar Server Functions", () => {
     });
 
     it("should throw error if token not found", async () => {
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(null);
 
       try {
         await revokeCalendarTokenLogic("token-nonexistent", "user-1");
@@ -327,9 +325,9 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(mockToken);
 
       try {
         await revokeCalendarTokenLogic("token-1", "user-1");
@@ -365,9 +363,9 @@ describe("Calendar Server Functions", () => {
         },
       ];
 
-      (mockDrizzleDb.query.calendarTokens.findMany as any).mockResolvedValueOnce(
-        mockTokens
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findMany as any
+      ).mockResolvedValueOnce(mockTokens);
 
       const result = await listCalendarTokensLogic(userId);
 
@@ -377,9 +375,9 @@ describe("Calendar Server Functions", () => {
     });
 
     it("should return empty list if no tokens exist", async () => {
-      (mockDrizzleDb.query.calendarTokens.findMany as any).mockResolvedValueOnce(
-        []
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findMany as any
+      ).mockResolvedValueOnce([]);
 
       const result = await listCalendarTokensLogic("user-1");
 
@@ -398,9 +396,9 @@ describe("Calendar Server Functions", () => {
         isActive: false,
       };
 
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(mockToken);
 
       const deleteChain = createMockDeleteChain();
       (deleteChain.where as any).mockResolvedValueOnce(undefined);
@@ -413,9 +411,9 @@ describe("Calendar Server Functions", () => {
     });
 
     it("should throw error if token not found", async () => {
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(null);
 
       try {
         await deleteCalendarTokenLogic("token-nonexistent", "user-1");
@@ -435,9 +433,9 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(mockToken);
 
       try {
         await deleteCalendarTokenLogic("token-1", "user-1");
@@ -457,9 +455,9 @@ describe("Calendar Server Functions", () => {
         isActive: false,
       };
 
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        mockToken
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(mockToken);
 
       try {
         await deleteCalendarTokenLogic("token-1", "user-1");

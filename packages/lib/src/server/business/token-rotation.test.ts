@@ -36,28 +36,34 @@ mock.module("@vamsa/lib/logger", () => ({
   startTimer: mockStartTimer,
 }));
 
-// Create mock Drizzle helpers
-const createMockInsertChain = () => ({
-  values: mock(() => ({
-    returning: mock(() => Promise.resolve([{}])),
-  })),
-});
+// Mock for returning() in update chain - allows tests to control the return value
 
-const createMockUpdateChain = () => ({
-  set: mock(() => ({
-    where: mock(() => Promise.resolve()),
-  })),
-});
+const mockUpdateReturning = mock(() => Promise.resolve([{}] as any[]));
+// Mock for returning() in insert chain
+
+const mockInsertReturning = mock(() => Promise.resolve([{}] as any[]));
 
 const mockDrizzleDb = {
-  insert: mock(() => createMockInsertChain()),
+  insert: mock(() => ({
+    values: mock(() => ({
+      returning: mockInsertReturning,
+    })),
+  })),
   query: {
     calendarTokens: {
       findFirst: mock(() => Promise.resolve(null)),
       findMany: mock(() => Promise.resolve([])),
     },
   },
-  update: mock(() => createMockUpdateChain()),
+  update: mock(() => ({
+    set: mock(() => ({
+      where: mock(() => {
+        // Return a thenable with returning() for Drizzle's fluent API
+        const result = Promise.resolve({});
+        return Object.assign(result, { returning: mockUpdateReturning });
+      }),
+    })),
+  })),
 };
 
 const mockDrizzleSchema = {
@@ -77,6 +83,8 @@ describe("Token Rotation Functions", () => {
     (mockDrizzleDb.query.calendarTokens.findFirst as any).mockClear();
     (mockDrizzleDb.query.calendarTokens.findMany as any).mockClear();
     (mockDrizzleDb.update as any).mockClear();
+    mockUpdateReturning.mockClear();
+    mockInsertReturning.mockClear();
   });
 
   describe("generateSecureToken", () => {
@@ -125,9 +133,9 @@ describe("Token Rotation Functions", () => {
 
   describe("enforceRotationPolicy", () => {
     it("should return empty result when no tokens exist", async () => {
-      (mockDrizzleDb.query.calendarTokens.findMany as any).mockResolvedValueOnce(
-        []
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findMany as any
+      ).mockResolvedValueOnce([]);
 
       const result = await enforceRotationPolicy("user-1", "manual");
 
@@ -156,24 +164,15 @@ describe("Token Rotation Functions", () => {
         isActive: true,
       };
 
-      (mockDrizzleDb.query.calendarTokens.findMany as any).mockResolvedValueOnce(
-        [existingToken]
-      );
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        existingToken
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findMany as any
+      ).mockResolvedValueOnce([existingToken]);
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(existingToken);
 
-      const insertChain = createMockInsertChain();
-      (insertChain.values as any).mockReturnValueOnce({
-        returning: () => Promise.resolve([newToken]),
-      });
-      (mockDrizzleDb.insert as any).mockReturnValueOnce(insertChain);
-
-      const updateChain = createMockUpdateChain();
-      (updateChain.set as any).mockReturnValueOnce({
-        where: () => Promise.resolve(),
-      });
-      (mockDrizzleDb.update as any).mockReturnValueOnce(updateChain);
+      // Mock insert returning() for new token creation
+      mockInsertReturning.mockResolvedValueOnce([newToken]);
 
       const result = await enforceRotationPolicy("user-1", "manual");
 
@@ -192,9 +191,9 @@ describe("Token Rotation Functions", () => {
         createdAt: new Date(),
       };
 
-      (mockDrizzleDb.query.calendarTokens.findMany as any).mockResolvedValueOnce(
-        [existingToken]
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findMany as any
+      ).mockResolvedValueOnce([existingToken]);
 
       const result = await enforceRotationPolicy("user-1", "password_change");
 
@@ -219,24 +218,15 @@ describe("Token Rotation Functions", () => {
         token: "new-secure-token",
       };
 
-      (mockDrizzleDb.query.calendarTokens.findMany as any).mockResolvedValueOnce(
-        [oldToken]
-      );
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        oldToken
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findMany as any
+      ).mockResolvedValueOnce([oldToken]);
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(oldToken);
 
-      const insertChain = createMockInsertChain();
-      (insertChain.values as any).mockReturnValueOnce({
-        returning: () => Promise.resolve([newToken]),
-      });
-      (mockDrizzleDb.insert as any).mockReturnValueOnce(insertChain);
-
-      const updateChain = createMockUpdateChain();
-      (updateChain.set as any).mockReturnValueOnce({
-        where: () => Promise.resolve(),
-      });
-      (mockDrizzleDb.update as any).mockReturnValueOnce(updateChain);
+      // Mock insert returning() for new token creation
+      mockInsertReturning.mockResolvedValueOnce([newToken]);
 
       const result = await enforceRotationPolicy("user-1", "annual_check");
 
@@ -264,21 +254,12 @@ describe("Token Rotation Functions", () => {
         isActive: true,
       };
 
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        oldToken
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(oldToken);
 
-      const insertChain = createMockInsertChain();
-      (insertChain.values as any).mockReturnValueOnce({
-        returning: () => Promise.resolve([newToken]),
-      });
-      (mockDrizzleDb.insert as any).mockReturnValueOnce(insertChain);
-
-      const updateChain = createMockUpdateChain();
-      (updateChain.set as any).mockReturnValueOnce({
-        where: () => Promise.resolve(),
-      });
-      (mockDrizzleDb.update as any).mockReturnValueOnce(updateChain);
+      // Mock insert returning() for new token creation
+      mockInsertReturning.mockResolvedValueOnce([newToken]);
 
       const result = await rotateToken("old-id");
 
@@ -288,9 +269,9 @@ describe("Token Rotation Functions", () => {
     });
 
     it("should throw error if token not found", async () => {
-      (mockDrizzleDb.query.calendarTokens.findFirst as any).mockResolvedValueOnce(
-        null
-      );
+      (
+        mockDrizzleDb.query.calendarTokens.findFirst as any
+      ).mockResolvedValueOnce(null);
 
       try {
         await rotateToken("nonexistent");
@@ -304,17 +285,15 @@ describe("Token Rotation Functions", () => {
 
   describe("revokeToken", () => {
     it("should set isActive to false", async () => {
-      const updateChain = createMockUpdateChain();
-      const whereChain = {
-        returning: () => Promise.resolve([{ id: "token-1", isActive: false }]),
-      };
-      (updateChain.set as any).mockReturnValueOnce(whereChain);
-      (mockDrizzleDb.update as any).mockReturnValueOnce(updateChain);
+      mockUpdateReturning.mockResolvedValueOnce([
+        { id: "token-1", isActive: false },
+      ]);
 
       const result = await revokeToken("token-1");
 
       expect(mockDrizzleDb.update).toHaveBeenCalled();
       expect(result).toBeDefined();
+      expect(result.isActive).toBe(false);
     });
 
     it("should return updated token", async () => {
@@ -325,16 +304,13 @@ describe("Token Rotation Functions", () => {
         expiresAt: new Date(),
       };
 
-      const updateChain = createMockUpdateChain();
-      const whereChain = {
-        returning: () => Promise.resolve([updatedToken]),
-      };
-      (updateChain.set as any).mockReturnValueOnce(whereChain);
-      (mockDrizzleDb.update as any).mockReturnValueOnce(updateChain);
+      mockUpdateReturning.mockResolvedValueOnce([updatedToken]);
 
       const result = await revokeToken("token-1");
 
       expect(result).toBeDefined();
+      expect(result.id).toBe("token-1");
+      expect(result.isActive).toBe(false);
     });
   });
 });

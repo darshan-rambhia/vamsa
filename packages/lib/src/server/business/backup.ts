@@ -77,42 +77,61 @@ export async function gatherBackupData(
     mediaObjects,
   ] = await Promise.all([
     // People ordered by name for consistency
-    db.select().from(drizzleSchema.persons).orderBy(drizzleSchema.persons.lastName, drizzleSchema.persons.firstName),
+    db
+      .select()
+      .from(drizzleSchema.persons)
+      .orderBy(drizzleSchema.persons.lastName, drizzleSchema.persons.firstName),
 
     // Relationships by creation date
-    db.select().from(drizzleSchema.relationships).orderBy(drizzleSchema.relationships.createdAt),
+    db
+      .select()
+      .from(drizzleSchema.relationships)
+      .orderBy(drizzleSchema.relationships.createdAt),
 
     // Users WITHOUT password hashes (SECURITY)
-    db.select({
-      id: drizzleSchema.users.id,
-      email: drizzleSchema.users.email,
-      name: drizzleSchema.users.name,
-      personId: drizzleSchema.users.personId,
-      role: drizzleSchema.users.role,
-      isActive: drizzleSchema.users.isActive,
-      mustChangePassword: drizzleSchema.users.mustChangePassword,
-      invitedById: drizzleSchema.users.invitedById,
-      createdAt: drizzleSchema.users.createdAt,
-      updatedAt: drizzleSchema.users.updatedAt,
-      lastLoginAt: drizzleSchema.users.lastLoginAt,
-      preferredLanguage: drizzleSchema.users.preferredLanguage,
-      // password field is intentionally excluded for security
-    }).from(drizzleSchema.users).orderBy(drizzleSchema.users.createdAt),
+    db
+      .select({
+        id: drizzleSchema.users.id,
+        email: drizzleSchema.users.email,
+        name: drizzleSchema.users.name,
+        personId: drizzleSchema.users.personId,
+        role: drizzleSchema.users.role,
+        isActive: drizzleSchema.users.isActive,
+        mustChangePassword: drizzleSchema.users.mustChangePassword,
+        invitedById: drizzleSchema.users.invitedById,
+        createdAt: drizzleSchema.users.createdAt,
+        updatedAt: drizzleSchema.users.updatedAt,
+        lastLoginAt: drizzleSchema.users.lastLoginAt,
+        preferredLanguage: drizzleSchema.users.preferredLanguage,
+        // password field is intentionally excluded for security
+      })
+      .from(drizzleSchema.users)
+      .orderBy(drizzleSchema.users.createdAt),
 
     // Suggestions for community contributions
-    db.select().from(drizzleSchema.suggestions).orderBy(drizzleSchema.suggestions.submittedAt),
+    db
+      .select()
+      .from(drizzleSchema.suggestions)
+      .orderBy(drizzleSchema.suggestions.submittedAt),
 
     // Family settings
     db.select().from(drizzleSchema.familySettings).limit(1),
 
     // Audit logs (filtered by date if requested)
     options.includeAuditLogs
-      ? db.select().from(drizzleSchema.auditLogs).where(gte(drizzleSchema.auditLogs.createdAt, auditLogCutoff)).orderBy(drizzleSchema.auditLogs.createdAt)
+      ? db
+          .select()
+          .from(drizzleSchema.auditLogs)
+          .where(gte(drizzleSchema.auditLogs.createdAt, auditLogCutoff))
+          .orderBy(drizzleSchema.auditLogs.createdAt)
       : Promise.resolve([]),
 
     // Media objects for photo collection
     options.includePhotos
-      ? db.select().from(drizzleSchema.mediaObjects).orderBy(drizzleSchema.mediaObjects.uploadedAt)
+      ? db
+          .select()
+          .from(drizzleSchema.mediaObjects)
+          .orderBy(drizzleSchema.mediaObjects.uploadedAt)
       : Promise.resolve([]),
   ]);
 

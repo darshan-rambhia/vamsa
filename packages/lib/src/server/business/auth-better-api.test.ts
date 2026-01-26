@@ -4,13 +4,17 @@
  * Tests cover:
  * - betterAuthLogin: email/password login with headers handling
  * - betterAuthRegister: new user registration with headers handling
- * - betterAuthGetSession: session retrieval with null handling
+ * - betterAuthGetSession: session retrieval with null handling + bearer token auth
  * - betterAuthChangePassword: password change with error handling
  * - betterAuthSignOut: session invalidation
  * - betterAuthGetSessionWithUserFromCookie: cookie parsing and user field extraction
- * - betterAuthGetSessionWithUser: headers-based session with user field extraction
+ * - betterAuthGetSessionWithUser: headers-based session with user field extraction + bearer token auth
  * - getBetterAuthProviders: environment variable checking
  * - headersToObject: Headers to plain object conversion
+ *
+ * Bearer Token Authentication (for mobile apps):
+ * - Tests verify Authorization: Bearer <token> headers are correctly passed to auth API
+ * - Enables dual auth: web uses cookies, mobile uses bearer tokens
  */
 
 import { describe, it, expect, beforeEach, mock, afterEach } from "bun:test";
@@ -416,6 +420,60 @@ describe("auth-better-api", () => {
       const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
       expect(callArgs?.headers).toHaveProperty("cookie", "session=abc");
     });
+
+    // Bearer token authentication tests (for mobile apps)
+    it("should pass Authorization Bearer header to auth API", async () => {
+      const headers = new Headers({
+        authorization: "Bearer mobile-session-token-123",
+      });
+      mockBetterAuthApi.getSession.mockResolvedValueOnce({
+        user: { id: "user1", email: "mobile@example.com" },
+        session: {
+          id: "session1",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userId: "user1",
+          expiresAt: new Date(),
+          token: "mobile-session-token-123",
+        },
+      });
+
+      const result = await betterAuthGetSession(headers);
+
+      expect(result).not.toBeNull();
+      const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
+      expect(callArgs?.headers).toHaveProperty(
+        "authorization",
+        "Bearer mobile-session-token-123"
+      );
+    });
+
+    it("should return session when using bearer token without cookies", async () => {
+      const headers = new Headers({
+        authorization: "Bearer valid-mobile-token",
+      });
+      const mockSession = {
+        user: {
+          id: "mobile-user",
+          email: "app@example.com",
+          name: "Mobile User",
+        },
+        session: {
+          id: "mobile-session",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userId: "mobile-user",
+          expiresAt: new Date(),
+          token: "valid-mobile-token",
+        },
+      };
+      mockBetterAuthApi.getSession.mockResolvedValueOnce(mockSession);
+
+      const result = await betterAuthGetSession(headers);
+
+      expect(result as any).toEqual(mockSession);
+      expect((result as any)?.user?.id).toBe("mobile-user");
+    });
   });
 
   describe("betterAuthChangePassword", () => {
@@ -728,6 +786,80 @@ describe("auth-better-api", () => {
 
       const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
       expect(callArgs?.headers).toHaveProperty("cookie", "session=abc");
+    });
+
+    // Bearer token authentication tests (for mobile apps)
+    it("should return user when authenticated via bearer token", async () => {
+      const headers = new Headers({
+        authorization: "Bearer mobile-app-token-xyz",
+      });
+      mockBetterAuthApi.getSession.mockResolvedValueOnce({
+        user: {
+          id: "mobile-user",
+          email: "mobile@example.com",
+          name: "Mobile User",
+          role: "EDITOR",
+          personId: "person123",
+          mustChangePassword: false,
+          profileClaimStatus: "VERIFIED",
+          oidcProvider: null,
+        },
+        session: {
+          id: "mobile-session",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userId: "mobile-user",
+          expiresAt: new Date(),
+          token: "mobile-app-token-xyz",
+        },
+      });
+
+      const result = await betterAuthGetSessionWithUser(headers);
+
+      expect(result).toEqual({
+        id: "mobile-user",
+        email: "mobile@example.com",
+        name: "Mobile User",
+        role: "EDITOR",
+        personId: "person123",
+        mustChangePassword: false,
+        profileClaimStatus: "VERIFIED",
+        oidcProvider: null,
+      });
+
+      const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
+      expect(callArgs?.headers).toHaveProperty(
+        "authorization",
+        "Bearer mobile-app-token-xyz"
+      );
+    });
+
+    it("should pass both cookie and bearer token headers when present", async () => {
+      // Edge case: both auth methods present (bearer should take precedence in Better Auth)
+      const headers = new Headers({
+        cookie: "session=web-cookie",
+        authorization: "Bearer mobile-token",
+      });
+      mockBetterAuthApi.getSession.mockResolvedValueOnce({
+        user: { id: "user1", email: "test@example.com", name: "Test" },
+        session: {
+          id: "session1",
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userId: "user1",
+          expiresAt: new Date(),
+          token: "token1",
+        },
+      });
+
+      await betterAuthGetSessionWithUser(headers);
+
+      const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
+      expect(callArgs?.headers).toHaveProperty("cookie", "session=web-cookie");
+      expect(callArgs?.headers).toHaveProperty(
+        "authorization",
+        "Bearer mobile-token"
+      );
     });
   });
 

@@ -36,8 +36,9 @@ mock.module("@vamsa/lib/logger", () => ({
   startTimer: mockStartTimer,
 }));
 
-// Create mock drizzleDb and drizzleSchema BEFORE they're used in mock.module
-const createMockDrizzleDb = () => ({
+// Create mock drizzleDb and drizzleSchema - these must be stable references
+// that are reused (not reassigned) because mock.module captures the reference
+const mockDrizzleDb = {
   query: {
     relationships: {
       findMany: mock(() => Promise.resolve([])),
@@ -58,9 +59,9 @@ const createMockDrizzleDb = () => ({
   delete: mock(() => ({
     where: mock(() => Promise.resolve({})),
   })),
-});
+};
 
-const createMockDrizzleSchema = () => ({
+const mockDrizzleSchema = {
   relationships: {
     id: "id",
     personId: "personId",
@@ -70,16 +71,28 @@ const createMockDrizzleSchema = () => ({
   persons: {
     id: "id",
   },
-});
-
-// Initialize mocks
-let mockDrizzleDb = createMockDrizzleDb();
-let mockDrizzleSchema = createMockDrizzleSchema();
+};
 
 mock.module("@vamsa/api", () => ({
   drizzleDb: mockDrizzleDb,
   drizzleSchema: mockDrizzleSchema,
 }));
+
+// Helper to clear all drizzle mocks between tests
+function clearDrizzleMocks() {
+  (
+    mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+  ).mockClear();
+  (
+    mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+  ).mockClear();
+  (
+    mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+  ).mockClear();
+  (mockDrizzleDb.insert as ReturnType<typeof mock>).mockClear();
+  (mockDrizzleDb.update as ReturnType<typeof mock>).mockClear();
+  (mockDrizzleDb.delete as ReturnType<typeof mock>).mockClear();
+}
 
 // Import the functions to test
 import {
@@ -92,8 +105,7 @@ import {
 
 describe("Relationship Server Functions", () => {
   beforeEach(() => {
-    mockDrizzleDb = createMockDrizzleDb();
-    mockDrizzleSchema = createMockDrizzleSchema();
+    clearDrizzleMocks();
     mockLogger.error.mockClear();
   });
 
@@ -854,13 +866,15 @@ describe("Relationship Server Functions", () => {
         })),
       });
 
-      const updateCalls = (mockDrizzleDb.update as ReturnType<typeof mock>)
-        .mock.calls.length;
+      const updateCalls = (mockDrizzleDb.update as ReturnType<typeof mock>).mock
+        .calls.length;
 
       await updateRelationshipData(relationshipId, input);
 
       // Should only be called once (not twice for bidirectional sync)
-      expect((mockDrizzleDb.update as ReturnType<typeof mock>).mock.calls.length).toBe(updateCalls + 1);
+      expect(
+        (mockDrizzleDb.update as ReturnType<typeof mock>).mock.calls.length
+      ).toBe(updateCalls + 1);
     });
 
     it("should throw error when relationship not found", async () => {

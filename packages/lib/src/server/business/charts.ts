@@ -25,7 +25,7 @@
  */
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, inArray, desc } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 import { recordChartMetrics } from "../metrics";
 import {
   buildRelationshipMaps,

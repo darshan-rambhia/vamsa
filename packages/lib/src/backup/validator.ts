@@ -89,10 +89,8 @@ export class BackupValidator {
 
       // Validate data files
       const dataValidation = await this.validateDataFiles();
-      if (!dataValidation.isValid) {
-        errors.push(...dataValidation.errors);
-        warnings.push(...dataValidation.warnings);
-      }
+      errors.push(...dataValidation.errors);
+      warnings.push(...dataValidation.warnings);
 
       const isValid = errors.length === 0;
       return this.createValidationResult(isValid, conflicts, errors, warnings);
@@ -116,8 +114,22 @@ export class BackupValidator {
 
       try {
         const data = JSON.parse(content);
-        // If directly parseable as JSON, use it
-        this.extractedFiles.set("data.json", data);
+        // If directly parseable as JSON, check if it's in file-map format
+        // (keys are filenames like "metadata.json")
+        if (
+          data &&
+          typeof data === "object" &&
+          !Array.isArray(data) &&
+          Object.keys(data).some((k) => k.endsWith(".json"))
+        ) {
+          // Treat each key as a filename
+          for (const [filename, fileData] of Object.entries(data)) {
+            this.extractedFiles.set(filename, fileData);
+          }
+        } else {
+          // Store the entire object as data.json
+          this.extractedFiles.set("data.json", data);
+        }
       } catch {
         // If not JSON, it's likely a real ZIP file
         // This should be handled by the server function with 'unzipper' package
@@ -146,7 +158,11 @@ export class BackupValidator {
     try {
       const metadataData = this.extractedFiles.get("metadata.json");
 
-      if (!metadataData || typeof metadataData !== "object") {
+      if (
+        !metadataData ||
+        typeof metadataData !== "object" ||
+        Array.isArray(metadataData)
+      ) {
         errors.push("Invalid metadata format in metadata.json");
         return { isValid: false, errors };
       }

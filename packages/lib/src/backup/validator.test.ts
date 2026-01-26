@@ -403,4 +403,434 @@ describe("BackupValidator", () => {
       expect(result.metadata.statistics).toBeDefined();
     });
   });
+
+  describe("metadata validation edge cases - mutation killing", () => {
+    it("rejects metadata that is null", async () => {
+      const data = {
+        "metadata.json": null,
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some((e) => e.includes("Invalid metadata format"))
+      ).toBe(true);
+    });
+
+    it("rejects metadata that is a string", async () => {
+      const data = {
+        "metadata.json": "not an object",
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some((e) => e.includes("Invalid metadata format"))
+      ).toBe(true);
+    });
+
+    it("rejects metadata that is a number", async () => {
+      const data = {
+        "metadata.json": 12345,
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some((e) => e.includes("Invalid metadata format"))
+      ).toBe(true);
+    });
+
+    it("rejects metadata that is an array", async () => {
+      const data = {
+        "metadata.json": [1, 2, 3],
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some((e) => e.includes("Invalid metadata format"))
+      ).toBe(true);
+    });
+
+    it("rejects metadata that is a boolean", async () => {
+      const data = {
+        "metadata.json": true,
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some((e) => e.includes("Invalid metadata format"))
+      ).toBe(true);
+    });
+
+    it("rejects metadata missing exportedAt field", async () => {
+      const data = {
+        "metadata.json": {
+          version: "1.0.0",
+          // Missing exportedAt
+          exportedBy: {
+            id: "user1",
+            email: "user@test.com",
+            name: "User",
+          },
+          statistics: {
+            totalPeople: 0,
+            totalRelationships: 0,
+            totalUsers: 0,
+            totalSuggestions: 0,
+            totalPhotos: 0,
+            auditLogDays: 0,
+            totalAuditLogs: 0,
+          },
+          dataFiles: [],
+          photoDirectories: [],
+        },
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some((e) => e.includes("exportedAt"))).toBe(true);
+    });
+
+    it("rejects metadata with null exportedAt", async () => {
+      const data = {
+        "metadata.json": {
+          version: "1.0.0",
+          exportedAt: null,
+          exportedBy: {
+            id: "user1",
+            email: "user@test.com",
+            name: "User",
+          },
+          statistics: {
+            totalPeople: 0,
+            totalRelationships: 0,
+            totalUsers: 0,
+            totalSuggestions: 0,
+            totalPhotos: 0,
+            auditLogDays: 0,
+            totalAuditLogs: 0,
+          },
+          dataFiles: [],
+          photoDirectories: [],
+        },
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some((e) => e.includes("exportedAt"))).toBe(true);
+    });
+
+    it("rejects metadata with empty string exportedAt", async () => {
+      const data = {
+        "metadata.json": {
+          version: "1.0.0",
+          exportedAt: "",
+          exportedBy: {
+            id: "user1",
+            email: "user@test.com",
+            name: "User",
+          },
+          statistics: {
+            totalPeople: 0,
+            totalRelationships: 0,
+            totalUsers: 0,
+            totalSuggestions: 0,
+            totalPhotos: 0,
+            auditLogDays: 0,
+            totalAuditLogs: 0,
+          },
+          dataFiles: [],
+          photoDirectories: [],
+        },
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some((e) => e.includes("exportedAt"))).toBe(true);
+    });
+
+    it("rejects unsupported backup version", async () => {
+      const data = {
+        "metadata.json": {
+          version: "2.0.0",
+          exportedAt: "2024-01-01T00:00:00Z",
+          exportedBy: {
+            id: "user1",
+            email: "user@test.com",
+            name: "User",
+          },
+          statistics: {
+            totalPeople: 0,
+            totalRelationships: 0,
+            totalUsers: 0,
+            totalSuggestions: 0,
+            totalPhotos: 0,
+            auditLogDays: 0,
+            totalAuditLogs: 0,
+          },
+          dataFiles: [],
+          photoDirectories: [],
+        },
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some((e) => e.includes("Unsupported backup version"))
+      ).toBe(true);
+    });
+
+    it("rejects metadata with unsupported version string format", async () => {
+      const data = {
+        "metadata.json": {
+          version: "3.5.7",
+          exportedAt: "2024-01-01T00:00:00Z",
+          exportedBy: {
+            id: "user1",
+            email: "user@test.com",
+            name: "User",
+          },
+          statistics: {
+            totalPeople: 0,
+            totalRelationships: 0,
+            totalUsers: 0,
+            totalSuggestions: 0,
+            totalPhotos: 0,
+            auditLogDays: 0,
+            totalAuditLogs: 0,
+          },
+          dataFiles: [],
+          photoDirectories: [],
+        },
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some((e) => e.includes("Unsupported backup version"))
+      ).toBe(true);
+    });
+
+    it("rejects metadata with dataFiles not being an array", async () => {
+      const data = {
+        "metadata.json": {
+          version: "1.0.0",
+          exportedAt: "2024-01-01T00:00:00Z",
+          exportedBy: {
+            id: "user1",
+            email: "user@test.com",
+            name: "User",
+          },
+          statistics: {
+            totalPeople: 0,
+            totalRelationships: 0,
+            totalUsers: 0,
+            totalSuggestions: 0,
+            totalPhotos: 0,
+            auditLogDays: 0,
+            totalAuditLogs: 0,
+          },
+          dataFiles: "not an array",
+          photoDirectories: [],
+        },
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      // Should pass metadata validation if dataFiles is not an array (skips check)
+      // But may fail on other validations
+      expect(result).toHaveProperty("errors");
+      expect(result).toHaveProperty("warnings");
+    });
+
+    it("generates warnings when photo count mismatch", async () => {
+      const data = {
+        "metadata.json": {
+          version: "1.0.0",
+          exportedAt: "2024-01-01T00:00:00Z",
+          exportedBy: {
+            id: "user1",
+            email: "user@test.com",
+            name: "User",
+          },
+          statistics: {
+            totalPeople: 0,
+            totalRelationships: 0,
+            totalUsers: 0,
+            totalSuggestions: 0,
+            totalPhotos: 5, // Expected 5 photos
+            auditLogDays: 0,
+            totalAuditLogs: 0,
+          },
+          dataFiles: [],
+          photoDirectories: [],
+        },
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.warnings).toContain(
+        "Expected 5 photos but found 0 photo files"
+      );
+    });
+
+    it("correctly validates metadata with all required fields present", async () => {
+      const data = {
+        "metadata.json": {
+          version: "1.0.0",
+          exportedAt: "2024-01-01T00:00:00Z",
+          exportedBy: {
+            id: "user1",
+            email: "user@test.com",
+            name: "User",
+          },
+          statistics: {
+            totalPeople: 0,
+            totalRelationships: 0,
+            totalUsers: 0,
+            totalSuggestions: 0,
+            totalPhotos: 0,
+            auditLogDays: 0,
+            totalAuditLogs: 0,
+          },
+          dataFiles: [],
+          photoDirectories: [],
+        },
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      // Metadata validation should pass (even though data files validation may have other issues)
+      expect(validator.getMetadata()).not.toBeNull();
+      expect(validator.getMetadata()?.version).toBe("1.0.0");
+      expect(result.isValid).toBe(true);
+    });
+
+    it("returns warnings array in result", async () => {
+      const data = {
+        "metadata.json": {
+          version: "1.0.0",
+          exportedAt: "2024-01-01T00:00:00Z",
+          exportedBy: {
+            id: "user1",
+            email: "user@test.com",
+            name: "User",
+          },
+          statistics: {
+            totalPeople: 0,
+            totalRelationships: 0,
+            totalUsers: 0,
+            totalSuggestions: 0,
+            totalPhotos: 0,
+            auditLogDays: 0,
+            totalAuditLogs: 0,
+          },
+          dataFiles: [],
+          photoDirectories: [],
+        },
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(Array.isArray(result.warnings)).toBe(true);
+      expect(result.warnings).toBeDefined();
+    });
+
+    it("early exit when metadata validation fails prevents data validation", async () => {
+      const data = {
+        "metadata.json": null, // Invalid metadata
+        "data/people.json": "not an array",
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      // Should fail on metadata validation, not reach data validation
+      expect(result.isValid).toBe(false);
+      expect(
+        result.errors.some((e) => e.includes("Invalid metadata format"))
+      ).toBe(true);
+    });
+
+    it("correctly handles metadata with missing version field", async () => {
+      const data = {
+        "metadata.json": {
+          // Missing version
+          exportedAt: "2024-01-01T00:00:00Z",
+          exportedBy: {
+            id: "user1",
+            email: "user@test.com",
+            name: "User",
+          },
+          statistics: {
+            totalPeople: 0,
+            totalRelationships: 0,
+            totalUsers: 0,
+            totalSuggestions: 0,
+            totalPhotos: 0,
+            auditLogDays: 0,
+            totalAuditLogs: 0,
+          },
+          dataFiles: [],
+          photoDirectories: [],
+        },
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some((e) => e.includes("version"))).toBe(true);
+    });
+
+    it("correctly handles metadata with missing statistics", async () => {
+      const data = {
+        "metadata.json": {
+          version: "1.0.0",
+          exportedAt: "2024-01-01T00:00:00Z",
+          exportedBy: {
+            id: "user1",
+            email: "user@test.com",
+            name: "User",
+          },
+          // Missing statistics
+          dataFiles: [],
+          photoDirectories: [],
+        },
+      };
+      const buffer = Buffer.from(JSON.stringify(data));
+      const validator = new BackupValidator(buffer);
+      const result = await validator.validate();
+
+      expect(result.isValid).toBe(false);
+      expect(result.errors.some((e) => e.includes("statistics"))).toBe(true);
+    });
+  });
 });

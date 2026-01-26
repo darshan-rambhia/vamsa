@@ -48,7 +48,6 @@ import {
   type GedcomStructureError,
 } from "../helpers/gedcom";
 
-
 /**
  * Result type for GEDCOM import operation
  */
@@ -289,21 +288,19 @@ export async function importGedcomData(
       }
 
       // Log audit trail within transaction
-      await tx
-        .insert(drizzleSchema.auditLogs)
-        .values({
-          id: crypto.randomUUID(),
-          userId,
-          action: "CREATE" as any,
-          entityType: "GEDCOM_IMPORT",
-          entityId: null,
-          newData: {
-            fileName,
-            peopleCount: insertedPeople.length,
-            relationshipCount: insertedRelationships.length,
-          },
-          createdAt: new Date(),
-        });
+      await tx.insert(drizzleSchema.auditLogs).values({
+        id: crypto.randomUUID(),
+        userId,
+        action: "CREATE" as any,
+        entityType: "GEDCOM_IMPORT",
+        entityId: null,
+        newData: {
+          fileName,
+          peopleCount: insertedPeople.length,
+          relationshipCount: insertedRelationships.length,
+        },
+        createdAt: new Date(),
+      });
 
       return {
         people: insertedPeople,
@@ -360,15 +357,16 @@ export async function importGedcomData(
  *   fs.writeFileSync("family.ged", result.gedcomContent);
  * }
  */
-export async function exportGedcomData(
-  userId: string
-): Promise<ExportResult> {
+export async function exportGedcomData(userId: string): Promise<ExportResult> {
   const start = Date.now();
 
   try {
     // Fetch all people and relationships
     const people = await drizzleDb.query.persons.findMany({
-      orderBy: [asc(drizzleSchema.persons.lastName), asc(drizzleSchema.persons.firstName)],
+      orderBy: [
+        asc(drizzleSchema.persons.lastName),
+        asc(drizzleSchema.persons.firstName),
+      ],
     });
 
     const relationships = await drizzleDb.query.relationships.findMany({
@@ -391,21 +389,19 @@ export async function exportGedcomData(
     );
 
     // Log audit trail
-    await drizzleDb
-      .insert(drizzleSchema.auditLogs)
-      .values({
-        id: crypto.randomUUID(),
-        userId,
-        action: "CREATE" as any,
-        entityType: "GEDCOM_EXPORT",
-        entityId: null,
-        newData: {
-          peopleCount: people.length,
-          relationshipCount: relationships.length,
-          timestamp: new Date().toISOString(),
-        },
-        createdAt: new Date(),
-      });
+    await drizzleDb.insert(drizzleSchema.auditLogs).values({
+      id: crypto.randomUUID(),
+      userId,
+      action: "CREATE" as any,
+      entityType: "GEDCOM_EXPORT",
+      entityId: null,
+      newData: {
+        peopleCount: people.length,
+        relationshipCount: relationships.length,
+        timestamp: new Date().toISOString(),
+      },
+      createdAt: new Date(),
+    });
 
     // Record metrics
     const duration = Date.now() - start;
@@ -454,7 +450,10 @@ export async function exportGedcomDataZip(
   try {
     // Fetch all people and relationships
     const people = await drizzleDb.query.persons.findMany({
-      orderBy: [asc(drizzleSchema.persons.lastName), asc(drizzleSchema.persons.firstName)],
+      orderBy: [
+        asc(drizzleSchema.persons.lastName),
+        asc(drizzleSchema.persons.firstName),
+      ],
     });
 
     const relationships = await drizzleDb.query.relationships.findMany({
@@ -551,23 +550,21 @@ export async function exportGedcomDataZip(
     const zipBase64 = zipBuffer.toString("base64");
 
     // Log audit trail
-    await drizzleDb
-      .insert(drizzleSchema.auditLogs)
-      .values({
-        id: crypto.randomUUID(),
-        userId,
-        action: "CREATE" as any,
-        entityType: "GEDZIP_EXPORT",
-        entityId: null,
-        newData: {
-          peopleCount: people.length,
-          relationshipCount: relationships.length,
-          mediaFilesCount: includedMedia.length,
-          totalSize: zipBuffer.length,
-          timestamp: new Date().toISOString(),
-        },
-        createdAt: new Date(),
-      });
+    await drizzleDb.insert(drizzleSchema.auditLogs).values({
+      id: crypto.randomUUID(),
+      userId,
+      action: "CREATE" as any,
+      entityType: "GEDZIP_EXPORT",
+      entityId: null,
+      newData: {
+        peopleCount: people.length,
+        relationshipCount: relationships.length,
+        mediaFilesCount: includedMedia.length,
+        totalSize: zipBuffer.length,
+        timestamp: new Date().toISOString(),
+      },
+      createdAt: new Date(),
+    });
 
     // Record metrics
     const duration = Date.now() - start;
