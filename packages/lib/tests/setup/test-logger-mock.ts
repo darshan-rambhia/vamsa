@@ -71,7 +71,6 @@ mock.module("../../src/logger", () => ({
   },
 }));
 
-
 // Create a mock Drizzle db that does nothing
 const mockDrizzleDb = {
   select: () => ({

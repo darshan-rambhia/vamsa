@@ -98,7 +98,9 @@ async function main() {
   console.log("🚀 Starting E2E test runner...\n");
   if (useBunRuntime) {
     console.log("⚡ Running Playwright with Bun runtime (experimental)");
-    console.log("⚠️  Warning: This may not work due to Playwright's ESM loader conflict with Bun\n");
+    console.log(
+      "⚠️  Warning: This may not work due to Playwright's ESM loader conflict with Bun\n"
+    );
   }
 
   // Create temp docker-compose file for E2E
@@ -132,13 +134,10 @@ async function main() {
 
     // Push schema to database using Drizzle
     console.log("   - Applying database schema with Drizzle...");
-    const pushResult = await run(
-      ["bunx", "drizzle-kit", "push", "--force"],
-      {
-        cwd: API_DIR,
-        env: { DATABASE_URL: E2E_DATABASE_URL },
-      }
-    );
+    const pushResult = await run(["bunx", "drizzle-kit", "push", "--force"], {
+      cwd: API_DIR,
+      env: { DATABASE_URL: E2E_DATABASE_URL },
+    });
     if (pushResult !== 0) {
       throw new Error(`Drizzle push failed with exit code ${pushResult}`);
     }
@@ -146,13 +145,10 @@ async function main() {
 
     // Run seed to create test users
     console.log("   - Seeding test data...");
-    const seedResult = await run(
-      ["bun", "run", "src/drizzle/seed.ts"],
-      {
-        cwd: API_DIR,
-        env: { DATABASE_URL: E2E_DATABASE_URL },
-      }
-    );
+    const seedResult = await run(["bun", "run", "src/drizzle/seed.ts"], {
+      cwd: API_DIR,
+      env: { DATABASE_URL: E2E_DATABASE_URL },
+    });
     if (seedResult !== 0) {
       throw new Error(`Database seed failed with exit code ${seedResult}`);
     }

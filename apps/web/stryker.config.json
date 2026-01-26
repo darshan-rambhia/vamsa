@@ -3,7 +3,7 @@
   "packageManager": "pnpm",
   "testRunner": "command",
   "commandRunner": {
-    "command": "bun test --preload ../../packages/ui/src/test-setup.ts ./src/server ./server"
+    "command": "bun run test"
   },
   "checkers": ["typescript"],
   "plugins": ["@stryker-mutator/typescript-checker"],
@@ -16,21 +16,16 @@
     "server/**/*.ts",
     "!src/server/**/*.test.ts",
     "!server/**/*.test.ts",
-    "!src/server/**/*.function.ts"
+    "!src/server/**/*.function.ts",
+    "!tests/**/*.ts"
   ],
   "ignorePatterns": ["node_modules", "dist", ".git", ".stryker-tmp"],
-  "reporters": ["html", "clear-text", "progress", "json"],
-  "htmlReporter": {
-    "fileName": "../../test-output/mutation/web/index.html"
-  },
-  "jsonReporter": {
-    "fileName": "../../test-output/mutation/web/mutation-report.json"
-  },
-  "concurrency": 10,
+  "reporters": ["clear-text", "progress"],
+  "concurrency": 15,
   "tempDirName": ".stryker-tmp",
+  "cleanTempDir": "always",
   "coverageAnalysis": "perTest",
   "timeoutMS": 30000,
   "timeoutFactor": 2.5,
-  "disableBail": false,
-  "cleanTempDir": "always"
+  "disableBail": false
 }

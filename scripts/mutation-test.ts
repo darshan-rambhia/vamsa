@@ -132,7 +132,7 @@ async function runMutationTestsForPackage(
     return false;
   }
 
-  logger.info(`\n🧬 Running mutation tests for ${pkg.name}`);
+  logger.info(`Running mutation tests for ${pkg.name}`);
   if (file) {
     logger.info(`   Filtering to files matching: ${file}`);
   }
@@ -157,14 +157,14 @@ async function runMutationTestsForPackage(
 
   try {
     // Run stryker in the package directory
-    const result = await $`cd ${pkg.directory} && pnpm ${args}`.nothrow();
+    const result = await $`cd ${pkg.directory} && bun run ${args}`.nothrow();
 
     if (result.exitCode !== 0) {
-      logger.error(`\n❌ Mutation testing failed for ${pkg.name}`);
+      logger.error(`❌ Mutation testing failed for ${pkg.name}`);
       return false;
     }
 
-    logger.info(`\n✅ Mutation testing complete for ${pkg.name}`);
+    logger.info(`✅ Mutation testing complete for ${pkg.name}`);
     const outputDir = pkg.directory.replace(/^(packages|apps)\//, "");
     logger.info(`   Report: test-output/mutation/${outputDir}/index.html`);
     return true;
@@ -179,7 +179,7 @@ async function main() {
 
   if (packages.length > 1) {
     logger.info(
-      `\n🧬 Running mutation tests for all packages: ${packages.join(", ")}`
+      `Running mutation tests for all packages: ${packages.join(", ")}`
     );
   }
 
@@ -196,7 +196,7 @@ async function main() {
 
   // Summary for multiple packages
   if (packages.length > 1) {
-    logger.info("\n📊 Mutation Testing Summary");
+    logger.info("📊 Mutation Testing Summary");
     logger.info("─".repeat(40));
     for (const result of results) {
       const status = result.success ? "✅" : "❌";
@@ -205,11 +205,11 @@ async function main() {
 
     const failed = results.filter((r) => !r.success);
     if (failed.length > 0) {
-      logger.error(`\n❌ ${failed.length} package(s) failed mutation testing`);
+      logger.error(`❌ ${failed.length} package(s) failed mutation testing`);
       process.exit(1);
     }
 
-    logger.info(`\n✅ All ${packages.length} packages passed mutation testing`);
+    logger.info(`✅ All ${packages.length} packages passed mutation testing`);
   } else if (!results[0].success) {
     process.exit(1);
   }
