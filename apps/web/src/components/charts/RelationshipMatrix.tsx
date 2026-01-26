@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, memo, useMemo, useCallback, useRef } from "react";
+import { useState, memo, useMemo, useEffect } from "react";
 import { Svg, G, Rect, Circle, Text, Line } from "react-native-svg";
 import type { MatrixPerson, MatrixCell } from "~/server/charts";
+import { ZoomControls } from "./ZoomControls";
+import { useChartViewport, calculateLinearBounds } from "./useChartViewport";
 
 interface RelationshipMatrixProps {
   people: MatrixPerson[];
@@ -41,49 +43,44 @@ const relationshipLabels: Record<string, string> = {
   STEP_SIBLING: "SS",
 };
 
+// Layout constants
+const LABEL_WIDTH = 150;
+const LABEL_HEIGHT = 100;
+const MARGIN = {
+  top: LABEL_HEIGHT,
+  right: 40,
+  bottom: 40,
+  left: LABEL_WIDTH,
+};
+
 function RelationshipMatrixComponent({
   people,
   matrix,
   onNodeClick,
   resetSignal,
 }: RelationshipMatrixProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-  const [cellSize, setCellSize] = useState(40);
-
-  // Transform state for zoom/pan
-  const [transform, setTransform] = useState({
-    x: 0,
-    y: 0,
-    scale: 1,
+  // Use the standardized chart viewport hook
+  const viewport = useChartViewport({
+    margin: MARGIN,
+    minScale: 0.5,
+    resetSignal,
   });
 
-  // Dragging state
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  // Responsive cell sizing
+  const [cellSize, setCellSize] = useState(40);
 
   // Hover state
   const [hoveredCell, setHoveredCell] = useState<string | null>(null);
 
-  // Layout constants
-  const labelWidth = 150;
-  const labelHeight = 100;
-  const margin = {
-    top: labelHeight,
-    right: 40,
-    bottom: 40,
-    left: labelWidth,
-  };
-
   // Calculate dimensions
   const gridSize = people.length * cellSize;
   const width = Math.max(
-    dimensions.width,
-    margin.left + gridSize + margin.right
+    viewport.dimensions.width,
+    MARGIN.left + gridSize + MARGIN.right
   );
   const height = Math.max(
-    dimensions.height,
-    margin.top + gridSize + margin.bottom
+    viewport.dimensions.height,
+    MARGIN.top + gridSize + MARGIN.bottom
   );
 
   // Create lookup for matrix cells
@@ -95,35 +92,12 @@ function RelationshipMatrixComponent({
     return lookup;
   }, [matrix]);
 
-  // Calculate initial transform to fit content
-  const initialTransform = useMemo(() => {
-    const availableWidth = dimensions.width;
-    const availableHeight = Math.max(600, dimensions.height);
-    const scale = Math.min(
-      (availableWidth * 0.9) / (width + 40),
-      (availableHeight * 0.9) / (height + 40),
-      1
-    );
-    return {
-      x: 20,
-      y: 20,
-      scale,
-    };
-  }, [dimensions.width, dimensions.height, width, height]);
-
-  // Reset view when resetSignal changes
-  useMemo(() => {
-    if (resetSignal !== undefined) {
-      setTransform(initialTransform);
-    }
-  }, [resetSignal, initialTransform]);
-
-  // Responsive cell sizing
-  useMemo(() => {
-    if (!containerRef.current) return;
+  // Responsive cell sizing based on container
+  useEffect(() => {
+    if (!viewport.containerRef.current) return;
 
     const updateSizes = () => {
-      const container = containerRef.current!;
+      const container = viewport.containerRef.current!;
       const available =
         container.clientWidth > 0 ? container.clientWidth : window.innerWidth;
       const base = available / Math.max(people.length + 2, 3);
@@ -133,93 +107,18 @@ function RelationshipMatrixComponent({
 
     updateSizes();
     const ro = new ResizeObserver(updateSizes);
-    ro.observe(containerRef.current);
+    ro.observe(viewport.containerRef.current);
     return () => ro.disconnect();
-  }, [people.length]);
+  }, [people.length, viewport.containerRef]);
 
-  // Handle wheel zoom
-  const handleWheel = useCallback(
-    (e: React.WheelEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      const delta = e.deltaY > 0 ? 0.9 : 1.1;
-      const newScale = Math.max(0.3, Math.min(3, transform.scale * delta));
-
-      const scaleChange = newScale / transform.scale;
-      const newX = mouseX - (mouseX - transform.x) * scaleChange;
-      const newY = mouseY - (mouseY - transform.y) * scaleChange;
-
-      setTransform({
-        x: newX,
-        y: newY,
-        scale: newScale,
-      });
-    },
-    [transform]
-  );
-
-  // Handle mouse down for pan
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.button !== 0) return;
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
-    },
-    [transform]
-  );
-
-  // Handle mouse move for pan
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!isDragging) return;
-      setTransform({
-        ...transform,
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      });
-    },
-    [isDragging, dragStart, transform]
-  );
-
-  // Handle mouse up
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  // Handle mouse leave
-  const handleMouseLeave = useCallback(() => {
-    if (isDragging) {
-      setIsDragging(false);
+  // Fit content to viewport when dimensions change
+  useEffect(() => {
+    if (width > 0 && height > 0) {
+      const bounds = calculateLinearBounds(width, height);
+      viewport.fitContent(bounds);
     }
-  }, [isDragging]);
-
-  // Update dimensions on resize
-  useMemo(() => {
-    if (!containerRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry) {
-        setDimensions({
-          width: entry.contentRect.width,
-          height: Math.max(600, entry.contentRect.height),
-        });
-      }
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
-  // Initialize transform
-  useMemo(() => {
-    setTransform(initialTransform);
-  }, [initialTransform]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [width, height]);
 
   if (people.length === 0) {
     return (
@@ -232,193 +131,223 @@ function RelationshipMatrixComponent({
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
-      ref={containerRef}
+      ref={viewport.containerRef}
       className="bg-card relative h-full min-h-[70vh] w-full overflow-hidden rounded-lg border"
-      onWheel={handleWheel}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
-      style={{ cursor: isDragging ? "grabbing" : "grab" }}
+      onWheel={viewport.handlers.onWheel}
+      onMouseDown={viewport.handlers.onMouseDown}
+      onMouseMove={viewport.handlers.onMouseMove}
+      onMouseUp={viewport.handlers.onMouseUp}
+      onMouseLeave={viewport.handlers.onMouseLeave}
+      style={{ cursor: viewport.isDragging ? "grabbing" : "grab" }}
     >
-      <Svg width={dimensions.width} height={dimensions.height}>
-        <G
-          transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}
-        >
-          {/* Grid cells */}
-          {people.map((rowPerson, rowIndex) =>
-            people.map((colPerson, colIndex) => {
-              const cell = matrixLookup.get(`${rowPerson.id}-${colPerson.id}`);
-              const x = margin.left + colIndex * cellSize;
-              const y = margin.top + rowIndex * cellSize;
-              const cellKey = `${rowPerson.id}-${colPerson.id}`;
-              const isHovered = hoveredCell === cellKey;
-
-              return (
-                <G
-                  key={cellKey}
-                  transform={`translate(${x}, ${y})`}
-                  onMouseEnter={() =>
-                    cell?.relationshipType && setHoveredCell(cellKey)
-                  }
-                  onMouseLeave={() => setHoveredCell(null)}
-                  onClick={() => {
-                    if (rowPerson.id !== colPerson.id) {
-                      onNodeClick?.(rowPerson.id);
-                    }
-                  }}
-                >
-                  {/* Cell background */}
-                  <Rect
-                    width={cellSize}
-                    height={cellSize}
-                    fill={
-                      cell?.relationshipType
-                        ? relationshipColors[cell.relationshipType] ||
-                          "var(--color-muted)"
-                        : "var(--color-background)"
-                    }
-                    stroke="var(--color-border)"
-                    strokeWidth={1}
-                    opacity={isHovered ? 1 : cell?.relationshipType ? 0.7 : 0.3}
-                  />
-
-                  {/* Relationship label */}
-                  {cell?.relationshipType &&
-                    cell.relationshipType !== "SELF" && (
-                      <Text
-                        x={cellSize / 2}
-                        y={cellSize / 2}
-                        dy="0.35em"
-                        textAnchor="middle"
-                        fill="var(--color-foreground)"
-                        fontSize={9}
-                        fontWeight="600"
-                        pointerEvents="none"
-                      >
-                        {relationshipLabels[cell.relationshipType] || "?"}
-                      </Text>
-                    )}
-                </G>
-              );
-            })
-          )}
-
-          {/* Row labels (left side) */}
-          {people.map((person, index) => {
-            const y = margin.top + index * cellSize + cellSize / 2;
-
-            return (
-              <G
-                key={`row-label-${person.id}`}
-                onClick={() => onNodeClick?.(person.id)}
-              >
-                <Text
-                  x={margin.left - 10}
-                  y={y}
-                  dy="0.35em"
-                  textAnchor="end"
-                  fill="var(--color-foreground)"
-                  fontSize={11}
-                  fontWeight="500"
-                >
-                  {`${person.firstName} ${person.lastName}`.substring(0, 18)}
-                </Text>
-
-                {/* Gender indicator */}
-                <Circle
-                  cx={margin.left - labelWidth + 10}
-                  cy={y}
-                  r={4}
-                  fill={
-                    person.gender === "MALE"
-                      ? "var(--color-chart-1)"
-                      : person.gender === "FEMALE"
-                        ? "var(--color-chart-3)"
-                        : "var(--color-muted-foreground)"
-                  }
-                />
-              </G>
-            );
-          })}
-
-          {/* Column labels (top) */}
-          {people.map((person, index) => {
-            const x = margin.left + index * cellSize + cellSize / 2;
-
-            return (
-              <G
-                key={`col-label-${person.id}`}
-                onClick={() => onNodeClick?.(person.id)}
-              >
-                <Text
-                  x={x}
-                  y={margin.top - 10}
-                  textAnchor="start"
-                  transform={`rotate(-45, ${x}, ${margin.top - 10})`}
-                  fill="var(--color-foreground)"
-                  fontSize={11}
-                  fontWeight="500"
-                >
-                  {`${person.firstName} ${person.lastName}`.substring(0, 15)}
-                </Text>
-              </G>
-            );
-          })}
-
-          {/* Grid lines */}
-          {/* Horizontal lines */}
-          {Array.from({ length: people.length + 1 }).map((_, i) => (
-            <Line
-              key={`h-line-${i}`}
-              x1={margin.left}
-              x2={margin.left + gridSize}
-              y1={margin.top + i * cellSize}
-              y2={margin.top + i * cellSize}
-              stroke="var(--color-border)"
-              strokeWidth={1}
-            />
-          ))}
-
-          {/* Vertical lines */}
-          {Array.from({ length: people.length + 1 }).map((_, i) => (
-            <Line
-              key={`v-line-${i}`}
-              x1={margin.left + i * cellSize}
-              x2={margin.left + i * cellSize}
-              y1={margin.top}
-              y2={margin.top + gridSize}
-              stroke="var(--color-border)"
-              strokeWidth={1}
-            />
-          ))}
-        </G>
-      </Svg>
-
-      {/* Legend */}
-      <div className="bg-card/90 absolute right-4 bottom-4 rounded-lg border p-3 backdrop-blur-sm">
-        <p className="text-foreground mb-2 text-xs font-semibold">
-          Relationship Legend
-        </p>
-        <div className="grid grid-cols-2 gap-1 text-[10px]">
-          <div className="flex items-center gap-1">
-            <span className="font-mono">P</span>
-            <span className="text-muted-foreground">Parent</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="font-mono">C</span>
-            <span className="text-muted-foreground">Child</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="font-mono">S</span>
-            <span className="text-muted-foreground">Spouse</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <span className="font-mono">Sb</span>
-            <span className="text-muted-foreground">Sibling</span>
-          </div>
+      {!viewport.isReady ? (
+        <div className="flex h-full w-full items-center justify-center">
+          <div className="bg-primary/20 h-12 w-12 animate-pulse rounded-full" />
         </div>
-      </div>
+      ) : (
+        <>
+          <Svg
+            width={viewport.dimensions.width}
+            height={viewport.dimensions.height}
+            data-chart-svg="true"
+          >
+            <G
+              transform={`translate(${viewport.transform.x}, ${viewport.transform.y}) scale(${viewport.transform.scale})`}
+            >
+              {/* Grid cells */}
+              {people.map((rowPerson, rowIndex) =>
+                people.map((colPerson, colIndex) => {
+                  const cell = matrixLookup.get(
+                    `${rowPerson.id}-${colPerson.id}`
+                  );
+                  const x = MARGIN.left + colIndex * cellSize;
+                  const y = MARGIN.top + rowIndex * cellSize;
+                  const cellKey = `${rowPerson.id}-${colPerson.id}`;
+                  const isHovered = hoveredCell === cellKey;
+
+                  return (
+                    <G
+                      key={cellKey}
+                      transform={`translate(${x}, ${y})`}
+                      onMouseEnter={() =>
+                        cell?.relationshipType && setHoveredCell(cellKey)
+                      }
+                      onMouseLeave={() => setHoveredCell(null)}
+                      onClick={() => {
+                        if (rowPerson.id !== colPerson.id) {
+                          onNodeClick?.(rowPerson.id);
+                        }
+                      }}
+                    >
+                      {/* Cell background */}
+                      <Rect
+                        width={cellSize}
+                        height={cellSize}
+                        fill={
+                          cell?.relationshipType
+                            ? relationshipColors[cell.relationshipType] ||
+                              "var(--color-muted)"
+                            : "var(--color-background)"
+                        }
+                        stroke="var(--color-border)"
+                        strokeWidth={1}
+                        opacity={
+                          isHovered ? 1 : cell?.relationshipType ? 0.7 : 0.3
+                        }
+                      />
+
+                      {/* Relationship label */}
+                      {cell?.relationshipType &&
+                        cell.relationshipType !== "SELF" && (
+                          <Text
+                            x={cellSize / 2}
+                            y={cellSize / 2}
+                            dy="0.35em"
+                            textAnchor="middle"
+                            fill="var(--color-foreground)"
+                            fontSize={9}
+                            fontWeight="600"
+                            pointerEvents="none"
+                          >
+                            {relationshipLabels[cell.relationshipType] || "?"}
+                          </Text>
+                        )}
+                    </G>
+                  );
+                })
+              )}
+
+              {/* Row labels (left side) */}
+              {people.map((person, index) => {
+                const y = MARGIN.top + index * cellSize + cellSize / 2;
+
+                return (
+                  <G
+                    key={`row-label-${person.id}`}
+                    onClick={() => onNodeClick?.(person.id)}
+                  >
+                    <Text
+                      x={MARGIN.left - 10}
+                      y={y}
+                      dy="0.35em"
+                      textAnchor="end"
+                      fill="var(--color-foreground)"
+                      fontSize={11}
+                      fontWeight="500"
+                    >
+                      {`${person.firstName} ${person.lastName}`.substring(
+                        0,
+                        18
+                      )}
+                    </Text>
+
+                    {/* Gender indicator */}
+                    <Circle
+                      cx={MARGIN.left - LABEL_WIDTH + 10}
+                      cy={y}
+                      r={4}
+                      fill={
+                        person.gender === "MALE"
+                          ? "var(--color-chart-1)"
+                          : person.gender === "FEMALE"
+                            ? "var(--color-chart-3)"
+                            : "var(--color-muted-foreground)"
+                      }
+                    />
+                  </G>
+                );
+              })}
+
+              {/* Column labels (top) */}
+              {people.map((person, index) => {
+                const x = MARGIN.left + index * cellSize + cellSize / 2;
+
+                return (
+                  <G
+                    key={`col-label-${person.id}`}
+                    onClick={() => onNodeClick?.(person.id)}
+                  >
+                    <Text
+                      x={x}
+                      y={MARGIN.top - 10}
+                      textAnchor="start"
+                      transform={`rotate(-45, ${x}, ${MARGIN.top - 10})`}
+                      fill="var(--color-foreground)"
+                      fontSize={11}
+                      fontWeight="500"
+                    >
+                      {`${person.firstName} ${person.lastName}`.substring(
+                        0,
+                        15
+                      )}
+                    </Text>
+                  </G>
+                );
+              })}
+
+              {/* Grid lines */}
+              {/* Horizontal lines */}
+              {Array.from({ length: people.length + 1 }).map((_, i) => (
+                <Line
+                  key={`h-line-${i}`}
+                  x1={MARGIN.left}
+                  x2={MARGIN.left + gridSize}
+                  y1={MARGIN.top + i * cellSize}
+                  y2={MARGIN.top + i * cellSize}
+                  stroke="var(--color-border)"
+                  strokeWidth={1}
+                />
+              ))}
+
+              {/* Vertical lines */}
+              {Array.from({ length: people.length + 1 }).map((_, i) => (
+                <Line
+                  key={`v-line-${i}`}
+                  x1={MARGIN.left + i * cellSize}
+                  x2={MARGIN.left + i * cellSize}
+                  y1={MARGIN.top}
+                  y2={MARGIN.top + gridSize}
+                  stroke="var(--color-border)"
+                  strokeWidth={1}
+                />
+              ))}
+            </G>
+          </Svg>
+
+          {/* Legend */}
+          <div className="bg-card/90 absolute right-4 bottom-4 rounded-lg border p-3 backdrop-blur-sm">
+            <p className="text-foreground mb-2 text-xs font-semibold">
+              Relationship Legend
+            </p>
+            <div className="grid grid-cols-2 gap-1 text-[10px]">
+              <div className="flex items-center gap-1">
+                <span className="font-mono">P</span>
+                <span className="text-muted-foreground">Parent</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="font-mono">C</span>
+                <span className="text-muted-foreground">Child</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="font-mono">S</span>
+                <span className="text-muted-foreground">Spouse</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="font-mono">Sb</span>
+                <span className="text-muted-foreground">Sibling</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Zoom controls */}
+          <ZoomControls
+            scale={viewport.transform.scale}
+            onZoomIn={viewport.controls.zoomIn}
+            onZoomOut={viewport.controls.zoomOut}
+            onReset={viewport.controls.reset}
+          />
+        </>
+      )}
     </div>
   );
 }

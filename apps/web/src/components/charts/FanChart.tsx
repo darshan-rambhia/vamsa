@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo, useMemo, useCallback, useRef } from "react";
+import { useState, memo, useMemo, useCallback, useEffect } from "react";
 import { Svg, G, Circle, Path, Line } from "react-native-svg";
 import * as d3 from "d3";
 import type { ChartNode, ChartEdge } from "~/server/charts";
@@ -11,6 +11,8 @@ import {
 } from "~/lib/chart-performance";
 import { ChartTooltip } from "./ChartTooltip";
 import { ChartSkeleton } from "./ChartSkeleton";
+import { ZoomControls } from "./ZoomControls";
+import { useChartViewport, calculateRadialBounds } from "./useChartViewport";
 import { useNavigate } from "@tanstack/react-router";
 
 interface FanChartProps {
@@ -18,6 +20,7 @@ interface FanChartProps {
   edges: ChartEdge[];
   onNodeClick?: (nodeId: string) => void;
   rootPersonId?: string;
+  resetSignal?: number;
 }
 
 // Layout constants
@@ -106,21 +109,15 @@ function FanChartComponent({
   edges,
   onNodeClick,
   rootPersonId,
+  resetSignal,
 }: FanChartProps) {
   const navigate = useNavigate();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 800 });
 
-  // Transform state for zoom/pan
-  const [transform, setTransform] = useState({
-    x: 0,
-    y: 0,
-    scale: 1,
+  // Use the standardized chart viewport hook
+  const viewport = useChartViewport({
+    margin: MARGIN,
+    resetSignal,
   });
-
-  // Dragging state
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   // Tooltip state
   const [tooltip, setTooltip] = useState<{
@@ -139,15 +136,15 @@ function FanChartComponent({
     if (nodes.length === 0) {
       return {
         nodePositions: new Map<string, NodePosition>(),
-        centerX: dimensions.width / 2,
-        centerY: dimensions.height / 2,
+        centerX: viewport.dimensions.width / 2,
+        centerY: viewport.dimensions.height / 2,
         maxGen: 0,
       };
     }
 
     const startTime = performance.now();
-    const cx = dimensions.width / 2;
-    const cy = dimensions.height / 2;
+    const cx = viewport.dimensions.width / 2;
+    const cy = viewport.dimensions.height / 2;
     const positions = calculateRadialLayout(nodes, cx, cy);
     const generations = groupByGeneration(nodes);
     const max = Math.max(...Array.from(generations.keys()));
@@ -161,114 +158,39 @@ function FanChartComponent({
     }
 
     return { nodePositions: positions, centerX: cx, centerY: cy, maxGen: max };
-  }, [nodes, dimensions]);
+  }, [nodes, viewport.dimensions]);
 
-  // Calculate initial transform to center the chart
-  const initialTransform = useMemo(() => {
-    if (nodePositions.size === 0) {
-      return { x: dimensions.width / 2, y: dimensions.height / 2, scale: 1 };
+  // Fit content to viewport when layout changes
+  useEffect(() => {
+    if (nodePositions.size > 0) {
+      const maxRadius = INNER_RADIUS + maxGen * RADIUS_STEP + NODE_RADIUS;
+      const bounds = calculateRadialBounds(centerX, centerY, maxRadius);
+      viewport.fitContent(bounds);
     }
-
-    // Calculate content bounds
-    const maxRadius = INNER_RADIUS + maxGen * RADIUS_STEP + NODE_RADIUS;
-    const contentWidth = maxRadius * 2 + MARGIN.left + MARGIN.right;
-    const contentHeight = maxRadius * 2 + MARGIN.top + MARGIN.bottom;
-
-    // Calculate scale to fit
-    const scaleX = dimensions.width / contentWidth;
-    const scaleY = dimensions.height / contentHeight;
-    const scale = Math.min(scaleX, scaleY, 1);
-
-    return {
-      x: dimensions.width / 2,
-      y: dimensions.height / 2,
-      scale,
-    };
-  }, [nodePositions, dimensions, maxGen]);
-
-  // Initialize transform
-  useMemo(() => {
-    setTransform(initialTransform);
-  }, [initialTransform]);
-
-  // Handle wheel zoom
-  const handleWheel = useCallback(
-    (e: React.WheelEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      const delta = e.deltaY > 0 ? 0.9 : 1.1;
-      const newScale = Math.max(0.1, Math.min(4, transform.scale * delta));
-
-      const scaleChange = newScale / transform.scale;
-      const newX = mouseX - (mouseX - transform.x) * scaleChange;
-      const newY = mouseY - (mouseY - transform.y) * scaleChange;
-
-      setTransform({
-        x: newX,
-        y: newY,
-        scale: newScale,
-      });
-    },
-    [transform]
-  );
-
-  // Handle mouse down for pan
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.button !== 0) return;
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
-    },
-    [transform]
-  );
-
-  // Handle mouse move for pan
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!isDragging) return;
-      setTransform({
-        ...transform,
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      });
-    },
-    [isDragging, dragStart, transform]
-  );
-
-  // Handle mouse up/leave to stop pan
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (isDragging) {
-      setIsDragging(false);
-    }
-  }, [isDragging]);
+  }, [nodePositions, centerX, centerY, maxGen, viewport.fitContent]);
 
   // Handle node interactions
   const handleNodeMouseEnter = useCallback(
     (node: ChartNode) => {
-      const rect = containerRef.current?.getBoundingClientRect();
+      const rect = viewport.containerRef.current?.getBoundingClientRect();
       const pos = nodePositions.get(node.id);
       if (rect && pos) {
         setTooltip({
           node,
           position: {
-            x: rect.left + transform.x + (pos.x - centerX) * transform.scale,
-            y: rect.top + transform.y + (pos.y - centerY) * transform.scale,
+            x:
+              rect.left +
+              viewport.transform.x +
+              (pos.x - centerX) * viewport.transform.scale,
+            y:
+              rect.top +
+              viewport.transform.y +
+              (pos.y - centerY) * viewport.transform.scale,
           },
         });
       }
     },
-    [nodePositions, transform, centerX, centerY]
+    [nodePositions, viewport.transform, viewport.containerRef, centerX, centerY]
   );
 
   const handleNodeMouseLeave = useCallback(() => {
@@ -299,23 +221,6 @@ function FanChartComponent({
     [onNodeClick]
   );
 
-  // Update dimensions on mount and resize
-  useMemo(() => {
-    if (!containerRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry) {
-        const size = Math.max(600, entry.contentRect.width);
-        setDimensions({
-          width: entry.contentRect.width,
-          height: size,
-        });
-      }
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
-
   // Use provided root or first node
   const effectiveRootId = rootPersonId || nodes[0]?.id;
 
@@ -337,162 +242,184 @@ function FanChartComponent({
     );
   }
 
+  // Always render the container so ResizeObserver can measure it
+  // Only render SVG content once we have valid dimensions
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
-      ref={containerRef}
+      ref={viewport.containerRef}
       className="bg-card relative h-full w-full overflow-hidden rounded-lg border"
-      onWheel={handleWheel}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
-      style={{ cursor: isDragging ? "grabbing" : "grab" }}
+      onWheel={viewport.handlers.onWheel}
+      onMouseDown={viewport.handlers.onMouseDown}
+      onMouseMove={viewport.handlers.onMouseMove}
+      onMouseUp={viewport.handlers.onMouseUp}
+      onMouseLeave={viewport.handlers.onMouseLeave}
+      style={{ cursor: viewport.isDragging ? "grabbing" : "grab" }}
     >
-      <Svg width={dimensions.width} height={dimensions.height}>
-        <G
-          transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}
-        >
-          {/* Generation guide circles */}
-          <G opacity={0.1}>
-            {Array.from({ length: maxGen }, (_, i) => i + 1).map((gen) => {
-              const radius = INNER_RADIUS + gen * RADIUS_STEP;
-              return (
-                <Circle
-                  key={`guide-${gen}`}
-                  cx={centerX}
-                  cy={centerY}
-                  r={radius}
-                  fill="none"
-                  stroke="var(--color-border)"
-                  strokeWidth="1"
-                  strokeDasharray="5,5"
-                />
-              );
-            })}
-          </G>
-
-          {/* Render edges */}
-          <G>
-            {edges.map((edge, i) => {
-              const source = nodePositions.get(edge.source);
-              const target = nodePositions.get(edge.target);
-
-              if (!source || !target) return null;
-
-              if (edge.type === "parent-child") {
-                // Radial connection from inner to outer
-                const path = d3.path();
-                path.moveTo(source.x, source.y);
-                path.lineTo(target.x, target.y);
-
-                return (
-                  <Path
-                    key={`edge-${i}-${edge.source}-${edge.target}`}
-                    d={path.toString()}
-                    stroke="var(--color-border)"
-                    strokeWidth="2"
-                    fill="none"
-                  />
-                );
-              } else if (edge.type === "spouse") {
-                // Spouse connection
-                if (source.radius === 0 && target.radius === 0) {
-                  // Both at center - draw straight dashed line
+      {!viewport.isReady ? (
+        <div className="flex h-full w-full items-center justify-center">
+          <div className="bg-primary/20 h-12 w-12 animate-pulse rounded-full" />
+        </div>
+      ) : (
+        <>
+          <Svg
+            width={viewport.dimensions.width}
+            height={viewport.dimensions.height}
+            data-chart-svg="true"
+          >
+            <G
+              transform={`translate(${viewport.transform.x}, ${viewport.transform.y}) scale(${viewport.transform.scale})`}
+            >
+              {/* Generation guide circles */}
+              <G opacity={0.1}>
+                {Array.from({ length: maxGen }, (_, i) => i + 1).map((gen) => {
+                  const radius = INNER_RADIUS + gen * RADIUS_STEP;
                   return (
-                    <Line
-                      key={`edge-${i}-${edge.source}-${edge.target}`}
-                      x1={source.x}
-                      y1={source.y}
-                      x2={target.x}
-                      y2={target.y}
-                      stroke="var(--color-primary)"
-                      strokeWidth="2"
-                      strokeDasharray="5,5"
-                    />
-                  );
-                } else if (
-                  source.radius === target.radius &&
-                  source.radius > 0
-                ) {
-                  // Arc connection along the same generation circle
-                  const radius = source.radius;
-                  const startAngle = Math.atan2(
-                    source.y - centerY,
-                    source.x - centerX
-                  );
-                  const endAngle = Math.atan2(
-                    target.y - centerY,
-                    target.x - centerX
-                  );
-
-                  const arc = d3
-                    .arc()
-                    .innerRadius(radius)
-                    .outerRadius(radius)
-                    .startAngle(startAngle)
-                    .endAngle(endAngle);
-
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  const arcPath = arc({ startAngle, endAngle } as any);
-
-                  return (
-                    <Path
-                      key={`edge-${i}-${edge.source}-${edge.target}`}
-                      d={arcPath || ""}
-                      transform={`translate(${centerX}, ${centerY})`}
-                      stroke="var(--color-primary)"
-                      strokeWidth="2"
-                      strokeDasharray="5,5"
+                    <Circle
+                      key={`guide-${gen}`}
+                      cx={centerX}
+                      cy={centerY}
+                      r={radius}
                       fill="none"
+                      stroke="var(--color-border)"
+                      strokeWidth="1"
+                      strokeDasharray="5,5"
                     />
                   );
-                }
+                })}
+              </G>
+
+              {/* Render edges */}
+              <G>
+                {edges.map((edge, i) => {
+                  const source = nodePositions.get(edge.source);
+                  const target = nodePositions.get(edge.target);
+
+                  if (!source || !target) return null;
+
+                  if (edge.type === "parent-child") {
+                    // Radial connection from inner to outer
+                    const path = d3.path();
+                    path.moveTo(source.x, source.y);
+                    path.lineTo(target.x, target.y);
+
+                    return (
+                      <Path
+                        key={`edge-${i}-${edge.source}-${edge.target}`}
+                        d={path.toString()}
+                        stroke="var(--color-border)"
+                        strokeWidth="2"
+                        fill="none"
+                      />
+                    );
+                  } else if (edge.type === "spouse") {
+                    // Spouse connection
+                    if (source.radius === 0 && target.radius === 0) {
+                      // Both at center - draw straight dashed line
+                      return (
+                        <Line
+                          key={`edge-${i}-${edge.source}-${edge.target}`}
+                          x1={source.x}
+                          y1={source.y}
+                          x2={target.x}
+                          y2={target.y}
+                          stroke="var(--color-primary)"
+                          strokeWidth="2"
+                          strokeDasharray="5,5"
+                        />
+                      );
+                    } else if (
+                      source.radius === target.radius &&
+                      source.radius > 0
+                    ) {
+                      // Arc connection along the same generation circle
+                      const radius = source.radius;
+                      const startAngle = Math.atan2(
+                        source.y - centerY,
+                        source.x - centerX
+                      );
+                      const endAngle = Math.atan2(
+                        target.y - centerY,
+                        target.x - centerX
+                      );
+
+                      const arc = d3
+                        .arc()
+                        .innerRadius(radius)
+                        .outerRadius(radius)
+                        .startAngle(startAngle)
+                        .endAngle(endAngle);
+
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                      const arcPath = arc({ startAngle, endAngle } as any);
+
+                      return (
+                        <Path
+                          key={`edge-${i}-${edge.source}-${edge.target}`}
+                          d={arcPath || ""}
+                          transform={`translate(${centerX}, ${centerY})`}
+                          stroke="var(--color-primary)"
+                          strokeWidth="2"
+                          strokeDasharray="5,5"
+                          fill="none"
+                        />
+                      );
+                    }
+                  }
+                  return null;
+                })}
+              </G>
+
+              {/* Render nodes */}
+              <G>
+                {nodes.map((node) => {
+                  const pos = nodePositions.get(node.id);
+                  if (!pos) return null;
+
+                  const isRoot = (node.generation ?? 0) === 0;
+
+                  return (
+                    <CircleNode
+                      key={node.id}
+                      node={node}
+                      cx={pos.x}
+                      cy={pos.y}
+                      radius={NODE_RADIUS}
+                      isRoot={isRoot}
+                      onMouseEnter={handleNodeMouseEnter}
+                      onMouseLeave={handleNodeMouseLeave}
+                      onClick={handleNodeClick}
+                    />
+                  );
+                })}
+              </G>
+            </G>
+          </Svg>
+
+          {/* Tooltip */}
+          {tooltip && effectiveRootId && (
+            <ChartTooltip
+              node={tooltip.node}
+              position={tooltip.position}
+              rootPersonId={effectiveRootId}
+              onSetAsCenter={handleSetAsCenter}
+              onViewProfile={handleViewProfile}
+              relationshipLabel={
+                tooltip.node.generation
+                  ? `Generation ${tooltip.node.generation}`
+                  : undefined
               }
-              return null;
-            })}
-          </G>
+            />
+          )}
 
-          {/* Render nodes */}
-          <G>
-            {nodes.map((node) => {
-              const pos = nodePositions.get(node.id);
-              if (!pos) return null;
-
-              const isRoot = (node.generation ?? 0) === 0;
-
-              return (
-                <CircleNode
-                  key={node.id}
-                  node={node}
-                  cx={pos.x}
-                  cy={pos.y}
-                  radius={NODE_RADIUS}
-                  isRoot={isRoot}
-                  onMouseEnter={handleNodeMouseEnter}
-                  onMouseLeave={handleNodeMouseLeave}
-                  onClick={handleNodeClick}
-                />
-              );
-            })}
-          </G>
-        </G>
-      </Svg>
-
-      {/* Tooltip */}
-      {tooltip && effectiveRootId && (
-        <ChartTooltip
-          node={tooltip.node}
-          position={tooltip.position}
-          rootPersonId={effectiveRootId}
-          onSetAsCenter={handleSetAsCenter}
-          onViewProfile={handleViewProfile}
-          relationshipLabel={
-            tooltip.node.generation
-              ? `Generation ${tooltip.node.generation}`
-              : undefined
-          }
-        />
+          {/* Zoom controls */}
+          <ZoomControls
+            scale={viewport.transform.scale}
+            onZoomIn={viewport.controls.zoomIn}
+            onZoomOut={viewport.controls.zoomOut}
+            onReset={viewport.controls.reset}
+          />
+        </>
       )}
     </div>
   );

@@ -239,7 +239,7 @@ function VisualizeComponent() {
   const getChartTitle = () => chartTypeLabels[visualizationType];
 
   const handleExportPDF = async () => {
-    const svg = document.querySelector(".chart-container svg");
+    const svg = document.querySelector(".chart-container svg[data-chart-svg]");
     if (!svg) return;
 
     try {
@@ -260,7 +260,7 @@ function VisualizeComponent() {
   };
 
   const handleExportPNG = () => {
-    const svg = document.querySelector(".chart-container svg");
+    const svg = document.querySelector(".chart-container svg[data-chart-svg]");
     if (!svg) return;
 
     try {
@@ -274,7 +274,7 @@ function VisualizeComponent() {
   };
 
   const handleExportSVG = () => {
-    const svg = document.querySelector(".chart-container svg");
+    const svg = document.querySelector(".chart-container svg[data-chart-svg]");
     if (!svg) return;
 
     try {

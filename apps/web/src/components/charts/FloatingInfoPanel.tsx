@@ -166,54 +166,75 @@ export function FloatingInfoPanel({
                 Legend
               </p>
               <div className="grid gap-1.5 text-xs">
-                {/* Living/Deceased */}
-                <div className="flex items-center gap-2">
-                  <div className="bg-primary/10 border-primary h-4 w-4 rounded border" />
-                  <span className="text-muted-foreground">Living</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="bg-muted border-border h-4 w-4 rounded border" />
-                  <span className="text-muted-foreground">Deceased</span>
-                </div>
-
-                {/* Timeline-specific */}
-                {chartType === "timeline" && (
+                {/* Bowtie-specific: Paternal/Maternal is primary, skip Living/Deceased */}
+                {chartType === "bowtie" ? (
                   <>
                     <div className="flex items-center gap-2">
-                      <div className="bg-primary h-2 w-2 rounded-full" />
+                      <div
+                        className="h-4 w-4 rounded border-2"
+                        style={{
+                          backgroundColor:
+                            "color-mix(in oklch, var(--color-chart-1) 30%, transparent)",
+                          borderColor: "var(--color-chart-1)",
+                        }}
+                      />
+                      <span className="text-foreground font-medium">
+                        Paternal
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-4 w-4 rounded border-2"
+                        style={{
+                          backgroundColor:
+                            "color-mix(in oklch, var(--color-chart-3) 30%, transparent)",
+                          borderColor: "var(--color-chart-3)",
+                        }}
+                      />
+                      <span className="text-foreground font-medium">
+                        Maternal
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="bg-primary h-2.5 w-2.5 rounded-full" />
+                      <span className="text-muted-foreground">Living</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="bg-muted-foreground h-2.5 w-2.5 rounded-full" />
+                      <span className="text-muted-foreground">Deceased</span>
+                    </div>
+                  </>
+                ) : chartType === "timeline" ? (
+                  /* Timeline-specific */
+                  <>
+                    <div className="flex items-center gap-2">
+                      <div className="bg-primary/60 border-primary h-3 w-8 rounded border" />
+                      <span className="text-muted-foreground">Living</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="bg-muted border-border h-3 w-8 rounded border" />
+                      <span className="text-muted-foreground">Deceased</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="bg-primary h-2.5 w-2.5 rounded-full" />
                       <span className="text-muted-foreground">Birth</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="bg-muted-foreground h-2 w-2 rounded-full" />
+                      <div className="bg-muted-foreground h-2.5 w-2.5 rounded-full" />
                       <span className="text-muted-foreground">Death</span>
                     </div>
                   </>
-                )}
-
-                {/* Bowtie-specific */}
-                {chartType === "bowtie" && (
+                ) : (
+                  /* Tree-based charts: Living/Deceased + edges */
                   <>
                     <div className="flex items-center gap-2">
-                      <div className="bg-chart-1/30 border-chart-1 h-4 w-4 rounded border" />
-                      <span className="text-muted-foreground">Paternal</span>
+                      <div className="bg-primary/15 border-primary h-4 w-4 rounded border-2" />
+                      <span className="text-muted-foreground">Living</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <div className="bg-chart-3/30 border-chart-3 h-4 w-4 rounded border" />
-                      <span className="text-muted-foreground">Maternal</span>
+                      <div className="bg-muted border-muted-foreground/50 h-4 w-4 rounded border-2" />
+                      <span className="text-muted-foreground">Deceased</span>
                     </div>
-                  </>
-                )}
-
-                {/* Edge types for tree-based charts */}
-                {[
-                  "tree",
-                  "ancestor",
-                  "descendant",
-                  "hourglass",
-                  "fan",
-                  "compact",
-                ].includes(chartType) && (
-                  <>
                     <div className="flex items-center gap-2">
                       <div className="border-border h-0.5 w-4 border-t-2" />
                       <span className="text-muted-foreground">

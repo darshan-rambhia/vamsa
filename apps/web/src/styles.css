@@ -50,11 +50,19 @@
   --radius-xl: 1rem;
 
   /* Chart colors - earth tones (forest greens, bark browns, warm creams) */
+  /* Legacy HSL format for Tailwind utility classes */
   --chart-1: 145 45% 38%; /* Forest green */
   --chart-2: 30 55% 45%; /* Warm amber/bark */
   --chart-3: 85 35% 45%; /* Sage olive */
   --chart-4: 40 40% 55%; /* Warm cream */
   --chart-5: 165 30% 42%; /* Teal green */
+
+  /* Chart colors in oklch for CSS var() usage */
+  --color-chart-1: oklch(0.45 0.12 145); /* Forest green - paternal */
+  --color-chart-2: oklch(0.52 0.12 55); /* Warm amber/bark */
+  --color-chart-3: oklch(0.5 0.08 125); /* Sage olive - maternal */
+  --color-chart-4: oklch(0.6 0.08 70); /* Warm cream */
+  --color-chart-5: oklch(0.48 0.08 175); /* Teal green */
 }
 
 /* Dark mode colors */
@@ -93,6 +101,13 @@
   --chart-3: 85 30% 55%; /* Sage olive - brighter */
   --chart-4: 40 35% 60%; /* Warm cream - brighter */
   --chart-5: 165 25% 50%; /* Teal green - brighter */
+
+  /* Chart colors in oklch for CSS var() usage (dark mode) */
+  --color-chart-1: oklch(0.55 0.1 145); /* Forest green - paternal */
+  --color-chart-2: oklch(0.6 0.1 55); /* Warm amber/bark */
+  --color-chart-3: oklch(0.58 0.07 125); /* Sage olive - maternal */
+  --color-chart-4: oklch(0.65 0.07 70); /* Warm cream */
+  --color-chart-5: oklch(0.55 0.07 175); /* Teal green */
 }
 
 /* Base styles */
@@ -370,4 +385,107 @@ input[type="range"].slider:focus::-moz-range-thumb {
 
 .map-marker:hover {
   z-index: 100;
+}
+
+/* ============================================
+   DASHBOARD GRID
+   ============================================ */
+
+/* Dashboard grid container */
+.dashboard-grid {
+  position: relative;
+  width: 100%;
+}
+
+/* Grid layout container */
+.dashboard-grid .react-grid-layout {
+  position: relative;
+  transition: height 200ms ease;
+}
+
+/* Grid item wrapper */
+.dashboard-grid-item {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* Widget drag handle (applied to BaseWidget header) */
+.widget-drag-handle {
+  cursor: move;
+  user-select: none;
+}
+
+.widget-drag-handle:active {
+  cursor: grabbing;
+}
+
+/* Grid item during drag */
+.react-grid-item.react-draggable-dragging {
+  z-index: 100;
+  opacity: 0.85;
+  transition: none;
+}
+
+/* Grid item placeholder during drag/resize */
+.react-grid-item.react-grid-placeholder {
+  background: var(--color-primary);
+  opacity: 0.15;
+  border: 2px dashed var(--color-primary);
+  border-radius: var(--radius-lg);
+  transition: all 200ms ease;
+  z-index: 2;
+}
+
+/* Grid item during resize */
+.react-grid-item.resizing {
+  z-index: 100;
+  opacity: 0.9;
+}
+
+/* Resize handle (southeast corner) */
+.react-grid-item > .react-resizable-handle {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+}
+
+.react-grid-item > .react-resizable-handle::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--color-muted-foreground);
+  border-bottom: 2px solid var(--color-muted-foreground);
+  opacity: 0.3;
+  transition: opacity 200ms ease;
+}
+
+.react-grid-item:hover > .react-resizable-handle::after {
+  opacity: 0.6;
+}
+
+.react-grid-item > .react-resizable-handle:hover::after {
+  opacity: 1;
+}
+
+/* Responsive breakpoints */
+@media (max-width: 768px) {
+  .dashboard-grid .react-grid-layout {
+    /* Adjust for tablet (6 columns) */
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-grid .react-grid-layout {
+    /* Adjust for mobile (2 columns) */
+  }
+
+  /* Disable resize on mobile for better UX */
+  .react-grid-item > .react-resizable-handle {
+    display: none;
+  }
 }

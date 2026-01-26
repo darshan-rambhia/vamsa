@@ -8,6 +8,132 @@ export interface ExportOptions {
 }
 
 /**
+ * Color map for CSS variables to hex colors.
+ * These match the Vamsa design system colors defined in styles.css.
+ * Using hex values because svg2pdf.js and canvas don't support oklch().
+ */
+const COLOR_MAP: Record<string, string> = {
+  // Light mode colors (default)
+  "--color-background": "#faf9f7",
+  "--color-foreground": "#22573e",
+  "--color-card": "#f2f0ec",
+  "--color-card-foreground": "#22573e",
+  "--color-popover": "#faf9f7",
+  "--color-popover-foreground": "#22573e",
+  "--color-primary": "#22573e",
+  "--color-primary-foreground": "#faf9f7",
+  "--color-secondary": "#4a8f6e",
+  "--color-secondary-foreground": "#faf9f7",
+  "--color-muted": "#f2f0ec",
+  "--color-muted-foreground": "#6b5c4d",
+  "--color-accent": "#e8e4dc",
+  "--color-accent-foreground": "#22573e",
+  "--color-destructive": "#b54545",
+  "--color-destructive-foreground": "#faf9f7",
+  "--color-border": "#d4d0c8",
+  "--color-input": "#d4d0c8",
+  "--color-ring": "#22573e",
+  // Chart colors
+  "--color-chart-1": "#3d7a5a",
+  "--color-chart-2": "#a67c52",
+  "--color-chart-3": "#6b8e5c",
+  "--color-chart-4": "#b5a078",
+  "--color-chart-5": "#4a8f7a",
+};
+
+/**
+ * Resolve CSS variables in an SVG element to actual color values.
+ * This is necessary for PDF/PNG export since svg2pdf.js and canvas
+ * cannot interpret CSS custom properties.
+ */
+function resolveCssVariables(svgElement: SVGElement): SVGElement {
+  // Clone the SVG to avoid modifying the original
+  const svgClone = svgElement.cloneNode(true) as SVGElement;
+
+  // Helper to resolve a CSS variable value
+  const resolveVar = (value: string): string => {
+    if (!value || !value.includes("var(")) return value;
+
+    // Handle var() references
+    return value.replace(
+      /var\(--([^,)]+)(?:,\s*([^)]+))?\)/g,
+      (match, varName, fallback) => {
+        const cssVarName = `--${varName}`;
+        // Use color map lookup
+        const resolved = COLOR_MAP[cssVarName];
+        return resolved || fallback || match;
+      }
+    );
+  };
+
+  // Helper to resolve color-mix() to a solid color
+  const resolveColorMix = (value: string): string => {
+    if (!value.includes("color-mix")) return value;
+
+    // For color-mix with transparency, extract the base color and apply opacity
+    // color-mix(in oklch, var(--color-primary) 10%, transparent) -> rgba version
+    const match = value.match(
+      /color-mix\(in\s+\w+,\s*([^,]+)\s+(\d+)%,\s*transparent\)/
+    );
+    if (match) {
+      const baseColor = resolveVar(match[1].trim());
+      const percentage = parseInt(match[2], 10) / 100;
+
+      // Convert hex to rgba with opacity
+      if (baseColor.startsWith("#")) {
+        const r = parseInt(baseColor.slice(1, 3), 16);
+        const g = parseInt(baseColor.slice(3, 5), 16);
+        const b = parseInt(baseColor.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${percentage})`;
+      }
+      // Fallback: forest green with opacity
+      return `rgba(34, 87, 62, ${percentage})`;
+    }
+    return value;
+  };
+
+  // Attributes that may contain color values
+  const colorAttributes = [
+    "fill",
+    "stroke",
+    "stop-color",
+    "flood-color",
+    "lighting-color",
+  ];
+
+  // Walk through all elements in the cloned SVG
+  const processElement = (element: Element) => {
+    // Process color attributes
+    for (const attr of colorAttributes) {
+      const value = element.getAttribute(attr);
+      if (value && (value.includes("var(") || value.includes("color-mix"))) {
+        let resolved = resolveVar(value);
+        resolved = resolveColorMix(resolved);
+        element.setAttribute(attr, resolved);
+      }
+    }
+
+    // Process inline styles
+    if (element instanceof SVGElement || element instanceof HTMLElement) {
+      const style = element.getAttribute("style");
+      if (style && (style.includes("var(") || style.includes("color-mix"))) {
+        let resolved = resolveVar(style);
+        resolved = resolveColorMix(resolved);
+        element.setAttribute("style", resolved);
+      }
+    }
+
+    // Recursively process children
+    for (const child of element.children) {
+      processElement(child);
+    }
+  };
+
+  processElement(svgClone);
+  return svgClone;
+}
+
+/**
  * Export SVG element to PDF using jsPDF and svg2pdf.js
  */
 export async function exportToPDF(
@@ -20,6 +146,9 @@ export async function exportToPDF(
   const svg2pdf = svg2pdfModule.svg2pdf || (svg2pdfModule as any).default;
 
   const { title, orientation, includeMetadata = true, scale = 1 } = options;
+
+  // Resolve CSS variables before export
+  const resolvedSvg = resolveCssVariables(svgElement);
 
   // Get SVG dimensions
   const bbox = (svgElement as SVGGraphicsElement).getBBox();
@@ -82,8 +211,8 @@ export async function exportToPDF(
   const y = marginTop;
 
   try {
-    // Convert SVG to PDF
-    await svg2pdf(svgElement, pdf, {
+    // Convert SVG to PDF using the resolved SVG
+    await svg2pdf(resolvedSvg, pdf, {
       x,
       y,
       width: svgWidth,
@@ -124,8 +253,8 @@ export function exportToPNG(
     canvas.width = width;
     canvas.height = height;
 
-    // Clone the SVG to avoid modifying the original
-    const svgClone = svgElement.cloneNode(true) as SVGElement;
+    // Resolve CSS variables before export
+    const svgClone = resolveCssVariables(svgElement);
 
     // Set explicit width and height attributes on the cloned SVG
     svgClone.setAttribute("width", width.toString());
@@ -184,8 +313,8 @@ export function exportToPNG(
  */
 export function exportToSVG(svgElement: SVGElement, filename: string): void {
   try {
-    // Clone the SVG to avoid modifying the original
-    const svgClone = svgElement.cloneNode(true) as SVGElement;
+    // Resolve CSS variables before export so the SVG works standalone
+    const svgClone = resolveCssVariables(svgElement);
 
     // Ensure the SVG has proper xmlns attributes
     svgClone.setAttribute("xmlns", "http://www.w3.org/2000/svg");

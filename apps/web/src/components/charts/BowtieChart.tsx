@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, memo, useMemo, useCallback, useRef } from "react";
+import { useState, memo, useMemo, useCallback, useEffect } from "react";
 import { Svg, G, Rect, Text, Line, Path } from "react-native-svg";
 import * as d3 from "d3";
 import type { BowtieNode, ChartEdge } from "~/server/charts";
@@ -9,6 +9,11 @@ import {
   usePerformanceMonitor,
 } from "~/lib/chart-performance";
 import { ChartSkeleton } from "./ChartSkeleton";
+import { ZoomControls } from "./ZoomControls";
+import {
+  useChartViewport,
+  calculateBoundsFromPositions,
+} from "./useChartViewport";
 
 interface BowtieChartProps {
   nodes: BowtieNode[];
@@ -22,6 +27,7 @@ const NODE_WIDTH = 160;
 const NODE_HEIGHT = 50;
 const LEVEL_HEIGHT = 100;
 const HORIZONTAL_GAP = 80;
+const MARGIN = { top: 40, right: 40, bottom: 40, left: 40 };
 
 interface NodePosition {
   x: number;
@@ -95,9 +101,6 @@ function BowtieNodeComponent({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
-      role="button"
-      tabIndex={0}
-      cursor="pointer"
     >
       {/* Background rectangle */}
       <Rect
@@ -205,28 +208,29 @@ function calculateBowtieLayout(
     positions.set(centerNode.id, { x: centerX, y: centerY });
   }
 
-  // Position paternal nodes (left side)
+  // Position paternal nodes (left side) - centered within left half
   paternalGens.forEach((genNodes, gen) => {
     const yPos = centerY - gen * LEVEL_HEIGHT;
-    const leftWidth =
-      (paternalGens.get(gen)?.length || 1) * (NODE_WIDTH + HORIZONTAL_GAP / 2);
-    const startX = centerX - HORIZONTAL_GAP - leftWidth;
+    const nodeSpacing = NODE_WIDTH + HORIZONTAL_GAP / 2;
+    const totalWidth = genNodes.length * nodeSpacing - HORIZONTAL_GAP / 2;
+    // Center the generation within the left side
+    const startX = centerX - HORIZONTAL_GAP / 2 - totalWidth;
 
     genNodes.forEach((node, index) => {
-      const xPos =
-        startX + index * (NODE_WIDTH + HORIZONTAL_GAP / 2) + NODE_WIDTH / 2;
+      const xPos = startX + index * nodeSpacing + NODE_WIDTH / 2;
       positions.set(node.id, { x: xPos, y: yPos });
     });
   });
 
-  // Position maternal nodes (right side)
+  // Position maternal nodes (right side) - mirror of paternal
   maternalGens.forEach((genNodes, gen) => {
     const yPos = centerY - gen * LEVEL_HEIGHT;
-    const startX = centerX + HORIZONTAL_GAP;
+    const nodeSpacing = NODE_WIDTH + HORIZONTAL_GAP / 2;
+    // Start from center gap
+    const startX = centerX + HORIZONTAL_GAP / 2;
 
     genNodes.forEach((node, index) => {
-      const xPos =
-        startX + index * (NODE_WIDTH + HORIZONTAL_GAP / 2) + NODE_WIDTH / 2;
+      const xPos = startX + index * nodeSpacing + NODE_WIDTH / 2;
       positions.set(node.id, { x: xPos, y: yPos });
     });
   });
@@ -240,19 +244,10 @@ function BowtieChartComponent({
   rootPersonId,
   onNodeClick,
 }: BowtieChartProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [dimensions, setDimensions] = useState({ width: 800, height: 600 });
-
-  // Transform state for zoom/pan
-  const [transform, setTransform] = useState({
-    x: 0,
-    y: 0,
-    scale: 1,
+  // Use the standardized chart viewport hook
+  const viewport = useChartViewport({
+    margin: MARGIN,
   });
-
-  // Dragging state
-  const [isDragging, setIsDragging] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
 
   // Performance monitoring
   usePerformanceMonitor("BowtieChart", false);
@@ -265,15 +260,15 @@ function BowtieChartComponent({
     if (nodes.length === 0) {
       return {
         nodePositions: new Map<string, NodePosition>(),
-        centerX: dimensions.width / 2,
-        centerY: dimensions.height / 2,
+        centerX: viewport.dimensions.width / 2,
+        centerY: viewport.dimensions.height / 2,
         maxGenDepth: 0,
       };
     }
 
     const startTime = performance.now();
-    const cx = dimensions.width / 2;
-    const cy = dimensions.height / 2;
+    const cx = viewport.dimensions.width / 2;
+    const cy = viewport.dimensions.height / 2;
     const positions = calculateBowtieLayout(nodes, rootPersonId, cx, cy);
 
     // Calculate max generation depth
@@ -302,112 +297,19 @@ function BowtieChartComponent({
       centerY: cy,
       maxGenDepth: maxDepth,
     };
-  }, [nodes, dimensions, rootPersonId]);
+  }, [nodes, viewport.dimensions, rootPersonId]);
 
-  // Calculate initial transform to center the chart
-  const initialTransform = useMemo(() => {
-    if (nodePositions.size === 0) {
-      return { x: dimensions.width / 2, y: dimensions.height / 2, scale: 1 };
+  // Fit content to viewport when layout changes
+  useEffect(() => {
+    if (nodePositions.size > 0) {
+      const bounds = calculateBoundsFromPositions(
+        nodePositions,
+        NODE_WIDTH,
+        NODE_HEIGHT
+      );
+      viewport.fitContent(bounds);
     }
-
-    // Calculate content bounds
-    let minX = Infinity;
-    let maxX = -Infinity;
-    let minY = Infinity;
-    let maxY = -Infinity;
-
-    nodePositions.forEach((pos) => {
-      minX = Math.min(minX, pos.x - NODE_WIDTH / 2);
-      maxX = Math.max(maxX, pos.x + NODE_WIDTH / 2);
-      minY = Math.min(minY, pos.y - NODE_HEIGHT / 2);
-      maxY = Math.max(maxY, pos.y + NODE_HEIGHT / 2);
-    });
-
-    const contentWidth = maxX - minX + 60;
-    const contentHeight = maxY - minY + 60;
-
-    // Calculate scale to fit
-    const scaleX = (dimensions.width * 0.9) / contentWidth;
-    const scaleY = (dimensions.height * 0.9) / contentHeight;
-    const scale = Math.min(scaleX, scaleY, 0.95);
-
-    // Calculate center offset
-    const centerContentX = (minX + maxX) / 2;
-    const centerContentY = (minY + maxY) / 2;
-
-    return {
-      x: dimensions.width / 2 - centerContentX * scale,
-      y: dimensions.height / 2 - centerContentY * scale,
-      scale,
-    };
-  }, [nodePositions, dimensions]);
-
-  // Initialize transform
-  useMemo(() => {
-    setTransform(initialTransform);
-  }, [initialTransform]);
-
-  // Handle wheel zoom
-  const handleWheel = useCallback(
-    (e: React.WheelEvent<HTMLDivElement>) => {
-      e.preventDefault();
-      e.stopPropagation();
-
-      const rect = containerRef.current?.getBoundingClientRect();
-      if (!rect) return;
-
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-
-      const delta = e.deltaY > 0 ? 0.9 : 1.1;
-      const newScale = Math.max(0.1, Math.min(4, transform.scale * delta));
-
-      const scaleChange = newScale / transform.scale;
-      const newX = mouseX - (mouseX - transform.x) * scaleChange;
-      const newY = mouseY - (mouseY - transform.y) * scaleChange;
-
-      setTransform({
-        x: newX,
-        y: newY,
-        scale: newScale,
-      });
-    },
-    [transform]
-  );
-
-  // Handle mouse down for pan
-  const handleMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (e.button !== 0) return;
-      setIsDragging(true);
-      setDragStart({ x: e.clientX - transform.x, y: e.clientY - transform.y });
-    },
-    [transform]
-  );
-
-  // Handle mouse move for pan
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!isDragging) return;
-      setTransform({
-        ...transform,
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      });
-    },
-    [isDragging, dragStart, transform]
-  );
-
-  // Handle mouse up/leave
-  const handleMouseUp = useCallback(() => {
-    setIsDragging(false);
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (isDragging) {
-      setIsDragging(false);
-    }
-  }, [isDragging]);
+  }, [nodePositions, viewport.fitContent]);
 
   // Handle node click
   const handleNodeClick = useCallback(
@@ -416,22 +318,6 @@ function BowtieChartComponent({
     },
     [onNodeClick]
   );
-
-  // Update dimensions on mount and resize
-  useMemo(() => {
-    if (!containerRef.current) return;
-    const observer = new ResizeObserver((entries) => {
-      const entry = entries[0];
-      if (entry) {
-        setDimensions({
-          width: entry.contentRect.width,
-          height: Math.max(600, entry.contentRect.height),
-        });
-      }
-    });
-    observer.observe(containerRef.current);
-    return () => observer.disconnect();
-  }, []);
 
   // Show loading skeleton for large datasets
   if (loadingState.isLoading) {
@@ -451,121 +337,143 @@ function BowtieChartComponent({
     );
   }
 
+  // Always render the container so ResizeObserver can measure it
+  // Only render SVG content once we have valid dimensions
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
-      ref={containerRef}
+      ref={viewport.containerRef}
       className="bg-card relative h-full w-full overflow-hidden rounded-lg border"
-      onWheel={handleWheel}
-      onMouseDown={handleMouseDown}
-      onMouseMove={handleMouseMove}
-      onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}
-      style={{ cursor: isDragging ? "grabbing" : "grab" }}
+      onWheel={viewport.handlers.onWheel}
+      onMouseDown={viewport.handlers.onMouseDown}
+      onMouseMove={viewport.handlers.onMouseMove}
+      onMouseUp={viewport.handlers.onMouseUp}
+      onMouseLeave={viewport.handlers.onMouseLeave}
+      style={{ cursor: viewport.isDragging ? "grabbing" : "grab" }}
     >
-      <Svg width={dimensions.width} height={dimensions.height}>
-        <G
-          transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}
-        >
-          {/* Side labels */}
-          <G>
-            {/* Paternal label */}
-            <Text
-              x={centerX - HORIZONTAL_GAP * 2}
-              y={centerY - LEVEL_HEIGHT * 0.5}
-              textAnchor="middle"
-              fill="var(--color-chart-1)"
-              fontSize="14"
-              fontWeight="700"
-              letterSpacing="2"
+      {!viewport.isReady ? (
+        <div className="flex h-full w-full items-center justify-center">
+          <div className="bg-primary/20 h-12 w-12 animate-pulse rounded-full" />
+        </div>
+      ) : (
+        <>
+          <Svg
+            width={viewport.dimensions.width}
+            height={viewport.dimensions.height}
+            data-chart-svg="true"
+          >
+            <G
+              transform={`translate(${viewport.transform.x}, ${viewport.transform.y}) scale(${viewport.transform.scale})`}
             >
-              PATERNAL
-            </Text>
+              {/* Side labels */}
+              <G>
+                {/* Paternal label */}
+                <Text
+                  x={centerX - HORIZONTAL_GAP * 2}
+                  y={centerY - LEVEL_HEIGHT * 0.5}
+                  textAnchor="middle"
+                  fill="var(--color-chart-1)"
+                  fontSize="14"
+                  fontWeight="700"
+                  letterSpacing="2"
+                >
+                  PATERNAL
+                </Text>
 
-            {/* Maternal label */}
-            <Text
-              x={centerX + HORIZONTAL_GAP * 2}
-              y={centerY - LEVEL_HEIGHT * 0.5}
-              textAnchor="middle"
-              fill="var(--color-chart-3)"
-              fontSize="14"
-              fontWeight="700"
-              letterSpacing="2"
-            >
-              MATERNAL
-            </Text>
-          </G>
+                {/* Maternal label */}
+                <Text
+                  x={centerX + HORIZONTAL_GAP * 2}
+                  y={centerY - LEVEL_HEIGHT * 0.5}
+                  textAnchor="middle"
+                  fill="var(--color-chart-3)"
+                  fontSize="14"
+                  fontWeight="700"
+                  letterSpacing="2"
+                >
+                  MATERNAL
+                </Text>
+              </G>
 
-          {/* Center divider line */}
-          <Line
-            x1={centerX}
-            x2={centerX}
-            y1={centerY - (maxGenDepth + 1) * LEVEL_HEIGHT}
-            y2={centerY + LEVEL_HEIGHT / 2}
-            stroke="var(--color-border)"
-            strokeWidth="2"
-            strokeDasharray="8,4"
-            opacity={0.5}
+              {/* Center divider line */}
+              <Line
+                x1={centerX}
+                x2={centerX}
+                y1={centerY - (maxGenDepth + 1) * LEVEL_HEIGHT}
+                y2={centerY + LEVEL_HEIGHT / 2}
+                stroke="var(--color-border)"
+                strokeWidth="2"
+                strokeDasharray="8,4"
+                opacity={0.5}
+              />
+
+              {/* Render edges */}
+              <G>
+                {edges.map((edge, i) => {
+                  const source = nodePositions.get(edge.source);
+                  const target = nodePositions.get(edge.target);
+
+                  if (!source || !target) return null;
+
+                  // Draw curved path
+                  const midY = (source.y + target.y) / 2;
+
+                  const path = d3.path();
+                  path.moveTo(source.x, source.y + NODE_HEIGHT / 2);
+                  path.bezierCurveTo(
+                    source.x,
+                    midY,
+                    target.x,
+                    midY,
+                    target.x,
+                    target.y - NODE_HEIGHT / 2
+                  );
+
+                  return (
+                    <Path
+                      key={`edge-${i}-${edge.source}-${edge.target}`}
+                      d={path.toString()}
+                      stroke="var(--color-border)"
+                      strokeWidth="2"
+                      fill="none"
+                    />
+                  );
+                })}
+              </G>
+
+              {/* Render nodes */}
+              <G>
+                {nodes.map((node) => {
+                  const pos = nodePositions.get(node.id);
+                  if (!pos) return null;
+
+                  const isRoot = node.id === rootPersonId;
+
+                  return (
+                    <BowtieNodeComponent
+                      key={node.id}
+                      node={node}
+                      x={pos.x - NODE_WIDTH / 2}
+                      y={pos.y - NODE_HEIGHT / 2}
+                      width={NODE_WIDTH}
+                      height={NODE_HEIGHT}
+                      isRoot={isRoot}
+                      onClick={handleNodeClick}
+                    />
+                  );
+                })}
+              </G>
+            </G>
+          </Svg>
+
+          {/* Zoom controls */}
+          <ZoomControls
+            scale={viewport.transform.scale}
+            onZoomIn={viewport.controls.zoomIn}
+            onZoomOut={viewport.controls.zoomOut}
+            onReset={viewport.controls.reset}
           />
-
-          {/* Render edges */}
-          <G>
-            {edges.map((edge, i) => {
-              const source = nodePositions.get(edge.source);
-              const target = nodePositions.get(edge.target);
-
-              if (!source || !target) return null;
-
-              // Draw curved path
-              const midY = (source.y + target.y) / 2;
-
-              const path = d3.path();
-              path.moveTo(source.x, source.y + NODE_HEIGHT / 2);
-              path.bezierCurveTo(
-                source.x,
-                midY,
-                target.x,
-                midY,
-                target.x,
-                target.y - NODE_HEIGHT / 2
-              );
-
-              return (
-                <Path
-                  key={`edge-${i}-${edge.source}-${edge.target}`}
-                  d={path.toString()}
-                  stroke="var(--color-border)"
-                  strokeWidth="2"
-                  fill="none"
-                />
-              );
-            })}
-          </G>
-
-          {/* Render nodes */}
-          <G>
-            {nodes.map((node) => {
-              const pos = nodePositions.get(node.id);
-              if (!pos) return null;
-
-              const isRoot = node.id === rootPersonId;
-
-              return (
-                <BowtieNodeComponent
-                  key={node.id}
-                  node={node}
-                  x={pos.x - NODE_WIDTH / 2}
-                  y={pos.y - NODE_HEIGHT / 2}
-                  width={NODE_WIDTH}
-                  height={NODE_HEIGHT}
-                  isRoot={isRoot}
-                  onClick={handleNodeClick}
-                />
-              );
-            })}
-          </G>
-        </G>
-      </Svg>
+        </>
+      )}
     </div>
   );
 }

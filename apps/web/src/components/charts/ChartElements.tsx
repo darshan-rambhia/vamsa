@@ -91,9 +91,6 @@ export function RectNode({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
-      role="button"
-      tabIndex={0}
-      cursor="pointer"
     >
       {/* Background rectangle */}
       <Rect
@@ -225,9 +222,6 @@ export function CircleNode({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
-      role="button"
-      tabIndex={0}
-      cursor="pointer"
     >
       {/* Main circle */}
       <Circle
