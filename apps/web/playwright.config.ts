@@ -78,6 +78,7 @@ const webServerConfig = {
  */
 export default defineConfig({
   testDir: path.join(__dirname, "e2e"),
+  testMatch: "**/*.e2e.ts",
   timeout: 30 * 1000,
   expect: {
     timeout: 10 * 1000,
