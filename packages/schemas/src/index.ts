@@ -194,3 +194,17 @@ export {
   type SuccessResponse,
   type PaginationMetadata,
 } from "./response";
+
+// Dashboard schemas
+export {
+  widgetConfigSchema,
+  dashboardLayoutSchema,
+  dashboardPreferencesSchema,
+  saveDashboardPreferencesSchema,
+  DEFAULT_DASHBOARD_LAYOUT,
+  DEFAULT_DASHBOARD_WIDGETS,
+  type WidgetConfig,
+  type DashboardLayout,
+  type DashboardPreferences,
+  type SaveDashboardPreferencesInput,
+} from "./dashboard";
