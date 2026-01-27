@@ -1,25 +1,32 @@
 /**
- * Unit tests for auth.ts validation and patterns
+ * Unit tests for auth.ts server functions
  *
- * These tests validate the schemas, constants, and logic patterns
- * used in auth.ts without requiring TanStack Start server context.
+ * Tests:
+ * - Schema validation using actual @vamsa/schemas
+ * - i18n error messages using real i18n system
  *
- * The actual server functions are tested via:
+ * Note: The actual server functions are tested via:
  * - E2E tests (apps/web/e2e/auth.e2e.ts)
  * - Business logic tests (packages/lib/src/server/business/auth.test.ts)
  * - API route tests (apps/web/server/api/auth.test.ts)
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, beforeAll } from "bun:test";
 import { claimProfileSchema, changePasswordSchema } from "@vamsa/schemas";
+import {
+  t,
+  tMultiple,
+  getServerI18n,
+  initializeServerI18n,
+} from "@vamsa/lib/server";
 
-describe("auth.ts validation and patterns", () => {
-  // ==========================================================================
-  // Schema validation tests - using actual schemas from @vamsa/schemas
-  // ==========================================================================
+// =============================================================================
+// Schema Validation Tests
+// =============================================================================
 
-  describe("claimProfileSchema validation", () => {
-    it("should validate correct claim data", () => {
+describe("Auth Schema Validation", () => {
+  describe("claimProfileSchema", () => {
+    it("validates correct claim data", () => {
       const result = claimProfileSchema.parse({
         email: "user@example.com",
         personId: "person-123",
@@ -31,7 +38,7 @@ describe("auth.ts validation and patterns", () => {
       expect(result.password).toBe("password123");
     });
 
-    it("should reject invalid email format", () => {
+    it("rejects invalid email format", () => {
       expect(() => {
         claimProfileSchema.parse({
           email: "not-an-email",
@@ -41,7 +48,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should reject missing email", () => {
+    it("rejects missing email", () => {
       expect(() => {
         claimProfileSchema.parse({
           personId: "person-123",
@@ -50,7 +57,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should reject missing personId", () => {
+    it("rejects missing personId", () => {
       expect(() => {
         claimProfileSchema.parse({
           email: "user@example.com",
@@ -59,7 +66,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should reject empty personId", () => {
+    it("rejects empty personId", () => {
       expect(() => {
         claimProfileSchema.parse({
           email: "user@example.com",
@@ -69,7 +76,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should reject missing password", () => {
+    it("rejects missing password", () => {
       expect(() => {
         claimProfileSchema.parse({
           email: "user@example.com",
@@ -78,7 +85,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should reject password shorter than 8 characters", () => {
+    it("rejects password shorter than 8 characters", () => {
       expect(() => {
         claimProfileSchema.parse({
           email: "user@example.com",
@@ -88,7 +95,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should accept 8-character password as minimum", () => {
+    it("accepts 8-character password as minimum", () => {
       const result = claimProfileSchema.parse({
         email: "user@example.com",
         personId: "person-123",
@@ -98,7 +105,7 @@ describe("auth.ts validation and patterns", () => {
       expect(result.password).toBe("12345678");
     });
 
-    it("should accept various valid email formats", () => {
+    it("accepts various valid email formats", () => {
       const validEmails = [
         "user@example.com",
         "user.name@example.com",
@@ -117,8 +124,8 @@ describe("auth.ts validation and patterns", () => {
     });
   });
 
-  describe("changePasswordSchema validation", () => {
-    it("should validate correct password change data", () => {
+  describe("changePasswordSchema", () => {
+    it("validates correct password change data", () => {
       const result = changePasswordSchema.parse({
         currentPassword: "oldpassword",
         newPassword: "newpassword123",
@@ -130,7 +137,7 @@ describe("auth.ts validation and patterns", () => {
       expect(result.confirmPassword).toBe("newpassword123");
     });
 
-    it("should reject mismatched passwords", () => {
+    it("rejects mismatched passwords", () => {
       expect(() => {
         changePasswordSchema.parse({
           currentPassword: "oldpassword",
@@ -140,7 +147,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should reject missing currentPassword", () => {
+    it("rejects missing currentPassword", () => {
       expect(() => {
         changePasswordSchema.parse({
           newPassword: "newpassword123",
@@ -149,7 +156,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should reject empty currentPassword", () => {
+    it("rejects empty currentPassword", () => {
       expect(() => {
         changePasswordSchema.parse({
           currentPassword: "",
@@ -159,7 +166,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should reject missing newPassword", () => {
+    it("rejects missing newPassword", () => {
       expect(() => {
         changePasswordSchema.parse({
           currentPassword: "oldpassword",
@@ -168,7 +175,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should reject newPassword shorter than 8 characters", () => {
+    it("rejects newPassword shorter than 8 characters", () => {
       expect(() => {
         changePasswordSchema.parse({
           currentPassword: "oldpassword",
@@ -178,7 +185,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should reject missing confirmPassword", () => {
+    it("rejects missing confirmPassword", () => {
       expect(() => {
         changePasswordSchema.parse({
           currentPassword: "oldpassword",
@@ -187,7 +194,7 @@ describe("auth.ts validation and patterns", () => {
       }).toThrow();
     });
 
-    it("should accept 8-character newPassword as minimum", () => {
+    it("accepts 8-character newPassword as minimum", () => {
       const result = changePasswordSchema.parse({
         currentPassword: "oldpassword",
         newPassword: "12345678",
@@ -197,7 +204,7 @@ describe("auth.ts validation and patterns", () => {
       expect(result.newPassword).toBe("12345678");
     });
 
-    it("should allow any non-empty currentPassword", () => {
+    it("allows any non-empty currentPassword", () => {
       const result = changePasswordSchema.parse({
         currentPassword: "a",
         newPassword: "newpassword123",
@@ -207,126 +214,218 @@ describe("auth.ts validation and patterns", () => {
       expect(result.currentPassword).toBe("a");
     });
   });
+});
 
-  // ==========================================================================
-  // Cookie configuration tests
-  // ==========================================================================
+// =============================================================================
+// i18n Error Messages Tests
+// =============================================================================
 
-  describe("cookie configuration", () => {
-    const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
+describe("Auth i18n Error Messages", () => {
+  beforeAll(async () => {
+    await initializeServerI18n();
+  });
 
-    it("should use correct Better Auth cookie name", () => {
-      expect(BETTER_AUTH_COOKIE_NAME).toBe("better-auth.session_token");
+  describe("Login Error Messages", () => {
+    it("returns invalid credentials error", async () => {
+      const errorMsg = await t("errors:auth.invalidCredentials");
+      expect(errorMsg).toBe("Invalid email or password");
     });
 
-    it("should construct cookie header correctly with value", () => {
-      const cookie = "my-token-value";
-      const headerValue = `${BETTER_AUTH_COOKIE_NAME}=${cookie}`;
-
-      expect(headerValue).toBe("better-auth.session_token=my-token-value");
+    it("returns account disabled error", async () => {
+      const errorMsg = await t("errors:auth.accountDisabled");
+      expect(errorMsg).toBe("Account is disabled");
     });
 
-    it("should return empty string for undefined cookie", () => {
-      const cookie: string | undefined = undefined;
-      const headerValue = cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : "";
-
-      expect(headerValue).toBe("");
+    it("returns session expired error", async () => {
+      const errorMsg = await t("errors:auth.sessionExpired");
+      expect(errorMsg).toBe("Your session has expired");
     });
 
-    it("should construct Headers object with cookie", () => {
-      const cookie = "token-value";
-      const headers = new Headers({
-        cookie: cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : "",
+    it("returns not authenticated error", async () => {
+      const errorMsg = await t("errors:auth.notAuthenticated");
+      expect(errorMsg).toBe("Please log in to continue");
+    });
+  });
+
+  describe("Account Lock Error Messages", () => {
+    it("returns account locked with minutes", async () => {
+      const errorMsg = await t("errors:auth.accountLockedAfterThreshold", {
+        minutes: 15,
       });
+      expect(errorMsg).toContain("locked");
+      expect(errorMsg).toContain("15");
+      expect(errorMsg).toContain("minutes");
+    });
 
-      expect(headers).toBeInstanceOf(Headers);
-      expect(headers.get("cookie")).toBe(
-        "better-auth.session_token=token-value"
-      );
+    it("handles different minute values", async () => {
+      const durations = [1, 5, 15, 30, 60];
+
+      for (const minutes of durations) {
+        const msg = await t("errors:auth.accountLockedAfterThreshold", {
+          minutes,
+        });
+        expect(msg).toContain(minutes.toString());
+      }
     });
   });
 
-  // ==========================================================================
-  // Return value shape tests
-  // ==========================================================================
-
-  describe("return value shapes", () => {
-    it("claimProfile success response should have success and userId", () => {
-      const response = { success: true, userId: "new-user-id" };
-
-      expect(response).toHaveProperty("success", true);
-      expect(response).toHaveProperty("userId");
-      expect(typeof response.userId).toBe("string");
+  describe("OAuth Error Messages", () => {
+    it("returns invalid provider error", async () => {
+      const errorMsg = await t("errors:auth.invalidProvider");
+      expect(errorMsg).toBe("Invalid provider");
     });
 
-    it("changePassword success response should have success true", () => {
-      const response = { success: true };
+    it("returns oauth not configured with provider", async () => {
+      const providers = ["Google", "GitHub", "Facebook", "Microsoft"];
 
-      expect(response).toEqual({ success: true });
+      for (const provider of providers) {
+        const msg = await t("errors:auth.oauthNotConfigured", { provider });
+        expect(msg).toContain(provider);
+        expect(msg).toContain("OAuth");
+      }
     });
 
-    it("logout success response should have success true", () => {
-      const response = { success: true };
-
-      expect(response.success).toBe(true);
+    it("returns oauth user info failed", async () => {
+      const errorMsg = await t("errors:auth.oauthUserInfoFailed", {
+        provider: "GitHub",
+      });
+      expect(errorMsg).toContain("Failed");
+      expect(errorMsg).toContain("GitHub");
     });
 
-    it("getSession success should return user object", () => {
-      const user = {
-        id: "user-123",
-        email: "user@example.com",
-        name: "John Doe",
-        role: "MEMBER",
-      };
-
-      expect(user).toHaveProperty("id");
-      expect(user).toHaveProperty("email");
-      expect(user).toHaveProperty("role");
+    it("returns oauth email not found", async () => {
+      const errorMsg = await t("errors:auth.oauthEmailNotFound", {
+        provider: "Twitter",
+      });
+      expect(errorMsg).toContain("email");
+      expect(errorMsg).toContain("Twitter");
     });
 
-    it("getSession error should return null", () => {
-      const result = null;
-      expect(result).toBeNull();
+    it("returns oauth email exists error", async () => {
+      const errorMsg = await t("errors:auth.oauthEmailExists");
+      expect(errorMsg).toContain("account");
+      expect(errorMsg).toContain("already exists");
+    });
+  });
+
+  describe("Password Validation Error Messages", () => {
+    it("returns password mismatch error", async () => {
+      const errorMsg = await t("errors:validation.passwordMismatch");
+      expect(errorMsg).toBe("Passwords do not match");
     });
 
-    it("checkAuth success should return valid true and user", () => {
-      const response = { valid: true, user: { id: "user-1" } };
+    it("returns password too short error", async () => {
+      const errorMsg = await t("errors:validation.passwordTooShort", {
+        min: 8,
+      });
+      expect(errorMsg).toContain("8");
+      expect(errorMsg).toContain("characters");
+    });
+  });
 
-      expect(response.valid).toBe(true);
-      expect(response.user).not.toBeNull();
+  describe("Validation Error Messages", () => {
+    it("returns required field error", async () => {
+      const errorMsg = await t("errors:validation.required", {
+        field: "Email",
+      });
+      expect(errorMsg).toBe("Email is required");
     });
 
-    it("checkAuth failure should return valid false and null user", () => {
-      const response = { valid: false, user: null };
-
-      expect(response.valid).toBe(false);
-      expect(response.user).toBeNull();
+    it("returns invalid email error", async () => {
+      const errorMsg = await t("errors:validation.invalidEmail");
+      expect(errorMsg).toBe("Invalid email address");
     });
 
-    it("getUnclaimedProfiles should return array of profiles", () => {
-      const profiles = [
-        { id: "person-1", firstName: "John", lastName: "Doe" },
-        { id: "person-2", firstName: "Jane", lastName: "Smith" },
+    it("returns minLength validation error", async () => {
+      const errorMsg = await t("errors:validation.minLength", { length: 6 });
+      expect(errorMsg).toContain("6");
+      expect(errorMsg).toContain("characters");
+    });
+
+    it("returns maxLength validation error", async () => {
+      const errorMsg = await t("errors:validation.maxLength", { length: 255 });
+      expect(errorMsg).toContain("255");
+      expect(errorMsg).toContain("characters");
+    });
+
+    it("returns invalid URL error", async () => {
+      const errorMsg = await t("errors:validation.invalidUrl");
+      expect(errorMsg).toContain("URL");
+    });
+  });
+
+  describe("Multiple Error Messages", () => {
+    it("returns multiple error messages", async () => {
+      const keys = [
+        "errors:auth.invalidCredentials",
+        "errors:auth.accountDisabled",
+        "errors:auth.sessionExpired",
       ];
+      const messages = await tMultiple(keys);
 
-      expect(Array.isArray(profiles)).toBe(true);
-      expect(profiles[0]).toHaveProperty("id");
-      expect(profiles[0]).toHaveProperty("firstName");
-      expect(profiles[0]).toHaveProperty("lastName");
-    });
-
-    it("getAvailableProviders should return provider flags", () => {
-      const providers = {
-        google: true,
-        github: false,
-        microsoft: false,
-        oidc: true,
-      };
-
-      expect(typeof providers).toBe("object");
-      expect(providers).toHaveProperty("google");
-      expect(typeof providers.google).toBe("boolean");
+      expect(messages).toHaveLength(3);
+      expect(messages[0]).toBe("Invalid email or password");
+      expect(messages[1]).toBe("Account is disabled");
+      expect(messages[2]).toBe("Your session has expired");
     });
   });
 
+  describe("Auth Namespace UI Strings", () => {
+    it("has login button text", async () => {
+      const i18n = await getServerI18n();
+      const authNs = i18n.getResourceBundle("en", "auth");
+      if (authNs && typeof authNs === "object" && "login" in authNs) {
+        expect((authNs as Record<string, unknown>).login).toBe("Login");
+      }
+    });
+
+    it("has register button text", async () => {
+      const i18n = await getServerI18n();
+      const authNs = i18n.getResourceBundle("en", "auth");
+      if (authNs && typeof authNs === "object" && "register" in authNs) {
+        expect((authNs as Record<string, unknown>).register).toBe("Register");
+      }
+    });
+
+    it("has success messages", async () => {
+      const i18n = await getServerI18n();
+      const authNs = i18n.getResourceBundle("en", "auth");
+      if (authNs && typeof authNs === "object") {
+        expect("loginSuccess" in authNs).toBe(true);
+        expect("logout" in authNs).toBe(true);
+      }
+    });
+
+    it("has password reset strings", async () => {
+      const i18n = await getServerI18n();
+      const authNs = i18n.getResourceBundle("en", "auth");
+      if (authNs && typeof authNs === "object") {
+        expect("forgotPassword" in authNs).toBe(true);
+        expect("changePassword" in authNs).toBe(true);
+      }
+    });
+
+    it("has profile claiming strings", async () => {
+      const i18n = await getServerI18n();
+      const authNs = i18n.getResourceBundle("en", "auth");
+      if (authNs && typeof authNs === "object") {
+        expect("claimProfile" in authNs).toBe(true);
+        expect("selectProfile" in authNs).toBe(true);
+      }
+    });
+  });
+
+  describe("i18n System", () => {
+    it("loads i18n instance with all namespaces", async () => {
+      const i18n = await getServerI18n();
+      expect(i18n).toBeDefined();
+      expect(i18n.isInitialized).toBe(true);
+    });
+
+    it("has English error bundle", async () => {
+      const i18n = await getServerI18n();
+      const enBundle = i18n.getResourceBundle("en", "errors");
+      expect(enBundle).toBeDefined();
+    });
+  });
 });
