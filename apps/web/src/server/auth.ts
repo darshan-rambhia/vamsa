@@ -7,15 +7,12 @@ import {
   betterAuthChangePassword,
   betterAuthSignOut,
   getBetterAuthProviders,
-  betterAuthRegister,
+  getUnclaimedProfilesData,
+  claimProfileData,
 } from "@vamsa/lib/server/business";
 import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
-import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
-import { eq } from "drizzle-orm";
 import { logger } from "@vamsa/lib/logger";
-import { t } from "@vamsa/lib/server";
 import { checkRateLimit, getClientIP } from "./middleware/rate-limiter";
-import { notifyNewMemberJoined } from "@vamsa/lib/server/business";
 
 const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 
@@ -31,54 +28,7 @@ const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
  */
 export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
   async () => {
-    logger.debug("Fetching unclaimed profiles");
-
-    // Get all personIds that already have users
-    const usersWithPeople = await drizzleDb
-      .select({ personId: drizzleSchema.users.personId })
-      .from(drizzleSchema.users)
-      .where(eq(drizzleSchema.users.personId, drizzleSchema.users.personId)); // NOT NULL
-
-    const claimedPersonIds = usersWithPeople
-      .map((u) => u.personId)
-      .filter((id): id is string => id !== null);
-
-    logger.debug({ count: claimedPersonIds.length }, "Claimed profiles found");
-
-    // Get all living persons not yet claimed
-    const profiles =
-      claimedPersonIds.length > 0
-        ? await drizzleDb
-            .select({
-              id: drizzleSchema.persons.id,
-              firstName: drizzleSchema.persons.firstName,
-              lastName: drizzleSchema.persons.lastName,
-            })
-            .from(drizzleSchema.persons)
-            .where(eq(drizzleSchema.persons.isLiving, true))
-            .orderBy(
-              drizzleSchema.persons.lastName,
-              drizzleSchema.persons.firstName
-            )
-            .then((rows) =>
-              rows.filter((r) => !claimedPersonIds.includes(r.id))
-            )
-        : await drizzleDb
-            .select({
-              id: drizzleSchema.persons.id,
-              firstName: drizzleSchema.persons.firstName,
-              lastName: drizzleSchema.persons.lastName,
-            })
-            .from(drizzleSchema.persons)
-            .where(eq(drizzleSchema.persons.isLiving, true))
-            .orderBy(
-              drizzleSchema.persons.lastName,
-              drizzleSchema.persons.firstName
-            );
-
-    logger.debug({ count: profiles.length }, "Unclaimed profiles found");
-
-    return profiles;
+    return getUnclaimedProfilesData();
   }
 );
 
@@ -106,96 +56,11 @@ export const claimProfile = createServerFn({ method: "POST" })
     }
   )
   .handler(async ({ data }) => {
-    const { email, personId, password } = data;
-
     // Rate limit by IP address
     const clientIP = getClientIP();
     checkRateLimit("claimProfile", clientIP);
 
-    try {
-      // Validate person exists and is living
-      const [person] = await drizzleDb
-        .select()
-        .from(drizzleSchema.persons)
-        .where(eq(drizzleSchema.persons.id, personId))
-        .limit(1);
-
-      if (!person || !person.isLiving) {
-        logger.warn({ personId }, "Profile not found or cannot be claimed");
-        throw new Error(await t("errors:person.notFound"));
-      }
-
-      // Check if already claimed
-      const [existingUser] = await drizzleDb
-        .select()
-        .from(drizzleSchema.users)
-        .where(eq(drizzleSchema.users.personId, personId))
-        .limit(1);
-
-      if (existingUser) {
-        logger.warn({ personId }, "Profile is already claimed");
-        throw new Error("This profile is already claimed");
-      }
-
-      // Check if email already exists
-      const [existingEmail] = await drizzleDb
-        .select()
-        .from(drizzleSchema.users)
-        .where(eq(drizzleSchema.users.email, email.toLowerCase()))
-        .limit(1);
-
-      if (existingEmail) {
-        logger.warn({ email: email.toLowerCase() }, "Email already in use");
-        throw new Error(await t("errors:user.alreadyExists"));
-      }
-
-      // Create user via Better Auth - note: can't pass headers directly from server function
-      // Better Auth will create user and set cookie via tanstackStartCookies plugin
-      const result = await betterAuthRegister(
-        email,
-        `${person.firstName} ${person.lastName}`,
-        password
-      );
-
-      if (!result?.user) {
-        logger.warn({ email }, "Failed to create user via Better Auth");
-        throw new Error("Failed to create user");
-      }
-
-      // Update user with Vamsa-specific fields
-      await drizzleDb
-        .update(drizzleSchema.users)
-        .set({
-          personId,
-          role: "MEMBER",
-          profileClaimStatus: "CLAIMED",
-          profileClaimedAt: new Date(),
-        })
-        .where(eq(drizzleSchema.users.id, result.user.id));
-
-      logger.info(
-        { userId: result.user.id, personId },
-        "Profile claimed successfully"
-      );
-
-      // Send notification about new family member joined
-      try {
-        await notifyNewMemberJoined(result.user.id);
-      } catch (error) {
-        logger.warn(
-          { userId: result.user.id, error },
-          "Failed to send notification"
-        );
-      }
-
-      return { success: true, userId: result.user.id };
-    } catch (error) {
-      logger.warn(
-        { email: email.toLowerCase(), personId, error },
-        "Profile claim failed"
-      );
-      throw error;
-    }
+    return claimProfileData(data.email, data.personId, data.password);
   });
 
 /**

@@ -37,7 +37,6 @@ describe("DialogOverlay", () => {
     });
 
     test("DialogOverlay forwards ref correctly", () => {
-      let overlayRef: HTMLElement | null = null;
       render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
@@ -255,9 +254,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent data-testid="content">
-            Content
-          </DialogContent>
+          <DialogContent data-testid="content">Content</DialogContent>
         </Dialog>
       );
       const content = container.querySelector("[data-testid='content']");
@@ -272,9 +269,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent data-testid="content">
-            Content
-          </DialogContent>
+          <DialogContent data-testid="content">Content</DialogContent>
         </Dialog>
       );
       const content = container.querySelector("[data-testid='content']");
@@ -288,9 +283,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent data-testid="content">
-            Content
-          </DialogContent>
+          <DialogContent data-testid="content">Content</DialogContent>
         </Dialog>
       );
       const content = container.querySelector("[data-testid='content']");
@@ -303,9 +296,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent data-testid="content">
-            Content
-          </DialogContent>
+          <DialogContent data-testid="content">Content</DialogContent>
         </Dialog>
       );
       const content = container.querySelector("[data-testid='content']");
@@ -319,9 +310,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent data-testid="content">
-            Content
-          </DialogContent>
+          <DialogContent data-testid="content">Content</DialogContent>
         </Dialog>
       );
       const content = container.querySelector("[data-testid='content']");
@@ -334,9 +323,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent data-testid="content">
-            Content
-          </DialogContent>
+          <DialogContent data-testid="content">Content</DialogContent>
         </Dialog>
       );
       const content = container.querySelector("[data-testid='content']");
@@ -350,9 +337,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent data-testid="content">
-            Content
-          </DialogContent>
+          <DialogContent data-testid="content">Content</DialogContent>
         </Dialog>
       );
       const content = container.querySelector("[data-testid='content']");
@@ -366,9 +351,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent data-testid="content">
-            Content
-          </DialogContent>
+          <DialogContent data-testid="content">Content</DialogContent>
         </Dialog>
       );
       const content = container.querySelector("[data-testid='content']");
@@ -381,9 +364,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent data-testid="content">
-            Content
-          </DialogContent>
+          <DialogContent data-testid="content">Content</DialogContent>
         </Dialog>
       );
       const content = container.querySelector("[data-testid='content']");
@@ -396,9 +377,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent data-testid="content">
-            Content
-          </DialogContent>
+          <DialogContent data-testid="content">Content</DialogContent>
         </Dialog>
       );
       const content = container.querySelector("[data-testid='content']");
@@ -411,9 +390,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent data-testid="content">
-            Content
-          </DialogContent>
+          <DialogContent data-testid="content">Content</DialogContent>
         </Dialog>
       );
       const content = container.querySelector("[data-testid='content']");
@@ -516,10 +493,7 @@ describe("DialogContent", () => {
       const { container } = render(
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
-          <DialogContent
-            className="extra-custom-class"
-            data-testid="content"
-          >
+          <DialogContent className="extra-custom-class" data-testid="content">
             <DialogTitle>Title</DialogTitle>
             <DialogDescription>Description</DialogDescription>
             Content
@@ -623,9 +597,7 @@ describe("DialogTitle", () => {
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
           <DialogContent>
-            <DialogTitle data-testid="title">
-              Title
-            </DialogTitle>
+            <DialogTitle data-testid="title">Title</DialogTitle>
             <DialogDescription>Description</DialogDescription>
           </DialogContent>
         </Dialog>
@@ -640,9 +612,7 @@ describe("DialogTitle", () => {
         <Dialog open={true}>
           <DialogTrigger>Open</DialogTrigger>
           <DialogContent>
-            <DialogTitle>
-              Dialog Title
-            </DialogTitle>
+            <DialogTitle>Dialog Title</DialogTitle>
             <DialogDescription>Description</DialogDescription>
           </DialogContent>
         </Dialog>
@@ -809,9 +779,7 @@ describe("DialogDescription", () => {
           <DialogTrigger>Open</DialogTrigger>
           <DialogContent>
             <DialogTitle>Title</DialogTitle>
-            <DialogDescription>
-              Custom Description Text
-            </DialogDescription>
+            <DialogDescription>Custom Description Text</DialogDescription>
           </DialogContent>
         </Dialog>
       );
@@ -894,7 +862,7 @@ describe("DialogDescription", () => {
 
 describe("Dialog composition", () => {
   test("renders complete dialog with trigger, header, and footer", () => {
-    const { container, getByRole, getByText } = render(
+    const { container, getByText } = render(
       <Dialog>
         <DialogTrigger data-testid="trigger">Open Dialog</DialogTrigger>
         <DialogContent data-testid="content">
@@ -923,7 +891,9 @@ describe("Dialog composition", () => {
         <DialogContent data-testid="content">
           <DialogHeader data-testid="header">
             <DialogTitle data-testid="title">Title</DialogTitle>
-            <DialogDescription data-testid="desc">Description</DialogDescription>
+            <DialogDescription data-testid="desc">
+              Description
+            </DialogDescription>
           </DialogHeader>
           <div data-testid="body">Body Content</div>
           <DialogFooter data-testid="footer">
@@ -981,9 +951,7 @@ describe("Dialog composition", () => {
     const { container } = render(
       <Dialog open={true}>
         <DialogTrigger>Open</DialogTrigger>
-        <DialogContent data-testid="content">
-          Content
-        </DialogContent>
+        <DialogContent data-testid="content">Content</DialogContent>
       </Dialog>
     );
 

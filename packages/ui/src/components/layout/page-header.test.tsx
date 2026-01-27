@@ -259,10 +259,7 @@ describe("PageHeader", () => {
   describe("title and description container", () => {
     test("wraps title and description in div with space-y-2", () => {
       const { container } = render(
-        <PageHeader
-          title="Test Title"
-          description="Test description"
-        />
+        <PageHeader title="Test Title" description="Test description" />
       );
       const titleDiv = container.querySelector(".space-y-2");
       expect(titleDiv).toBeDefined();
@@ -271,10 +268,7 @@ describe("PageHeader", () => {
 
     test("title and description are siblings in same container", () => {
       const { container } = render(
-        <PageHeader
-          title="Test Title"
-          description="Test description"
-        />
+        <PageHeader title="Test Title" description="Test description" />
       );
       const titleDiv = container.querySelector(".space-y-2");
       const h1 = titleDiv?.querySelector("h1");
@@ -305,10 +299,7 @@ describe("PageHeader", () => {
 
     test("allows overriding default responsive behavior via className", () => {
       const { container } = render(
-        <PageHeader
-          title="Test Title"
-          className="flex-row items-start"
-        />
+        <PageHeader title="Test Title" className="flex-row items-start" />
       );
       const header = container.querySelector("header");
       // Should have both overridden and default classes
@@ -318,10 +309,7 @@ describe("PageHeader", () => {
 
     test("applies multiple custom classes", () => {
       const { container } = render(
-        <PageHeader
-          title="Test Title"
-          className="class1 class2 class3"
-        />
+        <PageHeader title="Test Title" className="class1 class2 class3" />
       );
       const header = container.querySelector("header");
       expect(header?.className).toContain("class1");
@@ -370,10 +358,7 @@ describe("PageHeader", () => {
 
     test("passes through data attributes", () => {
       const { container } = render(
-        <PageHeader
-          title="Test Title"
-          data-custom="custom-value"
-        />
+        <PageHeader title="Test Title" data-custom="custom-value" />
       );
       const header = container.querySelector("header");
       expect(header?.getAttribute("data-custom")).toBe("custom-value");
@@ -381,10 +366,7 @@ describe("PageHeader", () => {
 
     test("passes through aria-label attribute", () => {
       const { container } = render(
-        <PageHeader
-          title="Test Title"
-          aria-label="Main page header"
-        />
+        <PageHeader title="Test Title" aria-label="Main page header" />
       );
       const header = container.querySelector("header");
       expect(header?.getAttribute("aria-label")).toBe("Main page header");
@@ -392,10 +374,7 @@ describe("PageHeader", () => {
 
     test("passes through aria-describedby attribute", () => {
       const { container } = render(
-        <PageHeader
-          title="Test Title"
-          aria-describedby="description"
-        />
+        <PageHeader title="Test Title" aria-describedby="description" />
       );
       const header = container.querySelector("header");
       expect(header?.getAttribute("aria-describedby")).toBe("description");
@@ -458,10 +437,7 @@ describe("PageHeader", () => {
 
     test("renders with title and description only", () => {
       const { container, getByText } = render(
-        <PageHeader
-          title="Page Title"
-          description="Page description"
-        />
+        <PageHeader title="Page Title" description="Page description" />
       );
 
       expect(getByText("Page Title")).toBeDefined();
@@ -475,10 +451,7 @@ describe("PageHeader", () => {
 
     test("renders with title and actions only", () => {
       const { container, getByText } = render(
-        <PageHeader
-          title="Page Title"
-          actions={<button>Save</button>}
-        />
+        <PageHeader title="Page Title" actions={<button>Save</button>} />
       );
 
       expect(getByText("Page Title")).toBeDefined();
@@ -523,9 +496,7 @@ describe("PageHeader", () => {
     });
 
     test("handles null actions by not rendering actions section", () => {
-      const { container } = render(
-        <PageHeader title="Title" actions={null} />
-      );
+      const { container } = render(<PageHeader title="Title" actions={null} />);
       const actionDiv = container.querySelector(
         ".flex.shrink-0.items-center.gap-3"
       );

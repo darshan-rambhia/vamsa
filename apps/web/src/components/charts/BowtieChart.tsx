@@ -309,7 +309,7 @@ function BowtieChartComponent({
       );
       viewport.fitContent(bounds);
     }
-  }, [nodePositions, viewport.fitContent]);
+  }, [nodePositions, viewport]);
 
   // Handle node click
   const handleNodeClick = useCallback(

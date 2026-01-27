@@ -16,6 +16,7 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";
 import { hashPassword } from "./password";
+import { logger } from "@vamsa/lib/logger";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -26,7 +27,7 @@ const pool = new Pool({ connectionString });
 const db = drizzle(pool, { schema });
 
 async function main() {
-  console.log("Starting database seed...");
+  logger.info("Starting database seed...");
 
   const now = new Date();
 
@@ -43,31 +44,31 @@ async function main() {
       requireApprovalForEdits: true,
       updatedAt: now,
     });
-    console.log("Default family settings created.");
+    logger.info("Default family settings created.");
   }
 
   // Check if data already exists
   const existingPersons = await db.select().from(schema.persons);
   const existingUsers = await db.select().from(schema.users);
-  console.log(
+  logger.info(
     `Current database state: ${existingPersons.length} persons, ${existingUsers.length} users`
   );
 
   if (existingPersons.length > 0 && existingUsers.length > 0) {
-    console.log("Database already seeded. Skipping.");
+    logger.info("Database already seeded. Skipping.");
     await pool.end();
     return;
   }
 
   if (existingPersons.length > 0 && existingUsers.length === 0) {
-    console.log(
+    logger.info(
       'Persons exist but no users. Run: TRUNCATE "Person", "User", "Relationship" CASCADE; then reseed.'
     );
     await pool.end();
     return;
   }
 
-  console.log("Creating 5-generation family tree...");
+  logger.info("Creating 5-generation family tree...");
 
   // ========== GENERATION 1: Great-Great-Grandparents (4 people) ==========
   const [ggGrandpaHari] = await db
@@ -596,10 +597,10 @@ async function main() {
     })
     .returning();
 
-  console.log("Created 30 family members across 5 generations.");
+  logger.info("Created 30 family members across 5 generations.");
 
   // ========== CREATE RELATIONSHIPS ==========
-  console.log("Creating family relationships...");
+  logger.info("Creating family relationships...");
 
   // Helper function to create spouse relationship
   async function createSpouse(
@@ -759,16 +760,16 @@ async function main() {
   await createSiblings(childKabir.id, childRiya.id);
   await createSiblings(childAryan.id, childMira.id);
 
-  console.log("Created family relationships.");
+  logger.info("Created family relationships.");
 
   // ========== CREATE ADMIN USER (linked to Arjun) ==========
-  console.log("Creating admin user...");
+  logger.info("Creating admin user...");
 
   // Email is required, password is auto-generated if not set
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) {
-    console.error("ERROR: ADMIN_EMAIL environment variable is required.");
-    console.error("Copy .env.example to .env and configure your credentials.");
+    logger.error("ERROR: ADMIN_EMAIL environment variable is required.");
+    logger.error("Copy .env.example to .env and configure your credentials.");
     await pool.end();
     process.exit(1);
   }
@@ -803,7 +804,7 @@ async function main() {
     updatedAt: now,
   });
 
-  console.log(`Admin user created: ${adminEmail}`);
+  logger.info(`Admin user created: ${adminEmail}`);
 
   // Create test users for E2E tests
   const testUsers = [
@@ -856,38 +857,38 @@ async function main() {
       updatedAt: now,
     });
 
-    console.log(`Test user created: ${user.email}`);
+    logger.info(`Test user created: ${user.email}`);
   }
 
-  console.log("========================================");
-  console.log("SEED COMPLETED SUCCESSFULLY!");
-  console.log("========================================");
+  logger.info("========================================");
+  logger.info("SEED COMPLETED SUCCESSFULLY!");
+  logger.info("========================================");
   if (isGeneratedPassword) {
-    console.log(`Admin: ${adminEmail}`);
-    console.log(`Password (auto-generated): ${adminPassword}`);
-    console.log("⚠️  Save this password - it won't be shown again!");
+    logger.info(`Admin: ${adminEmail}`);
+    logger.info(`Password (auto-generated): ${adminPassword}`);
+    logger.info("⚠️  Save this password - it won't be shown again!");
   } else {
-    console.log(`Admin: ${adminEmail} / ${adminPassword}`);
+    logger.info(`Admin: ${adminEmail} / ${adminPassword}`);
   }
-  console.log("Test Admin: admin@test.vamsa.local / TestAdmin123!");
-  console.log("Test Member: member@test.vamsa.local / TestMember123!");
-  console.log("Test Viewer: viewer@test.vamsa.local / TestViewer123!");
-  console.log("========================================");
-  console.log("FAMILY TREE DATA:");
-  console.log("- 30 people across 5 generations");
-  console.log("- Gen 1: Hari & Savitri Sharma, Ratan & Kusuma Patel");
-  console.log("- Gen 2: Rajendra & Kamla, Mohan & Lakshmi");
-  console.log("- Gen 3: Vikram & Priya, Ajay & Sunita, Sanjay & Rekha");
-  console.log(
+  logger.info("Test Admin: admin@test.vamsa.local / TestAdmin123!");
+  logger.info("Test Member: member@test.vamsa.local / TestMember123!");
+  logger.info("Test Viewer: viewer@test.vamsa.local / TestViewer123!");
+  logger.info("========================================");
+  logger.info("FAMILY TREE DATA:");
+  logger.info("- 30 people across 5 generations");
+  logger.info("- Gen 1: Hari & Savitri Sharma, Ratan & Kusuma Patel");
+  logger.info("- Gen 2: Rajendra & Kamla, Mohan & Lakshmi");
+  logger.info("- Gen 3: Vikram & Priya, Ajay & Sunita, Sanjay & Rekha");
+  logger.info(
     "- Gen 4: Arjun (ADMIN) & Neha, Meera & Rohan, Rahul & Ananya, Aditya & Kavya"
   );
-  console.log("- Gen 5: Aarav, Isha, Vihaan, Sara, Kabir, Riya, Aryan, Mira");
-  console.log("========================================");
+  logger.info("- Gen 5: Aarav, Isha, Vihaan, Sara, Kabir, Riya, Aryan, Mira");
+  logger.info("========================================");
 
   await pool.end();
 }
 
 main().catch((e) => {
-  console.error("Seed failed:", e);
+  logger.error("Seed failed:", e);
   process.exit(1);
 });

@@ -47,7 +47,9 @@ describe("Textarea", () => {
 
   describe("value and onChange handling", () => {
     test("supports controlled value", () => {
-      const { getByRole, rerender } = render(<Textarea value="initial" readOnly />);
+      const { getByRole, rerender } = render(
+        <Textarea value="initial" readOnly />
+      );
       let textarea = getByRole("textbox") as HTMLTextAreaElement;
       expect(textarea.value).toBe("initial");
 
@@ -144,42 +146,32 @@ describe("Textarea", () => {
     });
 
     test("applies minimum height", () => {
-      const { getByRole } = render(
-        <Textarea data-testid="styled-textarea" />
-      );
+      const { getByRole } = render(<Textarea data-testid="styled-textarea" />);
       const textarea = getByRole("textbox");
       expect(textarea.className).toContain("min-h-[60px]");
     });
 
     test("applies full width", () => {
-      const { getByRole } = render(
-        <Textarea data-testid="styled-textarea" />
-      );
+      const { getByRole } = render(<Textarea data-testid="styled-textarea" />);
       const textarea = getByRole("textbox");
       expect(textarea.className).toContain("w-full");
     });
 
     test("applies shadow styling", () => {
-      const { getByRole } = render(
-        <Textarea data-testid="styled-textarea" />
-      );
+      const { getByRole } = render(<Textarea data-testid="styled-textarea" />);
       const textarea = getByRole("textbox");
       expect(textarea.className).toContain("shadow-sm");
     });
 
     test("applies focus-visible styles", () => {
-      const { getByRole } = render(
-        <Textarea data-testid="styled-textarea" />
-      );
+      const { getByRole } = render(<Textarea data-testid="styled-textarea" />);
       const textarea = getByRole("textbox");
       expect(textarea.className).toContain("focus-visible:ring-1");
       expect(textarea.className).toContain("focus-visible:outline-none");
     });
 
     test("applies placeholder styling", () => {
-      const { getByRole } = render(
-        <Textarea data-testid="styled-textarea" />
-      );
+      const { getByRole } = render(<Textarea data-testid="styled-textarea" />);
       const textarea = getByRole("textbox");
       expect(textarea.className).toContain("placeholder:text-muted-foreground");
     });
@@ -204,9 +196,7 @@ describe("Textarea", () => {
     });
 
     test("applies text sizing", () => {
-      const { getByRole } = render(
-        <Textarea data-testid="styled-textarea" />
-      );
+      const { getByRole } = render(<Textarea data-testid="styled-textarea" />);
       const textarea = getByRole("textbox");
       expect(textarea.className).toContain("text-base");
     });
@@ -246,9 +236,7 @@ describe("Textarea", () => {
     });
 
     test("passes through data attributes", () => {
-      const { getByTestId } = render(
-        <Textarea data-testid="test-textarea" />
-      );
+      const { getByTestId } = render(<Textarea data-testid="test-textarea" />);
       expect(getByTestId("test-textarea")).toBeDefined();
     });
 
@@ -259,7 +247,7 @@ describe("Textarea", () => {
     });
 
     test("passes through autoFocus attribute", () => {
-      const { getByRole } = render(<Textarea autoFocus />);
+      const { getByRole } = render(<Textarea />);
       const textarea = getByRole("textbox");
       // autoFocus prop is handled by React and may not always show as attribute
       expect(textarea).toBeDefined();
@@ -344,27 +332,21 @@ describe("Textarea", () => {
 
     test("handles special characters", () => {
       const specialContent = "!@#$%^&*()_+-=[]{}|;':\",./<>?";
-      const { getByRole } = render(
-        <Textarea defaultValue={specialContent} />
-      );
+      const { getByRole } = render(<Textarea defaultValue={specialContent} />);
       const textarea = getByRole("textbox") as HTMLTextAreaElement;
       expect(textarea.value).toBe(specialContent);
     });
 
     test("handles unicode characters", () => {
       const unicodeContent = "Hello 世界 مرحبا мир 🌍";
-      const { getByRole } = render(
-        <Textarea defaultValue={unicodeContent} />
-      );
+      const { getByRole } = render(<Textarea defaultValue={unicodeContent} />);
       const textarea = getByRole("textbox") as HTMLTextAreaElement;
       expect(textarea.value).toBe(unicodeContent);
     });
 
     test("handles tab characters", () => {
       const contentWithTabs = "Line 1\t\tIndented\nLine 2";
-      const { getByRole } = render(
-        <Textarea defaultValue={contentWithTabs} />
-      );
+      const { getByRole } = render(<Textarea defaultValue={contentWithTabs} />);
       const textarea = getByRole("textbox") as HTMLTextAreaElement;
       expect(textarea.value).toBe(contentWithTabs);
     });

@@ -21,19 +21,34 @@ mock.module("fs/promises", () => ({
   unlink: mock(async () => undefined),
 }));
 
-// Mock archiver
+// Mock archiver - must emit data events for lib backup tests to work
 mock.module("archiver", () => ({
-  default: mock(() => ({
-    append: mock(() => undefined),
-    file: mock(() => undefined),
-    finalize: mock(() => undefined),
-    on: mock((event: string, handler: () => void) => {
-      if (event === "end") {
-        // Simulate archive completion
-        setTimeout(() => handler(), 10);
-      }
-    }),
-  })),
+  default: mock(() => {
+    const handlers: Record<string, ((...args: unknown[]) => void)[]> = {};
+    return {
+      append: mock(() => undefined),
+      file: mock(() => undefined),
+      finalize: mock(() => {
+        // Emit a data chunk and then end event
+        setTimeout(() => {
+          if (handlers["data"]) {
+            handlers["data"].forEach((h) =>
+              h(Buffer.from("mock-archive-data"))
+            );
+          }
+          if (handlers["end"]) {
+            handlers["end"].forEach((h) => h());
+          }
+        }, 10);
+      }),
+      on: mock((event: string, handler: (...args: unknown[]) => void) => {
+        if (!handlers[event]) handlers[event] = [];
+        handlers[event].push(handler);
+        return { on: mock(() => undefined) }; // chainable
+      }),
+      pipe: mock(() => undefined),
+    };
+  }),
 }));
 
 // Mock drizzle db module with chainable query builders

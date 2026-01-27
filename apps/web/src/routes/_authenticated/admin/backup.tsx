@@ -16,9 +16,11 @@ import { BackupExport } from "~/components/admin/backup-export";
 import { BackupImport } from "~/components/admin/backup-import";
 import { GedcomImport } from "~/components/admin/gedcom-import";
 import { GedcomExport } from "~/components/admin/gedcom-export";
+import { AdminRouteError } from "~/components/admin/route-error";
 
 export const Route = createFileRoute("/_authenticated/admin/backup")({
   component: BackupPage,
+  errorComponent: AdminRouteError,
 });
 
 function BackupPage() {

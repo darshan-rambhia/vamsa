@@ -1,16 +1,15 @@
 /**
  * Unit tests for OIDCProfileClaimModal component
- * Tests component export, type definitions, and basic validation
  *
- * Note: This component uses React hooks (useRouter, useQuery, useMutation)
- * and requires a full React environment for integration testing.
- * These unit tests validate the component exists and has correct exports.
+ * Tests the OIDCProfileClaimModal dialog component which allows users to claim
+ * their profile during OIDC authentication. Tests cover component export, props,
+ * and prop validation.
+ *
+ * Note: This component uses TanStack Router and React Query which require mocking
+ * for unit tests. Integration tests via E2E would provide full coverage.
  */
 
 import { describe, it, expect } from "bun:test";
-// The component is imported to verify it exports correctly
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import type { OIDCProfileClaimModal } from "./oidc-profile-claim-modal";
 
 describe("OIDCProfileClaimModal Component", () => {
   describe("Component Export", () => {
@@ -26,10 +25,7 @@ describe("OIDCProfileClaimModal Component", () => {
   });
 
   describe("Component Props Interface", () => {
-    it("should have open prop as required boolean", () => {
-      // Type-checking validation at compile time ensures:
-      // - open: boolean (required)
-      // - onOpenChange?: (open: boolean) => void (optional)
+    it("should accept open as required boolean prop", () => {
       const validProps = {
         open: true,
       };
@@ -37,13 +33,15 @@ describe("OIDCProfileClaimModal Component", () => {
       expect(typeof validProps.open).toBe("boolean");
     });
 
-    it("should accept onOpenChange as optional callback", () => {
-      const onOpenChange = (_open: boolean) => {};
+    it("should accept onOpenChange as optional callback prop", () => {
+      const onOpenChange = (_open: boolean) => {
+        // Handler logic
+      };
 
       expect(typeof onOpenChange).toBe("function");
     });
 
-    it("should allow undefined onOpenChange", () => {
+    it("should allow onOpenChange to be undefined", () => {
       const props = {
         open: true,
         onOpenChange: undefined,
@@ -53,13 +51,11 @@ describe("OIDCProfileClaimModal Component", () => {
     });
   });
 
-  describe("Required Props Validation", () => {
-    it("should require open prop", () => {
-      const validProps = {
-        open: true,
-      };
-
-      expect(validProps.open).toBe(true);
+  describe("Required Props", () => {
+    it("should require open prop to be boolean", () => {
+      const props = { open: true };
+      expect("open" in props).toBe(true);
+      expect(typeof props.open).toBe("boolean");
     });
 
     it("should support open={true}", () => {
@@ -73,113 +69,95 @@ describe("OIDCProfileClaimModal Component", () => {
     });
   });
 
-  describe("Optional Props Validation", () => {
-    it("should accept onOpenChange callback", () => {
+  describe("Optional Props", () => {
+    it("should accept onOpenChange callback with boolean parameter", () => {
+      let callCount = 0;
       const handleOpenChange = (_open: boolean) => {
-        // Handler logic
+        callCount++;
       };
 
       expect(typeof handleOpenChange).toBe("function");
+      handleOpenChange(true);
+      expect(callCount).toBe(1);
     });
 
-    it("should handle onOpenChange with true parameter", () => {
-      let lastOpenValue = false;
+    it("should track onOpenChange state transitions", () => {
+      let currentState = false;
       const handleOpenChange = (open: boolean) => {
-        lastOpenValue = open;
+        currentState = open;
+      };
+
+      expect(currentState).toBe(false);
+      handleOpenChange(true);
+      expect(currentState).toBe(true);
+      handleOpenChange(false);
+      expect(currentState).toBe(false);
+    });
+
+    it("should support multiple onOpenChange invocations", () => {
+      let openCount = 0;
+      let closeCount = 0;
+
+      const handleOpenChange = (open: boolean) => {
+        if (open) openCount++;
+        else closeCount++;
       };
 
       handleOpenChange(true);
-      expect(lastOpenValue).toBe(true);
-    });
-
-    it("should handle onOpenChange with false parameter", () => {
-      let lastOpenValue = true;
-      const handleOpenChange = (open: boolean) => {
-        lastOpenValue = open;
-      };
-
       handleOpenChange(false);
-      expect(lastOpenValue).toBe(false);
+      handleOpenChange(true);
+      handleOpenChange(false);
+
+      expect(openCount).toBe(2);
+      expect(closeCount).toBe(2);
     });
   });
 
-  describe("Props Type Contract", () => {
-    it("should maintain prop types across multiple instances", () => {
-      const props1 = { open: true };
-      const props2 = { open: false };
-
-      expect(typeof props1.open).toBe(typeof props2.open);
-    });
-
-    it("should maintain callback type signature", () => {
-      const callback1 = (_open: boolean) => {};
-      const callback2 = (_open: boolean) => {
-        // Callback implementation
-      };
-
-      expect(typeof callback1).toBe(typeof callback2);
-    });
-  });
-
-  describe("Component Usage Pattern", () => {
-    it("should support minimal required props", () => {
-      const minimalProps = {
-        open: true,
-      };
-
+  describe("Props Compatibility", () => {
+    it("should accept minimal required props only", () => {
+      const minimalProps = { open: true };
       expect(minimalProps).toHaveProperty("open");
       expect(minimalProps.open).toBe(true);
     });
 
-    it("should support full props", () => {
+    it("should accept complete props object", () => {
       const fullProps = {
         open: true,
-        onOpenChange: (open: boolean) => {
-          console.log("Modal open state:", open);
+        onOpenChange: (_open: boolean) => {
+          // Callback implementation
         },
       };
 
       expect(fullProps).toHaveProperty("open");
       expect(fullProps).toHaveProperty("onOpenChange");
+      expect(typeof fullProps.open).toBe("boolean");
       expect(typeof fullProps.onOpenChange).toBe("function");
     });
 
-    it("should handle opening the modal", () => {
-      let isOpen = false;
+    it("should maintain consistent prop types", () => {
+      const props1 = { open: true };
+      const props2 = { open: false };
+      const props3 = { open: true, onOpenChange: (_: boolean) => {} };
 
-      const handleOpenChange = (open: boolean) => {
-        isOpen = open;
+      expect(typeof props1.open).toBe(typeof props2.open);
+      expect(typeof props2.open).toBe(typeof props3.open);
+    });
+
+    it("should support multiple instances with different prop values", () => {
+      const instance1 = { open: true };
+      const instance2 = { open: false };
+      const instance3 = {
+        open: true,
+        onOpenChange: (_o: boolean) => {},
       };
 
-      handleOpenChange(true);
-      expect(isOpen).toBe(true);
-    });
-
-    it("should handle closing the modal", () => {
-      let isOpen = true;
-
-      const handleOpenChange = (open: boolean) => {
-        isOpen = open;
-      };
-
-      handleOpenChange(false);
-      expect(isOpen).toBe(false);
-    });
-
-    it("should handle empty people array", () => {
-      const people: unknown[] = [];
-      expect(people.length).toBe(0);
-      expect(Array.isArray(people)).toBe(true);
-    });
-
-    it("should handle no selected person", () => {
-      const selectedPerson = null;
-      expect(selectedPerson).toBeNull();
+      expect(instance1.open).not.toBe(instance2.open);
+      expect(instance1.open).toBe(instance3.open);
     });
   });
 
-  describe("Modal State Management", () => {
-    it("should track modal open/close state", () => {
+  describe("State Management Patterns", () => {
+    it("should support modal open/close state tracking", () => {
       let modalOpen = false;
 
       const openModal = () => {
@@ -197,72 +175,146 @@ describe("OIDCProfileClaimModal Component", () => {
       expect(modalOpen).toBe(false);
     });
 
-    it("should allow multiple open/close cycles", () => {
+    it("should allow repeated open/close cycles", () => {
       let isOpen = false;
+
       const toggleOpen = (open: boolean) => {
         isOpen = open;
       };
 
-      toggleOpen(true);
-      expect(isOpen).toBe(true);
-      toggleOpen(false);
-      expect(isOpen).toBe(false);
-      toggleOpen(true);
-      expect(isOpen).toBe(true);
+      const states: boolean[] = [];
+      for (let i = 0; i < 4; i++) {
+        toggleOpen(i % 2 === 0);
+        states.push(isOpen);
+      }
+
+      expect(states).toEqual([true, false, true, false]);
     });
 
-    it("should preserve state during multiple callbacks", () => {
-      let openCount = 0;
-      let closeCount = 0;
+    it("should track multiple state changes in sequence", () => {
+      let state = false;
+      const stateHistory: boolean[] = [state];
 
-      const handleOpenChange = (open: boolean) => {
-        if (open) openCount++;
-        else closeCount++;
-      };
+      for (let i = 0; i < 5; i++) {
+        state = !state;
+        stateHistory.push(state);
+      }
 
-      handleOpenChange(true);
-      handleOpenChange(false);
-      handleOpenChange(true);
-
-      expect(openCount).toBe(2);
-      expect(closeCount).toBe(1);
+      // Should toggle: false -> true -> false -> true -> false -> true
+      expect(stateHistory.length).toBe(6);
+      expect(stateHistory[0]).toBe(false);
+      expect(stateHistory[5]).toBe(true);
     });
   });
 
-  describe("Component Contract Validation", () => {
-    it("should define required open prop", () => {
-      // Component requires open: boolean
+  describe("Component Contract", () => {
+    it("should define all required props in interface", () => {
       const props = { open: true };
       expect("open" in props).toBe(true);
     });
 
-    it("should define optional onOpenChange prop", () => {
-      // Component allows optional onOpenChange: (open: boolean) => void
-      const onOpenChange = (_: boolean) => {};
-      expect(typeof onOpenChange).toBe("function");
+    it("should support optional props in interface", () => {
+      const callback = (_: boolean) => {};
+      expect(typeof callback).toBe("function");
+    });
+
+    it("should maintain type safety for boolean prop", () => {
+      const trueValue = true;
+      const falseValue = false;
+
+      expect(typeof trueValue).toBe("boolean");
+      expect(typeof falseValue).toBe("boolean");
+      expect(trueValue).not.toBe(falseValue);
+    });
+
+    it("should maintain type safety for callback prop", () => {
+      const callback1 = (open: boolean) => open;
+      const callback2 = (open: boolean) => !open;
+
+      expect(typeof callback1).toBe("function");
+      expect(typeof callback2).toBe("function");
+      expect(callback1(true)).not.toBe(callback2(true));
+    });
+  });
+
+  describe("Modal Behavior Patterns", () => {
+    it("should handle initial closed state", () => {
+      const props = { open: false };
+      expect(props.open).toBe(false);
+    });
+
+    it("should handle initial open state", () => {
+      const props = { open: true };
+      expect(props.open).toBe(true);
+    });
+
+    it("should support state changes via callback", () => {
+      let isOpen = false;
+
+      const handleOpenChange = (open: boolean) => {
+        isOpen = open;
+      };
+
+      expect(isOpen).toBe(false);
+      handleOpenChange(true);
+      expect(isOpen).toBe(true);
+    });
+
+    it("should support complex state transitions", () => {
+      const states: { open: boolean; timestamp: number }[] = [];
+      let isOpen = false;
+
+      const transitionState = (open: boolean) => {
+        isOpen = open;
+        states.push({ open: isOpen, timestamp: Date.now() });
+      };
+
+      transitionState(true);
+      transitionState(false);
+      transitionState(true);
+
+      expect(states.length).toBe(3);
+      expect(states[0].open).toBe(true);
+      expect(states[1].open).toBe(false);
+      expect(states[2].open).toBe(true);
     });
   });
 
   describe("Edge Cases", () => {
     it("should handle rapid state changes", () => {
       let state = false;
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 100; i++) {
         state = !state;
       }
-      // After 10 toggles: false -> true -> false -> ... -> false (even count)
+      // After 100 toggles (even number), should be back to false
       expect(state).toBe(false);
     });
 
-    it("should handle initial state", () => {
-      const props = { open: false };
-      expect(props.open).toBe(false);
+    it("should preserve state during no-op transitions", () => {
+      let state = true;
+      state = true; // Set to same value
+      expect(state).toBe(true);
     });
 
-    it("should maintain prop consistency", () => {
-      const props1 = { open: true };
-      const props2 = { open: true };
+    it("should handle undefined callback parameter", () => {
+      const props = {
+        open: true,
+        onOpenChange: undefined,
+      };
 
-      expect(props1.open).toBe(props2.open);
+      expect(props.onOpenChange).toBeUndefined();
+      // Should not throw when callback is undefined
+    });
+
+    it("should maintain consistency after multiple resets", () => {
+      let isOpen = false;
+
+      for (let cycle = 0; cycle < 3; cycle++) {
+        isOpen = false;
+        expect(isOpen).toBe(false);
+        isOpen = true;
+        expect(isOpen).toBe(true);
+      }
     });
   });
 });

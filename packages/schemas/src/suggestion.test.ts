@@ -128,7 +128,11 @@ describe("suggestionTypeEnum", () => {
 
 describe("suggestionStatusEnum", () => {
   it("should accept all valid suggestion statuses", () => {
-    const validStatuses: SuggestionStatus[] = ["PENDING", "APPROVED", "REJECTED"];
+    const validStatuses: SuggestionStatus[] = [
+      "PENDING",
+      "APPROVED",
+      "REJECTED",
+    ];
 
     validStatuses.forEach((status) => {
       const result = suggestionStatusEnum.safeParse(status);

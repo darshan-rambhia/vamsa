@@ -26,7 +26,7 @@ import { createPaginationMeta } from "@vamsa/schemas";
 
 // Drizzle imports
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { eq, and, desc, asc, sql, SQLWrapper } from "drizzle-orm";
 
 /**
  * Local type definitions to match Drizzle enum values
@@ -40,6 +40,13 @@ export type UserRole = "ADMIN" | "MEMBER" | "VIEWER";
  * This module uses Drizzle ORM as the default database client.
  */
 export type InvitesDb = typeof drizzleDb;
+
+/**
+ * Type guard to validate if a string is a valid InviteStatus
+ */
+function isValidInviteStatus(status: string): status is InviteStatus {
+  return ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"].includes(status);
+}
 
 /**
  * Query invites with pagination and optional status filtering
@@ -63,9 +70,9 @@ export async function getInvitesData(
   db: InvitesDb = drizzleDb
 ) {
   // Build where conditions
-  const whereConditions: any[] = [];
-  if (status) {
-    whereConditions.push(eq(drizzleSchema.invites.status, status as any));
+  const whereConditions: (SQLWrapper | undefined)[] = [];
+  if (status && isValidInviteStatus(status)) {
+    whereConditions.push(eq(drizzleSchema.invites.status, status));
   }
 
   // Get total count
@@ -225,12 +232,12 @@ export async function createInviteData(
     .values({
       id: crypto.randomUUID(),
       email: normalizedEmail,
-      role: role as any,
+      role,
       personId: personId ?? null,
       invitedById: currentUserId,
       token,
       expiresAt,
-      status: "PENDING" as any,
+      status: "PENDING",
       createdAt: new Date(),
     })
     .returning();
@@ -318,7 +325,7 @@ export async function getInviteByTokenData(
     if (invite.status === "PENDING") {
       await db
         .update(drizzleSchema.invites)
-        .set({ status: "EXPIRED" as any })
+        .set({ status: "EXPIRED" })
         .where(eq(drizzleSchema.invites.id, invite.id));
     }
     return { valid: false, error: "Invite has expired", invite: null };
@@ -387,7 +394,7 @@ export async function acceptInviteData(
   if (invite.expiresAt < new Date()) {
     await db
       .update(drizzleSchema.invites)
-      .set({ status: "EXPIRED" as any })
+      .set({ status: "EXPIRED" })
       .where(eq(drizzleSchema.invites.id, invite.id));
     throw new Error("Invite has expired");
   }
@@ -417,7 +424,7 @@ export async function acceptInviteData(
         email: invite.email,
         name,
         passwordHash,
-        role: invite.role as any,
+        role: invite.role,
         personId: invite.personId,
         invitedById: invite.invitedById,
         isActive: true,
@@ -432,7 +439,7 @@ export async function acceptInviteData(
     await tx
       .update(drizzleSchema.invites)
       .set({
-        status: "ACCEPTED" as any,
+        status: "ACCEPTED",
         acceptedAt: new Date(),
       })
       .where(eq(drizzleSchema.invites.id, invite.id));
@@ -482,7 +489,7 @@ export async function revokeInviteData(
 
   await db
     .update(drizzleSchema.invites)
-    .set({ status: "REVOKED" as any })
+    .set({ status: "REVOKED" })
     .where(eq(drizzleSchema.invites.id, inviteId));
 
   logger.info({ inviteId, revokedBy: currentUserId }, "Revoked invite");
@@ -571,7 +578,7 @@ export async function resendInviteData(
     .set({
       token: newToken,
       expiresAt: newExpiresAt,
-      status: "PENDING" as any,
+      status: "PENDING",
     })
     .where(eq(drizzleSchema.invites.id, inviteId))
     .returning();

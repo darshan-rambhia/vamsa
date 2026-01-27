@@ -10,92 +10,42 @@ import {
   PersonFormPage,
 } from "./fixtures/page-objects";
 
-// Helper to fill input with error throwing on failure
-// Uses click + fill pattern with verification that works for React controlled components
-async function fillInputWithError(
-  page: any,
-  input: any,
-  value: string,
-  fieldName: string
-) {
-  await input.waitFor({ state: "visible", timeout: 5000 });
-
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    // Click to focus, then fill with longer waits for parallel execution stability
-    await input.click();
-    await page.waitForTimeout(100);
-    await input.fill(value);
-    await page.waitForTimeout(150);
-
-    const currentValue = await input.inputValue();
-    if (currentValue === value) return;
-
-    // Retry with selectText + type if fill didn't work
-    if (attempt < 3) {
-      await input.click();
-      await input.selectText().catch(() => {});
-      await input.type(value, { delay: 30 });
-      await page.waitForTimeout(100);
-
-      const retryValue = await input.inputValue();
-      if (retryValue === value) return;
-
-      await page.waitForTimeout(150 * attempt);
-    }
-  }
-
-  const finalValue = await input.inputValue();
-  throw new Error(
-    `[fillInputWithError] Failed to fill ${fieldName} after 3 retries. Expected: "${value}", Got: "${finalValue}"`
-  );
-}
-
 // Helper to ensure a person exists, returns person ID
+// Uses existing seeded data and waits for detail page to fully load
 async function ensurePersonExists(
   page: any,
-  waitForConvexSync: () => Promise<void>
+  _waitForConvexSync: () => Promise<void>
 ): Promise<string | null> {
-  // First check if persons already exist
+  // Go to people list
   await page.goto("/people");
 
+  // Wait for table to be visible (seeded data should exist)
   const tableBody = page.locator("table tbody");
-  await tableBody.waitFor({ state: "visible", timeout: 10000 }).catch(() => {});
-  await page.waitForTimeout(500);
+  await tableBody.waitFor({ state: "visible", timeout: 10000 });
 
-  const firstPersonLink = page
-    .locator("table tbody tr a, [data-person-card] a")
-    .first();
-  if (await firstPersonLink.isVisible().catch(() => false)) {
-    await firstPersonLink.click();
-    await page.waitForURL(/\/people\/[^/]+$/);
-    const match = page.url().match(/\/people\/([^/]+)/);
-    return match ? match[1] : null;
+  // Get the first person's link href
+  const firstPersonLink = page.locator("table tbody tr a").first();
+  await firstPersonLink.waitFor({ state: "visible", timeout: 5000 });
+
+  const href = await firstPersonLink.getAttribute("href");
+  const personIdMatch = href?.match(/\/people\/([^/]+)/);
+  const personId = personIdMatch?.[1];
+
+  if (!personId) {
+    throw new Error("Could not find person ID from table link href");
   }
 
-  // Create a new person
-  await page.goto("/people/new");
+  // Navigate to the person detail page
+  await page.goto(`/people/${personId}`);
 
-  const firstNameInput = page.getByTestId("person-form-firstName");
-  await firstNameInput.waitFor({ state: "visible", timeout: 10000 });
-  await page.waitForTimeout(200);
+  // Wait for the page to load - either the person's name or an h1 element
+  await page.waitForLoadState("networkidle");
+  await page
+    .locator("h1")
+    .first()
+    .waitFor({ state: "visible", timeout: 10000 });
 
-  const firstName = `PeopleTest${Date.now()}`;
-  const lastName = "Person";
-
-  // Fill form with error throwing on failure
-  await fillInputWithError(page, firstNameInput, firstName, "firstName");
-
-  const lastNameInput = page.getByTestId("person-form-lastName");
-  await fillInputWithError(page, lastNameInput, lastName, "lastName");
-
-  await page.getByTestId("person-form-submit").click();
-  await page.waitForURL((url: URL) => !url.pathname.includes("/new"), {
-    timeout: 15000,
-  });
-  await waitForConvexSync();
-
-  const match = page.url().match(/\/people\/([^/]+)/);
-  return match ? match[1] : null;
+  return personId;
 }
 
 test.describe("People Management", () => {

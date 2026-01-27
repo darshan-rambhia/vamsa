@@ -1,23 +1,25 @@
 /**
  * Unit tests for D3 utilities
- * Tests: setupSVGContainer, createZoomBehavior, fitToContainer, fitToContainerTop,
- *        renderRectNode, renderCircleNode, renderParentChildEdge, renderSpouseEdge,
- *        groupByGeneration
  *
- * Comprehensive test coverage for:
- * - SVG container initialization
- * - D3 zoom behavior configuration
- * - Fit-to-container logic (center and top variants)
- * - Node rendering (rectangular and circular)
- * - Edge rendering (parent-child and spouse relationships)
- * - Generation grouping
- * - Error handling and edge cases
+ * This test suite focuses on:
+ * 1. Pure utility functions (groupByGeneration, calculateBoundingBox, etc.)
+ * 2. Type interfaces and their properties
+ * 3. Data transformation logic
+ * 4. Calculation logic for positioning and scaling
+ *
+ * Note: DOM-dependent functions (renderRectNode, renderCircleNode, createZoomBehavior,
+ * fitToContainer, etc.) are tested via integration tests in chart components and E2E tests,
+ * as they require actual DOM/SVG elements.
  */
 
 import { describe, it, expect, mock } from "bun:test";
 import type { ChartNode } from "~/server/charts";
 import {
   groupByGeneration,
+  calculateBoundingBox,
+  calculateFitScale,
+  generateGenerationRange,
+  getSortedGenerations,
   type Position,
   type Margin,
   type RectNodeOptions,
@@ -982,6 +984,302 @@ describe("D3 Utilities", () => {
       const yearPosition = radius + yearOffset;
 
       expect(yearPosition).toBe(55);
+    });
+  });
+
+  // ====================================================
+  // SECTION 16: Pure Utility Functions (calculateBoundingBox)
+  // ====================================================
+
+  describe("calculateBoundingBox", () => {
+    it("should return zero bounds for empty positions", () => {
+      const result = calculateBoundingBox([]);
+
+      expect(result.minX).toBe(0);
+      expect(result.minY).toBe(0);
+      expect(result.maxX).toBe(0);
+      expect(result.maxY).toBe(0);
+      expect(result.width).toBe(0);
+      expect(result.height).toBe(0);
+    });
+
+    it("should calculate bounds for single position", () => {
+      const positions: Position[] = [{ x: 100, y: 200 }];
+
+      const result = calculateBoundingBox(positions);
+
+      expect(result.minX).toBe(100);
+      expect(result.maxX).toBe(100);
+      expect(result.minY).toBe(200);
+      expect(result.maxY).toBe(200);
+      expect(result.width).toBe(0);
+      expect(result.height).toBe(0);
+    });
+
+    it("should calculate bounds for multiple positions", () => {
+      const positions: Position[] = [
+        { x: 0, y: 0 },
+        { x: 100, y: 200 },
+        { x: 50, y: 150 },
+      ];
+
+      const result = calculateBoundingBox(positions);
+
+      expect(result.minX).toBe(0);
+      expect(result.maxX).toBe(100);
+      expect(result.minY).toBe(0);
+      expect(result.maxY).toBe(200);
+      expect(result.width).toBe(100);
+      expect(result.height).toBe(200);
+    });
+
+    it("should handle negative coordinates", () => {
+      const positions: Position[] = [
+        { x: -100, y: -50 },
+        { x: 100, y: 50 },
+      ];
+
+      const result = calculateBoundingBox(positions);
+
+      expect(result.minX).toBe(-100);
+      expect(result.maxX).toBe(100);
+      expect(result.minY).toBe(-50);
+      expect(result.maxY).toBe(50);
+      expect(result.width).toBe(200);
+      expect(result.height).toBe(100);
+    });
+
+    it("should handle all positions at same location", () => {
+      const positions: Position[] = [
+        { x: 50, y: 50 },
+        { x: 50, y: 50 },
+        { x: 50, y: 50 },
+      ];
+
+      const result = calculateBoundingBox(positions);
+
+      expect(result.minX).toBe(50);
+      expect(result.maxX).toBe(50);
+      expect(result.minY).toBe(50);
+      expect(result.maxY).toBe(50);
+      expect(result.width).toBe(0);
+      expect(result.height).toBe(0);
+    });
+
+    it("should calculate correctly for large coordinate values", () => {
+      const positions: Position[] = [
+        { x: 5000, y: 5000 },
+        { x: 10000, y: 10000 },
+      ];
+
+      const result = calculateBoundingBox(positions);
+
+      expect(result.minX).toBe(5000);
+      expect(result.maxX).toBe(10000);
+      expect(result.width).toBe(5000);
+      expect(result.height).toBe(5000);
+    });
+  });
+
+  // ====================================================
+  // SECTION 17: Pure Utility Functions (calculateFitScale)
+  // ====================================================
+
+  describe("calculateFitScale", () => {
+    it("should return 1 for zero content dimensions", () => {
+      const result = calculateFitScale(0, 0, 800, 600);
+
+      expect(result).toBe(1);
+    });
+
+    it("should return 1 when content fits in container", () => {
+      const result = calculateFitScale(400, 300, 800, 600);
+
+      expect(result).toBeLessThanOrEqual(1);
+      expect(result).toBeGreaterThan(0);
+    });
+
+    it("should scale down when content is larger than container", () => {
+      const result = calculateFitScale(1600, 1200, 800, 600);
+
+      expect(result).toBeLessThan(1);
+    });
+
+    it("should apply padding factor", () => {
+      // When content is larger than container, padding affects scale
+      const resultWith90Percent = calculateFitScale(1000, 1000, 800, 600, 0.9);
+      const resultWith100Percent = calculateFitScale(1000, 1000, 800, 600, 1.0);
+
+      expect(resultWith90Percent).toBeLessThan(resultWith100Percent);
+    });
+
+    it("should respect maxScale limit", () => {
+      const result = calculateFitScale(100, 100, 1000, 1000, 0.9, 2);
+
+      expect(result).toBeLessThanOrEqual(2);
+    });
+
+    it("should handle non-square containers", () => {
+      const result = calculateFitScale(400, 300, 1200, 400);
+
+      expect(result).toBeGreaterThan(0);
+      expect(result).toBeLessThanOrEqual(1);
+    });
+
+    it("should calculate correct scale when width constrains", () => {
+      const result = calculateFitScale(400, 100, 200, 1000);
+
+      // scaleX = (200 * 0.9) / 400 = 0.45
+      // scaleY = (1000 * 0.9) / 100 = 9
+      // should use scaleX = 0.45
+      expect(result).toBeLessThan(1);
+    });
+
+    it("should calculate correct scale when height constrains", () => {
+      const result = calculateFitScale(100, 400, 1000, 200);
+
+      // scaleX = (1000 * 0.9) / 100 = 9
+      // scaleY = (200 * 0.9) / 400 = 0.45
+      // should use scaleY = 0.45
+      expect(result).toBeLessThan(1);
+    });
+  });
+
+  // ====================================================
+  // SECTION 18: Pure Utility Functions (generateGenerationRange)
+  // ====================================================
+
+  describe("generateGenerationRange", () => {
+    it("should generate range from min to max inclusive", () => {
+      const result = generateGenerationRange(0, 5);
+
+      expect(result).toEqual([0, 1, 2, 3, 4, 5]);
+    });
+
+    it("should handle single generation", () => {
+      const result = generateGenerationRange(3, 3);
+
+      expect(result).toEqual([3]);
+    });
+
+    it("should handle negative to positive range", () => {
+      const result = generateGenerationRange(-2, 2);
+
+      expect(result).toEqual([-2, -1, 0, 1, 2]);
+    });
+
+    it("should handle all negative range", () => {
+      const result = generateGenerationRange(-5, -1);
+
+      expect(result).toEqual([-5, -4, -3, -2, -1]);
+    });
+
+    it("should generate correct length", () => {
+      const result = generateGenerationRange(0, 10);
+
+      expect(result).toHaveLength(11);
+    });
+
+    it("should preserve order", () => {
+      const result = generateGenerationRange(1, 5);
+
+      expect(result[0]).toBeLessThan(result[1]);
+      expect(result[result.length - 1]).toBe(5);
+    });
+  });
+
+  // ====================================================
+  // SECTION 19: Pure Utility Functions (getSortedGenerations)
+  // ====================================================
+
+  describe("getSortedGenerations", () => {
+    it("should sort generations in ascending order", () => {
+      const generations = new Map<number, ChartNode[]>([
+        [3, []],
+        [1, []],
+        [2, []],
+      ]);
+
+      const result = getSortedGenerations(generations);
+
+      expect(result).toEqual([1, 2, 3]);
+    });
+
+    it("should handle empty map", () => {
+      const generations = new Map<number, ChartNode[]>();
+
+      const result = getSortedGenerations(generations);
+
+      expect(result).toEqual([]);
+    });
+
+    it("should handle negative generations", () => {
+      const generations = new Map<number, ChartNode[]>([
+        [-1, []],
+        [1, []],
+        [0, []],
+        [-3, []],
+      ]);
+
+      const result = getSortedGenerations(generations);
+
+      expect(result).toEqual([-3, -1, 0, 1]);
+    });
+
+    it("should handle single generation", () => {
+      const generations = new Map<number, ChartNode[]>([[5, []]]);
+
+      const result = getSortedGenerations(generations);
+
+      expect(result).toEqual([5]);
+    });
+
+    it("should not modify original map", () => {
+      const generations = new Map<number, ChartNode[]>([
+        [2, []],
+        [1, []],
+      ]);
+
+      getSortedGenerations(generations);
+
+      // Map order should be preserved (insertion order)
+      const keys = Array.from(generations.keys());
+      expect(keys[0]).toBe(2);
+    });
+
+    it("should handle large generation numbers", () => {
+      const generations = new Map<number, ChartNode[]>([
+        [1000, []],
+        [-1000, []],
+        [0, []],
+      ]);
+
+      const result = getSortedGenerations(generations);
+
+      expect(result).toEqual([-1000, 0, 1000]);
+    });
+  });
+
+  // ====================================================
+  // SECTION 20: Module Exports
+  // ====================================================
+
+  describe("Module Exports", () => {
+    it("should export required pure functions", async () => {
+      const module = await import("./d3-utils");
+
+      expect(module.groupByGeneration).toBeDefined();
+      expect(module.calculateBoundingBox).toBeDefined();
+      expect(module.calculateFitScale).toBeDefined();
+      expect(module.generateGenerationRange).toBeDefined();
+      expect(module.getSortedGenerations).toBeDefined();
+    });
+
+    it("should export type interfaces", async () => {
+      const module = await import("./d3-utils");
+
+      // Type interfaces are available as types
+      expect(module).toBeDefined();
     });
   });
 });

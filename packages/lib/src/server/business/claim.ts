@@ -5,6 +5,9 @@
  * their person profiles in the family tree. These functions accept primitive
  * parameters and return typed results, with auth checks performed at the
  * server function layer.
+ *
+ * Uses dependency injection pattern for database access and external services,
+ * allowing easy testing with mock implementations.
  */
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
@@ -19,17 +22,27 @@ import {
 import { notifyNewMemberJoined } from "./notifications";
 
 /**
+ * Type for the database client used by claim functions.
+ * This module uses Drizzle ORM as the default database client.
+ */
+export type ClaimDb = typeof drizzleDb;
+
+/**
  * Fetch claimable profiles for an OIDC user
  *
  * Returns all living person profiles that are not yet claimed by any user,
  * along with suggested matches based on the user's email and name.
  *
  * @param userId - ID of the OIDC user
+ * @param db - Drizzle database instance (defaults to drizzleDb)
  * @returns Object with all unclaimed profiles and suggested matches
  * @throws Error if user not found or not an OIDC user
  */
-export async function getClaimableProfilesData(userId: string) {
-  const user = await drizzleDb.query.users.findFirst({
+export async function getClaimableProfilesData(
+  userId: string,
+  db: ClaimDb = drizzleDb
+) {
+  const user = await db.query.users.findFirst({
     where: eq(drizzleSchema.users.id, userId),
   });
 
@@ -47,7 +60,7 @@ export async function getClaimableProfilesData(userId: string) {
   );
 
   // Get all personIds that are already claimed
-  const usersWithPeople = await drizzleDb.query.users.findMany({
+  const usersWithPeople = await db.query.users.findMany({
     where: isNotNull(drizzleSchema.users.personId),
     columns: { personId: true },
   });
@@ -59,7 +72,7 @@ export async function getClaimableProfilesData(userId: string) {
   logger.debug({ count: claimedPersonIds.length }, "Claimed person IDs");
 
   // Get all living persons not yet claimed
-  const profiles = await drizzleDb.query.persons.findMany({
+  const profiles = await db.query.persons.findMany({
     where: and(
       eq(drizzleSchema.persons.isLiving, true),
       notInArray(drizzleSchema.persons.id, claimedPersonIds)
@@ -121,15 +134,19 @@ export async function getClaimableProfilesData(userId: string) {
  *
  * @param userId - ID of the OIDC user claiming
  * @param personId - ID of the person profile to claim
+ * @param db - Drizzle database instance (defaults to drizzleDb)
+ * @param notify - Notification function (defaults to notifyNewMemberJoined)
  * @returns Object with success status and updated user ID
  * @throws Error if user/person not found, already claimed, or validation fails
  */
 export async function claimProfileForOIDCData(
   userId: string,
-  personId: string
+  personId: string,
+  db: ClaimDb = drizzleDb,
+  notify: typeof notifyNewMemberJoined = notifyNewMemberJoined
 ) {
   // Fetch user with current state
-  const user = await drizzleDb.query.users.findFirst({
+  const user = await db.query.users.findFirst({
     where: eq(drizzleSchema.users.id, userId),
   });
 
@@ -159,7 +176,7 @@ export async function claimProfileForOIDCData(
   }
 
   // Verify person exists and is living
-  const person = await drizzleDb.query.persons.findFirst({
+  const person = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -179,7 +196,7 @@ export async function claimProfileForOIDCData(
   );
 
   // Verify no other user has claimed this person
-  const existingClaim = await drizzleDb.query.users.findFirst({
+  const existingClaim = await db.query.users.findFirst({
     where: eq(drizzleSchema.users.personId, personId),
   });
 
@@ -190,7 +207,7 @@ export async function claimProfileForOIDCData(
 
   // Link user to person and promote to MEMBER
   logger.debug({ userId: user.id, personId }, "Linking user to person");
-  const [updatedUser] = await drizzleDb
+  const [updatedUser] = await db
     .update(drizzleSchema.users)
     .set({
       personId,
@@ -206,7 +223,7 @@ export async function claimProfileForOIDCData(
 
   // Send notification to admins about new member
   try {
-    await notifyNewMemberJoined(user.id);
+    await notify(user.id);
     logger.debug({ userId: user.id }, "Notification sent");
   } catch (error) {
     logger.error({ userId: user.id, error }, "Failed to send notification");
@@ -223,11 +240,15 @@ export async function claimProfileForOIDCData(
  * still claim a profile later if they choose.
  *
  * @param userId - ID of the OIDC user skipping
+ * @param db - Drizzle database instance (defaults to drizzleDb)
  * @returns Object with success status
  * @throws Error if user not found, already claimed, or not an OIDC user
  */
-export async function skipProfileClaimData(userId: string) {
-  const user = await drizzleDb.query.users.findFirst({
+export async function skipProfileClaimData(
+  userId: string,
+  db: ClaimDb = drizzleDb
+) {
+  const user = await db.query.users.findFirst({
     where: eq(drizzleSchema.users.id, userId),
   });
 
@@ -251,7 +272,7 @@ export async function skipProfileClaimData(userId: string) {
   }
 
   // Update status to SKIPPED
-  await drizzleDb
+  await db
     .update(drizzleSchema.users)
     .set({
       profileClaimStatus: "SKIPPED",
@@ -271,10 +292,14 @@ export async function skipProfileClaimData(userId: string) {
  * claimed a profile, which profile they claimed, and their OIDC provider.
  *
  * @param userId - ID of the OIDC user
+ * @param db - Drizzle database instance (defaults to drizzleDb)
  * @returns Claim status object with user and person details, or null if not OIDC user
  */
-export async function getOIDCClaimStatusData(userId: string) {
-  const user = await drizzleDb.query.users.findFirst({
+export async function getOIDCClaimStatusData(
+  userId: string,
+  db: ClaimDb = drizzleDb
+) {
+  const user = await db.query.users.findFirst({
     where: eq(drizzleSchema.users.id, userId),
   });
 
@@ -289,7 +314,7 @@ export async function getOIDCClaimStatusData(userId: string) {
   logger.debug({ userId: user.id }, "Fetching OIDC claim status");
 
   const person = user.personId
-    ? await drizzleDb.query.persons.findFirst({
+    ? await db.query.persons.findFirst({
         where: eq(drizzleSchema.persons.id, user.personId),
         columns: {
           id: true,

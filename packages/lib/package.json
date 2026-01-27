@@ -14,7 +14,7 @@
     "./logger": "./src/logger.ts",
     "./server": "./src/server/index.ts",
     "./server/business": "./src/server/business/index.ts",
-    "./media": "./src/media/processor.ts",
+    "./media": "./src/media/index.ts",
     "./stories": "./src/stories/index.ts"
   },
   "scripts": {

@@ -23,6 +23,7 @@
 // ============================================================================
 // Authentication & Authorization (Better Auth)
 // ============================================================================
+export * from "./auth";
 export * from "./auth-better";
 export * from "./auth-better-api";
 
@@ -36,6 +37,7 @@ export * from "./restore";
 // Calendar Integration
 // ============================================================================
 export * from "./calendar";
+export * from "./calendar-feeds";
 export * from "./calendar-tokens";
 export * from "./token-rotation";
 

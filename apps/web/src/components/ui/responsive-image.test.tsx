@@ -1,19 +1,84 @@
 /**
  * Unit tests for ResponsiveImage component
  *
- * Note: This is a client component with React state and event handlers.
- * Full rendering tests would require @testing-library/react. These tests verify
- * the component exports correctly and can be instantiated with valid props.
+ * Tests verify the component:
+ * 1. Exports and renders correctly
+ * 2. Handles responsive image sizes and srcSet
+ * 3. Uses picture element for responsive images
+ * 4. Displays error placeholder when image fails to load
+ * 5. Applies lazy loading and priority settings
  */
 
 import { describe, it, expect } from "bun:test";
+import { render } from "@testing-library/react";
 import { ResponsiveImage } from "./responsive-image";
 
 describe("ResponsiveImage Component", () => {
-  describe("exports", () => {
+  describe("exports and basic rendering", () => {
     it("should export ResponsiveImage component", () => {
       expect(ResponsiveImage).toBeDefined();
       expect(typeof ResponsiveImage).toBe("function");
+    });
+
+    it("should render an image with alt text", () => {
+      const { container } = render(
+        <ResponsiveImage mediaId="test-123" alt="Test image" />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      expect(img).toBeDefined();
+      expect(img.alt).toBe("Test image");
+    });
+
+    it("should set lazy loading by default", () => {
+      const { container } = render(
+        <ResponsiveImage
+          mediaId="test-123"
+          alt="Test image"
+          webpPath="media/test.webp"
+        />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      expect(img.getAttribute("loading")).toBe("lazy");
+    });
+
+    it("should set eager loading when priority is true", () => {
+      const { container } = render(
+        <ResponsiveImage
+          mediaId="test-123"
+          alt="Test image"
+          priority={true}
+          webpPath="media/test.webp"
+        />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      expect(img.getAttribute("loading")).toBe("eager");
+    });
+
+    it("should have async decoding attribute", () => {
+      const { container } = render(
+        <ResponsiveImage
+          mediaId="test-123"
+          alt="Test image"
+          webpPath="media/test.webp"
+        />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      expect(img.getAttribute("decoding")).toBe("async");
+    });
+
+    it("should apply responsive object-cover styling", () => {
+      const { container } = render(
+        <ResponsiveImage mediaId="test-123" alt="Test image" />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      expect(img.className).toContain("h-full");
+      expect(img.className).toContain("w-full");
+      expect(img.className).toContain("object-cover");
     });
   });
 
@@ -64,7 +129,107 @@ describe("ResponsiveImage Component", () => {
     });
   });
 
-  describe("instantiation with optional responsive sizes", () => {
+  describe("responsive image sizes", () => {
+    it("should render picture element with source when responsive sizes provided", () => {
+      const { container } = render(
+        <ResponsiveImage
+          mediaId="test-123"
+          alt="Test image"
+          thumb400Path="media/responsive/test-123_400.webp"
+          thumb800Path="media/responsive/test-123_800.webp"
+        />
+      );
+      const picture = container.querySelector("picture");
+
+      expect(picture).toBeDefined();
+      expect(picture?.querySelector("source")).toBeDefined();
+    });
+
+    it("should set correct srcSet with responsive sizes", () => {
+      const { container } = render(
+        <ResponsiveImage
+          mediaId="test-123"
+          alt="Test image"
+          thumb400Path="media/responsive/test-123_400.webp"
+          thumb800Path="media/responsive/test-123_800.webp"
+          thumb1200Path="media/responsive/test-123_1200.webp"
+        />
+      );
+      const source = container.querySelector("source") as HTMLSourceElement;
+
+      expect(source).toBeDefined();
+      const srcSet = source.getAttribute("srcset") || source.srcset || "";
+      expect(srcSet.toString()).toContain(
+        "media/responsive/test-123_400.webp 400w"
+      );
+      expect(srcSet.toString()).toContain(
+        "media/responsive/test-123_800.webp 800w"
+      );
+      expect(srcSet.toString()).toContain(
+        "media/responsive/test-123_1200.webp 1200w"
+      );
+    });
+
+    it("should include only provided responsive sizes in srcSet", () => {
+      const { container } = render(
+        <ResponsiveImage
+          mediaId="test-123"
+          alt="Test image"
+          thumb400Path="media/responsive/test-123_400.webp"
+          thumb1200Path="media/responsive/test-123_1200.webp"
+        />
+      );
+      const source = container.querySelector("source") as HTMLSourceElement;
+
+      const srcSet = source.getAttribute("srcset") || source.srcset || "";
+      expect(srcSet.toString()).toContain("400w");
+      expect(srcSet.toString()).toContain("1200w");
+      expect(srcSet.toString()).not.toContain("800w");
+    });
+
+    it("should set source type to image/webp", () => {
+      const { container } = render(
+        <ResponsiveImage
+          mediaId="test-123"
+          alt="Test image"
+          thumb400Path="media/responsive/test-123_400.webp"
+        />
+      );
+      const source = container.querySelector("source") as HTMLSourceElement;
+
+      expect(source.type).toBe("image/webp");
+    });
+
+    it("should use custom sizes attribute when provided", () => {
+      const customSizes = "(max-width: 640px) 100vw, 50vw";
+      const { container } = render(
+        <ResponsiveImage
+          mediaId="test-123"
+          alt="Test image"
+          thumb400Path="media/responsive/test-123_400.webp"
+          sizes={customSizes}
+        />
+      );
+      const source = container.querySelector("source") as HTMLSourceElement;
+
+      expect(source.getAttribute("sizes")).toBe(customSizes);
+    });
+
+    it("should use default sizes when not provided", () => {
+      const { container } = render(
+        <ResponsiveImage
+          mediaId="test-123"
+          alt="Test image"
+          thumb400Path="media/responsive/test-123_400.webp"
+        />
+      );
+      const source = container.querySelector("source") as HTMLSourceElement;
+
+      expect(source.getAttribute("sizes")).toBe(
+        "(max-width: 640px) 400px, (max-width: 1024px) 800px, 1200px"
+      );
+    });
+
     it("should accept thumb400Path", () => {
       const element = (
         <ResponsiveImage
@@ -78,21 +243,6 @@ describe("ResponsiveImage Component", () => {
       expect(element.props.thumb400Path).toBe(
         "media/responsive/test-123_400.webp"
       );
-    });
-
-    it("should accept thumb400Path and thumb800Path", () => {
-      const element = (
-        <ResponsiveImage
-          mediaId="test-123"
-          alt="Test image"
-          thumb400Path="media/responsive/test-123_400.webp"
-          thumb800Path="media/responsive/test-123_800.webp"
-        />
-      );
-
-      expect(element).toBeDefined();
-      expect(element.props.thumb400Path).toBeDefined();
-      expect(element.props.thumb800Path).toBeDefined();
     });
 
     it("should accept all responsive size props", () => {
@@ -142,22 +292,26 @@ describe("ResponsiveImage Component", () => {
     });
   });
 
-  describe("instantiation with optional className", () => {
-    it("should accept className prop", () => {
-      const element = (
+  describe("className and styling", () => {
+    it("should accept className prop and apply to image", () => {
+      const { container } = render(
         <ResponsiveImage
           mediaId="test-123"
           alt="Test image"
-          className="h-auto w-full rounded-lg"
+          className="rounded-lg shadow-md"
         />
       );
+      const img = container.querySelector("img") as HTMLImageElement;
 
-      expect(element).toBeDefined();
-      expect(element.props.className).toContain("rounded-lg");
+      expect(img.className).toContain("rounded-lg");
+      expect(img.className).toContain("shadow-md");
+      // Should still have base classes
+      expect(img.className).toContain("h-full");
+      expect(img.className).toContain("w-full");
     });
 
     it("should accept multiple classes in className", () => {
-      const customClass = "w-full h-auto object-cover rounded-md shadow-lg";
+      const customClass = "rounded-md shadow-lg border-2";
       const element = (
         <ResponsiveImage
           mediaId="test-123"
@@ -167,8 +321,19 @@ describe("ResponsiveImage Component", () => {
       );
 
       expect(element).toBeDefined();
-      expect(element.props.className).toContain("object-cover");
+      expect(element.props.className).toContain("rounded-md");
       expect(element.props.className).toContain("shadow-lg");
+      expect(element.props.className).toContain("border-2");
+    });
+
+    it("should apply transition opacity classes for loading states", () => {
+      const { container } = render(
+        <ResponsiveImage mediaId="test-123" alt="Test image" />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      expect(img.className).toContain("transition-opacity");
+      expect(img.className).toContain("duration-300");
     });
   });
 

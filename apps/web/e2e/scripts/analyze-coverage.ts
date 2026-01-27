@@ -411,7 +411,7 @@ function main() {
     ? args[args.indexOf("--output") + 1]
     : join(process.cwd(), "apps/web/e2e/COVERAGE.md");
 
-  const jsonPath = join(process.cwd(), "apps/web/test-results/results.json");
+  const jsonPath = join(process.cwd(), "apps/web/test-output/results.json");
 
   console.log("🔍 Analyzing E2E test coverage...\n");
 

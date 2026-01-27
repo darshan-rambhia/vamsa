@@ -149,13 +149,17 @@ describe("password", () => {
     });
 
     it("should return false for unknown hash format", async () => {
-      const result = await verifyPassword("anypassword", "unknownformat:abc:def");
+      const result = await verifyPassword(
+        "anypassword",
+        "unknownformat:abc:def"
+      );
 
       expect(result).toBe(false);
     });
 
     it("should return false for bcrypt format", async () => {
-      const bcryptHash = "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
+      const bcryptHash =
+        "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy";
 
       const result = await verifyPassword("anypassword", bcryptHash);
 
@@ -246,12 +250,15 @@ describe("password", () => {
         incorrectTimes.push(performance.now() - start);
       }
 
-      const avgCorrect = correctTimes.reduce((a, b) => a + b) / correctTimes.length;
-      const avgIncorrect = incorrectTimes.reduce((a, b) => a + b) / incorrectTimes.length;
+      const avgCorrect =
+        correctTimes.reduce((a, b) => a + b) / correctTimes.length;
+      const avgIncorrect =
+        incorrectTimes.reduce((a, b) => a + b) / incorrectTimes.length;
 
       // Times should be similar (within 50% of each other)
       // This is a rough check - actual timing attacks need more sophisticated analysis
-      const ratio = Math.max(avgCorrect, avgIncorrect) / Math.min(avgCorrect, avgIncorrect);
+      const ratio =
+        Math.max(avgCorrect, avgIncorrect) / Math.min(avgCorrect, avgIncorrect);
       expect(ratio).toBeLessThan(2);
     });
   });

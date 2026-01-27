@@ -80,9 +80,7 @@ describe("Avatar", () => {
     });
 
     test("does not render image when src is undefined", () => {
-      const { queryByRole } = render(
-        <Avatar alt="User" fallback="JD" />
-      );
+      const { queryByRole } = render(<Avatar alt="User" fallback="JD" />);
       const img = queryByRole("img");
       expect(img).toBeNull();
     });
@@ -466,11 +464,7 @@ describe("Avatar", () => {
 
     test("passes through style object", () => {
       const { getByTestId } = render(
-        <Avatar
-          style={{ margin: "10px" }}
-          data-testid="avatar"
-          fallback="AB"
-        />
+        <Avatar style={{ margin: "10px" }} data-testid="avatar" fallback="AB" />
       );
       const avatar = getByTestId("avatar");
       expect(avatar.style.margin).toBe("10px");
@@ -500,9 +494,7 @@ describe("Avatar", () => {
     });
 
     test("displays only first and last word initials with many words", () => {
-      const { getByText } = render(
-        <Avatar alt="John Michael Robert Doe" />
-      );
+      const { getByText } = render(<Avatar alt="John Michael Robert Doe" />);
       expect(getByText("JD")).toBeDefined();
     });
   });
@@ -540,11 +532,7 @@ describe("Avatar", () => {
 
       // Add src
       rerender(
-        <Avatar
-          src="https://example.com/avatar.jpg"
-          alt="User"
-          fallback="AB"
-        />
+        <Avatar src="https://example.com/avatar.jpg" alt="User" fallback="AB" />
       );
 
       // Image should be visible

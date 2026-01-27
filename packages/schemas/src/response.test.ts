@@ -823,9 +823,7 @@ describe("paginatedResponseSchema", () => {
 
     it("should strip extra fields from items", () => {
       const response = {
-        items: [
-          { id: "1", name: "Item 1", extra: "should be stripped" },
-        ],
+        items: [{ id: "1", name: "Item 1", extra: "should be stripped" }],
         pagination: {
           page: 1,
           limit: 10,
@@ -1175,9 +1173,9 @@ describe("paginatedResponseSchema", () => {
   describe("Type inference", () => {
     it("should properly infer paginated response type", () => {
       const stringSchema = z.string();
-      const paginated = paginatedResponseSchema(stringSchema);
+      const _paginated = paginatedResponseSchema(stringSchema);
 
-      type PaginatedStringResponse = z.infer<typeof paginated>;
+      type PaginatedStringResponse = z.infer<typeof _paginated>;
 
       const response: PaginatedStringResponse = {
         items: ["item1", "item2"],
@@ -1198,9 +1196,9 @@ describe("paginatedResponseSchema", () => {
         id: z.string(),
         value: z.number(),
       });
-      const paginated = paginatedResponseSchema(objectSchema);
+      const _paginated = paginatedResponseSchema(objectSchema);
 
-      type PaginatedObjectResponse = z.infer<typeof paginated>;
+      type PaginatedObjectResponse = z.infer<typeof _paginated>;
 
       const response: PaginatedObjectResponse = {
         items: [

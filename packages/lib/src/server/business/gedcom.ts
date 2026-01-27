@@ -253,7 +253,7 @@ export async function importGedcomData(
             dateOfPassing: person.dateOfPassing,
             birthPlace: person.birthPlace,
             nativePlace: person.nativePlace,
-            gender: person.gender as any,
+            gender: person.gender,
             bio: person.bio,
             profession: person.profession,
             isLiving: person.isLiving,
@@ -275,7 +275,7 @@ export async function importGedcomData(
             id: relationshipId,
             personId: rel.personId,
             relatedPersonId: rel.relatedPersonId,
-            type: rel.type as any,
+            type: rel.type,
             marriageDate: rel.marriageDate,
             divorceDate: rel.divorceDate,
             isActive: rel.isActive,
@@ -291,7 +291,7 @@ export async function importGedcomData(
       await tx.insert(drizzleSchema.auditLogs).values({
         id: crypto.randomUUID(),
         userId,
-        action: "CREATE" as any,
+        action: "CREATE",
         entityType: "GEDCOM_IMPORT",
         entityId: null,
         newData: {
@@ -392,7 +392,7 @@ export async function exportGedcomData(userId: string): Promise<ExportResult> {
     await drizzleDb.insert(drizzleSchema.auditLogs).values({
       id: crypto.randomUUID(),
       userId,
-      action: "CREATE" as any,
+      action: "CREATE",
       entityType: "GEDCOM_EXPORT",
       entityId: null,
       newData: {
@@ -553,7 +553,7 @@ export async function exportGedcomDataZip(
     await drizzleDb.insert(drizzleSchema.auditLogs).values({
       id: crypto.randomUUID(),
       userId,
-      action: "CREATE" as any,
+      action: "CREATE",
       entityType: "GEDZIP_EXPORT",
       entityId: null,
       newData: {

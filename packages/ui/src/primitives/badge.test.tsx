@@ -41,9 +41,7 @@ describe("Badge", () => {
 
   describe("base styles", () => {
     test("applies base styling classes", () => {
-      const { getByTestId } = render(
-        <Badge data-testid="badge">Badge</Badge>
-      );
+      const { getByTestId } = render(<Badge data-testid="badge">Badge</Badge>);
       const badge = getByTestId("badge");
       // Layout
       expect(badge.className).toContain("inline-flex");
@@ -334,16 +332,14 @@ describe("Badge", () => {
     });
 
     test("renders badge with only whitespace", () => {
-      const { getByTestId } = render(<Badge data-testid="badge">   </Badge>);
+      const { getByTestId } = render(<Badge data-testid="badge"> </Badge>);
       expect(getByTestId("badge")).toBeDefined();
     });
   });
 
   describe("accessibility", () => {
     test("maintains semantic div structure", () => {
-      const { getByTestId } = render(
-        <Badge data-testid="badge">Status</Badge>
-      );
+      const { getByTestId } = render(<Badge data-testid="badge">Status</Badge>);
       const badge = getByTestId("badge");
       expect(badge.tagName).toBe("DIV");
     });

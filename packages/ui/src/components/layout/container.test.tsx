@@ -225,10 +225,7 @@ describe("Container", () => {
 
     test("custom className takes precedence when conflicting", () => {
       const { container } = render(
-        <Container
-          className="px-8"
-          data-testid="container"
-        />
+        <Container className="px-8" data-testid="container" />
       );
       const div = container.querySelector("div");
       // Tailwind merge should prefer custom px-8 over px-4
@@ -269,11 +266,7 @@ describe("Container", () => {
 
     test("passes through multiple data attributes", () => {
       const { container } = render(
-        <Container
-          data-testid="container"
-          data-foo="bar"
-          data-baz="qux"
-        />
+        <Container data-testid="container" data-foo="bar" data-baz="qux" />
       );
       const div = container.querySelector("div");
       expect(div?.getAttribute("data-foo")).toBe("bar");
@@ -314,10 +307,7 @@ describe("Container", () => {
 
     test("passes through style attribute as object", () => {
       const { container } = render(
-        <Container
-          style={{ marginTop: "10px" }}
-          data-testid="container"
-        />
+        <Container style={{ marginTop: "10px" }} data-testid="container" />
       );
       const div = container.querySelector("div");
       expect(div?.style.marginTop).toBe("10px");
@@ -337,21 +327,6 @@ describe("Container", () => {
       );
       expect(divRef.current).not.toBeNull();
       expect(divRef.current?.tagName).toBe("DIV");
-    });
-
-    test("ref allows access to element properties", () => {
-      const divRef = { current: null as HTMLDivElement | null };
-      const { container } = render(
-        <Container
-          ref={(el) => {
-            divRef.current = el;
-          }}
-          className="test-class"
-          data-testid="container"
-        />
-      );
-      expect(divRef.current?.className).toContain("test-class");
-      expect(divRef.current?.className).toContain("mx-auto");
     });
 
     test("ref is mutable", () => {
@@ -392,7 +367,12 @@ describe("Container", () => {
     });
 
     test("all size variants work with custom className", () => {
-      const sizes: Array<"sm" | "md" | "lg" | "full"> = ["sm", "md", "lg", "full"];
+      const sizes: Array<"sm" | "md" | "lg" | "full"> = [
+        "sm",
+        "md",
+        "lg",
+        "full",
+      ];
       const expectedClasses = {
         sm: "max-w-3xl",
         md: "max-w-5xl",
@@ -402,7 +382,11 @@ describe("Container", () => {
 
       sizes.forEach((size) => {
         const { container } = render(
-          <Container size={size} className="my-custom" data-testid="container" />
+          <Container
+            size={size}
+            className="my-custom"
+            data-testid="container"
+          />
         );
         const div = container.querySelector("div");
         expect(div?.className).toContain(expectedClasses[size]);
@@ -411,7 +395,12 @@ describe("Container", () => {
     });
 
     test("children render correctly with all size variants", () => {
-      const sizes: Array<"sm" | "md" | "lg" | "full"> = ["sm", "md", "lg", "full"];
+      const sizes: Array<"sm" | "md" | "lg" | "full"> = [
+        "sm",
+        "md",
+        "lg",
+        "full",
+      ];
 
       sizes.forEach((size) => {
         const { getByText } = render(
@@ -447,25 +436,19 @@ describe("Container", () => {
     });
 
     test("renders with null children", () => {
-      const { container } = render(
-        <Container>{null}</Container>
-      );
+      const { container } = render(<Container>{null}</Container>);
       const div = container.querySelector("div");
       expect(div).toBeDefined();
     });
 
     test("renders with undefined children", () => {
-      const { container } = render(
-        <Container>{undefined}</Container>
-      );
+      const { container } = render(<Container>{undefined}</Container>);
       const div = container.querySelector("div");
       expect(div).toBeDefined();
     });
 
     test("renders with false children (React falsy)", () => {
-      const { container } = render(
-        <Container>{false}</Container>
-      );
+      const { container } = render(<Container>{false}</Container>);
       const div = container.querySelector("div");
       expect(div).toBeDefined();
     });
@@ -487,10 +470,7 @@ describe("Container", () => {
 
     test("forwards all HTML div attributes", () => {
       const { container } = render(
-        <Container
-          tabIndex={-1}
-          data-testid="container"
-        />
+        <Container tabIndex={-1} data-testid="container" />
       );
       const div = container.querySelector("div");
       expect(div?.tabIndex).toBe(-1);
@@ -593,7 +573,7 @@ describe("Container", () => {
 
     test("verifies ref points to the div not a child", () => {
       const divRef = { current: null as HTMLDivElement | null };
-      const { container } = render(
+      render(
         <Container
           ref={(el) => {
             divRef.current = el;

@@ -1,19 +1,67 @@
 /**
  * Unit tests for AvatarImage component
  *
- * Note: This is a simple presentational component. Full rendering tests
- * would require @testing-library/react. These tests verify the component
- * exports correctly and can be instantiated with valid props.
+ * Tests verify the component:
+ * 1. Exports and renders correctly
+ * 2. Handles all prop combinations
+ * 3. Displays initials or images based on props
+ * 4. Applies proper CSS classes for styling and sizing
  */
 
 import { describe, it, expect } from "bun:test";
+import { render } from "@testing-library/react";
 import { AvatarImage } from "./avatar-image";
 
 describe("AvatarImage Component", () => {
-  describe("exports", () => {
+  describe("exports and rendering", () => {
     it("should export AvatarImage component", () => {
       expect(AvatarImage).toBeDefined();
       expect(typeof AvatarImage).toBe("function");
+    });
+
+    it("should render a circular container with proper classes", () => {
+      const { container } = render(<AvatarImage alt="John Doe" />);
+      const avatar = container.firstChild as HTMLElement;
+
+      expect(avatar).toBeDefined();
+      expect(avatar.className).toContain("rounded-full");
+      expect(avatar.className).toContain("inline-flex");
+      expect(avatar.className).toContain("items-center");
+      expect(avatar.className).toContain("justify-center");
+      expect(avatar.className).toContain("overflow-hidden");
+      expect(avatar.className).toContain("bg-primary/10");
+    });
+
+    it("should render initials when no image is provided", () => {
+      const { getByText } = render(<AvatarImage alt="John Doe" />);
+      const initials = getByText("JD");
+
+      expect(initials).toBeDefined();
+      expect(initials.textContent).toBe("JD");
+    });
+
+    it("should use fallbackInitials when provided", () => {
+      const { getByText } = render(
+        <AvatarImage alt="John Doe" fallbackInitials="XX" />
+      );
+      const initials = getByText("XX");
+
+      expect(initials).toBeDefined();
+      expect(initials.textContent).toBe("XX");
+    });
+
+    it("should display single letter initial when name has only one word", () => {
+      const { getByText } = render(<AvatarImage alt="Madonna" />);
+      const initials = getByText("M");
+
+      expect(initials).toBeDefined();
+    });
+
+    it("should display question mark when alt is empty", () => {
+      const { getByText } = render(<AvatarImage alt="" />);
+      const initials = getByText("?");
+
+      expect(initials).toBeDefined();
     });
   });
 
@@ -38,7 +86,56 @@ describe("AvatarImage Component", () => {
     });
   });
 
-  describe("instantiation with optional props", () => {
+  describe("size variants", () => {
+    it("should apply small size classes", () => {
+      const { container } = render(<AvatarImage alt="John Doe" size="sm" />);
+      const avatar = container.firstChild as HTMLElement;
+
+      expect(avatar.className).toContain("h-8");
+      expect(avatar.className).toContain("w-8");
+      expect(avatar.className).toContain("text-xs");
+    });
+
+    it("should apply medium size classes (default)", () => {
+      const { container } = render(<AvatarImage alt="John Doe" size="md" />);
+      const avatar = container.firstChild as HTMLElement;
+
+      expect(avatar.className).toContain("h-10");
+      expect(avatar.className).toContain("w-10");
+      expect(avatar.className).toContain("text-sm");
+    });
+
+    it("should apply large size classes", () => {
+      const { container } = render(<AvatarImage alt="John Doe" size="lg" />);
+      const avatar = container.firstChild as HTMLElement;
+
+      expect(avatar.className).toContain("h-14");
+      expect(avatar.className).toContain("w-14");
+      expect(avatar.className).toContain("text-lg");
+    });
+
+    it("should apply extra large size classes", () => {
+      const { container } = render(<AvatarImage alt="John Doe" size="xl" />);
+      const avatar = container.firstChild as HTMLElement;
+
+      expect(avatar.className).toContain("h-24");
+      expect(avatar.className).toContain("w-24");
+      expect(avatar.className).toContain("text-2xl");
+    });
+
+    it("should use default size when undefined", () => {
+      const { container } = render(
+        <AvatarImage alt="John Doe" size={undefined} />
+      );
+      const avatar = container.firstChild as HTMLElement;
+
+      // Default is "md"
+      expect(avatar.className).toContain("h-10");
+      expect(avatar.className).toContain("w-10");
+    });
+  });
+
+  describe("optional props handling", () => {
     it("should accept size prop", () => {
       const element = <AvatarImage alt="John Doe" size="sm" />;
 
@@ -60,15 +157,21 @@ describe("AvatarImage Component", () => {
       expect(element).toBeDefined();
     });
 
-    it("should accept className prop", () => {
-      const element = (
+    it("should accept className prop and merge with base styles", () => {
+      const { container } = render(
         <AvatarImage
           alt="John Doe"
           className="custom-style border-primary ring-2"
         />
       );
+      const avatar = container.firstChild as HTMLElement;
 
-      expect(element).toBeDefined();
+      // Should have base classes
+      expect(avatar.className).toContain("rounded-full");
+      // Should have custom classes
+      expect(avatar.className).toContain("custom-style");
+      expect(avatar.className).toContain("border-primary");
+      expect(avatar.className).toContain("ring-2");
     });
 
     it("should accept mediaId prop", () => {
@@ -104,6 +207,95 @@ describe("AvatarImage Component", () => {
       );
 
       expect(element).toBeDefined();
+    });
+  });
+
+  describe("image rendering", () => {
+    it("should render image when thumbnailPath is provided", () => {
+      const { container, queryByText } = render(
+        <AvatarImage
+          alt="John Doe"
+          thumbnailPath="media/thumbnails/avatar.webp"
+        />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      // Image should be rendered
+      expect(img).toBeDefined();
+      expect(img.src).toContain("media/thumbnails/avatar.webp");
+      expect(img.alt).toBe("John Doe");
+      // Initials should not be shown
+      expect(queryByText("JD")).toBeNull();
+    });
+
+    it("should use thumbnailPath in preference to webpPath", () => {
+      const { container } = render(
+        <AvatarImage
+          alt="John Doe"
+          thumbnailPath="media/thumbnails/avatar.webp"
+          webpPath="media/webp/avatar.webp"
+        />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      // Should prefer thumbnail
+      expect(img.src).toContain("media/thumbnails/avatar.webp");
+    });
+
+    it("should use webpPath when thumbnailPath is not available", () => {
+      const { container } = render(
+        <AvatarImage alt="John Doe" webpPath="media/webp/avatar.webp" />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      expect(img.src).toContain("media/webp/avatar.webp");
+    });
+
+    it("should use filePath when no other paths are available", () => {
+      const { container } = render(
+        <AvatarImage alt="John Doe" filePath="media/original/avatar.jpg" />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      expect(img.src).toContain("media/original/avatar.jpg");
+    });
+
+    it("should render initials when all image paths are null", () => {
+      const { getByText } = render(
+        <AvatarImage
+          alt="John Doe"
+          thumbnailPath={null}
+          webpPath={null}
+          filePath={null}
+        />
+      );
+      const initials = getByText("JD");
+
+      expect(initials).toBeDefined();
+    });
+
+    it("should set loading attribute to lazy on images", () => {
+      const { container } = render(
+        <AvatarImage
+          alt="John Doe"
+          thumbnailPath="media/thumbnails/avatar.webp"
+        />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      expect(img.getAttribute("loading")).toBe("lazy");
+    });
+
+    it("should set decoding attribute to async on images", () => {
+      const { container } = render(
+        <AvatarImage
+          alt="John Doe"
+          thumbnailPath="media/thumbnails/avatar.webp"
+        />
+      );
+      const img = container.querySelector("img") as HTMLImageElement;
+
+      expect(img.getAttribute("decoding")).toBe("async");
     });
   });
 

@@ -111,7 +111,8 @@ describe("ThemeToggle", () => {
       const { container } = render(<ThemeToggle size="sm" />);
       const svg = container.querySelector("svg");
 
-      const classStr = svg?.className.baseVal || (svg?.className as unknown as string) || "";
+      const classStr =
+        svg?.className.baseVal || (svg?.className as unknown as string) || "";
       expect(classStr).toContain("h-4");
       expect(classStr).toContain("w-4");
     });
@@ -120,7 +121,8 @@ describe("ThemeToggle", () => {
       const { container } = render(<ThemeToggle size="md" />);
       const svg = container.querySelector("svg");
 
-      const classStr = svg?.className.baseVal || (svg?.className as unknown as string) || "";
+      const classStr =
+        svg?.className.baseVal || (svg?.className as unknown as string) || "";
       expect(classStr).toContain("h-5");
       expect(classStr).toContain("w-5");
     });
@@ -283,9 +285,7 @@ describe("ThemeToggle", () => {
     });
 
     test("passes through custom data attributes", () => {
-      const { getByRole } = render(
-        <ThemeToggle data-custom="custom-value" />
-      );
+      const { getByRole } = render(<ThemeToggle data-custom="custom-value" />);
       const button = getByRole("button");
 
       expect(button.getAttribute("data-custom")).toBe("custom-value");
@@ -446,7 +446,8 @@ describe("ThemeToggle", () => {
       const { container } = render(<ThemeToggle />);
       const svg = container.querySelector("svg");
 
-      const classStr = svg?.className.baseVal || (svg?.className as unknown as string) || "";
+      const classStr =
+        svg?.className.baseVal || (svg?.className as unknown as string) || "";
       expect(classStr).toContain("text-foreground");
     });
 
@@ -469,9 +470,9 @@ describe("ThemeToggle", () => {
       const ariaLabel = button.getAttribute("aria-label");
       // Should indicate next theme, not current
       expect(ariaLabel).toBeDefined();
-      expect(
-        ariaLabel?.includes("dark") || ariaLabel?.includes("light")
-      ).toBe(true);
+      expect(ariaLabel?.includes("dark") || ariaLabel?.includes("light")).toBe(
+        true
+      );
     });
 
     test("icon matches theme state", () => {
@@ -585,7 +586,8 @@ describe("ThemeToggle", () => {
       const { container } = render(<ThemeToggle />);
       const svg = container.querySelector("svg");
 
-      const classStr = svg?.className.baseVal || (svg?.className as unknown as string) || "";
+      const classStr =
+        svg?.className.baseVal || (svg?.className as unknown as string) || "";
       expect(classStr).toContain("h-");
       expect(classStr).toContain("w-");
     });
@@ -627,7 +629,8 @@ describe("ThemeToggle", () => {
       const { container } = render(<ThemeToggle />);
       const svg = container.querySelector("svg");
 
-      const classStr = svg?.className.baseVal || (svg?.className as unknown as string) || "";
+      const classStr =
+        svg?.className.baseVal || (svg?.className as unknown as string) || "";
       expect(classStr).toContain("text-foreground");
     });
   });

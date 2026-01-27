@@ -9,7 +9,12 @@
  * - Error handling and edge cases
  * - Suggested profile matching
  *
- * Uses mocked drizzleDb module instead of dependency injection.
+ * Testing approach:
+ * 1. Module mocking (existing tests) - mocks @vamsa/api to intercept default db
+ * 2. DI injection (new tests) - passes mock db directly via DI parameters
+ *
+ * The DI approach is preferred for new tests as it's more explicit and doesn't
+ * require mock.module() setup.
  */
 
 import { describe, it, expect, beforeEach, mock } from "bun:test";
@@ -751,6 +756,173 @@ describe("Claim Server Business Logic", () => {
       expect(result?.person?.firstName).toBe("John");
       expect(result?.person?.lastName).toBe("Doe");
       expect(result?.person?.email).toBe("john@example.com");
+    });
+  });
+
+  describe("DI-based tests (demonstrates injected mock pattern)", () => {
+    /**
+     * These tests demonstrate the DI approach where we pass mock db
+     * directly to functions instead of relying on module mocking.
+     *
+     * Benefits:
+     * - More explicit test setup
+     * - No need for mock.module() at file level
+     * - Easier to understand what's being tested
+     * - Tests are more isolated
+     */
+
+    it("should use injected db for getClaimableProfilesData", async () => {
+      const mockUser = {
+        id: "user-di-1",
+        email: "di-test@example.com",
+        name: "DI Test User",
+        oidcProvider: "google",
+      };
+
+      const mockProfiles = [
+        {
+          id: "person-di-1",
+          firstName: "DI",
+          lastName: "Test",
+          email: "di@example.com",
+          dateOfBirth: new Date("1990-01-15"),
+        },
+      ];
+
+      // Create inline mock db for this test
+      const inlineDb = {
+        query: {
+          users: {
+            findFirst: mock(() => Promise.resolve(mockUser)),
+            findMany: mock(() => Promise.resolve([])),
+          },
+          persons: {
+            findMany: mock(() => Promise.resolve(mockProfiles)),
+          },
+        },
+      } as any;
+
+      const result = await getClaimableProfilesData("user-di-1", inlineDb);
+
+      expect(result.all).toHaveLength(1);
+      expect(result.all[0].id).toBe("person-di-1");
+      expect(inlineDb.query.users.findFirst).toHaveBeenCalled();
+    });
+
+    it("should use injected notify for claimProfileForOIDCData", async () => {
+      const mockUser = {
+        id: "user-notify-1",
+        email: "notify@example.com",
+        oidcProvider: "google",
+        personId: null,
+        profileClaimStatus: "PENDING",
+      };
+
+      const mockPerson = {
+        id: "person-notify-1",
+        firstName: "Notify",
+        lastName: "Test",
+        isLiving: true,
+      };
+
+      const updatedUser = {
+        ...mockUser,
+        personId: "person-notify-1",
+        role: "MEMBER",
+        profileClaimStatus: "CLAIMED",
+      };
+
+      let notifyCalled = false;
+      const mockNotify = mock(() => {
+        notifyCalled = true;
+        return Promise.resolve();
+      });
+
+      // Create inline mock db with proper fluent API
+      const inlineDb = {
+        query: {
+          users: {
+            findFirst: mock()
+              .mockResolvedValueOnce(mockUser) // First call: fetch user
+              .mockResolvedValueOnce(null), // Second call: check existing claim
+          },
+          persons: {
+            findFirst: mock(() => Promise.resolve(mockPerson)),
+          },
+        },
+        update: mock(() => ({
+          set: mock(() => ({
+            where: mock(() =>
+              Object.assign(Promise.resolve({}), {
+                returning: mock(() => Promise.resolve([updatedUser])),
+              })
+            ),
+          })),
+        })),
+      } as any;
+
+      const result = await claimProfileForOIDCData(
+        "user-notify-1",
+        "person-notify-1",
+        inlineDb,
+        mockNotify
+      );
+
+      expect(result.success).toBe(true);
+      expect(notifyCalled).toBe(true);
+      expect(mockNotify).toHaveBeenCalledWith("user-notify-1");
+    });
+
+    it("should use injected db for skipProfileClaimData", async () => {
+      const mockUser = {
+        id: "user-skip-1",
+        oidcProvider: "google",
+        profileClaimStatus: "PENDING",
+      };
+
+      const inlineDb = {
+        query: {
+          users: {
+            findFirst: mock(() => Promise.resolve(mockUser)),
+          },
+        },
+        update: mock(() => ({
+          set: mock(() => ({
+            where: mock(() => Promise.resolve({})),
+          })),
+        })),
+      } as any;
+
+      const result = await skipProfileClaimData("user-skip-1", inlineDb);
+
+      expect(result.success).toBe(true);
+      expect(inlineDb.update).toHaveBeenCalled();
+    });
+
+    it("should use injected db for getOIDCClaimStatusData", async () => {
+      const mockUser = {
+        id: "user-status-1",
+        email: "status@example.com",
+        name: "Status User",
+        oidcProvider: "google",
+        personId: null,
+        profileClaimStatus: "PENDING",
+        profileClaimedAt: null,
+      };
+
+      const inlineDb = {
+        query: {
+          users: {
+            findFirst: mock(() => Promise.resolve(mockUser)),
+          },
+        },
+      } as any;
+
+      const result = await getOIDCClaimStatusData("user-status-1", inlineDb);
+
+      expect(result?.userId).toBe("user-status-1");
+      expect(result?.profileClaimStatus).toBe("PENDING");
+      expect(inlineDb.query.users.findFirst).toHaveBeenCalled();
     });
   });
 });

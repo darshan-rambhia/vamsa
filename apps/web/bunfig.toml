@@ -1,7 +1,7 @@
 [test]
 # Test configuration for @vamsa/web
 # Preload test setup to configure jsdom and DOM globals
-preload = ["./tests/setup/test-logger-mock.ts"]
+preload = ["./tests/setup/test-logger-mock.ts", "./tests/setup/jsdom-setup.ts"]
 
 coverage = true
 

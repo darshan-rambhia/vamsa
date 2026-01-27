@@ -202,7 +202,7 @@ function DashboardComponent() {
             <CardTitle className="flex items-center justify-between">
               <span>{t("admin.pendingApprovals")}</span>
               <Link
-                to="/admin"
+                to="/admin/suggestions"
                 className="text-primary text-sm font-normal hover:underline"
               >
                 {t("common.search")}

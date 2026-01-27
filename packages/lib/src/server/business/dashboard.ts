@@ -314,7 +314,18 @@ export async function getRecentActivityData(
   // Action type filter
   if (filters.actionTypes && filters.actionTypes.length > 0) {
     whereConditions.push(
-      inArray(drizzleSchema.auditLogs.action, filters.actionTypes as any)
+      inArray(
+        drizzleSchema.auditLogs.action,
+        filters.actionTypes as Array<
+          | "CREATE"
+          | "UPDATE"
+          | "DELETE"
+          | "LOGIN"
+          | "LOGOUT"
+          | "APPROVE"
+          | "REJECT"
+        >
+      )
     );
   }
 

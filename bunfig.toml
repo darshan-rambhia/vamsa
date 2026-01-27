@@ -5,12 +5,9 @@
 # Use exact versions for reproducible builds
 exact = true
 
+
 # Automatically install peer dependencies
 peer = true
-
-[install.lockfile]
-# Use text-based lockfile for better git diffs
-print = "yarn"
 
 [test]
 # Test configuration

@@ -321,17 +321,18 @@ export async function getPersonData(
   // Only use relationshipsFrom to avoid duplicates since relationships are stored bidirectionally
   const relationships = (person.relationshipsFrom || []).map(
     (r: RelationshipWithRelatedPerson) => ({
-    id: r.id,
-    type: r.type,
-    marriageDate: r.marriageDate?.toISOString().split("T")[0] ?? null,
-    divorceDate: r.divorceDate?.toISOString().split("T")[0] ?? null,
-    isActive: r.isActive,
-    relatedPerson: {
-      id: r.relatedPerson.id,
-      firstName: r.relatedPerson.firstName,
-      lastName: r.relatedPerson.lastName,
-    },
-  }));
+      id: r.id,
+      type: r.type,
+      marriageDate: r.marriageDate?.toISOString().split("T")[0] ?? null,
+      divorceDate: r.divorceDate?.toISOString().split("T")[0] ?? null,
+      isActive: r.isActive,
+      relatedPerson: {
+        id: r.relatedPerson.id,
+        firstName: r.relatedPerson.firstName,
+        lastName: r.relatedPerson.lastName,
+      },
+    })
+  );
 
   return {
     id: person.id,

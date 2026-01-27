@@ -79,8 +79,8 @@ jobs:
       - name: Generate coverage report
         if: always()
         run: |
-          if [ -f apps/web/test-results/results.json ]; then
-            bun run apps/web/e2e/scripts/analyze-coverage.ts --output apps/web/test-results/coverage-report.md
+          if [ -f apps/web/test-output/results.json ]; then
+            bun run apps/web/e2e/scripts/analyze-coverage.ts --output apps/web/test-output/coverage-report.md
           fi
 
       - name: Upload Playwright report
@@ -95,8 +95,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: apps/web/test-results/
+          name: test-output
+          path: apps/web/test-output/
           retention-days: 30
 
       - name: Upload coverage report
@@ -104,7 +104,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: apps/web/test-results/coverage-report.md
+          path: apps/web/test-output/coverage-report.md
           retention-days: 30
 
       - name: Comment PR with test results
@@ -113,8 +113,7 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            const coveragePath = 'apps/web/test-results/coverage-report.md';
-
+            const coveragePath = 'apps/web/test-output/coverage-report.md';
             if (fs.existsSync(coveragePath)) {
               const coverage = fs.readFileSync(coveragePath, 'utf8');
 

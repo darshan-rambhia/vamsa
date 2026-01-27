@@ -16,6 +16,7 @@ import {
 import { relations } from "drizzle-orm";
 import { genderEnum } from "./enums";
 import { users } from "./user";
+import { relationships } from "./relationship";
 
 /**
  * Person table - core genealogy record
@@ -63,10 +64,10 @@ export const personsRelations = relations(persons, ({ one, many }) => ({
     references: [users.id],
     relationName: "PersonCreatedBy",
   }),
-  relationshipsFrom: many(persons, {
+  relationshipsFrom: many(relationships, {
     relationName: "RelationshipFrom",
   }),
-  relationshipsTo: many(persons, {
+  relationshipsTo: many(relationships, {
     relationName: "RelationshipTo",
   }),
   suggestions: many(persons, {

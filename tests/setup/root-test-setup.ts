@@ -81,7 +81,10 @@ declare global {
 }
 
 if (!Element.prototype.attachEvent) {
-  Element.prototype.attachEvent = function (event: string, listener: EventListener) {
+  Element.prototype.attachEvent = function (
+    event: string,
+    listener: EventListener
+  ) {
     this.addEventListener(event.replace(/^on/, ""), listener);
   };
 }

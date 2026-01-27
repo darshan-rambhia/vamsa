@@ -9,8 +9,6 @@ import {
   placeCreateSchema,
   placeUpdateSchema,
   placePersonLinkCreateSchema,
-  type PlaceType,
-  type PersonPlaceType,
   type PlaceCreateInput,
   type PlaceUpdateInput,
   type PlacePersonLinkCreateInput,

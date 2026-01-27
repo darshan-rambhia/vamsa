@@ -137,3 +137,22 @@ Skills are automatically available to agents. When working on:
 - **Frontend work**: Read `.claude/skills/design/` before writing components
 - **Test work**: Read `.claude/skills/testing/` before writing tests
 - **Both**: The relevant agent files already reference these skills
+
+## Coding Standards
+
+### Logging
+
+Always use the project's built-in logger instead of `console.log`:
+
+```typescript
+import { logger } from "@vamsa/lib/logger";
+
+// Use structured logging with context
+logger.info({ userId, action: "login" }, "User logged in");
+logger.error({ error: serializeError(error) }, "Failed to process request");
+logger.debug({ query, results: results.length }, "Database query completed");
+```
+
+- **Never use `console.log`** in production code - use `logger.info()`, `logger.debug()`, `logger.warn()`, or `logger.error()`
+- **Include context objects** as the first argument for structured logging
+- **Use `serializeError()`** from `@vamsa/lib/logger` when logging errors

@@ -907,12 +907,9 @@ describe("personListInputSchema", () => {
     });
 
     it("should accept all sortBy options", () => {
-      const sortByOptions: Array<"lastName" | "firstName" | "dateOfBirth" | "createdAt"> = [
-        "lastName",
-        "firstName",
-        "dateOfBirth",
-        "createdAt",
-      ];
+      const sortByOptions: Array<
+        "lastName" | "firstName" | "dateOfBirth" | "createdAt"
+      > = ["lastName", "firstName", "dateOfBirth", "createdAt"];
 
       sortByOptions.forEach((sortBy) => {
         const result = personListInputSchema.safeParse({ sortBy });
@@ -1210,7 +1207,13 @@ describe("auditLogListInputSchema", () => {
 
     it("should accept all action values", () => {
       const actions: Array<
-        "CREATE" | "UPDATE" | "DELETE" | "LOGIN" | "LOGOUT" | "APPROVE" | "REJECT"
+        | "CREATE"
+        | "UPDATE"
+        | "DELETE"
+        | "LOGIN"
+        | "LOGOUT"
+        | "APPROVE"
+        | "REJECT"
       > = [
         "CREATE",
         "UPDATE",

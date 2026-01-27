@@ -167,7 +167,7 @@ function FanChartComponent({
       const bounds = calculateRadialBounds(centerX, centerY, maxRadius);
       viewport.fitContent(bounds);
     }
-  }, [nodePositions, centerX, centerY, maxGen, viewport.fitContent]);
+  }, [nodePositions, centerX, centerY, maxGen, viewport]);
 
   // Handle node interactions
   const handleNodeMouseEnter = useCallback(

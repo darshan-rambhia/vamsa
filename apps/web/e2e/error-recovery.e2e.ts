@@ -262,6 +262,16 @@ test.describe("Feature: Error Recovery", () => {
       await bdd.then(
         "form is still present on page for user interaction",
         async () => {
+          // Wait for either form to be visible or URL to change (successful redirect)
+          await Promise.race([
+            page
+              .getByTestId("person-form")
+              .waitFor({ state: "visible", timeout: 5000 }),
+            page.waitForURL(/\/people\/[^n]/, { timeout: 5000 }), // Not /people/new
+          ]).catch(() => {
+            // At least one should succeed
+          });
+
           // After submission, form should still be visible on the page
           // (user can see the form to verify or make additional changes)
           const personForm = page.getByTestId("person-form");
@@ -298,6 +308,16 @@ test.describe("Feature: Error Recovery", () => {
       await bdd.then(
         "form input fields are still accessible for user",
         async () => {
+          // Wait for either form to be visible or URL to change (successful redirect)
+          await Promise.race([
+            page
+              .getByTestId("person-form")
+              .waitFor({ state: "visible", timeout: 5000 }),
+            page.waitForURL(/\/people\/[^n]/, { timeout: 5000 }), // Not /people/new
+          ]).catch(() => {
+            // At least one should succeed
+          });
+
           // Verify that form elements are present and accessible
           const firstNameInput = page.getByTestId("person-form-firstName");
           const lastNameInput = page.getByTestId("person-form-lastName");
@@ -625,7 +645,15 @@ test.describe("Feature: Error Recovery", () => {
       await bdd.then(
         "form remains accessible after submission attempt",
         async () => {
-          await page.waitForTimeout(500);
+          // Wait for either form to be visible or URL to change (successful redirect)
+          await Promise.race([
+            page
+              .getByTestId("person-form")
+              .waitFor({ state: "visible", timeout: 5000 }),
+            page.waitForURL(/\/people\/[^n]/, { timeout: 5000 }), // Not /people/new
+          ]).catch(() => {
+            // At least one should succeed
+          });
 
           // Either form is still visible for retry or submission succeeded
           const form = page.getByTestId("person-form");

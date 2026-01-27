@@ -38,8 +38,10 @@ test.describe("Visualization Page", () => {
       // Person selector
       await expect(page.getByLabel(/center on/i)).toBeVisible();
 
-      // Action buttons
-      await expect(page.getByRole("button", { name: /reset/i })).toBeVisible();
+      // Action buttons - use first() since there may be multiple reset buttons
+      await expect(
+        page.getByRole("button", { name: /reset/i }).first()
+      ).toBeVisible();
       await expect(page.getByRole("button", { name: /export/i })).toBeVisible();
     });
   });

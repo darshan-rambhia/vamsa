@@ -12,13 +12,8 @@ import {
   validationResultSchema,
   importResultSchema,
   backupValidationPreviewSchema,
-  importPreviewSchema,
-  storageProviderEnum,
-  backupStatusEnum,
-  backupTypeEnum,
   backupSettingsSchema,
   backupSchema,
-  listBackupsInputSchema,
   type BackupExportInput,
   type BackupMetadata,
 } from "./backup";
@@ -858,7 +853,9 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() => require("./backup").importPreviewSchema.parse(preview)).not.toThrow();
+      expect(() =>
+        require("./backup").importPreviewSchema.parse(preview)
+      ).not.toThrow();
     });
 
     it("should validate import preview with no conflicts", () => {
@@ -888,7 +885,9 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() => require("./backup").importPreviewSchema.parse(preview)).not.toThrow();
+      expect(() =>
+        require("./backup").importPreviewSchema.parse(preview)
+      ).not.toThrow();
     });
 
     it("should validate import preview with zero duration", () => {
@@ -918,7 +917,9 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() => require("./backup").importPreviewSchema.parse(preview)).not.toThrow();
+      expect(() =>
+        require("./backup").importPreviewSchema.parse(preview)
+      ).not.toThrow();
     });
 
     it("should validate import preview with large numbers", () => {
@@ -948,7 +949,9 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() => require("./backup").importPreviewSchema.parse(preview)).not.toThrow();
+      expect(() =>
+        require("./backup").importPreviewSchema.parse(preview)
+      ).not.toThrow();
     });
   });
 
@@ -979,7 +982,9 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() => require("./backup").importPreviewSchema.parse(preview)).toThrow();
+      expect(() =>
+        require("./backup").importPreviewSchema.parse(preview)
+      ).toThrow();
     });
 
     it("should reject missing statistics", () => {
@@ -991,7 +996,9 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() => require("./backup").importPreviewSchema.parse(preview)).toThrow();
+      expect(() =>
+        require("./backup").importPreviewSchema.parse(preview)
+      ).toThrow();
     });
 
     it("should reject missing estimatedDuration", () => {
@@ -1017,7 +1024,9 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() => require("./backup").importPreviewSchema.parse(preview)).toThrow();
+      expect(() =>
+        require("./backup").importPreviewSchema.parse(preview)
+      ).toThrow();
     });
 
     it("should reject negative duration values", () => {
@@ -1047,7 +1056,9 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() => require("./backup").importPreviewSchema.parse(preview)).not.toThrow();
+      expect(() =>
+        require("./backup").importPreviewSchema.parse(preview)
+      ).not.toThrow();
     });
 
     it("should reject negative statistics", () => {
@@ -1077,7 +1088,9 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() => require("./backup").importPreviewSchema.parse(preview)).not.toThrow();
+      expect(() =>
+        require("./backup").importPreviewSchema.parse(preview)
+      ).not.toThrow();
     });
   });
 });
@@ -1576,7 +1589,13 @@ describe("backupSchema", () => {
 
     it("should validate all backup statuses", () => {
       const { backupSchema } = require("./backup");
-      const statuses = ["PENDING", "IN_PROGRESS", "COMPLETED", "FAILED", "DELETED"];
+      const statuses = [
+        "PENDING",
+        "IN_PROGRESS",
+        "COMPLETED",
+        "FAILED",
+        "DELETED",
+      ];
       statuses.forEach((status) => {
         const backup = {
           id: "backup-1",
@@ -2172,7 +2191,13 @@ describe("Additional edge cases and boundary tests", () => {
 
   describe("conflictSchema combinations", () => {
     it("should validate all valid type and action combinations", () => {
-      const types = ["person", "user", "relationship", "suggestion", "settings"];
+      const types = [
+        "person",
+        "user",
+        "relationship",
+        "suggestion",
+        "settings",
+      ];
       const actions = ["create", "update"];
 
       types.forEach((type) => {
