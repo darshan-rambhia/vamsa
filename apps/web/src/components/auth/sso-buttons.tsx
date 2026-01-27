@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@vamsa/ui";
-import { getAvailableProviders } from "~/server/auth";
+import { getAvailableProviders } from "~/server/auth.functions";
 import { signIn } from "~/lib/auth-client";
 
 // Google icon

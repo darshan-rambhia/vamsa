@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { validateSession } from "~/server/auth";
+import { validateSession } from "~/server/auth.functions";
 import {
   getCalendarTokens,
   rotateCalendarToken,

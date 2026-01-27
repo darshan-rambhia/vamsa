@@ -5,10 +5,7 @@
  * - Schema validation using actual @vamsa/schemas
  * - i18n error messages using real i18n system
  *
- * Note: The actual server functions are tested via:
- * - E2E tests (apps/web/e2e/auth.e2e.ts)
- * - Business logic tests (packages/lib/src/server/business/auth.test.ts)
- * - API route tests (apps/web/server/api/auth.test.ts)
+ * Note: Handler tests are in auth.handlers.test.ts to avoid mock conflicts.
  */
 
 import { describe, it, expect, beforeAll } from "bun:test";

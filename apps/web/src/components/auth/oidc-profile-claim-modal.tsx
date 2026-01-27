@@ -17,7 +17,7 @@ import {
   getOIDCClaimableProfiles,
   claimProfileOIDC,
   skipProfileClaim,
-} from "~/server/claim";
+} from "~/server/claim.functions";
 
 interface OIDCProfileClaimModalProps {
   open: boolean;

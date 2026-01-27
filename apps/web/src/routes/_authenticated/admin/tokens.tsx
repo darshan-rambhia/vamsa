@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@vamsa/ui";
-import { getCurrentUser } from "~/server/auth";
+import { getCurrentUser } from "~/server/auth.functions";
 import {
   getAllCalendarTokens,
   rotateCalendarToken,

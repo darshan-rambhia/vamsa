@@ -25,6 +25,7 @@
 import { spawn } from "bun";
 import { existsSync, unlinkSync, writeFileSync } from "fs";
 import { resolve } from "path";
+import { logger } from "@vamsa/lib/logger";
 
 const ROOT_DIR = resolve(import.meta.dirname, "../../..");
 const API_DIR = resolve(ROOT_DIR, "packages/api");
@@ -70,14 +71,14 @@ async function run(
 }
 
 async function cleanup() {
-  console.log("🧹 Cleaning up...");
+  logger.info("🧹 Cleaning up...");
   await run(["docker-compose", "-f", composeFile, "down", "-v"], {
     quiet: true,
   });
   if (existsSync(composeFile)) {
     unlinkSync(composeFile);
   }
-  console.log("✅ Cleanup complete\n");
+  logger.info("✅ Cleanup complete\n");
 }
 
 async function main() {
@@ -94,10 +95,10 @@ async function main() {
     (arg) => arg !== "--logs" && arg !== "--bun-runtime"
   );
 
-  console.log("🚀 Starting E2E test runner...\n");
+  logger.info("🚀 Starting E2E test runner...\n");
   if (useBunRuntime) {
-    console.log("⚡ Running Playwright with Bun runtime (experimental)");
-    console.log(
+    logger.info("⚡ Running Playwright with Bun runtime (experimental)");
+    logger.warn(
       "⚠️  Warning: This may not work due to Playwright's ESM loader conflict with Bun\n"
     );
   }
@@ -107,10 +108,10 @@ async function main() {
 
   try {
     // Step 1: Start PostgreSQL
-    console.log("📦 Step 1/4: Starting PostgreSQL...");
+    logger.info("📦 Step 1/4: Starting PostgreSQL...");
 
     // First, ensure any old containers are removed
-    console.log("   - Cleaning up old containers...");
+    logger.info("   - Cleaning up old containers...");
     await run(["docker-compose", "-f", composeFile, "down", "-v"], {
       quiet: true,
     });
@@ -126,13 +127,13 @@ async function main() {
     if (dockerResult !== 0) {
       throw new Error(`Docker compose failed with exit code ${dockerResult}`);
     }
-    console.log("✅ PostgreSQL is ready\n");
+    logger.info("✅ PostgreSQL is ready\n");
 
     // Step 2: Run Drizzle migrations and seed
-    console.log("🔄 Step 2/4: Running Drizzle migrations and seeding...");
+    logger.info("🔄 Step 2/4: Running Drizzle migrations and seeding...");
 
     // Push schema to database using Drizzle
-    console.log("   - Applying database schema with Drizzle...");
+    logger.info("   - Applying database schema with Drizzle...");
     const pushResult = await run(["bunx", "drizzle-kit", "push", "--force"], {
       cwd: API_DIR,
       env: { DATABASE_URL: E2E_DATABASE_URL },
@@ -140,10 +141,10 @@ async function main() {
     if (pushResult !== 0) {
       throw new Error(`Drizzle push failed with exit code ${pushResult}`);
     }
-    console.log("✅ Database schema applied");
+    logger.info("✅ Database schema applied");
 
     // Run seed to create test users
-    console.log("   - Seeding test data...");
+    logger.info("   - Seeding test data...");
     const seedResult = await run(["bun", "run", "src/drizzle/seed.ts"], {
       cwd: API_DIR,
       env: { DATABASE_URL: E2E_DATABASE_URL },
@@ -151,10 +152,10 @@ async function main() {
     if (seedResult !== 0) {
       throw new Error(`Database seed failed with exit code ${seedResult}`);
     }
-    console.log("✅ Test data seeded\n");
+    logger.info("✅ Test data seeded\n");
 
     // Step 3: Run Playwright tests
-    console.log("🧪 Step 3/4: Running Playwright tests...\n");
+    logger.info("🧪 Step 3/4: Running Playwright tests...\n");
 
     // Build the playwright command
     // Using `bun --bun x` runs the command with Bun as the JavaScript runtime
@@ -175,18 +176,18 @@ async function main() {
     });
 
     // Step 4: Cleanup
-    console.log("\n🧹 Step 4/4: Cleaning up...");
+    logger.info("\n🧹 Step 4/4: Cleaning up...");
     await cleanup();
 
     // Exit with test result code
     if (testResult !== 0) {
-      console.log("❌ E2E tests failed");
+      logger.error("❌ E2E tests failed");
       process.exit(testResult);
     }
 
-    console.log("✅ E2E tests passed!");
+    logger.info("✅ E2E tests passed!");
   } catch (error) {
-    console.error("\n❌ Error:", error);
+    logger.error({ error }, "\n❌ Error running E2E tests");
 
     // Cleanup on error
     try {

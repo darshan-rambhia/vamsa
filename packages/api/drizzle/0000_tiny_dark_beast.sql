@@ -1,6 +1,3 @@
--- Current sql file was generated after introspecting the database
--- If you want to run this migration please uncomment this code before executing migrations
-/*
 CREATE TYPE "public"."AuditAction" AS ENUM('CREATE', 'UPDATE', 'DELETE', 'LOGIN', 'LOGOUT', 'APPROVE', 'REJECT');--> statement-breakpoint
 CREATE TYPE "public"."BackupStatus" AS ENUM('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'DELETED');--> statement-breakpoint
 CREATE TYPE "public"."BackupType" AS ENUM('DAILY', 'WEEKLY', 'MONTHLY', 'MANUAL');--> statement-breakpoint
@@ -415,7 +412,7 @@ CREATE INDEX "idx_calendarToken_expiresAt" ON "CalendarToken" USING btree ("expi
 CREATE INDEX "idx_calendarToken_isActive" ON "CalendarToken" USING btree ("isActive" bool_ops);--> statement-breakpoint
 CREATE INDEX "idx_calendarToken_token" ON "CalendarToken" USING btree ("token" text_ops);--> statement-breakpoint
 CREATE INDEX "idx_calendarToken_userId" ON "CalendarToken" USING btree ("userId" text_ops);--> statement-breakpoint
-CREATE INDEX "idx_calendarToken_userId_isActive" ON "CalendarToken" USING btree ("userId" text_ops,"isActive" text_ops);--> statement-breakpoint
+CREATE INDEX "idx_calendarToken_userId_isActive" ON "CalendarToken" USING btree ("userId" text_ops,"isActive" bool_ops);--> statement-breakpoint
 CREATE INDEX "idx_oAuthState_expiresAt" ON "OAuthState" USING btree ("expiresAt" timestamp_ops);--> statement-breakpoint
 CREATE INDEX "idx_oAuthState_state" ON "OAuthState" USING btree ("state" text_ops);--> statement-breakpoint
 CREATE INDEX "idx_eventMedia_eventType" ON "EventMedia" USING btree ("eventType" text_ops);--> statement-breakpoint
@@ -464,4 +461,3 @@ CREATE INDEX "idx_source_title" ON "Source" USING btree ("title" text_ops);--> s
 CREATE INDEX "idx_suggestion_status" ON "Suggestion" USING btree ("status" enum_ops);--> statement-breakpoint
 CREATE INDEX "idx_suggestion_submittedById" ON "Suggestion" USING btree ("submittedById" text_ops);--> statement-breakpoint
 CREATE INDEX "idx_suggestion_targetPersonId" ON "Suggestion" USING btree ("targetPersonId" text_ops);
-*/

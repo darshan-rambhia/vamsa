@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { getUnclaimedProfiles, claimProfile } from "~/server/auth";
+import { getUnclaimedProfiles, claimProfile } from "~/server/auth.functions";
 import {
   Button,
   Card,

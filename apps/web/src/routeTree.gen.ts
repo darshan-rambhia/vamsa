@@ -8,588 +8,588 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ClaimProfileRouteImport } from './routes/claim-profile'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
-import { Route as IndexRouteImport } from './routes/index'
-import { Route as InviteTokenRouteImport } from './routes/invite.$token'
-import { Route as AuthenticatedVisualizeRouteImport } from './routes/_authenticated/visualize'
-import { Route as AuthenticatedSubscribeRouteImport } from './routes/_authenticated/subscribe'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
-import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
-import { Route as AuthenticatedMapsIndexRouteImport } from './routes/_authenticated/maps/index'
-import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
-import { Route as AuthenticatedSettingsCalendarTokensRouteImport } from './routes/_authenticated/settings/calendar-tokens'
-import { Route as AuthenticatedPeopleNewRouteImport } from './routes/_authenticated/people/new'
-import { Route as AuthenticatedPeoplePersonIdRouteImport } from './routes/_authenticated/people/$personId'
-import { Route as AuthenticatedDevErrorsRouteImport } from './routes/_authenticated/dev/errors'
-import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
-import { Route as AuthenticatedAdminTokensRouteImport } from './routes/_authenticated/admin/tokens'
-import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin/suggestions'
-import { Route as AuthenticatedAdminSourcesRouteImport } from './routes/_authenticated/admin/sources'
-import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
-import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authenticated/admin/metrics'
-import { Route as AuthenticatedAdminInvitesRouteImport } from './routes/_authenticated/admin/invites'
-import { Route as AuthenticatedAdminBackupRouteImport } from './routes/_authenticated/admin/backup'
-import { Route as AuthenticatedPeoplePersonIdEditRouteImport } from './routes/_authenticated/people/$personId_.edit'
+import { Route as rootRouteImport } from "./routes/__root";
+import { Route as RegisterRouteImport } from "./routes/register";
+import { Route as LoginRouteImport } from "./routes/login";
+import { Route as ClaimProfileRouteImport } from "./routes/claim-profile";
+import { Route as AuthenticatedRouteImport } from "./routes/_authenticated";
+import { Route as IndexRouteImport } from "./routes/index";
+import { Route as InviteTokenRouteImport } from "./routes/invite.$token";
+import { Route as AuthenticatedVisualizeRouteImport } from "./routes/_authenticated/visualize";
+import { Route as AuthenticatedSubscribeRouteImport } from "./routes/_authenticated/subscribe";
+import { Route as AuthenticatedDashboardRouteImport } from "./routes/_authenticated/dashboard";
+import { Route as AuthenticatedChangePasswordRouteImport } from "./routes/_authenticated/change-password";
+import { Route as AuthenticatedAdminRouteImport } from "./routes/_authenticated/admin";
+import { Route as AuthenticatedActivityRouteImport } from "./routes/_authenticated/activity";
+import { Route as AuthenticatedPeopleIndexRouteImport } from "./routes/_authenticated/people/index";
+import { Route as AuthenticatedMapsIndexRouteImport } from "./routes/_authenticated/maps/index";
+import { Route as AuthenticatedSettingsProfileRouteImport } from "./routes/_authenticated/settings/profile";
+import { Route as AuthenticatedSettingsCalendarTokensRouteImport } from "./routes/_authenticated/settings/calendar-tokens";
+import { Route as AuthenticatedPeopleNewRouteImport } from "./routes/_authenticated/people/new";
+import { Route as AuthenticatedPeoplePersonIdRouteImport } from "./routes/_authenticated/people/$personId";
+import { Route as AuthenticatedDevErrorsRouteImport } from "./routes/_authenticated/dev/errors";
+import { Route as AuthenticatedAdminUsersRouteImport } from "./routes/_authenticated/admin/users";
+import { Route as AuthenticatedAdminTokensRouteImport } from "./routes/_authenticated/admin/tokens";
+import { Route as AuthenticatedAdminSuggestionsRouteImport } from "./routes/_authenticated/admin/suggestions";
+import { Route as AuthenticatedAdminSourcesRouteImport } from "./routes/_authenticated/admin/sources";
+import { Route as AuthenticatedAdminSettingsRouteImport } from "./routes/_authenticated/admin/settings";
+import { Route as AuthenticatedAdminMetricsRouteImport } from "./routes/_authenticated/admin/metrics";
+import { Route as AuthenticatedAdminInvitesRouteImport } from "./routes/_authenticated/admin/invites";
+import { Route as AuthenticatedAdminBackupRouteImport } from "./routes/_authenticated/admin/backup";
+import { Route as AuthenticatedPeoplePersonIdEditRouteImport } from "./routes/_authenticated/people/$personId_.edit";
 
 const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
+  id: "/register",
+  path: "/register",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+  id: "/login",
+  path: "/login",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const ClaimProfileRoute = ClaimProfileRouteImport.update({
-  id: '/claim-profile',
-  path: '/claim-profile',
+  id: "/claim-profile",
+  path: "/claim-profile",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+  id: "/_authenticated",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+  id: "/",
+  path: "/",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const InviteTokenRoute = InviteTokenRouteImport.update({
-  id: '/invite/$token',
-  path: '/invite/$token',
+  id: "/invite/$token",
+  path: "/invite/$token",
   getParentRoute: () => rootRouteImport,
-} as any)
+} as any);
 const AuthenticatedVisualizeRoute = AuthenticatedVisualizeRouteImport.update({
-  id: '/visualize',
-  path: '/visualize',
+  id: "/visualize",
+  path: "/visualize",
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedSubscribeRoute = AuthenticatedSubscribeRouteImport.update({
-  id: '/subscribe',
-  path: '/subscribe',
+  id: "/subscribe",
+  path: "/subscribe",
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+  id: "/dashboard",
+  path: "/dashboard",
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedChangePasswordRoute =
   AuthenticatedChangePasswordRouteImport.update({
-    id: '/change-password',
-    path: '/change-password',
+    id: "/change-password",
+    path: "/change-password",
     getParentRoute: () => AuthenticatedRoute,
-  } as any)
+  } as any);
 const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+  id: "/admin",
+  path: "/admin",
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
+  id: "/activity",
+  path: "/activity",
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedPeopleIndexRoute =
   AuthenticatedPeopleIndexRouteImport.update({
-    id: '/people/',
-    path: '/people/',
+    id: "/people/",
+    path: "/people/",
     getParentRoute: () => AuthenticatedRoute,
-  } as any)
+  } as any);
 const AuthenticatedMapsIndexRoute = AuthenticatedMapsIndexRouteImport.update({
-  id: '/maps/',
-  path: '/maps/',
+  id: "/maps/",
+  path: "/maps/",
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedSettingsProfileRoute =
   AuthenticatedSettingsProfileRouteImport.update({
-    id: '/settings/profile',
-    path: '/settings/profile',
+    id: "/settings/profile",
+    path: "/settings/profile",
     getParentRoute: () => AuthenticatedRoute,
-  } as any)
+  } as any);
 const AuthenticatedSettingsCalendarTokensRoute =
   AuthenticatedSettingsCalendarTokensRouteImport.update({
-    id: '/settings/calendar-tokens',
-    path: '/settings/calendar-tokens',
+    id: "/settings/calendar-tokens",
+    path: "/settings/calendar-tokens",
     getParentRoute: () => AuthenticatedRoute,
-  } as any)
+  } as any);
 const AuthenticatedPeopleNewRoute = AuthenticatedPeopleNewRouteImport.update({
-  id: '/people/new',
-  path: '/people/new',
+  id: "/people/new",
+  path: "/people/new",
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedPeoplePersonIdRoute =
   AuthenticatedPeoplePersonIdRouteImport.update({
-    id: '/people/$personId',
-    path: '/people/$personId',
+    id: "/people/$personId",
+    path: "/people/$personId",
     getParentRoute: () => AuthenticatedRoute,
-  } as any)
+  } as any);
 const AuthenticatedDevErrorsRoute = AuthenticatedDevErrorsRouteImport.update({
-  id: '/dev/errors',
-  path: '/dev/errors',
+  id: "/dev/errors",
+  path: "/dev/errors",
   getParentRoute: () => AuthenticatedRoute,
-} as any)
+} as any);
 const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
+  id: "/users",
+  path: "/users",
   getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
+} as any);
 const AuthenticatedAdminTokensRoute =
   AuthenticatedAdminTokensRouteImport.update({
-    id: '/tokens',
-    path: '/tokens',
+    id: "/tokens",
+    path: "/tokens",
     getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
+  } as any);
 const AuthenticatedAdminSuggestionsRoute =
   AuthenticatedAdminSuggestionsRouteImport.update({
-    id: '/suggestions',
-    path: '/suggestions',
+    id: "/suggestions",
+    path: "/suggestions",
     getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
+  } as any);
 const AuthenticatedAdminSourcesRoute =
   AuthenticatedAdminSourcesRouteImport.update({
-    id: '/sources',
-    path: '/sources',
+    id: "/sources",
+    path: "/sources",
     getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
+  } as any);
 const AuthenticatedAdminSettingsRoute =
   AuthenticatedAdminSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
+    id: "/settings",
+    path: "/settings",
     getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
+  } as any);
 const AuthenticatedAdminMetricsRoute =
   AuthenticatedAdminMetricsRouteImport.update({
-    id: '/metrics',
-    path: '/metrics',
+    id: "/metrics",
+    path: "/metrics",
     getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
+  } as any);
 const AuthenticatedAdminInvitesRoute =
   AuthenticatedAdminInvitesRouteImport.update({
-    id: '/invites',
-    path: '/invites',
+    id: "/invites",
+    path: "/invites",
     getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
+  } as any);
 const AuthenticatedAdminBackupRoute =
   AuthenticatedAdminBackupRouteImport.update({
-    id: '/backup',
-    path: '/backup',
+    id: "/backup",
+    path: "/backup",
     getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
+  } as any);
 const AuthenticatedPeoplePersonIdEditRoute =
   AuthenticatedPeoplePersonIdEditRouteImport.update({
-    id: '/people/$personId_/edit',
-    path: '/people/$personId/edit',
+    id: "/people/$personId_/edit",
+    path: "/people/$personId/edit",
     getParentRoute: () => AuthenticatedRoute,
-  } as any)
+  } as any);
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
-  '/claim-profile': typeof ClaimProfileRoute
-  '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
-  '/activity': typeof AuthenticatedActivityRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/change-password': typeof AuthenticatedChangePasswordRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/subscribe': typeof AuthenticatedSubscribeRoute
-  '/visualize': typeof AuthenticatedVisualizeRoute
-  '/invite/$token': typeof InviteTokenRoute
-  '/admin/backup': typeof AuthenticatedAdminBackupRoute
-  '/admin/invites': typeof AuthenticatedAdminInvitesRoute
-  '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
-  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/admin/sources': typeof AuthenticatedAdminSourcesRoute
-  '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
-  '/admin/tokens': typeof AuthenticatedAdminTokensRoute
-  '/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/dev/errors': typeof AuthenticatedDevErrorsRoute
-  '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
-  '/people/new': typeof AuthenticatedPeopleNewRoute
-  '/settings/calendar-tokens': typeof AuthenticatedSettingsCalendarTokensRoute
-  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
-  '/maps/': typeof AuthenticatedMapsIndexRoute
-  '/people/': typeof AuthenticatedPeopleIndexRoute
-  '/people/$personId/edit': typeof AuthenticatedPeoplePersonIdEditRoute
+  "/": typeof IndexRoute;
+  "/claim-profile": typeof ClaimProfileRoute;
+  "/login": typeof LoginRoute;
+  "/register": typeof RegisterRoute;
+  "/activity": typeof AuthenticatedActivityRoute;
+  "/admin": typeof AuthenticatedAdminRouteWithChildren;
+  "/change-password": typeof AuthenticatedChangePasswordRoute;
+  "/dashboard": typeof AuthenticatedDashboardRoute;
+  "/subscribe": typeof AuthenticatedSubscribeRoute;
+  "/visualize": typeof AuthenticatedVisualizeRoute;
+  "/invite/$token": typeof InviteTokenRoute;
+  "/admin/backup": typeof AuthenticatedAdminBackupRoute;
+  "/admin/invites": typeof AuthenticatedAdminInvitesRoute;
+  "/admin/metrics": typeof AuthenticatedAdminMetricsRoute;
+  "/admin/settings": typeof AuthenticatedAdminSettingsRoute;
+  "/admin/sources": typeof AuthenticatedAdminSourcesRoute;
+  "/admin/suggestions": typeof AuthenticatedAdminSuggestionsRoute;
+  "/admin/tokens": typeof AuthenticatedAdminTokensRoute;
+  "/admin/users": typeof AuthenticatedAdminUsersRoute;
+  "/dev/errors": typeof AuthenticatedDevErrorsRoute;
+  "/people/$personId": typeof AuthenticatedPeoplePersonIdRoute;
+  "/people/new": typeof AuthenticatedPeopleNewRoute;
+  "/settings/calendar-tokens": typeof AuthenticatedSettingsCalendarTokensRoute;
+  "/settings/profile": typeof AuthenticatedSettingsProfileRoute;
+  "/maps/": typeof AuthenticatedMapsIndexRoute;
+  "/people/": typeof AuthenticatedPeopleIndexRoute;
+  "/people/$personId/edit": typeof AuthenticatedPeoplePersonIdEditRoute;
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
-  '/claim-profile': typeof ClaimProfileRoute
-  '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
-  '/activity': typeof AuthenticatedActivityRoute
-  '/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/change-password': typeof AuthenticatedChangePasswordRoute
-  '/dashboard': typeof AuthenticatedDashboardRoute
-  '/subscribe': typeof AuthenticatedSubscribeRoute
-  '/visualize': typeof AuthenticatedVisualizeRoute
-  '/invite/$token': typeof InviteTokenRoute
-  '/admin/backup': typeof AuthenticatedAdminBackupRoute
-  '/admin/invites': typeof AuthenticatedAdminInvitesRoute
-  '/admin/metrics': typeof AuthenticatedAdminMetricsRoute
-  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/admin/sources': typeof AuthenticatedAdminSourcesRoute
-  '/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
-  '/admin/tokens': typeof AuthenticatedAdminTokensRoute
-  '/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/dev/errors': typeof AuthenticatedDevErrorsRoute
-  '/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
-  '/people/new': typeof AuthenticatedPeopleNewRoute
-  '/settings/calendar-tokens': typeof AuthenticatedSettingsCalendarTokensRoute
-  '/settings/profile': typeof AuthenticatedSettingsProfileRoute
-  '/maps': typeof AuthenticatedMapsIndexRoute
-  '/people': typeof AuthenticatedPeopleIndexRoute
-  '/people/$personId/edit': typeof AuthenticatedPeoplePersonIdEditRoute
+  "/": typeof IndexRoute;
+  "/claim-profile": typeof ClaimProfileRoute;
+  "/login": typeof LoginRoute;
+  "/register": typeof RegisterRoute;
+  "/activity": typeof AuthenticatedActivityRoute;
+  "/admin": typeof AuthenticatedAdminRouteWithChildren;
+  "/change-password": typeof AuthenticatedChangePasswordRoute;
+  "/dashboard": typeof AuthenticatedDashboardRoute;
+  "/subscribe": typeof AuthenticatedSubscribeRoute;
+  "/visualize": typeof AuthenticatedVisualizeRoute;
+  "/invite/$token": typeof InviteTokenRoute;
+  "/admin/backup": typeof AuthenticatedAdminBackupRoute;
+  "/admin/invites": typeof AuthenticatedAdminInvitesRoute;
+  "/admin/metrics": typeof AuthenticatedAdminMetricsRoute;
+  "/admin/settings": typeof AuthenticatedAdminSettingsRoute;
+  "/admin/sources": typeof AuthenticatedAdminSourcesRoute;
+  "/admin/suggestions": typeof AuthenticatedAdminSuggestionsRoute;
+  "/admin/tokens": typeof AuthenticatedAdminTokensRoute;
+  "/admin/users": typeof AuthenticatedAdminUsersRoute;
+  "/dev/errors": typeof AuthenticatedDevErrorsRoute;
+  "/people/$personId": typeof AuthenticatedPeoplePersonIdRoute;
+  "/people/new": typeof AuthenticatedPeopleNewRoute;
+  "/settings/calendar-tokens": typeof AuthenticatedSettingsCalendarTokensRoute;
+  "/settings/profile": typeof AuthenticatedSettingsProfileRoute;
+  "/maps": typeof AuthenticatedMapsIndexRoute;
+  "/people": typeof AuthenticatedPeopleIndexRoute;
+  "/people/$personId/edit": typeof AuthenticatedPeoplePersonIdEditRoute;
 }
 export interface FileRoutesById {
-  __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
-  '/_authenticated': typeof AuthenticatedRouteWithChildren
-  '/claim-profile': typeof ClaimProfileRoute
-  '/login': typeof LoginRoute
-  '/register': typeof RegisterRoute
-  '/_authenticated/activity': typeof AuthenticatedActivityRoute
-  '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
-  '/_authenticated/change-password': typeof AuthenticatedChangePasswordRoute
-  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
-  '/_authenticated/subscribe': typeof AuthenticatedSubscribeRoute
-  '/_authenticated/visualize': typeof AuthenticatedVisualizeRoute
-  '/invite/$token': typeof InviteTokenRoute
-  '/_authenticated/admin/backup': typeof AuthenticatedAdminBackupRoute
-  '/_authenticated/admin/invites': typeof AuthenticatedAdminInvitesRoute
-  '/_authenticated/admin/metrics': typeof AuthenticatedAdminMetricsRoute
-  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
-  '/_authenticated/admin/sources': typeof AuthenticatedAdminSourcesRoute
-  '/_authenticated/admin/suggestions': typeof AuthenticatedAdminSuggestionsRoute
-  '/_authenticated/admin/tokens': typeof AuthenticatedAdminTokensRoute
-  '/_authenticated/admin/users': typeof AuthenticatedAdminUsersRoute
-  '/_authenticated/dev/errors': typeof AuthenticatedDevErrorsRoute
-  '/_authenticated/people/$personId': typeof AuthenticatedPeoplePersonIdRoute
-  '/_authenticated/people/new': typeof AuthenticatedPeopleNewRoute
-  '/_authenticated/settings/calendar-tokens': typeof AuthenticatedSettingsCalendarTokensRoute
-  '/_authenticated/settings/profile': typeof AuthenticatedSettingsProfileRoute
-  '/_authenticated/maps/': typeof AuthenticatedMapsIndexRoute
-  '/_authenticated/people/': typeof AuthenticatedPeopleIndexRoute
-  '/_authenticated/people/$personId_/edit': typeof AuthenticatedPeoplePersonIdEditRoute
+  __root__: typeof rootRouteImport;
+  "/": typeof IndexRoute;
+  "/_authenticated": typeof AuthenticatedRouteWithChildren;
+  "/claim-profile": typeof ClaimProfileRoute;
+  "/login": typeof LoginRoute;
+  "/register": typeof RegisterRoute;
+  "/_authenticated/activity": typeof AuthenticatedActivityRoute;
+  "/_authenticated/admin": typeof AuthenticatedAdminRouteWithChildren;
+  "/_authenticated/change-password": typeof AuthenticatedChangePasswordRoute;
+  "/_authenticated/dashboard": typeof AuthenticatedDashboardRoute;
+  "/_authenticated/subscribe": typeof AuthenticatedSubscribeRoute;
+  "/_authenticated/visualize": typeof AuthenticatedVisualizeRoute;
+  "/invite/$token": typeof InviteTokenRoute;
+  "/_authenticated/admin/backup": typeof AuthenticatedAdminBackupRoute;
+  "/_authenticated/admin/invites": typeof AuthenticatedAdminInvitesRoute;
+  "/_authenticated/admin/metrics": typeof AuthenticatedAdminMetricsRoute;
+  "/_authenticated/admin/settings": typeof AuthenticatedAdminSettingsRoute;
+  "/_authenticated/admin/sources": typeof AuthenticatedAdminSourcesRoute;
+  "/_authenticated/admin/suggestions": typeof AuthenticatedAdminSuggestionsRoute;
+  "/_authenticated/admin/tokens": typeof AuthenticatedAdminTokensRoute;
+  "/_authenticated/admin/users": typeof AuthenticatedAdminUsersRoute;
+  "/_authenticated/dev/errors": typeof AuthenticatedDevErrorsRoute;
+  "/_authenticated/people/$personId": typeof AuthenticatedPeoplePersonIdRoute;
+  "/_authenticated/people/new": typeof AuthenticatedPeopleNewRoute;
+  "/_authenticated/settings/calendar-tokens": typeof AuthenticatedSettingsCalendarTokensRoute;
+  "/_authenticated/settings/profile": typeof AuthenticatedSettingsProfileRoute;
+  "/_authenticated/maps/": typeof AuthenticatedMapsIndexRoute;
+  "/_authenticated/people/": typeof AuthenticatedPeopleIndexRoute;
+  "/_authenticated/people/$personId_/edit": typeof AuthenticatedPeoplePersonIdEditRoute;
 }
 export interface FileRouteTypes {
-  fileRoutesByFullPath: FileRoutesByFullPath
+  fileRoutesByFullPath: FileRoutesByFullPath;
   fullPaths:
-    | '/'
-    | '/claim-profile'
-    | '/login'
-    | '/register'
-    | '/activity'
-    | '/admin'
-    | '/change-password'
-    | '/dashboard'
-    | '/subscribe'
-    | '/visualize'
-    | '/invite/$token'
-    | '/admin/backup'
-    | '/admin/invites'
-    | '/admin/metrics'
-    | '/admin/settings'
-    | '/admin/sources'
-    | '/admin/suggestions'
-    | '/admin/tokens'
-    | '/admin/users'
-    | '/dev/errors'
-    | '/people/$personId'
-    | '/people/new'
-    | '/settings/calendar-tokens'
-    | '/settings/profile'
-    | '/maps/'
-    | '/people/'
-    | '/people/$personId/edit'
-  fileRoutesByTo: FileRoutesByTo
+    | "/"
+    | "/claim-profile"
+    | "/login"
+    | "/register"
+    | "/activity"
+    | "/admin"
+    | "/change-password"
+    | "/dashboard"
+    | "/subscribe"
+    | "/visualize"
+    | "/invite/$token"
+    | "/admin/backup"
+    | "/admin/invites"
+    | "/admin/metrics"
+    | "/admin/settings"
+    | "/admin/sources"
+    | "/admin/suggestions"
+    | "/admin/tokens"
+    | "/admin/users"
+    | "/dev/errors"
+    | "/people/$personId"
+    | "/people/new"
+    | "/settings/calendar-tokens"
+    | "/settings/profile"
+    | "/maps/"
+    | "/people/"
+    | "/people/$personId/edit";
+  fileRoutesByTo: FileRoutesByTo;
   to:
-    | '/'
-    | '/claim-profile'
-    | '/login'
-    | '/register'
-    | '/activity'
-    | '/admin'
-    | '/change-password'
-    | '/dashboard'
-    | '/subscribe'
-    | '/visualize'
-    | '/invite/$token'
-    | '/admin/backup'
-    | '/admin/invites'
-    | '/admin/metrics'
-    | '/admin/settings'
-    | '/admin/sources'
-    | '/admin/suggestions'
-    | '/admin/tokens'
-    | '/admin/users'
-    | '/dev/errors'
-    | '/people/$personId'
-    | '/people/new'
-    | '/settings/calendar-tokens'
-    | '/settings/profile'
-    | '/maps'
-    | '/people'
-    | '/people/$personId/edit'
+    | "/"
+    | "/claim-profile"
+    | "/login"
+    | "/register"
+    | "/activity"
+    | "/admin"
+    | "/change-password"
+    | "/dashboard"
+    | "/subscribe"
+    | "/visualize"
+    | "/invite/$token"
+    | "/admin/backup"
+    | "/admin/invites"
+    | "/admin/metrics"
+    | "/admin/settings"
+    | "/admin/sources"
+    | "/admin/suggestions"
+    | "/admin/tokens"
+    | "/admin/users"
+    | "/dev/errors"
+    | "/people/$personId"
+    | "/people/new"
+    | "/settings/calendar-tokens"
+    | "/settings/profile"
+    | "/maps"
+    | "/people"
+    | "/people/$personId/edit";
   id:
-    | '__root__'
-    | '/'
-    | '/_authenticated'
-    | '/claim-profile'
-    | '/login'
-    | '/register'
-    | '/_authenticated/activity'
-    | '/_authenticated/admin'
-    | '/_authenticated/change-password'
-    | '/_authenticated/dashboard'
-    | '/_authenticated/subscribe'
-    | '/_authenticated/visualize'
-    | '/invite/$token'
-    | '/_authenticated/admin/backup'
-    | '/_authenticated/admin/invites'
-    | '/_authenticated/admin/metrics'
-    | '/_authenticated/admin/settings'
-    | '/_authenticated/admin/sources'
-    | '/_authenticated/admin/suggestions'
-    | '/_authenticated/admin/tokens'
-    | '/_authenticated/admin/users'
-    | '/_authenticated/dev/errors'
-    | '/_authenticated/people/$personId'
-    | '/_authenticated/people/new'
-    | '/_authenticated/settings/calendar-tokens'
-    | '/_authenticated/settings/profile'
-    | '/_authenticated/maps/'
-    | '/_authenticated/people/'
-    | '/_authenticated/people/$personId_/edit'
-  fileRoutesById: FileRoutesById
+    | "__root__"
+    | "/"
+    | "/_authenticated"
+    | "/claim-profile"
+    | "/login"
+    | "/register"
+    | "/_authenticated/activity"
+    | "/_authenticated/admin"
+    | "/_authenticated/change-password"
+    | "/_authenticated/dashboard"
+    | "/_authenticated/subscribe"
+    | "/_authenticated/visualize"
+    | "/invite/$token"
+    | "/_authenticated/admin/backup"
+    | "/_authenticated/admin/invites"
+    | "/_authenticated/admin/metrics"
+    | "/_authenticated/admin/settings"
+    | "/_authenticated/admin/sources"
+    | "/_authenticated/admin/suggestions"
+    | "/_authenticated/admin/tokens"
+    | "/_authenticated/admin/users"
+    | "/_authenticated/dev/errors"
+    | "/_authenticated/people/$personId"
+    | "/_authenticated/people/new"
+    | "/_authenticated/settings/calendar-tokens"
+    | "/_authenticated/settings/profile"
+    | "/_authenticated/maps/"
+    | "/_authenticated/people/"
+    | "/_authenticated/people/$personId_/edit";
+  fileRoutesById: FileRoutesById;
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
-  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
-  ClaimProfileRoute: typeof ClaimProfileRoute
-  LoginRoute: typeof LoginRoute
-  RegisterRoute: typeof RegisterRoute
-  InviteTokenRoute: typeof InviteTokenRoute
+  IndexRoute: typeof IndexRoute;
+  AuthenticatedRoute: typeof AuthenticatedRouteWithChildren;
+  ClaimProfileRoute: typeof ClaimProfileRoute;
+  LoginRoute: typeof LoginRoute;
+  RegisterRoute: typeof RegisterRoute;
+  InviteTokenRoute: typeof InviteTokenRoute;
 }
 
-declare module '@tanstack/react-router' {
+declare module "@tanstack/react-router" {
   interface FileRoutesByPath {
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/claim-profile': {
-      id: '/claim-profile'
-      path: '/claim-profile'
-      fullPath: '/claim-profile'
-      preLoaderRoute: typeof ClaimProfileRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated': {
-      id: '/_authenticated'
-      path: ''
-      fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/invite/$token': {
-      id: '/invite/$token'
-      path: '/invite/$token'
-      fullPath: '/invite/$token'
-      preLoaderRoute: typeof InviteTokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/_authenticated/visualize': {
-      id: '/_authenticated/visualize'
-      path: '/visualize'
-      fullPath: '/visualize'
-      preLoaderRoute: typeof AuthenticatedVisualizeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/subscribe': {
-      id: '/_authenticated/subscribe'
-      path: '/subscribe'
-      fullPath: '/subscribe'
-      preLoaderRoute: typeof AuthenticatedSubscribeRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/change-password': {
-      id: '/_authenticated/change-password'
-      path: '/change-password'
-      fullPath: '/change-password'
-      preLoaderRoute: typeof AuthenticatedChangePasswordRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/admin': {
-      id: '/_authenticated/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AuthenticatedAdminRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/activity': {
-      id: '/_authenticated/activity'
-      path: '/activity'
-      fullPath: '/activity'
-      preLoaderRoute: typeof AuthenticatedActivityRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/people/': {
-      id: '/_authenticated/people/'
-      path: '/people'
-      fullPath: '/people/'
-      preLoaderRoute: typeof AuthenticatedPeopleIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/maps/': {
-      id: '/_authenticated/maps/'
-      path: '/maps'
-      fullPath: '/maps/'
-      preLoaderRoute: typeof AuthenticatedMapsIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/settings/profile': {
-      id: '/_authenticated/settings/profile'
-      path: '/settings/profile'
-      fullPath: '/settings/profile'
-      preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/settings/calendar-tokens': {
-      id: '/_authenticated/settings/calendar-tokens'
-      path: '/settings/calendar-tokens'
-      fullPath: '/settings/calendar-tokens'
-      preLoaderRoute: typeof AuthenticatedSettingsCalendarTokensRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/people/new': {
-      id: '/_authenticated/people/new'
-      path: '/people/new'
-      fullPath: '/people/new'
-      preLoaderRoute: typeof AuthenticatedPeopleNewRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/people/$personId': {
-      id: '/_authenticated/people/$personId'
-      path: '/people/$personId'
-      fullPath: '/people/$personId'
-      preLoaderRoute: typeof AuthenticatedPeoplePersonIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dev/errors': {
-      id: '/_authenticated/dev/errors'
-      path: '/dev/errors'
-      fullPath: '/dev/errors'
-      preLoaderRoute: typeof AuthenticatedDevErrorsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/admin/users': {
-      id: '/_authenticated/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/tokens': {
-      id: '/_authenticated/admin/tokens'
-      path: '/tokens'
-      fullPath: '/admin/tokens'
-      preLoaderRoute: typeof AuthenticatedAdminTokensRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/suggestions': {
-      id: '/_authenticated/admin/suggestions'
-      path: '/suggestions'
-      fullPath: '/admin/suggestions'
-      preLoaderRoute: typeof AuthenticatedAdminSuggestionsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/sources': {
-      id: '/_authenticated/admin/sources'
-      path: '/sources'
-      fullPath: '/admin/sources'
-      preLoaderRoute: typeof AuthenticatedAdminSourcesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/settings': {
-      id: '/_authenticated/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/metrics': {
-      id: '/_authenticated/admin/metrics'
-      path: '/metrics'
-      fullPath: '/admin/metrics'
-      preLoaderRoute: typeof AuthenticatedAdminMetricsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/invites': {
-      id: '/_authenticated/admin/invites'
-      path: '/invites'
-      fullPath: '/admin/invites'
-      preLoaderRoute: typeof AuthenticatedAdminInvitesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/backup': {
-      id: '/_authenticated/admin/backup'
-      path: '/backup'
-      fullPath: '/admin/backup'
-      preLoaderRoute: typeof AuthenticatedAdminBackupRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/people/$personId_/edit': {
-      id: '/_authenticated/people/$personId_/edit'
-      path: '/people/$personId/edit'
-      fullPath: '/people/$personId/edit'
-      preLoaderRoute: typeof AuthenticatedPeoplePersonIdEditRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
+    "/register": {
+      id: "/register";
+      path: "/register";
+      fullPath: "/register";
+      preLoaderRoute: typeof RegisterRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/login": {
+      id: "/login";
+      path: "/login";
+      fullPath: "/login";
+      preLoaderRoute: typeof LoginRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/claim-profile": {
+      id: "/claim-profile";
+      path: "/claim-profile";
+      fullPath: "/claim-profile";
+      preLoaderRoute: typeof ClaimProfileRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_authenticated": {
+      id: "/_authenticated";
+      path: "";
+      fullPath: "/";
+      preLoaderRoute: typeof AuthenticatedRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/": {
+      id: "/";
+      path: "/";
+      fullPath: "/";
+      preLoaderRoute: typeof IndexRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/invite/$token": {
+      id: "/invite/$token";
+      path: "/invite/$token";
+      fullPath: "/invite/$token";
+      preLoaderRoute: typeof InviteTokenRouteImport;
+      parentRoute: typeof rootRouteImport;
+    };
+    "/_authenticated/visualize": {
+      id: "/_authenticated/visualize";
+      path: "/visualize";
+      fullPath: "/visualize";
+      preLoaderRoute: typeof AuthenticatedVisualizeRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/subscribe": {
+      id: "/_authenticated/subscribe";
+      path: "/subscribe";
+      fullPath: "/subscribe";
+      preLoaderRoute: typeof AuthenticatedSubscribeRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/dashboard": {
+      id: "/_authenticated/dashboard";
+      path: "/dashboard";
+      fullPath: "/dashboard";
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/change-password": {
+      id: "/_authenticated/change-password";
+      path: "/change-password";
+      fullPath: "/change-password";
+      preLoaderRoute: typeof AuthenticatedChangePasswordRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/admin": {
+      id: "/_authenticated/admin";
+      path: "/admin";
+      fullPath: "/admin";
+      preLoaderRoute: typeof AuthenticatedAdminRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/activity": {
+      id: "/_authenticated/activity";
+      path: "/activity";
+      fullPath: "/activity";
+      preLoaderRoute: typeof AuthenticatedActivityRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/people/": {
+      id: "/_authenticated/people/";
+      path: "/people";
+      fullPath: "/people/";
+      preLoaderRoute: typeof AuthenticatedPeopleIndexRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/maps/": {
+      id: "/_authenticated/maps/";
+      path: "/maps";
+      fullPath: "/maps/";
+      preLoaderRoute: typeof AuthenticatedMapsIndexRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/settings/profile": {
+      id: "/_authenticated/settings/profile";
+      path: "/settings/profile";
+      fullPath: "/settings/profile";
+      preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/settings/calendar-tokens": {
+      id: "/_authenticated/settings/calendar-tokens";
+      path: "/settings/calendar-tokens";
+      fullPath: "/settings/calendar-tokens";
+      preLoaderRoute: typeof AuthenticatedSettingsCalendarTokensRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/people/new": {
+      id: "/_authenticated/people/new";
+      path: "/people/new";
+      fullPath: "/people/new";
+      preLoaderRoute: typeof AuthenticatedPeopleNewRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/people/$personId": {
+      id: "/_authenticated/people/$personId";
+      path: "/people/$personId";
+      fullPath: "/people/$personId";
+      preLoaderRoute: typeof AuthenticatedPeoplePersonIdRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/dev/errors": {
+      id: "/_authenticated/dev/errors";
+      path: "/dev/errors";
+      fullPath: "/dev/errors";
+      preLoaderRoute: typeof AuthenticatedDevErrorsRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
+    "/_authenticated/admin/users": {
+      id: "/_authenticated/admin/users";
+      path: "/users";
+      fullPath: "/admin/users";
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport;
+      parentRoute: typeof AuthenticatedAdminRoute;
+    };
+    "/_authenticated/admin/tokens": {
+      id: "/_authenticated/admin/tokens";
+      path: "/tokens";
+      fullPath: "/admin/tokens";
+      preLoaderRoute: typeof AuthenticatedAdminTokensRouteImport;
+      parentRoute: typeof AuthenticatedAdminRoute;
+    };
+    "/_authenticated/admin/suggestions": {
+      id: "/_authenticated/admin/suggestions";
+      path: "/suggestions";
+      fullPath: "/admin/suggestions";
+      preLoaderRoute: typeof AuthenticatedAdminSuggestionsRouteImport;
+      parentRoute: typeof AuthenticatedAdminRoute;
+    };
+    "/_authenticated/admin/sources": {
+      id: "/_authenticated/admin/sources";
+      path: "/sources";
+      fullPath: "/admin/sources";
+      preLoaderRoute: typeof AuthenticatedAdminSourcesRouteImport;
+      parentRoute: typeof AuthenticatedAdminRoute;
+    };
+    "/_authenticated/admin/settings": {
+      id: "/_authenticated/admin/settings";
+      path: "/settings";
+      fullPath: "/admin/settings";
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport;
+      parentRoute: typeof AuthenticatedAdminRoute;
+    };
+    "/_authenticated/admin/metrics": {
+      id: "/_authenticated/admin/metrics";
+      path: "/metrics";
+      fullPath: "/admin/metrics";
+      preLoaderRoute: typeof AuthenticatedAdminMetricsRouteImport;
+      parentRoute: typeof AuthenticatedAdminRoute;
+    };
+    "/_authenticated/admin/invites": {
+      id: "/_authenticated/admin/invites";
+      path: "/invites";
+      fullPath: "/admin/invites";
+      preLoaderRoute: typeof AuthenticatedAdminInvitesRouteImport;
+      parentRoute: typeof AuthenticatedAdminRoute;
+    };
+    "/_authenticated/admin/backup": {
+      id: "/_authenticated/admin/backup";
+      path: "/backup";
+      fullPath: "/admin/backup";
+      preLoaderRoute: typeof AuthenticatedAdminBackupRouteImport;
+      parentRoute: typeof AuthenticatedAdminRoute;
+    };
+    "/_authenticated/people/$personId_/edit": {
+      id: "/_authenticated/people/$personId_/edit";
+      path: "/people/$personId/edit";
+      fullPath: "/people/$personId/edit";
+      preLoaderRoute: typeof AuthenticatedPeoplePersonIdEditRouteImport;
+      parentRoute: typeof AuthenticatedRoute;
+    };
   }
 }
 
 interface AuthenticatedAdminRouteChildren {
-  AuthenticatedAdminBackupRoute: typeof AuthenticatedAdminBackupRoute
-  AuthenticatedAdminInvitesRoute: typeof AuthenticatedAdminInvitesRoute
-  AuthenticatedAdminMetricsRoute: typeof AuthenticatedAdminMetricsRoute
-  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
-  AuthenticatedAdminSourcesRoute: typeof AuthenticatedAdminSourcesRoute
-  AuthenticatedAdminSuggestionsRoute: typeof AuthenticatedAdminSuggestionsRoute
-  AuthenticatedAdminTokensRoute: typeof AuthenticatedAdminTokensRoute
-  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute
+  AuthenticatedAdminBackupRoute: typeof AuthenticatedAdminBackupRoute;
+  AuthenticatedAdminInvitesRoute: typeof AuthenticatedAdminInvitesRoute;
+  AuthenticatedAdminMetricsRoute: typeof AuthenticatedAdminMetricsRoute;
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute;
+  AuthenticatedAdminSourcesRoute: typeof AuthenticatedAdminSourcesRoute;
+  AuthenticatedAdminSuggestionsRoute: typeof AuthenticatedAdminSuggestionsRoute;
+  AuthenticatedAdminTokensRoute: typeof AuthenticatedAdminTokensRoute;
+  AuthenticatedAdminUsersRoute: typeof AuthenticatedAdminUsersRoute;
 }
 
 const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
@@ -601,26 +601,26 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminSuggestionsRoute: AuthenticatedAdminSuggestionsRoute,
   AuthenticatedAdminTokensRoute: AuthenticatedAdminTokensRoute,
   AuthenticatedAdminUsersRoute: AuthenticatedAdminUsersRoute,
-}
+};
 
 const AuthenticatedAdminRouteWithChildren =
-  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren)
+  AuthenticatedAdminRoute._addFileChildren(AuthenticatedAdminRouteChildren);
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute
-  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
-  AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute
-  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
-  AuthenticatedSubscribeRoute: typeof AuthenticatedSubscribeRoute
-  AuthenticatedVisualizeRoute: typeof AuthenticatedVisualizeRoute
-  AuthenticatedDevErrorsRoute: typeof AuthenticatedDevErrorsRoute
-  AuthenticatedPeoplePersonIdRoute: typeof AuthenticatedPeoplePersonIdRoute
-  AuthenticatedPeopleNewRoute: typeof AuthenticatedPeopleNewRoute
-  AuthenticatedSettingsCalendarTokensRoute: typeof AuthenticatedSettingsCalendarTokensRoute
-  AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute
-  AuthenticatedMapsIndexRoute: typeof AuthenticatedMapsIndexRoute
-  AuthenticatedPeopleIndexRoute: typeof AuthenticatedPeopleIndexRoute
-  AuthenticatedPeoplePersonIdEditRoute: typeof AuthenticatedPeoplePersonIdEditRoute
+  AuthenticatedActivityRoute: typeof AuthenticatedActivityRoute;
+  AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren;
+  AuthenticatedChangePasswordRoute: typeof AuthenticatedChangePasswordRoute;
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute;
+  AuthenticatedSubscribeRoute: typeof AuthenticatedSubscribeRoute;
+  AuthenticatedVisualizeRoute: typeof AuthenticatedVisualizeRoute;
+  AuthenticatedDevErrorsRoute: typeof AuthenticatedDevErrorsRoute;
+  AuthenticatedPeoplePersonIdRoute: typeof AuthenticatedPeoplePersonIdRoute;
+  AuthenticatedPeopleNewRoute: typeof AuthenticatedPeopleNewRoute;
+  AuthenticatedSettingsCalendarTokensRoute: typeof AuthenticatedSettingsCalendarTokensRoute;
+  AuthenticatedSettingsProfileRoute: typeof AuthenticatedSettingsProfileRoute;
+  AuthenticatedMapsIndexRoute: typeof AuthenticatedMapsIndexRoute;
+  AuthenticatedPeopleIndexRoute: typeof AuthenticatedPeopleIndexRoute;
+  AuthenticatedPeoplePersonIdEditRoute: typeof AuthenticatedPeoplePersonIdEditRoute;
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -639,11 +639,11 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedMapsIndexRoute: AuthenticatedMapsIndexRoute,
   AuthenticatedPeopleIndexRoute: AuthenticatedPeopleIndexRoute,
   AuthenticatedPeoplePersonIdEditRoute: AuthenticatedPeoplePersonIdEditRoute,
-}
+};
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
-  AuthenticatedRouteChildren,
-)
+  AuthenticatedRouteChildren
+);
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -652,16 +652,16 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
   InviteTokenRoute: InviteTokenRoute,
-}
+};
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
-  ._addFileTypes<FileRouteTypes>()
+  ._addFileTypes<FileRouteTypes>();
 
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
+import type { getRouter } from "./router.tsx";
+import type { createStart } from "@tanstack/react-start";
+declare module "@tanstack/react-start" {
   interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
+    ssr: true;
+    router: Awaited<ReturnType<typeof getRouter>>;
   }
 }

@@ -105,7 +105,7 @@ export async function createPersonHandler(
  * @throws Error if person not found or user lacks permission
  */
 export async function updatePersonHandler(
-  data: PersonUpdateInput
+  data: PersonUpdateInput & { id: string }
 ): Promise<PersonUpdateResult> {
   const user = await requireAuth("MEMBER");
   const { id, ...updates } = data;

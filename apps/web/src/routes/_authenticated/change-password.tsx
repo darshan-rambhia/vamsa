@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { changePassword } from "~/server/auth";
+import { changePassword } from "~/server/auth.functions";
 import {
   Button,
   Card,

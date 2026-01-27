@@ -4,7 +4,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getCurrentUser } from "~/server/auth";
+import { getCurrentUser } from "~/server/auth.functions";
 import { useCallback, useId, useState } from "react";
 import {
   Select,

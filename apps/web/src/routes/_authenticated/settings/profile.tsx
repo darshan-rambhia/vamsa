@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { validateSession } from "~/server/auth";
-import { getOIDCClaimStatus } from "~/server/claim";
+import { validateSession } from "~/server/auth.functions";
+import { getOIDCClaimStatus } from "~/server/claim.functions";
 import {
   Card,
   CardContent,

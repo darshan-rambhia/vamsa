@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Container, PageHeader, Card, CardContent } from "@vamsa/ui";
 import { getUsers } from "~/server/users";
-import { getCurrentUser } from "~/server/auth";
+import { getCurrentUser } from "~/server/auth.functions";
 import { UsersTable } from "~/components/admin/users-table";
 import { AdminRouteError } from "~/components/admin/route-error";
 

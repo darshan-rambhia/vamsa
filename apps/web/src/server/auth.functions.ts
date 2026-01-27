@@ -1,20 +1,24 @@
 "use server";
 
-import { createServerFn } from "@tanstack/react-start";
-import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
-import {
-  betterAuthGetSessionWithUserFromCookie,
-  betterAuthChangePassword,
-  betterAuthSignOut,
-  getBetterAuthProviders,
-  getUnclaimedProfilesData,
-  claimProfileData,
-} from "@vamsa/lib/server/business";
-import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
-import { logger } from "@vamsa/lib/logger";
-import { checkRateLimit, getClientIP } from "./middleware/rate-limiter";
+/**
+ * Auth server functions (createServerFn wrappers)
+ *
+ * This file exports the public API for auth operations.
+ * Safe to import from client components.
+ *
+ * @fileoverview Client-importable server function exports
+ */
 
-const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
+import { createServerFn } from "@tanstack/react-start";
+import {
+  getUnclaimedProfilesHandler,
+  claimProfileHandler,
+  changePasswordHandler,
+  getSessionHandler,
+  checkAuthHandler,
+  logoutHandler,
+  getAvailableProvidersHandler,
+} from "./auth.server";
 
 /**
  * Get unclaimed living profiles available for claiming
@@ -27,9 +31,7 @@ const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
  * // [{ id: "person_123", firstName: "John", lastName: "Doe" }, ...]
  */
 export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
-  async () => {
-    return getUnclaimedProfilesData();
-  }
+  getUnclaimedProfilesHandler
 );
 
 /**
@@ -51,17 +53,9 @@ export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
  */
 export const claimProfile = createServerFn({ method: "POST" })
   .inputValidator(
-    (data: { email: string; personId: string; password: string }) => {
-      return claimProfileSchema.parse(data);
-    }
+    (data: { email: string; personId: string; password: string }) => data
   )
-  .handler(async ({ data }) => {
-    // Rate limit by IP address
-    const clientIP = getClientIP();
-    checkRateLimit("claimProfile", clientIP);
-
-    return claimProfileData(data.email, data.personId, data.password);
-  });
+  .handler(async ({ data }) => claimProfileHandler(data));
 
 /**
  * Change user password after verifying current password
@@ -85,29 +79,9 @@ export const changePassword = createServerFn({ method: "POST" })
       currentPassword: string;
       newPassword: string;
       confirmPassword: string;
-    }) => {
-      return changePasswordSchema.parse(data);
-    }
+    }) => data
   )
-  .handler(async ({ data }) => {
-    try {
-      const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
-      await betterAuthChangePassword(
-        data.currentPassword,
-        data.newPassword,
-        new Headers({
-          cookie: cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : "",
-        })
-      );
-
-      logger.info("Password changed successfully");
-
-      return { success: true };
-    } catch (error) {
-      logger.warn({ error }, "Password change failed");
-      throw error;
-    }
-  });
+  .handler(async ({ data }) => changePasswordHandler(data));
 
 /**
  * Get current authenticated user from session
@@ -122,18 +96,7 @@ export const changePassword = createServerFn({ method: "POST" })
  * }
  */
 export const getSession = createServerFn({ method: "GET" }).handler(
-  async () => {
-    try {
-      const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
-      const user = await betterAuthGetSessionWithUserFromCookie(
-        cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
-      );
-      return user;
-    } catch (error) {
-      logger.debug({ error }, "Failed to get session");
-      return null;
-    }
-  }
+  getSessionHandler
 );
 
 /**
@@ -148,26 +111,9 @@ export const getSession = createServerFn({ method: "GET" }).handler(
  *   // Redirect to login
  * }
  */
-export const checkAuth = createServerFn({ method: "GET" }).handler(async () => {
-  try {
-    const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
-    const user = await betterAuthGetSessionWithUserFromCookie(
-      cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
-    );
-
-    if (!user) {
-      return { valid: false, user: null };
-    }
-
-    return {
-      valid: true,
-      user,
-    };
-  } catch (error) {
-    logger.debug({ error }, "Auth check failed");
-    return { valid: false, user: null };
-  }
-});
+export const checkAuth = createServerFn({ method: "GET" }).handler(
+  checkAuthHandler
+);
 
 /**
  * Logout user by invalidating session
@@ -178,22 +124,7 @@ export const checkAuth = createServerFn({ method: "GET" }).handler(async () => {
  * @example
  * await logout();
  */
-export const logout = createServerFn({ method: "POST" }).handler(async () => {
-  try {
-    const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
-    await betterAuthSignOut(
-      new Headers({
-        cookie: cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : "",
-      })
-    );
-    logger.info("Logout completed");
-  } catch (error) {
-    logger.warn({ error }, "Logout failed");
-    // Continue even if logout fails (e.g., no active session)
-  }
-
-  return { success: true };
-});
+export const logout = createServerFn({ method: "POST" }).handler(logoutHandler);
 
 /**
  * Get available Better Auth providers
@@ -206,9 +137,7 @@ export const logout = createServerFn({ method: "POST" }).handler(async () => {
  * // { google: true, github: false, microsoft: false, oidc: true }
  */
 export const getAvailableProviders = createServerFn({ method: "GET" }).handler(
-  async () => {
-    return getBetterAuthProviders();
-  }
+  getAvailableProvidersHandler
 );
 
 // Alias exports for backward compatibility

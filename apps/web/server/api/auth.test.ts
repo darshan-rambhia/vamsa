@@ -8,10 +8,37 @@
  * - Request/response format and status codes
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, mock, beforeEach } from "bun:test";
+
+// =============================================================================
+// Mocks - Must be before importing the router
+// =============================================================================
+
+// Use `as unknown` to allow flexible return types in tests
+const mockBetterAuthLogin = mock(async () => null as unknown);
+const mockBetterAuthRegister = mock(async () => null as unknown);
+const mockBetterAuthSignOut = mock(async () => undefined);
+
+mock.module("@vamsa/lib/server/business", () => ({
+  betterAuthLogin: mockBetterAuthLogin,
+  betterAuthRegister: mockBetterAuthRegister,
+  betterAuthSignOut: mockBetterAuthSignOut,
+}));
+
+// Import after mocks are set up
 import authRouter from "./auth";
 
 describe("Authentication API Routes", () => {
+  beforeEach(() => {
+    mockBetterAuthLogin.mockClear();
+    mockBetterAuthRegister.mockClear();
+    mockBetterAuthSignOut.mockClear();
+    // Reset to default behavior
+    mockBetterAuthLogin.mockImplementation(async () => null);
+    mockBetterAuthRegister.mockImplementation(async () => null);
+    mockBetterAuthSignOut.mockImplementation(async () => undefined);
+  });
+
   describe("POST /login - Login Endpoint", () => {
     it("should return 400 when email is missing", async () => {
       const res = await authRouter.request("/login", {
@@ -214,7 +241,11 @@ describe("Authentication API Routes", () => {
     });
 
     it("should return 409 when email already exists", async () => {
-      // This tests the specific error case for existing emails
+      // Mock the register function to throw "already exists" error
+      mockBetterAuthRegister.mockImplementation(async () => {
+        throw new Error("Email already exists");
+      });
+
       const res = await authRouter.request("/register", {
         method: "POST",
         body: JSON.stringify({
@@ -228,8 +259,9 @@ describe("Authentication API Routes", () => {
         },
       });
 
-      // Either 400 (validation) or 409 (email exists)
-      expect([400, 409, 500]).toContain(res.status);
+      expect(res.status).toBe(409);
+      const body = await res.json();
+      expect(body.error).toBe("Email already in use");
     });
 
     it("should return error response format on validation failure", async () => {
@@ -247,6 +279,15 @@ describe("Authentication API Routes", () => {
     });
 
     it("should accept valid email formats", async () => {
+      // Mock successful registration
+      mockBetterAuthRegister.mockImplementation(async () => ({
+        user: {
+          id: "user-1",
+          email: "user+tag@example.co.uk",
+          name: "John Doe",
+        },
+      }));
+
       const res = await authRouter.request("/register", {
         method: "POST",
         body: JSON.stringify({
@@ -260,11 +301,16 @@ describe("Authentication API Routes", () => {
         },
       });
 
-      // Should not return 400 for valid format
-      expect(res.status).not.toBe(400);
+      // Should succeed with valid format
+      expect(res.status).toBe(201);
     });
 
     it("should handle unicode characters in name", async () => {
+      // Mock successful registration
+      mockBetterAuthRegister.mockImplementation(async () => ({
+        user: { id: "user-1", email: "user@test.com", name: "João Silva" },
+      }));
+
       const res = await authRouter.request("/register", {
         method: "POST",
         body: JSON.stringify({
@@ -278,11 +324,16 @@ describe("Authentication API Routes", () => {
         },
       });
 
-      // Should not fail on unicode
-      expect(res.status).not.toBe(400);
+      // Should succeed with unicode name
+      expect(res.status).toBe(201);
     });
 
     it("should handle special characters in name", async () => {
+      // Mock successful registration
+      mockBetterAuthRegister.mockImplementation(async () => ({
+        user: { id: "user-1", email: "user@test.com", name: "O'Brien-Smith" },
+      }));
+
       const res = await authRouter.request("/register", {
         method: "POST",
         body: JSON.stringify({
@@ -296,8 +347,8 @@ describe("Authentication API Routes", () => {
         },
       });
 
-      // Should not fail on special characters
-      expect(res.status).not.toBe(400);
+      // Should succeed with special characters in name
+      expect(res.status).toBe(201);
     });
 
     it("should use POST method", async () => {

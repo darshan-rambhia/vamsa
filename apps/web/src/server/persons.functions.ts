@@ -96,7 +96,7 @@ export const createPerson = createServerFn({ method: "POST" })
  */
 export const updatePerson = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => {
-    return personUpdateSchema.parse(data);
+    return personUpdateSchema.extend({ id: z.string() }).parse(data);
   })
   .handler(async ({ data }): Promise<PersonUpdateResult> => {
     return updatePersonHandler(data);

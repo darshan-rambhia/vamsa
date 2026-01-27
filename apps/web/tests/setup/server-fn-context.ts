@@ -242,13 +242,17 @@ function ensureStubsInstalled(): void {
       throw new Error("betterAuthGetSession: Use mock.module() in your test");
     },
     betterAuthChangePassword: async () => {
-      throw new Error("betterAuthChangePassword: Use mock.module() in your test");
+      throw new Error(
+        "betterAuthChangePassword: Use mock.module() in your test"
+      );
     },
     betterAuthSignOut: async () => {
       throw new Error("betterAuthSignOut: Use mock.module() in your test");
     },
     betterAuthGetSessionWithUser: async () => {
-      throw new Error("betterAuthGetSessionWithUser: Use mock.module() in your test");
+      throw new Error(
+        "betterAuthGetSessionWithUser: Use mock.module() in your test"
+      );
     },
     getBetterAuthProviders: () => ({
       google: false,
@@ -352,7 +356,11 @@ export function asViewer<T>(
   overrides?: Partial<MockAuthUser>
 ): Promise<StubbedServerContextResult<T>> {
   return withStubbedServerContext(
-    { user: overrides ? createMockUser(testUsers.viewer, overrides) : testUsers.viewer },
+    {
+      user: overrides
+        ? createMockUser(testUsers.viewer, overrides)
+        : testUsers.viewer,
+    },
     fn
   );
 }
@@ -365,7 +373,11 @@ export function asMember<T>(
   overrides?: Partial<MockAuthUser>
 ): Promise<StubbedServerContextResult<T>> {
   return withStubbedServerContext(
-    { user: overrides ? createMockUser(testUsers.member, overrides) : testUsers.member },
+    {
+      user: overrides
+        ? createMockUser(testUsers.member, overrides)
+        : testUsers.member,
+    },
     fn
   );
 }
@@ -378,7 +390,11 @@ export function asAdmin<T>(
   overrides?: Partial<MockAuthUser>
 ): Promise<StubbedServerContextResult<T>> {
   return withStubbedServerContext(
-    { user: overrides ? createMockUser(testUsers.admin, overrides) : testUsers.admin },
+    {
+      user: overrides
+        ? createMockUser(testUsers.admin, overrides)
+        : testUsers.admin,
+    },
     fn
   );
 }
@@ -395,7 +411,12 @@ export function asAdmin<T>(
 export function resetRateLimits(): void {
   try {
     const rateLimiter = require("../../src/server/middleware/rate-limiter");
-    const actions = ["login", "register", "claimProfile", "passwordReset"] as const;
+    const actions = [
+      "login",
+      "register",
+      "claimProfile",
+      "passwordReset",
+    ] as const;
     for (const action of actions) {
       rateLimiter.resetRateLimit?.(action, "unknown");
       rateLimiter.resetRateLimit?.(action, "127.0.0.1");

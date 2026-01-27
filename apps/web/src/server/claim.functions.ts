@@ -1,46 +1,22 @@
+"use server";
+
 /**
- * OIDC Profile Claiming Server Functions
+ * OIDC Profile Claiming server functions (createServerFn wrappers)
  *
- * This module provides TanStack React Start server function wrappers
- * for OIDC profile claiming operations. Each function handles:
- * - Input validation with Zod schemas
- * - Auth context retrieval (Better Auth session)
- * - Delegation to business logic in claim.server.ts
+ * This file exports the public API for OIDC claim operations.
+ * Safe to import from client components.
  *
- * The actual business logic is separated to claim.server.ts for testability
- * and reusability.
+ * @fileoverview Client-importable server function exports
  */
 
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
 import { z } from "zod";
 import {
-  getClaimableProfilesData,
-  claimProfileForOIDCData,
-  skipProfileClaimData,
-  getOIDCClaimStatusData,
-  betterAuthGetSessionWithUserFromCookie,
-} from "@vamsa/lib/server/business";
-
-const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
-
-/**
- * Get current authenticated user from Better Auth session
- * @returns User object with ID, email, name, and OIDC provider info
- * @throws Error if not authenticated or session expired
- */
-async function getCurrentAuthenticatedUser() {
-  const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
-  const user = await betterAuthGetSessionWithUserFromCookie(
-    cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
-  );
-
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-
-  return user;
-}
+  getOIDCClaimableProfilesHandler,
+  claimProfileOIDCHandler,
+  skipProfileClaimHandler,
+  getOIDCClaimStatusHandler,
+} from "./claim.server";
 
 // Zod schemas
 const oidcClaimProfileSchema = z.object({
@@ -58,10 +34,7 @@ const oidcClaimProfileSchema = z.object({
  */
 export const getOIDCClaimableProfiles = createServerFn({
   method: "GET",
-}).handler(async () => {
-  const user = await getCurrentAuthenticatedUser();
-  return getClaimableProfilesData(user.id);
-});
+}).handler(getOIDCClaimableProfilesHandler);
 
 /**
  * Server function: Claim a profile for OIDC user
@@ -76,12 +49,7 @@ export const getOIDCClaimableProfiles = createServerFn({
  */
 export const claimProfileOIDC = createServerFn({ method: "POST" })
   .inputValidator((data) => oidcClaimProfileSchema.parse(data))
-  .handler(async ({ data }) => {
-    const user = await getCurrentAuthenticatedUser();
-    const { personId } = data;
-
-    return claimProfileForOIDCData(user.id, personId);
-  });
+  .handler(async ({ data }) => claimProfileOIDCHandler(data));
 
 /**
  * Server function: Skip profile claiming
@@ -93,10 +61,7 @@ export const claimProfileOIDC = createServerFn({ method: "POST" })
  * @requires User has not yet claimed a profile
  */
 export const skipProfileClaim = createServerFn({ method: "POST" }).handler(
-  async () => {
-    const user = await getCurrentAuthenticatedUser();
-    return skipProfileClaimData(user.id);
-  }
+  skipProfileClaimHandler
 );
 
 /**
@@ -109,8 +74,5 @@ export const skipProfileClaim = createServerFn({ method: "POST" }).handler(
  * @returns Claim status object with user and person details, or null if not OIDC user
  */
 export const getOIDCClaimStatus = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const user = await getCurrentAuthenticatedUser();
-    return getOIDCClaimStatusData(user.id);
-  }
+  getOIDCClaimStatusHandler
 );

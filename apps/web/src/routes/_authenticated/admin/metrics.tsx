@@ -15,7 +15,7 @@ import {
 } from "@vamsa/ui";
 import { useQuery } from "@tanstack/react-query";
 import { getMetricsSnapshot, getPrometheusStatus } from "~/server/metrics";
-import { getCurrentUser } from "~/server/auth";
+import { getCurrentUser } from "~/server/auth.functions";
 import { getFamilySettings, updateFamilySettings } from "~/server/settings";
 import { AdminRouteError } from "~/components/admin/route-error";
 import {

@@ -5,7 +5,11 @@ import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import * as crypto from "crypto";
+import { config } from "dotenv";
 import { vamsaDevApiPlugin } from "./server/dev";
+
+// Load .env from monorepo root for server-side code (Drizzle, Better Auth, etc.)
+config({ path: path.resolve(__dirname, "../../.env") });
 
 export default defineConfig({
   // Load .env from monorepo root

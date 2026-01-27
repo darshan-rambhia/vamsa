@@ -15,14 +15,18 @@ import {
 
 // Mock business logic BEFORE importing handlers
 const mockListPersonsData = mock(async () => ({
-  persons: [
+  items: [
     { id: "person-1", firstName: "John", lastName: "Doe" },
     { id: "person-2", firstName: "Jane", lastName: "Smith" },
   ],
-  total: 2,
-  page: 1,
-  limit: 50,
-  totalPages: 1,
+  pagination: {
+    total: 2,
+    page: 1,
+    limit: 50,
+    totalPages: 1,
+    hasNext: false,
+    hasPrev: false,
+  },
 }));
 
 const mockGetPersonData = mock(async () => ({
@@ -36,12 +40,10 @@ const mockGetPersonData = mock(async () => ({
 
 const mockCreatePersonData = mock(async () => ({
   id: "new-person-id",
-  success: true,
 }));
 
 const mockUpdatePersonData = mock(async () => ({
   id: "person-1",
-  success: true,
 }));
 
 const mockDeletePersonData = mock(async () => ({
@@ -137,8 +139,8 @@ describe("Person Handlers", () => {
           })
       );
 
-      expect(result.persons).toHaveLength(2);
-      expect(result.total).toBe(2);
+      expect(result.items).toHaveLength(2);
+      expect(result.pagination.total).toBe(2);
       expect(mockListPersonsData).toHaveBeenCalledTimes(1);
     });
 
@@ -154,7 +156,7 @@ describe("Person Handlers", () => {
           })
       );
 
-      expect(result.persons).toHaveLength(2);
+      expect(result.items).toHaveLength(2);
     });
 
     it("allows ADMIN to list persons", async () => {
@@ -169,7 +171,7 @@ describe("Person Handlers", () => {
           })
       );
 
-      expect(result.persons).toHaveLength(2);
+      expect(result.items).toHaveLength(2);
     });
 
     it("passes filter options to business logic", async () => {
@@ -244,7 +246,7 @@ describe("Person Handlers", () => {
     const validPersonData = {
       firstName: "New",
       lastName: "Person",
-      sex: "MALE" as const,
+      gender: "MALE" as const,
       isLiving: true,
     };
 
@@ -269,7 +271,6 @@ describe("Person Handlers", () => {
       );
 
       expect(result.id).toBe("new-person-id");
-      expect(result.success).toBe(true);
       expect(mockCreatePersonData).toHaveBeenCalledWith(
         validPersonData,
         testUsers.member.id
@@ -316,7 +317,7 @@ describe("Person Handlers", () => {
         () => updatePersonHandler(validUpdateData)
       );
 
-      expect(result.success).toBe(true);
+      expect(result.id).toBe("person-1");
       expect(mockUpdatePersonData).toHaveBeenCalledWith(
         "person-1",
         { firstName: "Updated" },
@@ -330,7 +331,7 @@ describe("Person Handlers", () => {
         () => updatePersonHandler(validUpdateData)
       );
 
-      expect(result.success).toBe(true);
+      expect(result.id).toBe("person-1");
     });
   });
 
@@ -445,12 +446,12 @@ describe("Person Handlers", () => {
           createPersonHandler({
             firstName: "Test",
             lastName: "User",
-            sex: "FEMALE" as const,
+            gender: "FEMALE" as const,
             isLiving: true,
           })
       );
 
-      expect(result.success).toBe(true);
+      expect(result.id).toBe("new-person-id");
       expect(mockCreatePersonData).toHaveBeenCalledWith(
         expect.any(Object),
         "custom-user-id"

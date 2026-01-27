@@ -1,7 +1,7 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Card, CardContent } from "@vamsa/ui";
 import { getInvites } from "~/server/invites";
-import { getCurrentUser } from "~/server/auth";
+import { getCurrentUser } from "~/server/auth.functions";
 import { InvitesTable } from "~/components/admin/invites-table";
 import { CreateInviteDialog } from "~/components/admin/create-invite-dialog";
 

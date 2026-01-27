@@ -5,7 +5,7 @@ import {
   useLocation,
   type ErrorComponentProps,
 } from "@tanstack/react-router";
-import { validateSession } from "~/server/auth";
+import { validateSession } from "~/server/auth.functions";
 import { signOut } from "~/lib/auth-client";
 import { Nav, NavLink, Button } from "@vamsa/ui";
 import { LanguageSwitcher } from "~/components/layout/language-switcher";

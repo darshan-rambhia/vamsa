@@ -12,6 +12,12 @@
  * - Test users (admin, member, viewer)
  */
 
+import { config } from "dotenv";
+import path from "path";
+
+// Load .env from monorepo root
+config({ path: path.resolve(__dirname, "../../../../.env") });
+
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";

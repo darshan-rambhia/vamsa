@@ -316,4 +316,3 @@ describe("createMockUser helper", () => {
     expect(user.role).toBe("ADMIN");
   });
 });
-
