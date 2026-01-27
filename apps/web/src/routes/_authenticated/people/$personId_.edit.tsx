@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getPerson } from "~/server/persons";
+import { getPerson } from "~/server/persons.functions";
 import { Container, PageHeader, Card, CardContent } from "@vamsa/ui";
 import { PersonForm } from "~/components/person";
 

@@ -24,7 +24,7 @@ import {
   addEventParticipant,
   removeEventParticipant,
 } from "~/server/events";
-import { searchPersons } from "~/server/persons";
+import { searchPersons } from "~/server/persons.functions";
 import { EventFormModal } from "./event-form-modal";
 
 interface EventDetailModalProps {

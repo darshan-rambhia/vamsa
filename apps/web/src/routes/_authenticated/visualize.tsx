@@ -15,7 +15,7 @@ import {
   Button,
   Label,
 } from "@vamsa/ui";
-import { listPersons } from "~/server/persons";
+import { listPersons } from "~/server/persons.functions";
 import {
   getAncestorChart,
   getDescendantChart,

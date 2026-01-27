@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { listPersons } from "~/server/persons";
+import { listPersons } from "~/server/persons.functions";
 import {
   Container,
   PageHeader,

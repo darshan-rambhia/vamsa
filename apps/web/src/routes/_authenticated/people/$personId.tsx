@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getPerson } from "~/server/persons";
+import { getPerson } from "~/server/persons.functions";
 import { getPersonEvents } from "~/server/events";
 import { getPersonPlaces } from "~/server/places";
 import { getPersonMedia } from "~/server/media";
@@ -17,7 +17,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@vamsa/ui/primitives";
-import type { PersonDetail } from "~/server/persons";
+import type { PersonDetail } from "~/server/persons.functions";
 import { OverviewTab } from "~/components/person/overview-tab";
 import { RelationshipsTab } from "~/components/person/relationships-tab";
 import { EventsTab } from "~/components/person/events-tab";

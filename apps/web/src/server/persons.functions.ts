@@ -1,27 +1,40 @@
+/**
+ * Person server functions (client-importable)
+ *
+ * This file exports createServerFn wrappers that can be safely imported
+ * from client components. The actual handler logic lives in persons.server.ts.
+ *
+ * @fileoverview Client-safe server function exports
+ */
+
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { personCreateSchema, personUpdateSchema } from "@vamsa/schemas";
-import { requireAuth } from "./middleware/require-auth";
 import {
-  listPersonsData,
-  getPersonData,
-  createPersonData,
-  updatePersonData,
-  deletePersonData,
-  searchPersonsData,
-  type PersonListOptions,
-  type PersonListResult,
-  type PersonDetail,
-  type PersonCreateResult,
-  type PersonUpdateResult,
-  type PersonDeleteResult,
-  type PersonSearchResult,
+  listPersonsHandler,
+  getPersonHandler,
+  createPersonHandler,
+  updatePersonHandler,
+  deletePersonHandler,
+  searchPersonsHandler,
+  type PersonListInput,
+} from "./persons.server";
+import type {
+  PersonListResult,
+  PersonDetail,
+  PersonCreateResult,
+  PersonUpdateResult,
+  PersonDeleteResult,
+  PersonSearchResult,
 } from "@vamsa/lib/server/business";
 
 // Re-export types for use by route loaders
 export type { PersonDetail };
 
-// Person list input schema with pagination, search, and filters
+// ============================================================================
+// Input Schemas
+// ============================================================================
+
 const personListInputSchema = z.object({
   page: z.number().int().min(1).default(1),
   limit: z.number().int().min(1).max(100).default(50),
@@ -33,7 +46,9 @@ const personListInputSchema = z.object({
   isLiving: z.boolean().optional(),
 });
 
-type PersonListInput = z.infer<typeof personListInputSchema>;
+// ============================================================================
+// Server Functions
+// ============================================================================
 
 /**
  * Server function: List persons with pagination and filtering
@@ -45,18 +60,7 @@ export const listPersons = createServerFn({ method: "GET" })
     return personListInputSchema.parse(data);
   })
   .handler(async ({ data }): Promise<PersonListResult> => {
-    await requireAuth("VIEWER");
-
-    const options: PersonListOptions = {
-      page: data.page,
-      limit: data.limit,
-      sortBy: data.sortBy as PersonListOptions["sortBy"],
-      sortOrder: data.sortOrder as PersonListOptions["sortOrder"],
-      search: data.search,
-      isLiving: data.isLiving,
-    };
-
-    return listPersonsData(options);
+    return listPersonsHandler(data);
   });
 
 /**
@@ -68,8 +72,7 @@ export const listPersons = createServerFn({ method: "GET" })
 export const getPerson = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<PersonDetail> => {
-    await requireAuth("VIEWER");
-    return getPersonData(data.id);
+    return getPersonHandler(data);
   });
 
 /**
@@ -82,8 +85,7 @@ export const createPerson = createServerFn({ method: "POST" })
     return personCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<PersonCreateResult> => {
-    const user = await requireAuth("MEMBER");
-    return createPersonData(data, user.id);
+    return createPersonHandler(data);
   });
 
 /**
@@ -97,10 +99,7 @@ export const updatePerson = createServerFn({ method: "POST" })
     return personUpdateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<PersonUpdateResult> => {
-    const user = await requireAuth("MEMBER");
-    const { id, ...updates } = data as { id: string } & Record<string, unknown>;
-
-    return updatePersonData(id, updates as typeof data, user.id);
+    return updatePersonHandler(data);
   });
 
 /**
@@ -112,8 +111,7 @@ export const updatePerson = createServerFn({ method: "POST" })
 export const deletePerson = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<PersonDeleteResult> => {
-    const user = await requireAuth("ADMIN");
-    return deletePersonData(data.id, user.id);
+    return deletePersonHandler(data);
   });
 
 /**
@@ -124,6 +122,5 @@ export const deletePerson = createServerFn({ method: "POST" })
 export const searchPersons = createServerFn({ method: "GET" })
   .inputValidator((data: { query: string; excludeId?: string }) => data)
   .handler(async ({ data }): Promise<PersonSearchResult[]> => {
-    await requireAuth("VIEWER");
-    return searchPersonsData(data.query, data.excludeId);
+    return searchPersonsHandler(data);
   });

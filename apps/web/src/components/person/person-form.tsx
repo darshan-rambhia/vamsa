@@ -15,7 +15,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@vamsa/ui";
-import { createPerson, updatePerson } from "~/server/persons";
+import { createPerson, updatePerson } from "~/server/persons.functions";
 
 interface PersonFormProps {
   person?: {

@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui";
-import { searchPersons } from "~/server/persons";
+import { searchPersons } from "~/server/persons.functions";
 import { createRelationship } from "~/server/relationships";
 
 interface AddRelationshipButtonProps {
