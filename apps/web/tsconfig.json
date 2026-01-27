@@ -15,14 +15,16 @@
     "isolatedModules": true,
     "incremental": true,
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@test/*": ["./tests/setup/*"]
     }
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
     "vite.config.ts",
-    "server/**/*.ts"
+    "server/**/*.ts",
+    "tests/**/*.ts"
   ],
   "exclude": ["node_modules", "dist", ".stryker-tmp"]
 }
