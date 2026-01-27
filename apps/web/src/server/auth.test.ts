@@ -11,10 +11,7 @@
  */
 
 import { describe, it, expect } from "bun:test";
-import {
-  claimProfileSchema,
-  changePasswordSchema,
-} from "@vamsa/schemas";
+import { claimProfileSchema, changePasswordSchema } from "@vamsa/schemas";
 
 describe("auth.ts validation and patterns", () => {
   // ==========================================================================
@@ -243,7 +240,9 @@ describe("auth.ts validation and patterns", () => {
       });
 
       expect(headers).toBeInstanceOf(Headers);
-      expect(headers.get("cookie")).toBe("better-auth.session_token=token-value");
+      expect(headers.get("cookie")).toBe(
+        "better-auth.session_token=token-value"
+      );
     });
   });
 
@@ -330,146 +329,4 @@ describe("auth.ts validation and patterns", () => {
     });
   });
 
-  // ==========================================================================
-  // Error handling pattern tests
-  // ==========================================================================
-
-  describe("error handling patterns", () => {
-    it("changePassword should rethrow errors after logging", () => {
-      let errorLogged = false;
-      let errorThrown = false;
-
-      try {
-        try {
-          throw new Error("Auth failed");
-        } catch (error) {
-          errorLogged = true;
-          throw error;
-        }
-      } catch {
-        errorThrown = true;
-      }
-
-      expect(errorLogged).toBe(true);
-      expect(errorThrown).toBe(true);
-    });
-
-    it("getSession error handling returns null", () => {
-      let result: unknown;
-
-      try {
-        throw new Error("Session error");
-      } catch {
-        result = null;
-      }
-
-      expect(result).toBeNull();
-    });
-
-    it("checkAuth error handling returns valid false", () => {
-      let result: { valid: boolean; user: unknown };
-
-      try {
-        throw new Error("Auth check failed");
-      } catch {
-        result = { valid: false, user: null };
-      }
-
-      expect(result.valid).toBe(false);
-      expect(result.user).toBeNull();
-    });
-
-    it("logout should not throw even on error", () => {
-      let result: { success: boolean };
-
-      try {
-        throw new Error("Signout failed");
-      } catch {
-        // Error is caught but we continue
-      }
-
-      result = { success: true };
-
-      expect(result.success).toBe(true);
-    });
-  });
-
-  // ==========================================================================
-  // Mutation-killing specific tests
-  // ==========================================================================
-
-  describe("mutation killers", () => {
-    it("cookie name must be exactly better-auth.session_token", () => {
-      const name = "better-auth.session_token";
-      expect(name).not.toBe("session_token");
-      expect(name).not.toBe("better-auth");
-      expect(name).not.toBe("");
-      expect(name).toBe("better-auth.session_token");
-    });
-
-    it("success response must have success: true, not false", () => {
-      const successResponse = { success: true };
-      expect(successResponse.success).not.toBe(false);
-      expect(successResponse.success).toBe(true);
-    });
-
-    it("checkAuth valid boolean logic is correct", () => {
-      const noUser = null;
-      const hasUser = { id: "user-1" };
-
-      const validWhenNoUser = noUser ? true : false;
-      const validWhenHasUser = hasUser ? true : false;
-
-      expect(validWhenNoUser).toBe(false);
-      expect(validWhenHasUser).toBe(true);
-    });
-
-    it("getSession error must return null not undefined", () => {
-      const errorResult = null;
-      expect(errorResult).not.toBeUndefined();
-      expect(errorResult).toBeNull();
-    });
-
-    it("checkAuth error must return valid: false not true", () => {
-      const errorResult = { valid: false, user: null };
-      expect(errorResult.valid).not.toBe(true);
-      expect(errorResult.valid).toBe(false);
-    });
-
-    it("HTTP methods must be correct for each function", () => {
-      const methods = {
-        getUnclaimedProfiles: "GET",
-        claimProfile: "POST",
-        changePassword: "POST",
-        getSession: "GET",
-        checkAuth: "GET",
-        logout: "POST",
-        getAvailableProviders: "GET",
-      };
-
-      expect(methods.getUnclaimedProfiles).toBe("GET");
-      expect(methods.claimProfile).toBe("POST");
-      expect(methods.changePassword).toBe("POST");
-      expect(methods.getSession).toBe("GET");
-      expect(methods.checkAuth).toBe("GET");
-      expect(methods.logout).toBe("POST");
-      expect(methods.getAvailableProviders).toBe("GET");
-    });
-
-    it("cookie ternary returns empty string when undefined", () => {
-      const cookie: string | undefined = undefined;
-      const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
-      const result = cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : "";
-
-      expect(result).toBe("");
-    });
-
-    it("cookie ternary returns formatted string when defined", () => {
-      const cookie = "my-token";
-      const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
-      const result = cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : "";
-
-      expect(result).toBe("better-auth.session_token=my-token");
-    });
-  });
 });
