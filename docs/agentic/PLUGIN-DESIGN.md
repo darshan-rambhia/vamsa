@@ -45,14 +45,14 @@ Your agents are specific to Vamsa:
 .claude/agents/
 ├── techlead.md      ← Vamsa-specific system prompt
 ├── frontend.md      ← Uses shadcn/ui, TanStack Start patterns
-├── backend.md       ← Uses Prisma, Zod, your auth patterns
+├── backend.md       ← Uses Drizzle, Zod, your auth patterns
 ├── tester.md        ← Uses Bun test, Playwright config
 └── reviewer.md      ← Knows your quality gate commands
 ```
 
 **Problem:** Every project has different:
 
-- Tech stack (your project: TanStack Start + Bun + Prisma)
+- Tech stack (your project: TanStack Start + Bun + Drizzle)
 - Quality gates (your thresholds: 90% coverage)
 - Conventions (your patterns: Server Functions, shadcn/ui)
 - Models and architecture (your unique patterns)
@@ -109,7 +109,7 @@ pnpm db:migrate
 Your agents know about:
 
 - TanStack Start (file-based routing, server functions)
-- Prisma ORM
+- Drizzle ORM
 - Zod for validation
 - shadcn/ui components
 - Lucia Auth
@@ -221,7 +221,7 @@ project-root/.claude/
     {
       "language": "typescript",
       "framework": "next.js",
-      "orm": "prisma",
+      "orm": "drizzle",
       "testing": "vitest+playwright",
     },
 }

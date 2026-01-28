@@ -1,7 +1,7 @@
 /**
  * Drizzle ORM Schema - User
  *
- * Maps Prisma User, Account, Session, Verification, OAuthState, and CalendarToken models
+ * Defines User, Account, Session, Verification, OAuthState, and CalendarToken models
  */
 
 import {

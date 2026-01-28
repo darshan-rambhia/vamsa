@@ -474,7 +474,7 @@ relationshipsRouter.openapi(updateRelationshipRoute, async (c) => {
     }
 
     const data = c.req.valid("json");
-    // Convert string dates to Date objects for Prisma
+    // Convert string dates to Date objects for database
     const updateData: Record<string, unknown> = {};
     for (const [key, value] of Object.entries(data)) {
       if (

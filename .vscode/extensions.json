@@ -1,0 +1,33 @@
+{
+  "recommendations": [
+    // Core development
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+
+    // TypeScript & React
+    "ms-vscode.vscode-typescript-next",
+    "dsznajder.es7-react-js-snippets",
+
+    // Tailwind CSS
+    "bradlc.vscode-tailwindcss",
+
+    // Database
+    "drizzle-team.drizzle-orm-snippets",
+
+    // Git
+    "eamodio.gitlens",
+
+    // Testing
+    "ms-playwright.playwright",
+
+    // Utilities
+    "aaron-bond.better-comments",
+    "mikestead.dotenv",
+    "redhat.vscode-yaml",
+    "yoavbls.pretty-ts-errors",
+
+    // AI Assistant
+    "anthropics.claude-code"
+  ],
+  "unwantedRecommendations": []
+}

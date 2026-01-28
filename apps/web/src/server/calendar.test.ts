@@ -2,7 +2,7 @@
  * Unit tests for calendar server business logic
  *
  * Note: These functions are database orchestration functions that interact with:
- * - Prisma ORM for database operations
+ * - Drizzle ORM for database operations
  * - randomBytes for cryptographic token generation
  * - Audit logging for compliance
  *
@@ -25,7 +25,7 @@ import { describe, it, expect } from "bun:test";
  * Note on test coverage:
  *
  * The calendar.server.ts module contains business logic functions that:
- * 1. Query and mutate database state via Prisma
+ * 1. Query and mutate database state via Drizzle
  * 2. Generate cryptographic tokens
  * 3. Create audit logs
  * 4. Handle user authorization
@@ -63,7 +63,7 @@ describe("Calendar Server Business Logic", () => {
 
   describe("function requirements", () => {
     it("should require database context to run", () => {
-      // These functions use Prisma for database operations
+      // These functions use Drizzle for database operations
       // They cannot be called without a database connection
       // This test documents that limitation - proper testing requires integration tests
 

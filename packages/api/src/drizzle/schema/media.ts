@@ -1,7 +1,7 @@
 /**
  * Drizzle ORM Schema - Media
  *
- * Maps Prisma MediaObject and PersonMedia models
+ * Defines MediaObject and PersonMedia models
  */
 
 import {

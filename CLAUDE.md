@@ -14,7 +14,7 @@ Vamsa is a family genealogy application built with:
 
 - **Frontend**: TanStack Start (React + Vite via Vinxi)
 - **Backend API**: TanStack React Start server functions
-- **Database**: PostgreSQL (via Prisma ORM)
+- **Database**: PostgreSQL (via Drizzle ORM)
 - **Runtime**: Bun (non-negotiable)
 - **Monorepo**: Bun workspaces
 
@@ -29,7 +29,7 @@ apps/
       client/    # Static files (served by nginx in production)
       server/    # Server bundle (TanStack Start fetch handler)
 packages/
-  api/           # Prisma schema, migrations, and database utilities
+  api/           # Drizzle schema, migrations, and database utilities
   lib/           # Shared business logic (GEDCOM, genealogy utilities)
   schemas/       # Shared Zod schemas
   ui/            # Shared UI components (shadcn/ui based)
@@ -87,12 +87,12 @@ bun run test:e2e        # Run E2E tests with Playwright
 ### Database
 
 ```bash
-bun run db:generate        # Generate Prisma client
-bun run db:migrate         # Run pending Prisma migrations
+bun run db:generate        # Generate Drizzle client
+bun run db:migrate         # Run pending Drizzle migrations
 bun run db:migrate:deploy  # Deploy migrations (production)
-bun run db:push            # Push Prisma schema to database
+bun run db:push            # Push Drizzle schema to database
 bun run db:seed            # Seed database with initial data
-bun run db:studio          # Open Prisma Studio GUI
+bun run db:studio          # Open Drizzle Studio GUI
 ```
 
 ### Docker

@@ -224,13 +224,13 @@ When agents run in background:
 
 ## Project Context
 
-- Stack: TanStack Start, Bun, Prisma, shadcn/ui
+- Stack: TanStack Start, Bun, Drizzle, shadcn/ui
 - Routes: `apps/web/src/routes/`
 - Server Functions: `apps/web/src/server/`
 - Business Logic: `packages/lib/src/server/business/`
 - Components: `packages/ui/src/`
 - Schemas: `packages/schemas/src/`
-- Database: `packages/api/prisma/schema.prisma`
+- Database: `packages/api/src/drizzle/schema/`
 
 ## Rules
 

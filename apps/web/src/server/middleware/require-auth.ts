@@ -18,7 +18,7 @@ const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
  * Require authentication for a server function
  *
  * @param requiredRole - Minimum role required (defaults to VIEWER)
- * @returns The authenticated user (full Prisma User object)
+ * @returns The authenticated user (full User object)
  * @throws Error if not authenticated or insufficient role
  */
 export async function requireAuth(requiredRole: UserRole = "VIEWER") {

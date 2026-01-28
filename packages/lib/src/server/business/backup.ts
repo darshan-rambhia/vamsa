@@ -391,7 +391,7 @@ export async function extractBackupData(archiveBuffer: Buffer) {
  * @param extractedData Data extracted from backup archive
  * @param options Import options including conflict strategy
  * @param userId ID of user performing restore
- * @param db Optional database client (defaults to prisma)
+ * @param db Optional database client (defaults to drizzle)
  * @returns Import result with statistics and any errors
  * @throws Error if restore transaction fails
  */

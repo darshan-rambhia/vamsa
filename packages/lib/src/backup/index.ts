@@ -1,5 +1,5 @@
 // Backup utilities index
-// Note: These utilities are designed to work with Prisma and Zod
+// Note: These utilities are designed to work with Drizzle and Zod
 // which should be installed as dependencies in the consuming package
 
 export { BackupValidator } from "./validator";

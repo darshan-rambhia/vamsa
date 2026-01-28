@@ -45,8 +45,8 @@ export interface Event {
 }
 
 /**
- * Format a raw Prisma event to the response format
- * @param event - Raw event from Prisma with participants included
+ * Format a raw database event to the response format
+ * @param event - Raw event from database with participants included
  * @returns Formatted event
  */
 function formatEvent(event: {

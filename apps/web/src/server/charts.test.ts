@@ -2,7 +2,7 @@
  * Unit tests for chart server business logic
  *
  * Note: These functions are database orchestration functions that interact with:
- * - Prisma ORM for complex genealogical queries
+ * - Drizzle ORM for complex genealogical queries
  * - Chart data collection helpers
  * - Performance metrics recording
  *
@@ -25,7 +25,7 @@ import { describe, it, expect } from "bun:test";
  * Note on test coverage:
  *
  * The charts.server.ts module contains business logic functions that:
- * 1. Query complex genealogical relationships via Prisma
+ * 1. Query complex genealogical relationships via Drizzle
  * 2. Build relationship maps and traverse family trees
  * 3. Delegate to helper functions for data collection
  * 4. Format results for chart visualization
@@ -86,7 +86,7 @@ describe("Chart Server Business Logic", () => {
 
   describe("function requirements", () => {
     it("should require database context to run", () => {
-      // These functions use Prisma for complex genealogical queries
+      // These functions use Drizzle for complex genealogical queries
       // They fetch persons, relationships, and build family trees
       // They cannot be called without a database connection
 
@@ -111,7 +111,7 @@ describe("Chart Server Business Logic", () => {
       // This validation logic is tested in E2E tests
 
       // Example from getAncestorChartData:
-      //   const rootPerson = await prisma.person.findUnique({ where: { id: personId } });
+      //   const rootPerson = await db.query.persons.findFirst({ where: eq(persons.id, personId) });
       //   if (!rootPerson) throw new Error("Person not found");
 
       expect(true).toBe(true);

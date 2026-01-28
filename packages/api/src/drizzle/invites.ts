@@ -1,9 +1,9 @@
 /**
  * Drizzle Query Functions for Invites
  *
- * Equivalent functions to the Prisma invites module.
+ * Database query functions for invite operations.
  * This serves as a reference for the actual implementations in
- * packages/lib/src/server/business/invites.ts which use the *Drizzle suffix.
+ * packages/lib/src/server/business/invites.ts
  */
 
 import { db } from "./db";

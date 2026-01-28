@@ -116,7 +116,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(vamsa_prisma_query_duration_ms_bucket[5m])) by (le, model))",
+          "expr": "histogram_quantile(0.95, sum(rate(vamsa_db_query_duration_ms_bucket[5m])) by (le, model))",
           "legendFormat": "{{model}}",
           "range": true,
           "refId": "A"
@@ -205,7 +205,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(vamsa_prisma_query_count[1m])) by (operation)",
+          "expr": "sum(rate(vamsa_db_query_count[1m])) by (operation)",
           "legendFormat": "{{operation}}",
           "range": true,
           "refId": "A"
@@ -272,7 +272,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(vamsa_prisma_slow_query_count)",
+          "expr": "sum(vamsa_db_slow_query_count)",
           "legendFormat": "Slow Queries",
           "range": true,
           "refId": "A"
@@ -331,7 +331,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(vamsa_prisma_query_count[1m]))",
+          "expr": "sum(rate(vamsa_db_query_count[1m]))",
           "legendFormat": "Queries/sec",
           "range": true,
           "refId": "A"
@@ -398,7 +398,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum(rate(vamsa_prisma_query_duration_ms_bucket[5m])) by (le))",
+          "expr": "histogram_quantile(0.95, sum(rate(vamsa_db_query_duration_ms_bucket[5m])) by (le))",
           "legendFormat": "P95",
           "range": true,
           "refId": "A"
@@ -465,7 +465,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(vamsa_prisma_error_count[5m])) / sum(rate(vamsa_prisma_query_count[5m]))",
+          "expr": "sum(rate(vamsa_db_error_count[5m])) / sum(rate(vamsa_db_query_count[5m]))",
           "legendFormat": "Error Rate",
           "range": true,
           "refId": "A"
@@ -554,7 +554,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(vamsa_prisma_error_count[5m])) by (error_type)",
+          "expr": "sum(rate(vamsa_db_error_count[5m])) by (error_type)",
           "legendFormat": "{{error_type}}",
           "range": true,
           "refId": "A"
@@ -625,7 +625,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "topk(10, histogram_quantile(0.95, sum(rate(vamsa_prisma_query_duration_ms_bucket[5m])) by (le, model, operation)))",
+          "expr": "topk(10, histogram_quantile(0.95, sum(rate(vamsa_db_query_duration_ms_bucket[5m])) by (le, model, operation)))",
           "legendFormat": "{{model}}.{{operation}}",
           "range": true,
           "refId": "A"
@@ -714,7 +714,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(vamsa_prisma_query_count[1m])) by (model)",
+          "expr": "sum(rate(vamsa_db_query_count[1m])) by (model)",
           "legendFormat": "{{model}}",
           "range": true,
           "refId": "A"
@@ -808,7 +808,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(vamsa_prisma_result_count_bucket[5m])) by (le)",
+          "expr": "sum(rate(vamsa_db_result_count_bucket[5m])) by (le)",
           "format": "heatmap",
           "legendFormat": "{{le}}",
           "range": true,
@@ -822,7 +822,7 @@
   "refresh": "30s",
   "schemaVersion": 38,
   "style": "dark",
-  "tags": ["vamsa", "database", "prisma", "postgresql"],
+  "tags": ["vamsa", "database", "drizzle", "postgresql"],
   "templating": {
     "list": [
       {
@@ -835,7 +835,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(vamsa_prisma_query_count, model)",
+        "definition": "label_values(vamsa_db_query_count, model)",
         "hide": 0,
         "includeAll": true,
         "label": "Model",
@@ -843,7 +843,7 @@
         "name": "model",
         "options": [],
         "query": {
-          "query": "label_values(vamsa_prisma_query_count, model)",
+          "query": "label_values(vamsa_db_query_count, model)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
@@ -862,7 +862,7 @@
           "type": "prometheus",
           "uid": "prometheus"
         },
-        "definition": "label_values(vamsa_prisma_query_count, operation)",
+        "definition": "label_values(vamsa_db_query_count, operation)",
         "hide": 0,
         "includeAll": true,
         "label": "Operation",
@@ -870,7 +870,7 @@
         "name": "operation",
         "options": [],
         "query": {
-          "query": "label_values(vamsa_prisma_query_count, operation)",
+          "query": "label_values(vamsa_db_query_count, operation)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,

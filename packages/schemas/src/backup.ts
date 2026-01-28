@@ -150,7 +150,7 @@ export type BackupValidationPreview = z.infer<
 >;
 export type ImportPreview = z.infer<typeof importPreviewSchema>;
 
-// Backup Settings schema (matches Prisma BackupSettings model)
+// Backup Settings schema (matches Drizzle BackupSettings model)
 export const storageProviderEnum = z.enum(["LOCAL", "S3", "R2", "B2"]);
 export const backupStatusEnum = z.enum([
   "PENDING",

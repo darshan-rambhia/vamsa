@@ -1,7 +1,7 @@
 /**
  * Drizzle ORM Schema - Enums
  *
- * All 15 enums from Prisma schema mapped to pgEnum
+ * All 15 database enums as pgEnum
  */
 
 import { pgEnum } from "drizzle-orm/pg-core";

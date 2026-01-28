@@ -59,7 +59,7 @@ jobs:
       - name: Install Playwright browsers
         run: bunx playwright install --with-deps chromium
 
-      - name: Generate Prisma Client
+      - name: Generate Drizzle migrations
         run: bun run db:generate
 
       - name: Run database migrations

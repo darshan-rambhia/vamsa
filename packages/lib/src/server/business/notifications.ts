@@ -140,7 +140,7 @@ export async function notifySuggestionCreated(suggestionId: string) {
       return;
     }
 
-    // TODO: Implement email sending logic similar to Prisma version
+    // TODO: Implement email sending logic
     log.info({ suggestionId }, "Suggestion created notification queued");
   } catch (error) {
     log.withErr(error).msg("Error notifying suggestion created");
@@ -174,7 +174,7 @@ export async function notifySuggestionUpdated(
       return;
     }
 
-    // TODO: Implement email sending logic similar to Prisma version
+    // TODO: Implement email sending logic
     log.info(
       { suggestionId, status },
       "Suggestion updated notification queued"
@@ -214,7 +214,7 @@ export async function notifyNewMemberJoined(userId: string) {
       return;
     }
 
-    // TODO: Implement email sending logic similar to Prisma version
+    // TODO: Implement email sending logic
     log.info({ userId }, "New member notification queued");
   } catch (error) {
     log.withErr(error).msg("Error notifying new member joined");
@@ -263,7 +263,7 @@ export async function sendBirthdayReminders() {
       return;
     }
 
-    // TODO: Implement email sending logic similar to Prisma version
+    // TODO: Implement email sending logic
     log.info(
       { count: peopleWithBirthdayToday.length },
       "Birthday reminders queued"

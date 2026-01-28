@@ -64,7 +64,7 @@ groups:
     rules:
       # Too many slow queries (>500ms)
       - alert: TooManySlowQueries
-        expr: sum(rate(vamsa_prisma_slow_query_count[5m])) > 0.5
+        expr: sum(rate(vamsa_db_slow_query_count[5m])) > 0.5
         for: 5m
         labels:
           severity: warning
@@ -78,8 +78,8 @@ groups:
       - alert: HighDatabaseErrorRate
         expr: |
           (
-            sum(rate(vamsa_prisma_error_count[5m])) /
-            sum(rate(vamsa_prisma_query_count[5m]))
+            sum(rate(vamsa_db_error_count[5m])) /
+            sum(rate(vamsa_db_query_count[5m]))
           ) > 0.01
         for: 5m
         labels:
@@ -94,7 +94,7 @@ groups:
       - alert: HighDatabaseQueryLatency
         expr: |
           histogram_quantile(0.95,
-            rate(vamsa_prisma_query_duration_ms_bucket[5m])
+            rate(vamsa_db_query_duration_ms_bucket[5m])
           ) > 500
         for: 10m
         labels:

@@ -4,7 +4,7 @@
 [![TanStack Start](https://img.shields.io/badge/TanStack-Start-blue?logo=react)](https://tanstack.com/start)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-runtime-f9f1e1?logo=bun)](https://bun.sh/)
-[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?logo=prisma)](https://www.prisma.io/)
+[![Drizzle](https://img.shields.io/badge/Drizzle-ORM-C5F74F?logo=drizzle)](https://orm.drizzle.team/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-336791?logo=postgresql)](https://www.postgresql.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
@@ -28,7 +28,7 @@ A modern web application for managing family genealogy with server-side renderin
 
 - **Framework**: TanStack Start (React + Vite via Vinxi)
 - **Backend API**: TanStack React Start server functions
-- **Database**: PostgreSQL 18 with Prisma ORM
+- **Database**: PostgreSQL 18 with Drizzle ORM
 - **Runtime**: Bun
 - **Monorepo**: Bun workspaces
 - **UI**: Tailwind CSS + shadcn/ui components
@@ -116,7 +116,7 @@ apps/
 
 packages/
   api/                   # Database layer
-    prisma/             # Schema & migrations
+    src/drizzle/        # Schema & migrations
     src/                # Database utilities
   lib/                   # Shared business logic
     src/
@@ -140,8 +140,8 @@ bun run lint               # Run ESLint
 ### Database
 
 ```bash
-bun run db:migrate      # Run Prisma migrations
-bun run db:studio       # Open Prisma Studio
+bun run db:migrate      # Run Drizzle migrations
+bun run db:studio       # Open Drizzle Studio
 bun run db:seed         # Seed initial data
 ```
 

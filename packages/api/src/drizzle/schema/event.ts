@@ -1,7 +1,7 @@
 /**
  * Drizzle ORM Schema - Event
  *
- * Maps Prisma Event, EventParticipant, EventSource, and EventMedia models
+ * Defines Event, EventParticipant, EventSource, and EventMedia models
  */
 
 import {

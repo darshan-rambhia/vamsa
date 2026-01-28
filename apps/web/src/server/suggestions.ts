@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireAuth } from "./middleware/require-auth";
 
-// Define JsonValue type locally since we're migrating away from Prisma
+// Define JsonValue type locally for JSON column handling
 type JsonValue =
   | string
   | number

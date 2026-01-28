@@ -128,12 +128,12 @@ This document provides response procedures for each alert defined in the Vamsa m
 
 4. **Check for N+1 query issues**
    - Review recent code changes for new database queries
-   - Check Prisma query logs
+   - Check Drizzle query logs
 
 #### Resolution
 
 1. **Add database indexes** for slow queries
-2. **Optimize queries** using Prisma includes/selects
+2. **Optimize queries** using Drizzle includes/selects
 3. **Add caching** for frequently accessed data
 4. **Scale horizontally** if under heavy load
 
@@ -217,8 +217,9 @@ This document provides response procedures for each alert defined in the Vamsa m
 
 1. **Add missing indexes**
 
-   ```prisma
-   @@index([fieldName])
+   ```typescript
+   // In Drizzle schema
+   index("field_idx").on(table.fieldName)
    ```
 
 2. **Optimize queries**

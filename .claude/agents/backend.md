@@ -1,6 +1,6 @@
 ---
 name: backend
-description: Use this agent when you need to implement server-side features including server actions, database models, migrations, and API logic. This agent handles all backend code following your project's patterns. Examples:\n\n<example>\nContext: Need to implement API endpoint for user creation\nuser: "We need a new endpoint to create users in the system."\nassistant: "I'll use the backend agent to create the server action, Zod schema, and database migration for user creation."\n<Task tool call to backend agent>\n</example>\n\n<example>\nContext: Database schema needs updating\nuser: "Add a new field 'preferences' to the Person model"\nassistant: "I'll use the backend agent to update the Prisma schema and create the migration."\n<Task tool call to backend agent>\n</example>
+description: Use this agent when you need to implement server-side features including server actions, database models, migrations, and API logic. This agent handles all backend code following your project's patterns. Examples:\n\n<example>\nContext: Need to implement API endpoint for user creation\nuser: "We need a new endpoint to create users in the system."\nassistant: "I'll use the backend agent to create the server action, Zod schema, and database migration for user creation."\n<Task tool call to backend agent>\n</example>\n\n<example>\nContext: Database schema needs updating\nuser: "Add a new field 'preferences' to the Person model"\nassistant: "I'll use the backend agent to update the Drizzle schema and create the migration."\n<Task tool call to backend agent>\n</example>
 model: haiku
 color: blue
 tools: Read, Write, Edit, Bash, Glob, Grep
@@ -33,7 +33,7 @@ bd status {bead-id} in_progress
 
 ```bash
 bd status {bead-id} ready
-bd comment {bead-id} --body "Backend implementation complete. Quality gates passed: prisma validate ✓, typecheck ✓, lint ✓, build ✓"
+bd comment {bead-id} --body "Backend implementation complete. Quality gates passed: typecheck ✓, lint ✓, build ✓"
 ```
 
 ## Implementation Patterns
@@ -76,9 +76,9 @@ export type ThingInput = z.infer<typeof thingSchema>;
 ### Database Changes
 
 ```bash
-# 1. Edit prisma/schema.prisma
+# 1. Edit packages/api/src/drizzle/schema/*.ts
 # 2. Run migration
-bunx prisma migrate dev --name descriptive_name
+bun run db:migrate
 ```
 
 ### Auth Helpers
@@ -92,7 +92,6 @@ import { requireAuth, requireAdmin, requireMember } from "@/lib/auth";
 Run BEFORE completing:
 
 ```bash
-bunx prisma validate
 bun run typecheck
 bun run lint
 bun run build

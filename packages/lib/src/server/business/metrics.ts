@@ -231,10 +231,10 @@ export async function getMetricsSnapshotData(): Promise<MetricSnapshot> {
     queryPrometheus("vamsa_http_active_connections"),
 
     // Database metrics
-    queryPrometheus("sum(rate(vamsa_prisma_query_count[1m]))"),
-    queryPrometheus("sum(vamsa_prisma_slow_query_count)"),
+    queryPrometheus("sum(rate(vamsa_db_query_count[1m]))"),
+    queryPrometheus("sum(vamsa_db_slow_query_count)"),
     queryPrometheus(
-      "histogram_quantile(0.95, sum(rate(vamsa_prisma_query_duration_ms_bucket[1m])) by (le))"
+      "histogram_quantile(0.95, sum(rate(vamsa_db_query_duration_ms_bucket[1m])) by (le))"
     ),
 
     // Application metrics

@@ -65,7 +65,7 @@ Packages:
   (none)    Test all packages
   lib       Test @vamsa/lib (business logic, utilities)
   ui        Test @vamsa/ui (UI components)
-  api       Test @vamsa/api (database/Prisma utilities)
+  api       Test @vamsa/api (database/Drizzle utilities)
   schemas   Test @vamsa/schemas (Zod schemas)
   web       Test @vamsa/web server code (server actions)
 

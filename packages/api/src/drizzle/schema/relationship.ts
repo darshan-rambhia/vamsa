@@ -1,7 +1,7 @@
 /**
  * Drizzle ORM Schema - Relationship
  *
- * Maps the Prisma Relationship model
+ * Defines the Relationship model for family connections
  */
 
 import {

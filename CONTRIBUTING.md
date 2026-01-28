@@ -107,7 +107,7 @@ vamsa/
 │       ├── e2e/          # End-to-end tests (Playwright)
 │       └── tests/        # Unit tests
 ├── packages/
-│   ├── api/              # Prisma schema, database client
+│   ├── api/              # Drizzle schema, database client
 │   ├── lib/              # Shared business logic and utilities
 │   ├── schemas/          # Shared Zod schemas
 │   └── ui/               # Shared UI components (shadcn/ui)
@@ -119,7 +119,7 @@ vamsa/
 
 - **Frontend**: React 19, TanStack Router, TanStack Query, React Flow
 - **Backend**: TanStack Start server functions, Hono (production server)
-- **Database**: PostgreSQL 18 with Prisma ORM
+- **Database**: PostgreSQL 18 with Drizzle ORM
 - **Styling**: Tailwind CSS, shadcn/ui components
 - **Testing**: Playwright (E2E), Vitest (Unit), @axe-core/playwright (Accessibility)
 - **Observability**: OpenTelemetry, Prometheus, Grafana
@@ -360,16 +360,16 @@ All PRs must pass:
 
 ## Database Changes
 
-### Working with Prisma
+### Working with Drizzle
 
-The database schema is in `packages/api/prisma/schema.prisma`.
+The database schema is in `packages/api/src/drizzle/schema/`.
 
 ### Making Schema Changes
 
 1. **Edit the schema**:
 
    ```bash
-   # Edit packages/api/prisma/schema.prisma
+   # Edit packages/api/src/drizzle/schema/*.ts
    ```
 
 2. **Create a migration**:
@@ -381,7 +381,7 @@ The database schema is in `packages/api/prisma/schema.prisma`.
    This will:
    - Create a new migration file
    - Apply the migration to your local database
-   - Regenerate the Prisma Client
+   - Regenerate the Drizzle client
 
 3. **Test your changes**:
    - Run the app and test functionality
@@ -389,7 +389,7 @@ The database schema is in `packages/api/prisma/schema.prisma`.
 
 4. **Commit the migration**:
    - Include both the schema changes AND the migration files
-   - Migration files are in `packages/api/prisma/migrations/`
+   - Migration files are in `packages/api/src/drizzle/migrations/`
 
 ### Database Best Practices
 
@@ -436,7 +436,7 @@ docker compose -f docker/docker-compose.yml down -v
 
 - Access PostgreSQL: `docker exec -it vamsa-postgres psql -U vamsa -d vamsa`
 - View container logs: `docker logs vamsa-web -f`
-- Inspect database: `bun run db:studio` (opens Prisma Studio)
+- Inspect database: `bun run db:studio` (opens Drizzle Studio)
 
 ## Observability
 

@@ -36,9 +36,9 @@ test-results
 *.tsbuildinfo
 next-env.d.ts
 
-# Prisma
-**/prisma/*.db
-**/prisma/*.db-journal
+# SQLite (legacy - can be removed if no longer used)
+**/*.db
+**/*.db-journal
 
 # Uploads (any data/uploads directory in the repo)
 **/data/uploads/*

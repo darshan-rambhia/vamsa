@@ -120,7 +120,7 @@ Frontend Agent (in parallel):
 Backend Agent (in parallel):
   1. Review bead requirements
   2. Implement actions, schemas, migrations
-  3. Run: prisma validate, typecheck, lint, build
+  3. Run: typecheck, lint, build
   4. Update status to `ready`
   5. Post completion comment
   ↓
@@ -350,12 +350,12 @@ Receive bead → Review requirements → Implement → Quality gates → Report 
 
 ### Backend Agent (claude-haiku-4)
 
-**Specialization:** TypeScript/Prisma server-side implementation
+**Specialization:** TypeScript/Drizzle server-side implementation
 
 **Capabilities:**
 
 - TanStack Start server functions
-- Prisma modeling
+- Drizzle modeling
 - Database migrations
 - Zod schema design
 - Auth/permission logic
@@ -366,7 +366,7 @@ Receive bead → Review requirements → Implement → Quality gates → Report 
 2. Design database models
 3. Create Zod schemas
 4. Handle migrations
-5. Run quality gates (prisma validate, typecheck, lint, build)
+5. Run quality gates (typecheck, lint, build)
 
 **Implementation:** See [`.claude/agents/backend.md`](../../.claude/agents/backend.md)
 
@@ -465,7 +465,7 @@ Each implements independently and runs:
 
 Backend additionally:
 
-- `bunx prisma validate` - Database schema integrity
+- Database schema validation via TypeScript types
 
 ### Phase 3 (Tester)
 

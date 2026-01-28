@@ -1,7 +1,7 @@
 /**
  * Drizzle ORM Schema - Place
  *
- * Maps Prisma Place and PlacePersonLink models
+ * Defines Place and PlacePersonLink models
  */
 
 import {

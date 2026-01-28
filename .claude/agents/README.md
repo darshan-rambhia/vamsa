@@ -31,7 +31,7 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
   - Create Zod schemas
   - Handle database migrations
   - Write API logic
-  - Quality gates: prisma validate, typecheck, lint, build
+  - Quality gates: typecheck, lint, build
 
 ### 3. **frontend.md** (Subagent)
 
@@ -136,7 +136,6 @@ bd comment {bead-id} --body "Work complete. Quality gates: [status]"
 ### Backend Agent
 
 ```bash
-bunx prisma validate  # Database schema valid
 bun run typecheck     # TypeScript checks
 bun run lint          # ESLint validation
 bun run build         # Production build succeeds
@@ -195,7 +194,7 @@ These agents work with:
 
 - **Framework**: Next.js 15
 - **Runtime**: Bun
-- **Database**: Prisma (PostgreSQL/SQLite)
+- **Database**: Drizzle (PostgreSQL)
 - **Auth**: NextAuth
 - **State**: TanStack Query
 - **UI**: React Flow, shadcn/ui

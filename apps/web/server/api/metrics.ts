@@ -64,11 +64,11 @@ const slowQueryStatsSchema = z
       example: 523,
     }),
     byModel: z.record(z.string(), z.number()).openapi({
-      description: "Count of slow queries by Prisma model",
+      description: "Count of slow queries by database model",
       example: { Person: 15, Event: 10 },
     }),
     byOperation: z.record(z.string(), z.number()).openapi({
-      description: "Count of slow queries by Prisma operation",
+      description: "Count of slow queries by database operation",
       example: { findMany: 20, findUnique: 10 },
     }),
     threshold_ms: z.number().openapi({

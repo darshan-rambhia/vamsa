@@ -1,7 +1,7 @@
 /**
  * Drizzle ORM Schema - Person
  *
- * Maps the Prisma Person model to Drizzle schema
+ * Defines the Person model for the genealogy database
  */
 
 import {

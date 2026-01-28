@@ -86,7 +86,7 @@ Reviewer: validates → closes bead
 **Allowed:**
 
 - ✓ Implement server functions, schemas, migrations
-- ✓ Run `pnpm db:generate` (Prisma generate)
+- ✓ Run `bun run db:generate` (Drizzle generate)
 - ✓ Run `pnpm typecheck`
 - ✓ Run `pnpm lint`
 - ✓ Run `pnpm build`

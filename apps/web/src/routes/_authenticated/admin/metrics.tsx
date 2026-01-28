@@ -360,7 +360,7 @@ function MetricsPage() {
                 />
                 <DashboardLink
                   name="Database Performance"
-                  description="Query duration, slow queries, Prisma metrics"
+                  description="Query duration, slow queries, database metrics"
                   href={`${prometheusStatus.grafanaUrl}/d/vamsa-db-perf`}
                 />
                 <DashboardLink

@@ -23,10 +23,10 @@ RUN bun install
 # Copy source code
 COPY . .
 
-# Generate Prisma client
+# Generate Drizzle client
 WORKDIR /app/packages/api
 ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
-RUN bunx prisma generate
+RUN bun run db:generate
 
 # Build the web app
 WORKDIR /app/apps/web
@@ -49,7 +49,7 @@ COPY packages/ui/package.json ./packages/ui/
 # Production dependencies only (excludes devDependencies)
 RUN bun install --production
 
-# Copy generated Prisma client
+# Copy generated Drizzle client
 COPY --from=builder /app/packages/api/src/generated ./packages/api/src/generated
 
 # =============================================================================

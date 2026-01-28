@@ -33,11 +33,11 @@ Update the backend to handle birthdays, death dates, marriage dates, and divorce
 
 ## Files to Modify
 
-- `prisma/schema.prisma` - Update date field types
+- `packages/api/src/drizzle/schema/` - Update date field types
 - `src/actions/person.ts` - Update person CRUD operations
 - `src/actions/relationship.ts` - Update relationship CRUD operations
 - `src/lib/utils.ts` - Update/add date handling utilities if needed
-- Create new migration file in `prisma/migrations/`
+- Create new migration file in `packages/api/src/drizzle/migrations/`
 
 ## Testing
 

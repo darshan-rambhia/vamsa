@@ -124,7 +124,7 @@ SELECT "emailType", COUNT(*) as count FROM "EmailLog" GROUP BY "emailType";
 | -------------------------------------- | --------------------------------------------- |
 | `packages/api/src/email/`              | Email service, templates, config              |
 | `apps/web/src/server/notifications.ts` | Server functions for notifications            |
-| `packages/api/prisma/schema.prisma`    | Database schema (EmailLog + User preferences) |
+| `packages/api/src/drizzle/schema/`     | Database schema (EmailLog + User preferences) |
 | `docs/EMAIL_NOTIFICATIONS.md`          | Full documentation                            |
 
 ## Next Steps

@@ -1,7 +1,7 @@
 /**
  * Drizzle ORM Schema - Backup
  *
- * Maps Prisma Backup and BackupSettings models
+ * Defines Backup and BackupSettings models
  */
 
 import {

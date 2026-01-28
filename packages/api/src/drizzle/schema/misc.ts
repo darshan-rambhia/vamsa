@@ -1,7 +1,7 @@
 /**
  * Drizzle ORM Schema - Miscellaneous
  *
- * Maps Prisma FamilySettings, AuditLog, Invite, Source, ResearchNote, EmailLog, and Suggestion models
+ * Defines FamilySettings, AuditLog, Invite, Source, ResearchNote, EmailLog, and Suggestion models
  */
 
 import {
