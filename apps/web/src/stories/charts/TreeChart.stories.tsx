@@ -8,7 +8,9 @@ import {
   DEEP_ANCESTRY,
   LONG_NAMES,
 } from "@vamsa/lib";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 export default {
   title: "Charts/TreeChart",
@@ -20,7 +22,7 @@ export const Default: Story = () => (
       nodes={SMALL_FAMILY.nodes}
       edges={SMALL_FAMILY.edges}
       onNodeClick={(id) =>
-        logger.info({ nodeId: id }, "Node clicked in TreeChart story")
+        log.info({ nodeId: id }, "Node clicked in TreeChart story")
       }
     />
   </StoryDecorator>
@@ -33,7 +35,7 @@ export const Empty: Story = () => (
       nodes={EMPTY_DATA.nodes}
       edges={EMPTY_DATA.edges}
       onNodeClick={(id) =>
-        logger.info({ nodeId: id }, "Node clicked in TreeChart story")
+        log.info({ nodeId: id }, "Node clicked in TreeChart story")
       }
     />
   </StoryDecorator>
@@ -46,7 +48,7 @@ export const LargeFamily: Story = () => (
       nodes={LARGE_FAMILY.nodes}
       edges={LARGE_FAMILY.edges}
       onNodeClick={(id) =>
-        logger.info({ nodeId: id }, "Node clicked in TreeChart story")
+        log.info({ nodeId: id }, "Node clicked in TreeChart story")
       }
     />
   </StoryDecorator>
@@ -59,7 +61,7 @@ export const DeepAncestryStory: Story = () => (
       nodes={DEEP_ANCESTRY.nodes}
       edges={DEEP_ANCESTRY.edges}
       onNodeClick={(id) =>
-        logger.info({ nodeId: id }, "Node clicked in TreeChart story")
+        log.info({ nodeId: id }, "Node clicked in TreeChart story")
       }
     />
   </StoryDecorator>
@@ -72,7 +74,7 @@ export const LongNamesStory: Story = () => (
       nodes={LONG_NAMES.nodes}
       edges={LONG_NAMES.edges}
       onNodeClick={(id) =>
-        logger.info({ nodeId: id }, "Node clicked in TreeChart story")
+        log.info({ nodeId: id }, "Node clicked in TreeChart story")
       }
     />
   </StoryDecorator>

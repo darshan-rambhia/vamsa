@@ -52,9 +52,9 @@ async function main() {
   logger.info("Syncing database schema...");
   await $`cd packages/api && bunx drizzle-kit push --force`;
 
-  // Seed database (ignore errors if already seeded)
-  logger.info("Seeding database...");
-  await $`bun run db:seed`.nothrow();
+  // Seed database with dev data (ignore errors if already seeded)
+  logger.info("Seeding database with dev data...");
+  await $`bun run db:seed:dev`.nothrow();
 
   // Start dev server
   logger.info("Starting development server...");

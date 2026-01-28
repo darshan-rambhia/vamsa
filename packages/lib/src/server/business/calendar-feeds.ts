@@ -15,11 +15,13 @@
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { eq, and, isNotNull, inArray } from "drizzle-orm";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import ical, {
   ICalEventRepeatingFreq,
   type ICalCalendar,
 } from "ical-generator";
+
+const log = loggers.db;
 // @ts-expect-error - rss package lacks type declarations
 import RSS from "rss";
 
@@ -90,7 +92,7 @@ export async function validateCalendarToken(
       },
     };
   } catch (error) {
-    logger.error({ error }, "Failed to validate calendar token");
+    log.withErr(error).msg("Failed to validate calendar token");
     return { valid: false, error: "Validation failed" };
   }
 }
@@ -343,7 +345,7 @@ function addBirthdayEvent(
       description: `${person.firstName} ${person.lastName}${person.isLiving ? `'s birthday. Currently ${age} years old.` : " (Deceased)."}`,
     });
   } catch (error) {
-    logger.warn({ error }, `Failed to create birthday event for ${person.id}`);
+    log.info({ error, personId: person.id }, "Failed to create birthday event");
   }
 }
 
@@ -486,9 +488,9 @@ function addAnniversaryEvent(
       description: `${marriage.person.firstName} ${marriage.person.lastName} and ${marriage.relatedPerson.firstName} ${marriage.relatedPerson.lastName}'s wedding anniversary. ${yearsMarried} years together.`,
     });
   } catch (error) {
-    logger.warn(
-      { error },
-      `Failed to create anniversary event for ${marriage.id}`
+    log.info(
+      { error, marriageId: marriage.id },
+      "Failed to create anniversary event"
     );
   }
 }
@@ -526,7 +528,7 @@ function addMemorialEvent(
       description: `Memorial date for ${person.firstName} ${person.lastName}. ${yearsSince} years since passing.`,
     });
   } catch (error) {
-    logger.warn({ error }, `Failed to create memorial event for ${person.id}`);
+    log.info({ error, personId: person.id }, "Failed to create memorial event");
   }
 }
 
@@ -622,6 +624,6 @@ function addFamilyEvent(
       categories: [{ name: "Event" }, { name: event.type }],
     });
   } catch (error) {
-    logger.warn({ error }, `Failed to create event for ${event.id}`);
+    log.info({ error, eventId: event.id }, "Failed to create event");
   }
 }

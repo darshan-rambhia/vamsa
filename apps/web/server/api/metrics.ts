@@ -3,13 +3,15 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
 import { drizzleDb, getDrizzlePoolStats } from "@vamsa/api";
 import { sql } from "drizzle-orm";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import {
   getSlowQueries,
   getSlowQueryStats,
   clearSlowQueries,
   SLOW_QUERY_LOG_THRESHOLD_MS,
 } from "../metrics/slow-query-logger";
+
+const log = loggers.api;
 
 const metricsRouter = new OpenAPIHono();
 
@@ -175,7 +177,7 @@ metricsRouter.openapi(slowQueriesRoute, (c) => {
       queries,
     });
   } catch (error) {
-    logger.error({ error }, "Error fetching slow queries");
+    log.withErr(error).msg("Error fetching slow queries");
     return c.json(
       { error: "Failed to fetch slow queries" },
       { status: 500 }
@@ -224,7 +226,7 @@ metricsRouter.openapi(slowQueryStatsRoute, (c) => {
       threshold_ms: SLOW_QUERY_LOG_THRESHOLD_MS,
     });
   } catch (error) {
-    logger.error({ error }, "Error fetching slow query stats");
+    log.withErr(error).msg("Error fetching slow query stats");
     return c.json(
       { error: "Failed to fetch slow query statistics" },
       { status: 500 }
@@ -280,14 +282,14 @@ metricsRouter.openapi(clearSlowQueriesRoute, (c) => {
     const previousCount = getSlowQueries(100).length;
     clearSlowQueries();
 
-    logger.info({ previousCount }, "Slow query buffer cleared");
+    log.info({ previousCount }, "Slow query buffer cleared");
 
     return c.json({
       success: true,
       cleared_count: previousCount,
     });
   } catch (error) {
-    logger.error({ error }, "Error clearing slow queries");
+    log.withErr(error).msg("Error clearing slow queries");
     return c.json(
       { error: "Failed to clear slow queries" },
       { status: 500 }
@@ -349,13 +351,12 @@ metricsRouter.openapi(dbHealthRoute, async (c) => {
   } catch (error) {
     const latency = Date.now() - start;
 
-    logger.error(
-      {
-        error: error instanceof Error ? error.message : "Unknown error",
+    log
+      .withErr(error)
+      .ctx({
         latency_ms: latency,
-      },
-      "Database health check failed"
-    );
+      })
+      .msg("Database health check failed");
 
     return c.json(
       {
@@ -423,7 +424,7 @@ metricsRouter.openapi(dbPoolRoute, async (c) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    logger.error({ error }, "Error fetching pool stats");
+    log.withErr(error).msg("Error fetching pool stats");
     return c.json(
       { error: "Failed to fetch pool statistics" },
       { status: 500 }

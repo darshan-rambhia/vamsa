@@ -1,6 +1,8 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { eq, and, or, ilike, desc, asc, sql, SQL } from "drizzle-orm";
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 import { createPaginationMeta } from "@vamsa/schemas";
 import { t } from "../i18n";
 import { recordSearchMetrics } from "../metrics";
@@ -46,10 +48,7 @@ export async function logAuditAction(
       newData: newData as Record<string, unknown> | null,
     });
   } catch (error) {
-    logger.error(
-      { error: serializeError(error) },
-      "Failed to log audit action"
-    );
+    log.withErr(error).msg("Failed to log audit action");
   }
 }
 

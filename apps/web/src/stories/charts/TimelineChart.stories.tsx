@@ -2,7 +2,9 @@ import type { Story } from "@ladle/react";
 import { TimelineChart } from "~/components/charts/TimelineChart";
 import { StoryDecorator } from "~/stories/decorators";
 import { createTimelineEntries } from "@vamsa/lib";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 export default {
   title: "Charts/TimelineChart",
@@ -25,7 +27,7 @@ export const Default: Story = () => {
         minYear={minYear}
         maxYear={maxYear}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in TimelineChart story")
+          log.info({ nodeId: id }, "Node clicked in TimelineChart story")
         }
       />
     </StoryDecorator>
@@ -46,7 +48,7 @@ export const Century: Story = () => {
         minYear={minYear}
         maxYear={maxYear}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in TimelineChart story")
+          log.info({ nodeId: id }, "Node clicked in TimelineChart story")
         }
       />
     </StoryDecorator>
@@ -67,7 +69,7 @@ export const ThreeCenturies: Story = () => {
         minYear={minYear}
         maxYear={maxYear}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in TimelineChart story")
+          log.info({ nodeId: id }, "Node clicked in TimelineChart story")
         }
       />
     </StoryDecorator>
@@ -90,7 +92,7 @@ export const NoDates: Story = () => {
         minYear={1900}
         maxYear={2000}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in TimelineChart story")
+          log.info({ nodeId: id }, "Node clicked in TimelineChart story")
         }
       />
     </StoryDecorator>
@@ -115,7 +117,7 @@ export const AllLiving: Story = () => {
         minYear={currentYear - 80}
         maxYear={currentYear}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in TimelineChart story")
+          log.info({ nodeId: id }, "Node clicked in TimelineChart story")
         }
       />
     </StoryDecorator>

@@ -11,7 +11,9 @@ import {
   updateRelationshipData as serverUpdateRelationship,
   deleteRelationshipData as serverDeleteRelationship,
 } from "@vamsa/lib/server/business";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 const relationshipsRouter = new OpenAPIHono();
 
@@ -181,7 +183,7 @@ relationshipsRouter.openapi(listRelationshipsRoute, async (c) => {
       { status: 200 as const }
     );
   } catch (error) {
-    logger.error({ error }, "Error listing relationships");
+    log.withErr(error).msg("Error listing relationships");
     return c.json(
       { error: "Failed to list relationships" },
       { status: 500 as const }
@@ -289,7 +291,7 @@ relationshipsRouter.openapi(createRelationshipRoute, async (c) => {
       }
     }
 
-    logger.error({ error }, "Error creating relationship");
+    log.withErr(error).msg("Error creating relationship");
     return c.json(
       { error: "Failed to create relationship" },
       { status: 500 }
@@ -375,7 +377,7 @@ relationshipsRouter.openapi(getRelationshipRoute, async (c) => {
 
     return c.json({ error: "Not implemented" }, { status: 501 });
   } catch (error) {
-    logger.error({ error }, "Error getting relationship");
+    log.withErr(error).msg("Error getting relationship");
     return c.json({ error: "Failed to get relationship" }, { status: 500 });
   }
 });
@@ -510,7 +512,7 @@ relationshipsRouter.openapi(updateRelationshipRoute, async (c) => {
       return c.json({ error: "Unauthorized" }, { status: 401 }) as any;
     }
 
-    logger.error({ error }, "Error updating relationship");
+    log.withErr(error).msg("Error updating relationship");
     return c.json(
       { error: "Failed to update relationship" },
       { status: 500 }
@@ -600,7 +602,7 @@ relationshipsRouter.openapi(deleteRelationshipRoute, async (c) => {
       return c.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    logger.error({ error }, "Error deleting relationship");
+    log.withErr(error).msg("Error deleting relationship");
     return c.json({ error: "Failed to delete relationship" }, { status: 500 });
   }
 });

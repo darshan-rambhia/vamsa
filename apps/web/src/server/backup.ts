@@ -25,8 +25,10 @@ import {
   type ListBackupsInput,
   type Backup,
 } from "@vamsa/schemas";
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import { requireAuth } from "./middleware/require-auth";
+
+const log = loggers.db;
 import {
   gatherBackupData,
   createBackupArchive,
@@ -122,10 +124,7 @@ export const exportBackup = createServerFn({ method: "POST" })
         });
       } catch (err) {
         // Log audit error but don't fail the export
-        logger.error(
-          { error: serializeError(err) },
-          "Failed to create audit log for backup export"
-        );
+        log.withErr(err).msg("Failed to create audit log for backup export");
       }
 
       return {
@@ -311,10 +310,7 @@ export const deleteBackup = createServerFn({ method: "POST" })
         },
       });
     } catch (err) {
-      logger.error(
-        { error: serializeError(err) },
-        "Failed to create audit log for backup deletion"
-      );
+      log.withErr(err).msg("Failed to create audit log for backup deletion");
     }
 
     return {
@@ -463,7 +459,7 @@ export const scheduleBackup = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const user = await requireAuth("ADMIN");
 
-    logger.info({ updatedBy: user.id }, "Updating backup settings");
+    log.info({ updatedBy: user.id }, "Updating backup settings");
 
     // Schedule backup jobs
     await scheduleBackupJob(data, user.id);
@@ -503,7 +499,7 @@ export const scheduleBackup = createServerFn({ method: "POST" })
         .where(eq(drizzleSchema.backupSettings.id, existing.id))
         .returning();
 
-      logger.info({ settingsId: updated.id }, "Backup settings updated");
+      log.info({ settingsId: updated.id }, "Backup settings updated");
       return { success: true, id: updated.id };
     } else {
       const [created] = await drizzleDb
@@ -535,7 +531,7 @@ export const scheduleBackup = createServerFn({ method: "POST" })
         })
         .returning();
 
-      logger.info({ settingsId: created.id }, "Backup settings created");
+      log.info({ settingsId: created.id }, "Backup settings created");
       return { success: true, id: created.id };
     }
   });

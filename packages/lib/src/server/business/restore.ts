@@ -6,7 +6,9 @@ import type {
   ImportPreview,
   ConflictResolutionStrategy,
 } from "@vamsa/schemas";
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 
 /**
  * User type for restore functions
@@ -70,7 +72,7 @@ export async function validateBackupData(
       warnings: [],
     } as ValidationResult;
   } catch (error) {
-    logger.error({ error: serializeError(error) }, "Backup validation error");
+    log.withErr(error).msg("Backup validation error");
     throw new Error(
       `Validation failed: ${error instanceof Error ? error.message : "Unknown error"}`
     );
@@ -146,7 +148,7 @@ export async function previewImportData(user: User): Promise<ImportPreview> {
       },
     } as ImportPreview;
   } catch (error) {
-    logger.error({ error: serializeError(error) }, "Import preview error");
+    log.withErr(error).msg("Import preview error");
     throw new Error(
       `Preview failed: ${error instanceof Error ? error.message : "Unknown error"}`
     );
@@ -231,7 +233,7 @@ export async function importBackupData(
 
     return result;
   } catch (error) {
-    logger.error({ error: serializeError(error) }, "Backup import error");
+    log.withErr(error).msg("Backup import error");
 
     // Log failed import attempt
     try {
@@ -247,10 +249,7 @@ export async function importBackupData(
         },
       });
     } catch (logError) {
-      logger.error(
-        { error: serializeError(logError) },
-        "Failed to log import error"
-      );
+      log.withErr(logError).msg("Failed to log import error");
     }
 
     throw new Error(
@@ -311,10 +310,7 @@ export async function getImportHistoryData(user: User): Promise<
       };
     });
   } catch (error) {
-    logger.error(
-      { error: serializeError(error) },
-      "Import history retrieval error"
-    );
+    log.withErr(error).msg("Import history retrieval error");
     throw new Error(
       `History retrieval failed: ${error instanceof Error ? error.message : "Unknown error"}`
     );

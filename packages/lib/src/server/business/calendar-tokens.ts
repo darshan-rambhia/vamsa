@@ -1,5 +1,7 @@
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import { addYears } from "date-fns";
+
+const log = loggers.auth;
 
 import {
   generateSecureToken,
@@ -70,7 +72,7 @@ export async function createCalendarTokenData(
     })
     .returning();
 
-  logger.info(
+  log.info(
     { userId, tokenId, tokenName: created.name },
     "Calendar token created"
   );
@@ -116,7 +118,7 @@ export async function rotateCalendarTokenData(tokenId: string, userId: string) {
 
   const newToken = await rotateToken(tokenId);
 
-  logger.info(
+  log.info(
     { userId, oldTokenId: tokenId, newTokenId: newToken.id },
     "Calendar token rotated manually"
   );
@@ -137,7 +139,7 @@ export async function revokeCalendarTokenData(tokenId: string, userId: string) {
 
   const revokedToken = await revokeToken(tokenId);
 
-  logger.info({ userId, tokenId }, "Calendar token revoked");
+  log.info({ userId, tokenId }, "Calendar token revoked");
 
   return revokedToken;
 }
@@ -170,10 +172,7 @@ export async function updateTokenNameData(
       name: drizzleSchema.calendarTokens.name,
     });
 
-  logger.info(
-    { userId, tokenId, newName: name },
-    "Calendar token name updated"
-  );
+  log.info({ userId, tokenId, newName: name }, "Calendar token name updated");
 
   return {
     id: updatedToken.id,
@@ -208,7 +207,7 @@ export async function deleteCalendarTokenData(
     .delete(drizzleSchema.calendarTokens)
     .where(eq(drizzleSchema.calendarTokens.id, tokenId));
 
-  logger.info({ userId, tokenId }, "Calendar token permanently deleted");
+  log.info({ userId, tokenId }, "Calendar token permanently deleted");
 
   return { success: true, deletedId: tokenId };
 }

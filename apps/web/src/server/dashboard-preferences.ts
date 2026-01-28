@@ -1,7 +1,9 @@
 "use server";
 
 import { createServerFn } from "@tanstack/react-start";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 import {
   dashboardPreferencesSchema,
   saveDashboardPreferencesSchema,
@@ -41,7 +43,7 @@ export const getDashboardPreferences = createServerFn({
 }).handler(async () => {
   try {
     const user = await requireAuth();
-    logger.debug({ userId: user.id }, "Fetching dashboard preferences");
+    log.info({ userId: user.id }, "Fetching dashboard preferences");
 
     const [preferences] = await drizzleDb
       .select()
@@ -50,10 +52,7 @@ export const getDashboardPreferences = createServerFn({
       .limit(1);
 
     if (!preferences) {
-      logger.debug(
-        { userId: user.id },
-        "No preferences found, returning defaults"
-      );
+      log.info({ userId: user.id }, "No preferences found, returning defaults");
       const defaultPrefs: DashboardPreferences = {
         layout: DEFAULT_DASHBOARD_LAYOUT,
         widgets: DEFAULT_DASHBOARD_WIDGETS,
@@ -67,14 +66,14 @@ export const getDashboardPreferences = createServerFn({
       widgets: preferences.widgets as unknown[],
     });
 
-    logger.debug(
+    log.info(
       { userId: user.id, widgetCount: parsed.widgets.length },
       "Dashboard preferences retrieved"
     );
 
     return parsed;
   } catch (error) {
-    logger.error({ error }, "getDashboardPreferences failed");
+    log.withErr(error).msg("getDashboardPreferences failed");
     throw error;
   }
 });
@@ -104,7 +103,7 @@ export const saveDashboardPreferences = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     try {
       const user = await requireAuth();
-      logger.debug({ userId: user.id }, "Saving dashboard preferences");
+      log.info({ userId: user.id }, "Saving dashboard preferences");
 
       // Get existing preferences or create new
       const [existing] = await drizzleDb
@@ -141,7 +140,7 @@ export const saveDashboardPreferences = createServerFn({ method: "POST" })
           .where(eq(drizzleSchema.dashboardPreferences.userId, user.id));
 
         savedPreferences = parsed;
-        logger.debug({ userId: user.id }, "Dashboard preferences updated");
+        log.info({ userId: user.id }, "Dashboard preferences updated");
       } else {
         // Create new preferences
         const layout = data.layout ?? DEFAULT_DASHBOARD_LAYOUT;
@@ -162,12 +161,12 @@ export const saveDashboardPreferences = createServerFn({ method: "POST" })
         });
 
         savedPreferences = parsed;
-        logger.debug({ userId: user.id }, "Dashboard preferences created");
+        log.info({ userId: user.id }, "Dashboard preferences created");
       }
 
       return savedPreferences;
     } catch (error) {
-      logger.error({ error }, "saveDashboardPreferences failed");
+      log.withErr(error).msg("saveDashboardPreferences failed");
       throw error;
     }
   });
@@ -192,7 +191,7 @@ export const resetDashboardPreferences = createServerFn({
 }).handler(async () => {
   try {
     const user = await requireAuth();
-    logger.debug({ userId: user.id }, "Resetting dashboard preferences");
+    log.info({ userId: user.id }, "Resetting dashboard preferences");
 
     // Delete existing preferences
     await drizzleDb
@@ -204,14 +203,11 @@ export const resetDashboardPreferences = createServerFn({
       widgets: DEFAULT_DASHBOARD_WIDGETS,
     };
 
-    logger.debug(
-      { userId: user.id },
-      "Dashboard preferences reset to defaults"
-    );
+    log.info({ userId: user.id }, "Dashboard preferences reset to defaults");
 
     return defaultPrefs;
   } catch (error) {
-    logger.error({ error }, "resetDashboardPreferences failed");
+    log.withErr(error).msg("resetDashboardPreferences failed");
     throw error;
   }
 });

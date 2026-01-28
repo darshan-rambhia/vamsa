@@ -19,7 +19,9 @@
  * - sendBirthdayReminders: Sends birthday reminder emails for today's birthdays
  */
 
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.email;
 
 /**
  * Get user's email notification preferences
@@ -124,7 +126,7 @@ export async function notifySuggestionCreated(suggestionId: string) {
     });
 
     if (!suggestion) {
-      logger.error({ suggestionId }, "Suggestion not found for notification");
+      log.info({ suggestionId }, "Suggestion not found for notification");
       return;
     }
 
@@ -134,17 +136,14 @@ export async function notifySuggestionCreated(suggestionId: string) {
     });
 
     if (admins.length === 0) {
-      logger.warn("No admins found to notify");
+      log.info({}, "No admins found to notify");
       return;
     }
 
     // TODO: Implement email sending logic similar to Prisma version
-    logger.info({ suggestionId }, "Suggestion created notification queued");
+    log.info({ suggestionId }, "Suggestion created notification queued");
   } catch (error) {
-    logger.error(
-      { error: serializeError(error) },
-      "Error notifying suggestion created"
-    );
+    log.withErr(error).msg("Error notifying suggestion created");
   }
 }
 
@@ -168,7 +167,7 @@ export async function notifySuggestionUpdated(
     });
 
     if (!suggestion) {
-      logger.error(
+      log.info(
         { suggestionId },
         "Suggestion not found for update notification"
       );
@@ -176,15 +175,12 @@ export async function notifySuggestionUpdated(
     }
 
     // TODO: Implement email sending logic similar to Prisma version
-    logger.info(
+    log.info(
       { suggestionId, status },
       "Suggestion updated notification queued"
     );
   } catch (error) {
-    logger.error(
-      { error: serializeError(error) },
-      "Error notifying suggestion updated"
-    );
+    log.withErr(error).msg("Error notifying suggestion updated");
   }
 }
 
@@ -204,7 +200,7 @@ export async function notifyNewMemberJoined(userId: string) {
     });
 
     if (!newMember) {
-      logger.error({ userId }, "User not found for new member notification");
+      log.info({ userId }, "User not found for new member notification");
       return;
     }
 
@@ -214,17 +210,14 @@ export async function notifyNewMemberJoined(userId: string) {
     });
 
     if (members.length === 0) {
-      logger.warn("No members found to notify");
+      log.info({}, "No members found to notify");
       return;
     }
 
     // TODO: Implement email sending logic similar to Prisma version
-    logger.info({ userId }, "New member notification queued");
+    log.info({ userId }, "New member notification queued");
   } catch (error) {
-    logger.error(
-      { error: serializeError(error) },
-      "Error notifying new member joined"
-    );
+    log.withErr(error).msg("Error notifying new member joined");
   }
 }
 
@@ -266,19 +259,16 @@ export async function sendBirthdayReminders() {
     });
 
     if (!systemUser) {
-      logger.warn("No system user found for birthday reminders");
+      log.info({}, "No system user found for birthday reminders");
       return;
     }
 
     // TODO: Implement email sending logic similar to Prisma version
-    logger.info(
+    log.info(
       { count: peopleWithBirthdayToday.length },
       "Birthday reminders queued"
     );
   } catch (error) {
-    logger.error(
-      { error: serializeError(error) },
-      "Error sending birthday reminders"
-    );
+    log.withErr(error).msg("Error sending birthday reminders");
   }
 }

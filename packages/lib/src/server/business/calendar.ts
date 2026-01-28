@@ -19,7 +19,9 @@
 import { randomBytes } from "crypto";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { eq, desc } from "drizzle-orm";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 
 /**
  * Generate a new calendar token with expiration
@@ -72,7 +74,7 @@ export async function generateCalendarTokenLogic(
     },
   });
 
-  logger.info(`Calendar token generated for user ${userId}`);
+  log.info({ userId }, "Calendar token generated");
 
   return {
     success: true,
@@ -114,7 +116,7 @@ export async function validateCalendarTokenLogic(token: string) {
       },
     };
   } catch (error) {
-    logger.error({ error }, "Failed to validate calendar token");
+    log.withErr(error).msg("Failed to validate calendar token");
     return { valid: false, user: null };
   }
 }
@@ -158,7 +160,7 @@ export async function revokeCalendarTokenLogic(
     entityId: calendarToken.id,
   });
 
-  logger.info(`Calendar token revoked for user ${userId}`);
+  log.info({ userId }, "Calendar token revoked");
 
   return { success: true };
 }
@@ -234,7 +236,7 @@ export async function deleteCalendarTokenLogic(
     entityId: calendarToken.id,
   });
 
-  logger.info(`Calendar token deleted for user ${userId}`);
+  log.info({ userId }, "Calendar token deleted");
 
   return { success: true };
 }

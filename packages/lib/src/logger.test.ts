@@ -73,7 +73,7 @@ describe("Logger", () => {
     it("should support logging with request context", () => {
       const requestLogger = createRequestLogger("req-456");
       expect(() => {
-        requestLogger.info("Processing request");
+        requestLogger.info({ path: "/api/test" }, "Processing request");
       }).not.toThrow();
     });
   });
@@ -107,10 +107,10 @@ describe("Logger", () => {
       expect(serialized.stack).toBeDefined();
     });
 
-    it("should return unknown values as-is", () => {
+    it("should wrap unknown values in value property", () => {
       const value = "not an error";
       const serialized = serializeError(value);
-      expect(serialized).toBe(value);
+      expect(serialized).toEqual({ value: "not an error" });
     });
 
     it("should handle Error with cause", () => {

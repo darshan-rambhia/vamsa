@@ -1,4 +1,6 @@
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 
 /**
  * Source details with related data
@@ -864,10 +866,7 @@ export async function getPersonSourcesData(
 
     return groupedSources;
   } catch (error) {
-    logger.error(
-      { error: serializeError(error), personId },
-      "Error fetching person sources"
-    );
+    log.withErr(error).ctx({ personId }).msg("Error fetching person sources");
     throw new Error("Failed to fetch person sources");
   }
 }
@@ -942,10 +941,10 @@ export async function generateCitationData(
       citation,
     };
   } catch (error) {
-    logger.error(
-      { error: serializeError(error), sourceId, format },
-      "Error generating citation"
-    );
+    log
+      .withErr(error)
+      .ctx({ sourceId, format })
+      .msg("Error generating citation");
     throw new Error("Failed to generate citation");
   }
 }

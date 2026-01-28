@@ -1,11 +1,13 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { eq, and } from "drizzle-orm";
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import type {
   RelationshipCreateInput,
   RelationshipType,
   RelationshipUpdateInput,
 } from "@vamsa/schemas";
+
+const log = loggers.db;
 
 /**
  * List relationships for a person with optional filtering.
@@ -53,10 +55,10 @@ export async function listRelationshipsData(
       },
     }));
   } catch (error) {
-    logger.error(
-      { personId, type, error: serializeError(error) },
-      "Failed to list relationships"
-    );
+    log
+      .withErr(error)
+      .ctx({ personId, type })
+      .msg("Failed to list relationships");
     throw error;
   }
 }
@@ -98,10 +100,10 @@ export async function getRelationshipData(relationshipId: string) {
       },
     };
   } catch (error) {
-    logger.error(
-      { relationshipId, error: serializeError(error) },
-      "Failed to get relationship"
-    );
+    log
+      .withErr(error)
+      .ctx({ relationshipId })
+      .msg("Failed to get relationship");
     throw error;
   }
 }
@@ -152,15 +154,10 @@ async function ensureBidirectional(
       updatedAt: new Date(),
     });
   } catch (error) {
-    logger.error(
-      {
-        personId,
-        relatedPersonId,
-        type,
-        error: serializeError(error),
-      },
-      "Failed to ensure bidirectional relationship"
-    );
+    log
+      .withErr(error)
+      .ctx({ personId, relatedPersonId, type })
+      .msg("Failed to ensure bidirectional relationship");
     throw error;
   }
 }
@@ -242,10 +239,7 @@ export async function createRelationshipData(input: RelationshipCreateInput) {
 
     return { id: relationshipId };
   } catch (error) {
-    logger.error(
-      { input, error: serializeError(error) },
-      "Failed to create relationship"
-    );
+    log.withErr(error).ctx({ input }).msg("Failed to create relationship");
     throw error;
   }
 }
@@ -321,10 +315,10 @@ export async function updateRelationshipData(
 
     return { id: relationshipId };
   } catch (error) {
-    logger.error(
-      { relationshipId, input, error: serializeError(error) },
-      "Failed to update relationship"
-    );
+    log
+      .withErr(error)
+      .ctx({ relationshipId, input })
+      .msg("Failed to update relationship");
     throw error;
   }
 }
@@ -384,10 +378,10 @@ export async function deleteRelationshipData(relationshipId: string) {
 
     return { success: true };
   } catch (error) {
-    logger.error(
-      { relationshipId, error: serializeError(error) },
-      "Failed to delete relationship"
-    );
+    log
+      .withErr(error)
+      .ctx({ relationshipId })
+      .msg("Failed to delete relationship");
     throw error;
   }
 }

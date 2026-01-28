@@ -21,6 +21,8 @@ import {
 } from "./token-rotation";
 import {
   mockLogger,
+  mockLoggers,
+  mockLog,
   mockSerializeError,
   mockCreateContextLogger,
   mockCreateRequestLogger,
@@ -30,6 +32,8 @@ import {
 // Mock logger to avoid console output during tests
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
+  loggers: mockLoggers,
+  log: mockLog,
   serializeError: mockSerializeError,
   createContextLogger: mockCreateContextLogger,
   createRequestLogger: mockCreateRequestLogger,

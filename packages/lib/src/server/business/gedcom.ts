@@ -6,12 +6,14 @@
  * and interact with the Drizzle ORM database.
  */
 
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import {
   recordGedcomImport,
   recordGedcomExport,
   recordGedcomValidation,
 } from "../metrics";
+
+const log = loggers.db;
 import type { VamsaPerson, VamsaRelationship } from "@vamsa/lib";
 import archiver from "archiver";
 import * as fs from "fs";
@@ -170,7 +172,7 @@ export async function validateGedcomImport(
       },
     };
   } catch (error) {
-    logger.error({ error: serializeError(error) }, "GEDCOM validation error");
+    log.withErr(error).msg("GEDCOM validation error");
     recordGedcomValidation(false, 1, Date.now() - start);
 
     return {
@@ -330,7 +332,7 @@ export async function importGedcomData(
       })),
     };
   } catch (error) {
-    logger.error({ error: serializeError(error) }, "GEDCOM import error");
+    log.withErr(error).msg("GEDCOM import error");
 
     // Record failed import
     recordGedcomImport(0, 0, Date.now() - start, 1);
@@ -413,7 +415,7 @@ export async function exportGedcomData(userId: string): Promise<ExportResult> {
       gedcomContent,
     };
   } catch (error) {
-    logger.error({ error: serializeError(error) }, "GEDCOM export error");
+    log.withErr(error).msg("GEDCOM export error");
     return {
       success: false,
       message: error instanceof Error ? error.message : "Export failed",
@@ -512,7 +514,7 @@ export async function exportGedcomDataZip(
           includedMedia.push(archivePath);
           totalMediaSize += media.fileSize;
         } else {
-          logger.warn({ filePath }, "Media file not found for GEDZip export");
+          log.info({ filePath }, "Media file not found for GEDZip export");
         }
       }
     }
@@ -582,7 +584,7 @@ export async function exportGedcomDataZip(
       },
     };
   } catch (error) {
-    logger.error({ error: serializeError(error) }, "GEDZip export error");
+    log.withErr(error).msg("GEDZip export error");
     return {
       success: false,
       message: error instanceof Error ? error.message : "Export failed",

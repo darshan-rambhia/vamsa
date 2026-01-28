@@ -1,5 +1,7 @@
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import type { UserRole } from "@vamsa/schemas";
+
+const log = loggers.db;
 
 /**
  * Family settings data transfer object
@@ -41,7 +43,7 @@ export async function getFamilySettingsData(): Promise<FamilySettingsData> {
   const settings = await drizzleDb.query.familySettings.findFirst();
 
   if (!settings) {
-    logger.debug("No family settings found, returning defaults");
+    log.debug({}, "No family settings found, returning defaults");
     return {
       id: null,
       familyName: "Our Family",
@@ -82,7 +84,7 @@ export async function updateFamilySettingsData(
   const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
   const { eq } = await import("drizzle-orm");
 
-  logger.info(
+  log.info(
     { userId, userRole, updates: Object.keys(data) },
     "Updating family settings"
   );
@@ -109,7 +111,7 @@ export async function updateFamilySettingsData(
       .returning();
 
     settings = updated;
-    logger.info({ settingsId: settings.id }, "Family settings updated");
+    log.info({ settingsId: settings.id }, "Family settings updated");
   } else {
     // Create new settings
     const newId = crypto.randomUUID();
@@ -128,7 +130,7 @@ export async function updateFamilySettingsData(
       .returning();
 
     settings = created;
-    logger.info({ settingsId: settings.id }, "Family settings created");
+    log.info({ settingsId: settings.id }, "Family settings created");
   }
 
   return {
@@ -161,7 +163,7 @@ export async function getUserLanguagePreferenceData(
   });
 
   if (!userData) {
-    logger.warn({ userId }, "User not found when fetching language preference");
+    log.info({ userId }, "User not found when fetching language preference");
     throw new Error("User not found");
   }
 
@@ -194,7 +196,7 @@ export async function setUserLanguagePreferenceData(
       preferredLanguage: drizzleSchema.users.preferredLanguage,
     });
 
-  logger.info({ userId, language }, "Language preference updated");
+  log.info({ userId, language }, "Language preference updated");
 
   return updated.preferredLanguage ?? "en";
 }

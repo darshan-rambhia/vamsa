@@ -56,7 +56,13 @@ yarn.lock
 
 # IDE
 .idea
-.vscode
+
+# VS Code (allow shared settings, ignore personal/local files)
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
 
 # Ladle cache
 apps/web/.ladle/.cache

@@ -2,7 +2,9 @@ import type { Story } from "@ladle/react";
 import { RelationshipMatrix } from "~/components/charts/RelationshipMatrix";
 import { StoryDecorator } from "~/stories/decorators";
 import { createMatrixData } from "@vamsa/lib";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 export default {
   title: "Charts/RelationshipMatrix",
@@ -17,10 +19,7 @@ export const Default: Story = () => {
         people={people}
         matrix={matrix}
         onNodeClick={(id) =>
-          logger.info(
-            { nodeId: id },
-            "Node clicked in RelationshipMatrix story"
-          )
+          log.info({ nodeId: id }, "Node clicked in RelationshipMatrix story")
         }
       />
     </StoryDecorator>
@@ -38,10 +37,7 @@ export const Small: Story = () => {
         people={people}
         matrix={matrix}
         onNodeClick={(id) =>
-          logger.info(
-            { nodeId: id },
-            "Node clicked in RelationshipMatrix story"
-          )
+          log.info({ nodeId: id }, "Node clicked in RelationshipMatrix story")
         }
       />
     </StoryDecorator>
@@ -59,10 +55,7 @@ export const Large: Story = () => {
         people={people}
         matrix={matrix}
         onNodeClick={(id) =>
-          logger.info(
-            { nodeId: id },
-            "Node clicked in RelationshipMatrix story"
-          )
+          log.info({ nodeId: id }, "Node clicked in RelationshipMatrix story")
         }
       />
     </StoryDecorator>
@@ -85,10 +78,7 @@ export const DuplicateNames: Story = () => {
         people={duplicatedPeople}
         matrix={matrix}
         onNodeClick={(id) =>
-          logger.info(
-            { nodeId: id },
-            "Node clicked in RelationshipMatrix story"
-          )
+          log.info({ nodeId: id }, "Node clicked in RelationshipMatrix story")
         }
       />
     </StoryDecorator>
@@ -111,10 +101,7 @@ export const NoRelationships: Story = () => {
         people={people}
         matrix={emptyMatrix}
         onNodeClick={(id) =>
-          logger.info(
-            { nodeId: id },
-            "Node clicked in RelationshipMatrix story"
-          )
+          log.info({ nodeId: id }, "Node clicked in RelationshipMatrix story")
         }
       />
     </StoryDecorator>

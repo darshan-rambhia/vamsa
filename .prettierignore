@@ -23,10 +23,6 @@ playwright-report
 **/convex/_generated
 *.tsbuildinfo
 
-# Prisma
-**/prisma/*.db
-**/prisma/*.db-journal
-
 # Lock files
 pnpm-lock.yaml
 bun.lock
@@ -46,3 +42,6 @@ apps/web/.ladle/.cache
 
 # Mutation testing
 **/.stryker-tmp
+
+# Tanstack Start
+**/routeTree.gen.ts

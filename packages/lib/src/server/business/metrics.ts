@@ -17,7 +17,9 @@
  */
 
 import { drizzleDb } from "@vamsa/api";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 
 /**
  * Prometheus API response structure
@@ -75,10 +77,7 @@ export async function queryPrometheus(query: string): Promise<number> {
     });
 
     if (!response.ok) {
-      logger.warn(
-        { status: response.status, query },
-        "Prometheus query failed"
-      );
+      log.warn({ status: response.status, query }, "Prometheus query failed");
       return 0;
     }
 
@@ -91,7 +90,7 @@ export async function queryPrometheus(query: string): Promise<number> {
 
     return 0;
   } catch (error) {
-    logger.warn({ error, query }, "Failed to query Prometheus");
+    log.withErr(error).ctx({ query }).msg("Failed to query Prometheus");
     return 0;
   }
 }
@@ -133,7 +132,7 @@ export async function queryPrometheusVector(
 
     return result;
   } catch (error) {
-    logger.warn({ error, query }, "Failed to query Prometheus vector");
+    log.withErr(error).ctx({ query }).msg("Failed to query Prometheus vector");
     return {};
   }
 }
@@ -185,7 +184,7 @@ export async function getMetricsSnapshotData(): Promise<MetricSnapshot> {
   const prometheusAvailable = await isPrometheusAvailable();
 
   if (!prometheusAvailable) {
-    logger.warn("Prometheus is not available");
+    log.warn({}, "Prometheus is not available");
     return {
       timestamp: new Date().toISOString(),
       http: {

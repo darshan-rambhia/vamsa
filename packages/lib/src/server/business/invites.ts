@@ -21,7 +21,9 @@
  */
 
 import { randomBytes } from "crypto";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.auth;
 import { createPaginationMeta } from "@vamsa/schemas";
 
 // Drizzle imports
@@ -262,7 +264,7 @@ export async function createInviteData(
     }
   }
 
-  logger.info(
+  log.info(
     { email: normalizedEmail, createdBy: currentUserId },
     "Created invite"
   );
@@ -447,7 +449,7 @@ export async function acceptInviteData(
     return createdUser;
   });
 
-  logger.info(
+  log.info(
     { inviteId: invite.id, userId: newUser.id },
     "Invite accepted, user created"
   );
@@ -492,7 +494,7 @@ export async function revokeInviteData(
     .set({ status: "REVOKED" })
     .where(eq(drizzleSchema.invites.id, inviteId));
 
-  logger.info({ inviteId, revokedBy: currentUserId }, "Revoked invite");
+  log.info({ inviteId, revokedBy: currentUserId }, "Revoked invite");
 
   return { success: true };
 }
@@ -533,7 +535,7 @@ export async function deleteInviteData(
     .delete(drizzleSchema.invites)
     .where(eq(drizzleSchema.invites.id, inviteId));
 
-  logger.info({ inviteId, deletedBy: currentUserId }, "Invite deleted");
+  log.info({ inviteId, deletedBy: currentUserId }, "Invite deleted");
 
   return { success: true };
 }
@@ -583,7 +585,7 @@ export async function resendInviteData(
     .where(eq(drizzleSchema.invites.id, inviteId))
     .returning();
 
-  logger.info({ inviteId }, "Resent invite");
+  log.info({ inviteId }, "Resent invite");
 
   return {
     success: true,

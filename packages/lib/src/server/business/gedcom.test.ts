@@ -19,6 +19,10 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
 import {
   mockLogger,
+  mockLoggers,
+  mockLog,
+  mockWithErr,
+  mockWithErrBuilder,
   mockSerializeError,
   mockCreateContextLogger,
   mockCreateRequestLogger,
@@ -96,6 +100,8 @@ mock.module("@vamsa/api", () => ({
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
+  loggers: mockLoggers,
+  log: mockLog,
   serializeError: mockSerializeError,
   createContextLogger: mockCreateContextLogger,
   createRequestLogger: mockCreateRequestLogger,
@@ -140,6 +146,9 @@ describe("GEDCOM Server Business Logic", () => {
     mockRecordGedcomExport.mockClear();
     mockRecordGedcomValidation.mockClear();
     mockLogger.error.mockClear();
+    mockWithErr.mockClear();
+    mockWithErrBuilder.ctx.mockClear();
+    mockWithErrBuilder.msg.mockClear();
   });
 
   describe("validateGedcomImport", () => {
@@ -303,7 +312,7 @@ describe("GEDCOM Server Business Logic", () => {
       const result = await exportGedcomData("user-1");
 
       expect(result.success).toBe(false);
-      expect(mockLogger.error).toHaveBeenCalled();
+      expect(mockWithErr).toHaveBeenCalled();
     });
 
     it("should include GEDCOM content in successful export", async () => {

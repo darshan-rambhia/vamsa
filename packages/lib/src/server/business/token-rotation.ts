@@ -1,8 +1,10 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { eq, and } from "drizzle-orm";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import { addYears, addDays } from "date-fns";
 import crypto from "crypto";
+
+const log = loggers.auth;
 
 type RotationEvent = "password_change" | "manual" | "annual_check";
 
@@ -51,7 +53,7 @@ export async function enforceRotationPolicy(
       rotatedTokens.push(newToken.token);
       rotatedCount++;
 
-      logger.info(
+      log.info(
         { userId, tokenId: token.id, event, newTokenId: newToken.id },
         "Calendar token rotated"
       );

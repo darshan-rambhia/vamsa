@@ -2,9 +2,11 @@ import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
 import { eq, and, isNotNull, inArray } from "drizzle-orm";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import ical, { ICalEventRepeatingFreq } from "ical-generator";
 import RSS from "rss";
+
+const log = loggers.api;
 
 const calendarRouter = new OpenAPIHono();
 
@@ -182,7 +184,7 @@ calendarRouter.openapi(rssRoute, async (c) => {
       "Cache-Control": "public, max-age=3600",
     });
   } catch (error) {
-    logger.error({ error }, "Failed to generate RSS feed");
+    log.withErr(error).msg("Failed to generate RSS feed");
     return c.json({ error: "Internal Server Error" }, { status: 500 });
   }
 });
@@ -308,10 +310,10 @@ calendarRouter.openapi(birthdaysRoute, async (c) => {
           description: `${person.firstName} ${person.lastName}${person.isLiving ? `'s birthday. Currently ${age} years old.` : " (Deceased)."}`,
         });
       } catch (error) {
-        logger.warn(
-          { error },
-          `Failed to create birthday event for ${person.id}`
-        );
+        log
+          .withErr(error)
+          .ctx({ personId: person.id })
+          .msg("Failed to create birthday event");
       }
     }
 
@@ -324,7 +326,7 @@ calendarRouter.openapi(birthdaysRoute, async (c) => {
       "Cache-Control": "public, max-age=3600",
     });
   } catch (error) {
-    logger.error({ error }, "Failed to generate birthday calendar");
+    log.withErr(error).msg("Failed to generate birthday calendar");
     return c.json({ error: "Internal Server Error" }, { status: 500 });
   }
 });
@@ -471,10 +473,10 @@ calendarRouter.openapi(anniversariesRoute, async (c) => {
           description: `${marriage.person.firstName} ${marriage.person.lastName} and ${marriage.relatedPerson.firstName} ${marriage.relatedPerson.lastName}'s wedding anniversary. ${yearsMarried} years together.`,
         });
       } catch (error) {
-        logger.warn(
-          { error },
-          `Failed to create anniversary event for ${marriage.id}`
-        );
+        log
+          .withErr(error)
+          .ctx({ marriageId: marriage.id })
+          .msg("Failed to create anniversary event");
       }
     }
 
@@ -516,10 +518,10 @@ calendarRouter.openapi(anniversariesRoute, async (c) => {
           description: `Memorial date for ${person.firstName} ${person.lastName}. ${yearsSince} years since passing.`,
         });
       } catch (error) {
-        logger.warn(
-          { error },
-          `Failed to create memorial event for ${person.id}`
-        );
+        log
+          .withErr(error)
+          .ctx({ personId: person.id })
+          .msg("Failed to create memorial event");
       }
     }
 
@@ -532,7 +534,7 @@ calendarRouter.openapi(anniversariesRoute, async (c) => {
       "Cache-Control": "public, max-age=3600",
     });
   } catch (error) {
-    logger.error({ error }, "Failed to generate anniversaries calendar");
+    log.withErr(error).msg("Failed to generate anniversaries calendar");
     return c.json({ error: "Internal Server Error" }, { status: 500 });
   }
 });
@@ -664,7 +666,10 @@ calendarRouter.openapi(eventsRoute, async (c) => {
           categories: [{ name: "Event" }, { name: event.type }],
         });
       } catch (error) {
-        logger.warn({ error }, `Failed to create event for ${event.id}`);
+        log
+          .withErr(error)
+          .ctx({ eventId: event.id })
+          .msg("Failed to create event");
       }
     }
 
@@ -677,7 +682,7 @@ calendarRouter.openapi(eventsRoute, async (c) => {
       "Cache-Control": "public, max-age=3600",
     });
   } catch (error) {
-    logger.error({ error }, "Failed to generate events calendar");
+    log.withErr(error).msg("Failed to generate events calendar");
     return c.json({ error: "Internal Server Error" }, { status: 500 });
   }
 });

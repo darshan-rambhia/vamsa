@@ -1,6 +1,8 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { eq, and, sql, asc, count, lte, gte, inArray } from "drizzle-orm";
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 
 /**
  * Type definitions for map responses
@@ -224,10 +226,10 @@ export async function getPlacesForMapData(
         timeRange,
       });
     } catch (error) {
-      logger.error(
-        { error: serializeError(error), placeId: place.id },
-        "Failed to format place"
-      );
+      log
+        .withErr(error)
+        .ctx({ placeId: place.id })
+        .msg("Failed to format place");
     }
   }
 
@@ -392,10 +394,10 @@ export async function getPersonLocationsData(personId: string): Promise<{
         })),
       });
     } catch (error) {
-      logger.error(
-        { error: serializeError(error), placeId: place.id },
-        "Failed to format place"
-      );
+      log
+        .withErr(error)
+        .ctx({ placeId: place.id })
+        .msg("Failed to format place");
     }
   }
 
@@ -550,10 +552,10 @@ export async function getFamilyLocationsData(): Promise<{
         eventDetails,
       });
     } catch (error) {
-      logger.error(
-        { error: serializeError(error), placeId: place.id },
-        "Failed to format place"
-      );
+      log
+        .withErr(error)
+        .ctx({ placeId: place.id })
+        .msg("Failed to format place");
     }
   }
 
@@ -810,10 +812,10 @@ export async function getPlaceClustersData(
         timeRange,
       });
     } catch (error) {
-      logger.error(
-        { error: serializeError(error), placeId: place.id },
-        "Failed to format place"
-      );
+      log
+        .withErr(error)
+        .ctx({ placeId: place.id })
+        .msg("Failed to format place");
     }
   }
 

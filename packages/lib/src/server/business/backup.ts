@@ -23,7 +23,9 @@ import * as path from "path";
 import archiver from "archiver";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { gte } from "drizzle-orm";
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 import type {
   BackupExportInput,
   BackupMetadata,
@@ -222,10 +224,10 @@ export async function createBackupArchive(
           archive.file(filePath, { name: `photos/${media.id}/${fileName}` });
         } catch (err) {
           // Log file addition errors but continue with backup
-          logger.error(
-            { error: serializeError(err), filePath },
-            "Failed to add photo to backup"
-          );
+          log
+            .withErr(err)
+            .ctx({ filePath })
+            .msg("Failed to add photo to backup");
         }
       }
     }
@@ -277,7 +279,7 @@ export async function validateBackupFile(
   // - Check for conflicts
   // - Return ValidationResult
 
-  logger.info({ size: archiveBuffer.length }, "Validating backup file");
+  log.info({ size: archiveBuffer.length }, "Validating backup file");
 
   return {
     isValid: true,
@@ -334,7 +336,7 @@ export async function extractBackupData(archiveBuffer: Buffer) {
   // - Extract photos to temp directory
   // - Return extracted data object
 
-  logger.info({ size: archiveBuffer.length }, "Extracting backup data");
+  log.info({ size: archiveBuffer.length }, "Extracting backup data");
 
   return {
     metadata: {
@@ -410,10 +412,7 @@ export async function restoreFromBackup(
   // - Return ImportResult
   // Note: _db parameter will be used when implementing the actual restore logic
 
-  logger.info(
-    { userId, strategy: options.strategy },
-    "Starting backup restore"
-  );
+  log.info({ userId, strategy: options.strategy }, "Starting backup restore");
 
   return {
     success: true,
@@ -467,7 +466,7 @@ export async function scheduleBackupJob(
   settings: BackupSettings,
   userId: string
 ) {
-  logger.info(
+  log.info(
     { userId, dailyEnabled: settings.dailyEnabled },
     "Scheduling backup jobs"
   );
@@ -502,7 +501,7 @@ export async function scheduleBackupJob(
       : { enabled: false },
   };
 
-  logger.info(
+  log.info(
     { scheduleInfo, storage: settings.storageProvider },
     "Backup schedules configured"
   );

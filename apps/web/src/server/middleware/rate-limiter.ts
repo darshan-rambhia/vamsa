@@ -16,7 +16,9 @@
  * ```
  */
 
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 // Skip rate limiting in E2E tests to avoid flaky tests due to parallel workers
 const SKIP_RATE_LIMITING = process.env.E2E_TESTING === "true";
@@ -100,7 +102,7 @@ export function checkRateLimit(
       count: 1,
       resetAt: now + config.windowMs,
     });
-    logger.debug(
+    log.info(
       { action, identifier, count: 1, limit: config.limit },
       "Rate limit check passed"
     );
@@ -113,7 +115,7 @@ export function checkRateLimit(
 
   if (entry.count > config.limit) {
     const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-    logger.warn(
+    log.warn(
       {
         action,
         identifier,
@@ -135,7 +137,7 @@ export function checkRateLimit(
     throw error;
   }
 
-  logger.debug(
+  log.info(
     { action, identifier, count: entry.count, limit: config.limit },
     "Rate limit check passed"
   );
@@ -183,7 +185,7 @@ export function resetRateLimit(
 ): void {
   const key = `${action}:${identifier}`;
   rateLimitStore.delete(key);
-  logger.debug({ action, identifier }, "Rate limit reset");
+  log.info({ action, identifier }, "Rate limit reset");
 }
 
 /**

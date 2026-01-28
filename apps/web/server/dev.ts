@@ -8,7 +8,9 @@
  */
 
 import type { Plugin, ViteDevServer } from "vite";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 /**
  * Vite plugin that adds API routes during development
@@ -87,12 +89,12 @@ export function vamsaDevApiPlugin(): Plugin {
 
       app.route("/api", apiRouter);
 
-      logger.info("Development API routes initialized");
-      logger.info("  API:     http://localhost:3000/api");
-      logger.info("  Docs:    http://localhost:3000/api/v1/docs");
-      logger.info("  OpenAPI: http://localhost:3000/api/v1/openapi.json");
+      log.info({}, "Development API routes initialized");
+      log.info({}, "  API:     http://localhost:3000/api");
+      log.info({}, "  Docs:    http://localhost:3000/api/v1/docs");
+      log.info({}, "  OpenAPI: http://localhost:3000/api/v1/openapi.json");
     } catch (error) {
-      logger.error({ error }, "Failed to load API routes");
+      log.withErr(error).msg("Failed to load API routes");
       // Add a fallback error route
       app.all("/api/*", (c) =>
         c.json(
@@ -156,7 +158,7 @@ export function vamsaDevApiPlugin(): Plugin {
               }
             }
 
-            logger.info(
+            log.info(
               { url, method: req.method, bodyText },
               "Better Auth request"
             );
@@ -187,7 +189,7 @@ export function vamsaDevApiPlugin(): Plugin {
 
             // Get response body
             const responseBody = await response.text();
-            logger.info(
+            log.info(
               {
                 status: response.status,
                 responseBody: responseBody.substring(0, 500),
@@ -203,7 +205,7 @@ export function vamsaDevApiPlugin(): Plugin {
             res.end(responseBody);
             return;
           } catch (error) {
-            logger.error({ error, url }, "Better Auth handler error");
+            log.withErr(error).ctx({ url }).msg("Better Auth handler error");
             res.statusCode = 500;
             res.setHeader("Content-Type", "application/json");
             res.end(
@@ -282,7 +284,7 @@ export function vamsaDevApiPlugin(): Plugin {
           }
           res.end();
         } catch (error) {
-          logger.error({ error }, "API request error");
+          log.withErr(error).msg("API request error");
           res.statusCode = 500;
           res.setHeader("Content-Type", "application/json");
           res.end(

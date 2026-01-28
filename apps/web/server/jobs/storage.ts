@@ -7,7 +7,9 @@
  * - Backblaze B2
  */
 
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.jobs;
 
 export type StorageProvider = "LOCAL" | "S3" | "R2" | "B2";
 
@@ -73,15 +75,15 @@ export async function uploadToStorage(
         await client.write(`${config.bucket}/${key}`, buffer, {
           type: "application/zip",
         });
-        logger.info(
+        log.info(
           { provider, bucket: config.bucket, key, size: buffer.length },
           "Uploaded backup to cloud storage"
         );
       } catch (error) {
-        logger.error(
-          { error: serializeError(error), provider, key },
-          "Failed to upload backup to cloud storage"
-        );
+        log
+          .withErr(error)
+          .ctx({ provider, key })
+          .msg("Failed to upload backup to cloud storage");
         throw error;
       }
       break;
@@ -112,15 +114,15 @@ export async function deleteFromStorage(
       try {
         const client = getS3Client();
         await client.unlink(`${config.bucket}/${key}`);
-        logger.info(
+        log.info(
           { provider, bucket: config.bucket, key },
           "Deleted backup from cloud storage"
         );
       } catch (error) {
-        logger.error(
-          { error: serializeError(error), provider, key },
-          "Failed to delete backup from cloud storage"
-        );
+        log
+          .withErr(error)
+          .ctx({ provider, key })
+          .msg("Failed to delete backup from cloud storage");
         throw error;
       }
       break;

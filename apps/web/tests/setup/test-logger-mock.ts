@@ -29,4 +29,16 @@ setLocalesPath(
 await initializeServerI18n();
 
 // Re-export the mocks so test files can import them if needed
-export { mockLogger, mockSerializeError, clearAllMocks } from "./shared-mocks";
+export {
+  mockLogger,
+  mockLog,
+  mockLoggers,
+  mockDomainLogger,
+  mockWithErr,
+  mockWithErrBuilder,
+  mockSerializeError,
+  mockCreateContextLogger,
+  mockCreateRequestLogger,
+  mockStartTimer,
+  clearAllMocks,
+} from "./shared-mocks";

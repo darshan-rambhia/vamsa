@@ -35,6 +35,7 @@ export default tseslint.config(
       "site/**", // Ladle build output
       ".beads/**", // Project management
       "**/.stryker-tmp/**", // Stryker temp files
+      "**/routeTree.gen.ts", // Auto-generated route tree
     ],
   },
 

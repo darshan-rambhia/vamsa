@@ -13,17 +13,21 @@
  */
 
 import { describe, it, expect, beforeEach, mock } from "bun:test";
-import { mockLogger, clearAllMocks } from "../../testing/shared-mocks";
+import {
+  mockLogger,
+  mockLoggers,
+  mockLog,
+  mockWithErr,
+  mockSerializeError,
+  clearAllMocks,
+} from "../../testing/shared-mocks";
 
 // Mock logger module
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
-  serializeError: (error: unknown) => {
-    if (error instanceof Error) {
-      return { message: error.message, stack: error.stack };
-    }
-    return error;
-  },
+  loggers: mockLoggers,
+  log: mockLog,
+  serializeError: mockSerializeError,
 }));
 
 // Mock Drizzle database and schema
@@ -284,7 +288,7 @@ describe("notifications business logic", () => {
 
       await notifySuggestionCreated("nonexistent-suggestion");
 
-      expect(mockLogger.error).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         { suggestionId: "nonexistent-suggestion" },
         "Suggestion not found for notification"
       );
@@ -300,7 +304,10 @@ describe("notifications business logic", () => {
 
       await notifySuggestionCreated("suggestion-1");
 
-      expect(mockLogger.warn).toHaveBeenCalledWith("No admins found to notify");
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        {},
+        "No admins found to notify"
+      );
     });
 
     it("should not throw on database error", async () => {
@@ -311,7 +318,7 @@ describe("notifications business logic", () => {
       // Should not throw
       await notifySuggestionCreated("suggestion-1");
 
-      expect(mockLogger.error).toHaveBeenCalled();
+      expect(mockWithErr).toHaveBeenCalled();
     });
   });
 
@@ -351,7 +358,7 @@ describe("notifications business logic", () => {
 
       await notifySuggestionUpdated("nonexistent-suggestion", "APPROVED");
 
-      expect(mockLogger.error).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         { suggestionId: "nonexistent-suggestion" },
         "Suggestion not found for update notification"
       );
@@ -365,7 +372,7 @@ describe("notifications business logic", () => {
       // Should not throw
       await notifySuggestionUpdated("suggestion-1", "APPROVED");
 
-      expect(mockLogger.error).toHaveBeenCalled();
+      expect(mockWithErr).toHaveBeenCalled();
     });
   });
 
@@ -402,7 +409,7 @@ describe("notifications business logic", () => {
 
       await notifyNewMemberJoined("nonexistent-user");
 
-      expect(mockLogger.error).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         { userId: "nonexistent-user" },
         "User not found for new member notification"
       );
@@ -416,7 +423,8 @@ describe("notifications business logic", () => {
 
       await notifyNewMemberJoined("user-1");
 
-      expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        {},
         "No members found to notify"
       );
     });
@@ -429,7 +437,7 @@ describe("notifications business logic", () => {
       // Should not throw
       await notifyNewMemberJoined("user-1");
 
-      expect(mockLogger.error).toHaveBeenCalled();
+      expect(mockWithErr).toHaveBeenCalled();
     });
   });
 
@@ -533,7 +541,8 @@ describe("notifications business logic", () => {
 
       await sendBirthdayReminders();
 
-      expect(mockLogger.warn).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        {},
         "No system user found for birthday reminders"
       );
     });
@@ -570,7 +579,7 @@ describe("notifications business logic", () => {
       // Should not throw
       await sendBirthdayReminders();
 
-      expect(mockLogger.error).toHaveBeenCalled();
+      expect(mockWithErr).toHaveBeenCalled();
     });
   });
 });

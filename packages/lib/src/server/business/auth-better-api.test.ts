@@ -18,11 +18,20 @@
  */
 
 import { describe, it, expect, beforeEach, mock, afterEach } from "bun:test";
-import { mockLogger, clearAllMocks } from "../../testing/shared-mocks";
+import {
+  mockLogger,
+  mockLoggers,
+  mockLog,
+  mockSerializeError,
+  clearAllMocks,
+} from "../../testing/shared-mocks";
 
 // Mock the logger before importing the module
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
+  loggers: mockLoggers,
+  log: mockLog,
+  serializeError: mockSerializeError,
 }));
 
 // Mock auth module
@@ -240,7 +249,7 @@ describe("auth-better-api", () => {
 
       await betterAuthLogin("test@example.com", "password123");
 
-      expect(mockLogger.debug).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         { email: "test@example.com" },
         "Better Auth login attempt"
       );
@@ -354,7 +363,7 @@ describe("auth-better-api", () => {
 
       await betterAuthRegister("new@example.com", "New User", "password123");
 
-      expect(mockLogger.debug).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         { email: "new@example.com", name: "New User" },
         "Better Auth registration attempt"
       );
@@ -520,10 +529,12 @@ describe("auth-better-api", () => {
         new Headers()
       );
 
-      expect(mockLogger.debug).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
+        {},
         "Better Auth password change attempt"
       );
       expect(mockLogger.info).toHaveBeenCalledWith(
+        {},
         "Better Auth password changed successfully"
       );
     });
@@ -553,8 +564,9 @@ describe("auth-better-api", () => {
 
       await betterAuthSignOut(new Headers());
 
-      expect(mockLogger.debug).toHaveBeenCalledWith("Better Auth sign out");
+      expect(mockLogger.info).toHaveBeenCalledWith({}, "Better Auth sign out");
       expect(mockLogger.info).toHaveBeenCalledWith(
+        {},
         "Better Auth sign out successful"
       );
     });

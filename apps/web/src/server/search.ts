@@ -11,7 +11,9 @@ import {
   type RelationshipDataMaps,
 } from "@vamsa/lib";
 import { requireAuth } from "./middleware/require-auth";
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 
 /**
  * Convert a Map<string, Set<string>> to Map<string, string[]>
@@ -122,10 +124,7 @@ async function buildRelationshipMaps(): Promise<RelationshipDataMaps> {
       childToParents: parents,
     };
   } catch (error) {
-    logger.error(
-      { error: serializeError(error) },
-      "Failed to build relationship maps"
-    );
+    log.withErr(error).msg("Failed to build relationship maps");
     // Return empty maps as fallback
     return {
       people: new Map(),
@@ -201,7 +200,7 @@ export const searchPeople = createServerFn({ method: "GET" })
 
           const queryTime = Date.now() - startTime;
 
-          logger.debug(
+          log.info(
             {
               query: data.query,
               intentType: nlpResult.type,
@@ -222,10 +221,10 @@ export const searchPeople = createServerFn({ method: "GET" })
             // Store explanation in results metadata (needs schema update)
           };
         } catch (nlpError) {
-          logger.debug(
-            { error: serializeError(nlpError), query: data.query },
-            "NLP search failed, falling back to FTS"
-          );
+          log
+            .withErr(nlpError)
+            .ctx({ query: data.query })
+            .msg("NLP search failed, falling back to FTS");
           // Fall through to FTS search as fallback
         }
       }
@@ -272,7 +271,7 @@ export const searchPeople = createServerFn({ method: "GET" })
 
       const queryTime = Date.now() - startTime;
 
-      logger.debug(
+      log.info(
         { query: data.query, resultCount: results.length, queryTime, total },
         "FTS search executed"
       );
@@ -284,10 +283,10 @@ export const searchPeople = createServerFn({ method: "GET" })
       };
     } catch (error) {
       const queryTime = Date.now() - startTime;
-      logger.error(
-        { error: serializeError(error), query: data.query, queryTime },
-        "Search query failed"
-      );
+      log
+        .withErr(error)
+        .ctx({ query: data.query, queryTime })
+        .msg("Search query failed");
 
       throw error;
     }

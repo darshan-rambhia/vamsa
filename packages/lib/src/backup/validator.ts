@@ -1,7 +1,9 @@
 // Backup validator utility for ZIP extraction and validation
 // This utility is designed to be database-agnostic
 
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 
 export interface BackupMetadata {
   version: string;
@@ -95,7 +97,7 @@ export class BackupValidator {
       const isValid = errors.length === 0;
       return this.createValidationResult(isValid, conflicts, errors, warnings);
     } catch (error) {
-      logger.error({ error: serializeError(error) }, "Backup validation error");
+      log.withErr(error).msg("Backup validation error");
       errors.push(
         `Validation failed: ${error instanceof Error ? error.message : "Unknown error"}`
       );

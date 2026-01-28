@@ -10,7 +10,9 @@ import {
   betterAuthRegister,
   betterAuthSignOut,
 } from "@vamsa/lib/server/business";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.auth;
 
 const authRouter = new OpenAPIHono();
 
@@ -146,7 +148,7 @@ authRouter.openapi(loginRoute, async (c) => {
       );
     }
 
-    logger.error({ error }, "Login error");
+    log.withErr(error).msg("Login error");
     return c.json({ error: "Invalid email or password" }, { status: 401 });
   }
 });
@@ -267,7 +269,7 @@ authRouter.openapi(registerRoute, async (c) => {
       return c.json({ error: "Email already in use" }, { status: 409 });
     }
 
-    logger.error({ error }, "Registration error");
+    log.withErr(error).msg("Registration error");
     return c.json({ error: "Registration failed" }, { status: 500 });
   }
 });
@@ -316,7 +318,7 @@ authRouter.openapi(logoutRoute, async (c) => {
 
     return c.json({ success: true as const }, { status: 200 });
   } catch (error) {
-    logger.error({ error }, "Logout error");
+    log.withErr(error).msg("Logout error");
     // Still clear cookie even if signOut fails (user may already be logged out)
     c.header(
       "Set-Cookie",

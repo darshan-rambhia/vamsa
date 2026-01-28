@@ -16,7 +16,9 @@
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { eq } from "drizzle-orm";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.auth;
 import { t } from "../i18n";
 import { betterAuthRegister } from "./auth-better-api";
 import { notifyNewMemberJoined } from "./notifications";
@@ -58,7 +60,7 @@ export interface ClaimProfileResult {
 export async function getUnclaimedProfilesData(
   db: AuthDb = drizzleDb
 ): Promise<UnclaimedProfile[]> {
-  logger.debug("Fetching unclaimed profiles");
+  log.info({}, "Fetching unclaimed profiles");
 
   // Get all personIds that already have users
   const usersWithPeople = await db
@@ -70,7 +72,7 @@ export async function getUnclaimedProfilesData(
     .map((u) => u.personId)
     .filter((id): id is string => id !== null);
 
-  logger.debug({ count: claimedPersonIds.length }, "Claimed profiles found");
+  log.info({ count: claimedPersonIds.length }, "Claimed profiles found");
 
   // Get all living persons not yet claimed
   const profiles =
@@ -101,7 +103,7 @@ export async function getUnclaimedProfilesData(
             drizzleSchema.persons.firstName
           );
 
-  logger.debug({ count: profiles.length }, "Unclaimed profiles found");
+  log.info({ count: profiles.length }, "Unclaimed profiles found");
 
   return profiles;
 }
@@ -145,7 +147,7 @@ export async function claimProfileData(
       .limit(1);
 
     if (!person || !person.isLiving) {
-      logger.warn({ personId }, "Profile not found or cannot be claimed");
+      log.warn({ personId }, "Profile not found or cannot be claimed");
       throw new Error(await translate("errors:person.notFound"));
     }
 
@@ -157,7 +159,7 @@ export async function claimProfileData(
       .limit(1);
 
     if (existingUser) {
-      logger.warn({ personId }, "Profile is already claimed");
+      log.warn({ personId }, "Profile is already claimed");
       throw new Error("This profile is already claimed");
     }
 
@@ -170,7 +172,7 @@ export async function claimProfileData(
       .limit(1);
 
     if (existingEmail) {
-      logger.warn({ email: normalizedEmail }, "Email already in use");
+      log.warn({ email: normalizedEmail }, "Email already in use");
       throw new Error(await translate("errors:user.alreadyExists"));
     }
 
@@ -179,7 +181,7 @@ export async function claimProfileData(
     const result = await register(normalizedEmail, fullName, password);
 
     if (!result?.user) {
-      logger.warn(
+      log.warn(
         { email: normalizedEmail },
         "Failed to create user via Better Auth"
       );
@@ -197,7 +199,7 @@ export async function claimProfileData(
       })
       .where(eq(drizzleSchema.users.id, result.user.id));
 
-    logger.info(
+    log.info(
       { userId: result.user.id, personId },
       "Profile claimed successfully"
     );
@@ -206,7 +208,7 @@ export async function claimProfileData(
     try {
       await notify(result.user.id);
     } catch (error) {
-      logger.warn(
+      log.warn(
         { userId: result.user.id, error },
         "Failed to send notification"
       );
@@ -214,7 +216,7 @@ export async function claimProfileData(
 
     return { success: true, userId: result.user.id };
   } catch (error) {
-    logger.warn(
+    log.warn(
       { email: email.toLowerCase(), personId, error },
       "Profile claim failed"
     );

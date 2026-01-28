@@ -24,7 +24,9 @@ import {
   ATTR_SERVICE_VERSION,
 } from "@opentelemetry/semantic-conventions";
 import { PeriodicExportingMetricReader } from "@opentelemetry/sdk-metrics";
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 // SDK instance for shutdown handling
 let sdk: NodeSDK | null = null;
@@ -65,12 +67,12 @@ export async function startTelemetry(): Promise<void> {
   const config = getConfig();
 
   if (!config.enabled) {
-    logger.info("OpenTelemetry disabled via OTEL_ENABLED=false");
+    log.info({}, "OpenTelemetry disabled via OTEL_ENABLED=false");
     return;
   }
 
   if (sdk) {
-    logger.warn("OpenTelemetry already initialized");
+    log.warn({}, "OpenTelemetry already initialized");
     return;
   }
 
@@ -129,7 +131,7 @@ export async function startTelemetry(): Promise<void> {
     // Start the SDK
     sdk.start();
 
-    logger.info(
+    log.info(
       {
         service: config.serviceName,
         version: config.serviceVersion,
@@ -139,10 +141,7 @@ export async function startTelemetry(): Promise<void> {
       "OpenTelemetry started"
     );
   } catch (error) {
-    logger.error(
-      { error: serializeError(error) },
-      "Failed to start OpenTelemetry"
-    );
+    log.withErr(error).msg("Failed to start OpenTelemetry");
     // Don't throw - telemetry failure shouldn't crash the app
   }
 }
@@ -161,12 +160,9 @@ export async function stopTelemetry(): Promise<void> {
   try {
     await sdk.shutdown();
     sdk = null;
-    logger.info("OpenTelemetry stopped");
+    log.info({}, "OpenTelemetry stopped");
   } catch (error) {
-    logger.error(
-      { error: serializeError(error) },
-      "Error stopping OpenTelemetry"
-    );
+    log.withErr(error).msg("Error stopping OpenTelemetry");
   }
 }
 

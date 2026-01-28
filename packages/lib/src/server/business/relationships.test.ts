@@ -22,6 +22,10 @@ import type {
 // Mock logger for this test file
 import {
   mockLogger,
+  mockLoggers,
+  mockLog,
+  mockWithErr,
+  mockWithErrBuilder,
   mockSerializeError,
   mockCreateContextLogger,
   mockCreateRequestLogger,
@@ -30,6 +34,8 @@ import {
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
+  loggers: mockLoggers,
+  log: mockLog,
   serializeError: mockSerializeError,
   createContextLogger: mockCreateContextLogger,
   createRequestLogger: mockCreateRequestLogger,
@@ -107,6 +113,9 @@ describe("Relationship Server Functions", () => {
   beforeEach(() => {
     clearDrizzleMocks();
     mockLogger.error.mockClear();
+    mockWithErr.mockClear();
+    mockWithErrBuilder.ctx.mockClear();
+    mockWithErrBuilder.msg.mockClear();
   });
 
   describe("listRelationshipsData", () => {
@@ -302,7 +311,7 @@ describe("Relationship Server Functions", () => {
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err).toBe(error);
-        expect(mockLogger.error).toHaveBeenCalled();
+        expect(mockWithErr).toHaveBeenCalled();
       }
     });
   });
@@ -417,7 +426,7 @@ describe("Relationship Server Functions", () => {
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err).toBe(error);
-        expect(mockLogger.error).toHaveBeenCalled();
+        expect(mockWithErr).toHaveBeenCalled();
       }
     });
   });
@@ -697,7 +706,7 @@ describe("Relationship Server Functions", () => {
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err).toBe(error);
-        expect(mockLogger.error).toHaveBeenCalled();
+        expect(mockWithErr).toHaveBeenCalled();
       }
     });
 
@@ -920,7 +929,7 @@ describe("Relationship Server Functions", () => {
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err).toBe(error);
-        expect(mockLogger.error).toHaveBeenCalled();
+        expect(mockWithErr).toHaveBeenCalled();
       }
     });
   });
@@ -1036,7 +1045,7 @@ describe("Relationship Server Functions", () => {
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err).toBe(error);
-        expect(mockLogger.error).toHaveBeenCalled();
+        expect(mockWithErr).toHaveBeenCalled();
       }
     });
 
@@ -1075,15 +1084,14 @@ describe("Relationship Server Functions", () => {
         // Expected
       }
 
-      expect(mockLogger.error).toHaveBeenCalledWith(
+      // Verify fluent error logging: log.withErr(error).ctx({...}).msg(...)
+      expect(mockWithErr).toHaveBeenCalled();
+      expect(mockWithErrBuilder.ctx).toHaveBeenCalledWith(
         expect.objectContaining({
           personId: "person-1",
-          type: undefined,
-          error: expect.objectContaining({
-            message: "DB error",
-            name: "Error",
-          }),
-        }),
+        })
+      );
+      expect(mockWithErrBuilder.msg).toHaveBeenCalledWith(
         "Failed to list relationships"
       );
     });

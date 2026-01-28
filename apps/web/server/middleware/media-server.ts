@@ -1,7 +1,9 @@
 import { Context } from "hono";
 import { promises as fs } from "fs";
 import path from "path";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.media;
 
 /**
  * MIME type mapping for media files
@@ -99,7 +101,7 @@ export async function serveMedia(c: Context): Promise<Response> {
     // Security: prevent path traversal attacks
     const mediaDir = getMediaDir();
     if (!isValidMediaPath(filePath, mediaDir)) {
-      logger.warn(
+      log.warn(
         { requestedPath: filePath },
         "Attempted path traversal in media request"
       );
@@ -113,7 +115,7 @@ export async function serveMedia(c: Context): Promise<Response> {
     try {
       await fs.access(fullPath);
     } catch {
-      logger.debug({ path: fullPath }, "Media file not found");
+      log.debug({ path: fullPath }, "Media file not found");
       return c.notFound();
     }
 
@@ -186,13 +188,12 @@ export async function serveMedia(c: Context): Promise<Response> {
       headers,
     });
   } catch (error) {
-    logger.error(
-      {
-        error: error instanceof Error ? error.message : String(error),
+    log
+      .withErr(error)
+      .ctx({
         path: new URL(c.req.url).pathname,
-      },
-      "Error serving media"
-    );
+      })
+      .msg("Error serving media");
 
     return c.json({ error: "Internal Server Error" }, 500, {
       "Cache-Control": "no-store",

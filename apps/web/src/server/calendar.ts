@@ -13,8 +13,10 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import { requireAuth } from "./middleware/require-auth";
+
+const log = loggers.db;
 import {
   generateCalendarTokenLogic,
   validateCalendarTokenLogic,
@@ -52,7 +54,7 @@ export const generateCalendarToken = createServerFn({ method: "POST" })
         data.expiryDays
       );
     } catch (error) {
-      logger.error({ error }, "Failed to generate calendar token");
+      log.withErr(error).msg("Failed to generate calendar token");
       throw error;
     }
   });
@@ -66,7 +68,7 @@ export const validateCalendarToken = createServerFn({ method: "POST" })
     try {
       return await validateCalendarTokenLogic(data.token);
     } catch (error) {
-      logger.error({ error }, "Failed to validate calendar token");
+      log.withErr(error).msg("Failed to validate calendar token");
       return { valid: false, user: null };
     }
   });
@@ -82,7 +84,7 @@ export const revokeCalendarToken = createServerFn({ method: "POST" })
 
       return await revokeCalendarTokenLogic(data.token, user.id);
     } catch (error) {
-      logger.error({ error }, "Failed to revoke calendar token");
+      log.withErr(error).msg("Failed to revoke calendar token");
       throw error;
     }
   });
@@ -97,7 +99,7 @@ export const listCalendarTokens = createServerFn({ method: "GET" }).handler(
 
       return await listCalendarTokensLogic(user.id);
     } catch (error) {
-      logger.error({ error }, "Failed to list calendar tokens");
+      log.withErr(error).msg("Failed to list calendar tokens");
       throw error;
     }
   }
@@ -114,7 +116,7 @@ export const deleteCalendarToken = createServerFn({ method: "POST" })
 
       return await deleteCalendarTokenLogic(data.token, user.id);
     } catch (error) {
-      logger.error({ error }, "Failed to delete calendar token");
+      log.withErr(error).msg("Failed to delete calendar token");
       throw error;
     }
   });

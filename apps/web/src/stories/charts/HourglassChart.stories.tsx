@@ -3,7 +3,9 @@ import { HourglassChart } from "~/components/charts/HourglassChart";
 import { StoryDecorator } from "~/stories/decorators";
 import type { ChartNode, ChartEdge } from "~/server/charts";
 import { createMockEdges, resetIdCounter, createMockPerson } from "@vamsa/lib";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 export default {
   title: "Charts/HourglassChart",
@@ -71,7 +73,7 @@ export const Default: Story = () => {
         edges={edges}
         rootPersonId={rootId}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in HourglassChart story")
+          log.info({ nodeId: id }, "Node clicked in HourglassChart story")
         }
       />
     </StoryDecorator>
@@ -89,7 +91,7 @@ export const Balanced: Story = () => {
         edges={edges}
         rootPersonId={rootId}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in HourglassChart story")
+          log.info({ nodeId: id }, "Node clicked in HourglassChart story")
         }
       />
     </StoryDecorator>
@@ -107,7 +109,7 @@ export const HeavyAncestors: Story = () => {
         edges={edges}
         rootPersonId={rootId}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in HourglassChart story")
+          log.info({ nodeId: id }, "Node clicked in HourglassChart story")
         }
       />
     </StoryDecorator>
@@ -125,7 +127,7 @@ export const Asymmetric: Story = () => {
         edges={edges}
         rootPersonId={rootId}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in HourglassChart story")
+          log.info({ nodeId: id }, "Node clicked in HourglassChart story")
         }
       />
     </StoryDecorator>

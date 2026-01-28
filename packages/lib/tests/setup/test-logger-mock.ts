@@ -4,9 +4,9 @@
  * This file is loaded before tests run to set up global test configuration.
  *
  * Key behaviors:
- * 1. Mocks the logger module globally to prevent stderr output
- *    - This prevents expected error logs from causing exit code 1
- *    - logger.test.ts tests the actual pino configuration separately
+ * 1. Mocks the logger module globally using shared mocks from shared-mocks.ts
+ *    - Uses mock functions that can be verified in tests
+ *    - Tests import mockLogger, mockLoggers, etc. from shared-mocks
  *
  * 2. Initializes i18n for translation tests
  *    - i18n is initialized once at setup
@@ -22,53 +22,40 @@ import { mock, afterAll } from "bun:test";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 
-// Mock logger module to prevent stderr output during tests
-// This must happen before any module imports the logger
-const noopLogger = {
-  trace: () => {},
-  debug: () => {},
-  info: () => {},
-  warn: () => {},
-  error: () => {},
-  fatal: () => {},
-  child: () => noopLogger,
-};
+// Import shared mocks - these are the same objects that test files import
+import {
+  mockLogger,
+  mockLog,
+  mockLoggers,
+  mockSerializeError,
+  mockCreateContextLogger,
+  mockCreateRequestLogger,
+  mockStartTimer,
+} from "../../src/testing/shared-mocks";
 
+// Mock logger module using shared mocks
+// This ensures test files can verify calls on the same mock objects
 mock.module("@vamsa/lib/logger", () => ({
-  logger: noopLogger,
-  createContextLogger: () => noopLogger,
-  createRequestLogger: () => noopLogger,
-  startTimer: () => () => {},
-  serializeError: (error: unknown) => {
-    if (error instanceof Error) {
-      return {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-        cause: (error as Error & { cause?: unknown }).cause,
-      };
-    }
-    return error;
-  },
+  logger: mockLogger,
+  log: mockLog,
+  loggers: mockLoggers,
+  createLogger: () => mockLog,
+  createContextLogger: mockCreateContextLogger,
+  createRequestLogger: mockCreateRequestLogger,
+  startTimer: mockStartTimer,
+  serializeError: mockSerializeError,
 }));
 
 // Also mock the direct path in case some files use it
 mock.module("../../src/logger", () => ({
-  logger: noopLogger,
-  createContextLogger: () => noopLogger,
-  createRequestLogger: () => noopLogger,
-  startTimer: () => () => {},
-  serializeError: (error: unknown) => {
-    if (error instanceof Error) {
-      return {
-        message: error.message,
-        stack: error.stack,
-        name: error.name,
-        cause: (error as Error & { cause?: unknown }).cause,
-      };
-    }
-    return error;
-  },
+  logger: mockLogger,
+  log: mockLog,
+  loggers: mockLoggers,
+  createLogger: () => mockLog,
+  createContextLogger: mockCreateContextLogger,
+  createRequestLogger: mockCreateRequestLogger,
+  startTimer: mockStartTimer,
+  serializeError: mockSerializeError,
 }));
 
 // Create a mock Drizzle db that does nothing
@@ -181,4 +168,10 @@ afterAll(async () => {
 });
 
 // Re-export the mocks so test files can import them if needed
-export { mockLogger, mockSerializeError, clearAllMocks } from "./shared-mocks";
+export {
+  mockLogger,
+  mockLog,
+  mockLoggers,
+  mockSerializeError,
+  clearAllMocks,
+} from "../../src/testing/shared-mocks";

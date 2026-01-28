@@ -17,6 +17,10 @@ import { describe, it, expect, beforeEach, mock } from "bun:test";
 // Mock logger for this test file
 import {
   mockLogger,
+  mockLoggers,
+  mockLog,
+  mockWithErr,
+  mockWithErrBuilder,
   mockSerializeError,
   mockCreateContextLogger,
   mockCreateRequestLogger,
@@ -25,6 +29,8 @@ import {
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
+  loggers: mockLoggers,
+  log: mockLog,
   serializeError: mockSerializeError,
   createContextLogger: mockCreateContextLogger,
   createRequestLogger: mockCreateRequestLogger,
@@ -90,6 +96,9 @@ describe("Calendar Server Functions", () => {
   beforeEach(() => {
     mockLogger.info.mockClear();
     mockLogger.error.mockClear();
+    mockWithErr.mockClear();
+    mockWithErrBuilder.ctx.mockClear();
+    mockWithErrBuilder.msg.mockClear();
     (mockDrizzleDb.insert as any).mockClear();
     (mockDrizzleDb.query.calendarTokens.findFirst as any).mockClear();
     (mockDrizzleDb.update as any).mockClear();
@@ -169,7 +178,8 @@ describe("Calendar Server Functions", () => {
       await generateCalendarTokenLogic("user-1", undefined, 30);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.stringContaining("Calendar token generated for user user-1")
+        { userId: "user-1" },
+        "Calendar token generated"
       );
     });
   });
@@ -271,7 +281,7 @@ describe("Calendar Server Functions", () => {
 
       expect(result.valid).toBe(false);
       expect(result.user).toBeNull();
-      expect(mockLogger.error).toHaveBeenCalled();
+      expect(mockWithErr).toHaveBeenCalled();
     });
   });
 

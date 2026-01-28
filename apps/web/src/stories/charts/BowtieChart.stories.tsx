@@ -2,7 +2,9 @@ import type { Story } from "@ladle/react";
 import { BowtieChart } from "~/components/charts/BowtieChart";
 import { StoryDecorator } from "~/stories/decorators";
 import { createMockPerson, createBowtieNodes } from "@vamsa/lib";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 export default {
   title: "Charts/BowtieChart",
@@ -28,7 +30,7 @@ export const Default: Story = () => {
         edges={edges}
         rootPersonId={rootPerson.id}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in BowtieChart story")
+          log.info({ nodeId: id }, "Node clicked in BowtieChart story")
         }
       />
     </StoryDecorator>
@@ -47,7 +49,7 @@ export const PaternalOnly: Story = () => {
         edges={edges}
         rootPersonId={rootPerson.id}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in BowtieChart story")
+          log.info({ nodeId: id }, "Node clicked in BowtieChart story")
         }
       />
     </StoryDecorator>
@@ -66,7 +68,7 @@ export const MaternalOnly: Story = () => {
         edges={edges}
         rootPersonId={rootPerson.id}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in BowtieChart story")
+          log.info({ nodeId: id }, "Node clicked in BowtieChart story")
         }
       />
     </StoryDecorator>
@@ -85,7 +87,7 @@ export const SingleParent: Story = () => {
         edges={edges}
         rootPersonId={rootPerson.id}
         onNodeClick={(id) =>
-          logger.info({ nodeId: id }, "Node clicked in BowtieChart story")
+          log.info({ nodeId: id }, "Node clicked in BowtieChart story")
         }
       />
     </StoryDecorator>

@@ -17,23 +17,20 @@
  */
 
 import { describe, it, expect, beforeEach, mock } from "bun:test";
-import { mockLogger, clearAllMocks } from "../../testing/shared-mocks";
+import {
+  mockLogger,
+  mockLoggers,
+  mockLog,
+  mockSerializeError,
+  clearAllMocks,
+} from "../../testing/shared-mocks";
 
 // Mock the logger before importing modules
-const mockSerializeErrorFn = mock((error: unknown) => {
-  if (error instanceof Error) {
-    return {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-    };
-  }
-  return error;
-});
-
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
-  serializeError: mockSerializeErrorFn,
+  loggers: mockLoggers,
+  log: mockLog,
+  serializeError: mockSerializeError,
 }));
 
 // Mock drizzle schema

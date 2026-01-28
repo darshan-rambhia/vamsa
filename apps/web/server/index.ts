@@ -19,8 +19,10 @@ import { logger as honoLogger } from "hono/logger";
 import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import { secureHeaders } from "hono/secure-headers";
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import { etagMiddleware, getETagMetrics } from "./middleware/etag";
+
+const log = loggers.api;
 import { telemetryMiddleware } from "./middleware/telemetry";
 import { initializeServerI18n } from "@vamsa/lib/server";
 import { serveMedia } from "./middleware/media-server";
@@ -261,9 +263,18 @@ async function setupRoutes() {
   const tanstackFetch = handler.default?.fetch ?? handler.fetch;
 
   if (!tanstackFetch) {
-    logger.error("Could not find fetch handler in TanStack Start build");
-    logger.error("Expected handler.default.fetch or handler.fetch");
-    logger.error("Make sure you ran: pnpm build:web");
+    log.error(
+      { module: "TanStack Start" },
+      "Could not find fetch handler in TanStack Start build"
+    );
+    log.error(
+      { module: "TanStack Start" },
+      "Expected handler.default.fetch or handler.fetch"
+    );
+    log.error(
+      { module: "TanStack Start" },
+      "Make sure you ran: pnpm build:web"
+    );
     process.exit(1);
   }
 
@@ -274,7 +285,7 @@ async function setupRoutes() {
       const response = await tanstackFetch(c.req.raw);
       return response;
     } catch (error) {
-      logger.error({ error: serializeError(error) }, "TanStack Start error");
+      log.withErr(error).msg("TanStack Start error");
       return c.json(
         {
           error: "Internal Server Error",
@@ -291,8 +302,8 @@ async function setupRoutes() {
 // ============================================
 
 async function startServer() {
-  logger.info("Starting Vamsa server...");
-  logger.info(
+  log.info({}, "Starting Vamsa server...");
+  log.info(
     {
       runtime: Bun.version,
       environment: IS_PRODUCTION ? "production" : "development",
@@ -305,9 +316,9 @@ async function startServer() {
   // Initialize i18n for server functions
   try {
     await initializeServerI18n();
-    logger.info("Server-side i18n initialized");
+    log.info({}, "Server-side i18n initialized");
   } catch (error) {
-    logger.error({ error: serializeError(error) }, "Failed to initialize i18n");
+    log.withErr(error).msg("Failed to initialize i18n");
     // Don't exit, continue with default English
   }
 
@@ -324,12 +335,12 @@ async function startServer() {
 
     // Error handler
     error(error: Error) {
-      logger.error({ error: serializeError(error) }, "Bun server error");
+      log.withErr(error).msg("Bun server error");
       return new Response("Internal Server Error", { status: 500 });
     },
   });
 
-  logger.info(
+  log.info(
     { url: `http://${HOST}:${PORT}`, health: `http://${HOST}:${PORT}/health` },
     "Server listening"
   );
@@ -342,14 +353,14 @@ const server = await startServer();
 
 // Graceful shutdown
 process.on("SIGINT", async () => {
-  logger.info("Received SIGINT, shutting down server...");
+  log.info({}, "Received SIGINT, shutting down server...");
   server.stop();
   await stopTelemetry();
   process.exit(0);
 });
 
 process.on("SIGTERM", async () => {
-  logger.info("Received SIGTERM, shutting down server...");
+  log.info({}, "Received SIGTERM, shutting down server...");
   server.stop();
   await stopTelemetry();
   process.exit(0);

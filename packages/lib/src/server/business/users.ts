@@ -14,7 +14,9 @@
  */
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.auth;
 import { createPaginationMeta } from "@vamsa/schemas";
 import type { UserUpdateInput, UserRole } from "@vamsa/schemas";
 import {
@@ -304,7 +306,7 @@ export async function updateUserData(
 
   const updated = result[0];
 
-  logger.info(
+  log.info(
     {
       targetUserId: userId,
       changes: data,
@@ -356,10 +358,7 @@ export async function deleteUserData(
     .delete(drizzleSchema.users)
     .where(eq(drizzleSchema.users.id, userId));
 
-  logger.info(
-    { deletedUserId: userId, deletedBy: currentUserId },
-    "User deleted"
-  );
+  log.info({ deletedUserId: userId, deletedBy: currentUserId }, "User deleted");
 
   return { success: true };
 }
@@ -472,7 +471,7 @@ export async function unlockUserAccountData(
     })
     .where(eq(drizzleSchema.users.id, userId));
 
-  logger.info(
+  log.info(
     { unlockedUserId: userId, unlockedBy: currentUserId },
     "User account unlocked"
   );

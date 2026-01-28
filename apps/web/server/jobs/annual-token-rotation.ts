@@ -1,8 +1,10 @@
 import cron from "node-cron";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
 import { eq, and } from "drizzle-orm";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import { enforceRotationPolicy } from "@vamsa/lib/server/business";
+
+const log = loggers.jobs;
 
 /**
  * Daily job to check for tokens that need annual rotation
@@ -11,7 +13,7 @@ import { enforceRotationPolicy } from "@vamsa/lib/server/business";
 export function startAnnualRotationJob() {
   cron.schedule("0 2 * * *", async () => {
     try {
-      logger.info("Running annual token rotation check");
+      log.info({}, "Running annual token rotation check");
 
       // Find users who have active tokens with annual rotation policy
       const tokensWithAnnualRotation = await drizzleDb
@@ -39,21 +41,21 @@ export function startAnnualRotationJob() {
           );
           totalRotated += rotated;
         } catch (err) {
-          logger.error(
-            { err, userId: user.id },
-            "Failed to rotate tokens for user"
-          );
+          log
+            .withErr(err)
+            .ctx({ userId: user.id })
+            .msg("Failed to rotate tokens for user");
         }
       }
 
-      logger.info(
+      log.info(
         { totalRotated, usersChecked: users.length },
         "Annual token rotation complete"
       );
     } catch (err) {
-      logger.error({ err }, "Annual token rotation job failed");
+      log.withErr(err).msg("Annual token rotation job failed");
     }
   });
 
-  logger.info("Annual token rotation job scheduled");
+  log.info({}, "Annual token rotation job scheduled");
 }

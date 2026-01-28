@@ -5,7 +5,9 @@ import personsRouter from "./persons";
 import relationshipsRouter from "./relationships";
 import calendarRouter from "./calendar";
 import metricsRouter from "./metrics";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 /**
  * Main API router for Vamsa
@@ -133,7 +135,7 @@ apiV1.route("/metrics", metricsRouter);
  * 404 handler for undefined routes
  */
 apiV1.notFound((c) => {
-  logger.warn(
+  log.warn(
     {
       method: c.req.method,
       path: c.req.path,
@@ -155,7 +157,7 @@ apiV1.notFound((c) => {
  * Global error handler
  */
 apiV1.onError((err, c) => {
-  logger.error(
+  log.error(
     {
       error: err.message,
       path: c.req.path,

@@ -9,11 +9,21 @@
  */
 
 import { describe, it, expect, beforeEach, mock } from "bun:test";
-import { mockLogger, clearAllMocks } from "../../testing/shared-mocks";
+import {
+  mockLogger,
+  mockLoggers,
+  mockLog,
+  mockSerializeError,
+  clearAllMocks,
+} from "../../testing/shared-mocks";
 
 // Mock the logger before importing the module
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
+  loggers: mockLoggers,
+  log: mockLog,
+  createLogger: () => mockLog,
+  serializeError: mockSerializeError,
 }));
 
 // Create mock column references that behave like Drizzle columns
@@ -120,7 +130,7 @@ describe("auth business logic", () => {
       const result = await getUnclaimedProfilesData(mockDb);
 
       expect(result).toEqual(livingProfiles);
-      expect(mockLogger.debug).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         { count: 0 },
         "Claimed profiles found"
       );
@@ -211,7 +221,7 @@ describe("auth business logic", () => {
       // person-1 should be returned since it's not in the claimed list
       // (person-2 is the only claimed one, nulls are filtered)
       expect(result).toEqual(livingProfiles);
-      expect(mockLogger.debug).toHaveBeenCalledWith(
+      expect(mockLogger.info).toHaveBeenCalledWith(
         { count: 1 }, // Only person-2 is in the filtered list
         "Claimed profiles found"
       );

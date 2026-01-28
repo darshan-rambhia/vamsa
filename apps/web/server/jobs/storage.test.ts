@@ -11,6 +11,8 @@ import { describe, it, expect, mock, beforeEach } from "bun:test";
 // Mock logger for this test file
 import {
   mockLogger,
+  mockLog,
+  mockLoggers,
   mockSerializeError,
   mockCreateContextLogger,
   mockCreateRequestLogger,
@@ -20,6 +22,9 @@ import {
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
+  log: mockLog,
+  loggers: mockLoggers,
+  createLogger: () => mockLog,
   serializeError: mockSerializeError,
   createContextLogger: mockCreateContextLogger,
   createRequestLogger: mockCreateRequestLogger,

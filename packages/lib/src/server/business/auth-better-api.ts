@@ -1,5 +1,7 @@
 import { auth } from "./auth-better";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.auth;
 
 /**
  * Better Auth API Wrapper Functions
@@ -45,7 +47,7 @@ export async function betterAuthLogin(
   password: string,
   headers?: Headers
 ) {
-  logger.debug({ email }, "Better Auth login attempt");
+  log.info({ email }, "Better Auth login attempt");
 
   const result = await auth.api.signInEmail({
     body: { email, password },
@@ -53,11 +55,11 @@ export async function betterAuthLogin(
   });
 
   if (!result) {
-    logger.warn({ email }, "Better Auth login failed - no result returned");
+    log.warn({ email }, "Better Auth login failed - no result returned");
     throw new Error("Login failed");
   }
 
-  logger.info({ email }, "Better Auth login successful");
+  log.info({ email }, "Better Auth login successful");
   return result;
 }
 
@@ -85,7 +87,7 @@ export async function betterAuthRegister(
   password: string,
   headers?: Headers
 ) {
-  logger.debug({ email, name }, "Better Auth registration attempt");
+  log.info({ email, name }, "Better Auth registration attempt");
 
   const result = await auth.api.signUpEmail({
     body: { email, name, password },
@@ -93,14 +95,11 @@ export async function betterAuthRegister(
   });
 
   if (!result) {
-    logger.warn(
-      { email },
-      "Better Auth registration failed - no result returned"
-    );
+    log.warn({ email }, "Better Auth registration failed - no result returned");
     throw new Error("Registration failed");
   }
 
-  logger.info({ email }, "Better Auth registration successful");
+  log.info({ email }, "Better Auth registration successful");
   return result;
 }
 
@@ -151,7 +150,7 @@ export async function betterAuthChangePassword(
   newPassword: string,
   headers: Headers
 ) {
-  logger.debug("Better Auth password change attempt");
+  log.info({}, "Better Auth password change attempt");
 
   const result = await auth.api.changePassword({
     body: { currentPassword, newPassword },
@@ -159,11 +158,11 @@ export async function betterAuthChangePassword(
   });
 
   if (!result) {
-    logger.warn("Better Auth password change failed - no result returned");
+    log.warn({}, "Better Auth password change failed - no result returned");
     throw new Error("Password change failed");
   }
 
-  logger.info("Better Auth password changed successfully");
+  log.info({}, "Better Auth password changed successfully");
   return result;
 }
 
@@ -180,13 +179,13 @@ export async function betterAuthChangePassword(
  * await betterAuthSignOut(request.headers);
  */
 export async function betterAuthSignOut(headers: Headers) {
-  logger.debug("Better Auth sign out");
+  log.info({}, "Better Auth sign out");
 
   await auth.api.signOut({
     headers: headersToObject(headers),
   });
 
-  logger.info("Better Auth sign out successful");
+  log.info({}, "Better Auth sign out successful");
 }
 
 /**

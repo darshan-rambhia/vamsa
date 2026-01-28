@@ -12,6 +12,8 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
 import {
   mockLogger,
+  mockLoggers,
+  mockLog,
   mockSerializeError,
   clearAllMocks,
 } from "../../testing/shared-mocks";
@@ -19,6 +21,8 @@ import {
 // Mock logger
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
+  loggers: mockLoggers,
+  log: mockLog,
   serializeError: mockSerializeError,
 }));
 

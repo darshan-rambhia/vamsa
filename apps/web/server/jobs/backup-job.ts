@@ -16,8 +16,10 @@ import {
   type StorageProvider,
 } from "./storage";
 import { sendBackupNotification } from "./notifications";
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import type { BackupType, BackupSettings } from "@vamsa/api";
+
+const log = loggers.jobs;
 import * as fs from "fs/promises";
 import * as path from "path";
 
@@ -54,7 +56,7 @@ export async function performBackup(type: BackupType): Promise<string> {
 
   try {
     // Generate backup using existing export function
-    logger.info({ type, filename }, "Generating backup data");
+    log.info({ type, filename }, "Generating backup data");
 
     // Call the server function to export backup
     // We need to generate the export in a different way since we can't call server functions
@@ -202,8 +204,11 @@ export async function performBackup(type: BackupType): Promise<string> {
           }
         } catch (err) {
           // Log file addition errors but continue
-          logger.warn(
-            { error: serializeError(err), filePath },
+          log.warn(
+            {
+              error: err instanceof Error ? err.message : String(err),
+              filePath,
+            },
             "Failed to add photo to backup"
           );
         }
@@ -233,7 +238,7 @@ export async function performBackup(type: BackupType): Promise<string> {
     // Save locally first
     const localPath = path.join(BACKUP_DIR, filename);
     await fs.writeFile(localPath, zipBuffer);
-    logger.info({ localPath, size: zipBuffer.length }, "Backup saved locally");
+    log.info({ localPath, size: zipBuffer.length }, "Backup saved locally");
 
     // Upload to cloud storage if configured
     if (settings?.storageProvider && settings.storageProvider !== "LOCAL") {
@@ -248,14 +253,19 @@ export async function performBackup(type: BackupType): Promise<string> {
             prefix: settings.storagePath || undefined,
           }
         );
-        logger.info(
+        log.info(
           { provider: settings.storageProvider },
           "Backup uploaded to cloud"
         );
       } catch (uploadError) {
         // Log cloud upload error but don't fail the entire backup
-        logger.warn(
-          { error: serializeError(uploadError) },
+        log.warn(
+          {
+            error:
+              uploadError instanceof Error
+                ? uploadError.message
+                : String(uploadError),
+          },
           "Failed to upload backup to cloud storage, local backup still available"
         );
       }
@@ -296,14 +306,19 @@ export async function performBackup(type: BackupType): Promise<string> {
           emails,
         });
       } catch (notificationError) {
-        logger.warn(
-          { error: serializeError(notificationError) },
+        log.warn(
+          {
+            error:
+              notificationError instanceof Error
+                ? notificationError.message
+                : String(notificationError),
+          },
           "Failed to send success notification"
         );
       }
     }
 
-    logger.info(
+    log.info(
       { filename, duration, size: zipBuffer.length },
       "Backup completed successfully"
     );
@@ -338,14 +353,13 @@ export async function performBackup(type: BackupType): Promise<string> {
           emails,
         });
       } catch (notificationError) {
-        logger.warn(
-          { error: serializeError(notificationError) },
-          "Failed to send failure notification"
-        );
+        log
+          .withErr(notificationError)
+          .msg("Failed to send failure notification");
       }
     }
 
-    logger.error({ error: serializeError(error), filename }, "Backup failed");
+    log.withErr(error).ctx({ filename }).msg("Backup failed");
     throw error;
   }
 }
@@ -385,7 +399,7 @@ async function rotateBackups(
   const backupsToDelete = allBackups.slice(keepCount);
 
   for (const backupToDelete of backupsToDelete) {
-    logger.info({ filename: backupToDelete.filename }, "Deleting old backup");
+    log.info({ filename: backupToDelete.filename }, "Deleting old backup");
 
     // Delete from cloud storage
     if (backupToDelete.location !== "LOCAL" && settings.storageBucket) {
@@ -400,8 +414,8 @@ async function rotateBackups(
           }
         );
       } catch (error) {
-        logger.warn(
-          { error: serializeError(error) },
+        log.warn(
+          { error: error instanceof Error ? error.message : String(error) },
           "Failed to delete backup from cloud storage"
         );
       }
@@ -423,6 +437,6 @@ async function rotateBackups(
   }
 
   if (backupsToDelete.length > 0) {
-    logger.info({ count: backupsToDelete.length, type }, "Rotated old backups");
+    log.info({ count: backupsToDelete.length, type }, "Rotated old backups");
   }
 }

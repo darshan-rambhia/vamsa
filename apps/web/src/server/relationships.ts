@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 import {
   relationshipCreateSchema,
   relationshipUpdateSchema,
@@ -44,10 +46,10 @@ export const listRelationships = createServerFn({ method: "GET" })
       );
       return relationships;
     } catch (error) {
-      logger.error(
-        { error, personId: data.personId },
-        "listRelationships failed"
-      );
+      log
+        .withErr(error)
+        .ctx({ personId: data.personId })
+        .msg("listRelationships failed");
       throw error;
     }
   });
@@ -73,10 +75,10 @@ export const getRelationship = createServerFn({ method: "GET" })
       const relationship = await getRelationshipData(data.id);
       return relationship;
     } catch (error) {
-      logger.error(
-        { error, relationshipId: data.id },
-        "getRelationship failed"
-      );
+      log
+        .withErr(error)
+        .ctx({ relationshipId: data.id })
+        .msg("getRelationship failed");
       throw error;
     }
   });
@@ -103,17 +105,17 @@ export const createRelationship = createServerFn({ method: "POST" })
     try {
       const result = await createRelationshipData(data);
 
-      logger.info(
+      log.info(
         { relationshipId: result.id, createdBy: user.id, type: data.type },
         "Created relationship"
       );
 
       return result;
     } catch (error) {
-      logger.error(
-        { error, userId: user.id, input: data },
-        "createRelationship failed"
-      );
+      log
+        .withErr(error)
+        .ctx({ userId: user.id, input: data })
+        .msg("createRelationship failed");
       throw error;
     }
   });
@@ -147,17 +149,17 @@ export const updateRelationship = createServerFn({ method: "POST" })
       const { id, ...updateInput } = data;
       const result = await updateRelationshipData(id, updateInput);
 
-      logger.info(
+      log.info(
         { relationshipId: id, updatedBy: user.id },
         "Updated relationship"
       );
 
       return result;
     } catch (error) {
-      logger.error(
-        { error, userId: user.id, relationshipId: data.id },
-        "updateRelationship failed"
-      );
+      log
+        .withErr(error)
+        .ctx({ userId: user.id, relationshipId: data.id })
+        .msg("updateRelationship failed");
       throw error;
     }
   });
@@ -187,17 +189,17 @@ export const deleteRelationship = createServerFn({ method: "POST" })
     try {
       const result = await deleteRelationshipData(data.id);
 
-      logger.info(
+      log.info(
         { relationshipId: data.id, deletedBy: user.id },
         "Deleted relationship"
       );
 
       return result;
     } catch (error) {
-      logger.error(
-        { error, userId: user.id, relationshipId: data.id },
-        "deleteRelationship failed"
-      );
+      log
+        .withErr(error)
+        .ctx({ userId: user.id, relationshipId: data.id })
+        .msg("deleteRelationship failed");
       throw error;
     }
   });
@@ -240,7 +242,7 @@ export const getFamilyTree = createServerFn({ method: "GET" }).handler(
         ),
       };
     } catch (error) {
-      logger.error({ error }, "getFamilyTree failed");
+      log.withErr(error).msg("getFamilyTree failed");
       throw error;
     }
   }

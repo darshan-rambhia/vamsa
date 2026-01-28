@@ -11,7 +11,9 @@ import {
   updatePersonData as serverUpdatePerson,
   deletePersonData as serverDeletePerson,
 } from "@vamsa/lib/server/business";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 const personsRouter = new OpenAPIHono();
 
@@ -200,7 +202,7 @@ personsRouter.openapi(listPersonsRoute, async (c) => {
 
     return c.json(response, { status: 200 });
   } catch (error) {
-    logger.error({ error }, "Error listing persons");
+    log.withErr(error).msg("Error listing persons");
     return c.json({ error: "Failed to list persons" }, { status: 500 });
   }
 });
@@ -292,7 +294,7 @@ personsRouter.openapi(createPersonRoute, async (c) => {
       return c.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    logger.error({ error }, "Error creating person");
+    log.withErr(error).msg("Error creating person");
     return c.json({ error: "Failed to create person" }, { status: 500 });
   }
 });
@@ -376,7 +378,7 @@ personsRouter.openapi(getPersonRoute, async (c) => {
       return c.json({ error: "Person not found" }, { status: 404 });
     }
 
-    logger.error({ error }, "Error getting person");
+    log.withErr(error).msg("Error getting person");
     return c.json({ error: "Failed to get person" }, { status: 500 });
   }
 });
@@ -498,7 +500,7 @@ personsRouter.openapi(updatePersonRoute, async (c) => {
       return c.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    logger.error({ error }, "Error updating person");
+    log.withErr(error).msg("Error updating person");
     return c.json({ error: "Failed to update person" }, { status: 500 });
   }
 });
@@ -587,7 +589,7 @@ personsRouter.openapi(deletePersonRoute, async (c) => {
       return c.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    logger.error({ error }, "Error deleting person");
+    log.withErr(error).msg("Error deleting person");
     return c.json({ error: "Failed to delete person" }, { status: 500 });
   }
 });

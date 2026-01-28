@@ -4,7 +4,9 @@
  * Sends success/failure notifications when backups complete
  */
 
-import { logger, serializeError } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.jobs;
 
 export type NotificationType = "success" | "failure";
 
@@ -60,7 +62,7 @@ export async function sendBackupNotification(
 
   // Skip if no emails provided
   if (!emails || emails.length === 0) {
-    logger.info("No notification emails configured, skipping notification");
+    log.info({}, "No notification emails configured, skipping notification");
     return;
   }
 
@@ -191,7 +193,7 @@ export async function sendBackupNotification(
 
     // TODO: Integrate with actual email service
     // For now, just log the notification
-    logger.info(
+    log.info(
       {
         type,
         subject,
@@ -208,10 +210,7 @@ export async function sendBackupNotification(
     // - SMTP service
     // - Or other email provider configured in env vars
   } catch (error) {
-    logger.error(
-      { error: serializeError(error) },
-      "Failed to send backup notification"
-    );
+    log.withErr(error).msg("Failed to send backup notification");
     // Don't throw - notification failure should not block backup process
   }
 }

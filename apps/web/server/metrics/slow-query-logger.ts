@@ -14,7 +14,9 @@
  *   logSlowQuery({ model: 'Person', operation: 'select', duration: 1500 });
  */
 
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.db;
 
 // ============================================
 // Types
@@ -82,7 +84,7 @@ export function logSlowQuery(query: SlowQuery): void {
   }
 
   // Log a warning for visibility
-  logger.warn(
+  log.warn(
     {
       model: query.model,
       operation: query.operation,

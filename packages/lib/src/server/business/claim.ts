@@ -12,7 +12,7 @@
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { eq, and, notInArray, asc, isNotNull } from "drizzle-orm";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import {
   findSuggestedMatches,
   type ClaimableProfile,
@@ -20,6 +20,8 @@ import {
   type ProfileMatch,
 } from "@vamsa/lib";
 import { notifyNewMemberJoined } from "./notifications";
+
+const log = loggers.auth;
 
 /**
  * Type for the database client used by claim functions.
@@ -54,7 +56,7 @@ export async function getClaimableProfilesData(
     throw new Error("This endpoint is for OIDC users only");
   }
 
-  logger.debug(
+  log.debug(
     { userId: user.id, provider: user.oidcProvider },
     "Fetching claimable profiles for OIDC user"
   );
@@ -69,7 +71,7 @@ export async function getClaimableProfilesData(
     .map((u) => u.personId)
     .filter((id): id is string => id !== null);
 
-  logger.debug({ count: claimedPersonIds.length }, "Claimed person IDs");
+  log.debug({ count: claimedPersonIds.length }, "Claimed person IDs");
 
   // Get all living persons not yet claimed
   const profiles = await db.query.persons.findMany({
@@ -90,7 +92,7 @@ export async function getClaimableProfilesData(
     ],
   });
 
-  logger.debug({ count: profiles.length }, "Unclaimed living profiles found");
+  log.debug({ count: profiles.length }, "Unclaimed living profiles found");
 
   // Build user data for matching
   const claimingUser: ClaimingUser = {
@@ -117,7 +119,7 @@ export async function getClaimableProfilesData(
     .slice(0, 5)
     .map((m: ProfileMatch) => m.profile);
 
-  logger.debug({ count: suggested.length }, "Suggested matches found");
+  log.debug({ count: suggested.length }, "Suggested matches found");
 
   return {
     all: profiles,
@@ -158,20 +160,20 @@ export async function claimProfileForOIDCData(
     throw new Error("This endpoint is for OIDC users only");
   }
 
-  logger.info(
+  log.info(
     { userId: user.id, personId, provider: user.oidcProvider },
     "Attempting to claim profile for OIDC user"
   );
 
   // Check if user already has a personId
   if (user.personId) {
-    logger.warn({ userId: user.id }, "User already has a linked profile");
+    log.info({ userId: user.id }, "User already has a linked profile");
     throw new Error("You have already claimed a profile");
   }
 
   // Check profile claim status
   if (user.profileClaimStatus === "CLAIMED") {
-    logger.warn({ userId: user.id }, "User already claimed a profile");
+    log.info({ userId: user.id }, "User already claimed a profile");
     throw new Error("You have already completed profile claiming");
   }
 
@@ -181,16 +183,16 @@ export async function claimProfileForOIDCData(
   });
 
   if (!person) {
-    logger.warn({ personId }, "Profile not found");
+    log.info({ personId }, "Profile not found");
     throw new Error("Profile not found");
   }
 
   if (!person.isLiving) {
-    logger.warn({ personId }, "Cannot claim a non-living profile");
+    log.info({ personId }, "Cannot claim a non-living profile");
     throw new Error("Cannot claim a non-living profile");
   }
 
-  logger.debug(
+  log.debug(
     { personId, firstName: person.firstName, lastName: person.lastName },
     "Person found and is living"
   );
@@ -201,12 +203,12 @@ export async function claimProfileForOIDCData(
   });
 
   if (existingClaim) {
-    logger.warn({ personId }, "Profile is already claimed by another user");
+    log.info({ personId }, "Profile is already claimed by another user");
     throw new Error("This profile is already claimed by another user");
   }
 
   // Link user to person and promote to MEMBER
-  logger.debug({ userId: user.id, personId }, "Linking user to person");
+  log.debug({ userId: user.id, personId }, "Linking user to person");
   const [updatedUser] = await db
     .update(drizzleSchema.users)
     .set({
@@ -219,14 +221,17 @@ export async function claimProfileForOIDCData(
     .where(eq(drizzleSchema.users.id, user.id))
     .returning();
 
-  logger.info({ userId: user.id, personId }, "Profile claimed successfully");
+  log.info({ userId: user.id, personId }, "Profile claimed successfully");
 
   // Send notification to admins about new member
   try {
     await notify(user.id);
-    logger.debug({ userId: user.id }, "Notification sent");
+    log.debug({ userId: user.id }, "Notification sent");
   } catch (error) {
-    logger.error({ userId: user.id, error }, "Failed to send notification");
+    log
+      .withErr(error)
+      .ctx({ userId: user.id })
+      .msg("Failed to send notification");
     // Don't throw - notification failure shouldn't block claiming
   }
 
@@ -260,14 +265,14 @@ export async function skipProfileClaimData(
     throw new Error("This endpoint is for OIDC users only");
   }
 
-  logger.info(
+  log.info(
     { userId: user.id, provider: user.oidcProvider },
     "User skipping profile claim"
   );
 
   // Check if already claimed
   if (user.profileClaimStatus === "CLAIMED") {
-    logger.warn({ userId: user.id }, "User already claimed a profile");
+    log.info({ userId: user.id }, "User already claimed a profile");
     throw new Error("You have already claimed a profile");
   }
 
@@ -280,7 +285,7 @@ export async function skipProfileClaimData(
     })
     .where(eq(drizzleSchema.users.id, user.id));
 
-  logger.info({ userId: user.id }, "Profile claim skipped");
+  log.info({ userId: user.id }, "Profile claim skipped");
 
   return { success: true };
 }
@@ -311,7 +316,7 @@ export async function getOIDCClaimStatusData(
     return null;
   }
 
-  logger.debug({ userId: user.id }, "Fetching OIDC claim status");
+  log.debug({ userId: user.id }, "Fetching OIDC claim status");
 
   const person = user.personId
     ? await db.query.persons.findFirst({

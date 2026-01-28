@@ -17,8 +17,10 @@ import {
   claimProfileData,
 } from "@vamsa/lib/server/business";
 import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
 import { checkRateLimit, getClientIP } from "./middleware/rate-limiter";
+
+const log = loggers.auth;
 
 const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 
@@ -80,11 +82,11 @@ export async function changePasswordHandler(input: ChangePasswordInput) {
       })
     );
 
-    logger.info("Password changed successfully");
+    log.info({}, "Password changed successfully");
 
     return { success: true };
   } catch (error) {
-    logger.warn({ error }, "Password change failed");
+    log.withErr(error).msg("Password change failed");
     throw error;
   }
 }
@@ -100,7 +102,7 @@ export async function getSessionHandler() {
     );
     return user;
   } catch (error) {
-    logger.debug({ error }, "Failed to get session");
+    log.withErr(error).msg("Failed to get session");
     return null;
   }
 }
@@ -124,7 +126,7 @@ export async function checkAuthHandler() {
       user,
     };
   } catch (error) {
-    logger.debug({ error }, "Auth check failed");
+    log.withErr(error).msg("Auth check failed");
     return { valid: false, user: null };
   }
 }
@@ -140,9 +142,9 @@ export async function logoutHandler() {
         cookie: cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : "",
       })
     );
-    logger.info("Logout completed");
+    log.info({}, "Logout completed");
   } catch (error) {
-    logger.warn({ error }, "Logout failed");
+    log.withErr(error).msg("Logout failed");
     // Continue even if logout fails (e.g., no active session)
   }
 

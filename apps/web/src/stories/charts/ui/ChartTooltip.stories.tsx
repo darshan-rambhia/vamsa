@@ -1,7 +1,9 @@
 import type { Story } from "@ladle/react";
 import { ChartTooltip } from "~/components/charts/ChartTooltip";
 import { ThemeDecorator } from "~/stories/decorators";
-import { logger } from "@vamsa/lib/logger";
+import { loggers } from "@vamsa/lib/logger";
+
+const log = loggers.api;
 
 export default {
   title: "Charts/UI/ChartTooltip",
@@ -48,10 +50,10 @@ export const Default: Story = () => (
         position={{ x: 200, y: 200 }}
         rootPersonId="person-root"
         onSetAsCenter={(id) =>
-          logger.info({ personId: id }, "Set as center in ChartTooltip story")
+          log.info({ personId: id }, "Set as center in ChartTooltip story")
         }
         onViewProfile={(id) =>
-          logger.info({ personId: id }, "View profile in ChartTooltip story")
+          log.info({ personId: id }, "View profile in ChartTooltip story")
         }
         relationshipLabel="3 generations up"
       />
@@ -68,10 +70,10 @@ export const LongContent: Story = () => (
         position={{ x: 300, y: 300 }}
         rootPersonId="person-root"
         onSetAsCenter={(id) =>
-          logger.info({ personId: id }, "Set as center in ChartTooltip story")
+          log.info({ personId: id }, "Set as center in ChartTooltip story")
         }
         onViewProfile={(id) =>
-          logger.info({ personId: id }, "View profile in ChartTooltip story")
+          log.info({ personId: id }, "View profile in ChartTooltip story")
         }
         relationshipLabel="2 generations down (grandson)"
       />
@@ -88,11 +90,11 @@ export const WithActions: Story = () => (
         position={{ x: 400, y: 400 }}
         rootPersonId="person-root"
         onSetAsCenter={(id) => {
-          logger.info({ personId: id }, "Set as center in ChartTooltip story");
+          log.info({ personId: id }, "Set as center in ChartTooltip story");
           alert(`Setting ${id} as center person`);
         }}
         onViewProfile={(id) => {
-          logger.info({ personId: id }, "View profile in ChartTooltip story");
+          log.info({ personId: id }, "View profile in ChartTooltip story");
           alert(`Viewing profile for ${id}`);
         }}
         relationshipLabel="Grandmother"
@@ -110,10 +112,10 @@ export const RootPerson: Story = () => (
         position={{ x: 500, y: 200 }}
         rootPersonId="person-1"
         onSetAsCenter={(id) =>
-          logger.info({ personId: id }, "Set as center in ChartTooltip story")
+          log.info({ personId: id }, "Set as center in ChartTooltip story")
         }
         onViewProfile={(id) =>
-          logger.info({ personId: id }, "View profile in ChartTooltip story")
+          log.info({ personId: id }, "View profile in ChartTooltip story")
         }
         relationshipLabel="Center"
       />
@@ -135,16 +137,10 @@ export const EdgePositioning: Story = () => (
             position={{ x: 10, y: 10 }}
             rootPersonId="person-root"
             onSetAsCenter={(id) =>
-              logger.info(
-                { personId: id },
-                "Set as center in ChartTooltip story"
-              )
+              log.info({ personId: id }, "Set as center in ChartTooltip story")
             }
             onViewProfile={(id) =>
-              logger.info(
-                { personId: id },
-                "View profile in ChartTooltip story"
-              )
+              log.info({ personId: id }, "View profile in ChartTooltip story")
             }
           />
         </div>
@@ -161,16 +157,10 @@ export const EdgePositioning: Story = () => (
             }}
             rootPersonId="person-root"
             onSetAsCenter={(id) =>
-              logger.info(
-                { personId: id },
-                "Set as center in ChartTooltip story"
-              )
+              log.info({ personId: id }, "Set as center in ChartTooltip story")
             }
             onViewProfile={(id) =>
-              logger.info(
-                { personId: id },
-                "View profile in ChartTooltip story"
-              )
+              log.info({ personId: id }, "View profile in ChartTooltip story")
             }
             relationshipLabel="Edge positioning test"
           />
