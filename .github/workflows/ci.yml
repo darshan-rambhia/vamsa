@@ -1,0 +1,171 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+# Explicit permissions following principle of least privilege
+permissions:
+  contents: read
+  pull-requests: write
+
+# Cancel in-progress runs for the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Check formatting
+        run: bun run format:check
+
+      - name: Run ESLint
+        run: bun run lint
+
+      - name: TypeScript check
+        run: bun run typecheck
+
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Run unit tests with coverage
+        run: bun run test
+        env:
+          CI: true
+
+      - name: Check coverage thresholds
+        run: bun scripts/check-coverage.ts
+
+      - name: Upload coverage to artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: |
+            packages/*/coverage/
+            apps/*/coverage/
+          retention-days: 7
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Build all packages
+        run: bun run build
+
+      - name: Verify build output
+        run: |
+          if [ ! -d "apps/web/dist" ]; then
+            echo "Build output not found"
+            exit 1
+          fi
+          echo "Build successful"
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/Dockerfile
+          push: false
+          tags: vamsa:ci-test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  quality-gate:
+    name: Quality Gate
+    needs: [quality, unit-tests, build, docker]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Check all jobs passed
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          TESTS_RESULT: ${{ needs.unit-tests.result }}
+          BUILD_RESULT: ${{ needs.build.result }}
+          DOCKER_RESULT: ${{ needs.docker.result }}
+        run: |
+          echo "Quality: $QUALITY_RESULT"
+          echo "Unit Tests: $TESTS_RESULT"
+          echo "Build: $BUILD_RESULT"
+          echo "Docker: $DOCKER_RESULT"
+
+          if [[ "$QUALITY_RESULT" != "success" ]]; then
+            echo "Code quality checks failed"
+            exit 1
+          fi
+
+          if [[ "$TESTS_RESULT" != "success" ]]; then
+            echo "Unit tests failed or coverage below threshold"
+            exit 1
+          fi
+
+          if [[ "$BUILD_RESULT" != "success" ]]; then
+            echo "Build failed"
+            exit 1
+          fi
+
+          if [[ "$DOCKER_RESULT" != "success" ]]; then
+            echo "Docker build failed"
+            exit 1
+          fi
+
+          echo "All quality gates passed!"

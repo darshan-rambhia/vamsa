@@ -26,5 +26,5 @@
     "server/**/*.ts",
     "tests/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist", ".stryker-tmp"]
+  "exclude": ["node_modules", "dist", ".stryker-tmp", "tests/integration"]
 }

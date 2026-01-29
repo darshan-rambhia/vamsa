@@ -62,6 +62,8 @@ export const RATE_LIMITS = {
   register: { limit: 3, windowMs: 60 * 60 * 1000 }, // 3 attempts per hour
   claimProfile: { limit: 10, windowMs: 60 * 60 * 1000 }, // 10 attempts per hour
   passwordReset: { limit: 3, windowMs: 60 * 60 * 1000 }, // 3 attempts per hour
+  search: { limit: 30, windowMs: 60 * 1000 }, // 30 searches per minute
+  api: { limit: 100, windowMs: 60 * 1000 }, // 100 API requests per minute
 } as const;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;

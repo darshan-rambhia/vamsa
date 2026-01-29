@@ -55,7 +55,7 @@ services:
 const E2E_DATABASE_URL =
   "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test";
 
-const composeFile = resolve(DOCKER_DIR, "docker-compose.e2e.yml");
+const composeFile = resolve(DOCKER_DIR, "docker-compose.test.yml");
 
 async function run(
   cmd: string[],

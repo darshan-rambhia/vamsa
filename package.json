@@ -28,11 +28,13 @@
     "test": "bun run --filter '*' test",
     "test:unit": "bun run --filter @vamsa/lib --filter @vamsa/ui test",
     "test:e2e": "bun run --filter @vamsa/web test:e2e",
+    "test:int": "bun run --filter @vamsa/web test:int",
     "test:mutation": "bun scripts/mutation-test.ts",
     "test:mutation:lib": "bun scripts/mutation-test.ts lib",
     "test:mutation:ui": "bun scripts/mutation-test.ts ui",
     "test:mutation:api": "bun scripts/mutation-test.ts api",
     "test:mutation:web": "bun scripts/mutation-test.ts web",
+    "test:coverage": "bun scripts/check-coverage.ts",
     "// === Database ===": "",
     "db:generate": "bun run --filter @vamsa/api db:generate",
     "db:push": "bun run --filter @vamsa/api db:push",
@@ -40,6 +42,8 @@
     "db:seed": "bun run --filter @vamsa/api db:seed",
     "db:seed:dev": "bun run --filter @vamsa/api db:seed:dev",
     "db:studio": "bun run --filter @vamsa/api db:studio",
+    "db:backup": "./scripts/backup-db.sh",
+    "db:restore": "./scripts/restore-db.sh",
     "// === Docker ===": "",
     "docker": "docker compose -f docker/docker-compose.yml up -d",
     "docker:down": "docker compose -f docker/docker-compose.yml down",
@@ -51,7 +55,9 @@
     "observability:logs": "docker-compose -f docker/docker-compose.observability.yml logs -f",
     "observability:restart": "bun run observability:stop && bun run observability:start",
     "// === Utilities ===": "",
-    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules bun.lock"
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules bun.lock",
+    "release": "bunx semantic-release",
+    "release:dry": "bunx semantic-release --dry-run"
   },
   "dependencies": {
     "@hono/swagger-ui": "0.5.3",
@@ -61,7 +67,7 @@
     "drizzle-orm": "0.45.1",
     "html2canvas": "1.4.1",
     "ical-generator": "10.0.0",
-    "maplibre-gl": "5.16.0",
+    "maplibre-gl": "5.17.0",
     "rss": "1.2.2"
   },
   "devDependencies": {
@@ -71,22 +77,26 @@
     "@testing-library/react": "16.3.2",
     "@types/bun": "latest",
     "@types/jsdom": "27.0.0",
-    "@types/node": "25.0.10",
+    "@types/node": "25.1.0",
     "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.0.1",
-    "globals": "17.1.0",
+    "globals": "17.2.0",
     "jsdom": "27.4.0",
     "prettier": "3.8.1",
     "prettier-plugin-tailwindcss": "0.7.2",
+    "semantic-release": "25.0.2",
+    "@semantic-release/changelog": "6.0.3",
+    "@semantic-release/git": "10.0.1",
+    "conventional-changelog-conventionalcommits": "9.1.0",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.53.1"
+    "typescript-eslint": "8.54.0"
   },
   "overrides": {
     "@react-email/render": "^2.0.2",
-    "hono": ">=4.11.4",
+    "hono": ">=4.11.7",
     "lodash": ">=4.17.23"
   }
 }

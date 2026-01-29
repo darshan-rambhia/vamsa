@@ -1,0 +1,99 @@
+name: Cross-Browser E2E Tests
+
+on:
+  schedule:
+    # Weekly on Sunday at midnight UTC
+    - cron: "0 0 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cross-browser:
+    name: E2E - ${{ matrix.browser }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit, firefox]
+
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: vamsa_test
+          POSTGRES_USER: vamsa
+          POSTGRES_PASSWORD: vamsa_password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      DATABASE_URL: postgresql://vamsa:vamsa_password@localhost:5432/vamsa_test
+      NODE_ENV: test
+      CI: true
+      BROWSER: ${{ matrix.browser }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Install Playwright browsers
+        run: bunx playwright install --with-deps "$BROWSER"
+
+      - name: Setup database
+        run: |
+          bun run db:generate
+          bun run db:migrate:deploy
+          bun run db:seed
+
+      - name: Build application
+        run: bun run build
+
+      - name: Run E2E tests
+        run: bunx playwright test --project="$BROWSER" --reporter=html,json
+        env:
+          PLAYWRIGHT_WORKERS: 4
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-${{ matrix.browser }}
+          path: test-output/e2e/playwright/
+          retention-days: 7
+
+  summary:
+    name: Cross-Browser Summary
+    needs: cross-browser
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Check results
+        env:
+          RESULT: ${{ needs.cross-browser.result }}
+        run: |
+          echo "Cross-browser test results: $RESULT"
+
+          if [[ "$RESULT" == "failure" ]]; then
+            echo "Some browser tests failed. Check individual reports."
+            exit 1
+          fi
+
+          echo "All browser tests passed!"

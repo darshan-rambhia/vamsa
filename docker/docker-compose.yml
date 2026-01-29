@@ -3,13 +3,14 @@ name: vamsa-app
 
 services:
   # PostgreSQL Database
+  # SECURITY: DB_PASSWORD must be set in environment or .env file
   db:
     image: postgres:18-alpine
     container_name: vamsa-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-vamsa}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-vamsa_dev_password}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required - see .env.example}
       POSTGRES_DB: ${DB_NAME:-vamsa}
       # PostgreSQL 18 initialization arguments
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
@@ -66,8 +67,8 @@ services:
       NODE_ENV: production
       PORT: 3000
       HOST: 0.0.0.0
-      DATABASE_URL: postgresql://${DB_USER:-vamsa}:${DB_PASSWORD:-vamsa_dev_password}@db:5432/${DB_NAME:-vamsa}
-      SESSION_SECRET: ${SESSION_SECRET:-change-this-in-production}
+      DATABASE_URL: "postgresql://${DB_USER:-vamsa}:${DB_PASSWORD:?DB_PASSWORD is required}@db:5432/${DB_NAME:-vamsa}"
+      SESSION_SECRET: "${SESSION_SECRET:?SESSION_SECRET is required}"
     volumes:
       # Mount uploads directory for persistent file storage
       - uploads_data:/app/data/uploads

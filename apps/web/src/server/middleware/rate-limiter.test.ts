@@ -163,5 +163,15 @@ describe("Rate Limiter", () => {
       expect(RATE_LIMITS.claimProfile.limit).toBe(10);
       expect(RATE_LIMITS.claimProfile.windowMs).toBe(60 * 60 * 1000); // 1 hour
     });
+
+    it("has correct search limits", () => {
+      expect(RATE_LIMITS.search.limit).toBe(30);
+      expect(RATE_LIMITS.search.windowMs).toBe(60 * 1000); // 1 minute
+    });
+
+    it("has correct api limits", () => {
+      expect(RATE_LIMITS.api.limit).toBe(100);
+      expect(RATE_LIMITS.api.windowMs).toBe(60 * 1000); // 1 minute
+    });
   });
 });

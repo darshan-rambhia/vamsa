@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
+  FormField,
   Input,
   Label,
   Select,
@@ -122,21 +123,14 @@ export function SourceForm({
     <div className="relative">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Title */}
-        <div className="space-y-2">
-          <Label htmlFor="title">
-            Title <span className="text-destructive">*</span>
-          </Label>
+        <FormField label="Title" error={errors.title?.message} required>
           <Input
-            id="title"
             type="text"
             {...register("title")}
             placeholder="Source title..."
             disabled={isLoading}
           />
-          {errors.title && (
-            <p className="text-destructive text-sm">{errors.title.message}</p>
-          )}
-        </div>
+        </FormField>
 
         {/* Author */}
         <div className="space-y-2">
