@@ -1,6 +1,6 @@
 {
-  "id": "14e35125-9421-4006-86f7-1bedc934d1fe",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "018da0c3-2a2a-4a91-9186-9deb1e8c7d57",
+  "prevId": "14e35125-9421-4006-86f7-1bedc934d1fe",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -112,6 +112,80 @@
           "name": "Account_providerId_accountId_unique",
           "nullsNotDistinct": false,
           "columns": ["providerId", "accountId"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.DashboardPreferences": {
+      "name": "DashboardPreferences",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "layout": {
+          "name": "layout",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"widgets\":[]}'::jsonb"
+        },
+        "widgets": {
+          "name": "widgets",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_dashboardPreferences_userId": {
+          "name": "idx_dashboardPreferences_userId",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "DashboardPreferences_userId_unique": {
+          "name": "DashboardPreferences_userId_unique",
+          "nullsNotDistinct": false,
+          "columns": ["userId"]
         }
       },
       "policies": {},
@@ -368,7 +442,7 @@
           "type": "jsonb",
           "primaryKey": false,
           "notNull": false,
-          "default": "'{\"suggestionsCreated\":true,\"suggestionsUpdated\":true,\"newMemberJoined\":true,\"birthdayReminders\":true}'::jsonb"
+          "default": "'{\"newMemberJoined\":true,\"birthdayReminders\":true,\"suggestionsCreated\":true,\"suggestionsUpdated\":true}'::jsonb"
         }
       },
       "indexes": {
@@ -434,7 +508,7 @@
         "User_oidcProvider_oidcSubject_unique": {
           "name": "User_oidcProvider_oidcSubject_unique",
           "nullsNotDistinct": false,
-          "columns": ["oidcProvider", "oidcSubject"]
+          "columns": ["oidcSubject", "oidcProvider"]
         }
       },
       "policies": {},
@@ -645,6 +719,12 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {
@@ -704,6 +784,21 @@
           "columns": [
             {
               "expression": "isLiving",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_person_deletedAt": {
+          "name": "idx_person_deletedAt",
+          "columns": [
+            {
+              "expression": "deletedAt",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -907,7 +1002,7 @@
         "Relationship_personId_relatedPersonId_type_unique": {
           "name": "Relationship_personId_relatedPersonId_type_unique",
           "nullsNotDistinct": false,
-          "columns": ["personId", "relatedPersonId", "type"]
+          "columns": ["type", "relatedPersonId", "personId"]
         }
       },
       "policies": {},
@@ -1266,7 +1361,7 @@
         "EventMedia_mediaId_personId_eventType_unique": {
           "name": "EventMedia_mediaId_personId_eventType_unique",
           "nullsNotDistinct": false,
-          "columns": ["mediaId", "personId", "eventType"]
+          "columns": ["personId", "mediaId", "eventType"]
         }
       },
       "policies": {},
@@ -1347,7 +1442,7 @@
         "EventParticipant_eventId_personId_unique": {
           "name": "EventParticipant_eventId_personId_unique",
           "nullsNotDistinct": false,
-          "columns": ["eventId", "personId"]
+          "columns": ["personId", "eventId"]
         }
       },
       "policies": {},
@@ -1672,7 +1767,7 @@
         "PlacePersonLink_personId_placeId_type_unique": {
           "name": "PlacePersonLink_personId_placeId_type_unique",
           "nullsNotDistinct": false,
-          "columns": ["personId", "placeId", "type"]
+          "columns": ["type", "placeId", "personId"]
         }
       },
       "policies": {},

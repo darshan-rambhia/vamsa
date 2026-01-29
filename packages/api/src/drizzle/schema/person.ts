@@ -46,12 +46,14 @@ export const persons = pgTable(
     createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),
     updatedAt: timestamp("updatedAt", { mode: "date" }).notNull(),
     createdById: text("createdById"),
+    deletedAt: timestamp("deletedAt", { mode: "date" }),
   },
   (table) => [
     index("idx_person_lastName_firstName").on(table.lastName, table.firstName),
     index("idx_person_createdById").on(table.createdById),
     index("idx_person_dateOfBirth").on(table.dateOfBirth),
     index("idx_person_isLiving").on(table.isLiving),
+    index("idx_person_deletedAt").on(table.deletedAt),
   ]
 );
 

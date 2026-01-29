@@ -1,5 +1,5 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, or, ilike, desc, asc, sql, SQL } from "drizzle-orm";
+import { eq, and, or, ilike, desc, asc, sql, SQL, isNull } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.db;
@@ -17,8 +17,10 @@ import type {
 /**
  * Type for the database client used by person functions.
  * This module uses Drizzle ORM as the default database client.
+ * Can be either the main database instance or a transaction object.
  */
 export type PersonDb = typeof drizzleDb;
+export type PersonDbOrTx = PersonDb | any;
 
 /**
  * Log audit action using Drizzle
@@ -27,7 +29,7 @@ export type PersonDb = typeof drizzleDb;
  * @param entityId - ID of the person record
  * @param previousData - Previous state of the record (for UPDATE/DELETE)
  * @param newData - New state of the record (for CREATE/UPDATE)
- * @param db - Drizzle database instance
+ * @param db - Drizzle database instance or transaction object
  */
 export async function logAuditAction(
   userId: string,
@@ -35,7 +37,7 @@ export async function logAuditAction(
   entityId: string,
   previousData?: unknown,
   newData?: unknown,
-  db: PersonDb = drizzleDb
+  db: PersonDbOrTx = drizzleDb
 ) {
   try {
     await db.insert(drizzleSchema.auditLogs).values({
@@ -60,6 +62,9 @@ export async function logAuditAction(
  */
 export function buildPersonWhereClause(search?: string, isLiving?: boolean) {
   const conditions: SQL<unknown>[] = [];
+
+  // Always exclude deleted persons
+  conditions.push(isNull(drizzleSchema.persons.deletedAt));
 
   if (search) {
     conditions.push(
@@ -304,7 +309,10 @@ export async function getPersonData(
   // Query person with relationships
   // Type assertion needed because drizzle's inferred type doesn't include the nested relation
   const person = (await db.query.persons.findFirst({
-    where: eq(drizzleSchema.persons.id, personId),
+    where: and(
+      eq(drizzleSchema.persons.id, personId),
+      isNull(drizzleSchema.persons.deletedAt)
+    ),
     with: {
       relationshipsFrom: {
         with: { relatedPerson: true } as Record<string, boolean>,
@@ -377,36 +385,42 @@ export async function createPersonData(
 ): Promise<PersonCreateResult> {
   const personId = crypto.randomUUID();
 
-  const [person] = await db
-    .insert(drizzleSchema.persons)
-    .values({
-      id: personId,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      maidenName: data.maidenName || null,
-      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-      dateOfPassing: data.dateOfPassing ? new Date(data.dateOfPassing) : null,
-      birthPlace: data.birthPlace || null,
-      nativePlace: data.nativePlace || null,
-      gender: data.gender || null,
-      photoUrl: null,
-      bio: data.bio || null,
-      email: data.email || null,
-      phone: data.phone || null,
-      currentAddress: data.currentAddress ?? null,
-      workAddress: data.workAddress ?? null,
-      profession: data.profession || null,
-      employer: data.employer || null,
-      socialLinks: data.socialLinks ?? null,
-      isLiving: data.isLiving ?? true,
-      createdById: userId,
-      updatedAt: new Date(),
-    })
-    .returning();
+  // Wrap insert and audit log in a transaction
+  return await db.transaction(async (tx) => {
+    // Step A: Insert Record using transaction
+    const [person] = await tx
+      .insert(drizzleSchema.persons)
+      .values({
+        id: personId,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        maidenName: data.maidenName || null,
+        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+        dateOfPassing: data.dateOfPassing ? new Date(data.dateOfPassing) : null,
+        birthPlace: data.birthPlace || null,
+        nativePlace: data.nativePlace || null,
+        gender: data.gender || null,
+        photoUrl: null,
+        bio: data.bio || null,
+        email: data.email || null,
+        phone: data.phone || null,
+        currentAddress: data.currentAddress ?? null,
+        workAddress: data.workAddress ?? null,
+        profession: data.profession || null,
+        employer: data.employer || null,
+        socialLinks: data.socialLinks ?? null,
+        isLiving: data.isLiving ?? true,
+        createdById: userId,
+        updatedAt: new Date(),
+      })
+      .returning();
 
-  await logAuditAction(userId, "CREATE", person.id, null, data, db);
+    // Step B: Log Audit using transaction
+    // Must await to ensure it's part of the transaction
+    await logAuditAction(userId, "CREATE", person.id, null, data, tx);
 
-  return { id: person.id };
+    return { id: person.id };
+  });
 }
 
 export interface PersonUpdateResult {
@@ -432,7 +446,10 @@ export async function updatePersonData(
 ): Promise<PersonUpdateResult> {
   // Get existing person with user relationship
   const existing = await db.query.persons.findFirst({
-    where: eq(drizzleSchema.persons.id, personId),
+    where: and(
+      eq(drizzleSchema.persons.id, personId),
+      isNull(drizzleSchema.persons.deletedAt)
+    ),
   });
 
   if (!existing) {
@@ -462,56 +479,62 @@ export async function updatePersonData(
     }
   }
 
-  // Build update data, handling dates and JSON fields specially
-  const updateData: Record<string, unknown> = {
-    updatedAt: new Date(),
-  };
+  // Wrap update and audit log in a transaction
+  return await db.transaction(async (tx) => {
+    // Build update data, handling dates and JSON fields specially
+    const updateData: Record<string, unknown> = {
+      updatedAt: new Date(),
+    };
 
-  if (data.dateOfBirth !== undefined) {
-    updateData.dateOfBirth = data.dateOfBirth
-      ? new Date(data.dateOfBirth)
-      : null;
-  }
-
-  if (data.dateOfPassing !== undefined) {
-    updateData.dateOfPassing = data.dateOfPassing
-      ? new Date(data.dateOfPassing)
-      : null;
-  }
-
-  // Add other fields, excluding date and JSON fields that need special handling
-  for (const [key, value] of Object.entries(data)) {
-    if (
-      key !== "dateOfBirth" &&
-      key !== "dateOfPassing" &&
-      key !== "currentAddress" &&
-      key !== "workAddress" &&
-      key !== "socialLinks"
-    ) {
-      updateData[key] = value;
+    if (data.dateOfBirth !== undefined) {
+      updateData.dateOfBirth = data.dateOfBirth
+        ? new Date(data.dateOfBirth)
+        : null;
     }
-  }
 
-  // Handle JSON fields with proper null handling
-  if ("currentAddress" in data) {
-    updateData.currentAddress = data.currentAddress ?? null;
-  }
-  if ("workAddress" in data) {
-    updateData.workAddress = data.workAddress ?? null;
-  }
-  if ("socialLinks" in data) {
-    updateData.socialLinks = data.socialLinks ?? null;
-  }
+    if (data.dateOfPassing !== undefined) {
+      updateData.dateOfPassing = data.dateOfPassing
+        ? new Date(data.dateOfPassing)
+        : null;
+    }
 
-  const [person] = await db
-    .update(drizzleSchema.persons)
-    .set(updateData)
-    .where(eq(drizzleSchema.persons.id, personId))
-    .returning();
+    // Add other fields, excluding date and JSON fields that need special handling
+    for (const [key, value] of Object.entries(data)) {
+      if (
+        key !== "dateOfBirth" &&
+        key !== "dateOfPassing" &&
+        key !== "currentAddress" &&
+        key !== "workAddress" &&
+        key !== "socialLinks"
+      ) {
+        updateData[key] = value;
+      }
+    }
 
-  await logAuditAction(userId, "UPDATE", person.id, existing, data, db);
+    // Handle JSON fields with proper null handling
+    if ("currentAddress" in data) {
+      updateData.currentAddress = data.currentAddress ?? null;
+    }
+    if ("workAddress" in data) {
+      updateData.workAddress = data.workAddress ?? null;
+    }
+    if ("socialLinks" in data) {
+      updateData.socialLinks = data.socialLinks ?? null;
+    }
 
-  return { id: person.id };
+    // Step A: Update record using transaction
+    const [person] = await tx
+      .update(drizzleSchema.persons)
+      .set(updateData)
+      .where(eq(drizzleSchema.persons.id, personId))
+      .returning();
+
+    // Step B: Log Audit using transaction
+    // Must await to ensure it's part of the transaction
+    await logAuditAction(userId, "UPDATE", person.id, existing, data, tx);
+
+    return { id: person.id };
+  });
 }
 
 export interface PersonDeleteResult {
@@ -519,7 +542,7 @@ export interface PersonDeleteResult {
 }
 
 /**
- * Delete a person (hard delete) with audit trail
+ * Delete a person (soft delete) with audit trail
  * @param personId - ID of person to delete
  * @param userId - ID of user performing the deletion
  * @param db - Drizzle database instance
@@ -532,20 +555,30 @@ export async function deletePersonData(
   db: PersonDb = drizzleDb
 ): Promise<PersonDeleteResult> {
   const person = await db.query.persons.findFirst({
-    where: eq(drizzleSchema.persons.id, personId),
+    where: and(
+      eq(drizzleSchema.persons.id, personId),
+      isNull(drizzleSchema.persons.deletedAt)
+    ),
   });
 
   if (!person) {
     throw new Error(await t("errors:person.notFound"));
   }
 
-  await db
-    .delete(drizzleSchema.persons)
-    .where(eq(drizzleSchema.persons.id, personId));
+  // Wrap soft delete and audit log in a transaction
+  return await db.transaction(async (tx) => {
+    // Step A: Soft delete using transaction
+    await tx
+      .update(drizzleSchema.persons)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(eq(drizzleSchema.persons.id, personId));
 
-  await logAuditAction(userId, "DELETE", personId, person, null, db);
+    // Step B: Log Audit using transaction
+    // Must await to ensure it's part of the transaction
+    await logAuditAction(userId, "DELETE", personId, person, null, tx);
 
-  return { success: true };
+    return { success: true };
+  });
 }
 
 export interface PersonSearchResult {
@@ -571,6 +604,7 @@ export async function searchPersonsData(
   const start = Date.now();
 
   const conditions: SQL<unknown>[] = [
+    isNull(drizzleSchema.persons.deletedAt),
     or(
       ilike(drizzleSchema.persons.firstName, `%${query}%`),
       ilike(drizzleSchema.persons.lastName, `%${query}%`)

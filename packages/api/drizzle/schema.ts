@@ -258,6 +258,7 @@ export const person = pgTable(
     createdAt: timestamp({ mode: "string" }).defaultNow().notNull(),
     updatedAt: timestamp({ mode: "string" }).notNull(),
     createdById: text(),
+    deletedAt: timestamp({ mode: "string" }),
   },
   (table) => [
     index("idx_person_createdById").using(

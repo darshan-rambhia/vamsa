@@ -11,6 +11,7 @@ import { Nav, NavLink, Button } from "@vamsa/ui";
 import { LanguageSwitcher } from "~/components/layout/language-switcher";
 import { OIDCProfileClaimModal } from "~/components/auth/oidc-profile-claim-modal";
 import { RouteError } from "~/components/error";
+import { CommandPalette } from "~/components/search/command-palette";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
@@ -241,6 +242,9 @@ function AuthenticatedLayout() {
 
       {/* OIDC Profile Claim Modal */}
       <OIDCProfileClaimModal open={showProfileClaimModal} />
+
+      {/* Command Palette - Global Search */}
+      <CommandPalette />
     </div>
   );
 }

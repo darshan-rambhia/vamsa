@@ -8,6 +8,13 @@
       "when": 1769236042522,
       "tag": "0000_tiny_dark_beast",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1769646420134,
+      "tag": "0001_lush_the_stranger",
+      "breakpoints": true
     }
   ]
 }

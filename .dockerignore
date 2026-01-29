@@ -34,7 +34,6 @@ apps/web/tests/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-bunfig.toml
 
 # IDE
 .idea
