@@ -25,23 +25,27 @@ You receive a bead or epic ID. Run `bd show {id}` to get acceptance criteria.
 You MUST run ALL of these commands and ALL must pass before closing any bead:
 
 ```bash
-# 1. Unit Tests
+# 1. Run all quality checks
+bun run check
+# Expected: All checks pass, no failures
+
+# 2. Unit Tests, if `bun run check` indicates test failures
 bun run test
 # Expected: All tests pass, no failures
 
-# 2. Linting
+# 3. Linting, if `bun run check` indicates linting failures
 bun run lint
 # Expected: No errors (warnings acceptable)
 
-# 3. TypeScript
+# 4. TypeScript, if `bun run check` indicates typecheck failures
 bun run typecheck
 # Expected: No type errors
 
-# 4. Production Build
+# 5. Production Build
 bun run build
 # Expected: Build succeeds without errors
 
-# 5. Development Server
+# 6. Development Server
 bun run dev &
 sleep 15
 curl -s http://localhost:3000 > /dev/null && echo "Dev server OK" || echo "Dev server FAILED"
@@ -49,11 +53,11 @@ curl -s http://localhost:3000 > /dev/null && echo "Dev server OK" || echo "Dev s
 pkill -f "next dev" || true
 # Expected: Server starts and responds
 
-# 6. Docker Build
+# 7. Docker Build
 docker build -t vamsa-review -f docker/Dockerfile .
 # Expected: Image builds successfully
 
-# 7. Docker Run
+# 8. Docker Run
 docker run --rm -d -p 3001:3000 --name vamsa-review-container vamsa-review
 sleep 20
 curl -s http://localhost:3001 > /dev/null && echo "Docker container OK" || echo "Docker container FAILED"
@@ -73,7 +77,7 @@ docker stop vamsa-review-container
 | Docker Build | `docker build`       | YES       |
 | Docker Run   | `docker run` + curl  | YES       |
 
-**ALL 7 gates must pass. No exceptions.**
+**ALL 8 gates must pass. No exceptions.**
 
 ## Review Checklist
 
