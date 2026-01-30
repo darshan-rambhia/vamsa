@@ -21,6 +21,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "bun src/drizzle/seed.ts",
     "db:seed:dev": "bun src/drizzle/seed-dev.ts",
+    "db:seed:e2e": "bun src/drizzle/seed-e2e.ts",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit",
     "test": "bun test src"

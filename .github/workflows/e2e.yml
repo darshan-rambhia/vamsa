@@ -94,7 +94,7 @@ jobs:
         run: bun run db:migrate
 
       - name: Seed test database
-        run: bun run db:seed
+        run: bun run db:seed:e2e
 
       - name: Build application
         run: bun run build
@@ -242,7 +242,7 @@ jobs:
         run: |
           bun run db:generate
           bun run db:migrate
-          bun run db:seed
+          bun run db:seed:e2e
 
       - name: Build application
         run: bun run build

@@ -85,6 +85,7 @@ async function cleanup() {
 
 async function main() {
   const playwrightArgs = process.argv.slice(2);
+  const isCI = !!process.env.CI;
 
   // Check if --logs flag is present to enable webserver logs
   const hasServerLogs = playwrightArgs.includes("--logs");
@@ -102,7 +103,7 @@ async function main() {
   const hasProjectFlag = filteredArgs.some(
     (arg) => arg.startsWith("--project") || arg === "-p"
   );
-  if (!process.env.CI && !hasProjectFlag) {
+  if (!isCI && !hasProjectFlag) {
     filteredArgs.push("--project=chromium");
   }
 
@@ -115,6 +116,38 @@ async function main() {
     );
   }
 
+  // In CI, the workflow already handles database setup via GitHub Actions services
+  // Skip Docker/migration/seeding and just run Playwright tests
+  if (isCI) {
+    log.info({}, "🏃 CI mode: Using pre-configured database from workflow\n");
+
+    // Just run Playwright tests - database is already set up by the workflow
+    log.info({}, "🧪 Running Playwright tests...\n");
+
+    const playwrightCmd = useBunRuntime
+      ? ["bun", "--bun", "x", "playwright", "test", ...filteredArgs]
+      : ["bunx", "playwright", "test", ...filteredArgs];
+
+    const testResult = await run(playwrightCmd, {
+      cwd: WEB_DIR,
+      env: {
+        ...process.env,
+        // Use DATABASE_URL from environment (set by workflow)
+        PLAYWRIGHT_LOGS: hasServerLogs ? "true" : "false",
+        ...(useBunRuntime && { PW_DISABLE_TS_ESM: "1" }),
+      },
+    });
+
+    if (testResult !== 0) {
+      log.error({}, "❌ E2E tests failed");
+      process.exit(testResult);
+    }
+
+    log.info({}, "✅ E2E tests passed!");
+    return;
+  }
+
+  // Local development: Start Docker, run migrations, seed, then run tests
   // Create temp docker-compose file for E2E
   writeFileSync(composeFile, E2E_COMPOSE);
 

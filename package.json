@@ -42,6 +42,7 @@
     "db:migrate": "bun run --filter @vamsa/api db:migrate",
     "db:seed": "bun run --filter @vamsa/api db:seed",
     "db:seed:dev": "bun run --filter @vamsa/api db:seed:dev",
+    "db:seed:e2e": "bun run --filter @vamsa/api db:seed:e2e",
     "db:studio": "bun run --filter @vamsa/api db:studio",
     "db:backup": "bun scripts/backup-database.ts --type=full",
     "db:backup:pre-migration": "bun scripts/backup-database.ts --type=pre-migration --verify",
