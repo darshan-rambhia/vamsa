@@ -1,10 +1,5 @@
 import crypto from "node:crypto";
-import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { and, eq } from "drizzle-orm";
 import { addDays, addYears } from "date-fns";
-import { loggers } from "@vamsa/lib/logger";
-
-const log = loggers.auth;
 
 type RotationEvent = "password_change" | "manual" | "annual_check";
 
@@ -29,6 +24,11 @@ export async function enforceRotationPolicy(
   userId: string,
   event: RotationEvent
 ): Promise<{ rotated: number; tokens: Array<string> }> {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { and, eq } = await import("drizzle-orm");
+  const { loggers } = await import("@vamsa/lib/logger");
+  const log = loggers.auth;
+
   const tokens = await drizzleDb.query.calendarTokens.findMany({
     where: and(
       eq(drizzleSchema.calendarTokens.userId, userId),
@@ -67,6 +67,9 @@ export async function enforceRotationPolicy(
  * Rotate a single token with grace period
  */
 export async function rotateToken(oldTokenId: string) {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
   const oldToken = await drizzleDb.query.calendarTokens.findFirst({
     where: eq(drizzleSchema.calendarTokens.id, oldTokenId),
   });
@@ -109,6 +112,9 @@ export async function rotateToken(oldTokenId: string) {
  * Revoke a token immediately (no grace period)
  */
 export async function revokeToken(tokenId: string) {
+  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+  const { eq } = await import("drizzle-orm");
+
   const [result] = await drizzleDb
     .update(drizzleSchema.calendarTokens)
     .set({

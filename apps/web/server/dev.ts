@@ -7,10 +7,25 @@
  * Usage: Import this plugin in vite.config.ts
  */
 
-import { loggers } from "@vamsa/lib/logger";
 import type { Plugin, ViteDevServer } from "vite";
 
-const log = loggers.api;
+// Logger is loaded dynamically to avoid Node.js ESM issues with .ts files
+// when Vite loads this config
+let log: {
+  info: (ctx: Record<string, unknown>, msg: string) => void;
+  withErr: (err: unknown) => {
+    ctx: (c: Record<string, unknown>) => { msg: (m: string) => void };
+    msg: (m: string) => void;
+  };
+} | null = null;
+
+async function getLogger() {
+  if (!log) {
+    const { loggers } = await import("@vamsa/lib/logger");
+    log = loggers.api;
+  }
+  return log;
+}
 
 /**
  * Vite plugin that adds API routes during development
@@ -25,6 +40,8 @@ export function vamsaDevApiPlugin(): Plugin {
 
   async function initializeApi(server: ViteDevServer) {
     if (apiApp) return;
+
+    const log = await getLogger();
 
     // Use Vite's module loader to import API dependencies
     // This ensures proper resolution of workspace packages
@@ -119,6 +136,7 @@ export function vamsaDevApiPlugin(): Plugin {
       // This runs BEFORE Vite's default middleware
       server.middlewares.use(async (req, res, next) => {
         const url = req.url || "";
+        const log = await getLogger();
 
         // Only handle /api/* and /health requests
         if (!url.startsWith("/api") && !url.startsWith("/health")) {

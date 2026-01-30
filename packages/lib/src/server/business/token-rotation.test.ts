@@ -8,7 +8,8 @@
  * - rotateToken: Token rotation with grace period
  * - revokeToken: Immediate token revocation
  *
- * Uses dynamic imports to ensure mocks are applied before module loads
+ * The module under test uses dynamic imports for @vamsa/api and drizzle-orm,
+ * allowing mock.module() to intercept them reliably.
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
@@ -70,10 +71,14 @@ mock.module("@vamsa/api", () => ({
   drizzleSchema: mockDrizzleSchema,
 }));
 
-// Helper to dynamically import the module (ensures mocks are applied)
-async function getTokenRotation() {
-  return await import("./token-rotation");
-}
+// Import after mocks - these are pure functions that don't use mocked modules
+import {
+  daysSinceCreation,
+  enforceRotationPolicy,
+  generateSecureToken,
+  revokeToken,
+  rotateToken,
+} from "./token-rotation";
 
 describe("Token Rotation Functions", () => {
   beforeEach(() => {
@@ -92,28 +97,24 @@ describe("Token Rotation Functions", () => {
   });
 
   describe("generateSecureToken", () => {
-    it("should generate a token", async () => {
-      const { generateSecureToken } = await getTokenRotation();
+    it("should generate a token", () => {
       const token = generateSecureToken();
       expect(token).toBeDefined();
       expect(typeof token).toBe("string");
     });
 
-    it("should generate different tokens on each call", async () => {
-      const { generateSecureToken } = await getTokenRotation();
+    it("should generate different tokens on each call", () => {
       const token1 = generateSecureToken();
       const token2 = generateSecureToken();
       expect(token1).not.toBe(token2);
     });
 
-    it("should generate base64url encoded tokens", async () => {
-      const { generateSecureToken } = await getTokenRotation();
+    it("should generate base64url encoded tokens", () => {
       const token = generateSecureToken();
       expect(/^[A-Za-z0-9_-]+$/.test(token)).toBe(true);
     });
 
-    it("should be cryptographically random", async () => {
-      const { generateSecureToken } = await getTokenRotation();
+    it("should be cryptographically random", () => {
       const tokens = new Set();
       for (let i = 0; i < 100; i++) {
         tokens.add(generateSecureToken());
@@ -123,20 +124,17 @@ describe("Token Rotation Functions", () => {
   });
 
   describe("daysSinceCreation", () => {
-    it("should return 0 for today", async () => {
-      const { daysSinceCreation } = await getTokenRotation();
+    it("should return 0 for today", () => {
       const today = new Date();
       expect(daysSinceCreation(today)).toBe(0);
     });
 
-    it("should return 1 for yesterday", async () => {
-      const { daysSinceCreation } = await getTokenRotation();
+    it("should return 1 for yesterday", () => {
       const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
       expect(daysSinceCreation(yesterday)).toBe(1);
     });
 
-    it("should return 365 for one year ago", async () => {
-      const { daysSinceCreation } = await getTokenRotation();
+    it("should return 365 for one year ago", () => {
       const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
       expect(daysSinceCreation(oneYearAgo)).toBe(365);
     });
@@ -144,7 +142,6 @@ describe("Token Rotation Functions", () => {
 
   describe("enforceRotationPolicy", () => {
     it("should return empty result when no tokens exist", async () => {
-      const { enforceRotationPolicy } = await getTokenRotation();
       (
         mockDrizzleDb.query.calendarTokens.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce([]);
@@ -156,7 +153,6 @@ describe("Token Rotation Functions", () => {
     });
 
     it("should rotate tokens on manual event", async () => {
-      const { enforceRotationPolicy } = await getTokenRotation();
       const existingToken = {
         id: "token-1",
         userId: "user-1",
@@ -194,7 +190,6 @@ describe("Token Rotation Functions", () => {
     });
 
     it("should not rotate tokens on password_change for non-matching policy", async () => {
-      const { enforceRotationPolicy } = await getTokenRotation();
       const existingToken = {
         id: "token-1",
         userId: "user-1",
@@ -215,7 +210,6 @@ describe("Token Rotation Functions", () => {
     });
 
     it("should rotate annual tokens older than 365 days on annual_check", async () => {
-      const { enforceRotationPolicy } = await getTokenRotation();
       const oldToken = {
         id: "token-1",
         userId: "user-1",
@@ -250,7 +244,6 @@ describe("Token Rotation Functions", () => {
 
   describe("rotateToken", () => {
     it("should create new token with same settings", async () => {
-      const { rotateToken } = await getTokenRotation();
       const oldToken = {
         id: "old-id",
         userId: "user-1",
@@ -284,7 +277,6 @@ describe("Token Rotation Functions", () => {
     });
 
     it("should throw error if token not found", async () => {
-      const { rotateToken } = await getTokenRotation();
       (
         mockDrizzleDb.query.calendarTokens.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(null);
@@ -301,7 +293,6 @@ describe("Token Rotation Functions", () => {
 
   describe("revokeToken", () => {
     it("should set isActive to false", async () => {
-      const { revokeToken } = await getTokenRotation();
       mockUpdateReturning.mockResolvedValueOnce([
         { id: "token-1", isActive: false },
       ]);
@@ -314,7 +305,6 @@ describe("Token Rotation Functions", () => {
     });
 
     it("should return updated token", async () => {
-      const { revokeToken } = await getTokenRotation();
       const updatedToken = {
         id: "token-1",
         userId: "user-1",
