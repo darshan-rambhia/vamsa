@@ -28,5 +28,5 @@
     "tests/**/*.ts",
     "e2e/**/*.ts"
   ],
-  "exclude": ["node_modules", "dist", ".stryker-tmp", "tests/integration", "server"]
+  "exclude": ["node_modules", "dist", ".stryker-tmp", "tests/integration"]
 }
