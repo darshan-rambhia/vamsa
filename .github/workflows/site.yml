@@ -30,7 +30,7 @@ jobs:
       - name: Build Ladle
         run: bun run --filter @vamsa/web ladle:build
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: docs/site
 
