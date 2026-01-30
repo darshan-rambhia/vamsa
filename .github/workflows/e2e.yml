@@ -31,20 +31,28 @@ jobs:
         browser: [chromium, firefox, webkit]
 
     env:
+      # Database (matches .env.e2e pattern but uses CI port 5432)
       POSTGRES_DB: vamsa_test
       POSTGRES_USER: vamsa_test
-      POSTGRES_PASSWORD: test_password_ci
-      DATABASE_URL: postgresql://vamsa_test:test_password_ci@localhost:5432/vamsa_test
+      POSTGRES_PASSWORD: vamsa_test
+      DATABASE_URL: postgresql://vamsa_test:vamsa_test@localhost:5432/vamsa_test
       BROWSER: ${{ matrix.browser }}
       NODE_ENV: test
       CI: true
-      # Auth configuration for E2E tests
+      # Auth configuration
       BETTER_AUTH_SECRET: e2e-test-secret-32-characters-long
       BETTER_AUTH_URL: http://localhost:3000
       APP_URL: http://localhost:3000
-      # Admin user for seeding
-      ADMIN_EMAIL: admin@e2e-test.local
-      ADMIN_PASSWORD: e2e-test-password
+      VITE_APP_NAME: Vamsa - E2E
+      # Admin user for seeding (matches .env.e2e)
+      ADMIN_EMAIL: admin@test.vamsa.local
+      ADMIN_PASSWORD: TestAdmin123!
+      # E2E test users
+      E2E_ADMIN_EMAIL: admin@test.vamsa.local
+      E2E_ADMIN_PASSWORD: TestAdmin123!
+      E2E_MEMBER_EMAIL: member@test.vamsa.local
+      E2E_MEMBER_PASSWORD: TestMember123!
+      DISABLE_EXTERNAL_SERVICES: true
 
     services:
       postgres:
@@ -175,19 +183,27 @@ jobs:
     timeout-minutes: 5
 
     env:
+      # Database (matches .env.e2e pattern but uses CI port 5432)
       POSTGRES_DB: vamsa_test
       POSTGRES_USER: vamsa_test
-      POSTGRES_PASSWORD: test_password_ci
-      DATABASE_URL: postgresql://vamsa_test:test_password_ci@localhost:5432/vamsa_test
+      POSTGRES_PASSWORD: vamsa_test
+      DATABASE_URL: postgresql://vamsa_test:vamsa_test@localhost:5432/vamsa_test
       NODE_ENV: test
       CI: true
-      # Auth configuration for E2E tests
+      # Auth configuration
       BETTER_AUTH_SECRET: e2e-test-secret-32-characters-long
       BETTER_AUTH_URL: http://localhost:3000
       APP_URL: http://localhost:3000
-      # Admin user for seeding
-      ADMIN_EMAIL: admin@e2e-test.local
-      ADMIN_PASSWORD: e2e-test-password
+      VITE_APP_NAME: Vamsa - E2E
+      # Admin user for seeding (matches .env.e2e)
+      ADMIN_EMAIL: admin@test.vamsa.local
+      ADMIN_PASSWORD: TestAdmin123!
+      # E2E test users
+      E2E_ADMIN_EMAIL: admin@test.vamsa.local
+      E2E_ADMIN_PASSWORD: TestAdmin123!
+      E2E_MEMBER_EMAIL: member@test.vamsa.local
+      E2E_MEMBER_PASSWORD: TestMember123!
+      DISABLE_EXTERNAL_SERVICES: true
 
     services:
       postgres:
