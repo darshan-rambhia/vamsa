@@ -2,11 +2,11 @@
  * Unit Tests for GEDCOM Encoding
  * Tests ANSEL to UTF-8 conversion and encoding detection
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
+  anselToUtf8,
   detectEncoding,
   normalizeEncoding,
-  anselToUtf8,
   utf8ToAnsel,
 } from "./encoding";
 

@@ -6,15 +6,13 @@
  * All functions are deterministic and can be tested independently.
  */
 
-import {
-  GedcomParser,
-  GedcomMapper,
-  GedcomGenerator,
-  type VamsaPerson,
-  type VamsaRelationship,
-  type GeneratorOptions,
-  type GedcomFile,
-  type MappingResult,
+import { GedcomGenerator, GedcomMapper, GedcomParser } from "@vamsa/lib";
+import type {
+  GedcomFile,
+  GeneratorOptions,
+  MappingResult,
+  VamsaPerson,
+  VamsaRelationship,
 } from "@vamsa/lib";
 
 /**
@@ -30,7 +28,7 @@ export interface GedcomStructureError {
  */
 export interface GedcomValidationResult {
   valid: boolean;
-  errors: GedcomStructureError[];
+  errors: Array<GedcomStructureError>;
   preview?: {
     peopleCount: number;
     familiesCount: number;
@@ -81,22 +79,20 @@ export function validateGedcomStructure(
   const mapped = mapper.mapFromGedcom(gedcomFile);
 
   // Combine errors
-  const validationErrorsFormatted: GedcomStructureError[] =
+  const validationErrorsFormatted: Array<GedcomStructureError> =
     validationErrors.map((e) => ({
       message: e.message,
-      type: (e.severity === "error" ? "validation_error" : "mapping_error") as
-        | "validation_error"
-        | "mapping_error",
+      type: e.severity === "error" ? "validation_error" : "mapping_error",
     }));
 
-  const mappingErrorsFormatted: GedcomStructureError[] = mapped.errors.map(
+  const mappingErrorsFormatted: Array<GedcomStructureError> = mapped.errors.map(
     (e) => ({
       message: e.message,
       type: "mapping_error" as const,
     })
   );
 
-  const allErrors: GedcomStructureError[] = [
+  const allErrors: Array<GedcomStructureError> = [
     ...validationErrorsFormatted,
     ...mappingErrorsFormatted,
   ];
@@ -211,8 +207,8 @@ export function mapGedcomToEntities(gedcomFile: GedcomFile): MappingResult {
  * });
  */
 export function generateGedcomOutput(
-  people: VamsaPerson[],
-  relationships: VamsaRelationship[],
+  people: Array<VamsaPerson>,
+  relationships: Array<VamsaRelationship>,
   options: GeneratorOptions
 ): string {
   const mapper = new GedcomMapper();

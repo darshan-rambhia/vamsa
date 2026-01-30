@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface Transform {
   x: number;
@@ -52,6 +52,7 @@ export interface ChartViewportResult {
     zoomIn: () => void;
     zoomOut: () => void;
     reset: () => void;
+    panTo: (x: number, y: number) => void;
   };
   /** Calculate and set initial transform based on content bounds */
   fitContent: (bounds: ContentBounds) => void;
@@ -287,6 +288,20 @@ export function useChartViewport(
     }
   }, [calculateInitialTransform]);
 
+  // Pan to a specific point in tree coordinates (center viewport on that point)
+  const panTo = useCallback(
+    (treeX: number, treeY: number) => {
+      const newX = dimensions.width / 2 - treeX * transform.scale;
+      const newY = dimensions.height / 2 - treeY * transform.scale;
+      setTransform({
+        ...transform,
+        x: newX,
+        y: newY,
+      });
+    },
+    [transform, dimensions]
+  );
+
   return {
     containerRef,
     dimensions,
@@ -305,6 +320,7 @@ export function useChartViewport(
       zoomIn,
       zoomOut,
       reset,
+      panTo,
     },
     fitContent,
     scalePercent: Math.round(transform.scale * 100),

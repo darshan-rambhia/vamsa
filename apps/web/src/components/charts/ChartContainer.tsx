@@ -1,7 +1,8 @@
 "use client";
 
-import { type ReactNode, forwardRef } from "react";
+import { forwardRef } from "react";
 import { cn } from "@vamsa/ui";
+import type { ReactNode } from "react";
 
 interface ChartContainerProps {
   children: ReactNode;

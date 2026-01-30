@@ -1,9 +1,9 @@
+import { createMockEdges, createMockPerson, resetIdCounter } from "@vamsa/lib";
+import { loggers } from "@vamsa/lib/logger";
 import type { Story } from "@ladle/react";
+import type { ChartEdge, ChartNode } from "~/server/charts";
 import { HourglassChart } from "~/components/charts/HourglassChart";
 import { StoryDecorator } from "~/stories/decorators";
-import type { ChartNode, ChartEdge } from "~/server/charts";
-import { createMockEdges, resetIdCounter, createMockPerson } from "@vamsa/lib";
-import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.api;
 
@@ -15,7 +15,7 @@ export default {
 function createHourglassData(
   ancestorGens: number,
   descendantGens: number
-): { nodes: ChartNode[]; edges: ChartEdge[]; rootId: string } {
+): { nodes: Array<ChartNode>; edges: Array<ChartEdge>; rootId: string } {
   resetIdCounter();
 
   // Create root person
@@ -26,7 +26,7 @@ function createHourglassData(
   });
 
   // Create ancestors (positive generations)
-  const ancestors: ChartNode[] = [];
+  const ancestors: Array<ChartNode> = [];
   for (let gen = 1; gen <= ancestorGens; gen++) {
     const peopleInGen = Math.pow(2, gen - 1);
     for (let i = 0; i < peopleInGen; i++) {
@@ -42,7 +42,7 @@ function createHourglassData(
   }
 
   // Create descendants (negative generations)
-  const descendants: ChartNode[] = [];
+  const descendants: Array<ChartNode> = [];
   for (let gen = 1; gen <= descendantGens; gen++) {
     const peopleInGen = Math.pow(2, gen - 1);
     for (let i = 0; i < peopleInGen; i++) {

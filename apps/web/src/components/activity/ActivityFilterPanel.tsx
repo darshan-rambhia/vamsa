@@ -2,18 +2,18 @@
 
 import { useState } from "react";
 import {
+  Badge,
+  Button,
   Card,
   CardContent,
-  Button,
-  Label,
+  Checkbox,
   Input,
+  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Badge,
-  Checkbox,
   cn,
 } from "@vamsa/ui";
 
@@ -26,8 +26,8 @@ interface FilterOption {
 export interface ActivityFilters {
   dateFrom?: number;
   dateTo?: number;
-  actionTypes: string[];
-  entityTypes: string[];
+  actionTypes: Array<string>;
+  entityTypes: Array<string>;
   userId?: string;
   searchQuery: string;
 }
@@ -35,9 +35,9 @@ export interface ActivityFilters {
 interface ActivityFilterPanelProps {
   filters: ActivityFilters;
   onFiltersChange: (filters: ActivityFilters) => void;
-  actionTypeOptions: FilterOption[];
-  entityTypeOptions: FilterOption[];
-  userOptions: FilterOption[];
+  actionTypeOptions: Array<FilterOption>;
+  entityTypeOptions: Array<FilterOption>;
+  userOptions: Array<FilterOption>;
   isLoading?: boolean;
 }
 

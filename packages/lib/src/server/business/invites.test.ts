@@ -11,7 +11,7 @@
  * These tests focus on business rule validation and error handling.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
 // Simple pure functions to test
 function normalizeEmail(email: string): string {
@@ -32,7 +32,7 @@ function isInviteExpired(expiresAt: Date): boolean {
 
 function validateInviteStatus(
   status: string,
-  allowedStatuses: string[]
+  allowedStatuses: Array<string>
 ): boolean {
   return allowedStatuses.includes(status);
 }
@@ -215,7 +215,7 @@ describe("invites business logic - pure functions", () => {
     it("should allow PENDING -> ACCEPTED transition", () => {
       const currentStatus = "PENDING";
       const nextStatus = "ACCEPTED";
-      const validTransitions: Record<string, string[]> = {
+      const validTransitions: Record<string, Array<string>> = {
         PENDING: ["ACCEPTED", "REVOKED", "EXPIRED"],
         ACCEPTED: [],
         REVOKED: [],
@@ -228,7 +228,7 @@ describe("invites business logic - pure functions", () => {
     it("should allow PENDING -> REVOKED transition", () => {
       const currentStatus = "PENDING";
       const nextStatus = "REVOKED";
-      const validTransitions: Record<string, string[]> = {
+      const validTransitions: Record<string, Array<string>> = {
         PENDING: ["ACCEPTED", "REVOKED", "EXPIRED"],
         ACCEPTED: [],
         REVOKED: [],
@@ -241,7 +241,7 @@ describe("invites business logic - pure functions", () => {
     it("should prevent ACCEPTED -> PENDING transition", () => {
       const currentStatus = "ACCEPTED";
       const nextStatus = "PENDING";
-      const validTransitions: Record<string, string[]> = {
+      const validTransitions: Record<string, Array<string>> = {
         PENDING: ["ACCEPTED", "REVOKED", "EXPIRED"],
         ACCEPTED: [],
         REVOKED: [],
@@ -253,7 +253,7 @@ describe("invites business logic - pure functions", () => {
 
     it("should prevent invalid transitions from ACCEPTED", () => {
       const currentStatus = "ACCEPTED";
-      const validTransitions: Record<string, string[]> = {
+      const validTransitions: Record<string, Array<string>> = {
         PENDING: ["ACCEPTED", "REVOKED", "EXPIRED"],
         ACCEPTED: [],
         REVOKED: [],

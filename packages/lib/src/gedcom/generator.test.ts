@@ -2,9 +2,9 @@
  * Unit Tests for GEDCOM Generator
  * Tests generation of GEDCOM 5.5.1 and 7.0 format files
  */
-import { describe, test, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, test } from "bun:test";
 import { GedcomGenerator } from "./generator";
-import type { GedcomIndividualData, GedcomFamilyData } from "./mapper-types";
+import type { GedcomFamilyData, GedcomIndividualData } from "./mapper-types";
 
 describe("GedcomGenerator", () => {
   let generator: GedcomGenerator;
@@ -18,8 +18,8 @@ describe("GedcomGenerator", () => {
 
   describe("generate", () => {
     test("generates valid GEDCOM structure", () => {
-      const individuals: GedcomIndividualData[] = [];
-      const families: GedcomFamilyData[] = [];
+      const individuals: Array<GedcomIndividualData> = [];
+      const families: Array<GedcomFamilyData> = [];
 
       const result = generator.generate(individuals, families);
 
@@ -62,7 +62,7 @@ describe("GedcomGenerator", () => {
     });
 
     test("generates individual records", () => {
-      const individuals: GedcomIndividualData[] = [
+      const individuals: Array<GedcomIndividualData> = [
         {
           xref: "@I1@",
           name: "John /Doe/",
@@ -95,7 +95,7 @@ describe("GedcomGenerator", () => {
     });
 
     test("generates family records", () => {
-      const families: GedcomFamilyData[] = [
+      const families: Array<GedcomFamilyData> = [
         {
           xref: "@F1@",
           husband: "@I1@",
@@ -124,7 +124,7 @@ describe("GedcomGenerator", () => {
     });
 
     test("handles individual without optional fields", () => {
-      const individuals: GedcomIndividualData[] = [
+      const individuals: Array<GedcomIndividualData> = [
         {
           xref: "@I1@",
           name: "Unknown //",
@@ -145,7 +145,7 @@ describe("GedcomGenerator", () => {
     });
 
     test("handles family without optional fields", () => {
-      const families: GedcomFamilyData[] = [
+      const families: Array<GedcomFamilyData> = [
         {
           xref: "@F1@",
           children: [],
@@ -163,7 +163,7 @@ describe("GedcomGenerator", () => {
     });
 
     test("handles multiple individuals and families", () => {
-      const individuals: GedcomIndividualData[] = [
+      const individuals: Array<GedcomIndividualData> = [
         {
           xref: "@I1@",
           name: "John /Doe/",
@@ -189,7 +189,7 @@ describe("GedcomGenerator", () => {
         },
       ];
 
-      const families: GedcomFamilyData[] = [
+      const families: Array<GedcomFamilyData> = [
         {
           xref: "@F1@",
           husband: "@I1@",
@@ -210,7 +210,7 @@ describe("GedcomGenerator", () => {
 
   describe("date formatting", () => {
     test("formats full date in 5.5.1 format", () => {
-      const individuals: GedcomIndividualData[] = [
+      const individuals: Array<GedcomIndividualData> = [
         {
           xref: "@I1@",
           name: "Test //",
@@ -226,7 +226,7 @@ describe("GedcomGenerator", () => {
     });
 
     test("formats month-year date", () => {
-      const individuals: GedcomIndividualData[] = [
+      const individuals: Array<GedcomIndividualData> = [
         {
           xref: "@I1@",
           name: "Test //",
@@ -242,7 +242,7 @@ describe("GedcomGenerator", () => {
     });
 
     test("formats year-only date", () => {
-      const individuals: GedcomIndividualData[] = [
+      const individuals: Array<GedcomIndividualData> = [
         {
           xref: "@I1@",
           name: "Test //",
@@ -263,7 +263,7 @@ describe("GedcomGenerator", () => {
         version: "7.0",
       });
 
-      const individuals: GedcomIndividualData[] = [
+      const individuals: Array<GedcomIndividualData> = [
         {
           xref: "@I1@",
           name: "Test //",
@@ -279,7 +279,7 @@ describe("GedcomGenerator", () => {
     });
 
     test("handles empty date", () => {
-      const individuals: GedcomIndividualData[] = [
+      const individuals: Array<GedcomIndividualData> = [
         {
           xref: "@I1@",
           name: "Test //",
@@ -302,7 +302,7 @@ describe("GedcomGenerator", () => {
         "This is a very long note that should exceed the maximum line length and require continuation. ".repeat(
           5
         );
-      const individuals: GedcomIndividualData[] = [
+      const individuals: Array<GedcomIndividualData> = [
         {
           xref: "@I1@",
           name: "Test //",
@@ -324,7 +324,7 @@ describe("GedcomGenerator", () => {
       });
 
       const longNote = "A".repeat(200);
-      const individuals: GedcomIndividualData[] = [
+      const individuals: Array<GedcomIndividualData> = [
         {
           xref: "@I1@",
           name: "Test //",

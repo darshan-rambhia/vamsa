@@ -3,15 +3,14 @@
  *
  * Tests the ancestor finding and lineage tracking functionality.
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
+  countAncestors,
   findAncestors,
   getAncestorsAtGeneration,
-  countAncestors,
   getAncestorsByGeneration,
-  type RelationshipNode,
-  type RelationshipMapSet,
 } from "./ancestors";
+import type { RelationshipMapSet, RelationshipNode } from "./ancestors";
 
 /**
  * Helper to create a person node
@@ -34,7 +33,7 @@ function createPerson(
  * Helper to create relationship maps from parent-child pairs
  */
 function createRelationshipMaps(
-  parentChildPairs: [string, string][]
+  parentChildPairs: Array<[string, string]>
 ): RelationshipMapSet {
   const childToParents = new Map<string, Set<string>>();
 

@@ -1,7 +1,7 @@
 /**
  * Unit Tests for UI Utility Functions
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { cn } from "./utils";
 
 describe("cn (class name utility)", () => {
@@ -33,7 +33,7 @@ describe("cn (class name utility)", () => {
   });
 
   test("merges Tailwind classes correctly", () => {
-    // twMerge should resolve conflicts
+    // twMerge should resolve conflictslet
     const result = cn("px-4", "px-6");
     expect(result).toBe("px-6");
   });

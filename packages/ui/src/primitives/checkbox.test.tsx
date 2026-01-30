@@ -1,10 +1,9 @@
 /**
  * Unit Tests for Checkbox Component
  */
-import { describe, test, expect } from "bun:test";
-import { render, fireEvent } from "@testing-library/react";
+import { describe, expect, test } from "bun:test";
+import { fireEvent, render } from "@testing-library/react";
 import { Checkbox } from "./checkbox";
-import React from "react";
 
 describe("Checkbox", () => {
   describe("rendering", () => {
@@ -50,7 +49,7 @@ describe("Checkbox", () => {
       const checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.getAttribute("aria-checked")).toBe("false");
+      expect(checkbox.getAttribute("aria-checked")).toBe("false");
     });
 
     test("renders checked when defaultChecked is true", () => {
@@ -58,7 +57,7 @@ describe("Checkbox", () => {
       const checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.getAttribute("aria-checked")).toBe("true");
+      expect(checkbox.getAttribute("aria-checked")).toBe("true");
     });
 
     test("applies checked styling classes", () => {
@@ -139,7 +138,7 @@ describe("Checkbox", () => {
       const checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.hasAttribute("disabled")).toBe(true);
+      expect(checkbox.hasAttribute("disabled")).toBe(true);
     });
 
     test("applies disabled styling", () => {
@@ -172,13 +171,13 @@ describe("Checkbox", () => {
       let checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.hasAttribute("disabled")).toBe(true);
+      expect(checkbox.hasAttribute("disabled")).toBe(true);
 
       rerender(<Checkbox disabled={true} />);
       checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.hasAttribute("disabled")).toBe(true);
+      expect(checkbox.hasAttribute("disabled")).toBe(true);
     });
   });
 
@@ -230,7 +229,7 @@ describe("Checkbox", () => {
       const checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.getAttribute("aria-label")).toBe("Accept terms");
+      expect(checkbox.getAttribute("aria-label")).toBe("Accept terms");
     });
 
     test("supports aria-labelledby attribute", () => {
@@ -240,7 +239,7 @@ describe("Checkbox", () => {
       const checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.getAttribute("aria-labelledby")).toBe("checkbox-label");
+      expect(checkbox.getAttribute("aria-labelledby")).toBe("checkbox-label");
     });
 
     test("supports aria-describedby attribute", () => {
@@ -250,7 +249,7 @@ describe("Checkbox", () => {
       const checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.getAttribute("aria-describedby")).toBe(
+      expect(checkbox.getAttribute("aria-describedby")).toBe(
         "checkbox-description"
       );
     });
@@ -260,7 +259,7 @@ describe("Checkbox", () => {
       const checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.getAttribute("data-test-attr")).toBe("accept-terms");
+      expect(checkbox.getAttribute("data-test-attr")).toBe("accept-terms");
     });
 
     test("supports id attribute", () => {
@@ -268,7 +267,7 @@ describe("Checkbox", () => {
       const checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.getAttribute("id")).toBe("my-checkbox");
+      expect(checkbox.getAttribute("id")).toBe("my-checkbox");
     });
 
     test("supports value attribute", () => {
@@ -276,7 +275,7 @@ describe("Checkbox", () => {
       const checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.getAttribute("value")).toBe("option-1");
+      expect(checkbox.getAttribute("value")).toBe("option-1");
     });
 
     test("ring offset is applied on focus", () => {
@@ -315,8 +314,8 @@ describe("Checkbox", () => {
       const checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.getAttribute("data-custom")).toBe("custom-value");
-      expect(checkbox?.getAttribute("data-another")).toBe("another-value");
+      expect(checkbox.getAttribute("data-custom")).toBe("custom-value");
+      expect(checkbox.getAttribute("data-another")).toBe("another-value");
     });
   });
 
@@ -379,9 +378,9 @@ describe("Checkbox", () => {
 
       const checkboxes = container.querySelectorAll("button[role='checkbox']");
       expect(checkboxes.length).toBe(3);
-      expect(checkboxes[0]?.getAttribute("aria-checked")).toBe("false");
-      expect(checkboxes[1]?.getAttribute("aria-checked")).toBe("false");
-      expect(checkboxes[2]?.getAttribute("aria-checked")).toBe("false");
+      expect(checkboxes[0].getAttribute("aria-checked")).toBe("false");
+      expect(checkboxes[1].getAttribute("aria-checked")).toBe("false");
+      expect(checkboxes[2].getAttribute("aria-checked")).toBe("false");
     });
 
     test("handles rapid clicks", () => {
@@ -402,13 +401,13 @@ describe("Checkbox", () => {
       let checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.hasAttribute("disabled")).toBe(true);
+      expect(checkbox.hasAttribute("disabled")).toBe(true);
 
       rerender(<Checkbox disabled={false} />);
       checkbox = container.querySelector(
         "button[role='checkbox']"
       ) as HTMLElement;
-      expect(checkbox?.hasAttribute("disabled")).toBe(false);
+      expect(checkbox.hasAttribute("disabled")).toBe(false);
     });
 
     test("works with mixed checked and unchecked states", () => {

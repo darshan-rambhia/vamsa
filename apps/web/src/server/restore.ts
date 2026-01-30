@@ -1,22 +1,21 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import {
+  getImportHistoryData,
+  importBackupData,
+  previewImportData,
+  validateBackupData,
+} from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
 import type {
-  ValidationResult,
-  ImportResult,
-  ImportPreview,
   ConflictResolutionStrategy,
+  ImportPreview,
+  ImportResult,
+  ValidationResult,
 } from "@vamsa/schemas";
 
 // Re-export types for use by components
 export type { ValidationResult, ImportResult, ImportPreview };
-
-import { requireAuth } from "./middleware/require-auth";
-import {
-  validateBackupData,
-  previewImportData,
-  importBackupData,
-  getImportHistoryData,
-} from "@vamsa/lib/server/business";
 
 // Input validation schemas
 const conflictStrategySchema = z.enum(["skip", "merge", "replace"] as const);
@@ -63,7 +62,7 @@ export const importBackup = createServerFn({ method: "POST" })
   })
   .handler(async ({ data }): Promise<ImportResult> => {
     const user = await requireAuth("ADMIN");
-    return importBackupData(user, data.strategy as ConflictResolutionStrategy);
+    return importBackupData(user, data.strategy);
   });
 
 /**

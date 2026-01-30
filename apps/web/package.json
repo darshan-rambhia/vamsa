@@ -76,6 +76,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/rss": "^0.0.32",
     "@vitejs/plugin-react": "^5.1.2",
+    "axe-core": "4.11.1",
     "tailwindcss": "^4.1.18",
     "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.9.3",

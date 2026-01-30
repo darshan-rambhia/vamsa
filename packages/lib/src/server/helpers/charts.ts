@@ -54,8 +54,8 @@ export interface RelationshipMaps {
   childToParents: Map<string, Set<string>>;
   parentToChildren: Map<string, Set<string>>;
   spouseMap: Map<string, Set<string>>;
-  spouseRels: RelationshipData[];
-  parentRels: RelationshipData[];
+  spouseRels: Array<RelationshipData>;
+  parentRels: Array<RelationshipData>;
 }
 
 /**
@@ -79,7 +79,7 @@ export interface RelationshipMaps {
  * // maps.spouseMap.get('person1') => Set(['person2'])
  */
 export function buildRelationshipMaps(
-  relationships: RelationshipData[]
+  relationships: Array<RelationshipData>
 ): RelationshipMaps {
   const parentRels = relationships.filter((r) => r.type === "PARENT");
   const spouseRels = relationships.filter((r) => r.type === "SPOUSE");
@@ -307,7 +307,7 @@ export function calculateFanLayout(
   generations: Map<string, number>
 ): Map<string, number> {
   const maxGen = Math.max(...Array.from(generations.values()));
-  const nodesByGen = new Map<number, string[]>();
+  const nodesByGen = new Map<number, Array<string>>();
 
   // Group nodes by generation
   nodeIds.forEach((id) => {

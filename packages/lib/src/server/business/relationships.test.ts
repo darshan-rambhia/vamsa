@@ -13,24 +13,33 @@
  * Uses mock.module() to mock the drizzleDb module
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import {
+  createRelationshipData,
+  deleteRelationshipData,
+  getRelationshipData,
+  listRelationshipsData,
+  updateRelationshipData,
+} from "@vamsa/lib/server/business";
+import {
+  mockCreateContextLogger,
+  mockCreateRequestLogger,
+  mockLog,
+  mockLogger,
+  mockLoggers,
+  mockSerializeError,
+  mockStartTimer,
+  mockWithErr,
+  mockWithErrBuilder,
+} from "../../testing/shared-mocks";
 import type {
   RelationshipCreateInput,
   RelationshipUpdateInput,
 } from "@vamsa/schemas";
 
 // Mock logger for this test file
-import {
-  mockLogger,
-  mockLoggers,
-  mockLog,
-  mockWithErr,
-  mockWithErrBuilder,
-  mockSerializeError,
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockStartTimer,
-} from "../../testing/shared-mocks";
+
+// Import the functions to test
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -99,15 +108,6 @@ function clearDrizzleMocks() {
   (mockDrizzleDb.update as ReturnType<typeof mock>).mockClear();
   (mockDrizzleDb.delete as ReturnType<typeof mock>).mockClear();
 }
-
-// Import the functions to test
-import {
-  listRelationshipsData,
-  getRelationshipData,
-  createRelationshipData,
-  updateRelationshipData,
-  deleteRelationshipData,
-} from "@vamsa/lib/server/business";
 
 describe("Relationship Server Functions", () => {
   beforeEach(() => {

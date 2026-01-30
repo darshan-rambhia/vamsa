@@ -2,8 +2,9 @@
  * Custom Playwright Test Fixtures
  * Extends the base test with app-specific utilities and fixtures
  */
-import { test as base, expect, type Page } from "@playwright/test";
+import { test as base, expect } from "@playwright/test";
 import { AxeBuilder } from "@axe-core/playwright";
+import type { Page } from "@playwright/test";
 import type { AxeResults } from "axe-core";
 
 /**
@@ -71,9 +72,9 @@ export interface TestFixtures {
   /** Check page for accessibility violations (WCAG 2 AA) */
   checkAccessibility: (options?: {
     selector?: string;
-    rules?: string[];
-    skipRules?: string[];
-  }) => Promise<AccessibilityViolation[]>;
+    rules?: Array<string>;
+    skipRules?: Array<string>;
+  }) => Promise<Array<AccessibilityViolation>>;
 }
 
 /**
@@ -415,11 +416,11 @@ export const test = base.extend<TestFixtures>({
   checkAccessibility: async ({ page }, use) => {
     const checkA11yFn = async (options?: {
       selector?: string;
-      rules?: string[];
-      skipRules?: string[];
-    }): Promise<AccessibilityViolation[]> => {
+      rules?: Array<string>;
+      skipRules?: Array<string>;
+    }): Promise<Array<AccessibilityViolation>> => {
       // Get violations from the page
-      const violations: AccessibilityViolation[] = [];
+      const violations: Array<AccessibilityViolation> = [];
 
       try {
         // Build the accessibility check with WCAG 2 AA rules

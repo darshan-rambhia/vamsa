@@ -80,7 +80,7 @@ export interface Conflict {
   existingId?: string;
   existingData?: Record<string, unknown>;
   newData: Record<string, unknown>;
-  conflictFields: string[];
+  conflictFields: Array<string>;
   severity: "low" | "medium" | "high";
   description: string;
 }
@@ -235,18 +235,18 @@ export class ConflictResolver {
 
   async importData(
     extractedFiles: Map<string, unknown>,
-    conflicts: Conflict[]
+    conflicts: Array<Conflict>
   ): Promise<{
     statistics: ImportStatistics;
-    errors: string[];
-    warnings: string[];
+    errors: Array<string>;
+    warnings: Array<string>;
   }> {
-    const errors: string[] = [];
-    const warnings: string[] = [];
+    const errors: Array<string> = [];
+    const warnings: Array<string> = [];
 
     try {
       // Create conflict lookup for quick access
-      const conflictMap = new Map<string, Conflict[]>();
+      const conflictMap = new Map<string, Array<Conflict>>();
       for (const conflict of conflicts) {
         const newId =
           typeof conflict.newData.id === "string"
@@ -297,9 +297,9 @@ export class ConflictResolver {
 
   private async importSettings(
     extractedFiles: Map<string, unknown>,
-    _conflictMap: Map<string, Conflict[]>,
-    errors: string[],
-    warnings: string[]
+    _conflictMap: Map<string, Array<Conflict>>,
+    errors: Array<string>,
+    warnings: Array<string>
   ): Promise<void> {
     if (!extractedFiles.has("data/settings.json")) {
       return;
@@ -356,9 +356,9 @@ export class ConflictResolver {
 
   private async importPeople(
     extractedFiles: Map<string, unknown>,
-    conflictMap: Map<string, Conflict[]>,
-    errors: string[],
-    warnings: string[]
+    conflictMap: Map<string, Array<Conflict>>,
+    errors: Array<string>,
+    warnings: Array<string>
   ): Promise<void> {
     if (!extractedFiles.has("data/people.json")) {
       return;
@@ -369,7 +369,7 @@ export class ConflictResolver {
       return;
     }
 
-    const typedPeople = peopleData as PersonImport[];
+    const typedPeople = peopleData as Array<PersonImport>;
 
     for (const person of typedPeople) {
       try {
@@ -443,9 +443,9 @@ export class ConflictResolver {
 
   private async importUsers(
     extractedFiles: Map<string, unknown>,
-    conflictMap: Map<string, Conflict[]>,
-    errors: string[],
-    warnings: string[]
+    conflictMap: Map<string, Array<Conflict>>,
+    errors: Array<string>,
+    warnings: Array<string>
   ): Promise<void> {
     if (!extractedFiles.has("data/users.json")) {
       return;
@@ -456,7 +456,7 @@ export class ConflictResolver {
       return;
     }
 
-    const typedUsers = usersData as UserImport[];
+    const typedUsers = usersData as Array<UserImport>;
 
     for (const user of typedUsers) {
       try {
@@ -521,9 +521,9 @@ export class ConflictResolver {
 
   private async importRelationships(
     extractedFiles: Map<string, unknown>,
-    conflictMap: Map<string, Conflict[]>,
-    errors: string[],
-    warnings: string[]
+    conflictMap: Map<string, Array<Conflict>>,
+    errors: Array<string>,
+    warnings: Array<string>
   ): Promise<void> {
     if (!extractedFiles.has("data/relationships.json")) {
       return;
@@ -534,7 +534,7 @@ export class ConflictResolver {
       return;
     }
 
-    const typedRelationships = relationshipsData as RelationshipImport[];
+    const typedRelationships = relationshipsData as Array<RelationshipImport>;
 
     for (const relationship of typedRelationships) {
       try {
@@ -604,9 +604,9 @@ export class ConflictResolver {
 
   private async importSuggestions(
     extractedFiles: Map<string, unknown>,
-    conflictMap: Map<string, Conflict[]>,
-    errors: string[],
-    warnings: string[]
+    conflictMap: Map<string, Array<Conflict>>,
+    errors: Array<string>,
+    warnings: Array<string>
   ): Promise<void> {
     if (!extractedFiles.has("data/suggestions.json")) {
       return;
@@ -617,7 +617,7 @@ export class ConflictResolver {
       return;
     }
 
-    const typedSuggestions = suggestionsData as SuggestionImport[];
+    const typedSuggestions = suggestionsData as Array<SuggestionImport>;
 
     for (const suggestion of typedSuggestions) {
       try {
@@ -674,9 +674,9 @@ export class ConflictResolver {
 
   private async importAuditLogs(
     extractedFiles: Map<string, unknown>,
-    _conflictMap: Map<string, Conflict[]>,
-    errors: string[],
-    warnings: string[]
+    _conflictMap: Map<string, Array<Conflict>>,
+    errors: Array<string>,
+    warnings: Array<string>
   ): Promise<void> {
     if (!extractedFiles.has("data/audit-logs.json")) {
       return;
@@ -687,7 +687,7 @@ export class ConflictResolver {
       return;
     }
 
-    const typedAuditLogs = auditLogsData as AuditLogImport[];
+    const typedAuditLogs = auditLogsData as Array<AuditLogImport>;
 
     for (const auditLog of typedAuditLogs) {
       try {

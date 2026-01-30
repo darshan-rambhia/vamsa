@@ -16,14 +16,14 @@
  */
 
 import type {
-  ChartNode,
-  ChartEdge,
   BowtieNode,
-  TimelineEntry,
-  MatrixPerson,
-  MatrixCell,
+  ChartEdge,
+  ChartNode,
   CompactTreeResult,
+  MatrixCell,
+  MatrixPerson,
   StatisticsResult,
+  TimelineEntry,
 } from "../server/business/charts";
 
 // Helper to generate unique IDs
@@ -71,9 +71,9 @@ export interface MockNodesOptions {
 export function createMockNodes(
   count: number,
   options: MockNodesOptions = {}
-): ChartNode[] {
+): Array<ChartNode> {
   resetIdCounter();
-  const nodes: ChartNode[] = [];
+  const nodes: Array<ChartNode> = [];
   const generations = options.generations ?? 3;
   const perGen = Math.ceil(count / generations);
 
@@ -102,9 +102,9 @@ export function createMockNodes(
   return nodes;
 }
 
-export function createMockEdges(nodes: ChartNode[]): ChartEdge[] {
-  const edges: ChartEdge[] = [];
-  const byGen = new Map<number, ChartNode[]>();
+export function createMockEdges(nodes: Array<ChartNode>): Array<ChartEdge> {
+  const edges: Array<ChartEdge> = [];
+  const byGen = new Map<number, Array<ChartNode>>();
 
   nodes.forEach((n) => {
     const gen = n.generation ?? 0;
@@ -155,9 +155,9 @@ export function createBowtieNodes(
   rootPerson: ChartNode,
   paternalCount: number,
   maternalCount: number
-): { nodes: BowtieNode[]; edges: ChartEdge[] } {
-  const nodes: BowtieNode[] = [];
-  const edges: ChartEdge[] = [];
+): { nodes: Array<BowtieNode>; edges: Array<ChartEdge> } {
+  const nodes: Array<BowtieNode> = [];
+  const edges: Array<ChartEdge> = [];
 
   // Add root as center
   nodes.push({ ...rootPerson, side: "center" });
@@ -215,9 +215,9 @@ export function createBowtieNodes(
   return { nodes, edges };
 }
 
-export function createTimelineEntries(count: number): TimelineEntry[] {
+export function createTimelineEntries(count: number): Array<TimelineEntry> {
   resetIdCounter();
-  const entries: TimelineEntry[] = [];
+  const entries: Array<TimelineEntry> = [];
   const currentYear = new Date().getFullYear();
 
   for (let i = 0; i < count; i++) {
@@ -239,11 +239,11 @@ export function createTimelineEntries(count: number): TimelineEntry[] {
 }
 
 export function createMatrixData(count: number): {
-  people: MatrixPerson[];
-  matrix: MatrixCell[];
+  people: Array<MatrixPerson>;
+  matrix: Array<MatrixCell>;
 } {
   resetIdCounter();
-  const people: MatrixPerson[] = [];
+  const people: Array<MatrixPerson> = [];
 
   // Create people
   for (let i = 0; i < count; i++) {
@@ -256,7 +256,7 @@ export function createMatrixData(count: number): {
   }
 
   // Create matrix cells (relationships)
-  const matrix: MatrixCell[] = [];
+  const matrix: Array<MatrixCell> = [];
   const relationshipTypes = [
     "PARENT",
     "CHILD",
@@ -439,14 +439,14 @@ export function createStatisticsData(
 // ==========================================
 
 export const EMPTY_DATA = {
-  nodes: [] as ChartNode[],
-  edges: [] as ChartEdge[],
+  nodes: [] as Array<ChartNode>,
+  edges: [] as Array<ChartEdge>,
 };
 
 export const SINGLE_PERSON = (() => {
   resetIdCounter();
   const nodes = [createMockPerson({ firstName: "Solo", lastName: "Person" })];
-  return { nodes, edges: [] as ChartEdge[] };
+  return { nodes, edges: [] as Array<ChartEdge> };
 })();
 
 export const SMALL_FAMILY = (() => {

@@ -1,21 +1,21 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  Button,
   Input,
 } from "@vamsa/ui";
 import { ProfileCard } from "./profile-card";
 import {
-  getOIDCClaimableProfiles,
   claimProfileOIDC,
+  getOIDCClaimableProfiles,
   skipProfileClaim,
 } from "~/server/claim.functions";
 

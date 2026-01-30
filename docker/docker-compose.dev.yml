@@ -1,8 +1,13 @@
+# Development-only Docker Compose
+# WARNING: Contains default credentials - DO NOT USE IN PRODUCTION
+# For production, use docker-compose.yml which requires secure credentials via .env
 name: vamsa-dev
 services:
   postgres:
     image: postgres:18-alpine
     environment:
+      # Default credentials for local development ONLY
+      # Production deployments MUST use docker-compose.yml with secure credentials
       POSTGRES_USER: vamsa
       POSTGRES_PASSWORD: vamsa
       POSTGRES_DB: vamsa

@@ -13,13 +13,14 @@
  * - Search and discovery workflows
  */
 
-import { test, expect } from "./fixtures/test-base";
+import { expect, test } from "./fixtures/test-base";
 import { bdd } from "./fixtures/bdd-helpers";
 import {
-  PeopleListPage,
-  PersonFormPage,
-  PersonDetailPage,
   Navigation,
+  PeopleListPage,
+  PersonDetailPage,
+  PersonFormPage,
+  gotoWithRetry,
 } from "./fixtures/page-objects";
 
 /**
@@ -39,13 +40,13 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
     const firstName2 = generateUniqueName("Child");
     const lastName2 = "TestFamily";
 
-    let personId1: string = "";
+    let personId1 = "";
     let createdPersonId1: string | null = null;
 
     await bdd.given(
       "user is logged in and on the people list page",
       async () => {
-        await page.goto("/people");
+        await gotoWithRetry(page, "/people");
         const peopleList = new PeopleListPage(page);
         await peopleList.waitForLoad();
         await expect(page.locator("main")).toBeVisible();
@@ -57,7 +58,8 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
         'button:has-text("Add"), a:has-text("Add Person")'
       );
       await addButton.click();
-      await page.waitForURL(/\/people\/new/);
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForURL(/\/people\/new/, { timeout: 30000 });
 
       const form = new PersonFormPage(page);
       await form.fillBasicInfo({
@@ -99,21 +101,50 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
     await bdd.then(
       "first person is created and visible in the list",
       async () => {
+        // Wait for any in-progress navigation to complete before navigating
+        await page.waitForLoadState("networkidle").catch(() => {});
+        await page.waitForLoadState("domcontentloaded");
+        // Additional wait for WebKit to stabilize after form submission
+        await page.waitForTimeout(1000);
+
         // We captured the person ID from the API response - use it to verify
         if (createdPersonId1) {
-          // Verify by navigating directly to the person's detail page
-          await page.goto(`/people/${createdPersonId1}`);
+          const personId = createdPersonId1; // Capture for type narrowing in callbacks
+          // Only navigate if we're not already at the target URL
+          const currentUrl = page.url();
+          if (!currentUrl.includes(personId)) {
+            // Wait for page to be stable before navigating
+            await page.waitForTimeout(500);
+            await gotoWithRetry(page, `/people/${personId}`);
+          }
+
+          // Wait for the person detail page to fully load
+          await page.waitForURL((url) => url.pathname.includes(personId), {
+            timeout: 15000,
+          });
 
           // Check that the person's name heading is visible
           const nameHeading = page.locator("h1").first();
           await nameHeading.waitFor({ state: "visible", timeout: 10000 });
           const headingText = await nameHeading.textContent();
 
-          // Verify the name contains our expected firstName
-          expect(headingText).toContain(firstName1);
+          // Verify the name contains our expected firstName (skip if still on form)
+          if (headingText === "Add Person") {
+            // Form submission might have failed, try to navigate directly
+            await gotoWithRetry(page, `/people/${personId}`);
+            await page.waitForLoadState("domcontentloaded");
+            await nameHeading.waitFor({ state: "visible", timeout: 10000 });
+            const retryHeadingText = await nameHeading.textContent();
+            expect(retryHeadingText).toContain(firstName1);
+          } else {
+            expect(headingText).toContain(firstName1);
+          }
         } else {
           // Fallback: search in the list (may fail if paginated)
-          await page.goto("/people");
+          if (!page.url().endsWith("/people")) {
+            await gotoWithRetry(page, "/people");
+            await page.waitForLoadState("domcontentloaded");
+          }
           const table = page.locator("table");
           await table.waitFor({ state: "visible", timeout: 10000 });
 
@@ -133,14 +164,17 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
 
     await bdd.and("user creates the second person (child)", async () => {
       // Navigate back to people list (we may be on detail page from previous step)
-      await page.goto("/people");
+      await page.waitForLoadState("domcontentloaded");
+      await gotoWithRetry(page, "/people");
+      await page.waitForLoadState("domcontentloaded");
       await page.locator("main").waitFor({ state: "visible", timeout: 10000 });
 
       const addButton = page.locator(
         'button:has-text("Add"), a:has-text("Add Person")'
       );
       await addButton.click();
-      await page.waitForURL(/\/people\/new/);
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForURL(/\/people\/new/, { timeout: 30000 });
 
       const form = new PersonFormPage(page);
       await form.fillBasicInfo({
@@ -176,7 +210,15 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
         // Require personId1 - fail test if not captured instead of skipping
         expect(personId1).toBeTruthy();
 
-        await page.goto(`/people/${personId1}`);
+        // Wait for any in-progress navigation to complete
+        await page.waitForLoadState("domcontentloaded");
+        await page.waitForTimeout(500);
+
+        // Only navigate if not already on the target person page
+        if (!page.url().includes(personId1)) {
+          await gotoWithRetry(page, `/people/${personId1}`);
+          await page.waitForLoadState("domcontentloaded");
+        }
         const detailPage = new PersonDetailPage(page);
         await expect(detailPage.nameHeading).toBeVisible({ timeout: 5000 });
 
@@ -260,7 +302,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
         expect(personId1).toBeTruthy();
 
         // Reload page to verify relationship persisted
-        await page.goto(`/people/${personId1}`);
+        await gotoWithRetry(page, `/people/${personId1}`);
         await page.waitForTimeout(500);
 
         // Look for relationship section
@@ -286,7 +328,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
           await nav.goToVisualize();
         } catch (_e) {
           // If visualize navigation fails, try direct navigation
-          await page.goto("/visualize");
+          await gotoWithRetry(page, "/visualize");
         }
 
         // Wait for visualization to load
@@ -316,7 +358,7 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
     const bio = "This is a test biography for search discovery";
 
     await bdd.given("user is on the people creation page", async () => {
-      await page.goto("/people/new");
+      await gotoWithRetry(page, "/people/new");
       const form = new PersonFormPage(page);
       await form.waitForFormReady();
     });
@@ -339,7 +381,7 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
 
     await bdd.then("person is created with all details persisted", async () => {
       // Navigate to people list
-      await page.goto("/people");
+      await gotoWithRetry(page, "/people");
       const peopleList = new PeopleListPage(page);
       await peopleList.waitForLoad();
       await page.waitForTimeout(500);
@@ -387,7 +429,7 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
 
       // Navigate to person detail to verify all details if we have personId
       if (personId) {
-        await page.goto(`/people/${personId}`);
+        await gotoWithRetry(page, `/people/${personId}`);
         const detailPage = new PersonDetailPage(page);
         await detailPage.nameHeading.waitFor({
           state: "visible",
@@ -405,7 +447,12 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
     await bdd.and(
       "user can find person via search with partial name",
       async () => {
-        await page.goto("/people");
+        // Wait for any in-progress navigation to complete before navigating
+        await page.waitForLoadState("domcontentloaded");
+        // Only navigate if not already on the target page
+        if (!page.url().includes("/people") || page.url().includes("/new")) {
+          await gotoWithRetry(page, "/people");
+        }
         const peopleList = new PeopleListPage(page);
         await peopleList.waitForLoad();
         await page.waitForTimeout(500);
@@ -438,7 +485,11 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
     await bdd.and(
       "user can find person via search with last name",
       async () => {
-        await page.goto("/people");
+        // Wait for any in-progress navigation to complete before navigating
+        await page.waitForLoadState("domcontentloaded");
+        if (!page.url().endsWith("/people")) {
+          await gotoWithRetry(page, "/people");
+        }
         const peopleList = new PeopleListPage(page);
         await peopleList.waitForLoad();
         await page.waitForTimeout(500);
@@ -481,7 +532,7 @@ test.describe("Integration Journey: Data Persistence Across Navigation", () => {
     await bdd.given(
       "user creates a new person with specific data",
       async () => {
-        await page.goto("/people/new");
+        await gotoWithRetry(page, "/people/new");
         const form = new PersonFormPage(page);
         await form.fillBasicInfo({
           firstName,
@@ -512,7 +563,7 @@ test.describe("Integration Journey: Data Persistence Across Navigation", () => {
         try {
           await nav.goToDashboard();
         } catch (_e) {
-          await page.goto("/dashboard");
+          await gotoWithRetry(page, "/dashboard");
         }
         await page.waitForTimeout(300);
 
@@ -520,12 +571,12 @@ test.describe("Integration Journey: Data Persistence Across Navigation", () => {
         try {
           await nav.goToPeople();
         } catch (_e) {
-          await page.goto("/people");
+          await gotoWithRetry(page, "/people");
         }
         await page.waitForTimeout(300);
 
         // Return to created person
-        await page.goto(`/people/${personId}`);
+        await gotoWithRetry(page, `/people/${personId}`);
         await page.waitForTimeout(300);
       }
     );
@@ -535,7 +586,7 @@ test.describe("Integration Journey: Data Persistence Across Navigation", () => {
       expect(personId).toBeTruthy();
 
       // Wait for person detail page to load
-      await page.waitForURL(`/people/${personId}`, { timeout: 5000 });
+      await page.waitForURL(`/people/${personId}`, { timeout: 30000 });
       await page.waitForTimeout(500);
 
       const detailPage = new PersonDetailPage(page);
@@ -547,7 +598,17 @@ test.describe("Integration Journey: Data Persistence Across Navigation", () => {
     });
 
     await bdd.and("user can search for the person and find it", async () => {
-      await page.goto("/people");
+      // Wait for any in-progress navigation to complete before navigating
+      await page.waitForLoadState("networkidle").catch(() => {});
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForTimeout(500);
+
+      // Only navigate if we're not already on the people list page
+      const currentUrl = page.url();
+      if (!currentUrl.endsWith("/people") && !currentUrl.includes("/people?")) {
+        await gotoWithRetry(page, "/people");
+        await page.waitForLoadState("domcontentloaded");
+      }
       const peopleList = new PeopleListPage(page);
       await peopleList.waitForLoad();
       await page.waitForTimeout(500);
@@ -575,7 +636,8 @@ test.describe("Integration Journey: Data Persistence Across Navigation", () => {
       // Require personId - fail test if not captured instead of skipping
       expect(personId).toBeTruthy();
 
-      await page.goto(`/people/${personId}`);
+      await page.waitForLoadState("domcontentloaded");
+      await gotoWithRetry(page, `/people/${personId}`);
       await page.reload();
       await page.waitForTimeout(500);
 
@@ -596,7 +658,7 @@ test.describe("Integration Journey: Search and Navigation Flow", () => {
     const searchTerm = "Test";
 
     await bdd.given("user is on people list page", async () => {
-      await page.goto("/people");
+      await gotoWithRetry(page, "/people");
       const peopleList = new PeopleListPage(page);
       await peopleList.waitForLoad();
     });
@@ -635,7 +697,8 @@ test.describe("Integration Journey: Search and Navigation Flow", () => {
 
         if (isVisible) {
           await firstPersonLink.click();
-          await page.waitForURL(/\/people\/[^/]+$/);
+          await page.waitForLoadState("domcontentloaded");
+          await page.waitForURL(/\/people\/[^/]+$/, { timeout: 30000 });
 
           // Person detail page should load
           const detailPage = new PersonDetailPage(page);
@@ -652,7 +715,7 @@ test.describe("Integration Journey: Search and Navigation Flow", () => {
         try {
           await nav.goToPeople();
         } catch (_e) {
-          await page.goto("/people");
+          await gotoWithRetry(page, "/people");
         }
 
         const peopleList = new PeopleListPage(page);
@@ -684,7 +747,7 @@ test.describe("Integration Journey: Full Feature Tour", () => {
     page,
   }) => {
     await bdd.given("user is logged in", async () => {
-      await page.goto("/people");
+      await gotoWithRetry(page, "/people");
       await expect(page.locator("main")).toBeVisible({ timeout: 10000 });
     });
 
@@ -693,7 +756,7 @@ test.describe("Integration Journey: Full Feature Tour", () => {
       try {
         await nav.goToDashboard();
       } catch (_e) {
-        await page.goto("/dashboard");
+        await gotoWithRetry(page, "/dashboard");
       }
       await page.waitForTimeout(500);
     });
@@ -707,7 +770,7 @@ test.describe("Integration Journey: Full Feature Tour", () => {
       try {
         await nav.goToPeople();
       } catch (_e) {
-        await page.goto("/people");
+        await gotoWithRetry(page, "/people");
       }
       await expect(page).toHaveURL(/\/people/);
     });
@@ -717,7 +780,7 @@ test.describe("Integration Journey: Full Feature Tour", () => {
       try {
         await nav.goToVisualize();
       } catch (_e) {
-        await page.goto("/visualize");
+        await gotoWithRetry(page, "/visualize");
       }
       await expect(page.locator("main")).toBeVisible({ timeout: 10000 });
     });
@@ -727,7 +790,7 @@ test.describe("Integration Journey: Full Feature Tour", () => {
       try {
         await nav.goToPeople();
       } catch (_e) {
-        await page.goto("/people");
+        await gotoWithRetry(page, "/people");
       }
       await expect(page).toHaveURL(/\/people/);
     });

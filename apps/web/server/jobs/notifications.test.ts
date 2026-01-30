@@ -6,19 +6,23 @@
  * - Formatting utilities and error handling
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 // Mock logger for this test file
 import {
-  mockLogger,
-  mockLog,
-  mockLoggers,
-  mockSerializeError,
+  clearAllMocks,
   mockCreateContextLogger,
   mockCreateRequestLogger,
+  mockLog,
+  mockLogger,
+  mockLoggers,
+  mockSerializeError,
   mockStartTimer,
-  clearAllMocks,
 } from "../../tests/setup/shared-mocks";
+
+// Import the module (logger mock is applied by this file)
+import { sendBackupNotification } from "./notifications";
+import type { BackupNotificationInput } from "./notifications";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -30,10 +34,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
-// Import the module (logger mock is applied by this file)
-import { sendBackupNotification } from "./notifications";
-import type { BackupNotificationInput } from "./notifications";
 
 describe("Backup Notifications", () => {
   beforeEach(() => {
@@ -311,7 +311,7 @@ describe("Backup Notifications", () => {
 
       await sendBackupNotification(input);
 
-      const calls = mockLogger.info.mock.calls as unknown[][];
+      const calls = mockLogger.info.mock.calls as Array<Array<unknown>>;
       const subjectCall = calls.find((call) => {
         const args = call[0];
         return (
@@ -338,7 +338,7 @@ describe("Backup Notifications", () => {
 
       await sendBackupNotification(input);
 
-      const calls = mockLogger.info.mock.calls as unknown[][];
+      const calls = mockLogger.info.mock.calls as Array<Array<unknown>>;
       const subjectCall = calls.find((call) => {
         const args = call[0];
         return (

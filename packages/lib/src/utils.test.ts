@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Utility Functions
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { generateRandomPassword, getInitials } from "./utils";
 
 describe("generateRandomPassword", () => {

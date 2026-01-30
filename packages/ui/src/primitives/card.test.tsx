@@ -1,15 +1,15 @@
 /**
  * Unit Tests for Card Components
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { render } from "@testing-library/react";
 import {
   Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
 } from "./card";
 
 describe("Card", () => {

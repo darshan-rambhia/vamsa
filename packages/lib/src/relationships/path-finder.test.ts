@@ -3,13 +3,9 @@
  *
  * Tests the path finding and relationship name calculation functionality
  */
-import { describe, it, expect } from "bun:test";
-import {
-  findRelationshipPath,
-  calculateRelationshipName,
-  type RelationshipNode,
-  type RelationshipMaps,
-} from "./path-finder";
+import { describe, expect, it } from "bun:test";
+import { calculateRelationshipName, findRelationshipPath } from "./path-finder";
+import type { RelationshipMaps, RelationshipNode } from "./path-finder";
 
 /**
  * Helper to create a person node
@@ -32,13 +28,13 @@ function createPerson(
  * Helper to create relationship maps
  */
 function createMaps(
-  parentChildPairs: [string, string][],
-  spousePairs: [string, string][] = []
+  parentChildPairs: Array<[string, string]>,
+  spousePairs: Array<[string, string]> = []
 ): [Map<string, RelationshipNode>, RelationshipMaps] {
   const people = new Map<string, RelationshipNode>();
-  const parents = new Map<string, string[]>();
-  const children = new Map<string, string[]>();
-  const spouses = new Map<string, string[]>();
+  const parents = new Map<string, Array<string>>();
+  const children = new Map<string, Array<string>>();
+  const spouses = new Map<string, Array<string>>();
 
   // Set up parent-child relationships
   for (const [parentId, childId] of parentChildPairs) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@vamsa/ui/primitives";
 
 interface MediaUploaderProps {

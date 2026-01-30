@@ -38,7 +38,7 @@ export type RelationshipCategory = "blood" | "marriage" | "inlaw" | "step";
 /**
  * Core blood relationships (biological/adoptive)
  */
-export const BLOOD_RELATIONSHIPS: RelationshipType[] = [
+export const BLOOD_RELATIONSHIPS: Array<RelationshipType> = [
   "PARENT",
   "CHILD",
   "SIBLING",
@@ -47,12 +47,12 @@ export const BLOOD_RELATIONSHIPS: RelationshipType[] = [
 /**
  * Marriage relationship
  */
-export const MARRIAGE_RELATIONSHIPS: RelationshipType[] = ["SPOUSE"];
+export const MARRIAGE_RELATIONSHIPS: Array<RelationshipType> = ["SPOUSE"];
 
 /**
  * In-law relationships (created through marriage)
  */
-export const INLAW_RELATIONSHIPS: RelationshipType[] = [
+export const INLAW_RELATIONSHIPS: Array<RelationshipType> = [
   "PARENT_IN_LAW",
   "CHILD_IN_LAW",
   "SIBLING_IN_LAW",
@@ -61,7 +61,7 @@ export const INLAW_RELATIONSHIPS: RelationshipType[] = [
 /**
  * Step relationships (created through remarriage)
  */
-export const STEP_RELATIONSHIPS: RelationshipType[] = [
+export const STEP_RELATIONSHIPS: Array<RelationshipType> = [
   "STEP_PARENT",
   "STEP_CHILD",
   "STEP_SIBLING",
@@ -70,7 +70,7 @@ export const STEP_RELATIONSHIPS: RelationshipType[] = [
 /**
  * All relationship types
  */
-export const ALL_RELATIONSHIP_TYPES: RelationshipType[] = [
+export const ALL_RELATIONSHIP_TYPES: Array<RelationshipType> = [
   ...BLOOD_RELATIONSHIPS,
   ...MARRIAGE_RELATIONSHIPS,
   ...INLAW_RELATIONSHIPS,
@@ -259,7 +259,7 @@ export const RELATIONSHIP_TYPE_OPTIONS = [
  * Get relationship options for a UI select, optionally filtered by category
  */
 export function getRelationshipOptions(
-  categories?: RelationshipCategory[]
+  categories?: Array<RelationshipCategory>
 ): Array<{ value: RelationshipType; label: string; category: string }> {
   const allOptions = RELATIONSHIP_TYPE_OPTIONS.flatMap((group) =>
     group.options.map((opt) => ({

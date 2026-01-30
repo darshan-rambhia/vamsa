@@ -1,7 +1,7 @@
 import type { Story } from "@ladle/react";
+import type { ChartType } from "~/components/charts/ChartControls";
 import { ChartLegend } from "~/components/charts/ChartLegend";
 import { ThemeDecorator } from "~/stories/decorators";
-import type { ChartType } from "~/components/charts/ChartControls";
 
 export default {
   title: "Charts/UI/ChartLegend",
@@ -20,7 +20,7 @@ export const Default: Story = () => (
 Default.storyName = "Default - All Legend Items";
 
 export const AllTypes: Story = () => {
-  const chartTypes: ChartType[] = [
+  const chartTypes: Array<ChartType> = [
     "tree",
     "ancestor",
     "descendant",

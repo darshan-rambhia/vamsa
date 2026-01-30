@@ -36,7 +36,7 @@ export interface ClaimingUser {
 export interface ProfileMatch {
   profile: ClaimableProfile;
   score: number;
-  reasons: string[];
+  reasons: Array<string>;
 }
 
 /**
@@ -57,7 +57,7 @@ export function scoreProfileMatch(
   profile: ClaimableProfile
 ): ProfileMatch {
   let score = 0;
-  const reasons: string[] = [];
+  const reasons: Array<string> = [];
 
   // Exact email match (strongest signal)
   if (user.email && profile.email) {
@@ -138,15 +138,24 @@ export function scoreProfileMatch(
  */
 function normalizeName(name: string): string {
   // Use split/filter/join instead of regex for whitespace normalization to avoid ReDoS
-  const normalized = name
+  const words = name
     .toLowerCase()
     .split(/\s/)
-    .filter((s) => s.length > 0)
-    .join(" ");
-  // Remove common titles and suffixes
-  return normalized
-    .replace(/^(mr|mrs|ms|dr|prof)\.\s*/i, "")
-    .replace(/\s*(jr|sr|ii|iii|iv|v)\.?\s*$/i, "");
+    .filter((s) => s.length > 0);
+
+  // Remove common titles at start (e.g., "mr.", "mrs.", "dr.")
+  const titles = new Set(["mr.", "mrs.", "ms.", "dr.", "prof."]);
+  while (words.length > 0 && titles.has(words[0])) {
+    words.shift();
+  }
+
+  // Remove common suffixes at end (e.g., "jr", "sr", "ii", "iii")
+  const suffixes = new Set(["jr", "jr.", "sr", "sr.", "ii", "iii", "iv", "v"]);
+  while (words.length > 0 && suffixes.has(words[words.length - 1])) {
+    words.pop();
+  }
+
+  return words.join(" ");
 }
 
 /**
@@ -159,9 +168,9 @@ function normalizeName(name: string): string {
  */
 export function findSuggestedMatches(
   user: ClaimingUser,
-  profiles: ClaimableProfile[],
+  profiles: Array<ClaimableProfile>,
   minScore: number = 30
-): ProfileMatch[] {
+): Array<ProfileMatch> {
   const matches = profiles
     .map((profile) => scoreProfileMatch(user, profile))
     .filter((match) => match.score >= minScore)
@@ -193,7 +202,7 @@ export function isConfidentMatch(match: ProfileMatch): boolean {
  */
 export function getBestMatch(
   user: ClaimingUser,
-  profiles: ClaimableProfile[]
+  profiles: Array<ClaimableProfile>
 ): ProfileMatch | null {
   const matches = findSuggestedMatches(user, profiles);
 
@@ -220,18 +229,18 @@ export function getBestMatch(
  */
 export function groupProfilesByMatch(
   user: ClaimingUser,
-  profiles: ClaimableProfile[]
+  profiles: Array<ClaimableProfile>
 ): {
-  confident: ProfileMatch[];
-  suggested: ProfileMatch[];
-  other: ClaimableProfile[];
+  confident: Array<ProfileMatch>;
+  suggested: Array<ProfileMatch>;
+  other: Array<ClaimableProfile>;
 } {
   const allMatches = profiles.map((profile) =>
     scoreProfileMatch(user, profile)
   );
 
-  const confident: ProfileMatch[] = [];
-  const suggested: ProfileMatch[] = [];
+  const confident: Array<ProfileMatch> = [];
+  const suggested: Array<ProfileMatch> = [];
   const matchedIds = new Set<string>();
 
   for (const match of allMatches) {
@@ -270,7 +279,7 @@ export function validateClaim(
     oidcProvider: string | null;
   },
   profile: ClaimableProfile & { isLiving: boolean },
-  claimedPersonIds: string[]
+  claimedPersonIds: Array<string>
 ): { valid: boolean; error?: string } {
   // User already has a profile
   if (user.personId) {

@@ -1,7 +1,7 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { existsSync, readFileSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
-import path from "path";
-import { fileURLToPath } from "url";
-import { readFileSync, existsSync } from "fs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -66,15 +66,14 @@ const webServerConfig = {
 /**
  * Playwright configuration for Vamsa E2E tests
  *
- * OPTIMIZATION: Currently running Chromium-only for faster execution (92% speedup).
- * - 2,052 runs (158 tests × 12 projects) → 158 runs
- * - 45-60 min → 3-4 min execution time
+ * Browser Strategy:
+ * - Local development: Chromium-only by default (fast feedback)
+ * - CI: All browsers in parallel via matrix strategy (chromium, firefox, webkit)
  *
- * Additional browsers/devices commented out because:
- * - No React Native app exists (mobile testing not needed yet)
- * - ReactFlow tests too superficial to catch WebKit-specific issues currently
- * - Responsive design better tested with visual regression tools
- * - Can add browsers back when specific cross-browser issues arise
+ * To run specific browsers locally:
+ *   bun test:e2e --project=firefox
+ *   bun test:e2e --project=webkit
+ *   bun test:e2e --project=chromium --project=firefox
  */
 export default defineConfig({
   testDir: path.join(__dirname, "e2e"),
@@ -110,21 +109,38 @@ export default defineConfig({
 
   projects: [
     // Desktop browsers
-    // Default: Chromium-only for fast PR feedback
-    // Cross-browser tests run weekly via .github/workflows/cross-browser.yml
     {
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-    // Disabled by default - uncomment for local cross-browser testing
-    // or use: bun test:e2e --project=webkit --project=firefox
-    // {
-    //   name: "webkit",
-    //   use: { ...devices["Desktop Safari"] },
-    // },
-    // {
-    //   name: "firefox",
-    //   use: { ...devices["Desktop Firefox"] },
-    // },
+    {
+      name: "webkit",
+      use: {
+        ...devices["Desktop Safari"],
+        // WebKit needs longer timeouts for navigation and actions
+        actionTimeout: 15000,
+        navigationTimeout: 30000,
+        // Use webkit-specific auth state (created by webkit browser in global-setup)
+        storageState: path.join(__dirname, "e2e/.auth/admin-webkit.json"),
+      },
+      // WebKit tests get longer overall timeout and more retries
+      timeout: 45 * 1000,
+      retries: process.env.CI ? 3 : 1,
+    },
+    // Firefox browser
+    {
+      name: "firefox",
+      use: {
+        ...devices["Desktop Firefox"],
+        // Firefox needs longer timeouts for navigation and actions (similar to WebKit)
+        actionTimeout: 15000,
+        navigationTimeout: 30000,
+        // Use firefox-specific auth state (created by firefox browser in global-setup)
+        storageState: path.join(__dirname, "e2e/.auth/admin-firefox.json"),
+      },
+      // Firefox tests get longer overall timeout and more retries
+      timeout: 45 * 1000,
+      retries: process.env.CI ? 3 : 1,
+    },
   ],
 });

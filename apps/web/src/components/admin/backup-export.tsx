@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Button, Checkbox, Input, Label } from "@vamsa/ui/primitives";
-import { exportBackup, type ExportBackupResult } from "~/server/backup";
+import type { ExportBackupResult } from "~/server/backup";
+import { exportBackup } from "~/server/backup";
 
 export function BackupExport() {
   const [includePhotos, setIncludePhotos] = useState(true);

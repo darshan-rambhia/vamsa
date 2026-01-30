@@ -2,21 +2,23 @@
  * Unit Tests for User Schemas
  * Tests Zod schema validation for user management, authentication, and registration
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  userRoleEnum,
-  userCreateSchema,
-  userUpdateSchema,
-  loginSchema,
-  registerSchema,
   changePasswordSchema,
   claimProfileSchema,
-  type UserCreateInput,
-  type UserUpdateInput,
-  type LoginInput,
-  type RegisterInput,
-  type ChangePasswordInput,
-  type ClaimProfileInput,
+  loginSchema,
+  registerSchema,
+  userCreateSchema,
+  userRoleEnum,
+  userUpdateSchema,
+} from "./user";
+import type {
+  ChangePasswordInput,
+  ClaimProfileInput,
+  LoginInput,
+  RegisterInput,
+  UserCreateInput,
+  UserUpdateInput,
 } from "./user";
 
 describe("userRoleEnum", () => {

@@ -1,8 +1,8 @@
+import { z } from "zod";
 import { registerWidget } from "../widget-registry";
 import { QuickActionsWidget } from "./QuickActionsWidget";
 import { RecentActivityWidget } from "./RecentActivityWidget";
 import { QuickSearchWidget } from "./QuickSearchWidget";
-import { z } from "zod";
 
 /**
  * Register all available dashboard widgets.

@@ -22,8 +22,8 @@ export interface BackupMetadata {
     auditLogDays: number;
     totalAuditLogs: number;
   };
-  dataFiles: string[];
-  photoDirectories: string[];
+  dataFiles: Array<string>;
+  photoDirectories: Array<string>;
 }
 
 export interface Conflict {
@@ -32,7 +32,7 @@ export interface Conflict {
   existingId?: string;
   // existingData?: Record<string, any>;
   // newData: Record<string, any>;
-  conflictFields: string[];
+  conflictFields: Array<string>;
   severity: "low" | "medium" | "high";
   description: string;
 }
@@ -40,14 +40,14 @@ export interface Conflict {
 export interface ValidationResult {
   isValid: boolean;
   metadata: BackupMetadata;
-  conflicts: Conflict[];
+  conflicts: Array<Conflict>;
   statistics: {
     totalConflicts: number;
     conflictsByType: Record<string, number>;
     conflictsBySeverity: Record<string, number>;
   };
-  errors: string[];
-  warnings: string[];
+  errors: Array<string>;
+  warnings: Array<string>;
 }
 
 // Supported backup versions
@@ -63,9 +63,9 @@ export class BackupValidator {
   }
 
   async validate(): Promise<ValidationResult> {
-    const errors: string[] = [];
-    const warnings: string[] = [];
-    const conflicts: Conflict[] = [];
+    const errors: Array<string> = [];
+    const warnings: Array<string> = [];
+    const conflicts: Array<Conflict> = [];
 
     try {
       // Validate file size first
@@ -148,9 +148,9 @@ export class BackupValidator {
 
   private async validateMetadata(): Promise<{
     isValid: boolean;
-    errors: string[];
+    errors: Array<string>;
   }> {
-    const errors: string[] = [];
+    const errors: Array<string> = [];
 
     if (!this.extractedFiles.has("metadata.json")) {
       errors.push("Missing metadata.json file");
@@ -216,11 +216,11 @@ export class BackupValidator {
 
   private async validateDataFiles(): Promise<{
     isValid: boolean;
-    errors: string[];
-    warnings: string[];
+    errors: Array<string>;
+    warnings: Array<string>;
   }> {
-    const errors: string[] = [];
-    const warnings: string[] = [];
+    const errors: Array<string> = [];
+    const warnings: Array<string> = [];
 
     if (!this.metadata) {
       errors.push("Metadata not loaded");
@@ -269,9 +269,9 @@ export class BackupValidator {
 
   private createValidationResult(
     isValid: boolean,
-    conflicts: Conflict[],
-    errors: string[],
-    warnings: string[]
+    conflicts: Array<Conflict>,
+    errors: Array<string>,
+    warnings: Array<string>
   ): ValidationResult {
     const conflictsByType: Record<string, number> = {};
     const conflictsBySeverity: Record<string, number> = {};
@@ -333,17 +333,18 @@ export class BackupValidator {
   } {
     return {
       people: this.extractedFiles.has("data/people.json")
-        ? (this.extractedFiles.get("data/people.json") as unknown[]).length
+        ? (this.extractedFiles.get("data/people.json") as Array<unknown>).length
         : 0,
       users: this.extractedFiles.has("data/users.json")
-        ? (this.extractedFiles.get("data/users.json") as unknown[]).length
+        ? (this.extractedFiles.get("data/users.json") as Array<unknown>).length
         : 0,
       relationships: this.extractedFiles.has("data/relationships.json")
-        ? (this.extractedFiles.get("data/relationships.json") as unknown[])
+        ? (this.extractedFiles.get("data/relationships.json") as Array<unknown>)
             .length
         : 0,
       suggestions: this.extractedFiles.has("data/suggestions.json")
-        ? (this.extractedFiles.get("data/suggestions.json") as unknown[]).length
+        ? (this.extractedFiles.get("data/suggestions.json") as Array<unknown>)
+            .length
         : 0,
     };
   }

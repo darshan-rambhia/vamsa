@@ -10,16 +10,16 @@
  * - EVENT_TYPE_LABELS: Label object completeness
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  mapGedcomTagToEventType,
-  mapEventTypeToGedcomTag,
-  getEventTypeLabel,
-  GEDCOM_TO_EVENT_TYPE,
-  EVENT_TYPE_TO_GEDCOM,
   EVENT_TYPE_LABELS,
-  type EventType,
+  EVENT_TYPE_TO_GEDCOM,
+  GEDCOM_TO_EVENT_TYPE,
+  getEventTypeLabel,
+  mapEventTypeToGedcomTag,
+  mapGedcomTagToEventType,
 } from "./event";
+import type { EventType } from "./event";
 
 describe("Event utilities", () => {
   describe("mapGedcomTagToEventType", () => {
@@ -186,7 +186,7 @@ describe("Event utilities", () => {
     });
 
     it("should handle all EventType values", () => {
-      const eventTypes: EventType[] = [
+      const eventTypes: Array<EventType> = [
         "BIRTH",
         "DEATH",
         "MARRIAGE",
@@ -288,7 +288,7 @@ describe("Event utilities", () => {
     });
 
     it("should have labels for all event types", () => {
-      const eventTypes: EventType[] = [
+      const eventTypes: Array<EventType> = [
         "BIRTH",
         "DEATH",
         "MARRIAGE",
@@ -341,7 +341,7 @@ describe("Event utilities", () => {
     });
 
     it("should only contain EventType values", () => {
-      const validEventTypes: EventType[] = [
+      const validEventTypes: Array<EventType> = [
         "BIRTH",
         "DEATH",
         "MARRIAGE",
@@ -367,7 +367,7 @@ describe("Event utilities", () => {
 
   describe("EVENT_TYPE_TO_GEDCOM mapping", () => {
     it("should have entries for all EventTypes", () => {
-      const eventTypes: EventType[] = [
+      const eventTypes: Array<EventType> = [
         "BIRTH",
         "DEATH",
         "MARRIAGE",
@@ -417,7 +417,7 @@ describe("Event utilities", () => {
 
   describe("EVENT_TYPE_LABELS mapping", () => {
     it("should have labels for all EventTypes", () => {
-      const eventTypes: EventType[] = [
+      const eventTypes: Array<EventType> = [
         "BIRTH",
         "DEATH",
         "MARRIAGE",
@@ -460,9 +460,9 @@ describe("Event utilities", () => {
     });
 
     it("should map most EventTypes back to GEDCOM tags", () => {
-      const customEventTypes: EventType[] = ["CUSTOM"];
+      const customEventTypes: Array<EventType> = ["CUSTOM"];
 
-      const eventTypes: EventType[] = [
+      const eventTypes: Array<EventType> = [
         "BIRTH",
         "DEATH",
         "MARRIAGE",

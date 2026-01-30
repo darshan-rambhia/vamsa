@@ -1,13 +1,13 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
+  CacheControl,
+  createCacheHeaders,
+  etagMatches,
   generateETag,
   generateETagFromObject,
   generateTimestampETag,
   generateVersionETag,
-  etagMatches,
   parseETag,
-  createCacheHeaders,
-  CacheControl,
 } from "./etag";
 
 describe("generateETag", () => {

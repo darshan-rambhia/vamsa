@@ -2,21 +2,20 @@
  * Unit Tests for Backup Export Schemas
  * Tests Zod schema validation for backup operations
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
   backupExportSchema,
-  backupMetadataSchema,
   backupImportOptionsSchema,
+  backupMetadataSchema,
+  backupSchema,
+  backupSettingsSchema,
+  backupValidationPreviewSchema,
   conflictResolutionStrategy,
   conflictSchema,
-  validationResultSchema,
   importResultSchema,
-  backupValidationPreviewSchema,
-  backupSettingsSchema,
-  backupSchema,
-  type BackupExportInput,
-  type BackupMetadata,
+  validationResultSchema,
 } from "./backup";
+import type { BackupExportInput, BackupMetadata } from "./backup";
 
 describe("backupExportSchema", () => {
   describe("Valid inputs", () => {

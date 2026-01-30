@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { AlertTriangle, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { AlertTriangle, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { Button, Card, CardContent, cn } from "@vamsa/ui";
 
 export interface ErrorCardProps {

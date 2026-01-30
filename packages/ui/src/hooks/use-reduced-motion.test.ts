@@ -1,10 +1,10 @@
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { renderHook, act } from "@testing-library/react";
-import { useReducedMotion, prefersReducedMotion } from "./use-reduced-motion";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { act, renderHook } from "@testing-library/react";
+import { prefersReducedMotion, useReducedMotion } from "./use-reduced-motion";
 
 describe("useReducedMotion", () => {
   type Listener = (event: { matches: boolean }) => void;
-  let listeners: Listener[] = [];
+  let listeners: Array<Listener> = [];
   const originalMatchMedia = window.matchMedia;
 
   function createMockMatchMedia(matches: boolean) {

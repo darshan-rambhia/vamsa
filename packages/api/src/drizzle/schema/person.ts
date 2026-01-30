@@ -5,13 +5,13 @@
  */
 
 import {
+  boolean,
+  date,
+  index,
+  jsonb,
   pgTable,
   text,
   timestamp,
-  boolean,
-  date,
-  jsonb,
-  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { genderEnum } from "./enums";

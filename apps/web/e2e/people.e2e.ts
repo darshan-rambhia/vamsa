@@ -2,12 +2,14 @@
  * People Management E2E Tests
  * Tests CRUD operations for family members with data persistence verification
  */
-import { test, expect } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { bdd } from "./fixtures/bdd-helpers";
 import {
+  Navigation,
   PeopleListPage,
   PersonDetailPage,
   PersonFormPage,
+  gotoWithRetry,
 } from "./fixtures/page-objects";
 
 // Helper to ensure a person exists, returns person ID
@@ -17,7 +19,7 @@ async function ensurePersonExists(
   _waitForConvexSync: () => Promise<void>
 ): Promise<string | null> {
   // Go to people list
-  await page.goto("/people");
+  await gotoWithRetry(page, "/people");
 
   // Wait for table to be visible (seeded data should exist)
   const tableBody = page.locator("table tbody");
@@ -36,7 +38,7 @@ async function ensurePersonExists(
   }
 
   // Navigate to the person detail page
-  await page.goto(`/people/${personId}`);
+  await gotoWithRetry(page, `/people/${personId}`);
 
   // Wait for the page to load - either the person's name or an h1 element
   await page.waitForLoadState("networkidle");
@@ -113,7 +115,7 @@ test.describe("People Management", () => {
       page,
       waitForConvexSync,
     }) => {
-      await page.goto("/people");
+      await gotoWithRetry(page, "/people");
 
       // Click add button
       const addButton = page
@@ -145,7 +147,7 @@ test.describe("People Management", () => {
       waitForConvexSync,
     }) => {
       await bdd.given("user navigates to create person form", async () => {
-        await page.goto("/people/new");
+        await gotoWithRetry(page, "/people/new");
         const form = page.getByTestId("person-form");
         await expect(form).toBeVisible();
       });
@@ -177,7 +179,7 @@ test.describe("People Management", () => {
         "people list can be accessed to verify data persistence",
         async () => {
           // Navigate to people list
-          await page.goto("/people");
+          await gotoWithRetry(page, "/people");
           const peopleList = new PeopleListPage(page);
           await peopleList.waitForLoad();
 
@@ -204,7 +206,7 @@ test.describe("People Management", () => {
           await firstPersonLink.click();
 
           // Should show person details
-          await page.waitForURL(/\/people\//);
+          await page.waitForURL(/\/people\//, { timeout: 15000 });
 
           const detailPage = new PersonDetailPage(page);
           await expect(detailPage.nameHeading).toBeVisible();
@@ -224,7 +226,7 @@ test.describe("People Management", () => {
 
         // Navigate to person detail if not already there
         if (!page.url().includes(`/people/${personId}`)) {
-          await page.goto(`/people/${personId}`);
+          await gotoWithRetry(page, `/people/${personId}`);
         }
       });
 
@@ -239,7 +241,7 @@ test.describe("People Management", () => {
             .first();
           await expect(editButton).toBeVisible({ timeout: 5000 });
           await editButton.click();
-          await page.waitForURL(/\/people\/[^/]+\/edit/);
+          await page.waitForURL(/\/people\/[^/]+\/edit/, { timeout: 15000 });
 
           // Modify the form
           const form = new PersonFormPage(page);
@@ -285,7 +287,7 @@ test.describe("People Management", () => {
     });
 
     test("should validate required fields on person form", async ({ page }) => {
-      await page.goto("/people");
+      await gotoWithRetry(page, "/people");
 
       const addButton = page
         .locator('button:has-text("Add"), a:has-text("Add")')
@@ -321,7 +323,7 @@ test.describe("People Management", () => {
           .first();
         if (await firstPerson.isVisible()) {
           await firstPerson.click();
-          await page.waitForURL(/\/people\//);
+          await page.waitForURL(/\/people\//, { timeout: 15000 });
 
           // Go back
           const backButton = page
@@ -351,7 +353,7 @@ test.describe("People Management", () => {
           .first();
         if (await firstPersonLink.isVisible()) {
           await firstPersonLink.click();
-          await page.waitForURL(/\/people\//);
+          await page.waitForURL(/\/people\//, { timeout: 15000 });
 
           // Check for breadcrumb
           const breadcrumb = page.locator(
@@ -421,7 +423,7 @@ test.describe("People - Data Integrity", () => {
   }) => {
     // This test verifies data updates are reactive
     // When data changes, UI should update without manual refresh
-    await page.goto("/people");
+    await gotoWithRetry(page, "/people");
 
     // Initial state captured
     const peopleList = new PeopleListPage(page);
@@ -437,7 +439,7 @@ test.describe("People - Data Integrity", () => {
     waitForConvexSync: _waitForConvexSync,
   }) => {
     await bdd.given("user navigates through multiple pages", async () => {
-      await page.goto("/people");
+      await gotoWithRetry(page, "/people");
       const peopleList = new PeopleListPage(page);
       await peopleList.waitForLoad();
 
@@ -448,28 +450,17 @@ test.describe("People - Data Integrity", () => {
           .first();
         if (await firstPersonLink.isVisible()) {
           await firstPersonLink.click();
-          await page.waitForURL(/\/people\//);
+          await page.waitForURL(/\/people\//, { timeout: 15000 });
         }
       }
     });
 
     await bdd.when("user navigates to other pages and back", async () => {
-      // Go to dashboard if available
-      const dashNav = page.getByTestId("nav-dashboard").first();
-      if (await dashNav.isVisible().catch(() => false)) {
-        await dashNav.click();
-        await page.waitForTimeout(500);
-
-        // Return to people
-        const peopleNav = page.getByTestId("nav-people").first();
-        if (await peopleNav.isVisible().catch(() => false)) {
-          await peopleNav.click();
-          await page.waitForURL("/people");
-        }
-      } else {
-        // Just go to people explicitly
-        await page.goto("/people");
-      }
+      // Use Navigation helper which handles Firefox NS_BINDING_ABORTED
+      const nav = new Navigation(page);
+      await nav.goToDashboard();
+      await page.waitForTimeout(300);
+      await nav.goToPeople();
     });
 
     await bdd.then(
@@ -497,7 +488,7 @@ test.describe("People - Data Integrity", () => {
 
       // Navigate to person detail if not already there
       if (!page.url().includes(`/people/${personId}`)) {
-        await page.goto(`/people/${personId}`);
+        await gotoWithRetry(page, `/people/${personId}`);
       }
     });
 

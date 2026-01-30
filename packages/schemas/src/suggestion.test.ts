@@ -2,21 +2,23 @@
  * Unit Tests for Suggestion Schemas
  * Tests Zod schema validation for suggestion creation, review, and status management
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  suggestionTypeEnum,
-  suggestionStatusEnum,
   suggestionCreateSchema,
   suggestionReviewSchema,
-  type SuggestionType,
-  type SuggestionStatus,
-  type SuggestionCreateInput,
-  type SuggestionReviewInput,
+  suggestionStatusEnum,
+  suggestionTypeEnum,
+} from "./suggestion";
+import type {
+  SuggestionCreateInput,
+  SuggestionReviewInput,
+  SuggestionStatus,
+  SuggestionType,
 } from "./suggestion";
 
 describe("suggestionTypeEnum", () => {
   it("should accept all valid suggestion types", () => {
-    const validTypes: SuggestionType[] = [
+    const validTypes: Array<SuggestionType> = [
       "CREATE",
       "UPDATE",
       "DELETE",
@@ -128,7 +130,7 @@ describe("suggestionTypeEnum", () => {
 
 describe("suggestionStatusEnum", () => {
   it("should accept all valid suggestion statuses", () => {
-    const validStatuses: SuggestionStatus[] = [
+    const validStatuses: Array<SuggestionStatus> = [
       "PENDING",
       "APPROVED",
       "REJECTED",

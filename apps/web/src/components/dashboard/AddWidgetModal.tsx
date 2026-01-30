@@ -3,12 +3,12 @@
 import { useState } from "react";
 import * as LucideIcons from "lucide-react";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  Button,
   cn,
 } from "@vamsa/ui";
 import { getAllWidgets } from "./widget-registry";
@@ -18,7 +18,7 @@ interface AddWidgetModalProps {
   onOpenChange: (open: boolean) => void;
   onAddWidget: (widgetType: string) => void;
   /** List of widget types already on the dashboard (to show "already added" state) */
-  existingWidgetTypes?: string[];
+  existingWidgetTypes?: Array<string>;
 }
 
 /**

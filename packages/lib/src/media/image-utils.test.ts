@@ -8,12 +8,12 @@
  * - calculateInitials: Name to initials conversion
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
   buildSrcSet,
-  selectImageSource,
-  selectAvatarSource,
   calculateInitials,
+  selectAvatarSource,
+  selectImageSource,
 } from "./image-utils";
 
 describe("Image Utilities", () => {

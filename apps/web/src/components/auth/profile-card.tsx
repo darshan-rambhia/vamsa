@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, Button, cn } from "@vamsa/ui";
+import { Button, Card, cn } from "@vamsa/ui";
 import { formatDate } from "@vamsa/lib";
 
 interface ProfileCardProps {

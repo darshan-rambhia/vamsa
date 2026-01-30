@@ -4,12 +4,12 @@
  * These tests use the real API without mocking shared modules
  * to avoid mock leaking issues between test files.
  */
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import apiV1 from "./index";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import {
-  clearSlowQueries,
   SLOW_QUERY_LOG_THRESHOLD_MS,
+  clearSlowQueries,
 } from "../metrics/slow-query-logger";
+import apiV1 from "./index";
 
 // Note: LOG_LEVEL=error is used in test command to silence logger warnings
 

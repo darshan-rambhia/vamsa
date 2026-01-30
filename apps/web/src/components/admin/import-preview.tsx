@@ -3,25 +3,26 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import {
+  Badge,
   Button,
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Badge,
 } from "@vamsa/ui/primitives";
 import type {
-  ImportPreview,
-  ConflictResolutionStrategy,
   Conflict,
+  ConflictResolutionStrategy,
+  ImportPreview,
 } from "@vamsa/schemas";
-import { importBackup, type ImportResult } from "~/server/restore";
+import type { ImportResult } from "~/server/restore";
+import { importBackup } from "~/server/restore";
 
 interface ImportPreviewProps {
   preview: ImportPreview;

@@ -214,8 +214,8 @@ export function detectEncoding(content: string): string {
   // Find HEAD record and CHAR tag
   const lines = content.split(/\r?\n/);
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
 
     // Check if line starts with "1" followed by whitespace
     if (!line.startsWith("1")) continue;
@@ -249,7 +249,7 @@ export function detectEncoding(content: string): string {
  */
 export function anselToUtf8(buffer: Buffer | Uint8Array): string {
   const bytes = buffer instanceof Buffer ? buffer : Buffer.from(buffer);
-  const result: string[] = [];
+  const result: Array<string> = [];
 
   let i = 0;
   while (i < bytes.length) {
@@ -310,7 +310,7 @@ export function anselToUtf8(buffer: Buffer | Uint8Array): string {
  * Returns best-effort conversion; some Unicode characters may not have ANSEL equivalents
  */
 export function utf8ToAnsel(text: string): Buffer {
-  const bytes: number[] = [];
+  const bytes: Array<number> = [];
 
   for (const char of text) {
     const code = char.charCodeAt(0);

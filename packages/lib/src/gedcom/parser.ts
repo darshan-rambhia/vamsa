@@ -3,23 +3,23 @@
  * Handles parsing of GEDCOM format files into structured TypeScript objects
  */
 
+import { detectEncoding, normalizeEncoding } from "./encoding";
 import type {
   GedcomFile,
   GedcomLine,
   GedcomRecord,
   ParsedDate,
-  ParsedIndividual,
   ParsedFamily,
+  ParsedIndividual,
   ParsedRepository,
   ParsedSubmitter,
   ValidationError,
 } from "./types";
-import { detectEncoding, normalizeEncoding } from "./encoding";
 
 export class GedcomParser {
-  private lines: GedcomLine[] = [];
-  private records: GedcomRecord[] = [];
-  private errors: ValidationError[] = [];
+  private lines: Array<GedcomLine> = [];
+  private records: Array<GedcomRecord> = [];
+  private errors: Array<ValidationError> = [];
   private gedcomVersion: "5.5.1" | "7.0" = "5.5.1";
 
   /**
@@ -130,7 +130,7 @@ export class GedcomParser {
   /**
    * Parse lines and handle continuation lines (CONT/CONC)
    */
-  private parseLines(rawLines: string[]): void {
+  private parseLines(rawLines: Array<string>): void {
     let i = 0;
     while (i < rawLines.length) {
       const line = rawLines[i];
@@ -290,7 +290,7 @@ export class GedcomParser {
    * Build hierarchical record structure from lines
    */
   private buildRecords(): void {
-    const recordStack: GedcomRecord[] = [];
+    const recordStack: Array<GedcomRecord> = [];
     let currentRecord: GedcomRecord | null = null;
     const _currentParent: GedcomRecord | null = null;
 
@@ -556,8 +556,8 @@ export class GedcomParser {
   /**
    * Validate GEDCOM file structure
    */
-  validate(file: GedcomFile): ValidationError[] {
-    const errors: ValidationError[] = [];
+  validate(file: GedcomFile): Array<ValidationError> {
+    const errors: Array<ValidationError> = [];
 
     if (!file.header) {
       errors.push({
@@ -702,7 +702,7 @@ export class GedcomParser {
     const occuLine = record.tags.get("OCCU")?.[0];
     const occupation = occuLine?.value;
 
-    const notes: string[] = [];
+    const notes: Array<string> = [];
     const noteLines = record.tags.get("NOTE") || [];
     for (const line of noteLines) {
       const noteValue = line.value.trim();
@@ -711,7 +711,7 @@ export class GedcomParser {
       }
     }
 
-    const familiesAsChild: string[] = [];
+    const familiesAsChild: Array<string> = [];
     const famcLines = record.tags.get("FAMC") || [];
     for (const line of famcLines) {
       if (line.pointer) {
@@ -719,7 +719,7 @@ export class GedcomParser {
       }
     }
 
-    const familiesAsSpouse: string[] = [];
+    const familiesAsSpouse: Array<string> = [];
     const famsLines = record.tags.get("FAMS") || [];
     for (const line of famsLines) {
       if (line.pointer) {
@@ -753,7 +753,7 @@ export class GedcomParser {
     const husband = husbandLine?.pointer?.replace(/@/g, "");
     const wife = wifeLine?.pointer?.replace(/@/g, "");
 
-    const children: string[] = [];
+    const children: Array<string> = [];
     const childLines = record.tags.get("CHIL") || [];
     for (const line of childLines) {
       if (line.pointer) {
@@ -766,7 +766,7 @@ export class GedcomParser {
 
     const divorceDate = this.parseDateFromRecord(record, "DIV");
 
-    const notes: string[] = [];
+    const notes: Array<string> = [];
     const noteLines = record.tags.get("NOTE") || [];
     for (const line of noteLines) {
       const noteValue = line.value.trim();
@@ -870,7 +870,7 @@ export class GedcomParser {
     const websiteLine = record.tags.get("WWW")?.[0];
     const website = websiteLine?.value;
 
-    const notes: string[] = [];
+    const notes: Array<string> = [];
     const noteLines = record.tags.get("NOTE") || [];
     for (const line of noteLines) {
       const noteValue = line.value.trim();
@@ -911,7 +911,7 @@ export class GedcomParser {
     const emailLine = record.tags.get("EMAIL")?.[0];
     const email = emailLine?.value;
 
-    const notes: string[] = [];
+    const notes: Array<string> = [];
     const noteLines = record.tags.get("NOTE") || [];
     for (const line of noteLines) {
       const noteValue = line.value.trim();

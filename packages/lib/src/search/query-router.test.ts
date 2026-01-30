@@ -1,5 +1,6 @@
-import { describe, it, expect } from "bun:test";
-import { executeSearch, type RelationshipDataMaps } from "./query-router";
+import { describe, expect, it } from "bun:test";
+import { executeSearch } from "./query-router";
+import type { RelationshipDataMaps } from "./query-router";
 import type { RelationshipNode } from "../relationships/path-finder";
 
 /**

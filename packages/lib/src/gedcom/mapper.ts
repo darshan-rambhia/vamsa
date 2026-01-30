@@ -3,18 +3,18 @@
  * Bidirectional mapping between GEDCOM and Vamsa data models
  */
 
-import type { GedcomFile } from "./types";
-import {
-  type MappingResult,
-  type MappingError,
-  type VamsaPerson,
-  type VamsaRelationship,
-  type GedcomIndividualData,
-  type GedcomFamilyData,
-  type MapOptions,
-  type ParsedName,
-} from "./mapper-types";
 import { GedcomParser } from "./parser";
+import type {
+  GedcomFamilyData,
+  GedcomIndividualData,
+  MapOptions,
+  MappingError,
+  MappingResult,
+  ParsedName,
+  VamsaPerson,
+  VamsaRelationship,
+} from "./mapper-types";
+import type { GedcomFile } from "./types";
 
 /**
  * Generate a CUID-like ID for use in mapping operations
@@ -37,10 +37,10 @@ export class GedcomMapper {
    * Convert parsed GEDCOM data to Vamsa data model
    */
   mapFromGedcom(gedcomFile: GedcomFile, options?: MapOptions): MappingResult {
-    const people: VamsaPerson[] = [];
-    const relationships: VamsaRelationship[] = [];
-    const errors: MappingError[] = [];
-    const warnings: string[] = [];
+    const people: Array<VamsaPerson> = [];
+    const relationships: Array<VamsaRelationship> = [];
+    const errors: Array<MappingError> = [];
+    const warnings: Array<string> = [];
 
     // 1. Validate GEDCOM structure
     if (!options?.skipValidation) {
@@ -302,11 +302,14 @@ export class GedcomMapper {
    * Convert Vamsa data to GEDCOM format
    */
   mapToGedcom(
-    people: VamsaPerson[],
-    relationships: VamsaRelationship[]
-  ): { individuals: GedcomIndividualData[]; families: GedcomFamilyData[] } {
-    const individuals: GedcomIndividualData[] = [];
-    const families: GedcomFamilyData[] = [];
+    people: Array<VamsaPerson>,
+    relationships: Array<VamsaRelationship>
+  ): {
+    individuals: Array<GedcomIndividualData>;
+    families: Array<GedcomFamilyData>;
+  } {
+    const individuals: Array<GedcomIndividualData> = [];
+    const families: Array<GedcomFamilyData> = [];
 
     // Create ID to xref mapping
     const idToXref = new Map<string, string>();
@@ -354,7 +357,7 @@ export class GedcomMapper {
       string,
       {
         spouses: [string, string] | [string] | undefined;
-        children: string[];
+        children: Array<string>;
         marriages: Map<string, { marriageDate?: Date; divorceDate?: Date }>;
       }
     >();

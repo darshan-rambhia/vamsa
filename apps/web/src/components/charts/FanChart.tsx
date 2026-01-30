@@ -1,23 +1,23 @@
 "use client";
 
-import { useState, memo, useMemo, useCallback, useEffect } from "react";
-import { Svg, G, Circle, Path, Line } from "react-native-svg";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { Circle, G, Line, Path, Svg } from "react-native-svg";
 import * as d3 from "d3";
-import type { ChartNode, ChartEdge } from "~/server/charts";
+import { useNavigate } from "@tanstack/react-router";
 import { CircleNode } from "./ChartElements";
+import { ChartTooltip } from "./ChartTooltip";
+import { ChartSkeleton } from "./ChartSkeleton";
+import { ZoomControls } from "./ZoomControls";
+import { calculateRadialBounds, useChartViewport } from "./useChartViewport";
+import type { ChartEdge, ChartNode } from "~/server/charts";
 import {
   useChartLoadingState,
   usePerformanceMonitor,
 } from "~/lib/chart-performance";
-import { ChartTooltip } from "./ChartTooltip";
-import { ChartSkeleton } from "./ChartSkeleton";
-import { ZoomControls } from "./ZoomControls";
-import { useChartViewport, calculateRadialBounds } from "./useChartViewport";
-import { useNavigate } from "@tanstack/react-router";
 
 interface FanChartProps {
-  nodes: ChartNode[];
-  edges: ChartEdge[];
+  nodes: Array<ChartNode>;
+  edges: Array<ChartEdge>;
   onNodeClick?: (nodeId: string) => void;
   rootPersonId?: string;
   resetSignal?: number;
@@ -32,8 +32,10 @@ const MARGIN = { top: 40, right: 40, bottom: 40, left: 40 };
 /**
  * Groups nodes by generation
  */
-function groupByGeneration(nodes: ChartNode[]): Map<number, ChartNode[]> {
-  const generations = new Map<number, ChartNode[]>();
+function groupByGeneration(
+  nodes: Array<ChartNode>
+): Map<number, Array<ChartNode>> {
+  const generations = new Map<number, Array<ChartNode>>();
   nodes.forEach((node) => {
     const gen = node.generation ?? 0;
     if (!generations.has(gen)) {
@@ -55,7 +57,7 @@ interface NodePosition {
  * Calculate radial positions for all nodes
  */
 function calculateRadialLayout(
-  nodes: ChartNode[],
+  nodes: Array<ChartNode>,
   centerX: number,
   centerY: number
 ): Map<string, NodePosition> {

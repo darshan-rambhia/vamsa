@@ -1,6 +1,7 @@
 import * as React from "react";
-import { cva, type VariantProps } from "class-variance-authority";
+import { cva } from "class-variance-authority";
 import { cn } from "../lib/utils";
+import type { VariantProps } from "class-variance-authority";
 
 const badgeVariants = cva(
   // Improved padding (px-2.5 py-0.5 -> px-3 py-1) and added letter-spacing for better readability

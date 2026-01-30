@@ -2,7 +2,7 @@
  * Feature: Password Management
  * Tests password change functionality with validation and error handling
  */
-import { test, expect, bdd, formValidation } from "./fixtures";
+import { bdd, expect, formValidation, test } from "./fixtures";
 
 class ChangePasswordPage {
   readonly page;
@@ -28,7 +28,7 @@ class ChangePasswordPage {
   }
 
   async goto() {
-    await this.page.goto("/change-password");
+    await this.page.goto("/change-password", { waitUntil: "domcontentloaded" });
     await this.form.waitFor({ state: "visible", timeout: 5000 });
     await this.page.waitForTimeout(500);
   }
@@ -184,7 +184,7 @@ test.describe("Feature: Password Management", () => {
   });
 
   test("form keyboard navigation", async ({ page }) => {
-    await page.goto("/change-password");
+    await page.goto("/change-password", { waitUntil: "domcontentloaded" });
 
     // Navigate to form and verify keyboard navigation works
     const changePasswordPage = new ChangePasswordPage(page);

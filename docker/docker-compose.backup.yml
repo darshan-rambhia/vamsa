@@ -1,0 +1,106 @@
+# Automated PostgreSQL Backups for Vamsa
+#
+# Usage:
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.backup.yml up -d
+#
+# The backup service will:
+# - Create daily backups at midnight UTC
+# - Keep 30 daily backups
+# - Keep 4 weekly backups
+# - Keep 6 monthly backups
+#
+# Backups are stored in the ./backups directory on the host machine.
+#
+# Configuration:
+#   - SCHEDULE: Cron schedule (default: @daily = 0 0 * * *)
+#   - BACKUP_KEEP_DAYS: Days to keep daily backups
+#   - BACKUP_KEEP_WEEKS: Weeks to keep weekly backups (Sunday)
+#   - BACKUP_KEEP_MONTHS: Months to keep monthly backups (1st of month)
+#   - HEALTHCHECK_PORT: Port for backup service health checks
+
+version: "3.8"
+name: vamsa-with-backup
+
+services:
+  # Automatic PostgreSQL Backup Service
+  # Uses prodrigestivill/postgres-backup-local image
+  postgres-backup:
+    image: prodrigestivill/postgres-backup-local:16
+    container_name: vamsa-postgres-backup
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # PostgreSQL Connection
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${DB_NAME:-vamsa}
+      POSTGRES_USER: ${DB_USER:-vamsa}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required - set in .env file}
+
+      # Backup Schedule (cron format)
+      # @daily  = 0 0 * * * (daily at midnight UTC)
+      # @weekly = 0 0 * * 0 (weekly on Sunday at midnight UTC)
+      # @hourly = 0 * * * * (every hour)
+      SCHEDULE: "@daily"
+
+      # Backup Retention
+      BACKUP_KEEP_DAYS: 30
+      BACKUP_KEEP_WEEKS: 4
+      BACKUP_KEEP_MONTHS: 6
+
+      # Health Check Configuration
+      HEALTHCHECK_PORT: 8080
+
+      # Additional PostgreSQL options
+      POSTGRES_EXTRA_OPTS: "--verbose --no-owner --no-acl"
+
+      # Compression (gz, bz2, xz)
+      COMPRESSION: gz
+
+      # Email notifications (optional)
+      # SEND_MAIL: "true"
+      # SEND_MAIL_FROM: "backup@vamsa.local"
+      # SEND_MAIL_TO: "admin@vamsa.local"
+
+      # Slack notifications (optional)
+      # SLACK_WEBHOOK: ""
+
+    volumes:
+      # Mount backups directory on host
+      - ./backups:/backups
+      # Optional: Mount custom backup scripts
+      # - ./scripts/backup-hooks:/backup-hooks:ro
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+    # Resource limits (adjust based on database size)
+    deploy:
+      resources:
+        limits:
+          cpus: "1"
+          memory: 512M
+        reservations:
+          cpus: "0.5"
+          memory: 256M
+
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    networks:
+      - vamsa-network
+
+networks:
+  vamsa-network:
+    external: true
+    name: vamsa-network

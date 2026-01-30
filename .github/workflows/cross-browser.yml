@@ -20,13 +20,21 @@ jobs:
       matrix:
         browser: [chromium, webkit, firefox]
 
+    env:
+      POSTGRES_DB: vamsa_test
+      POSTGRES_USER: vamsa_test
+      POSTGRES_PASSWORD: ${{ secrets.E2E_DB_PASSWORD || 'test_password_ci' }}
+      BROWSER: ${{ matrix.browser }}
+      NODE_ENV: test
+      CI: true
+
     services:
       postgres:
         image: postgres:18
         env:
-          POSTGRES_DB: vamsa_test
-          POSTGRES_USER: vamsa
-          POSTGRES_PASSWORD: vamsa_password
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -35,15 +43,12 @@ jobs:
         ports:
           - 5432:5432
 
-    env:
-      DATABASE_URL: postgresql://vamsa:vamsa_password@localhost:5432/vamsa_test
-      NODE_ENV: test
-      CI: true
-      BROWSER: ${{ matrix.browser }}
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set DATABASE_URL
+        run: echo "DATABASE_URL=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB" >> $GITHUB_ENV
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2

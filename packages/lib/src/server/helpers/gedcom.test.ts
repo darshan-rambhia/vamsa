@@ -13,15 +13,15 @@
  * All functions are pure with no side effects, making them fully testable.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  parseGedcomFile,
-  validateGedcomStructure,
-  validateGedcomImportPrerequisites,
-  mapGedcomToEntities,
-  generateGedcomOutput,
-  formatGedcomFileName,
   calculateGedcomStatistics,
+  formatGedcomFileName,
+  generateGedcomOutput,
+  mapGedcomToEntities,
+  parseGedcomFile,
+  validateGedcomImportPrerequisites,
+  validateGedcomStructure,
 } from "./gedcom";
 
 // GEDCOM fixtures

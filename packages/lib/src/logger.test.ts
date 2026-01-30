@@ -1,10 +1,10 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  logger,
   createContextLogger,
   createRequestLogger,
-  startTimer,
+  logger,
   serializeError,
+  startTimer,
 } from "./logger";
 
 describe("Logger", () => {
@@ -99,7 +99,7 @@ describe("Logger", () => {
   describe("serializeError", () => {
     it("should serialize Error objects", () => {
       const error = new Error("Test error");
-      const serialized = serializeError(error) as Record<string, unknown>;
+      const serialized = serializeError(error);
 
       expect(serialized).toBeDefined();
       expect(serialized.message, `${serialized}`).toBe("Test error");
@@ -118,7 +118,7 @@ describe("Logger", () => {
       const error = new Error("Main error");
       (error as unknown as { cause: Error }).cause = cause;
 
-      const serialized = serializeError(error) as Record<string, unknown>;
+      const serialized = serializeError(error);
       expect(serialized).toBeDefined();
       expect(serialized.message).toBe("Main error");
       expect(serialized.cause).toBeDefined();

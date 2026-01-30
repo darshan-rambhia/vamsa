@@ -10,7 +10,7 @@
  * - GEDCOM: Export as .ged and .zip formats
  * - GEDCOM: Import from GEDCOM files
  */
-import { test, expect, TEST_USERS, bdd } from "./fixtures";
+import { TEST_USERS, bdd, expect, gotoWithRetry, test } from "./fixtures";
 
 test.describe("Feature: Backup & Export", () => {
   test.describe("Export Page Access", () => {
@@ -23,7 +23,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user navigates to admin backup page", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
       });
 
       await bdd.then("admin should see the backup export page", async () => {
@@ -54,7 +54,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.and("user is on the backup export page", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         const form = page.locator("form");
         await expect(form).toBeVisible();
       });
@@ -90,7 +90,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user navigates to admin backup section", async () => {
-        await page.goto("/admin");
+        await gotoWithRetry(page, "/admin");
         const backupLink = page.locator(
           'a:has-text("Backup"), button:has-text("Backup"), [data-testid="backup-link"]'
         );
@@ -99,7 +99,7 @@ test.describe("Feature: Backup & Export", () => {
           await backupLink.click();
         } else {
           // If no link, navigate directly
-          await page.goto("/admin/backup");
+          await gotoWithRetry(page, "/admin/backup");
         }
       });
 
@@ -126,7 +126,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.and("user is on the System Backup tab", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         // Ensure we're on the system backup tab by default
         const systemBackupTab = page.getByRole("tab", {
           name: /system backup/i,
@@ -168,7 +168,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.and("user is on the backup export form", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         // Navigate to System Backup tab if needed
         const systemBackupTab = page.getByRole("tab", {
           name: /system backup/i,
@@ -209,7 +209,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.and("user is on the backup export form", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
       });
 
       await bdd.when("user enables audit logs and sets days", async () => {
@@ -250,7 +250,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.and("user has audit logs enabled on export form", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         const auditCheckbox = page.getByLabel(/include audit logs/i);
         const isChecked = await auditCheckbox.isChecked().catch(() => false);
         if (!isChecked) {
@@ -287,7 +287,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.and("user navigates to GEDCOM tab", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
         await expect(gedcomTab).toBeVisible();
         await gedcomTab.click();
@@ -327,7 +327,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.and("user is on the GEDCOM tab", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
         await gedcomTab.click();
       });
@@ -369,7 +369,9 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.and("user is on System Backup tab", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
+        await page.waitForLoadState("domcontentloaded");
+        await page.waitForURL(/\/admin\/backup/, { timeout: 15000 });
       });
 
       await bdd.when("user scrolls down to import section", async () => {
@@ -403,7 +405,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.and("user is on the import form", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
       });
 
       await bdd.when("user attempts to select import file", async () => {
@@ -437,7 +439,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user views the import section", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         // Wait for page to load
         await page.waitForTimeout(500);
       });
@@ -475,7 +477,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.and("user navigates to backup page", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
       });
 
       await bdd.then("GEDCOM tab should be visible", async () => {
@@ -494,7 +496,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.and("user is on the backup page", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
       });
 
       await bdd.then("GEDCOM tab can be clicked", async () => {
@@ -518,7 +520,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user views GEDCOM import instructions", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
         await gedcomTab.click();
 
@@ -552,7 +554,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user navigates to backup page", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
       });
 
       await bdd.then("form should display export options", async () => {
@@ -589,7 +591,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user views the export form", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         await page
           .locator("main")
           .waitFor({ state: "visible", timeout: 10000 });
@@ -628,7 +630,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user tries to access backup page", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         await page.waitForTimeout(500);
       });
 
@@ -663,7 +665,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user tries to access backup page", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         // Wait for redirect to login page (unauthenticated users are redirected)
         await page.waitForURL(/\/login/, { timeout: 10000 });
       });
@@ -693,7 +695,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user is on the admin dashboard", async () => {
-        await page.goto("/admin");
+        await gotoWithRetry(page, "/admin");
         await page
           .locator("main")
           .waitFor({ state: "visible", timeout: 10000 });
@@ -723,7 +725,7 @@ test.describe("Feature: Backup & Export", () => {
             expect(url).toContain("backup");
           } else {
             // Direct navigation should still work
-            await page.goto("/admin/backup");
+            await gotoWithRetry(page, "/admin/backup");
             const formExists = await page.locator("form").isVisible();
             expect(formExists).toBeTruthy();
           }
@@ -740,7 +742,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user is on the backup page", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         await page
           .locator("main")
           .waitFor({ state: "visible", timeout: 10000 });
@@ -781,7 +783,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user navigates to backup page", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
       });
 
       await bdd.then("user can switch between tabs", async () => {
@@ -826,7 +828,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user loads the backup page", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         await page
           .locator("main")
           .waitFor({ state: "visible", timeout: 10000 });
@@ -853,7 +855,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user attempts export", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         const exportButton = page.getByRole("button", {
           name: /download backup|export/i,
         });
@@ -893,7 +895,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user is on the backup page with form", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
         await page
           .locator("main")
           .waitFor({ state: "visible", timeout: 10000 });
@@ -923,7 +925,7 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.when("user views import form", async () => {
-        await page.goto("/admin/backup");
+        await gotoWithRetry(page, "/admin/backup");
       });
 
       await bdd.then(

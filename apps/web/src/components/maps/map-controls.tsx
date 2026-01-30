@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, Button } from "@vamsa/ui";
+import { Button, Card, CardContent } from "@vamsa/ui";
 
 interface MapControlsProps {
   currentStyle: "streets" | "satellite" | "terrain";

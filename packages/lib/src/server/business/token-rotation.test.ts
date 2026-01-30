@@ -11,23 +11,23 @@
  * Uses mock.module() to inject mocked Drizzle ORM instance
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
-  generateSecureToken,
-  daysSinceCreation,
-  enforceRotationPolicy,
-  rotateToken,
-  revokeToken,
-} from "./token-rotation";
-import {
-  mockLogger,
-  mockLoggers,
-  mockLog,
-  mockSerializeError,
   mockCreateContextLogger,
   mockCreateRequestLogger,
+  mockLog,
+  mockLogger,
+  mockLoggers,
+  mockSerializeError,
   mockStartTimer,
 } from "../../testing/shared-mocks";
+import {
+  daysSinceCreation,
+  enforceRotationPolicy,
+  generateSecureToken,
+  revokeToken,
+  rotateToken,
+} from "./token-rotation";
 
 // Mock logger to avoid console output during tests
 mock.module("@vamsa/lib/logger", () => ({
@@ -42,10 +42,10 @@ mock.module("@vamsa/lib/logger", () => ({
 
 // Mock for returning() in update chain - allows tests to control the return value
 
-const mockUpdateReturning = mock(() => Promise.resolve([{}] as any[]));
+const mockUpdateReturning = mock(() => Promise.resolve([{}] as Array<any>));
 // Mock for returning() in insert chain
 
-const mockInsertReturning = mock(() => Promise.resolve([{}] as any[]));
+const mockInsertReturning = mock(() => Promise.resolve([{}] as Array<any>));
 
 const mockDrizzleDb = {
   insert: mock(() => ({

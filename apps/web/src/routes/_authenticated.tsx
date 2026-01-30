@@ -1,13 +1,13 @@
 import {
-  createFileRoute,
   Outlet,
+  createFileRoute,
   redirect,
   useLocation,
-  type ErrorComponentProps,
 } from "@tanstack/react-router";
+import { Button, Nav, NavLink } from "@vamsa/ui";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 import { validateSession } from "~/server/auth.functions";
 import { signOut } from "~/lib/auth-client";
-import { Nav, NavLink, Button } from "@vamsa/ui";
 import { LanguageSwitcher } from "~/components/layout/language-switcher";
 import { OIDCProfileClaimModal } from "~/components/auth/oidc-profile-claim-modal";
 import { RouteError } from "~/components/error";
@@ -51,6 +51,21 @@ function AuthenticatedErrorComponent(props: ErrorComponentProps) {
  * Shared layout shell for the authenticated area.
  * Used by both the main layout and the error component.
  */
+/**
+ * Skip to main content link for keyboard accessibility.
+ * Hidden by default, becomes visible on focus.
+ */
+function SkipToMainContent() {
+  return (
+    <a
+      href="#main-content"
+      className="focus:bg-primary focus:text-primary-foreground focus:ring-primary sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:px-4 focus:py-2 focus:ring-2 focus:ring-offset-2 focus:outline-none"
+    >
+      Skip to main content
+    </a>
+  );
+}
+
 function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
   const handleSignOut = async () => {
     await signOut();
@@ -59,6 +74,7 @@ function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="bg-background min-h-screen">
+      <SkipToMainContent />
       <Nav
         data-testid="main-nav"
         logo={
@@ -120,7 +136,13 @@ function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
         </NavLink>
       </Nav>
 
-      <main className="py-6 sm:py-8">{children}</main>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="py-6 outline-none sm:py-8"
+      >
+        {children}
+      </main>
     </div>
   );
 }
@@ -141,6 +163,7 @@ function AuthenticatedLayout() {
 
   return (
     <div className="bg-background min-h-screen">
+      <SkipToMainContent />
       <Nav
         data-testid="main-nav"
         logo={
@@ -236,7 +259,11 @@ function AuthenticatedLayout() {
         )}
       </Nav>
 
-      <main className="py-6 sm:py-8">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="py-6 outline-none sm:py-8"
+      >
         <Outlet />
       </main>
 

@@ -74,7 +74,9 @@ export const DEFAULT_DASHBOARD_LAYOUT: z.infer<typeof dashboardLayoutSchema> = {
 /**
  * Default dashboard widgets
  */
-export const DEFAULT_DASHBOARD_WIDGETS: z.infer<typeof widgetConfigSchema>[] = [
+export const DEFAULT_DASHBOARD_WIDGETS: Array<
+  z.infer<typeof widgetConfigSchema>
+> = [
   {
     id: "default-stats",
     type: "people_statistics",

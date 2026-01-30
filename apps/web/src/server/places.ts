@@ -1,28 +1,30 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
   placeCreateSchema,
-  placeUpdateSchema,
   placePersonLinkCreateSchema,
+  placeUpdateSchema,
 } from "@vamsa/schemas";
-import type { PersonPlaceType } from "@vamsa/api";
 import {
-  getPlaceData,
-  searchPlacesData,
-  getPlaceHierarchyData,
-  getPersonPlacesData,
   createPlaceData,
-  updatePlaceData,
   deletePlaceData,
-  linkPersonToPlaceData,
-  getPlaceHierarchyPathData,
+  getPersonPlacesData,
   getPlaceChildrenData,
-  updatePlacePersonLinkData,
+  getPlaceData,
+  getPlaceHierarchyData,
+  getPlaceHierarchyPathData,
+  linkPersonToPlaceData,
+  searchPlacesData,
   unlinkPersonFromPlaceData,
-  type PlaceResponse,
-  type PlaceWithChildren,
-  type PlaceHierarchyItem,
-  type PersonPlace,
+  updatePlaceData,
+  updatePlacePersonLinkData,
 } from "@vamsa/lib/server/business";
+import type {
+  PersonPlace,
+  PlaceHierarchyItem,
+  PlaceResponse,
+  PlaceWithChildren,
+} from "@vamsa/lib/server/business";
+import type { PersonPlaceType } from "@vamsa/api";
 
 /**
  * Server function: Get a single place with hierarchy and counts
@@ -63,7 +65,7 @@ export const searchPlaces = createServerFn({ method: "GET" })
  */
 export const getPlaceHierarchy = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
-  .handler(async ({ data }): Promise<PlaceHierarchyItem[]> => {
+  .handler(async ({ data }): Promise<Array<PlaceHierarchyItem>> => {
     return getPlaceHierarchyData(data.id);
   });
 
@@ -74,7 +76,7 @@ export const getPlaceHierarchy = createServerFn({ method: "GET" })
  */
 export const getPersonPlaces = createServerFn({ method: "GET" })
   .inputValidator((data: { personId: string }) => data)
-  .handler(async ({ data }): Promise<PersonPlace[]> => {
+  .handler(async ({ data }): Promise<Array<PersonPlace>> => {
     return getPersonPlacesData(data.personId);
   });
 
@@ -160,7 +162,7 @@ export const getPlaceHierarchyPath = createServerFn({ method: "GET" })
  */
 export const getPlaceChildren = createServerFn({ method: "GET" })
   .inputValidator((data: { parentId: string }) => data)
-  .handler(async ({ data }): Promise<PlaceResponse[]> => {
+  .handler(async ({ data }): Promise<Array<PlaceResponse>> => {
     return getPlaceChildrenData(data.parentId);
   });
 

@@ -1,7 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, Container, PageHeader } from "@vamsa/ui";
 import { getPerson } from "~/server/persons.functions";
-import { Container, PageHeader, Card, CardContent } from "@vamsa/ui";
 import { PersonForm } from "~/components/person";
 
 export const Route = createFileRoute("/_authenticated/people/$personId_/edit")({

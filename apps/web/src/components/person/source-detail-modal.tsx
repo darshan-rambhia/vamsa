@@ -1,10 +1,10 @@
 import {
+  Badge,
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  Badge,
 } from "@vamsa/ui/primitives";
 import type { SourceWithEvents } from "~/server/sources";
 

@@ -1,26 +1,26 @@
 "use client";
 
-import { useState, memo, useMemo, useCallback, useEffect } from "react";
-import { Svg, G } from "react-native-svg";
-import type { ChartNode, ChartEdge } from "~/server/charts";
-import { RectNode, ParentChildEdge, SpouseEdge } from "./ChartElements";
-import type { Position } from "~/lib/d3-utils";
-import {
-  useChartLoadingState,
-  usePerformanceMonitor,
-} from "~/lib/chart-performance";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { G, Svg } from "react-native-svg";
+import { useNavigate } from "@tanstack/react-router";
+import { ParentChildEdge, RectNode, SpouseEdge } from "./ChartElements";
 import { ChartTooltip } from "./ChartTooltip";
 import { ChartSkeleton } from "./ChartSkeleton";
 import { ZoomControls } from "./ZoomControls";
 import {
-  useChartViewport,
   calculateBoundsFromPositions,
+  useChartViewport,
 } from "./useChartViewport";
-import { useNavigate } from "@tanstack/react-router";
+import type { Position } from "~/lib/d3-utils";
+import type { ChartEdge, ChartNode } from "~/server/charts";
+import {
+  useChartLoadingState,
+  usePerformanceMonitor,
+} from "~/lib/chart-performance";
 
 interface TreeChartProps {
-  nodes: ChartNode[];
-  edges: ChartEdge[];
+  nodes: Array<ChartNode>;
+  edges: Array<ChartEdge>;
   onNodeClick?: (nodeId: string) => void;
   rootPersonId?: string;
   resetSignal?: number;
@@ -38,9 +38,9 @@ const MARGIN = { top: 60, right: 60, bottom: 60, left: 60 };
  * Groups nodes by generation and sorts siblings by birth date
  */
 function groupAndSortByGeneration(
-  nodes: ChartNode[]
-): Map<number, ChartNode[]> {
-  const generations = new Map<number, ChartNode[]>();
+  nodes: Array<ChartNode>
+): Map<number, Array<ChartNode>> {
+  const generations = new Map<number, Array<ChartNode>>();
 
   nodes.forEach((node) => {
     const gen = node.generation ?? 0;
@@ -68,8 +68,8 @@ function groupAndSortByGeneration(
  * Generation 0 is centered, negative generations above, positive below
  */
 function calculateTreeLayout(
-  nodes: ChartNode[],
-  edges: ChartEdge[]
+  nodes: Array<ChartNode>,
+  edges: Array<ChartEdge>
 ): Map<string, Position> {
   const positions = new Map<string, Position>();
   const generations = groupAndSortByGeneration(nodes);
@@ -95,7 +95,7 @@ function calculateTreeLayout(
     const yPos = (gen - midGen) * VERTICAL_SPACING;
 
     // Group nodes into couples and singles
-    const couples: { primary: ChartNode; spouse: ChartNode | null }[] = [];
+    const couples: Array<{ primary: ChartNode; spouse: ChartNode | null }> = [];
     const processed = new Set<string>();
 
     genNodes.forEach((node) => {

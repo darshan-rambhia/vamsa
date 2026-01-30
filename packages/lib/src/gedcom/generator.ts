@@ -3,7 +3,7 @@
  * Converts mapped GEDCOM data to valid GEDCOM 5.5.1 text format
  */
 
-import type { GedcomIndividualData, GedcomFamilyData } from "./mapper-types";
+import type { GedcomFamilyData, GedcomIndividualData } from "./mapper-types";
 
 // Phase 2 types for source citations and multimedia - defined locally
 export interface VamsaSource {
@@ -45,10 +45,10 @@ export class GedcomGenerator {
    * Generate GEDCOM 5.5.1 file content
    */
   generate(
-    individuals: GedcomIndividualData[],
-    families: GedcomFamilyData[]
+    individuals: Array<GedcomIndividualData>,
+    families: Array<GedcomFamilyData>
   ): string {
-    const lines: string[] = [];
+    const lines: Array<string> = [];
 
     // 1. Generate header
     lines.push(this.generateHeader());
@@ -80,7 +80,7 @@ export class GedcomGenerator {
   private generateHeader(): string {
     const today = new Date();
 
-    const lines: string[] = [];
+    const lines: Array<string> = [];
     lines.push("0 HEAD");
     lines.push(`1 SOUR ${this.sourceProgram}`);
     lines.push(`2 NAME ${this.sourceProgram}`);
@@ -126,7 +126,7 @@ export class GedcomGenerator {
    * Generate submitter record
    */
   private generateSubmitter(): string {
-    const lines: string[] = [];
+    const lines: Array<string> = [];
     lines.push("0 @SUBM1@ SUBM");
     lines.push(`1 NAME ${this.submitterName}`);
 
@@ -137,7 +137,7 @@ export class GedcomGenerator {
    * Generate INDI record
    */
   private generateIndividual(individual: GedcomIndividualData): string {
-    const lines: string[] = [];
+    const lines: Array<string> = [];
 
     // Opening record
     lines.push(`0 ${individual.xref} INDI`);
@@ -203,7 +203,7 @@ export class GedcomGenerator {
    * Generate FAM record
    */
   private generateFamily(family: GedcomFamilyData): string {
-    const lines: string[] = [];
+    const lines: Array<string> = [];
 
     // Opening record
     lines.push(`0 ${family.xref} FAM`);
@@ -347,8 +347,12 @@ export class GedcomGenerator {
    * CONC = concatenate (no space between continuation)
    * CONT = continue (line break in original)
    */
-  private formatLongLine(level: number, tag: string, value: string): string[] {
-    const lines: string[] = [];
+  private formatLongLine(
+    level: number,
+    tag: string,
+    value: string
+  ): Array<string> {
+    const lines: Array<string> = [];
 
     if (!value || value.length === 0) {
       return [this.formatLine(level, tag)];
@@ -410,7 +414,7 @@ export class GedcomGenerator {
    * GEDCOM Phase 2: Source Citations Support
    */
   generateSource(source: VamsaSource & { xref: string }): string {
-    const lines: string[] = [];
+    const lines: Array<string> = [];
 
     // Opening record
     lines.push(`0 ${source.xref} SOUR`);
@@ -447,7 +451,7 @@ export class GedcomGenerator {
    * GEDCOM Phase 2: Multimedia Object Support
    */
   generateObject(object: VamsaMediaObject & { xref: string }): string {
-    const lines: string[] = [];
+    const lines: Array<string> = [];
 
     // Opening record
     lines.push(`0 ${object.xref} OBJE`);

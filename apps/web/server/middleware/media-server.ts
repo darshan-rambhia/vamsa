@@ -1,7 +1,7 @@
-import { Context } from "hono";
-import { promises as fs } from "fs";
-import path from "path";
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import { loggers } from "@vamsa/lib/logger";
+import type { Context } from "hono";
 
 const log = loggers.media;
 

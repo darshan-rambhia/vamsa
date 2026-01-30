@@ -1,7 +1,8 @@
 import { Resend } from "resend";
 import { drizzleDb } from "../client";
 import * as drizzleSchema from "../drizzle/schema";
-import { EMAIL_CONFIG, type NotificationPreferences } from "./config";
+import { EMAIL_CONFIG } from "./config";
+import type { NotificationPreferences } from "./config";
 import type { EmailTemplate } from "./templates";
 
 export class EmailService {

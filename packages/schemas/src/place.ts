@@ -44,7 +44,7 @@ export const placeCreateSchema = z.object({
   longitude?: number | null;
   parentId?: string | null;
   description?: string | null;
-  alternativeNames?: string[] | null;
+  alternativeNames?: Array<string> | null;
 }>;
 
 export const placeUpdateSchema = z.object({
@@ -68,7 +68,7 @@ export const placeUpdateSchema = z.object({
   longitude?: number | null;
   parentId?: string | null;
   description?: string | null;
-  alternativeNames?: string[] | null;
+  alternativeNames?: Array<string> | null;
 }>;
 
 export const placePersonLinkCreateSchema = z.object({

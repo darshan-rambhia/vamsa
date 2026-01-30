@@ -1,22 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Container,
-  PageHeader,
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Button,
-  Badge,
-  Input,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -25,12 +10,27 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Container,
+  Input,
+  PageHeader,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@vamsa/ui";
 import { getCurrentUser } from "~/server/auth.functions";
 import {
   getAllCalendarTokens,
-  rotateCalendarToken,
   revokeCalendarToken,
+  rotateCalendarToken,
 } from "~/server/calendar-tokens";
 import { formatDateShort, formatRelativeTime } from "~/lib/format";
 import { AdminRouteError } from "~/components/admin/route-error";

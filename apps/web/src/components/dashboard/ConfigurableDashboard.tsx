@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useCallback, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Settings2 } from "lucide-react";
 import { Button } from "@vamsa/ui";
+import {
+  getDashboardPreferences,
+  resetDashboardPreferences,
+  saveDashboardPreferences,
+} from "../../server/dashboard-preferences";
 import { DashboardGrid } from "./DashboardGrid";
 import { AddWidgetModal } from "./AddWidgetModal";
 import { getAllWidgets } from "./widget-registry";
-import {
-  getDashboardPreferences,
-  saveDashboardPreferences,
-  resetDashboardPreferences,
-} from "../../server/dashboard-preferences";
 import type { WidgetConfig } from "@vamsa/schemas";
 
 // Generate unique IDs for new widgets
@@ -56,12 +56,19 @@ export function ConfigurableDashboard() {
   });
 
   // Get current widgets from preferences or use defaults
-  const widgets: WidgetConfig[] = preferences?.widgets ?? getDefaultWidgets();
+  const widgets: Array<WidgetConfig> =
+    preferences?.widgets ?? getDefaultWidgets();
 
   // Handle layout changes from grid
   const handleLayoutChange = useCallback(
     (
-      newLayout: { i: string; x: number; y: number; w: number; h: number }[]
+      newLayout: Array<{
+        i: string;
+        x: number;
+        y: number;
+        w: number;
+        h: number;
+      }>
     ) => {
       const updatedWidgets = widgets.map((widget) => {
         const layoutItem = newLayout.find((item) => item.i === widget.id);
@@ -226,7 +233,7 @@ export function ConfigurableDashboard() {
 /**
  * Get default widgets for new users
  */
-function getDefaultWidgets(): WidgetConfig[] {
+function getDefaultWidgets(): Array<WidgetConfig> {
   return [
     {
       id: "default-stats",

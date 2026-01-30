@@ -2,9 +2,6 @@
 
 import { useState } from "react";
 import {
-  Card,
-  CardContent,
-  Button,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -13,10 +10,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Button,
+  Card,
+  CardContent,
 } from "@vamsa/ui/primitives";
-import { updateUserRole, toggleUserActive, deleteUser } from "~/server/users";
 import { formatDate } from "@vamsa/lib";
 import { LinkPersonDialog } from "./link-person-dialog";
+import { deleteUser, toggleUserActive, updateUserRole } from "~/server/users";
 
 interface UserItem {
   id: string;
@@ -31,7 +31,7 @@ interface UserItem {
 }
 
 interface UsersTableProps {
-  users: UserItem[];
+  users: Array<UserItem>;
   currentUserId: string;
   onUserUpdated?: () => void;
 }

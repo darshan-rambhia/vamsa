@@ -5,13 +5,13 @@
  */
 
 import {
+  boolean,
+  date,
+  index,
   pgTable,
   text,
   timestamp,
-  boolean,
-  date,
   unique,
-  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { relationshipTypeEnum } from "./enums";

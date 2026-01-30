@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
-import type { ChartNode, ChartEdge } from "~/server/charts";
+import type { ChartEdge, ChartNode } from "~/server/charts";
 import type { Position } from "./d3-utils";
 
 /**
@@ -12,7 +12,7 @@ import type { Position } from "./d3-utils";
  * Prevents expensive recalculations when data hasn't changed
  */
 export function useNodePositions(
-  nodes: ChartNode[],
+  nodes: Array<ChartNode>,
   width: number,
   nodeWidth: number,
   levelHeight: number,
@@ -22,7 +22,7 @@ export function useNodePositions(
     const nodePositions = new Map<string, Position>();
 
     // Group nodes by generation
-    const generations = new Map<number, ChartNode[]>();
+    const generations = new Map<number, Array<ChartNode>>();
     nodes.forEach((node) => {
       const gen = node.generation ?? 0;
       if (!generations.has(gen)) {
@@ -67,7 +67,7 @@ export function useChartDimensions(
  * Debounced zoom/pan handler using TanStack Pacer
  * Returns a callback that will be debounced to achieve 60fps (16ms)
  */
-export function useDebouncedZoom<T extends unknown[]>(
+export function useDebouncedZoom<T extends Array<unknown>>(
   callback: (...args: T) => void,
   delay = 16 // 16ms = 60fps
 ) {
@@ -130,9 +130,9 @@ export function useScheduledAnimation() {
  * Only returns edges that have both source and target nodes present
  */
 export function useValidEdges(
-  edges: ChartEdge[],
+  edges: Array<ChartEdge>,
   nodePositions: Map<string, Position>
-): ChartEdge[] {
+): Array<ChartEdge> {
   return useMemo(() => {
     return edges.filter(
       (edge) => nodePositions.has(edge.source) && nodePositions.has(edge.target)
@@ -145,10 +145,10 @@ export function useValidEdges(
  * For future optimization when dealing with very large datasets
  */
 export function useVisibleNodes(
-  nodes: ChartNode[],
+  nodes: Array<ChartNode>,
   nodePositions: Map<string, Position>,
   viewport: { x: number; y: number; width: number; height: number } | null
-): ChartNode[] {
+): Array<ChartNode> {
   return useMemo(() => {
     // If no viewport provided, return all nodes
     if (!viewport) return nodes;
@@ -202,10 +202,10 @@ export function useChartLoadingState(nodeCount: number) {
  * Memoized generation grouping
  */
 export function useGenerationGroups(
-  nodes: ChartNode[]
-): Map<number, ChartNode[]> {
+  nodes: Array<ChartNode>
+): Map<number, Array<ChartNode>> {
   return useMemo(() => {
-    const generations = new Map<number, ChartNode[]>();
+    const generations = new Map<number, Array<ChartNode>>();
     nodes.forEach((node) => {
       const gen = node.generation ?? 0;
       if (!generations.has(gen)) {

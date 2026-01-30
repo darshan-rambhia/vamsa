@@ -2,10 +2,11 @@
  * Feature: Profile Claiming
  * Tests profile claiming functionality with validation and error handling
  */
-import { test, expect, bdd, formValidation } from "./fixtures";
+import { bdd, expect, formValidation, test } from "./fixtures";
+import type { Page } from "@playwright/test";
 
 class ClaimProfilePage {
-  readonly page;
+  readonly page: Page;
   readonly form;
   readonly profileSelect;
   readonly emailInput;
@@ -13,7 +14,7 @@ class ClaimProfilePage {
   readonly submitButton;
   readonly errorMessage;
 
-  constructor(page) {
+  constructor(page: Page) {
     this.page = page;
     this.form = page.getByTestId("claim-profile-form");
     this.profileSelect = page.getByTestId("claim-profile-select");
@@ -24,7 +25,7 @@ class ClaimProfilePage {
   }
 
   async goto() {
-    await this.page.goto("/claim-profile");
+    await this.page.goto("/claim-profile", { waitUntil: "domcontentloaded" });
     await this.form.waitFor({ state: "visible", timeout: 5000 });
     await this.page.waitForTimeout(500);
   }

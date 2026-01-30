@@ -2,16 +2,18 @@
  * Unit Tests for Place Schemas
  * Tests Zod schema validation for place management, coordinates, and person-place relationships
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  placeTypeEnum,
   personPlaceTypeEnum,
   placeCreateSchema,
-  placeUpdateSchema,
   placePersonLinkCreateSchema,
-  type PlaceCreateInput,
-  type PlaceUpdateInput,
-  type PlacePersonLinkCreateInput,
+  placeTypeEnum,
+  placeUpdateSchema,
+} from "./place";
+import type {
+  PlaceCreateInput,
+  PlacePersonLinkCreateInput,
+  PlaceUpdateInput,
 } from "./place";
 
 describe("placeTypeEnum", () => {

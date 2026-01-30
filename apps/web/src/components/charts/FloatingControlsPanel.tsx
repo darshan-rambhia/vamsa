@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import {
-  cn,
   Button,
   Label,
   Select,
@@ -10,6 +9,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  cn,
 } from "@vamsa/ui";
 import { GenerationSlider } from "./GenerationSlider";
 import type { ChartType } from "./ChartControls";

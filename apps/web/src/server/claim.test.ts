@@ -7,12 +7,20 @@
  * Business logic (findSuggestedMatches, validateClaim) is tested in @vamsa/lib.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
-  withStubbedServerContext,
-  testUsers,
   getStubbedSession,
+  testUsers,
+  withStubbedServerContext,
 } from "@test/server-fn-context";
+
+// Import handlers AFTER setting up mocks
+import {
+  claimProfileOIDCHandler,
+  getOIDCClaimStatusHandler,
+  getOIDCClaimableProfilesHandler,
+  skipProfileClaimHandler,
+} from "./claim.server";
 
 // =============================================================================
 // Mocks for Handler Tests
@@ -78,14 +86,6 @@ mock.module("@vamsa/lib/server/business", () => ({
   getOIDCClaimStatusData: mockGetOIDCClaimStatusData,
   betterAuthGetSessionWithUserFromCookie: getStubbedSession,
 }));
-
-// Import handlers AFTER setting up mocks
-import {
-  getOIDCClaimableProfilesHandler,
-  claimProfileOIDCHandler,
-  skipProfileClaimHandler,
-  getOIDCClaimStatusHandler,
-} from "./claim.server";
 
 // =============================================================================
 // Handler Tests

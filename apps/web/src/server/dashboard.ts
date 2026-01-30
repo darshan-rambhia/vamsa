@@ -13,15 +13,17 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { requireAuth } from "./middleware/require-auth";
 import {
+  getActivityFilterOptionsData,
   getDashboardStatsData,
   getRecentActivityData,
-  getActivityFilterOptionsData,
-  type DashboardStats,
-  type ActivityLog,
-  type ActivityFilterOption,
-  type ActivityFilters,
+} from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
+import type {
+  ActivityFilterOption,
+  ActivityFilters,
+  ActivityLog,
+  DashboardStats,
 } from "@vamsa/lib/server/business";
 
 // Validation schemas
@@ -80,7 +82,7 @@ export const getRecentActivity = createServerFn({ method: "POST" })
   .inputValidator((data: z.infer<typeof activityFiltersSchema>) => {
     return activityFiltersSchema.parse(data);
   })
-  .handler(async ({ data }): Promise<ActivityLog[]> => {
+  .handler(async ({ data }): Promise<Array<ActivityLog>> => {
     await requireAuth("VIEWER");
 
     const filters: ActivityFilters = {

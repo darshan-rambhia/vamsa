@@ -1,26 +1,26 @@
 "use client";
 
-import { useState, memo, useMemo, useCallback, useEffect } from "react";
-import { Svg, G } from "react-native-svg";
-import type { ChartNode, ChartEdge } from "~/server/charts";
-import { RectNode, ParentChildEdge, SpouseEdge } from "./ChartElements";
-import type { Position } from "~/lib/d3-utils";
-import {
-  useChartLoadingState,
-  usePerformanceMonitor,
-} from "~/lib/chart-performance";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { G, Svg } from "react-native-svg";
+import { useNavigate } from "@tanstack/react-router";
+import { ParentChildEdge, RectNode, SpouseEdge } from "./ChartElements";
 import { ChartTooltip } from "./ChartTooltip";
 import { ChartSkeleton } from "./ChartSkeleton";
 import { ZoomControls } from "./ZoomControls";
 import {
-  useChartViewport,
   calculateBoundsFromPositions,
+  useChartViewport,
 } from "./useChartViewport";
-import { useNavigate } from "@tanstack/react-router";
+import type { Position } from "~/lib/d3-utils";
+import type { ChartEdge, ChartNode } from "~/server/charts";
+import {
+  useChartLoadingState,
+  usePerformanceMonitor,
+} from "~/lib/chart-performance";
 
 interface DescendantChartProps {
-  nodes: ChartNode[];
-  edges: ChartEdge[];
+  nodes: Array<ChartNode>;
+  edges: Array<ChartEdge>;
   onNodeClick?: (nodeId: string) => void;
   rootPersonId?: string;
   resetSignal?: number;
@@ -35,8 +35,10 @@ const MARGIN = { top: 40, right: 40, bottom: 40, left: 40 };
 /**
  * Groups nodes by generation
  */
-function groupByGeneration(nodes: ChartNode[]): Map<number, ChartNode[]> {
-  const generations = new Map<number, ChartNode[]>();
+function groupByGeneration(
+  nodes: Array<ChartNode>
+): Map<number, Array<ChartNode>> {
+  const generations = new Map<number, Array<ChartNode>>();
 
   nodes.forEach((node) => {
     const gen = node.generation ?? 0;
@@ -53,8 +55,8 @@ function groupByGeneration(nodes: ChartNode[]): Map<number, ChartNode[]> {
  * Calculates positions for all nodes in descendant layout
  */
 function calculateDescendantLayout(
-  nodes: ChartNode[],
-  edges: ChartEdge[],
+  nodes: Array<ChartNode>,
+  edges: Array<ChartEdge>,
   width: number
 ): Map<string, Position> {
   const positions = new Map<string, Position>();

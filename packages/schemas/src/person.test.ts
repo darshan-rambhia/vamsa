@@ -1,9 +1,9 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
+  addressSchema,
+  genderEnum,
   personCreateSchema,
   personUpdateSchema,
-  genderEnum,
-  addressSchema,
   socialLinksSchema,
 } from "./person";
 

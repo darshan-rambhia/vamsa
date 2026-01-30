@@ -1,18 +1,18 @@
 /**
  * Unit Tests for AlertDialog Components
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { render } from "@testing-library/react";
 import {
   AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-  AlertDialogTitle,
-  AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
 } from "./alert-dialog";
 
 describe("AlertDialogOverlay", () => {
@@ -384,7 +384,7 @@ describe("AlertDialogTitle", () => {
       const title = getByRole("heading");
       expect(title).toBeDefined();
       // Verify styles are present (component uses Radix UI + cn utility)
-      expect(title.className?.length || 0).toBeGreaterThan(0);
+      expect(title.className.length || 0).toBeGreaterThan(0);
     });
   });
 
@@ -664,7 +664,7 @@ describe("AlertDialogCancel", () => {
       const buttons = getAllByRole("button");
       expect(buttons.length).toBeGreaterThan(0);
       const cancelBtn = buttons[buttons.length - 1];
-      expect(cancelBtn.className?.length || 0).toBeGreaterThan(0);
+      expect(cancelBtn.className.length || 0).toBeGreaterThan(0);
     });
   });
 

@@ -1,18 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { validateSession } from "~/server/auth.functions";
-import { getOIDCClaimStatus } from "~/server/claim.functions";
 import {
+  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  Button,
   Container,
   PageHeader,
 } from "@vamsa/ui";
+import { validateSession } from "~/server/auth.functions";
+import { getOIDCClaimStatus } from "~/server/claim.functions";
 import { OIDCProfileClaimModal } from "~/components/auth/oidc-profile-claim-modal";
 
 export const Route = createFileRoute("/_authenticated/settings/profile")({

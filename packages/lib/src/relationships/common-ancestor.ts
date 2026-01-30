@@ -49,7 +49,7 @@ export function findCommonAncestor(
   person1Id: string,
   person2Id: string,
   people: Map<string, RelationshipNode>,
-  parents: Map<string, string[]>
+  parents: Map<string, Array<string>>
 ): AncestorResult | null {
   // Handle same person case
   if (person1Id === person2Id) {
@@ -151,8 +151,8 @@ export function findAllCommonAncestors(
   person1Id: string,
   person2Id: string,
   people: Map<string, RelationshipNode>,
-  parents: Map<string, string[]>
-): AncestorResult[] {
+  parents: Map<string, Array<string>>
+): Array<AncestorResult> {
   // Build complete ancestor set for person1
   const ancestors1 = new Map<string, number>();
   const queue1: Array<{ id: string; distance: number }> = [
@@ -200,7 +200,7 @@ export function findAllCommonAncestors(
   }
 
   // Find all common ancestors
-  const commonAncestors: AncestorResult[] = [];
+  const commonAncestors: Array<AncestorResult> = [];
 
   ancestors1.forEach((distance1, personId) => {
     if (ancestors2.has(personId)) {

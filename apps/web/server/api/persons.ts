@@ -1,15 +1,15 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import {
-  personCreateSchema,
   errorResponseSchema,
   paginatedResponseSchema,
+  personCreateSchema,
 } from "@vamsa/schemas";
 import {
-  listPersonsData as serverListPersons,
-  getPersonData as serverGetPerson,
   createPersonData as serverCreatePerson,
-  updatePersonData as serverUpdatePerson,
   deletePersonData as serverDeletePerson,
+  getPersonData as serverGetPerson,
+  listPersonsData as serverListPersons,
+  updatePersonData as serverUpdatePerson,
 } from "@vamsa/lib/server/business";
 import { loggers } from "@vamsa/lib/logger";
 
@@ -187,8 +187,8 @@ personsRouter.openapi(listPersonsRoute, async (c) => {
       page,
       limit,
       search,
-      sortBy: sortBy as "lastName" | "firstName" | "dateOfBirth" | "createdAt",
-      sortOrder: sortOrder as "asc" | "desc",
+      sortBy: sortBy,
+      sortOrder: sortOrder,
       isLiving,
     });
 

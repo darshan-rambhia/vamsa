@@ -44,6 +44,13 @@ next-env.d.ts
 **/data/uploads/*
 !**/data/uploads/.gitkeep
 
+# Database Backups (large binary files, not checked into version control)
+backups/
+*.sql.gz
+*.sql.bz2
+*.sql.xz
+!backups/.gitkeep
+
 # Lockfiles (use pnpm)
 bun.lock
 package-lock.json

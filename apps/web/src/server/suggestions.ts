@@ -1,6 +1,18 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import {
+  createSuggestionData,
+  getPendingSuggestionsCountData,
+  listSuggestionsData,
+  reviewSuggestionData,
+} from "@vamsa/lib/server/business";
 import { requireAuth } from "./middleware/require-auth";
+import type {
+  SuggestionCreateResult,
+  SuggestionListOptions,
+  SuggestionListResult,
+  SuggestionReviewResult,
+} from "@vamsa/lib/server/business";
 
 // Define JsonValue type locally for JSON column handling
 type JsonValue =
@@ -8,18 +20,8 @@ type JsonValue =
   | number
   | boolean
   | null
-  | JsonValue[]
+  | Array<JsonValue>
   | { [key: string]: JsonValue };
-import {
-  listSuggestionsData,
-  getPendingSuggestionsCountData,
-  createSuggestionData,
-  reviewSuggestionData,
-  type SuggestionListOptions,
-  type SuggestionListResult,
-  type SuggestionCreateResult,
-  type SuggestionReviewResult,
-} from "@vamsa/lib/server/business";
 
 // Suggestion list input schema with pagination and status filter
 const suggestionListInputSchema = z.object({
@@ -46,7 +48,7 @@ export const getSuggestions = createServerFn({ method: "GET" })
     const options: SuggestionListOptions = {
       page: data.page,
       limit: data.limit,
-      sortOrder: data.sortOrder as SuggestionListOptions["sortOrder"],
+      sortOrder: data.sortOrder,
       status: data.status,
     };
 

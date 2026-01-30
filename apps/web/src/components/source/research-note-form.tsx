@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Badge,
   Button,
   Label,
   Select,
@@ -11,17 +12,16 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Badge,
 } from "@vamsa/ui/primitives";
-import {
-  type ResearchNoteCreateInput,
-  type ResearchNoteUpdateInput,
-  type Reliability,
+import type {
+  Reliability,
+  ResearchNoteCreateInput,
+  ResearchNoteUpdateInput,
 } from "@vamsa/schemas";
 import {
   createResearchNote,
-  updateResearchNote,
   listSources,
+  updateResearchNote,
 } from "~/server/sources";
 
 interface ResearchNoteFormProps {
@@ -46,7 +46,7 @@ export function ResearchNoteForm({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [relatedSourcesInput, setRelatedSourcesInput] = useState("");
   const [selectedRelatedSources, setSelectedRelatedSources] = useState<
-    string[]
+    Array<string>
   >(initialData?.relatedSources || []);
 
   const isEditing = Boolean(noteId);

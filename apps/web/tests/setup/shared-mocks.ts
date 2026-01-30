@@ -92,12 +92,12 @@ export const mockSerializeError = mock((error: unknown) => {
  * Shared createContextLogger mock - returns a logger with the same interface
  */
 export const mockCreateContextLogger = mock((_context: unknown) => ({
-  trace: mock((..._args: unknown[]) => undefined),
-  debug: mock((..._args: unknown[]) => undefined),
-  info: mock((..._args: unknown[]) => undefined),
-  warn: mock((..._args: unknown[]) => undefined),
-  error: mock((..._args: unknown[]) => undefined),
-  fatal: mock((..._args: unknown[]) => undefined),
+  trace: mock((..._args: Array<unknown>) => undefined),
+  debug: mock((..._args: Array<unknown>) => undefined),
+  info: mock((..._args: Array<unknown>) => undefined),
+  warn: mock((..._args: Array<unknown>) => undefined),
+  error: mock((..._args: Array<unknown>) => undefined),
+  fatal: mock((..._args: Array<unknown>) => undefined),
 }));
 
 /**

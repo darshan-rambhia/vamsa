@@ -2,31 +2,31 @@
 
 import { useState } from "react";
 import {
-  startOfMonth,
-  endOfMonth,
+  addMonths,
   eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
   format,
   isSameMonth,
-  addMonths,
-  subMonths,
-  startOfWeek,
-  endOfWeek,
   isToday,
   parseISO,
+  startOfMonth,
+  startOfWeek,
+  subMonths,
 } from "date-fns";
 import {
+  Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon,
 } from "lucide-react";
 import { Button, cn } from "@vamsa/ui";
-import { BaseWidget } from "./BaseWidget";
-import type { WidgetProps } from "./types";
 import { useQuery } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { BaseWidget } from "./BaseWidget";
+import type { WidgetProps } from "./types";
 
 /**
  * Calendar widget settings schema
@@ -75,7 +75,7 @@ const getUpcomingEvents = createServerFn({ method: "GET" })
     const currentMonth = now.getMonth() + 1;
     const currentDay = now.getDate();
 
-    const upcomingEvents: UpcomingEvent[] = [];
+    const upcomingEvents: Array<UpcomingEvent> = [];
 
     // Fetch events with person data using join
     const eventsWithPersons = await drizzleDb
@@ -136,7 +136,7 @@ const getUpcomingEvents = createServerFn({ method: "GET" })
           id: row.eventId,
           personId: row.personId,
           personName: fullName,
-          type: row.eventType as "BIRTH" | "DEATH" | "MARRIAGE",
+          type: row.eventType,
           originalDate: format(eventDate, "yyyy-MM-dd"),
           upcomingDate: format(upcomingDate, "yyyy-MM-dd"),
           yearsAgo: upcomingYear - eventYear,
@@ -192,7 +192,7 @@ export function CalendarWidget({
   });
 
   // Map events by date for quick lookup
-  const eventsByDate = new Map<string, UpcomingEvent[]>();
+  const eventsByDate = new Map<string, Array<UpcomingEvent>>();
   upcomingEvents.forEach((event) => {
     const dateKey = event.upcomingDate;
     if (!eventsByDate.has(dateKey)) {

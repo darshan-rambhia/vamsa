@@ -1,10 +1,10 @@
 import { describe, expect, it } from "bun:test";
 import {
-  groupByGeneration,
   calculateBoundingBox,
   calculateFitScale,
   generateGenerationRange,
   getSortedGenerations,
+  groupByGeneration,
 } from "./utils";
 
 describe("groupByGeneration", () => {
@@ -219,7 +219,7 @@ describe("getSortedGenerations", () => {
   });
 
   it("handles empty map", () => {
-    const map = new Map<number, string[]>();
+    const map = new Map<number, Array<string>>();
     const result = getSortedGenerations(map);
     expect(result).toEqual([]);
   });

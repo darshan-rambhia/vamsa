@@ -1,8 +1,8 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import {
+  errorResponseSchema,
   loginSchema,
   registerSchema,
-  errorResponseSchema,
   successResponseSchema,
 } from "@vamsa/schemas";
 import {

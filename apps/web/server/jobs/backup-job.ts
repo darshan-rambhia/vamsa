@@ -8,20 +8,17 @@
  * - Backup metadata and status tracking
  */
 
-import { db, drizzleSchema } from "../db";
-import { eq, and, isNull, desc } from "drizzle-orm";
-import {
-  uploadToStorage,
-  deleteFromStorage,
-  type StorageProvider,
-} from "./storage";
-import { sendBackupNotification } from "./notifications";
+import * as fs from "node:fs/promises";
+import * as path from "node:path";
+import { and, desc, eq, isNull } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
-import type { BackupType, BackupSettings } from "@vamsa/api";
+import { db, drizzleSchema } from "../db";
+import { deleteFromStorage, uploadToStorage } from "./storage";
+import { sendBackupNotification } from "./notifications";
+import type { StorageProvider } from "./storage";
+import type { BackupSettings, BackupType } from "@vamsa/api";
 
 const log = loggers.jobs;
-import * as fs from "fs/promises";
-import * as path from "path";
 
 // Local backup directory
 const BACKUP_DIR = process.env.BACKUP_DIR || "./backups";
@@ -149,7 +146,7 @@ export async function performBackup(type: BackupType): Promise<string> {
       zlib: { level: settings?.compressLevel ?? 6 },
     });
 
-    const chunks: Buffer[] = [];
+    const chunks: Array<Buffer> = [];
     archive.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
 
     // Track archive errors

@@ -7,7 +7,7 @@
  * - Preference merging logic
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
 describe("Notification Server Functions", () => {
   describe("Email Notification Preferences", () => {
@@ -189,7 +189,7 @@ describe("Notification Server Functions", () => {
     });
 
     it("should handle no recipients gracefully", () => {
-      const recipients: string[] = [];
+      const recipients: Array<string> = [];
       expect(recipients.length).toEqual(0);
     });
 
@@ -225,7 +225,7 @@ describe("Notification Server Functions", () => {
     });
 
     it("should support status transitions", () => {
-      const transitions: Record<string, string[]> = {
+      const transitions: Record<string, Array<string>> = {
         PENDING: ["SENT", "FAILED"],
         SENT: ["FAILED"],
         FAILED: ["PENDING"],
@@ -405,7 +405,7 @@ describe("Notification Server Functions", () => {
     });
 
     it("should handle empty notification list", () => {
-      const notifications: unknown[] = [];
+      const notifications: Array<unknown> = [];
       const batchSize = 10;
       const batches = Math.ceil(notifications.length / batchSize) || 0;
 

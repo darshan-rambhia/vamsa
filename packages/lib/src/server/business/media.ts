@@ -8,19 +8,19 @@
  * This layer is designed for testability and reusability.
  */
 
+import { mkdir, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import path from "node:path";
+import { randomUUID } from "node:crypto";
+import { and, eq } from "drizzle-orm";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and } from "drizzle-orm";
-import { writeFile, mkdir } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
-import { randomUUID } from "crypto";
 import {
-  processUploadedImage,
   cleanupOldImages,
   getMediaDir,
+  processUploadedImage,
 } from "@vamsa/lib/server";
-import { recordMediaUpload } from "../metrics";
 import { loggers } from "@vamsa/lib/logger";
+import { recordMediaUpload } from "../metrics";
 
 const log = loggers.media;
 

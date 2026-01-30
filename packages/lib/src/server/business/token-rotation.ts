@@ -1,8 +1,8 @@
+import crypto from "node:crypto";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
+import { addDays, addYears } from "date-fns";
 import { loggers } from "@vamsa/lib/logger";
-import { addYears, addDays } from "date-fns";
-import crypto from "crypto";
 
 const log = loggers.auth;
 
@@ -28,7 +28,7 @@ export function daysSinceCreation(createdAt: Date): number {
 export async function enforceRotationPolicy(
   userId: string,
   event: RotationEvent
-): Promise<{ rotated: number; tokens: string[] }> {
+): Promise<{ rotated: number; tokens: Array<string> }> {
   const tokens = await drizzleDb.query.calendarTokens.findMany({
     where: and(
       eq(drizzleSchema.calendarTokens.userId, userId),
@@ -36,7 +36,7 @@ export async function enforceRotationPolicy(
     ),
   });
 
-  const rotatedTokens: string[] = [];
+  const rotatedTokens: Array<string> = [];
   let rotatedCount = 0;
 
   for (const token of tokens) {

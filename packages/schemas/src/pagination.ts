@@ -68,7 +68,7 @@ export function createPaginationMeta(
  * Paginated response wrapper type
  */
 export interface PaginatedResponse<T> {
-  items: T[];
+  items: Array<T>;
   pagination: PaginationMeta;
 }
 

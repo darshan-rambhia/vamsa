@@ -25,19 +25,18 @@
  */
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { recordChartMetrics } from "../metrics";
 import {
   buildRelationshipMaps,
-  collectAncestors,
-  collectDescendants,
   calculateFanLayout,
+  collectAncestors,
   collectBowtieAncestors,
+  collectDescendants,
   collectTreeAncestors,
   collectTreeDescendants,
-  type PersonData,
-  type CollectionState,
 } from "../helpers/charts";
+import type { CollectionState, PersonData } from "../helpers/charts";
 
 // Re-export types from the original file
 export interface ChartNode {
@@ -62,8 +61,8 @@ export interface ChartEdge {
 }
 
 export interface ChartLayoutResult {
-  nodes: ChartNode[];
-  edges: ChartEdge[];
+  nodes: Array<ChartNode>;
+  edges: Array<ChartEdge>;
   metadata: {
     chartType: string;
     totalGenerations: number;
@@ -84,7 +83,7 @@ export interface TimelineEntry {
 }
 
 export interface TimelineChartResult {
-  entries: TimelineEntry[];
+  entries: Array<TimelineEntry>;
   metadata: {
     chartType: "timeline";
     minYear: number;
@@ -108,8 +107,8 @@ export interface MatrixPerson {
 }
 
 export interface RelationshipMatrixResult {
-  people: MatrixPerson[];
-  matrix: MatrixCell[];
+  people: Array<MatrixPerson>;
+  matrix: Array<MatrixCell>;
   metadata: {
     chartType: "matrix";
     totalPeople: number;
@@ -122,8 +121,8 @@ export interface BowtieNode extends ChartNode {
 }
 
 export interface BowtieChartResult {
-  nodes: BowtieNode[];
-  edges: ChartEdge[];
+  nodes: Array<BowtieNode>;
+  edges: Array<ChartEdge>;
   metadata: {
     chartType: "bowtie";
     totalGenerations: number;
@@ -145,7 +144,7 @@ export interface CompactTreeNode {
   photoUrl: string | null;
   generation: number;
   parentId: string | null;
-  children: CompactTreeNode[];
+  children: Array<CompactTreeNode>;
   spouses: Array<{
     id: string;
     firstName: string;
@@ -216,12 +215,12 @@ export interface LifespanTrend {
 }
 
 export interface StatisticsResult {
-  ageDistribution: AgeDistribution[];
-  generationSizes: GenerationSize[];
-  genderDistribution: GenderDistribution[];
-  geographicDistribution: GeographicDistribution[];
-  surnameFrequency: SurnameFrequency[];
-  lifespanTrends: LifespanTrend[];
+  ageDistribution: Array<AgeDistribution>;
+  generationSizes: Array<GenerationSize>;
+  genderDistribution: Array<GenderDistribution>;
+  geographicDistribution: Array<GeographicDistribution>;
+  surnameFrequency: Array<SurnameFrequency>;
+  lifespanTrends: Array<LifespanTrend>;
   metadata: {
     chartType: "statistics";
     totalPeople: number;
@@ -307,7 +306,7 @@ export async function getAncestorChartData(
   );
 
   // Build nodes array
-  const nodes: ChartNode[] = [];
+  const nodes: Array<ChartNode> = [];
   collected.nodeIds.forEach((id) => {
     const person = personMap.get(id);
     if (person) {
@@ -326,7 +325,7 @@ export async function getAncestorChartData(
   });
 
   // Build edges array
-  const edges: ChartEdge[] = [];
+  const edges: Array<ChartEdge> = [];
   const processedEdges = new Set<string>();
 
   collected.edges.forEach((edgeData) => {
@@ -418,7 +417,7 @@ export async function getDescendantChartData(
   );
 
   // Build nodes array
-  const nodes: ChartNode[] = [];
+  const nodes: Array<ChartNode> = [];
   collected.nodeIds.forEach((id) => {
     const person = personMap.get(id);
     if (person) {
@@ -437,7 +436,7 @@ export async function getDescendantChartData(
   });
 
   // Build edges array
-  const edges: ChartEdge[] = [];
+  const edges: Array<ChartEdge> = [];
   const processedEdges = new Set<string>();
 
   collected.edges.forEach((edgeData) => {
@@ -537,7 +536,7 @@ export async function getHourglassChartData(
   );
 
   // Build nodes array
-  const nodes: ChartNode[] = [];
+  const nodes: Array<ChartNode> = [];
   collected.nodeIds.forEach((id) => {
     const person = personMap.get(id);
     if (person) {
@@ -556,7 +555,7 @@ export async function getHourglassChartData(
   });
 
   // Build edges array
-  const edges: ChartEdge[] = [];
+  const edges: Array<ChartEdge> = [];
   const processedEdges = new Set<string>();
 
   collected.edges.forEach((edgeData) => {
@@ -644,7 +643,7 @@ export async function getFanChartData(
   const angles = calculateFanLayout(collected.nodeIds, collected.generations);
 
   // Build nodes array with angle information
-  const nodes: ChartNode[] = [];
+  const nodes: Array<ChartNode> = [];
   collected.nodeIds.forEach((id) => {
     const person = personMap.get(id);
     if (person) {
@@ -664,7 +663,7 @@ export async function getFanChartData(
   });
 
   // Build edges array
-  const edges: ChartEdge[] = [];
+  const edges: Array<ChartEdge> = [];
   const processedEdges = new Set<string>();
 
   collected.edges.forEach((edgeData) => {
@@ -718,7 +717,7 @@ export async function getTimelineChartData(
   const allPersons = await drizzleDb.query.persons.findMany();
 
   // Filter to only those with dates and convert to timeline entries
-  const entries: TimelineEntry[] = allPersons
+  const entries: Array<TimelineEntry> = allPersons
     .filter((person) => person.dateOfBirth || person.dateOfPassing)
     .map((person) => ({
       id: person.id,
@@ -794,7 +793,7 @@ export async function getTimelineChartData(
  * const result = await getRelationshipMatrixData(undefined, 20)
  */
 export async function getRelationshipMatrixData(
-  personIds: string[] | undefined,
+  personIds: Array<string> | undefined,
   maxPeople: number
 ): Promise<RelationshipMatrixResult> {
   const start = Date.now();
@@ -816,7 +815,7 @@ export async function getRelationshipMatrixData(
 
   // Fetch all relationships between these people
   const personIdSet = new Set(persons.map((p) => p.id));
-  const personIdArray = Array.from(personIdSet) as string[];
+  const personIdArray = Array.from(personIdSet);
   const relationships = await drizzleDb.query.relationships.findMany({
     where: and(
       inArray(drizzleSchema.relationships.personId, personIdArray),
@@ -832,8 +831,8 @@ export async function getRelationshipMatrixData(
   });
 
   // Build matrix cells
-  const matrix: MatrixCell[] = [];
-  const people: MatrixPerson[] = persons.map((p) => ({
+  const matrix: Array<MatrixCell> = [];
+  const people: Array<MatrixPerson> = persons.map((p) => ({
     id: p.id,
     firstName: p.firstName,
     lastName: p.lastName,
@@ -966,7 +965,7 @@ export async function getBowtieChartData(
   }
 
   // Build nodes array with side information
-  const nodes: BowtieNode[] = [];
+  const nodes: Array<BowtieNode> = [];
   collected.nodeIds.forEach((id) => {
     const person = personMap.get(id);
     if (person) {
@@ -986,7 +985,7 @@ export async function getBowtieChartData(
   });
 
   // Build edges array
-  const edges: ChartEdge[] = [];
+  const edges: Array<ChartEdge> = [];
   const processedEdges = new Set<string>();
 
   collected.edges.forEach((edgeData) => {
@@ -1070,7 +1069,7 @@ export async function getCompactTreeData(
 
     // Get children
     const childIds = parentToChildren.get(pId) || new Set();
-    const children: CompactTreeNode[] = [];
+    const children: Array<CompactTreeNode> = [];
 
     childIds.forEach((childId) => {
       const childNode = buildTreeNode(childId, gen + 1, pId);
@@ -1240,7 +1239,7 @@ export async function getStatisticsData(
     { label: "90+", min: 90, max: 200 },
   ];
 
-  const ageDistribution: AgeDistribution[] = ageBrackets.map((bracket) => {
+  const ageDistribution: Array<AgeDistribution> = ageBrackets.map((bracket) => {
     const count = persons.filter((p) => {
       const age = calculateAge(p.dateOfBirth, p.dateOfPassing, p.isLiving);
       return age !== null && age >= bracket.min && age <= bracket.max;
@@ -1316,7 +1315,7 @@ export async function getStatisticsData(
     }
   });
 
-  const generationSizes: GenerationSize[] = Array.from(genCounts.entries())
+  const generationSizes: Array<GenerationSize> = Array.from(genCounts.entries())
     .sort((a, b) => a[0] - b[0])
     .map(([gen, counts]) => ({
       generation: gen + 1,
@@ -1332,7 +1331,7 @@ export async function getStatisticsData(
     genderCounts.set(gender, (genderCounts.get(gender) || 0) + 1);
   });
 
-  const genderDistribution: GenderDistribution[] = Array.from(
+  const genderDistribution: Array<GenderDistribution> = Array.from(
     genderCounts.entries()
   )
     .map(([gender, count]) => ({
@@ -1362,7 +1361,7 @@ export async function getStatisticsData(
     }
   });
 
-  const geographicDistribution: GeographicDistribution[] = Array.from(
+  const geographicDistribution: Array<GeographicDistribution> = Array.from(
     locationCounts.entries()
   )
     .map(([location, count]) => ({
@@ -1382,7 +1381,7 @@ export async function getStatisticsData(
     }
   });
 
-  const surnameFrequency: SurnameFrequency[] = Array.from(
+  const surnameFrequency: Array<SurnameFrequency> = Array.from(
     surnameCounts.entries()
   )
     .map(([surname, count]) => ({
@@ -1394,7 +1393,7 @@ export async function getStatisticsData(
     .slice(0, 15);
 
   // 6. Lifespan Trends by Decade (for deceased persons with both dates)
-  const decadeLifespans = new Map<string, number[]>();
+  const decadeLifespans = new Map<string, Array<number>>();
   persons.forEach((p) => {
     if (!p.isLiving && p.dateOfBirth && p.dateOfPassing) {
       const lifespan = calculateAge(p.dateOfBirth, p.dateOfPassing, false);
@@ -1409,7 +1408,9 @@ export async function getStatisticsData(
     }
   });
 
-  const lifespanTrends: LifespanTrend[] = Array.from(decadeLifespans.entries())
+  const lifespanTrends: Array<LifespanTrend> = Array.from(
+    decadeLifespans.entries()
+  )
     .map(([decade, lifespans]) => ({
       decade,
       averageLifespan: Math.round(
@@ -1611,7 +1612,7 @@ export async function getTreeChartData(
   }
 
   // Build nodes array
-  const nodes: ChartNode[] = [];
+  const nodes: Array<ChartNode> = [];
   collected.nodeIds.forEach((id) => {
     const person = personMap.get(id);
     if (person) {
@@ -1630,7 +1631,7 @@ export async function getTreeChartData(
   });
 
   // Build edges array
-  const edges: ChartEdge[] = [];
+  const edges: Array<ChartEdge> = [];
   const processedEdges = new Set<string>();
 
   collected.edges.forEach((edgeData) => {

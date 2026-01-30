@@ -3,7 +3,7 @@
  * Tests rendering, table display, status badges, and action buttons
  */
 
-import { describe, it, expect, mock } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 
 describe("BackupHistory Component", () => {
   const mockBackups = [

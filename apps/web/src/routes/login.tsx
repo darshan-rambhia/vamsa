@@ -1,12 +1,11 @@
 import {
-  createFileRoute,
   Link,
+  createFileRoute,
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
 import { useState } from "react";
 import { z } from "zod";
-import { signIn } from "~/lib/auth-client";
 import {
   Button,
   Card,
@@ -18,6 +17,7 @@ import {
   Label,
   ThemeToggle,
 } from "@vamsa/ui";
+import { signIn } from "~/lib/auth-client";
 import { SSOButtons } from "~/components/auth/sso-buttons";
 
 const searchSchema = z.object({

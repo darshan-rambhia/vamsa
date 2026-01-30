@@ -81,7 +81,7 @@ export interface SearchResult<T> {
  */
 export interface SearchResults<T> {
   /** Search results with ranking */
-  results: SearchResult<T>[];
+  results: Array<SearchResult<T>>;
   /** Total number of matches (before pagination) */
   total: number;
   /** Query execution time in milliseconds */
@@ -129,13 +129,13 @@ export function buildTsQuery(
   const sanitized = sanitizeQuery(query);
   if (!sanitized) return "";
 
-  const tokens: string[] = [];
+  const tokens: Array<string> = [];
   let remaining = sanitized;
 
   // Extract quoted phrases first
   const phraseRegex = /"([^"]+)"/g;
   let match: RegExpExecArray | null;
-  const phrases: string[] = [];
+  const phrases: Array<string> = [];
 
   while ((match = phraseRegex.exec(remaining)) !== null) {
     phrases.push(match[1]);
@@ -224,7 +224,7 @@ export function buildPersonSearchQuery(
   config: SearchConfig = {}
 ): {
   sql: string;
-  params: unknown[];
+  params: Array<unknown>;
 } {
   const {
     language = "english",
@@ -282,7 +282,7 @@ export function buildPersonSearchCountQuery(
   config: SearchConfig = {}
 ): {
   sql: string;
-  params: unknown[];
+  params: Array<unknown>;
 } {
   const { language = "english" } = config;
 
@@ -317,7 +317,7 @@ export function buildFuzzyPersonSearchQuery(
   config: SearchConfig = {}
 ): {
   sql: string;
-  params: unknown[];
+  params: Array<unknown>;
 } {
   const { fuzzyThreshold = 0.3, limit = 20, offset = 0 } = config;
 
@@ -361,7 +361,7 @@ export function buildCombinedSearchQuery(
   config: SearchConfig = {}
 ): {
   sql: string;
-  params: unknown[];
+  params: Array<unknown>;
 } {
   const {
     language = "english",

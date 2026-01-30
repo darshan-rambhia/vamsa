@@ -3,22 +3,22 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Button,
-  Label,
   Input,
+  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui/primitives";
-import { linkPersonToPlace, updatePlacePersonLink } from "~/server/places";
-import { PersonPlaceType } from "@vamsa/schemas";
 import { PlaceSearch } from "../place/place-search";
+import type { PersonPlaceType } from "@vamsa/schemas";
+import { linkPersonToPlace, updatePlacePersonLink } from "~/server/places";
 
 interface PlaceLinkFormModalProps {
   personId: string;

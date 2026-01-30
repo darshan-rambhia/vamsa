@@ -3,22 +3,22 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  Badge,
+  Button,
   Card,
   CardContent,
   CardHeader,
-  Button,
-  Badge,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
   Label,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
   Textarea,
 } from "@vamsa/ui/primitives";
 import { formatDate } from "@vamsa/lib";
@@ -40,7 +40,7 @@ interface Suggestion {
 }
 
 interface SuggestionsListProps {
-  suggestions: Suggestion[];
+  suggestions: Array<Suggestion>;
   onRefresh?: () => void;
 }
 

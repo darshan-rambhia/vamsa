@@ -6,7 +6,7 @@
  * - rotateBackups: Delete old backups based on retention settings
  */
 
-import { describe, it, expect, mock } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 // Note: performBackup is imported dynamically AFTER mocks are set up
 // to avoid loading server/db.ts before it can be mocked
 
@@ -24,7 +24,10 @@ mock.module("fs/promises", () => ({
 // Mock archiver - must emit data events for lib backup tests to work
 mock.module("archiver", () => ({
   default: mock(() => {
-    const handlers: Record<string, ((...args: unknown[]) => void)[]> = {};
+    const handlers: Record<
+      string,
+      Array<(...args: Array<unknown>) => void>
+    > = {};
     return {
       append: mock(() => undefined),
       file: mock(() => undefined),
@@ -41,7 +44,7 @@ mock.module("archiver", () => ({
           }
         }, 10);
       }),
-      on: mock((event: string, handler: (...args: unknown[]) => void) => {
+      on: mock((event: string, handler: (...args: Array<unknown>) => void) => {
         if (!handlers[event]) handlers[event] = [];
         handlers[event].push(handler);
         return { on: mock(() => undefined) }; // chainable
@@ -52,7 +55,7 @@ mock.module("archiver", () => ({
 }));
 
 // Mock drizzle db module with chainable query builders
-const createMockQueryBuilder = (data: unknown[]) => ({
+const createMockQueryBuilder = (data: Array<unknown>) => ({
   from: mock(() => createMockQueryBuilder(data)),
   where: mock(() => createMockQueryBuilder(data)),
   orderBy: mock(() => createMockQueryBuilder(data)),
@@ -60,7 +63,7 @@ const createMockQueryBuilder = (data: unknown[]) => ({
   offset: mock(() => createMockQueryBuilder(data)),
   innerJoin: mock(() => createMockQueryBuilder(data)),
   leftJoin: mock(() => createMockQueryBuilder(data)),
-  then: (resolve: (value: unknown[]) => void) =>
+  then: (resolve: (value: Array<unknown>) => void) =>
     Promise.resolve(data).then(resolve),
 });
 
@@ -166,22 +169,22 @@ describe("Backup Job", () => {
     });
 
     it("should accept DAILY backup type", () => {
-      const types: BackupType[] = ["DAILY", "WEEKLY", "MONTHLY", "MANUAL"];
+      const types: Array<BackupType> = ["DAILY", "WEEKLY", "MONTHLY", "MANUAL"];
       expect(types).toContain("DAILY");
     });
 
     it("should accept WEEKLY backup type", () => {
-      const types: BackupType[] = ["DAILY", "WEEKLY", "MONTHLY", "MANUAL"];
+      const types: Array<BackupType> = ["DAILY", "WEEKLY", "MONTHLY", "MANUAL"];
       expect(types).toContain("WEEKLY");
     });
 
     it("should accept MONTHLY backup type", () => {
-      const types: BackupType[] = ["DAILY", "WEEKLY", "MONTHLY", "MANUAL"];
+      const types: Array<BackupType> = ["DAILY", "WEEKLY", "MONTHLY", "MANUAL"];
       expect(types).toContain("MONTHLY");
     });
 
     it("should accept MANUAL backup type", () => {
-      const types: BackupType[] = ["DAILY", "WEEKLY", "MONTHLY", "MANUAL"];
+      const types: Array<BackupType> = ["DAILY", "WEEKLY", "MONTHLY", "MANUAL"];
       expect(types).toContain("MANUAL");
     });
 
@@ -662,7 +665,7 @@ describe("Backup Job", () => {
     });
 
     it("should handle empty backup list", () => {
-      const backups: any[] = [];
+      const backups: Array<any> = [];
       const backupsToDelete = backups.slice(7);
 
       expect(backupsToDelete).toHaveLength(0);

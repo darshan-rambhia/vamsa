@@ -12,9 +12,9 @@ export interface FileInfo {
 }
 
 export interface StorageProvider {
-  save(filename: string, data: Buffer): Promise<FileInfo>;
-  delete(filePath: string): Promise<void>;
-  getThumbnail(filePath: string): Promise<string | null>;
+  save: (filename: string, data: Buffer) => Promise<FileInfo>;
+  delete: (filePath: string) => Promise<void>;
+  getThumbnail: (filePath: string) => Promise<string | null>;
 }
 
 export async function getStorageProvider(): Promise<StorageProvider> {

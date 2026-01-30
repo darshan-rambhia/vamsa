@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { Input, Button, Badge } from "@vamsa/ui";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Badge, Button, Input } from "@vamsa/ui";
 import type { CompactTreeResult } from "~/server/charts";
 
 interface CompactTreeProps {
@@ -48,7 +48,7 @@ export function CompactTree({ data, onNodeClick }: CompactTreeProps) {
 
   // Build flattened visible list based on expansion state
   const visibleNodes = useMemo(() => {
-    const nodes: FlattenedNode[] = [];
+    const nodes: Array<FlattenedNode> = [];
     const visited = new Set<string>();
 
     function traverse(

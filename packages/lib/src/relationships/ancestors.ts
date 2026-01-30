@@ -181,7 +181,7 @@ export function findAncestors(
   people: Map<string, RelationshipNode>,
   relationships: RelationshipMapSet,
   options?: AncestorQueryOptions
-): AncestorQueryResult[] {
+): Array<AncestorQueryResult> {
   const state: AncestorCollectionState = {
     results: new Map(),
     visited: new Set(),
@@ -235,7 +235,7 @@ export function getAncestorsAtGeneration(
   generation: number,
   people: Map<string, RelationshipNode>,
   relationships: RelationshipMapSet
-): RelationshipNode[] {
+): Array<RelationshipNode> {
   const results = findAncestors(personId, people, relationships, {
     maxGenerations: generation,
   });
@@ -295,9 +295,9 @@ export function getAncestorsByGeneration(
   people: Map<string, RelationshipNode>,
   relationships: RelationshipMapSet,
   options?: AncestorQueryOptions
-): Map<number, RelationshipNode[]> {
+): Map<number, Array<RelationshipNode>> {
   const results = findAncestors(personId, people, relationships, options);
-  const grouped = new Map<number, RelationshipNode[]>();
+  const grouped = new Map<number, Array<RelationshipNode>>();
 
   results.forEach((result) => {
     if (!grouped.has(result.generation)) {

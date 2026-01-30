@@ -1,10 +1,10 @@
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("Error Handling", () => {
   test.describe("Error Showcase Page", () => {
     test.beforeEach(async ({ page }) => {
       // Navigate to the error showcase page (requires auth)
-      await page.goto("/dev/errors");
+      await page.goto("/dev/errors", { waitUntil: "domcontentloaded" });
     });
 
     test("should display all error card variants", async ({ page }) => {
@@ -84,7 +84,9 @@ test.describe("Error Handling", () => {
 
   test.describe("404 Not Found Page", () => {
     test("should show themed 404 page for unknown routes", async ({ page }) => {
-      await page.goto("/this-page-definitely-does-not-exist-12345");
+      await page.goto("/this-page-definitely-does-not-exist-12345", {
+        waitUntil: "domcontentloaded",
+      });
 
       // Should show 404 text
       await expect(page.getByText("404")).toBeVisible();
@@ -103,7 +105,7 @@ test.describe("Error Handling", () => {
     });
 
     test("should navigate home from 404 page", async ({ page }) => {
-      await page.goto("/nonexistent-route");
+      await page.goto("/nonexistent-route", { waitUntil: "domcontentloaded" });
 
       // Click go home
       await page.getByRole("link", { name: /go to homepage/i }).click();
@@ -118,7 +120,7 @@ test.describe("Error Handling", () => {
       page,
     }) => {
       // Navigate to the error showcase which is in authenticated area
-      await page.goto("/dev/errors");
+      await page.goto("/dev/errors", { waitUntil: "domcontentloaded" });
 
       // The main navigation should be visible
       await expect(page.locator("nav")).toBeVisible();

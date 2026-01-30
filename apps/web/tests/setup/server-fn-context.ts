@@ -76,8 +76,8 @@
  */
 
 import { mock } from "bun:test";
+import { createMockUser, testUsers } from "./server-fn-fixtures";
 import type { MockAuthUser } from "./server-fn-fixtures";
-import { testUsers, createMockUser } from "./server-fn-fixtures";
 
 // Re-export fixtures for convenience
 export { testUsers, createMockUser } from "./server-fn-fixtures";
@@ -148,7 +148,7 @@ interface ActiveContext {
   response: ServerContextResponse;
 }
 
-const contextStack: ActiveContext[] = [];
+const contextStack: Array<ActiveContext> = [];
 
 function getCurrentContext(): ActiveContext | undefined {
   return contextStack[contextStack.length - 1];

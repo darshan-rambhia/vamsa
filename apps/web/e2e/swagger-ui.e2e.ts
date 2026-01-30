@@ -5,11 +5,11 @@
  * Detailed API contract validation should be done in API/integration tests.
  */
 
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 test.describe("API Documentation", () => {
   test("Swagger UI loads successfully", async ({ page }) => {
-    await page.goto("/api/v1/docs");
+    await page.goto("/api/v1/docs", { waitUntil: "domcontentloaded" });
 
     // Wait for Swagger UI to load
     await expect(page.getByRole("heading", { name: /vamsa api/i })).toBeVisible(

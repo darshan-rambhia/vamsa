@@ -1,9 +1,9 @@
 /**
  * Unit Tests for Tabs Components
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { render } from "@testing-library/react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "./tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 
 describe("Tabs", () => {
   describe("rendering", () => {
@@ -16,9 +16,7 @@ describe("Tabs", () => {
           <TabsContent value="tab1">Content 1</TabsContent>
         </Tabs>
       );
-      const root = container.querySelector(
-        "[data-testid='tabs-root']"
-      ) as HTMLElement | null;
+      const root = container.querySelector("[data-testid='tabs-root']");
       expect(root).toBeDefined();
     });
 
@@ -73,9 +71,7 @@ describe("Tabs", () => {
           <TabsContent value="tab1">Content 1</TabsContent>
         </Tabs>
       );
-      const tabs = container.querySelector(
-        "[data-testid='tabs']"
-      ) as HTMLElement | null;
+      const tabs = container.querySelector("[data-testid='tabs']");
       expect(tabs).toBeDefined();
     });
   });
@@ -175,9 +171,7 @@ describe("TabsList", () => {
           <TabsList data-testid="tabs-list" />
         </Tabs>
       );
-      const list = container.querySelector(
-        "[data-testid='tabs-list']"
-      ) as HTMLElement | null;
+      const list = container.querySelector("[data-testid='tabs-list']");
       expect(list?.className).toContain("inline-flex");
       expect(list?.className).toContain("h-12");
       expect(list?.className).toContain("items-center");
@@ -191,9 +185,7 @@ describe("TabsList", () => {
           <TabsList data-testid="tabs-list" />
         </Tabs>
       );
-      const list = container.querySelector(
-        "[data-testid='tabs-list']"
-      ) as HTMLElement | null;
+      const list = container.querySelector("[data-testid='tabs-list']");
       expect(list?.className).toContain("w-full");
       expect(list?.className).toContain("sm:w-auto");
       expect(list?.className).toContain("overflow-x-auto");
@@ -205,9 +197,7 @@ describe("TabsList", () => {
           <TabsList data-testid="tabs-list" />
         </Tabs>
       );
-      const list = container.querySelector(
-        "[data-testid='tabs-list']"
-      ) as HTMLElement | null;
+      const list = container.querySelector("[data-testid='tabs-list']");
       expect(list?.className).toContain("p-1.5");
     });
 
@@ -217,9 +207,7 @@ describe("TabsList", () => {
           <TabsList data-testid="tabs-list" />
         </Tabs>
       );
-      const list = container.querySelector(
-        "[data-testid='tabs-list']"
-      ) as HTMLElement | null;
+      const list = container.querySelector("[data-testid='tabs-list']");
       expect(list?.className).toContain("bg-muted");
       expect(list?.className).toContain("border-border");
       expect(list?.className).toContain("text-muted-foreground");
@@ -231,9 +219,7 @@ describe("TabsList", () => {
           <TabsList className="custom-list-class" data-testid="tabs-list" />
         </Tabs>
       );
-      const list = container.querySelector(
-        "[data-testid='tabs-list']"
-      ) as HTMLElement | null;
+      const list = container.querySelector("[data-testid='tabs-list']");
       expect(list?.className).toContain("custom-list-class");
     });
 
@@ -292,9 +278,7 @@ describe("TabsList", () => {
           <TabsList data-testid="tabs-list" data-custom="value" />
         </Tabs>
       );
-      const list = container.querySelector(
-        "[data-testid='tabs-list']"
-      ) as HTMLElement | null;
+      const list = container.querySelector("[data-testid='tabs-list']");
       expect(list?.getAttribute("data-custom")).toBe("value");
     });
 
@@ -304,9 +288,7 @@ describe("TabsList", () => {
           <TabsList aria-label="Tab list" data-testid="tabs-list" />
         </Tabs>
       );
-      const list = container.querySelector(
-        "[data-testid='tabs-list']"
-      ) as HTMLElement | null;
+      const list = container.querySelector("[data-testid='tabs-list']");
       expect(list?.getAttribute("aria-label")).toBe("Tab list");
     });
 
@@ -316,9 +298,7 @@ describe("TabsList", () => {
           <TabsList role="tablist" data-testid="tabs-list" />
         </Tabs>
       );
-      const list = container.querySelector(
-        "[data-testid='tabs-list']"
-      ) as HTMLElement | null;
+      const list = container.querySelector("[data-testid='tabs-list']");
       expect(list?.getAttribute("role")).toBe("tablist");
     });
   });
@@ -398,9 +378,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.className).toContain("inline-flex");
       expect(trigger?.className).toContain("items-center");
       expect(trigger?.className).toContain("justify-center");
@@ -417,9 +395,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.className).toContain("px-4");
       expect(trigger?.className).toContain("py-2");
       expect(trigger?.className).toContain("text-sm");
@@ -437,9 +413,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.className).toContain("focus-visible:ring-ring");
       expect(trigger?.className).toContain("focus-visible:ring-2");
       expect(trigger?.className).toContain("focus-visible:ring-offset-2");
@@ -456,9 +430,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.className).toContain("transition-all");
       expect(trigger?.className).toContain("duration-200");
       expect(trigger?.className).toContain("ease-out");
@@ -474,9 +446,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.className).toContain("disabled:pointer-events-none");
       expect(trigger?.className).toContain("disabled:opacity-50");
     });
@@ -491,9 +461,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='active-trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='active-trigger']");
       expect(trigger?.className).toContain("data-[state=active]:bg-background");
       expect(trigger?.className).toContain("data-[state=active]:text-primary");
       expect(trigger?.className).toContain("data-[state=active]:shadow-md");
@@ -514,7 +482,7 @@ describe("TabsTrigger", () => {
       );
       const inactiveTrigger = container.querySelector(
         "[data-testid='trigger2']"
-      ) as HTMLElement | null;
+      );
       expect(inactiveTrigger?.className).toContain(
         "data-[state=inactive]:hover:bg-background"
       );
@@ -533,9 +501,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.className).toContain("data-[state=active]:border");
       expect(trigger?.className).toContain(
         "data-[state=active]:border-primary"
@@ -556,9 +522,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.className).toContain("custom-trigger-class");
     });
 
@@ -576,9 +540,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.className).toContain("custom-class");
       expect(trigger?.className).toContain("inline-flex");
       expect(trigger?.className).toContain("text-sm");
@@ -596,9 +558,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.getAttribute("aria-selected")).toBeDefined();
     });
 
@@ -612,9 +572,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.getAttribute("role")).toBe("tab");
     });
 
@@ -631,12 +589,10 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const activeTrigger = container.querySelector(
-        "[data-testid='active']"
-      ) as HTMLElement | null;
+      const activeTrigger = container.querySelector("[data-testid='active']");
       const inactiveTrigger = container.querySelector(
         "[data-testid='inactive']"
-      ) as HTMLElement | null;
+      );
       expect(activeTrigger?.getAttribute("data-state")).toBe("active");
       expect(inactiveTrigger?.getAttribute("data-state")).toBe("inactive");
     });
@@ -655,9 +611,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.getAttribute("aria-label")).toBe("First tab");
     });
   });
@@ -721,9 +675,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.getAttribute("data-custom")).toBe("custom-value");
     });
 
@@ -741,9 +693,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.getAttribute("aria-describedby")).toBe("tab-description");
     });
 
@@ -757,9 +707,7 @@ describe("TabsTrigger", () => {
           </TabsList>
         </Tabs>
       );
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
+      const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger?.hasAttribute("disabled")).toBe(true);
     });
   });
@@ -784,9 +732,7 @@ describe("TabsContent", () => {
           </TabsContent>
         </Tabs>
       );
-      const content = container.querySelector(
-        "[data-testid='content']"
-      ) as HTMLElement | null;
+      const content = container.querySelector("[data-testid='content']");
       expect(content).toBeDefined();
       expect(getByText("Content goes here")).toBeDefined();
     });
@@ -818,8 +764,8 @@ describe("TabsContent", () => {
       // Content 2 is hidden but should exist as tabpanel element
       const tabpanels = container.querySelectorAll("[role='tabpanel']");
       expect(tabpanels.length).toBe(2);
-      expect(tabpanels[0]?.getAttribute("data-state")).toBe("active");
-      expect(tabpanels[1]?.getAttribute("data-state")).toBe("inactive");
+      expect(tabpanels[0].getAttribute("data-state")).toBe("active");
+      expect(tabpanels[1].getAttribute("data-state")).toBe("inactive");
     });
 
     test("renders with children elements", () => {
@@ -851,9 +797,7 @@ describe("TabsContent", () => {
           </TabsContent>
         </Tabs>
       );
-      const content = container.querySelector(
-        "[data-testid='content']"
-      ) as HTMLElement | null;
+      const content = container.querySelector("[data-testid='content']");
       expect(content?.className).toContain("mt-6");
     });
 
@@ -868,9 +812,7 @@ describe("TabsContent", () => {
           </TabsContent>
         </Tabs>
       );
-      const content = container.querySelector(
-        "[data-testid='content']"
-      ) as HTMLElement | null;
+      const content = container.querySelector("[data-testid='content']");
       expect(content?.className).toContain("focus-visible:ring-ring");
       expect(content?.className).toContain("focus-visible:ring-2");
       expect(content?.className).toContain("focus-visible:ring-offset-2");
@@ -888,9 +830,7 @@ describe("TabsContent", () => {
           </TabsContent>
         </Tabs>
       );
-      const content = container.querySelector(
-        "[data-testid='content']"
-      ) as HTMLElement | null;
+      const content = container.querySelector("[data-testid='content']");
       expect(content?.className).toContain("ring-offset-background");
     });
 
@@ -909,9 +849,7 @@ describe("TabsContent", () => {
           </TabsContent>
         </Tabs>
       );
-      const content = container.querySelector(
-        "[data-testid='content']"
-      ) as HTMLElement | null;
+      const content = container.querySelector("[data-testid='content']");
       expect(content?.className).toContain("custom-content-class");
     });
 
@@ -930,9 +868,7 @@ describe("TabsContent", () => {
           </TabsContent>
         </Tabs>
       );
-      const content = container.querySelector(
-        "[data-testid='content']"
-      ) as HTMLElement | null;
+      const content = container.querySelector("[data-testid='content']");
       expect(content?.className).toContain("custom-class");
       expect(content?.className).toContain("mt-6");
       expect(content?.className).toContain("focus-visible:ring-ring");
@@ -951,9 +887,7 @@ describe("TabsContent", () => {
           </TabsContent>
         </Tabs>
       );
-      const content = container.querySelector(
-        "[data-testid='content']"
-      ) as HTMLElement | null;
+      const content = container.querySelector("[data-testid='content']");
       expect(content?.getAttribute("role")).toBe("tabpanel");
     });
 
@@ -972,12 +906,10 @@ describe("TabsContent", () => {
           </TabsContent>
         </Tabs>
       );
-      const activeContent = container.querySelector(
-        "[data-testid='content1']"
-      ) as HTMLElement | null;
+      const activeContent = container.querySelector("[data-testid='content1']");
       const inactiveContent = container.querySelector(
         "[data-testid='content2']"
-      ) as HTMLElement | null;
+      );
       expect(activeContent?.getAttribute("data-state")).toBe("active");
       expect(inactiveContent?.getAttribute("data-state")).toBe("inactive");
     });
@@ -997,9 +929,7 @@ describe("TabsContent", () => {
           </TabsContent>
         </Tabs>
       );
-      const content = container.querySelector(
-        "[data-testid='content']"
-      ) as HTMLElement | null;
+      const content = container.querySelector("[data-testid='content']");
       expect(content?.getAttribute("aria-label")).toBe("First tab content");
     });
   });
@@ -1066,9 +996,7 @@ describe("TabsContent", () => {
           </TabsContent>
         </Tabs>
       );
-      const content = container.querySelector(
-        "[data-testid='content']"
-      ) as HTMLElement | null;
+      const content = container.querySelector("[data-testid='content']");
       expect(content?.getAttribute("data-custom")).toBe("custom-value");
     });
 
@@ -1087,9 +1015,7 @@ describe("TabsContent", () => {
           </TabsContent>
         </Tabs>
       );
-      const content = container.querySelector(
-        "[data-testid='content']"
-      ) as HTMLElement | null;
+      const content = container.querySelector("[data-testid='content']");
       expect(content?.getAttribute("aria-describedby")).toBe(
         "content-description"
       );
@@ -1189,15 +1115,9 @@ describe("Tabs integration", () => {
         </Tabs>
       );
 
-      const list = container.querySelector(
-        "[data-testid='list']"
-      ) as HTMLElement | null;
-      const trigger = container.querySelector(
-        "[data-testid='trigger']"
-      ) as HTMLElement | null;
-      const content = container.querySelector(
-        "[data-testid='content']"
-      ) as HTMLElement | null;
+      const list = container.querySelector("[data-testid='list']");
+      const trigger = container.querySelector("[data-testid='trigger']");
+      const content = container.querySelector("[data-testid='content']");
 
       // Verify each has its own styling
       expect(list?.className).toContain("inline-flex");

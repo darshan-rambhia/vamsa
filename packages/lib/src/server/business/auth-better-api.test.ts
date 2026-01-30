@@ -17,14 +17,26 @@
  * - Enables dual auth: web uses cookies, mobile uses bearer tokens
  */
 
-import { describe, it, expect, beforeEach, mock, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+// Import after mocks are set up
+import {
+  betterAuthChangePassword,
+  betterAuthGetSession,
+  betterAuthGetSessionWithUser,
+  betterAuthGetSessionWithUserFromCookie,
+  betterAuthLogin,
+  betterAuthRegister,
+  betterAuthSignOut,
+  getBetterAuthProviders,
+} from "./auth-better-api";
 
 // Mock the logger before importing the module
 mock.module("@vamsa/lib/logger", () => ({
@@ -79,18 +91,6 @@ mock.module("./auth-better", () => ({
   },
 }));
 
-// Import after mocks are set up
-import {
-  betterAuthLogin,
-  betterAuthRegister,
-  betterAuthGetSession,
-  betterAuthChangePassword,
-  betterAuthSignOut,
-  betterAuthGetSessionWithUserFromCookie,
-  betterAuthGetSessionWithUser,
-  getBetterAuthProviders,
-} from "./auth-better-api";
-
 describe("auth-better-api", () => {
   beforeEach(() => {
     clearAllMocks();
@@ -123,7 +123,7 @@ describe("auth-better-api", () => {
       await betterAuthGetSession(headers);
 
       expect(mockBetterAuthApi.getSession).toHaveBeenCalled();
-      const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
+      const callArgs = mockBetterAuthApi.getSession.mock.calls[0]?.[0];
       expect(callArgs?.headers).toEqual({
         "content-type": "application/json",
         "x-custom": "value",
@@ -145,9 +145,7 @@ describe("auth-better-api", () => {
 
       await betterAuthLogin("user@test.com", "password");
 
-      const callArgs = (
-        mockBetterAuthApi.signInEmail.mock.calls as any
-      )[0]?.[0];
+      const callArgs = mockBetterAuthApi.signInEmail.mock.calls[0]?.[0];
       expect(callArgs?.headers).toEqual({});
     });
 
@@ -168,7 +166,7 @@ describe("auth-better-api", () => {
 
       await betterAuthGetSession(headers);
 
-      const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
+      const callArgs = mockBetterAuthApi.getSession.mock.calls[0]?.[0];
       expect(callArgs?.headers).toEqual({});
     });
   });
@@ -214,9 +212,7 @@ describe("auth-better-api", () => {
 
       await betterAuthLogin("test@example.com", "password123", headers);
 
-      const callArgs = (
-        mockBetterAuthApi.signInEmail.mock.calls as any
-      )[0]?.[0];
+      const callArgs = mockBetterAuthApi.signInEmail.mock.calls[0]?.[0];
       expect(callArgs?.headers).toHaveProperty("cookie", "session=abc");
     });
 
@@ -328,9 +324,7 @@ describe("auth-better-api", () => {
         headers
       );
 
-      const callArgs = (
-        mockBetterAuthApi.signUpEmail.mock.calls as any
-      )[0]?.[0];
+      const callArgs = mockBetterAuthApi.signUpEmail.mock.calls[0]?.[0];
       expect(callArgs?.headers).toHaveProperty("cookie", "session=abc");
     });
 
@@ -426,7 +420,7 @@ describe("auth-better-api", () => {
 
       await betterAuthGetSession(headers);
 
-      const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
+      const callArgs = mockBetterAuthApi.getSession.mock.calls[0]?.[0];
       expect(callArgs?.headers).toHaveProperty("cookie", "session=abc");
     });
 
@@ -450,7 +444,7 @@ describe("auth-better-api", () => {
       const result = await betterAuthGetSession(headers);
 
       expect(result).not.toBeNull();
-      const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
+      const callArgs = mockBetterAuthApi.getSession.mock.calls[0]?.[0];
       expect(callArgs?.headers).toHaveProperty(
         "authorization",
         "Bearer mobile-session-token-123"
@@ -555,7 +549,7 @@ describe("auth-better-api", () => {
 
       await betterAuthSignOut(headers);
 
-      const callArgs = (mockBetterAuthApi.signOut.mock.calls as any)[0]?.[0];
+      const callArgs = mockBetterAuthApi.signOut.mock.calls[0]?.[0];
       expect(callArgs?.headers).toHaveProperty("cookie", "session=abc");
     });
 
@@ -687,7 +681,7 @@ describe("auth-better-api", () => {
 
       await betterAuthGetSessionWithUserFromCookie("session=xyz; path=/");
 
-      const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
+      const callArgs = mockBetterAuthApi.getSession.mock.calls[0]?.[0];
       expect(callArgs?.headers?.cookie).toBe("session=xyz; path=/");
     });
   });
@@ -796,7 +790,7 @@ describe("auth-better-api", () => {
 
       await betterAuthGetSessionWithUser(headers);
 
-      const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
+      const callArgs = mockBetterAuthApi.getSession.mock.calls[0]?.[0];
       expect(callArgs?.headers).toHaveProperty("cookie", "session=abc");
     });
 
@@ -839,7 +833,7 @@ describe("auth-better-api", () => {
         oidcProvider: null,
       });
 
-      const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
+      const callArgs = mockBetterAuthApi.getSession.mock.calls[0]?.[0];
       expect(callArgs?.headers).toHaveProperty(
         "authorization",
         "Bearer mobile-app-token-xyz"
@@ -866,7 +860,7 @@ describe("auth-better-api", () => {
 
       await betterAuthGetSessionWithUser(headers);
 
-      const callArgs = (mockBetterAuthApi.getSession.mock.calls as any)[0]?.[0];
+      const callArgs = mockBetterAuthApi.getSession.mock.calls[0]?.[0];
       expect(callArgs?.headers).toHaveProperty("cookie", "session=web-cookie");
       expect(callArgs?.headers).toHaveProperty(
         "authorization",

@@ -9,7 +9,7 @@ const isBunRuntime = typeof globalThis.Bun !== "undefined";
 
 async function hashPassword(password: string): Promise<string> {
   // Use Node.js crypto scrypt for cross-runtime compatibility
-  const { scrypt, randomBytes } = await import("crypto");
+  const { scrypt, randomBytes } = await import("node:crypto");
   const salt = randomBytes(16).toString("hex");
   return new Promise((resolve, reject) => {
     scrypt(password, salt, 64, (err, derivedKey) => {
@@ -25,7 +25,7 @@ async function verifyPassword(
 ): Promise<boolean> {
   // Handle our scrypt format
   if (hash.startsWith("scrypt:")) {
-    const { scrypt, timingSafeEqual } = await import("crypto");
+    const { scrypt, timingSafeEqual } = await import("node:crypto");
     const [, salt, storedHash] = hash.split(":");
     return new Promise((resolve, reject) => {
       scrypt(password, salt, 64, (err, derivedKey) => {
@@ -94,7 +94,7 @@ export const auth = betterAuth({
         ...(process.env.GITHUB_CLIENT_ID ? ["github"] : []),
         ...(process.env.MICROSOFT_CLIENT_ID ? ["microsoft"] : []),
         ...(process.env.OIDC_DISCOVERY_URL ? ["oidc"] : []),
-      ] as ("google" | "github" | "microsoft" | "oidc")[],
+      ] as Array<"google" | "github" | "microsoft" | "oidc">,
     },
   },
 

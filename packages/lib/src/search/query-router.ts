@@ -18,26 +18,22 @@
  * - Unified result format across all query types
  */
 
-import { classifyIntent, type SearchIntent } from "./intent-classifier";
-import {
-  findRelationshipPath,
-  type RelationshipPath,
-  type RelationshipNode,
-  type RelationshipMaps,
+import { findRelationshipPath } from "../relationships/path-finder";
+import { findCommonAncestor } from "../relationships/common-ancestor";
+import { findCousins } from "../relationships/cousin-finder";
+import { findAncestors } from "../relationships/ancestors";
+import { findDescendants } from "../relationships/descendants";
+import { classifyIntent } from "./intent-classifier";
+import type {
+  RelationshipMaps,
+  RelationshipNode,
+  RelationshipPath,
 } from "../relationships/path-finder";
-import {
-  findCommonAncestor,
-  type AncestorResult,
-} from "../relationships/common-ancestor";
-import { findCousins, type CousinResult } from "../relationships/cousin-finder";
-import {
-  findAncestors,
-  type AncestorQueryResult,
-} from "../relationships/ancestors";
-import {
-  findDescendants,
-  type DescendantQueryResult,
-} from "../relationships/descendants";
+import type { AncestorResult } from "../relationships/common-ancestor";
+import type { CousinResult } from "../relationships/cousin-finder";
+import type { AncestorQueryResult } from "../relationships/ancestors";
+import type { DescendantQueryResult } from "../relationships/descendants";
+import type { SearchIntent } from "./intent-classifier";
 
 /**
  * Unified search result type covering all query types
@@ -46,7 +42,7 @@ export interface SearchResult {
   /** The classified intent of the query */
   type: SearchIntent;
   /** Raw results from the handler (type varies by intent) */
-  results: unknown[];
+  results: Array<unknown>;
   /** Query execution duration in milliseconds */
   duration: number;
   /** Natural language explanation of the results */
@@ -72,9 +68,9 @@ export interface RelationshipDataMaps {
  * Some modules expect Sets, others expect arrays
  */
 function mapsSetToArray(
-  mapsSet: Map<string, Set<string> | string[]>
-): Map<string, string[]> {
-  const result = new Map<string, string[]>();
+  mapsSet: Map<string, Set<string> | Array<string>>
+): Map<string, Array<string>> {
+  const result = new Map<string, Array<string>>();
   mapsSet.forEach((val, key) => {
     if (val instanceof Set) {
       result.set(key, Array.from(val));
@@ -89,7 +85,7 @@ function mapsSetToArray(
  * Convert relationship maps from arrays to Sets
  */
 function mapsArrayToSet(
-  mapsArray: Map<string, Set<string> | string[]>
+  mapsArray: Map<string, Set<string> | Array<string>>
 ): Map<string, Set<string>> {
   const result = new Map<string, Set<string>>();
   mapsArray.forEach((val, key) => {
@@ -149,7 +145,7 @@ function explainCommonAncestor(
  * Generate a natural language explanation for cousin finder results
  */
 function explainCousins(
-  results: CousinResult[],
+  results: Array<CousinResult>,
   degree?: number,
   person?: string
 ): string {
@@ -181,7 +177,7 @@ function explainCousins(
  * Generate a natural language explanation for ancestor results
  */
 function explainAncestors(
-  results: AncestorQueryResult[],
+  results: Array<AncestorQueryResult>,
   person?: string
 ): string {
   if (results.length === 0) {
@@ -189,7 +185,7 @@ function explainAncestors(
   }
 
   // Group by generation for summary
-  const byGeneration = new Map<number, AncestorQueryResult[]>();
+  const byGeneration = new Map<number, Array<AncestorQueryResult>>();
   results.forEach((result) => {
     if (!byGeneration.has(result.generation)) {
       byGeneration.set(result.generation, []);
@@ -197,7 +193,7 @@ function explainAncestors(
     byGeneration.get(result.generation)!.push(result);
   });
 
-  const generationSummaries: string[] = [];
+  const generationSummaries: Array<string> = [];
   byGeneration.forEach((items, gen) => {
     const names = items
       .map((r) => `${r.person.firstName} ${r.person.lastName}`)
@@ -220,7 +216,7 @@ function explainAncestors(
  * Generate a natural language explanation for descendant results
  */
 function explainDescendants(
-  results: DescendantQueryResult[],
+  results: Array<DescendantQueryResult>,
   person?: string
 ): string {
   if (results.length === 0) {
@@ -228,7 +224,7 @@ function explainDescendants(
   }
 
   // Group by generation for summary
-  const byGeneration = new Map<number, DescendantQueryResult[]>();
+  const byGeneration = new Map<number, Array<DescendantQueryResult>>();
   results.forEach((result) => {
     if (!byGeneration.has(result.generation)) {
       byGeneration.set(result.generation, []);
@@ -236,7 +232,7 @@ function explainDescendants(
     byGeneration.get(result.generation)!.push(result);
   });
 
-  const generationSummaries: string[] = [];
+  const generationSummaries: Array<string> = [];
   byGeneration.forEach((items, gen) => {
     const names = items
       .map((r) => `${r.person.firstName} ${r.person.lastName}`)
@@ -295,7 +291,7 @@ export async function executeSearch(
     const classification = classifyIntent(query);
 
     // Step 2: Route to handler based on intent
-    let results: unknown[] = [];
+    let results: Array<unknown> = [];
     let explanation: string | undefined;
 
     switch (classification.intent) {

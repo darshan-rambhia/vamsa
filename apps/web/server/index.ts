@@ -11,8 +11,6 @@
  */
 
 // Initialize OpenTelemetry before other imports (must be first)
-import { startTelemetry, stopTelemetry, getTelemetryConfig } from "./telemetry";
-await startTelemetry();
 
 import { Hono } from "hono";
 import { logger as honoLogger } from "hono/logger";
@@ -20,13 +18,93 @@ import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import { secureHeaders } from "hono/secure-headers";
 import { loggers } from "@vamsa/lib/logger";
+import { initializeServerI18n } from "@vamsa/lib/server";
+import { auth } from "@vamsa/lib/server/business";
+import { rateLimitMiddleware } from "../src/server/middleware/hono-rate-limiter";
 import { etagMiddleware, getETagMetrics } from "./middleware/etag";
+import { telemetryMiddleware } from "./middleware/telemetry";
+import { serveMedia } from "./middleware/media-server";
+import { getTelemetryConfig, startTelemetry, stopTelemetry } from "./telemetry";
+
+await startTelemetry();
 
 const log = loggers.api;
-import { telemetryMiddleware } from "./middleware/telemetry";
-import { initializeServerI18n } from "@vamsa/lib/server";
-import { serveMedia } from "./middleware/media-server";
-import { auth } from "@vamsa/lib/server/business";
+
+// ============================================
+// Security Validation
+// ============================================
+
+/**
+ * Validate critical security credentials on startup
+ * Fails fast in production if credentials are missing or weak
+ */
+function validateSecurityCredentials() {
+  const IS_PRODUCTION = process.env.NODE_ENV === "production";
+  const warnings: Array<string> = [];
+  const errors: Array<string> = [];
+
+  // Check BETTER_AUTH_SECRET
+  const authSecret = process.env.BETTER_AUTH_SECRET;
+  if (!authSecret) {
+    errors.push("BETTER_AUTH_SECRET is not set");
+  } else if (authSecret.length < 32) {
+    const msg = `BETTER_AUTH_SECRET is too short (${authSecret.length} chars, need 32+)`;
+    if (IS_PRODUCTION) errors.push(msg);
+    else warnings.push(msg);
+  } else if (
+    authSecret.includes("change-in-production") ||
+    authSecret === "your-32-character-secret-here-change-in-production"
+  ) {
+    const msg = "BETTER_AUTH_SECRET appears to be a placeholder value";
+    if (IS_PRODUCTION) errors.push(msg);
+    else warnings.push(msg);
+  }
+
+  // Check DATABASE_URL has non-default password
+  const dbUrl = process.env.DATABASE_URL;
+  if (dbUrl) {
+    const weakPasswords = [
+      "password",
+      "vamsa",
+      "postgres",
+      "admin",
+      "123456",
+      "secret",
+    ];
+    for (const weak of weakPasswords) {
+      if (dbUrl.includes(`:${weak}@`)) {
+        const msg = `DATABASE_URL contains weak password "${weak}"`;
+        if (IS_PRODUCTION) errors.push(msg);
+        else warnings.push(msg);
+        break;
+      }
+    }
+  }
+
+  // Log warnings
+  for (const warning of warnings) {
+    log.warn({ security: true }, warning);
+  }
+
+  // Fail on errors in production
+  if (errors.length > 0) {
+    for (const error of errors) {
+      log.error({ security: true }, error);
+    }
+    log.error(
+      { security: true },
+      "Security validation failed. See .env.example for credential generation instructions."
+    );
+    process.exit(1);
+  }
+
+  if (warnings.length === 0 && errors.length === 0) {
+    log.info({ security: true }, "Security credentials validated");
+  }
+}
+
+// Validate credentials before starting
+validateSecurityCredentials();
 
 const app = new Hono();
 
@@ -229,6 +307,16 @@ apiRouter.get("/", (c) =>
 // ============================================
 // Better Auth Handler
 // ============================================
+
+// Apply rate limiting to specific Better Auth routes
+// Sign in: 5 attempts per minute
+app.use("/api/auth/sign-in/*", rateLimitMiddleware("login"));
+
+// Sign up: 3 attempts per hour
+app.use("/api/auth/sign-up/*", rateLimitMiddleware("register"));
+
+// Forget password: 3 attempts per hour
+app.use("/api/auth/forget-password/*", rateLimitMiddleware("passwordReset"));
 
 // Mount Better Auth SDK endpoints at /api/auth/*
 // This handles authentication flows from the Better Auth React client

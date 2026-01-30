@@ -11,7 +11,7 @@
  * - Redirects from /tree and /charts work correctly
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import type { VisualizationType } from "~/routes/_authenticated/visualize";
 
 // Mock the route validation function
@@ -57,7 +57,7 @@ describe("Route: /_authenticated/visualize", () => {
         "bowtie",
         "compact",
         "statistics",
-      ] as VisualizationType[];
+      ] as Array<VisualizationType>;
 
       types.forEach((type) => {
         const result = validateSearch({ type });

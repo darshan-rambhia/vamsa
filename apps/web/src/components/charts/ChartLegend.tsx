@@ -84,6 +84,12 @@ const legendConfigs: Record<ChartType, LegendConfig> = {
     showTimelineLegend: false,
     showBowtieLegend: false,
   }, // Recharts legends
+  list: {
+    showNodeLegend: false,
+    showEdgeLegend: false,
+    showTimelineLegend: false,
+    showBowtieLegend: false,
+  }, // List view doesn't need a legend (text-based)
 };
 
 interface ChartLegendProps {

@@ -18,22 +18,22 @@
  * - scheduleBackupJob: Configures automatic backup scheduling with cron patterns
  */
 
-import * as fs from "fs";
-import * as path from "path";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import archiver from "archiver";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { gte } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
-
-const log = loggers.db;
 import type {
   BackupExportInput,
+  BackupImportOptions,
   BackupMetadata,
   BackupSettings,
-  BackupImportOptions,
-  ValidationResult,
   ImportResult,
+  ValidationResult,
 } from "@vamsa/schemas";
+
+const log = loggers.db;
 
 /**
  * Type for the database client used by backup functions.
@@ -174,7 +174,7 @@ export async function createBackupArchive(
     zlib: { level: 9 }, // Maximum compression for storage efficiency
   });
 
-  const chunks: Buffer[] = [];
+  const chunks: Array<Buffer> = [];
   let archiveError: Error | null = null;
 
   // Collect all archive data chunks

@@ -1,12 +1,12 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  sanitizeQuery,
-  buildTsQuery,
-  buildPersonSearchQuery,
-  buildPersonSearchCountQuery,
-  buildFuzzyPersonSearchQuery,
-  buildCombinedSearchQuery,
   SEARCH_FIELD_WEIGHTS,
+  buildCombinedSearchQuery,
+  buildFuzzyPersonSearchQuery,
+  buildPersonSearchCountQuery,
+  buildPersonSearchQuery,
+  buildTsQuery,
+  sanitizeQuery,
 } from "./search";
 
 describe("sanitizeQuery", () => {

@@ -12,14 +12,23 @@
  * Uses dependency injection to mock database calls.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+import {
+  deleteUserData,
+  getUserData,
+  getUsersData,
+  searchAvailablePersonsData,
+  unlockUserAccountData,
+  updateUserData,
+} from "./users";
 
 // Mock logger
 mock.module("@vamsa/lib/logger", () => ({
@@ -57,15 +66,6 @@ mock.module("@vamsa/api", () => ({
   drizzleDb: {},
   drizzleSchema: mockDrizzleSchema,
 }));
-
-import {
-  getUsersData,
-  getUserData,
-  updateUserData,
-  deleteUserData,
-  searchAvailablePersonsData,
-  unlockUserAccountData,
-} from "./users";
 
 describe("Users Business Logic", () => {
   beforeEach(() => {

@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { Container, PageHeader, Card, CardContent } from "@vamsa/ui";
+import { Card, CardContent, Container, PageHeader } from "@vamsa/ui";
 import { PersonForm } from "~/components/person";
 
 export const Route = createFileRoute("/_authenticated/people/new")({

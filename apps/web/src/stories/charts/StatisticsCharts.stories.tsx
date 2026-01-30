@@ -1,7 +1,7 @@
+import { createStatisticsData } from "@vamsa/lib";
 import type { Story } from "@ladle/react";
 import { StatisticsCharts } from "~/components/charts/StatisticsCharts";
 import { StoryDecorator } from "~/stories/decorators";
-import { createStatisticsData } from "@vamsa/lib";
 
 export default {
   title: "Charts/StatisticsCharts",

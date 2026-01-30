@@ -3,10 +3,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Card,
-  CardContent,
-  Badge,
-  Button,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -15,6 +11,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Badge,
+  Button,
+  Card,
+  CardContent,
 } from "@vamsa/ui/primitives";
 import { PlaceDetailModal } from "../place/place-detail-modal";
 import { PlaceLinkFormModal } from "./place-link-form-modal";
@@ -36,7 +36,7 @@ interface PersonPlace {
 }
 
 interface PlacesTabProps {
-  places: PersonPlace[];
+  places: Array<PersonPlace>;
   personId?: string;
 }
 
@@ -112,7 +112,7 @@ export function PlacesTab({ places, personId }: PlacesTabProps) {
       acc[type].push(place);
       return acc;
     },
-    {} as Record<string, PersonPlace[]>
+    {} as Record<string, Array<PersonPlace>>
   );
 
   // Sort places chronologically (earliest first)

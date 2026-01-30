@@ -2,24 +2,26 @@
  * Unit Tests for Source Schemas
  * Tests Zod schema validation for source management and research notes
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  sourceTypeEnum,
   citationFormatEnum,
+  citationGenerateSchema,
   confidenceEnum,
+  linkSourceToEventSchema,
   reliabilityEnum,
-  sourceCreateSchema,
-  sourceUpdateSchema,
   researchNoteCreateSchema,
   researchNoteUpdateSchema,
-  citationGenerateSchema,
-  linkSourceToEventSchema,
-  type SourceCreateOutput,
-  type SourceUpdateOutput,
-  type ResearchNoteCreateOutput,
-  type ResearchNoteUpdateOutput,
-  type CitationGenerateInput,
-  type LinkSourceToEventInput,
+  sourceCreateSchema,
+  sourceTypeEnum,
+  sourceUpdateSchema,
+} from "./source";
+import type {
+  CitationGenerateInput,
+  LinkSourceToEventInput,
+  ResearchNoteCreateOutput,
+  ResearchNoteUpdateOutput,
+  SourceCreateOutput,
+  SourceUpdateOutput,
 } from "./source";
 
 describe("sourceTypeEnum", () => {

@@ -2,10 +2,11 @@
  * Playwright Global Setup
  * Runs once before all tests - sets up test environment and pre-authenticates users
  */
-import { chromium, type FullConfig } from "@playwright/test";
-import { writeFileSync, mkdirSync } from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
+import { mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { chromium, firefox, webkit } from "@playwright/test";
+import type { FullConfig } from "@playwright/test";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -42,20 +43,19 @@ async function authenticateUser(
     .waitFor({ state: "visible", timeout: 5000 });
   console.log(`[E2E Setup] Login form is visible`);
 
-  // Fill credentials - use type() instead of fill() to trigger onChange on React controlled components
+  // Fill credentials using pressSequentially for cross-browser compatibility
+  // This types one character at a time which triggers all input events properly
   const emailInput = page.getByTestId("login-email-input");
   const passwordInput = page.getByTestId("login-password-input");
 
-  // Clear fields first in case they have any content
+  // Click to focus and clear any existing value
   await emailInput.click();
-  await emailInput.press("Control+A");
-  await emailInput.press("Backspace");
+  await emailInput.clear();
+  await emailInput.pressSequentially(credentials.email, { delay: 20 });
 
-  // Type the email - this will trigger onChange and update React state
-  await emailInput.type(credentials.email, { delay: 50 });
-
-  // Type the password
-  await passwordInput.type(credentials.password, { delay: 50 });
+  await passwordInput.click();
+  await passwordInput.clear();
+  await passwordInput.pressSequentially(credentials.password, { delay: 20 });
 
   // Verify the form was filled
   const filledEmail = await emailInput.inputValue();
@@ -255,6 +255,94 @@ async function globalSetup(config: FullConfig) {
 
   await memberPage.close();
   await browser.close();
+
+  // Also create webkit-specific auth states
+  // WebKit may handle cookies/storage differently than Chromium
+  console.log("[E2E Setup] Creating WebKit auth states...");
+
+  const webkitBrowser = await webkit.launch();
+  const webkitPage = await webkitBrowser.newPage();
+
+  try {
+    await authenticateUser(webkitPage, baseURL, ADMIN_CREDENTIALS, "admin");
+    const webkitAdminState = await webkitPage.context().storageState();
+    writeFileSync(
+      path.join(storageDir, "admin-webkit.json"),
+      JSON.stringify(webkitAdminState, null, 2)
+    );
+    console.log("[E2E Setup] ✓ WebKit admin auth state saved");
+  } catch (err) {
+    console.error("[E2E Setup] Failed to authenticate webkit admin:", err);
+    // Continue - webkit can fall back to chromium auth state
+  }
+
+  await webkitPage.close();
+
+  const webkitMemberPage = await webkitBrowser.newPage();
+  try {
+    await authenticateUser(
+      webkitMemberPage,
+      baseURL,
+      MEMBER_CREDENTIALS,
+      "member"
+    );
+    const webkitMemberState = await webkitMemberPage.context().storageState();
+    writeFileSync(
+      path.join(storageDir, "member-webkit.json"),
+      JSON.stringify(webkitMemberState, null, 2)
+    );
+    console.log("[E2E Setup] ✓ WebKit member auth state saved");
+  } catch (err) {
+    console.error("[E2E Setup] Failed to authenticate webkit member:", err);
+    // Continue - webkit can fall back to chromium auth state
+  }
+
+  await webkitMemberPage.close();
+  await webkitBrowser.close();
+
+  // Also create Firefox-specific auth states
+  // Firefox may handle cookies/storage differently than Chromium
+  console.log("[E2E Setup] Creating Firefox auth states...");
+
+  const firefoxBrowser = await firefox.launch();
+  const firefoxPage = await firefoxBrowser.newPage();
+
+  try {
+    await authenticateUser(firefoxPage, baseURL, ADMIN_CREDENTIALS, "admin");
+    const firefoxAdminState = await firefoxPage.context().storageState();
+    writeFileSync(
+      path.join(storageDir, "admin-firefox.json"),
+      JSON.stringify(firefoxAdminState, null, 2)
+    );
+    console.log("[E2E Setup] ✓ Firefox admin auth state saved");
+  } catch (err) {
+    console.error("[E2E Setup] Failed to authenticate firefox admin:", err);
+    // Continue - firefox can fall back to chromium auth state
+  }
+
+  await firefoxPage.close();
+
+  const firefoxMemberPage = await firefoxBrowser.newPage();
+  try {
+    await authenticateUser(
+      firefoxMemberPage,
+      baseURL,
+      MEMBER_CREDENTIALS,
+      "member"
+    );
+    const firefoxMemberState = await firefoxMemberPage.context().storageState();
+    writeFileSync(
+      path.join(storageDir, "member-firefox.json"),
+      JSON.stringify(firefoxMemberState, null, 2)
+    );
+    console.log("[E2E Setup] ✓ Firefox member auth state saved");
+  } catch (err) {
+    console.error("[E2E Setup] Failed to authenticate firefox member:", err);
+    // Continue - firefox can fall back to chromium auth state
+  }
+
+  await firefoxMemberPage.close();
+  await firefoxBrowser.close();
 
   console.log("[E2E Setup] Global setup complete");
 }

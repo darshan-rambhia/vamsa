@@ -8,7 +8,7 @@
  * - Display order calculation
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
 // Helper functions for media operations
 function getFileExtension(mimeType: string): string {
@@ -69,16 +69,19 @@ interface MediaItem {
 }
 
 function reorderMediaItems(
-  items: MediaItem[],
+  items: Array<MediaItem>,
   newOrdering: Array<{ mediaId: string; order: number }>
-): MediaItem[] {
+): Array<MediaItem> {
   return items.map((item) => {
     const newOrder = newOrdering.find((n) => n.mediaId === item.id);
     return newOrder ? { ...item, displayOrder: newOrder.order } : item;
   });
 }
 
-function setPrimaryMedia(items: MediaItem[], mediaId: string): MediaItem[] {
+function setPrimaryMedia(
+  items: Array<MediaItem>,
+  mediaId: string
+): Array<MediaItem> {
   return items.map((item) => ({
     ...item,
     isPrimary: item.id === mediaId,
@@ -224,7 +227,7 @@ describe("media business logic - file handling", () => {
 
   describe("setPrimaryPhoto", () => {
     it("should set specified media as primary", () => {
-      const items: MediaItem[] = [
+      const items: Array<MediaItem> = [
         { id: "media-1", displayOrder: 0, isPrimary: true },
         { id: "media-2", displayOrder: 1, isPrimary: false },
       ];
@@ -236,7 +239,7 @@ describe("media business logic - file handling", () => {
     });
 
     it("should unset previous primary photo", () => {
-      const items: MediaItem[] = [
+      const items: Array<MediaItem> = [
         { id: "media-1", displayOrder: 0, isPrimary: true },
         { id: "media-2", displayOrder: 1, isPrimary: false },
         { id: "media-3", displayOrder: 2, isPrimary: false },
@@ -249,7 +252,7 @@ describe("media business logic - file handling", () => {
     });
 
     it("should handle single media", () => {
-      const items: MediaItem[] = [
+      const items: Array<MediaItem> = [
         { id: "media-1", displayOrder: 0, isPrimary: true },
       ];
 
@@ -259,7 +262,7 @@ describe("media business logic - file handling", () => {
     });
 
     it("should set primary to non-primary if already primary", () => {
-      const items: MediaItem[] = [
+      const items: Array<MediaItem> = [
         { id: "media-1", displayOrder: 0, isPrimary: true },
       ];
 
@@ -272,7 +275,7 @@ describe("media business logic - file handling", () => {
 
   describe("reorderMediaItems", () => {
     it("should reorder media by displayOrder", () => {
-      const items: MediaItem[] = [
+      const items: Array<MediaItem> = [
         { id: "media-1", displayOrder: 0, isPrimary: true },
         { id: "media-2", displayOrder: 1, isPrimary: false },
         { id: "media-3", displayOrder: 2, isPrimary: false },
@@ -297,7 +300,7 @@ describe("media business logic - file handling", () => {
     });
 
     it("should skip items not in new ordering", () => {
-      const items: MediaItem[] = [
+      const items: Array<MediaItem> = [
         { id: "media-1", displayOrder: 0, isPrimary: true },
         { id: "media-2", displayOrder: 1, isPrimary: false },
       ];
@@ -311,7 +314,7 @@ describe("media business logic - file handling", () => {
     });
 
     it("should handle empty ordering", () => {
-      const items: MediaItem[] = [
+      const items: Array<MediaItem> = [
         { id: "media-1", displayOrder: 0, isPrimary: true },
         { id: "media-2", displayOrder: 1, isPrimary: false },
       ];
@@ -322,7 +325,7 @@ describe("media business logic - file handling", () => {
     });
 
     it("should handle reordering to put non-primary first", () => {
-      const items: MediaItem[] = [
+      const items: Array<MediaItem> = [
         { id: "media-1", displayOrder: 0, isPrimary: true },
         { id: "media-2", displayOrder: 1, isPrimary: false },
       ];

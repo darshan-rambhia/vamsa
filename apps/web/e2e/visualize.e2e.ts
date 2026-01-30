@@ -9,12 +9,12 @@
  * - Responsive behavior
  */
 
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { VIEWPORT_ARRAY } from "./fixtures/viewports";
 
 test.describe("Visualization Page", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/visualize");
+    await page.goto("/visualize", { waitUntil: "domcontentloaded" });
     await page
       .getByLabel(/chart type/i)
       .waitFor({ state: "visible", timeout: 10000 });
@@ -71,17 +71,23 @@ test.describe("Visualization Page", () => {
     // Test that different chart types can be accessed via URL
     test("chart types are accessible via URL", async ({ page }) => {
       // Test ancestor chart via direct URL
-      await page.goto("/visualize?type=ancestor");
+      await page.goto("/visualize?type=ancestor", {
+        waitUntil: "domcontentloaded",
+      });
       await expect(page).toHaveURL(/type=ancestor/);
       await expect(page.locator("main")).toBeVisible();
 
       // Test timeline chart via direct URL
-      await page.goto("/visualize?type=timeline");
+      await page.goto("/visualize?type=timeline", {
+        waitUntil: "domcontentloaded",
+      });
       await expect(page).toHaveURL(/type=timeline/);
       await expect(page.locator("main")).toBeVisible();
 
       // Test matrix chart via direct URL
-      await page.goto("/visualize?type=matrix");
+      await page.goto("/visualize?type=matrix", {
+        waitUntil: "domcontentloaded",
+      });
       await expect(page).toHaveURL(/type=matrix/);
       await expect(page.locator("main")).toBeVisible();
     });
@@ -103,7 +109,9 @@ test.describe("Visualization Page", () => {
       page,
     }) => {
       // Navigate to a specific chart type via URL
-      await page.goto("/visualize?type=timeline");
+      await page.goto("/visualize?type=timeline", {
+        waitUntil: "domcontentloaded",
+      });
       await expect(page).toHaveURL(/type=timeline/);
 
       // Verify page loaded correctly
@@ -112,26 +120,34 @@ test.describe("Visualization Page", () => {
     });
 
     test("restores chart from URL parameters on load", async ({ page }) => {
-      await page.goto("/visualize?type=matrix");
+      await page.goto("/visualize?type=matrix", {
+        waitUntil: "domcontentloaded",
+      });
 
       const chartTypeSelect = page.getByLabel(/chart type/i);
       await expect(chartTypeSelect).toContainText(/matrix/i);
     });
 
     test("preserves multiple URL parameters", async ({ page }) => {
+      // Use commit to avoid interruption if personId causes redirect
       await page.goto(
-        "/visualize?type=ancestor&personId=test-id&generations=5"
+        "/visualize?type=ancestor&personId=test-id&generations=5",
+        { waitUntil: "commit" }
       );
+      await page.waitForLoadState("domcontentloaded");
 
+      // Verify we're on the visualize page with expected params
       await expect(page).toHaveURL(/type=ancestor/);
       await expect(page).toHaveURL(/personId=test-id/);
       await expect(page).toHaveURL(/generations=5/);
     });
 
     test("handles invalid chart type gracefully", async ({ page }) => {
-      await page.goto("/visualize?type=invalid");
+      // Use commit to handle potential redirect from invalid type
+      await page.goto("/visualize?type=invalid", { waitUntil: "commit" });
+      await page.waitForLoadState("domcontentloaded");
 
-      // Should still render the page
+      // Should still render the page (may redirect to default type)
       await page.waitForTimeout(500);
       await expect(page.locator("main")).toBeVisible();
     });

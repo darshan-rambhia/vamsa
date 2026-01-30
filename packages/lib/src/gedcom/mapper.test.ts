@@ -2,7 +2,7 @@
  * Unit Tests for GEDCOM Mapper
  * Tests bidirectional mapping between GEDCOM and Vamsa data models
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { GedcomMapper } from "./mapper";
 import { GedcomParser } from "./parser";
 import type { VamsaPerson, VamsaRelationship } from "./mapper-types";
@@ -274,7 +274,7 @@ describe("GedcomMapper", () => {
 
   describe("mapToGedcom", () => {
     test("maps people to individuals", () => {
-      const people: VamsaPerson[] = [
+      const people: Array<VamsaPerson> = [
         {
           id: "person1",
           firstName: "John",
@@ -303,7 +303,7 @@ describe("GedcomMapper", () => {
     });
 
     test("maps female correctly", () => {
-      const people: VamsaPerson[] = [
+      const people: Array<VamsaPerson> = [
         {
           id: "person1",
           firstName: "Jane",
@@ -320,7 +320,7 @@ describe("GedcomMapper", () => {
     });
 
     test("maps OTHER gender correctly", () => {
-      const people: VamsaPerson[] = [
+      const people: Array<VamsaPerson> = [
         {
           id: "person1",
           firstName: "Pat",
@@ -337,7 +337,7 @@ describe("GedcomMapper", () => {
     });
 
     test("maps spouse relationships to families", () => {
-      const people: VamsaPerson[] = [
+      const people: Array<VamsaPerson> = [
         {
           id: "person1",
           firstName: "John",
@@ -354,7 +354,7 @@ describe("GedcomMapper", () => {
         },
       ];
 
-      const relationships: VamsaRelationship[] = [
+      const relationships: Array<VamsaRelationship> = [
         {
           id: "rel1",
           personId: "person1",
@@ -385,7 +385,7 @@ describe("GedcomMapper", () => {
     });
 
     test("maps parent-child relationships", () => {
-      const people: VamsaPerson[] = [
+      const people: Array<VamsaPerson> = [
         {
           id: "person1",
           firstName: "John",
@@ -403,7 +403,7 @@ describe("GedcomMapper", () => {
         { id: "person3", firstName: "Baby", lastName: "Doe", isLiving: true },
       ];
 
-      const relationships: VamsaRelationship[] = [
+      const relationships: Array<VamsaRelationship> = [
         {
           id: "rel1",
           personId: "person1",
@@ -444,7 +444,7 @@ describe("GedcomMapper", () => {
     });
 
     test("updates individual family references", () => {
-      const people: VamsaPerson[] = [
+      const people: Array<VamsaPerson> = [
         {
           id: "person1",
           firstName: "John",
@@ -462,7 +462,7 @@ describe("GedcomMapper", () => {
         { id: "person3", firstName: "Baby", lastName: "Doe", isLiving: true },
       ];
 
-      const relationships: VamsaRelationship[] = [
+      const relationships: Array<VamsaRelationship> = [
         {
           id: "rel1",
           personId: "person1",
@@ -507,7 +507,7 @@ describe("GedcomMapper", () => {
     });
 
     test("handles person without last name", () => {
-      const people: VamsaPerson[] = [
+      const people: Array<VamsaPerson> = [
         { id: "person1", firstName: "Madonna", lastName: "", isLiving: true },
       ];
 
@@ -518,7 +518,7 @@ describe("GedcomMapper", () => {
     });
 
     test("handles deceased person", () => {
-      const people: VamsaPerson[] = [
+      const people: Array<VamsaPerson> = [
         {
           id: "person1",
           firstName: "John",

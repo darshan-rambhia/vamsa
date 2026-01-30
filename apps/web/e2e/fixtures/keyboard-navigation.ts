@@ -10,7 +10,8 @@
  * - Skip to main content functionality
  */
 
-import { expect, type Page, test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 // Note: bdd helpers not needed in keyboard navigation utilities
 
 /**
@@ -36,7 +37,7 @@ export interface FormKeyboardConfig {
   /** Test ID or selector of the form container */
   formId: string;
   /** Array of form field test IDs in expected tab order */
-  fieldIds: string[];
+  fieldIds: Array<string>;
   /** Test ID of the submit button */
   submitButtonId: string;
   /** Optional: URL or test ID of destination after form submit */

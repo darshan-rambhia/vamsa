@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Container, PageHeader, Card, CardContent } from "@vamsa/ui";
+import { Card, CardContent, Container, PageHeader } from "@vamsa/ui";
 import { getFamilySettings } from "~/server/settings";
 import { getCurrentUser } from "~/server/auth.functions";
 import { SettingsForm } from "~/components/admin/settings-form";

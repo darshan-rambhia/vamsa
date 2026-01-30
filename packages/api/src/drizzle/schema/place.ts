@@ -5,17 +5,17 @@
  */
 
 import {
+  doublePrecision,
+  index,
+  integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
-  integer,
-  doublePrecision,
-  jsonb,
   unique,
-  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
-import { placeTypeEnum, personPlaceTypeEnum } from "./enums";
+import { personPlaceTypeEnum, placeTypeEnum } from "./enums";
 import { persons } from "./person";
 
 /**

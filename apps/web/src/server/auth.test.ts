@@ -8,13 +8,13 @@
  * Note: Handler tests are in auth.handlers.test.ts to avoid mock conflicts.
  */
 
-import { describe, it, expect, beforeAll } from "bun:test";
-import { claimProfileSchema, changePasswordSchema } from "@vamsa/schemas";
+import { beforeAll, describe, expect, it } from "bun:test";
+import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
 import {
-  t,
-  tMultiple,
   getServerI18n,
   initializeServerI18n,
+  t,
+  tMultiple,
 } from "@vamsa/lib/server";
 
 // =============================================================================

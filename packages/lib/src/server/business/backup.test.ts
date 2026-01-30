@@ -16,14 +16,24 @@
  * 4. Verify logging and metric recording
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+// Import functions to test
+import {
+  createBackupArchive,
+  extractBackupData,
+  gatherBackupData,
+  restoreFromBackup,
+  scheduleBackupJob,
+  validateBackupFile,
+} from "./backup";
 
 // Mock the logger before importing modules
 mock.module("@vamsa/lib/logger", () => ({
@@ -65,16 +75,6 @@ mock.module("@vamsa/api", () => ({
   drizzleSchema: mockDrizzleSchema,
   drizzleConfig: {},
 }));
-
-// Import functions to test
-import {
-  gatherBackupData,
-  createBackupArchive,
-  validateBackupFile,
-  extractBackupData,
-  restoreFromBackup,
-  scheduleBackupJob,
-} from "./backup";
 
 // Default test objects - tests can customize specific fields via spread
 const createDefaultImportOptions = (
@@ -167,7 +167,7 @@ const createDefaultExtractedData = (): ExtractedBackupData => ({
 const createDefaultMetadata = () => ({
   version: "1.0.0",
   exportedAt: new Date().toISOString(),
-  exportedBy: { id: "user1", email: "user@example.com", name: null as null },
+  exportedBy: { id: "user1", email: "user@example.com", name: null },
   statistics: {
     totalPeople: 0,
     totalRelationships: 0,
@@ -177,8 +177,8 @@ const createDefaultMetadata = () => ({
     auditLogDays: 90,
     totalAuditLogs: 0,
   },
-  dataFiles: [] as string[],
-  photoDirectories: [] as string[],
+  dataFiles: [] as Array<string>,
+  photoDirectories: [] as Array<string>,
 });
 
 describe("backup business logic", () => {

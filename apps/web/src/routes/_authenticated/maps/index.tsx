@@ -1,14 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
-import {
-  InteractiveMap,
-  type MapMarker,
-} from "~/components/maps/interactive-map";
+import { useMemo, useState } from "react";
+import { Button, Card, CardContent, Container, PageHeader } from "@vamsa/ui";
+import type { MapMarker } from "~/components/maps/interactive-map";
+import { InteractiveMap } from "~/components/maps/interactive-map";
 import { TimelineSlider } from "~/components/maps/timeline-slider";
 import { MapControls } from "~/components/maps/map-controls";
 import { getFamilyLocations, getPlacesByTimeRange } from "~/server/maps";
-import { Container, PageHeader, Card, CardContent, Button } from "@vamsa/ui";
 
 export const Route = createFileRoute("/_authenticated/maps/")({
   component: MapsComponent,
@@ -44,7 +42,7 @@ function MapsComponent() {
   });
 
   // Determine which markers to show
-  const markers: MapMarker[] = useMemo(() => {
+  const markers: Array<MapMarker> = useMemo(() => {
     if (useTimelineFilter && timelineData) {
       // Convert timeline markers to map markers
       const markerMap = new Map<string, MapMarker>();
@@ -100,7 +98,7 @@ function MapsComponent() {
     if (!familyData?.markers.length)
       return { min: 1900, max: new Date().getFullYear() };
 
-    const years: number[] = [];
+    const years: Array<number> = [];
     familyData.markers.forEach((marker) => {
       if (marker.timeRange.earliest) years.push(marker.timeRange.earliest);
       if (marker.timeRange.latest) years.push(marker.timeRange.latest);

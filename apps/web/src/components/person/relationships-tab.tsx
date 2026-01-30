@@ -2,12 +2,6 @@
 
 import { useState } from "react";
 import {
-  Card,
-  CardContent,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -16,14 +10,20 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Button,
+  Card,
+  CardContent,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   Input,
   Label,
-  Button,
 } from "@vamsa/ui/primitives";
 import { Link } from "@tanstack/react-router";
 import { formatDate, formatDateForInput } from "@vamsa/lib";
-import { updateRelationship, deleteRelationship } from "~/server/relationships";
 import { AddRelationshipButton } from "./add-relationship-button";
+import { deleteRelationship, updateRelationship } from "~/server/relationships";
 
 interface Relationship {
   id: string;
@@ -38,7 +38,7 @@ interface Relationship {
 }
 
 interface RelationshipsTabProps {
-  relationships: Relationship[];
+  relationships: Array<Relationship>;
   personId: string;
   personName: string;
   onRelationshipAdded?: () => void;
@@ -158,7 +158,7 @@ export function RelationshipsTab({
       acc[type].push(rel);
       return acc;
     },
-    {} as Record<string, Relationship[]>
+    {} as Record<string, Array<Relationship>>
   );
 
   return (

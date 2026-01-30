@@ -3,10 +3,10 @@
  * Tests theme toggle functionality, state management, and DOM/localStorage interactions
  */
 import "../test-setup";
-import { describe, test, expect, beforeEach, afterEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { render } from "@testing-library/react";
-import { ThemeToggle } from "./theme-toggle";
 import React from "react";
+import { ThemeToggle } from "./theme-toggle";
 
 describe("ThemeToggle", () => {
   beforeEach(() => {

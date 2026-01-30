@@ -1,22 +1,20 @@
 import { createServerFn } from "@tanstack/react-start";
 import {
   eventCreateSchema,
-  eventUpdateSchema,
   eventParticipantCreateSchema,
   eventParticipantRemoveSchema,
-  type EventCreateOutput,
-  type EventUpdateOutput,
+  eventUpdateSchema,
 } from "@vamsa/schemas";
 import {
-  getPersonEventsData,
-  createEventData,
-  updateEventData,
-  deleteEventData,
   addEventParticipantData,
+  createEventData,
+  deleteEventData,
+  getPersonEventsData,
   removeEventParticipantData,
-  type Event,
-  type EventParticipant,
+  updateEventData,
 } from "@vamsa/lib/server/business";
+import type { EventCreateOutput, EventUpdateOutput } from "@vamsa/schemas";
+import type { Event, EventParticipant } from "@vamsa/lib/server/business";
 
 /**
  * Server function: Get all events for a person
@@ -24,7 +22,7 @@ import {
  */
 export const getPersonEvents = createServerFn({ method: "GET" })
   .inputValidator((data: { personId: string }) => data)
-  .handler(async ({ data }): Promise<Event[]> => {
+  .handler(async ({ data }): Promise<Array<Event>> => {
     return getPersonEventsData(data.personId);
   });
 

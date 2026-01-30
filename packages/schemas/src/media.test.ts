@@ -2,19 +2,21 @@
  * Unit Tests for Media Schemas
  * Tests Zod schema validation for media management and uploads
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
+  linkMediaToEventSchema,
   mediaFormatEnum,
-  mediaUploadSchema,
   mediaMetadataSchema,
   mediaReorderSchema,
-  linkMediaToEventSchema,
+  mediaUploadSchema,
   setPrimaryPhotoSchema,
-  type MediaUploadInput,
-  type MediaMetadataInput,
-  type MediaReorderInput,
-  type LinkMediaToEventInput,
-  type SetPrimaryPhotoInput,
+} from "./media";
+import type {
+  LinkMediaToEventInput,
+  MediaMetadataInput,
+  MediaReorderInput,
+  MediaUploadInput,
+  SetPrimaryPhotoInput,
 } from "./media";
 
 describe("mediaFormatEnum", () => {

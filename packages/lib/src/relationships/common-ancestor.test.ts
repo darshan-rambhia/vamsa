@@ -3,8 +3,8 @@
  *
  * Tests the lowest common ancestor (LCA) and all common ancestors functionality
  */
-import { describe, it, expect } from "bun:test";
-import { findCommonAncestor, findAllCommonAncestors } from "./common-ancestor";
+import { describe, expect, it } from "bun:test";
+import { findAllCommonAncestors, findCommonAncestor } from "./common-ancestor";
 
 interface RelationshipNode {
   id: string;
@@ -34,10 +34,10 @@ function createPerson(
  * Helper to create relationship maps from parent-child pairs
  */
 function createMaps(
-  parentChildPairs: [string, string][]
-): [Map<string, RelationshipNode>, Map<string, string[]>] {
+  parentChildPairs: Array<[string, string]>
+): [Map<string, RelationshipNode>, Map<string, Array<string>>] {
   const people = new Map<string, RelationshipNode>();
-  const parents = new Map<string, string[]>();
+  const parents = new Map<string, Array<string>>();
 
   for (const [parentId, childId] of parentChildPairs) {
     if (!parents.has(childId)) {
@@ -63,7 +63,7 @@ describe("findCommonAncestor", () => {
       const people = new Map([
         ["person1", createPerson("person1", "John", "Doe")],
       ]);
-      const parents = new Map<string, string[]>();
+      const parents = new Map<string, Array<string>>();
 
       const result = findCommonAncestor("person1", "person1", people, parents);
 
@@ -75,7 +75,7 @@ describe("findCommonAncestor", () => {
 
     it("returns null when person does not exist in people map", () => {
       const people = new Map<string, RelationshipNode>();
-      const parents = new Map<string, string[]>();
+      const parents = new Map<string, Array<string>>();
 
       const result = findCommonAncestor(
         "nonexistent",

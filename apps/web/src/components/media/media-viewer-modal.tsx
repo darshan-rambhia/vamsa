@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Badge, Button } from "@vamsa/ui/primitives";
 import { ResponsiveImage } from "../ui/responsive-image";
 
@@ -21,7 +21,7 @@ interface MediaViewerModalProps {
     thumb800Path?: string | null;
     thumb1200Path?: string | null;
   };
-  allMediaIds: string[];
+  allMediaIds: Array<string>;
   relatedEvents?: Array<{
     id: string;
     eventType: string;

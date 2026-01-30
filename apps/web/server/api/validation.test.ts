@@ -9,7 +9,7 @@
  * 4. Error responses follow a consistent format
  */
 
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import apiV1 from "./index";
 
 describe("Authentication Endpoint Validation", () => {

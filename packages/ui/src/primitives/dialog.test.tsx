@@ -1,19 +1,19 @@
 /**
  * Unit Tests for Dialog Components
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { render } from "@testing-library/react";
 import {
   Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
-  DialogOverlay,
   DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogOverlay,
   DialogPortal,
+  DialogTitle,
+  DialogTrigger,
 } from "./dialog";
 
 describe("DialogOverlay", () => {

@@ -1,15 +1,15 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { listPersons } from "~/server/persons.functions";
 import {
-  Container,
-  PageHeader,
+  Avatar,
+  Badge,
   Button,
   Card,
   CardContent,
-  Avatar,
-  Badge,
+  Container,
+  PageHeader,
 } from "@vamsa/ui";
+import { listPersons } from "~/server/persons.functions";
 
 export const Route = createFileRoute("/_authenticated/people/")({
   component: PeopleListComponent,

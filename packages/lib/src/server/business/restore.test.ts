@@ -10,14 +10,22 @@
  * Uses module mocking to inject mocked Drizzle ORM instance and logger
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+// Import after mocks are set up
+import {
+  getImportHistoryData,
+  importBackupData,
+  previewImportData,
+  validateBackupData,
+} from "./restore";
 
 // Mock logger module
 mock.module("@vamsa/lib/logger", () => ({
@@ -49,7 +57,7 @@ const createMockDb = () => {
   return {
     select: mock(() => ({
       from: mock(() => ({
-        then: mock((fn: (rows: unknown[]) => unknown) =>
+        then: mock((fn: (rows: Array<unknown>) => unknown) =>
           Promise.resolve(fn([{ personCount: 10 }]))
         ),
       })),
@@ -88,14 +96,6 @@ mock.module("@vamsa/api", () => ({
   drizzleDb: mockDrizzleDb,
   drizzleSchema: mockDrizzleSchema,
 }));
-
-// Import after mocks are set up
-import {
-  validateBackupData,
-  previewImportData,
-  importBackupData,
-  getImportHistoryData,
-} from "./restore";
 
 describe("restore business logic", () => {
   beforeEach(() => {

@@ -14,8 +14,8 @@
  *   - Improved server performance (skip processing for cached data)
  */
 
-import type { Context, Next, MiddlewareHandler } from "hono";
-import { createHash } from "crypto";
+import { createHash } from "node:crypto";
+import type { Context, MiddlewareHandler, Next } from "hono";
 
 export interface ETagOptions {
   /**
@@ -35,7 +35,7 @@ export interface ETagOptions {
    * Routes to skip ETag generation (regex patterns)
    * Default: [/\.(ico|png|jpg|jpeg|gif|svg|woff|woff2|ttf|eot)$/]
    */
-  skip?: RegExp[];
+  skip?: Array<RegExp>;
 
   /**
    * Minimum response size to apply ETags (bytes)

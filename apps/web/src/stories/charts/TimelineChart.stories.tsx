@@ -1,8 +1,8 @@
+import { createTimelineEntries } from "@vamsa/lib";
+import { loggers } from "@vamsa/lib/logger";
 import type { Story } from "@ladle/react";
 import { TimelineChart } from "~/components/charts/TimelineChart";
 import { StoryDecorator } from "~/stories/decorators";
-import { createTimelineEntries } from "@vamsa/lib";
-import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.api;
 

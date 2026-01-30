@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import maplibregl, { type StyleSpecification } from "maplibre-gl";
+import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPopup } from "./map-popup";
+import type { StyleSpecification } from "maplibre-gl";
 
 export interface MapMarker {
   id: string;
@@ -14,7 +15,7 @@ export interface MapMarker {
   description: string | null;
   personCount: number;
   eventCount: number;
-  eventTypes: string[];
+  eventTypes: Array<string>;
   timeRange: {
     earliest: number | null;
     latest: number | null;
@@ -22,7 +23,7 @@ export interface MapMarker {
 }
 
 interface InteractiveMapProps {
-  markers: MapMarker[];
+  markers: Array<MapMarker>;
   onMarkerClick?: (marker: MapMarker) => void;
   centerLat?: number;
   centerLng?: number;
@@ -45,7 +46,7 @@ export function InteractiveMap({
     x: number;
     y: number;
   } | null>(null);
-  const mapMarkers = useRef<maplibregl.Marker[]>([]);
+  const mapMarkers = useRef<Array<maplibregl.Marker>>([]);
 
   // Initialize map
   useEffect(() => {

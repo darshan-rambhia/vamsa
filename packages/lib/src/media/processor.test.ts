@@ -3,19 +3,18 @@
  * Tests image optimization, conversion, and file handling
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
-import { promises as fs } from "fs";
-import path from "path";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 import {
-  generateWebP,
-  generateThumbnail,
-  generateResponsiveSizes,
-  processUploadedImage,
   cleanupOldImages,
+  generateResponsiveSizes,
+  generateThumbnail,
+  generateWebP,
   getMediaDir,
-  type ProcessedImage,
-  type ImageSize,
+  processUploadedImage,
 } from "./processor";
+import type { ImageSize, ProcessedImage } from "./processor";
 
 // Create a valid test PNG image (100x100 red)
 async function createTestImageFile(): Promise<Buffer> {
@@ -180,7 +179,7 @@ describe("Image Processing Pipeline", () => {
 
     it("generates custom sizes", async () => {
       const imageBuffer = await createTestImageFile();
-      const customSizes: ImageSize[] = [
+      const customSizes: Array<ImageSize> = [
         { width: 200, label: "small" },
         { width: 600, label: "large" },
       ];
@@ -366,7 +365,7 @@ describe("Image Processing Pipeline", () => {
 
     it("respects custom responsive sizes", async () => {
       const imageBuffer = await createTestImageFile();
-      const customSizes: ImageSize[] = [
+      const customSizes: Array<ImageSize> = [
         { width: 300, label: "300" },
         { width: 600, label: "600" },
       ];

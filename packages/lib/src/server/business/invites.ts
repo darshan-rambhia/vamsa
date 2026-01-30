@@ -20,15 +20,16 @@
  * - resendInviteData: Generate new token and extend expiration (admin only)
  */
 
-import { randomBytes } from "crypto";
-import { loggers } from "@vamsa/lib/logger";
-
-const log = loggers.auth;
+import { randomBytes } from "node:crypto";
 import { createPaginationMeta } from "@vamsa/schemas";
 
 // Drizzle imports
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, desc, asc, sql, SQLWrapper } from "drizzle-orm";
+import { and, asc, desc, eq, sql } from "drizzle-orm";
+import { loggers } from "@vamsa/lib/logger";
+import type { SQLWrapper } from "drizzle-orm";
+
+const log = loggers.auth;
 
 /**
  * Local type definitions to match Drizzle enum values
@@ -72,7 +73,7 @@ export async function getInvitesData(
   db: InvitesDb = drizzleDb
 ) {
   // Build where conditions
-  const whereConditions: (SQLWrapper | undefined)[] = [];
+  const whereConditions: Array<SQLWrapper | undefined> = [];
   if (status && isValidInviteStatus(status)) {
     whereConditions.push(eq(drizzleSchema.invites.status, status));
   }

@@ -76,7 +76,7 @@ globalAny.ResizeObserver =
 // Polyfill for IE's attachEvent (jsdom doesn't have this)
 declare global {
   interface Element {
-    attachEvent?(event: string, listener: EventListener): void;
+    attachEvent?: (event: string, listener: EventListener) => void;
   }
 }
 

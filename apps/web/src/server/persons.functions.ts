@@ -11,21 +11,21 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { personCreateSchema, personUpdateSchema } from "@vamsa/schemas";
 import {
-  listPersonsHandler,
-  getPersonHandler,
   createPersonHandler,
-  updatePersonHandler,
   deletePersonHandler,
+  getPersonHandler,
+  listPersonsHandler,
   searchPersonsHandler,
-  type PersonListInput,
+  updatePersonHandler,
 } from "./persons.server";
+import type { PersonListInput } from "./persons.server";
 import type {
-  PersonListResult,
-  PersonDetail,
   PersonCreateResult,
-  PersonUpdateResult,
   PersonDeleteResult,
+  PersonDetail,
+  PersonListResult,
   PersonSearchResult,
+  PersonUpdateResult,
 } from "@vamsa/lib/server/business";
 
 // Re-export types for use by route loaders
@@ -121,6 +121,6 @@ export const deletePerson = createServerFn({ method: "POST" })
  */
 export const searchPersons = createServerFn({ method: "GET" })
   .inputValidator((data: { query: string; excludeId?: string }) => data)
-  .handler(async ({ data }): Promise<PersonSearchResult[]> => {
+  .handler(async ({ data }): Promise<Array<PersonSearchResult>> => {
     return searchPersonsHandler(data);
   });

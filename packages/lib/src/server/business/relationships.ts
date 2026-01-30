@@ -1,5 +1,5 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 import type {
   RelationshipCreateInput,

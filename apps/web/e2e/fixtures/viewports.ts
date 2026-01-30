@@ -51,7 +51,7 @@ export const VIEWPORTS = {
 /**
  * All standard viewports as an array for parametrized tests
  */
-export const VIEWPORT_ARRAY: ViewportConfig[] = [
+export const VIEWPORT_ARRAY: Array<ViewportConfig> = [
   VIEWPORTS.mobile,
   VIEWPORTS.tablet,
   VIEWPORTS.desktop,
@@ -115,7 +115,7 @@ export class ResponsiveTestHelper {
   async testVisibilityAcrossViewports(
     selector: string | any,
     options: {
-      viewports?: ViewportConfig[];
+      viewports?: Array<ViewportConfig>;
       timeout?: number;
       name?: string;
     } = {}
@@ -190,7 +190,7 @@ export class ResponsiveTestHelper {
       viewport: ViewportConfig,
       helper: ResponsiveTestHelper
     ) => Promise<void>,
-    options: { viewports?: ViewportConfig[] } = {}
+    options: { viewports?: Array<ViewportConfig> } = {}
   ): Promise<void> {
     const viewports = options.viewports || VIEWPORT_ARRAY;
 

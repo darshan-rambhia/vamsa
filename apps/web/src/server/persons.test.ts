@@ -5,13 +5,23 @@
  * withStubbedServerContext for isolated testing.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
-  withStubbedServerContext,
-  testUsers,
   createMockUser,
   getStubbedSession,
+  testUsers,
+  withStubbedServerContext,
 } from "@test/server-fn-context";
+
+// Import handlers AFTER setting up mocks
+import {
+  createPersonHandler,
+  deletePersonHandler,
+  getPersonHandler,
+  listPersonsHandler,
+  searchPersonsHandler,
+  updatePersonHandler,
+} from "./persons.server";
 
 // Mock business logic BEFORE importing handlers
 const mockListPersonsData = mock(async () => ({
@@ -88,16 +98,6 @@ mock.module("./middleware/require-auth", () => ({
     return user;
   },
 }));
-
-// Import handlers AFTER setting up mocks
-import {
-  listPersonsHandler,
-  getPersonHandler,
-  createPersonHandler,
-  updatePersonHandler,
-  deletePersonHandler,
-  searchPersonsHandler,
-} from "./persons.server";
 
 describe("Person Handlers", () => {
   beforeEach(() => {

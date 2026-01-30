@@ -1,8 +1,8 @@
+import { createBowtieNodes, createMockPerson } from "@vamsa/lib";
+import { loggers } from "@vamsa/lib/logger";
 import type { Story } from "@ladle/react";
 import { BowtieChart } from "~/components/charts/BowtieChart";
 import { StoryDecorator } from "~/stories/decorators";
-import { createMockPerson, createBowtieNodes } from "@vamsa/lib";
-import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.api;
 

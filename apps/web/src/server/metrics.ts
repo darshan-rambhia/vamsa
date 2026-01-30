@@ -11,12 +11,12 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "./middleware/require-auth";
 import {
   getMetricsSnapshotData,
   getPrometheusStatusData,
-  type MetricSnapshot,
 } from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
+import type { MetricSnapshot } from "@vamsa/lib/server/business";
 
 // Re-export type for use by components
 export type { MetricSnapshot };

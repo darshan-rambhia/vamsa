@@ -9,20 +9,20 @@
  * - filterValidEdges: Edge validation
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  calculateNodePositions,
   calculateChartDimensions,
+  calculateNodePositions,
+  filterValidEdges,
   filterVisibleNodes,
   getLoadingState,
-  filterValidEdges,
-  type GenerationNode,
 } from "./performance-utils";
+import type { GenerationNode } from "./performance-utils";
 
 describe("Chart Performance Utilities", () => {
   describe("calculateNodePositions", () => {
     it("should calculate positions for nodes in single generation", () => {
-      const nodes: GenerationNode[] = [
+      const nodes: Array<GenerationNode> = [
         { id: "node-1", generation: 0 },
         { id: "node-2", generation: 0 },
       ];
@@ -39,7 +39,7 @@ describe("Chart Performance Utilities", () => {
     });
 
     it("should calculate positions for nodes across multiple generations", () => {
-      const nodes: GenerationNode[] = [
+      const nodes: Array<GenerationNode> = [
         { id: "parent", generation: 0 },
         { id: "child-1", generation: 1 },
         { id: "child-2", generation: 1 },
@@ -58,7 +58,7 @@ describe("Chart Performance Utilities", () => {
     });
 
     it("should center nodes horizontally", () => {
-      const nodes: GenerationNode[] = [{ id: "single", generation: 0 }];
+      const nodes: Array<GenerationNode> = [{ id: "single", generation: 0 }];
 
       const positions = calculateNodePositions(nodes, 800, 160, 100, 40);
 
@@ -69,7 +69,7 @@ describe("Chart Performance Utilities", () => {
     });
 
     it("should handle nodes with null generation", () => {
-      const nodes: GenerationNode[] = [
+      const nodes: Array<GenerationNode> = [
         { id: "node-1", generation: null },
         { id: "node-2", generation: undefined },
       ];
@@ -88,7 +88,7 @@ describe("Chart Performance Utilities", () => {
     });
 
     it("should space nodes appropriately within generation", () => {
-      const nodes: GenerationNode[] = [
+      const nodes: Array<GenerationNode> = [
         { id: "node-1", generation: 0 },
         { id: "node-2", generation: 0 },
         { id: "node-3", generation: 0 },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Button,
@@ -13,8 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui";
-import { getBackupSettings, updateBackupSettings } from "~/server/backup";
 import type { BackupSettings } from "@vamsa/schemas";
+import { getBackupSettings, updateBackupSettings } from "~/server/backup";
 
 const DAYS_OF_WEEK = [
   { value: 0, label: "Sunday" },

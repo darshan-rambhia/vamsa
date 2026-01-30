@@ -14,10 +14,10 @@
  */
 
 import {
-  drizzleDb,
-  getDrizzlePoolStats,
   closeDrizzleDb,
+  drizzleDb,
   drizzleSchema,
+  getDrizzlePoolStats,
 } from "@vamsa/api";
 
 // Re-export the Drizzle database client

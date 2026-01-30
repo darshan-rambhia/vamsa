@@ -1,10 +1,11 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { Users, UserCheck, UserMinus, TrendingUp } from "lucide-react";
+import { TrendingUp, UserCheck, UserMinus, Users } from "lucide-react";
+import { getPeopleStatistics } from "../../../server/statistics";
+import { AnimatedNumber } from "../../ui/animated-number";
 import { BaseWidget } from "./BaseWidget";
 import type { WidgetProps } from "./types";
-import { getPeopleStatistics } from "../../../server/statistics";
 
 /**
  * Widget settings for People Statistics
@@ -36,7 +37,7 @@ function StatCard({
       <div className="min-w-0 flex-1">
         <p className="text-muted-foreground text-sm font-medium">{label}</p>
         <p className="font-display mt-1 text-2xl font-semibold tabular-nums">
-          {value.toLocaleString()}
+          <AnimatedNumber value={value} />
         </p>
       </div>
     </div>

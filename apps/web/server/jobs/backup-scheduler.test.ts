@@ -4,7 +4,15 @@
  * Tests scheduler initialization, job creation, and management
  */
 
-import { describe, it, expect, mock, afterEach, beforeEach } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+
+// Import after mocks are set up
+import {
+  getSchedulerStatus,
+  initBackupScheduler,
+  refreshBackupScheduler,
+  stopBackupScheduler,
+} from "./backup-scheduler";
 
 // Mock settings type
 type MockSettings = {
@@ -46,14 +54,6 @@ mock.module("../db", () => {
 mock.module("./backup-job", () => ({
   performBackup: mockPerformBackup,
 }));
-
-// Import after mocks are set up
-import {
-  initBackupScheduler,
-  stopBackupScheduler,
-  refreshBackupScheduler,
-  getSchedulerStatus,
-} from "./backup-scheduler";
 
 describe("Backup Scheduler", () => {
   beforeEach(() => {

@@ -1,24 +1,24 @@
 "use client";
 
-import { memo, useMemo, useCallback, useEffect } from "react";
-import { Svg, G, Line } from "react-native-svg";
-import type { ChartNode, ChartEdge } from "~/server/charts";
-import { RectNode, ParentChildEdge } from "./ChartElements";
+import { memo, useCallback, useEffect, useMemo } from "react";
+import { G, Line, Svg } from "react-native-svg";
+import { ParentChildEdge, RectNode } from "./ChartElements";
+import { ChartSkeleton } from "./ChartSkeleton";
+import { ZoomControls } from "./ZoomControls";
+import {
+  calculateBoundsFromPositions,
+  useChartViewport,
+} from "./useChartViewport";
 import type { Position } from "~/lib/d3-utils";
+import type { ChartEdge, ChartNode } from "~/server/charts";
 import {
   useChartLoadingState,
   usePerformanceMonitor,
 } from "~/lib/chart-performance";
-import { ChartSkeleton } from "./ChartSkeleton";
-import { ZoomControls } from "./ZoomControls";
-import {
-  useChartViewport,
-  calculateBoundsFromPositions,
-} from "./useChartViewport";
 
 interface HourglassChartProps {
-  nodes: ChartNode[];
-  edges: ChartEdge[];
+  nodes: Array<ChartNode>;
+  edges: Array<ChartEdge>;
   rootPersonId: string;
   onNodeClick?: (nodeId: string) => void;
   resetSignal?: number;
@@ -33,8 +33,10 @@ const MARGIN = { top: 40, right: 40, bottom: 40, left: 40 };
 /**
  * Groups nodes by generation
  */
-function groupByGeneration(nodes: ChartNode[]): Map<number, ChartNode[]> {
-  const generations = new Map<number, ChartNode[]>();
+function groupByGeneration(
+  nodes: Array<ChartNode>
+): Map<number, Array<ChartNode>> {
+  const generations = new Map<number, Array<ChartNode>>();
   nodes.forEach((node) => {
     const gen = node.generation ?? 0;
     if (!generations.has(gen)) {
@@ -50,7 +52,7 @@ function groupByGeneration(nodes: ChartNode[]): Map<number, ChartNode[]> {
  * Ancestors above center, descendants below
  */
 function calculateHourglassLayout(
-  nodes: ChartNode[],
+  nodes: Array<ChartNode>,
   rootPersonId: string,
   width: number,
   height: number
@@ -62,8 +64,8 @@ function calculateHourglassLayout(
   const rootNode = nodes.find((n) => n.id === rootPersonId);
 
   // Separate ancestors and descendants
-  const ancestors: ChartNode[] = [];
-  const descendants: ChartNode[] = [];
+  const ancestors: Array<ChartNode> = [];
+  const descendants: Array<ChartNode> = [];
 
   nodes.forEach((node) => {
     if (node.id === rootPersonId) {
@@ -85,7 +87,7 @@ function calculateHourglassLayout(
 
   // Group by generation
   const ancestorGens = groupByGeneration(ancestors);
-  const descendantGens = new Map<number, ChartNode[]>();
+  const descendantGens = new Map<number, Array<ChartNode>>();
 
   descendants.forEach((node) => {
     const gen = Math.abs(node.generation ?? 0);

@@ -1,25 +1,27 @@
 "use client";
 
-import { useState, memo, useMemo, useCallback, useEffect } from "react";
-import { Svg, G, Rect, Text, Line, Path } from "react-native-svg";
+import { memo, useCallback, useEffect, useMemo, useState } from "react";
+import { G, Line, Path, Rect, Svg, Text } from "react-native-svg";
 import * as d3 from "d3";
+import { ChartSkeleton } from "./ChartSkeleton";
+import { ZoomControls } from "./ZoomControls";
+import { MiniMap } from "./MiniMap";
+import {
+  calculateBoundsFromPositions,
+  useChartViewport,
+} from "./useChartViewport";
 import type { BowtieNode, ChartEdge } from "~/server/charts";
 import {
   useChartLoadingState,
   usePerformanceMonitor,
 } from "~/lib/chart-performance";
-import { ChartSkeleton } from "./ChartSkeleton";
-import { ZoomControls } from "./ZoomControls";
-import {
-  useChartViewport,
-  calculateBoundsFromPositions,
-} from "./useChartViewport";
 
 interface BowtieChartProps {
-  nodes: BowtieNode[];
-  edges: ChartEdge[];
+  nodes: Array<BowtieNode>;
+  edges: Array<ChartEdge>;
   rootPersonId: string;
   onNodeClick?: (nodeId: string) => void;
+  showMiniMap?: boolean;
 }
 
 // Layout constants
@@ -175,7 +177,7 @@ function BowtieNodeComponent({
  * Calculate layout positions for bowtie chart
  */
 function calculateBowtieLayout(
-  nodes: BowtieNode[],
+  nodes: Array<BowtieNode>,
   rootPersonId: string,
   centerX: number,
   centerY: number
@@ -188,8 +190,8 @@ function calculateBowtieLayout(
   const centerNode = nodes.find((n) => n.id === rootPersonId);
 
   // Group by generation
-  const paternalGens = new Map<number, BowtieNode[]>();
-  const maternalGens = new Map<number, BowtieNode[]>();
+  const paternalGens = new Map<number, Array<BowtieNode>>();
+  const maternalGens = new Map<number, Array<BowtieNode>>();
 
   paternalNodes.forEach((node) => {
     const gen = node.generation ?? 0;
@@ -243,6 +245,7 @@ function BowtieChartComponent({
   edges,
   rootPersonId,
   onNodeClick,
+  showMiniMap = false,
 }: BowtieChartProps) {
   // Use the standardized chart viewport hook
   const viewport = useChartViewport({
@@ -317,6 +320,64 @@ function BowtieChartComponent({
       onNodeClick?.(node.id);
     },
     [onNodeClick]
+  );
+
+  // Calculate tree bounds and viewport for mini-map
+  const miniMapData = useMemo(() => {
+    if (!showMiniMap || nodePositions.size === 0) return null;
+
+    const bounds = calculateBoundsFromPositions(
+      nodePositions,
+      NODE_WIDTH,
+      NODE_HEIGHT
+    );
+
+    // Normalize node positions to start at (0, 0) relative to bounds
+    const nodeArray = Array.from(nodePositions.entries()).map(([id, pos]) => {
+      const node = nodes.find((n) => n.id === id);
+      return {
+        id,
+        x: pos.x - bounds.minX,
+        y: pos.y - bounds.minY,
+        generation: node?.generation,
+      };
+    });
+
+    // Calculate current viewport in tree coordinates (normalized to bounds origin)
+    const viewportX =
+      -viewport.transform.x / viewport.transform.scale - bounds.minX;
+    const viewportY =
+      -viewport.transform.y / viewport.transform.scale - bounds.minY;
+
+    const viewportInTreeCoords = {
+      x: viewportX,
+      y: viewportY,
+      width: viewport.dimensions.width / viewport.transform.scale,
+      height: viewport.dimensions.height / viewport.transform.scale,
+    };
+
+    return {
+      treeBounds: {
+        width: bounds.maxX - bounds.minX,
+        height: bounds.maxY - bounds.minY,
+      },
+      viewport: viewportInTreeCoords,
+      nodePositions: nodeArray,
+      boundsOffset: { x: bounds.minX, y: bounds.minY },
+    };
+  }, [showMiniMap, nodePositions, nodes, viewport]);
+
+  // Handle mini-map navigation
+  const handleMiniMapNavigate = useCallback(
+    (x: number, y: number) => {
+      // Add back the bounds offset to convert from normalized to actual tree coords
+      if (miniMapData) {
+        const actualX = x + miniMapData.boundsOffset.x;
+        const actualY = y + miniMapData.boundsOffset.y;
+        viewport.controls.panTo(actualX, actualY);
+      }
+    },
+    [viewport.controls, miniMapData]
   );
 
   // Show loading skeleton for large datasets
@@ -472,6 +533,17 @@ function BowtieChartComponent({
             onZoomOut={viewport.controls.zoomOut}
             onReset={viewport.controls.reset}
           />
+
+          {/* Mini-map overlay */}
+          {miniMapData && (
+            <MiniMap
+              treeBounds={miniMapData.treeBounds}
+              viewport={miniMapData.viewport}
+              onNavigate={handleMiniMapNavigate}
+              nodePositions={miniMapData.nodePositions}
+              rootPersonId={rootPersonId}
+            />
+          )}
         </>
       )}
     </div>

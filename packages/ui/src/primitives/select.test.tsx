@@ -1,19 +1,19 @@
 /**
  * Unit Tests for Select Components
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { render } from "@testing-library/react";
 import {
   Select,
-  SelectGroup,
-  SelectValue,
-  SelectTrigger,
   SelectContent,
-  SelectLabel,
+  SelectGroup,
   SelectItem,
-  SelectSeparator,
-  SelectScrollUpButton,
+  SelectLabel,
   SelectScrollDownButton,
+  SelectScrollUpButton,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
 } from "./select";
 
 describe("SelectTrigger", () => {
@@ -62,7 +62,7 @@ describe("SelectTrigger", () => {
       );
       const trigger = container.querySelector("[data-testid='trigger']");
       expect(trigger).toBeDefined();
-      expect(trigger?.className?.length || 0).toBeGreaterThan(0);
+      expect(trigger?.className.length || 0).toBeGreaterThan(0);
     });
 
     test("applies styling with children", () => {

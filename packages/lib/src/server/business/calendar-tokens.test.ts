@@ -12,14 +12,17 @@
  * - Logging for security-critical operations
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+// Import functions to test
+import { verifyTokenOwnership } from "./calendar-tokens";
 
 // Mock the logger before importing modules
 mock.module("@vamsa/lib/logger", () => ({
@@ -102,9 +105,6 @@ mock.module("./token-rotation", () => ({
     createdAt: new Date(),
   })),
 }));
-
-// Import functions to test
-import { verifyTokenOwnership } from "./calendar-tokens";
 
 describe("calendar-tokens business logic", () => {
   beforeEach(() => {

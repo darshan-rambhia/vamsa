@@ -16,7 +16,7 @@ export interface BackupNotificationInput {
   size?: number;
   duration?: number;
   error?: string;
-  emails: string[];
+  emails: Array<string>;
 }
 
 /**

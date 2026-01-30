@@ -11,15 +11,11 @@
  */
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, notInArray, asc, isNotNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, notInArray } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
-import {
-  findSuggestedMatches,
-  type ClaimableProfile,
-  type ClaimingUser,
-  type ProfileMatch,
-} from "@vamsa/lib";
+import { findSuggestedMatches } from "@vamsa/lib";
 import { notifyNewMemberJoined } from "./notifications";
+import type { ClaimableProfile, ClaimingUser, ProfileMatch } from "@vamsa/lib";
 
 const log = loggers.auth;
 
@@ -102,7 +98,7 @@ export async function getClaimableProfilesData(
   };
 
   // Convert profiles to ClaimableProfile type
-  const claimableProfiles: ClaimableProfile[] = profiles.map((p) => ({
+  const claimableProfiles: Array<ClaimableProfile> = profiles.map((p) => ({
     id: p.id,
     firstName: p.firstName,
     lastName: p.lastName,

@@ -1,14 +1,14 @@
 /**
  * Unit Tests for Metrics
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
   recordChartMetrics,
-  recordSearchMetrics,
-  recordMediaUpload,
-  recordGedcomValidation,
-  recordGedcomImport,
   recordGedcomExport,
+  recordGedcomImport,
+  recordGedcomValidation,
+  recordMediaUpload,
+  recordSearchMetrics,
 } from "./metrics";
 
 describe("Metrics Functions", () => {

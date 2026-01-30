@@ -1,20 +1,20 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  BLOOD_RELATIONSHIPS,
-  MARRIAGE_RELATIONSHIPS,
-  INLAW_RELATIONSHIPS,
-  STEP_RELATIONSHIPS,
   ALL_RELATIONSHIP_TYPES,
-  isBloodRelationship,
-  isInlawRelationship,
-  isStepRelationship,
-  isDerivedRelationship,
+  BLOOD_RELATIONSHIPS,
+  INLAW_RELATIONSHIPS,
+  MARRIAGE_RELATIONSHIPS,
+  RELATIONSHIP_TYPE_OPTIONS,
+  STEP_RELATIONSHIPS,
+  canCoexist,
+  getInverseRelationship,
   getRelationshipCategory,
   getRelationshipLabel,
-  getInverseRelationship,
-  RELATIONSHIP_TYPE_OPTIONS,
   getRelationshipOptions,
-  canCoexist,
+  isBloodRelationship,
+  isDerivedRelationship,
+  isInlawRelationship,
+  isStepRelationship,
 } from "./relationships";
 
 describe("Relationship Type Constants", () => {

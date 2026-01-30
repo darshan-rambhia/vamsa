@@ -4,7 +4,7 @@
  * These tests use the real API without mocking shared modules
  * to avoid mock leaking issues between test files.
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import apiV1 from "./index";
 
 // Note: LOG_LEVEL=error is used in test command to silence logger warnings
@@ -180,7 +180,7 @@ describe("Calendar API Endpoints", () => {
     });
 
     it("should handle empty person list", () => {
-      const people: (typeof mockPerson)[] = [];
+      const people: Array<typeof mockPerson> = [];
       expect(people.length).toBe(0);
     });
   });
@@ -198,7 +198,7 @@ describe("Calendar API Endpoints", () => {
     });
 
     it("should calculate years married correctly", () => {
-      const marriageYear = mockRelationship.marriageDate!.getFullYear();
+      const marriageYear = mockRelationship.marriageDate.getFullYear();
       const currentYear = new Date().getFullYear();
       const yearsTogether = currentYear - marriageYear;
       expect(yearsTogether).toBeGreaterThan(0);
@@ -384,7 +384,7 @@ describe("Calendar API Endpoints", () => {
     });
 
     it("should handle empty audit log", () => {
-      const logs: (typeof mockAuditLog)[] = [];
+      const logs: Array<typeof mockAuditLog> = [];
       expect(logs.length).toBe(0);
     });
 

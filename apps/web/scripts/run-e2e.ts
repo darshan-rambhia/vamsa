@@ -97,6 +97,15 @@ async function main() {
     (arg) => arg !== "--logs" && arg !== "--bun-runtime"
   );
 
+  // Default to Chromium-only for local development (faster)
+  // CI passes --project explicitly to run specific browsers
+  const hasProjectFlag = filteredArgs.some(
+    (arg) => arg.startsWith("--project") || arg === "-p"
+  );
+  if (!process.env.CI && !hasProjectFlag) {
+    filteredArgs.push("--project=chromium");
+  }
+
   log.info({}, "🚀 Starting E2E test runner...\n");
   if (useBunRuntime) {
     log.info({}, "⚡ Running Playwright with Bun runtime (experimental)");

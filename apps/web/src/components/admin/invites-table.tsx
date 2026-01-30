@@ -1,12 +1,5 @@
 import { useState } from "react";
 import {
-  Button,
-  Badge,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -16,8 +9,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@vamsa/ui";
-import { revokeInvite, resendInvite, deleteInvite } from "~/server/invites";
+import { deleteInvite, resendInvite, revokeInvite } from "~/server/invites";
 
 interface Invite {
   id: string;
@@ -34,7 +34,7 @@ interface Invite {
 }
 
 interface InvitesTableProps {
-  invites: Invite[];
+  invites: Array<Invite>;
   onInviteUpdated: () => void;
 }
 

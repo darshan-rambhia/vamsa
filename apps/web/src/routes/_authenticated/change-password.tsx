@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { changePassword } from "~/server/auth.functions";
 import {
   Button,
   Card,
@@ -12,6 +11,7 @@ import {
   Label,
   ThemeToggle,
 } from "@vamsa/ui";
+import { changePassword } from "~/server/auth.functions";
 
 export const Route = createFileRoute("/_authenticated/change-password")({
   component: ChangePasswordComponent,

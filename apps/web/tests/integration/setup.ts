@@ -6,18 +6,56 @@
  *
  * Setup:
  *   docker-compose -f docker/docker-compose.test.yml up -d
+ *   bun run test:int
  *
- * Run tests:
- *   TEST_DATABASE_URL=postgresql://... bun run test:int
+ * Environment Variables:
+ *   TEST_DATABASE_URL=postgresql://vamsa_test:vamsa_test_password@localhost:5433/vamsa_test
  */
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { sql, eq } from "drizzle-orm";
+import { randomUUID } from "crypto";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import path from "path";
 
 // Override DATABASE_URL if TEST_DATABASE_URL is provided
 if (process.env.TEST_DATABASE_URL) {
   process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 }
+
+// Set default test database URL if not provided
+if (!process.env.DATABASE_URL && !process.env.TEST_DATABASE_URL) {
+  process.env.DATABASE_URL =
+    "postgresql://vamsa_test:vamsa_test_password@localhost:5433/vamsa_test";
+}
+
+/**
+ * Initialize test database with migrations
+ * Called automatically on module load
+ */
+async function initializeTestDatabase(): Promise<void> {
+  try {
+    // Run migrations from the api package
+    const migrationsPath = path.resolve(
+      import.meta.dir,
+      "../../..",
+      "packages/api/drizzle"
+    );
+
+    await migrate(drizzleDb, {
+      migrationsFolder: migrationsPath,
+    });
+  } catch (error) {
+    // Migrations may already be applied or table structure may differ
+    // Log but don't fail - the schema might already exist
+    if (error instanceof Error) {
+      console.debug(`Migration note: ${error.message}`);
+    }
+  }
+}
+
+// Initialize database on module load
+await initializeTestDatabase();
 
 export const testDb = {
   db: drizzleDb,
@@ -31,20 +69,30 @@ export const testDb = {
 export async function cleanupTestData(): Promise<void> {
   const db = drizzleDb;
   // Delete in order respecting foreign keys
-  await db.execute(sql`TRUNCATE TABLE media_objects CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE events CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE relationships CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE persons CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE places CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE sources CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE invites CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE sessions CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE accounts CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE users CASCADE`);
+  // CASCADE will handle dependent records
+  await db.execute(sql`TRUNCATE TABLE "PersonMedia" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "EventMedia" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "MediaObject" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "EventParticipant" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "EventSource" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "Event" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "Relationship" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "Person" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "PlacePersonLink" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "Place" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "Source" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "Invite" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "ResearchNote" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "Suggestion" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "Session" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "Account" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "Verification" CASCADE`);
+  await db.execute(sql`TRUNCATE TABLE "User" CASCADE`);
 }
 
 /**
  * Seed minimal test data for integration tests
+ * Creates an admin user and returns it for use in tests
  */
 export async function seedTestData(): Promise<{
   adminUser: typeof drizzleSchema.users.$inferSelect;
@@ -56,26 +104,177 @@ export async function seedTestData(): Promise<{
   const [adminUser] = await db
     .insert(drizzleSchema.users)
     .values({
-      email: "admin@test.local",
+      id: randomUUID(),
+      email: `admin+${randomUUID()}@test.local`,
       name: "Test Admin",
       role: "ADMIN",
       emailVerified: true,
+      updatedAt: new Date(),
     })
     .returning();
+
+  if (!adminUser) {
+    throw new Error("Failed to create admin user");
+  }
 
   // Create test person
   const [testPerson] = await db
     .insert(drizzleSchema.persons)
     .values({
+      id: randomUUID(),
       firstName: "Test",
       lastName: "Person",
       isLiving: true,
       createdById: adminUser.id,
-      updatedById: adminUser.id,
+      updatedAt: new Date(),
     })
     .returning();
+
+  if (!testPerson) {
+    throw new Error("Failed to create test person");
+  }
 
   return { adminUser, testPerson };
 }
 
-export { eq, sql };
+/**
+ * Create a test user with a specific role
+ */
+export async function createTestUser(
+  role: "ADMIN" | "MEMBER" | "GUEST" = "MEMBER"
+): Promise<typeof drizzleSchema.users.$inferSelect> {
+  const db = drizzleDb;
+
+  const [user] = await db
+    .insert(drizzleSchema.users)
+    .values({
+      id: randomUUID(),
+      email: `user+${randomUUID()}@test.local`,
+      name: "Test User",
+      role,
+      emailVerified: true,
+      updatedAt: new Date(),
+    })
+    .returning();
+
+  if (!user) {
+    throw new Error("Failed to create test user");
+  }
+
+  return user;
+}
+
+/**
+ * Create test persons with relationships
+ */
+export async function createTestPersonWithRelatives(
+  creatorId: string
+): Promise<{
+  parent1: typeof drizzleSchema.persons.$inferSelect;
+  parent2: typeof drizzleSchema.persons.$inferSelect;
+  child: typeof drizzleSchema.persons.$inferSelect;
+}> {
+  const db = drizzleDb;
+
+  // Create two parents
+  const [parent1] = await db
+    .insert(drizzleSchema.persons)
+    .values({
+      id: randomUUID(),
+      firstName: "John",
+      lastName: "Doe",
+      gender: "MALE",
+      isLiving: true,
+      createdById: creatorId,
+      updatedAt: new Date(),
+    })
+    .returning();
+
+  const [parent2] = await db
+    .insert(drizzleSchema.persons)
+    .values({
+      id: randomUUID(),
+      firstName: "Jane",
+      lastName: "Doe",
+      gender: "FEMALE",
+      isLiving: true,
+      createdById: creatorId,
+      updatedAt: new Date(),
+    })
+    .returning();
+
+  // Create a child
+  const [child] = await db
+    .insert(drizzleSchema.persons)
+    .values({
+      id: randomUUID(),
+      firstName: "Jack",
+      lastName: "Doe",
+      gender: "MALE",
+      dateOfBirth: new Date("2000-01-01"),
+      isLiving: true,
+      createdById: creatorId,
+      updatedAt: new Date(),
+    })
+    .returning();
+
+  if (!parent1 || !parent2 || !child) {
+    throw new Error("Failed to create test persons with relatives");
+  }
+
+  // Create relationships
+  await db.insert(drizzleSchema.relationships).values([
+    {
+      id: randomUUID(),
+      personFromId: parent1.id,
+      personToId: child.id,
+      relationshipType: "PARENT",
+      createdById: creatorId,
+      updatedAt: new Date(),
+    },
+    {
+      id: randomUUID(),
+      personFromId: parent2.id,
+      personToId: child.id,
+      relationshipType: "PARENT",
+      createdById: creatorId,
+      updatedAt: new Date(),
+    },
+  ]);
+
+  return { parent1, parent2, child };
+}
+
+/**
+ * Helper to find a person by ID
+ */
+export async function findPersonById(
+  id: string
+): Promise<typeof drizzleSchema.persons.$inferSelect | undefined> {
+  return testDb.db.query.persons.findFirst({
+    where: eq(testDb.schema.persons.id, id),
+  });
+}
+
+/**
+ * Helper to find a user by ID
+ */
+export async function findUserById(
+  id: string
+): Promise<typeof drizzleSchema.users.$inferSelect | undefined> {
+  return testDb.db.query.users.findFirst({
+    where: eq(testDb.schema.users.id, id),
+  });
+}
+
+/**
+ * Helper to count relationships
+ */
+export async function countRelationships(): Promise<number> {
+  const result = await testDb.db.execute(
+    sql`SELECT COUNT(*) as count FROM relationships`
+  );
+  return (result[0] as { count: number }).count;
+}
+
+export { eq, sql, randomUUID };

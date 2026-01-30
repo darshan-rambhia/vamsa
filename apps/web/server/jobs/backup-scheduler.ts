@@ -8,10 +8,11 @@
  * - Dynamic reconfiguration on settings changes
  */
 
-import cron, { type ScheduledTask } from "node-cron";
+import cron from "node-cron";
+import { loggers } from "@vamsa/lib/logger";
 import { db, drizzleSchema } from "../db";
 import { performBackup } from "./backup-job";
-import { loggers } from "@vamsa/lib/logger";
+import type { ScheduledTask } from "node-cron";
 
 const log = loggers.jobs;
 

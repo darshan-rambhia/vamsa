@@ -5,13 +5,13 @@
  */
 
 import {
+  boolean,
+  index,
+  integer,
   pgTable,
   text,
   timestamp,
-  integer,
-  boolean,
   unique,
-  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { persons } from "./person";

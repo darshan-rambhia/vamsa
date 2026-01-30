@@ -3,14 +3,14 @@
  * Tests login, logout, and protected route access
  */
 import {
-  test,
-  expect,
-  bdd,
   TEST_USERS,
-  vamsaExpect,
+  bdd,
+  expect,
   formValidation,
+  test,
+  vamsaExpect,
 } from "./fixtures";
-import { LoginPage } from "./fixtures/page-objects";
+import { LoginPage, gotoWithRetry } from "./fixtures/page-objects";
 
 test.describe("Feature: User Authentication", () => {
   test.describe("Unauthenticated tests", () => {
@@ -19,7 +19,7 @@ test.describe("Feature: User Authentication", () => {
     test("should display login form with all fields", async ({ page }) => {
       // Skip pre-authenticated state for login tests
       await bdd.given("user navigates to login page", async () => {
-        await page.goto("/login");
+        await page.goto("/login", { waitUntil: "domcontentloaded" });
       });
 
       await bdd.then("login form is displayed", async () => {
@@ -85,7 +85,19 @@ test.describe("Feature: User Authentication", () => {
         await bdd.when(
           `user navigates to protected route: ${route}`,
           async () => {
-            await page.goto(route);
+            // Use waitUntil: 'commit' to handle Firefox's NS_BINDING_ABORTED
+            // This occurs when navigation is interrupted by a redirect
+            try {
+              await page.goto(route, { waitUntil: "commit" });
+            } catch (error) {
+              // Firefox may throw NS_BINDING_ABORTED during redirect - this is expected
+              if (
+                !(error instanceof Error) ||
+                !error.message.includes("NS_BINDING_ABORTED")
+              ) {
+                throw error;
+              }
+            }
           }
         );
 
@@ -102,7 +114,7 @@ test.describe("Feature: User Authentication", () => {
       const { isMobile } = getViewportInfo();
 
       await bdd.given("user is on login page", async () => {
-        await page.goto("/login");
+        await page.goto("/login", { waitUntil: "domcontentloaded" });
       });
 
       await bdd.then("login form is visible on mobile", async () => {
@@ -162,7 +174,18 @@ test.describe("Feature: User Authentication", () => {
       });
 
       await bdd.and("protected routes are no longer accessible", async () => {
-        await page.goto("/people");
+        // Use waitUntil: 'commit' to handle Firefox's NS_BINDING_ABORTED
+        // This occurs when navigation is interrupted by auth redirect
+        try {
+          await page.goto("/people", { waitUntil: "commit" });
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            !error.message.includes("NS_BINDING_ABORTED")
+          ) {
+            throw error;
+          }
+        }
         await expect(page).toHaveURL(/\/login/);
       });
     });
@@ -192,13 +215,15 @@ test.describe("Feature: User Authentication", () => {
       });
 
       await bdd.when("user navigates between pages", async () => {
-        await page.goto("/dashboard");
+        // Use waitUntil: 'domcontentloaded' for Firefox compatibility
+        // Firefox can throw NS_BINDING_ABORTED during rapid navigation
+        await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
         await expect(page).toHaveURL("/dashboard");
 
-        await page.goto("/people");
+        await page.goto("/people", { waitUntil: "domcontentloaded" });
         await expect(page).toHaveURL("/people");
 
-        await page.goto("/visualize");
+        await page.goto("/visualize", { waitUntil: "domcontentloaded" });
         await expect(page).toHaveURL(/\/visualize/);
       });
 
@@ -216,7 +241,7 @@ test.describe("Feature: User Authentication", () => {
       });
 
       await bdd.when("admin navigates to admin panel", async () => {
-        await page.goto("/admin");
+        await gotoWithRetry(page, "/admin");
       });
 
       await bdd.then("admin panel is accessible", async () => {

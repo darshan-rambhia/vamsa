@@ -1,10 +1,10 @@
+import path from "node:path";
+import * as crypto from "node:crypto";
 import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
-import path from "path";
-import * as crypto from "crypto";
 import { config } from "dotenv";
 import { vamsaDevApiPlugin } from "./server/dev";
 

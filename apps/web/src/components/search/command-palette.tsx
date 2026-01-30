@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Command } from "cmdk";
-import { Search, Loader2, User, Sparkles, X } from "lucide-react";
+import { Loader2, Search, Sparkles, User, X } from "lucide-react";
 import { cn } from "@vamsa/ui";
 import { searchPeople } from "../../server/search";
 

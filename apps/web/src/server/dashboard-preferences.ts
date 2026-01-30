@@ -2,19 +2,21 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { loggers } from "@vamsa/lib/logger";
-
-const log = loggers.db;
 import {
-  dashboardPreferencesSchema,
-  saveDashboardPreferencesSchema,
   DEFAULT_DASHBOARD_LAYOUT,
   DEFAULT_DASHBOARD_WIDGETS,
-  type DashboardPreferences,
-  type SaveDashboardPreferencesInput,
+  dashboardPreferencesSchema,
+  saveDashboardPreferencesSchema,
 } from "@vamsa/schemas";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
-import { requireAuth } from "./middleware/require-auth";
 import { eq } from "drizzle-orm";
+import { requireAuth } from "./middleware/require-auth";
+import type {
+  DashboardPreferences,
+  SaveDashboardPreferencesInput,
+} from "@vamsa/schemas";
+
+const log = loggers.db;
 
 function generateId(): string {
   // Generate a simple ID using timestamp and random bytes
@@ -63,7 +65,7 @@ export const getDashboardPreferences = createServerFn({
     // Parse the JSONB data stored in database
     const parsed = dashboardPreferencesSchema.parse({
       layout: preferences.layout as Record<string, unknown>,
-      widgets: preferences.widgets as unknown[],
+      widgets: preferences.widgets as Array<unknown>,
     });
 
     log.info(
@@ -117,7 +119,7 @@ export const saveDashboardPreferences = createServerFn({ method: "POST" })
       if (existing) {
         // Update existing preferences
         const currentLayout = existing.layout as Record<string, unknown>;
-        const currentWidgets = existing.widgets as unknown[];
+        const currentWidgets = existing.widgets as Array<unknown>;
 
         // Merge with new data
         const updatedLayout = data.layout

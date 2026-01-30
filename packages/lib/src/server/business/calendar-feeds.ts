@@ -14,16 +14,14 @@
  */
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, isNotNull, inArray } from "drizzle-orm";
-import { loggers } from "@vamsa/lib/logger";
-import ical, {
-  ICalEventRepeatingFreq,
-  type ICalCalendar,
-} from "ical-generator";
-
-const log = loggers.db;
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
+import ical, { ICalEventRepeatingFreq } from "ical-generator";
 // @ts-expect-error - rss package lacks type declarations
 import RSS from "rss";
+import { loggers } from "@vamsa/lib/logger";
+import type { ICalCalendar } from "ical-generator";
+
+const log = loggers.db;
 
 /**
  * Type for the database client used by calendar feed functions.

@@ -15,7 +15,7 @@
  */
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, sql, desc, asc, inArray, count } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
 
 /**
  * Dashboard statistics result interface
@@ -76,8 +76,8 @@ export interface ActivityFilters {
   limit?: number;
   dateFrom?: number; // timestamp
   dateTo?: number; // timestamp
-  actionTypes?: string[]; // CREATE, UPDATE, DELETE, etc.
-  entityTypes?: string[]; // PERSON, RELATIONSHIP, USER, etc.
+  actionTypes?: Array<string>; // CREATE, UPDATE, DELETE, etc.
+  entityTypes?: Array<string>; // PERSON, RELATIONSHIP, USER, etc.
   userId?: string; // filter by user who performed action
   searchQuery?: string; // free text search
 }
@@ -294,10 +294,10 @@ function getActivityDescription(
  */
 export async function getRecentActivityData(
   filters: ActivityFilters = {}
-): Promise<ActivityLog[]> {
+): Promise<Array<ActivityLog>> {
   // Build where clause dynamically - collect all conditions
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const whereConditions: any[] = [];
+  const whereConditions: Array<any> = [];
 
   // Date range filter
   if (filters.dateFrom) {

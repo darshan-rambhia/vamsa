@@ -8,12 +8,12 @@
  * - Viewing subscription instructions
  */
 
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { VIEWPORT_ARRAY } from "./fixtures/viewports";
 
 test.describe("Calendar Subscription", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/subscribe");
+    await page.goto("/subscribe", { waitUntil: "domcontentloaded" });
     await page
       .getByRole("heading", { name: /calendar subscriptions/i })
       .waitFor({ state: "visible", timeout: 10000 });
@@ -80,11 +80,12 @@ test.describe("Calendar Subscription", () => {
   });
 
   test.describe("Subscription Instructions", () => {
+    // Increase timeout for this test - tab interactions can be slow in WebKit
     test("user can view instructions for different calendar apps", async ({
       page,
     }) => {
-      // Wait for React to fully hydrate
-      await page.waitForTimeout(500);
+      // Wait for React to fully hydrate - longer for webkit
+      await page.waitForTimeout(1000);
 
       // Scroll down to the "How to Subscribe" section first to ensure tabs are in view
       const howToSubscribeHeading = page.getByRole("heading", {
@@ -99,7 +100,7 @@ test.describe("Calendar Subscription", () => {
 
       // Wait for tab content to be visible (indicates tabs are hydrated)
       await expect(page.getByText(/open google calendar/i)).toBeVisible({
-        timeout: 5000,
+        timeout: 10000,
       });
 
       // Google Calendar instructions shown by default
@@ -109,14 +110,26 @@ test.describe("Calendar Subscription", () => {
       await expect(page.getByText(/other calendars/i)).toBeVisible();
 
       // Helper to click tab with retry until content appears
+      // WebKit has issues with Radix tabs where the click may update visual state
+      // but not trigger the content switch properly
       async function clickTabUntilContentVisible(
         tab: any,
         contentHeadingPattern: RegExp,
-        maxAttempts = 5
+        maxAttempts = 8
       ) {
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-          await tab.click();
-          await page.waitForTimeout(100);
+          // First focus the tab
+          await tab.focus();
+          await page.waitForTimeout(50);
+
+          // Use keyboard Enter to trigger the tab (more reliable in WebKit)
+          if (attempt > 2) {
+            await tab.press("Enter");
+          } else {
+            // Try click first for first couple attempts
+            await tab.click({ force: true });
+          }
+          await page.waitForTimeout(200 + attempt * 50);
 
           const contentVisible = await page
             .getByRole("heading", { name: contentHeadingPattern })
@@ -126,7 +139,7 @@ test.describe("Calendar Subscription", () => {
           if (contentVisible) return;
 
           // React handler not responding yet - wait and retry
-          await page.waitForTimeout(150 * attempt);
+          await page.waitForTimeout(200 * attempt);
         }
       }
 
@@ -199,7 +212,7 @@ test.describe("Calendar Subscription", () => {
   test.describe("Keyboard Navigation", () => {
     test("tabs support keyboard navigation", async ({ page }) => {
       // First, navigate to subscribe and wait for tabs to be loaded
-      await page.goto("/subscribe");
+      await page.goto("/subscribe", { waitUntil: "domcontentloaded" });
       await page
         .getByRole("heading", { name: /calendar subscriptions/i })
         .waitFor({ state: "visible", timeout: 10000 });

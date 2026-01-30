@@ -6,30 +6,40 @@
  * and interact with the Drizzle ORM database.
  */
 
-import { loggers } from "@vamsa/lib/logger";
-import {
-  recordGedcomImport,
-  recordGedcomExport,
-  recordGedcomValidation,
-} from "../metrics";
-
-const log = loggers.db;
-import type { VamsaPerson, VamsaRelationship } from "@vamsa/lib";
+import * as fs from "node:fs";
+import * as path from "node:path";
 import archiver from "archiver";
-import * as fs from "fs";
-import * as path from "path";
 
 // Drizzle imports
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
+import { loggers } from "@vamsa/lib/logger";
+import {
+  recordGedcomExport,
+  recordGedcomImport,
+  recordGedcomValidation,
+} from "../metrics";
+
+import {
+  calculateGedcomStatistics,
+  formatGedcomFileName,
+  generateGedcomOutput,
+  mapGedcomToEntities,
+  parseGedcomFile,
+  validateGedcomImportPrerequisites,
+} from "../helpers/gedcom";
+import type { VamsaPerson, VamsaRelationship } from "@vamsa/lib";
+import type { GedcomStructureError } from "../helpers/gedcom";
+
+const log = loggers.db;
 
 /**
  * Interface for file system operations used by GEDCOM export.
  * This allows dependency injection for testing.
  */
 export interface GedcomFileSystem {
-  existsSync(filePath: string): boolean;
-  basename(filePath: string): string;
+  existsSync: (filePath: string) => boolean;
+  basename: (filePath: string) => string;
 }
 
 /**
@@ -39,16 +49,6 @@ export const defaultFileSystem: GedcomFileSystem = {
   existsSync: fs.existsSync,
   basename: path.basename,
 };
-
-import {
-  parseGedcomFile,
-  validateGedcomImportPrerequisites,
-  mapGedcomToEntities,
-  generateGedcomOutput,
-  formatGedcomFileName,
-  calculateGedcomStatistics,
-  type GedcomStructureError,
-} from "../helpers/gedcom";
 
 /**
  * Result type for GEDCOM import operation
@@ -84,7 +84,7 @@ export interface ExportZipResult {
   zipBase64?: string;
   manifest?: {
     gedcomFile: string;
-    mediaFiles: string[];
+    mediaFiles: Array<string>;
     totalSize: number;
     exportDate: string;
   };
@@ -115,7 +115,7 @@ export async function validateGedcomImport(
   preview?: {
     peopleCount: number;
     familiesCount: number;
-    errors: GedcomStructureError[];
+    errors: Array<GedcomStructureError>;
   };
 }> {
   const start = Date.now();
@@ -237,8 +237,8 @@ export async function importGedcomData(
 
     // Insert into database using transaction for atomicity
     const result = await drizzleDb.transaction(async (tx) => {
-      const insertedPeople: VamsaPerson[] = [];
-      const insertedRelationships: VamsaRelationship[] = [];
+      const insertedPeople: Array<VamsaPerson> = [];
+      const insertedRelationships: Array<VamsaRelationship> = [];
 
       // Insert persons
       for (const person of mapped.people) {
@@ -382,8 +382,8 @@ export async function exportGedcomData(userId: string): Promise<ExportResult> {
 
     // Generate GEDCOM output
     const gedcomContent = generateGedcomOutput(
-      people as unknown as VamsaPerson[],
-      relationships as unknown as VamsaRelationship[],
+      people as unknown as Array<VamsaPerson>,
+      relationships as unknown as Array<VamsaRelationship>,
       {
         sourceProgram: "vamsa",
         submitterName: user?.name || "Vamsa User",
@@ -476,8 +476,8 @@ export async function exportGedcomDataZip(
 
     // Generate GEDCOM output
     const gedcomContent = generateGedcomOutput(
-      people as unknown as VamsaPerson[],
-      relationships as unknown as VamsaRelationship[],
+      people as unknown as Array<VamsaPerson>,
+      relationships as unknown as Array<VamsaRelationship>,
       {
         sourceProgram: "vamsa",
         submitterName: user?.name || "Vamsa User",
@@ -489,7 +489,7 @@ export async function exportGedcomDataZip(
       zlib: { level: 9 }, // Maximum compression
     });
 
-    const chunks: Buffer[] = [];
+    const chunks: Array<Buffer> = [];
     archive.on("data", (chunk: Buffer) => chunks.push(Buffer.from(chunk)));
 
     // Add GEDCOM file
@@ -497,7 +497,7 @@ export async function exportGedcomDataZip(
     archive.append(gedcomContent, { name: gedcomFileName });
 
     // Track included media files
-    const includedMedia: string[] = [];
+    const includedMedia: Array<string> = [];
     let totalMediaSize = 0;
 
     // Add media files to the archive

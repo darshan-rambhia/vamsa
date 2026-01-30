@@ -9,7 +9,7 @@
  * 4. HTTP status codes and error responses are documented
  */
 
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import apiV1 from "./index";
 
 describe("Auto-Generated OpenAPI Specification", () => {
@@ -433,11 +433,11 @@ describe("HTTP Status Codes Documentation", () => {
     const res = await apiV1.request("/openapi.json");
     const spec = await res.json();
 
-    const paths = Object.values(spec.paths) as any[];
+    const paths = Object.values(spec.paths as Record<string, unknown>);
     for (const pathItem of paths) {
-      const operations = Object.values(pathItem).filter(
-        (op: any) => op && typeof op === "object" && op.responses
-      );
+      const operations = Object.values(
+        pathItem as Record<string, unknown>
+      ).filter((op: any) => op && typeof op === "object" && op.responses);
       for (const operation of operations) {
         const responses = (operation as any).responses;
         // Most endpoints should handle 500 errors

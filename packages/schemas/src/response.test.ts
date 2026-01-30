@@ -2,16 +2,18 @@
  * Unit Tests for Response Schemas
  * Tests Zod schema validation for API response formats including error, success, pagination
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { z } from "@hono/zod-openapi";
 import {
   errorResponseSchema,
-  successResponseSchema,
-  paginationMetadataSchema,
   paginatedResponseSchema,
-  type ErrorResponse,
-  type SuccessResponse,
-  type PaginationMetadata,
+  paginationMetadataSchema,
+  successResponseSchema,
+} from "./response";
+import type {
+  ErrorResponse,
+  PaginationMetadata,
+  SuccessResponse,
 } from "./response";
 
 describe("errorResponseSchema", () => {

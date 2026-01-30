@@ -8,12 +8,14 @@
  * - Navigation from subscribe page
  */
 
-import { test, expect } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { VIEWPORT_ARRAY } from "./fixtures/viewports";
 
 test.describe("Calendar Token Management", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("/settings/calendar-tokens");
+    await page.goto("/settings/calendar-tokens", {
+      waitUntil: "domcontentloaded",
+    });
     await page
       .getByRole("heading", { name: /calendar access tokens/i })
       .waitFor({ state: "visible", timeout: 10000 });
@@ -117,17 +119,24 @@ test.describe("Calendar Token Management", () => {
   test.describe("Navigation", () => {
     test("user can navigate from subscribe page", async ({ page }) => {
       // Navigate to subscribe page first
-      await page.goto("/subscribe");
+      await page.goto("/subscribe", { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("domcontentloaded");
 
       // Find and click the manage tokens link
       const manageLink = page.getByRole("link", { name: /manage tokens/i });
+      await expect(manageLink).toBeVisible({ timeout: 10000 });
       await manageLink.click();
 
+      // Wait for navigation to complete (WebKit may need more time)
+      await page.waitForLoadState("domcontentloaded");
+
       // Should navigate to calendar tokens page
-      await expect(page).toHaveURL(/settings.*calendar-tokens/i);
+      await expect(page).toHaveURL(/settings.*calendar-tokens/i, {
+        timeout: 15000,
+      });
       await expect(
         page.getByRole("heading", { name: /calendar access tokens/i })
-      ).toBeVisible();
+      ).toBeVisible({ timeout: 10000 });
     });
   });
 

@@ -27,7 +27,8 @@
     "yoavbls.pretty-ts-errors",
 
     // AI Assistant
-    "anthropics.claude-code"
+    "anthropics.claude-code",
+    "github.vscode-github-actions"
   ],
   "unwantedRecommendations": []
 }

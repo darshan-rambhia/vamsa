@@ -9,18 +9,18 @@
  * For development with test data, use seed-dev.ts instead.
  */
 
+import path from "node:path";
 import { config } from "dotenv";
-import path from "path";
-
-// Load .env from monorepo root
-config({ path: path.resolve(__dirname, "../../../../.env") });
 
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import { eq } from "drizzle-orm";
+import { loggers } from "@vamsa/lib/logger";
 import * as schema from "./schema";
 import { hashPassword } from "./password";
-import { loggers } from "@vamsa/lib/logger";
+
+// Load .env from monorepo root
+config({ path: path.resolve(__dirname, "../../../../.env") });
 
 const log = loggers.seed;
 

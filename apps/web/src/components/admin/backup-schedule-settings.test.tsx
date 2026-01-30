@@ -3,7 +3,7 @@
  * Tests rendering, user interactions, form submission, and error handling
  */
 
-import { describe, it, expect, mock } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 
 describe("BackupScheduleSettings Component", () => {
   const mockSettings = {

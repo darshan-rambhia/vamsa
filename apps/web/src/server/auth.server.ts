@@ -9,12 +9,12 @@
 
 import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
 import {
-  betterAuthGetSessionWithUserFromCookie,
   betterAuthChangePassword,
+  betterAuthGetSessionWithUserFromCookie,
   betterAuthSignOut,
+  claimProfileData,
   getBetterAuthProviders,
   getUnclaimedProfilesData,
-  claimProfileData,
 } from "@vamsa/lib/server/business";
 import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
 import { loggers } from "@vamsa/lib/logger";
@@ -71,6 +71,10 @@ export async function claimProfileHandler(input: ClaimProfileInput) {
 export async function changePasswordHandler(input: ChangePasswordInput) {
   // Validate input
   const data = changePasswordSchema.parse(input);
+
+  // Rate limit by IP address
+  const clientIP = getClientIP();
+  checkRateLimit("passwordReset", clientIP);
 
   try {
     const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);

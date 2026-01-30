@@ -3,7 +3,7 @@
  * Tests tab navigation, format selection, component rendering, and quick actions
  */
 
-import { describe, it, expect, mock } from "bun:test";
+import { describe, expect, it, mock } from "bun:test";
 
 describe("Backup Page Component", () => {
   describe("Tab Navigation", () => {

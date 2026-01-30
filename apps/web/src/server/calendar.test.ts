@@ -19,7 +19,7 @@
  * covered by E2E tests.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
 /**
  * Note on test coverage:

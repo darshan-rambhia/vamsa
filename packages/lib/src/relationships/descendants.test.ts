@@ -3,15 +3,15 @@
  *
  * Tests the descendant finding and generation tracking functionality
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  findDescendants,
-  getDescendantsAtGeneration,
   countDescendants,
-  getDescendantsByGeneration,
+  findDescendants,
   getAllRelatives,
+  getDescendantsAtGeneration,
+  getDescendantsByGeneration,
 } from "./descendants";
-import type { RelationshipNode, RelationshipMapSet } from "./ancestors";
+import type { RelationshipMapSet, RelationshipNode } from "./ancestors";
 
 // Extend the base RelationshipMapSet with parentToChildren for descendant tests
 type DescendantMapSet = RelationshipMapSet & {
@@ -41,7 +41,7 @@ function createPerson(
  * Helper to create relationship maps from parent-child pairs
  */
 function createMaps(
-  parentChildPairs: [string, string][]
+  parentChildPairs: Array<[string, string]>
 ): [Map<string, RelationshipNode>, DescendantMapSet] {
   const people = new Map<string, RelationshipNode>();
   const parentToChildren = new Map<string, Set<string>>();

@@ -20,9 +20,9 @@
  * // Map { 0 => [node1, node2], 1 => [node3] }
  */
 export function groupByGeneration<T extends { generation?: number | null }>(
-  nodes: T[]
-): Map<number, T[]> {
-  const generations = new Map<number, T[]>();
+  nodes: Array<T>
+): Map<number, Array<T>> {
+  const generations = new Map<number, Array<T>>();
 
   nodes.forEach((node) => {
     const gen = node.generation ?? 0;
@@ -116,8 +116,8 @@ export function calculateFitScale(
 export function generateGenerationRange(
   minGen: number,
   maxGen: number
-): number[] {
-  const range: number[] = [];
+): Array<number> {
+  const range: Array<number> = [];
   for (let i = minGen; i <= maxGen; i++) {
     range.push(i);
   }
@@ -130,6 +130,8 @@ export function generateGenerationRange(
  * @param generations - Map of generations
  * @returns Sorted array of generation numbers
  */
-export function getSortedGenerations<T>(generations: Map<number, T>): number[] {
+export function getSortedGenerations<T>(
+  generations: Map<number, T>
+): Array<number> {
   return Array.from(generations.keys()).sort((a, b) => a - b);
 }

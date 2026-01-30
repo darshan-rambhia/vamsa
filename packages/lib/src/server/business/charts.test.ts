@@ -10,14 +10,21 @@
  * Integration tests would verify the full chart generation pipeline.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+// NOTE: Do NOT mock "../helpers/charts" here - it causes test pollution
+// because Bun's mock.module persists across test files. The export
+// functions we test throw errors before using any helpers anyway.
+
+// Import functions to test
+import { exportChartAsPDF, exportChartAsSVG } from "./charts";
 
 // Mock the logger before importing modules
 mock.module("@vamsa/lib/logger", () => ({
@@ -71,13 +78,6 @@ mock.module("@vamsa/api", () => ({
 mock.module("../metrics", () => ({
   recordChartMetrics: mock(() => undefined),
 }));
-
-// NOTE: Do NOT mock "../helpers/charts" here - it causes test pollution
-// because Bun's mock.module persists across test files. The export
-// functions we test throw errors before using any helpers anyway.
-
-// Import functions to test
-import { exportChartAsPDF, exportChartAsSVG } from "./charts";
 
 describe("charts business logic", () => {
   beforeEach(() => {

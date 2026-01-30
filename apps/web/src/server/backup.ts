@@ -12,31 +12,33 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
-import { eq, ne, desc, count } from "drizzle-orm";
+import { count, desc, eq, ne } from "drizzle-orm";
 import {
   backupExportSchema,
   backupSettingsSchema,
   listBackupsInputSchema,
-  type BackupExportInput,
-  type BackupMetadata,
-  type BackupSettings,
-  type ListBackupsInput,
-  type Backup,
 } from "@vamsa/schemas";
 import { loggers } from "@vamsa/lib/logger";
-import { requireAuth } from "./middleware/require-auth";
-
-const log = loggers.db;
 import {
-  gatherBackupData,
   createBackupArchive,
-  validateBackupFile,
   extractBackupData,
+  gatherBackupData,
   restoreFromBackup,
   scheduleBackupJob,
+  validateBackupFile,
 } from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
+import type {
+  Backup,
+  BackupExportInput,
+  BackupMetadata,
+  BackupSettings,
+  ListBackupsInput,
+} from "@vamsa/schemas";
+import type { z } from "zod";
+
+const log = loggers.db;
 
 /**
  * Result type for exportBackup function
@@ -184,7 +186,7 @@ export const listBackups = createServerFn({ method: "POST" })
         error: b.error,
         createdAt: b.createdAt,
         deletedAt: b.deletedAt,
-      })) as Backup[],
+      })) as Array<Backup>,
       total,
       hasMore: data.offset + data.limit < total,
     };

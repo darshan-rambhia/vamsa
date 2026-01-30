@@ -2,23 +2,25 @@
  * Unit Tests for Pagination Schemas
  * Tests Zod schema validation for pagination inputs, metadata, and related functionality
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  sortOrderEnum,
-  paginationInputSchema,
-  paginationWithSearchSchema,
-  paginationMetaSchema,
-  createPaginationMeta,
-  personListInputSchema,
-  suggestionListInputSchema,
   auditLogListInputSchema,
-  type SortOrder,
-  type PaginationInput,
-  type PaginationWithSearchInput,
-  type PaginationMeta,
-  type PersonListInput,
-  type SuggestionListInput,
-  type AuditLogListInput,
+  createPaginationMeta,
+  paginationInputSchema,
+  paginationMetaSchema,
+  paginationWithSearchSchema,
+  personListInputSchema,
+  sortOrderEnum,
+  suggestionListInputSchema,
+} from "./pagination";
+import type {
+  AuditLogListInput,
+  PaginationInput,
+  PaginationMeta,
+  PaginationWithSearchInput,
+  PersonListInput,
+  SortOrder,
+  SuggestionListInput,
 } from "./pagination";
 
 describe("sortOrderEnum", () => {
@@ -40,7 +42,7 @@ describe("sortOrderEnum", () => {
     });
 
     it("should accept both values in array", () => {
-      const orders: SortOrder[] = ["asc", "desc"];
+      const orders: Array<SortOrder> = ["asc", "desc"];
       orders.forEach((order) => {
         const result = sortOrderEnum.safeParse(order);
         expect(result.success).toBe(true);

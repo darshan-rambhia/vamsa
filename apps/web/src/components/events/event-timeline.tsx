@@ -1,6 +1,6 @@
 import { Badge } from "@vamsa/ui/primitives";
 import { formatDate } from "@vamsa/lib";
-import { type EventType } from "@vamsa/schemas";
+import type { EventType } from "@vamsa/schemas";
 
 interface EventTimelineProps {
   events: Array<{

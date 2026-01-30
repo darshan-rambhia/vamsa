@@ -17,11 +17,11 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
-
-const log = loggers.auth;
 import { t } from "../i18n";
 import { betterAuthRegister } from "./auth-better-api";
 import { notifyNewMemberJoined } from "./notifications";
+
+const log = loggers.auth;
 
 /**
  * Type for the database client used by auth functions.
@@ -59,7 +59,7 @@ export interface ClaimProfileResult {
  */
 export async function getUnclaimedProfilesData(
   db: AuthDb = drizzleDb
-): Promise<UnclaimedProfile[]> {
+): Promise<Array<UnclaimedProfile>> {
   log.info({}, "Fetching unclaimed profiles");
 
   // Get all personIds that already have users

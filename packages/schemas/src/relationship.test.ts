@@ -1,7 +1,7 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
-  relationshipTypeEnum,
   relationshipCreateSchema,
+  relationshipTypeEnum,
   relationshipUpdateSchema,
 } from "./relationship";
 

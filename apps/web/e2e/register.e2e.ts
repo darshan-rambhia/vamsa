@@ -2,10 +2,12 @@
  * Feature: User Registration
  * Tests registration flow with form validation and error handling
  */
-import { test, expect, bdd, formValidation } from "./fixtures";
+import { bdd, expect, formValidation, test } from "./fixtures";
+import { gotoWithRetry } from "./fixtures/page-objects";
+import type { Page } from "@playwright/test";
 
 class RegisterPage {
-  readonly page;
+  readonly page: Page;
   readonly form;
   readonly nameInput;
   readonly emailInput;
@@ -14,7 +16,7 @@ class RegisterPage {
   readonly submitButton;
   readonly errorMessage;
 
-  constructor(page) {
+  constructor(page: Page) {
     this.page = page;
     this.form = page.getByTestId("register-form");
     this.nameInput = page.getByTestId("register-name-input");
@@ -28,7 +30,7 @@ class RegisterPage {
   }
 
   async goto() {
-    await this.page.goto("/register");
+    await gotoWithRetry(this.page, "/register");
     await this.form.waitFor({ state: "visible", timeout: 5000 });
     await this.page.waitForTimeout(500);
   }
@@ -223,7 +225,22 @@ test.describe("Feature: User Registration", () => {
       });
 
       await bdd.when("user clicks sign in link", async () => {
-        await page.locator('a:has-text("Sign in")').click();
+        const signInLink = page.locator('a:has-text("Sign in")');
+        await signInLink.click();
+        // Wait for navigation with Firefox NS_BINDING_ABORTED fallback
+        try {
+          await page.waitForURL(/\/login/, { timeout: 5000 });
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            error.message.includes("NS_BINDING_ABORTED")
+          ) {
+            // Firefox may throw but navigation still completes
+            await page.waitForTimeout(500);
+          } else if (!page.url().includes("/login")) {
+            throw error;
+          }
+        }
       });
 
       await bdd.then("user is redirected to login page", async () => {

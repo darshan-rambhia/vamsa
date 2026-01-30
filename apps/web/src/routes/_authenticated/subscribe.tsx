@@ -1,25 +1,25 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import {
-  generateCalendarToken,
-  listCalendarTokens,
-  revokeCalendarToken,
-  deleteCalendarToken,
-} from "~/server/calendar";
-import {
-  Container,
-  PageHeader,
+  Badge,
+  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-  Button,
+  Container,
   Input,
   Label,
-  Badge,
+  PageHeader,
 } from "@vamsa/ui";
+import {
+  deleteCalendarToken,
+  generateCalendarToken,
+  listCalendarTokens,
+  revokeCalendarToken,
+} from "~/server/calendar";
 import { SubscriptionInstructions } from "~/components/calendar/subscription-instructions";
 
 export const Route = createFileRoute("/_authenticated/subscribe")({

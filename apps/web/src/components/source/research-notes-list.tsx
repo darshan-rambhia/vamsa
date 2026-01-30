@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, Badge, Button } from "@vamsa/ui/primitives";
+import { Badge, Button, Card, CardContent } from "@vamsa/ui/primitives";
 
 interface ResearchNote {
   id: string;
@@ -9,7 +9,7 @@ interface ResearchNote {
   findings: string;
   methodology: string | null;
   limitations: string | null;
-  relatedSources: string[];
+  relatedSources: Array<string>;
   conclusionReliability: string | null;
   createdAt: string;
   updatedAt: string;
@@ -27,7 +27,7 @@ interface ResearchNote {
 }
 
 interface ResearchNotesListProps {
-  notes: Record<string, ResearchNote[]>;
+  notes: Record<string, Array<ResearchNote>>;
   onViewNote: (note: ResearchNote) => void;
   onEditNote: (note: ResearchNote) => void;
   onDeleteNote: (noteId: string) => void;

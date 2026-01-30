@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "./middleware/require-auth";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, count, gte, sql } from "drizzle-orm";
+import { count, eq, gte, sql } from "drizzle-orm";
+import { requireAuth } from "./middleware/require-auth";
 
 /**
  * People statistics result interface

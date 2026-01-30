@@ -1,7 +1,7 @@
-import { randomBytes } from "crypto";
-import { promises as fs } from "fs";
-import path from "path";
-import { StorageMetadata, FileInfo, StorageProvider } from "./index";
+import { randomBytes } from "node:crypto";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import type { FileInfo, StorageMetadata, StorageProvider } from "./index";
 
 const STORAGE_DIR = process.env.STORAGE_DIR || "./storage/media";
 const THUMBNAILS_DIR = path.join(STORAGE_DIR, "thumbnails");

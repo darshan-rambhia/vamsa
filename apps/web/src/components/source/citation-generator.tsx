@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Badge,
   Button,
   Label,
   Select,
@@ -10,7 +11,6 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Badge,
 } from "@vamsa/ui/primitives";
 import { generateCitation } from "~/server/sources";
 
@@ -35,7 +35,7 @@ export function CitationGenerator({ sourceId }: CitationGeneratorProps) {
     }
   };
 
-  const formatFields: Record<string, string[]> = {
+  const formatFields: Record<string, Array<string>> = {
     MLA: ["Author", "Title", "Publication Date", "Repository", "URL", "DOI"],
     APA: ["Author", "Publication Date", "Title", "Repository", "URL", "DOI"],
     CHICAGO: [

@@ -6,19 +6,23 @@
  * - deleteFromStorage: Delete backup from cloud storage
  */
 
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 // Mock logger for this test file
 import {
-  mockLogger,
-  mockLog,
-  mockLoggers,
-  mockSerializeError,
+  clearAllMocks,
   mockCreateContextLogger,
   mockCreateRequestLogger,
+  mockLog,
+  mockLogger,
+  mockLoggers,
+  mockSerializeError,
   mockStartTimer,
-  clearAllMocks,
 } from "../../tests/setup/shared-mocks";
+
+// Import after Bun.S3Client mock is set up
+import { deleteFromStorage, uploadToStorage } from "./storage";
+import type { StorageProvider } from "./storage";
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -42,10 +46,6 @@ const mockS3Unlink = mock(async () => undefined);
   unlink = mockS3Unlink;
 };
 
-// Import after Bun.S3Client mock is set up
-import { uploadToStorage, deleteFromStorage } from "./storage";
-import type { StorageProvider } from "./storage";
-
 describe("Cloud Storage Integration", () => {
   beforeEach(() => {
     clearAllMocks();
@@ -55,17 +55,17 @@ describe("Cloud Storage Integration", () => {
 
   describe("uploadToStorage - S3 Providers", () => {
     it("should accept S3 as storage provider", () => {
-      const providers: StorageProvider[] = ["S3", "R2", "B2", "LOCAL"];
+      const providers: Array<StorageProvider> = ["S3", "R2", "B2", "LOCAL"];
       expect(providers).toContain("S3");
     });
 
     it("should accept R2 as storage provider", () => {
-      const providers: StorageProvider[] = ["S3", "R2", "B2", "LOCAL"];
+      const providers: Array<StorageProvider> = ["S3", "R2", "B2", "LOCAL"];
       expect(providers).toContain("R2");
     });
 
     it("should accept B2 as storage provider", () => {
-      const providers: StorageProvider[] = ["S3", "R2", "B2", "LOCAL"];
+      const providers: Array<StorageProvider> = ["S3", "R2", "B2", "LOCAL"];
       expect(providers).toContain("B2");
     });
 
@@ -215,7 +215,12 @@ describe("Cloud Storage Integration", () => {
 
   describe("uploadToStorage - Error Handling", () => {
     it("should validate storage provider type", () => {
-      const validProviders: StorageProvider[] = ["S3", "R2", "B2", "LOCAL"];
+      const validProviders: Array<StorageProvider> = [
+        "S3",
+        "R2",
+        "B2",
+        "LOCAL",
+      ];
       expect(validProviders.length).toBe(4);
     });
   });
@@ -431,13 +436,18 @@ describe("Cloud Storage Integration", () => {
 
   describe("Error Handling", () => {
     it("should validate supported providers", () => {
-      const supportedProviders: StorageProvider[] = ["S3", "R2", "B2", "LOCAL"];
+      const supportedProviders: Array<StorageProvider> = [
+        "S3",
+        "R2",
+        "B2",
+        "LOCAL",
+      ];
       expect(supportedProviders).toContain("S3");
       expect(supportedProviders).toContain("LOCAL");
     });
 
     it("should support deletion from all S3-compatible providers", () => {
-      const providers: StorageProvider[] = ["S3", "R2", "B2"];
+      const providers: Array<StorageProvider> = ["S3", "R2", "B2"];
       expect(providers.length).toBe(3);
     });
 

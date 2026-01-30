@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import {
+  RATE_LIMITS,
   checkRateLimit,
   getRateLimitStatus,
   resetRateLimit,
-  RATE_LIMITS,
 } from "./rate-limiter";
 
 describe("Rate Limiter", () => {

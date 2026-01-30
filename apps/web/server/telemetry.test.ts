@@ -9,12 +9,12 @@
  * - Configuration object structure
  */
 
-import { describe, it, expect, afterEach } from "bun:test";
+import { afterEach, describe, expect, it } from "bun:test";
 import {
+  getTelemetryConfig,
+  isTelemetryEnabled,
   startTelemetry,
   stopTelemetry,
-  isTelemetryEnabled,
-  getTelemetryConfig,
 } from "./telemetry";
 
 describe("Telemetry Module", () => {

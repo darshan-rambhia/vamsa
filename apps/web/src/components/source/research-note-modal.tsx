@@ -1,12 +1,12 @@
 "use client";
 
 import {
+  Badge,
+  Button,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Badge,
-  Button,
 } from "@vamsa/ui/primitives";
 
 interface ResearchNote {
@@ -15,7 +15,7 @@ interface ResearchNote {
   findings: string;
   methodology: string | null;
   limitations: string | null;
-  relatedSources: string[];
+  relatedSources: Array<string>;
   conclusionReliability: string | null;
   createdAt: string;
   updatedAt: string;

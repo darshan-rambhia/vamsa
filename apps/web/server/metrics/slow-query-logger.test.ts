@@ -4,16 +4,26 @@
  * These tests verify that slow query logging and statistics work correctly.
  */
 
-import { describe, test, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, mock, test } from "bun:test";
 import {
-  mockLogger,
-  mockLog,
-  mockLoggers,
-  mockSerializeError,
   mockCreateContextLogger,
   mockCreateRequestLogger,
+  mockLog,
+  mockLogger,
+  mockLoggers,
+  mockSerializeError,
   mockStartTimer,
 } from "../../tests/setup/shared-mocks";
+
+import {
+  SLOW_QUERY_LOG_THRESHOLD_MS,
+  clearSlowQueries,
+  getSlowQueries,
+  getSlowQueryStats,
+  logSlowQuery,
+  sanitizeQueryParams,
+} from "./slow-query-logger";
+import type { SlowQuery } from "./slow-query-logger";
 
 // Mock the logger to prevent log output during tests
 mock.module("@vamsa/lib/logger", () => ({
@@ -26,16 +36,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
-import {
-  logSlowQuery,
-  getSlowQueries,
-  getSlowQueryStats,
-  clearSlowQueries,
-  sanitizeQueryParams,
-  SLOW_QUERY_LOG_THRESHOLD_MS,
-  type SlowQuery,
-} from "./slow-query-logger";
 
 describe("Slow Query Logger", () => {
   beforeEach(() => {
@@ -284,7 +284,7 @@ describe("Slow Query Logger", () => {
           string,
           unknown
         >
-      )?.in as unknown[];
+      )?.in as Array<unknown>;
       expect(inArray?.length).toBe(6); // 5 items + "...and X more"
     });
 

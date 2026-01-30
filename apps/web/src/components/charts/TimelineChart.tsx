@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, memo, useMemo, useEffect } from "react";
-import { Svg, G, Rect, Circle, Text, Line } from "react-native-svg";
+import { memo, useEffect, useMemo, useState } from "react";
+import { Circle, G, Line, Rect, Svg, Text } from "react-native-svg";
 import * as d3 from "d3";
-import type { TimelineEntry } from "~/server/charts";
 import { ZoomControls } from "./ZoomControls";
-import { useChartViewport, calculateLinearBounds } from "./useChartViewport";
+import { calculateLinearBounds, useChartViewport } from "./useChartViewport";
+import type { TimelineEntry } from "~/server/charts";
 
 interface TimelineChartProps {
-  entries: TimelineEntry[];
+  entries: Array<TimelineEntry>;
   minYear: number;
   maxYear: number;
   onNodeClick?: (nodeId: string) => void;

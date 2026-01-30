@@ -10,8 +10,9 @@
  * - Required field validation
  */
 
-import { Page, expect } from "@playwright/test";
+import { expect } from "@playwright/test";
 import { bdd } from "./bdd-helpers";
+import type { Page } from "@playwright/test";
 
 /**
  * Escapes special regex characters in a string for safe use in RegExp constructor
@@ -47,7 +48,7 @@ export interface FormValidationConfig {
   /** Test ID for error message container (optional, may not always appear) */
   errorMessageTestId?: string;
   /** Fields to validate */
-  fields: FormFieldConfig[];
+  fields: Array<FormFieldConfig>;
   /** Optional: Function to fill the form with all required fields */
   fillRequiredFields?: (page: Page) => Promise<void>;
   /** Optional: Function to get error message text */
@@ -122,7 +123,7 @@ export const formValidation = {
     page: Page,
     config: FormValidationConfig,
     requiredFieldTestId: string,
-    otherFieldsToFill: string[]
+    otherFieldsToFill: Array<string>
   ): Promise<void> {
     const fieldConfig = config.fields.find(
       (f) => f.testId === requiredFieldTestId

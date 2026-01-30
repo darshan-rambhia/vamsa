@@ -12,8 +12,9 @@
  */
 
 import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool, type PoolConfig } from "pg";
+import { Pool } from "pg";
 import * as schema from "./schema";
+import type { PoolConfig } from "pg";
 
 // Re-export schema for consumers
 export * from "./schema";

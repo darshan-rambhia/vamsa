@@ -10,14 +10,20 @@
  * Uses module mocking for database dependency injection.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+import {
+  createSuggestionData,
+  getPendingSuggestionsCountData,
+  listSuggestionsData,
+} from "./suggestions";
 
 // Mock logger
 mock.module("@vamsa/lib/logger", () => ({
@@ -81,12 +87,6 @@ mock.module("@vamsa/lib/server/business/notifications", () => ({
   notifySuggestionCreated: mockNotifySuggestionCreated,
   notifySuggestionUpdated: mockNotifySuggestionUpdated,
 }));
-
-import {
-  listSuggestionsData,
-  getPendingSuggestionsCountData,
-  createSuggestionData,
-} from "./suggestions";
 
 describe("Suggestions Business Logic", () => {
   beforeEach(() => {

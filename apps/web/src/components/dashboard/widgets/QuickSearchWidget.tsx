@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Search, Loader2, User, ExternalLink } from "lucide-react";
-import { Input, cn, Button } from "@vamsa/ui";
-import { BaseWidget } from "./BaseWidget";
+import { ExternalLink, Loader2, Search, User } from "lucide-react";
+import { Button, Input, cn } from "@vamsa/ui";
 import { searchPeople } from "../../../server/search";
+import { BaseWidget } from "./BaseWidget";
 import type { WidgetProps } from "./types";
 
 /**

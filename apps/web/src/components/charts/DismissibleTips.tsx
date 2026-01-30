@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@vamsa/ui";
 
 const STORAGE_KEY = "vamsa-chart-tips-dismissed";

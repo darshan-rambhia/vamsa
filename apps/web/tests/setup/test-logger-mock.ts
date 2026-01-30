@@ -16,8 +16,8 @@
  *    src/server/test-helpers/react-start-server.ts instead of here.
  */
 
+import path from "node:path";
 import { initializeServerI18n, setLocalesPath } from "@vamsa/lib/server";
-import path from "path";
 
 // Set locales path relative to cwd - works for both direct runs and Stryker sandbox
 // In both cases, src/i18n/locales/ exists at the current working directory

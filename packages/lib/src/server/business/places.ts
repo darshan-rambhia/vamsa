@@ -1,6 +1,6 @@
 // Drizzle imports - now the default ORM
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, asc, ilike, count } from "drizzle-orm";
+import { and, asc, count, eq, ilike } from "drizzle-orm";
 
 /**
  * Local type definitions to match Drizzle enum values
@@ -40,7 +40,7 @@ export interface PlaceResponse {
   longitude: number | null;
   parentId: string | null;
   description: string | null;
-  alternativeNames: string[] | null;
+  alternativeNames: Array<string> | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -114,7 +114,7 @@ export function formatPlace(place: {
     longitude: place.longitude,
     parentId: place.parentId,
     description: place.description,
-    alternativeNames: place.alternativeNames as string[] | null,
+    alternativeNames: place.alternativeNames as Array<string> | null,
     createdAt: place.createdAt.toISOString(),
     updatedAt: place.updatedAt.toISOString(),
   };
@@ -213,7 +213,7 @@ export async function searchPlacesData(query: string): Promise<
  */
 export async function getPlaceHierarchyData(
   id: string
-): Promise<PlaceHierarchyItem[]> {
+): Promise<Array<PlaceHierarchyItem>> {
   const place = await drizzleDb.query.places.findFirst({
     where: eq(drizzleSchema.places.id, id),
     with: {
@@ -226,7 +226,7 @@ export async function getPlaceHierarchyData(
   }
 
   // Build hierarchy from child to parent
-  const hierarchy: PlaceHierarchyItem[] = [
+  const hierarchy: Array<PlaceHierarchyItem> = [
     {
       id: place.id,
       name: place.name,
@@ -265,7 +265,7 @@ export async function getPlaceHierarchyData(
  */
 export async function getPersonPlacesData(
   personId: string
-): Promise<PersonPlace[]> {
+): Promise<Array<PersonPlace>> {
   // Verify person exists
   const person = await drizzleDb.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
@@ -311,7 +311,7 @@ export async function createPlaceData(data: {
   longitude?: number | null;
   parentId?: string | null;
   description?: string | null;
-  alternativeNames?: string[] | null;
+  alternativeNames?: Array<string> | null;
 }): Promise<PlaceResponse> {
   // Verify parent place exists if parentId is provided
   if (data.parentId) {
@@ -365,7 +365,7 @@ export async function updatePlaceData(
     longitude?: number | null;
     parentId?: string | null;
     description?: string | null;
-    alternativeNames?: string[] | null;
+    alternativeNames?: Array<string> | null;
   }
 ): Promise<PlaceResponse> {
   // Verify place exists
@@ -593,7 +593,7 @@ export async function getPlaceHierarchyPathData(id: string): Promise<string> {
     throw new Error("Place not found");
   }
 
-  const pathParts: string[] = [place.name];
+  const pathParts: Array<string> = [place.name];
 
   let current = place;
   while (current.parentId) {
@@ -620,7 +620,7 @@ export async function getPlaceHierarchyPathData(id: string): Promise<string> {
  */
 export async function getPlaceChildrenData(
   parentId: string
-): Promise<PlaceResponse[]> {
+): Promise<Array<PlaceResponse>> {
   const children = await drizzleDb.query.places.findMany({
     where: eq(drizzleSchema.places.parentId, parentId),
     orderBy: [

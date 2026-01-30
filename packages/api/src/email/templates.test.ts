@@ -1,12 +1,12 @@
 /**
  * Unit Tests for Email Templates
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
+  createBirthdayReminderEmail,
+  createNewMemberEmail,
   createSuggestionCreatedEmail,
   createSuggestionUpdatedEmail,
-  createNewMemberEmail,
-  createBirthdayReminderEmail,
 } from "./templates";
 
 describe("Email Templates", () => {

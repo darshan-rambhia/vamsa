@@ -2,13 +2,13 @@
  * Unit Tests for Date Utilities
  * Tests all date parsing, formatting, and calculation functions
  */
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
-  parseDateString,
-  formatDate,
-  formatDateForInput,
   calculateAge,
   createDateOnly,
+  formatDate,
+  formatDateForInput,
+  parseDateString,
   toDateOnly,
 } from "./date";
 

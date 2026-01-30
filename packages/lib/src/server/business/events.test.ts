@@ -14,16 +14,26 @@
  * Testing approach: Module mocking with mock.module() for @vamsa/api
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
-  mockLogger,
-  mockLoggers,
-  mockLog,
-  mockSerializeError,
+  addEventParticipantData,
+  createEventData,
+  deleteEventData,
+  getPersonEventsData,
+  removeEventParticipantData,
+  updateEventData,
+} from "@vamsa/lib/server/business";
+import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
+  mockLog,
+  mockLogger,
+  mockLoggers,
+  mockSerializeError,
   mockStartTimer,
 } from "../../testing/shared-mocks";
+
+// Import the functions to test
 
 // Create mock drizzleSchema
 const mockDrizzleSchema = {
@@ -92,16 +102,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
-// Import the functions to test
-import {
-  getPersonEventsData,
-  createEventData,
-  updateEventData,
-  deleteEventData,
-  addEventParticipantData,
-  removeEventParticipantData,
-} from "@vamsa/lib/server/business";
 
 describe("Events Server Business Logic", () => {
   beforeEach(() => {

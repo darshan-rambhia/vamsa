@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo, useRef, useCallback, useEffect } from "react";
-import { Input, Label, Button, cn } from "@vamsa/ui";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button, Input, Label, cn } from "@vamsa/ui";
 
 interface Person {
   id: string;
@@ -12,7 +12,7 @@ interface Person {
 }
 
 interface PersonSelectorProps {
-  persons: Person[];
+  persons: Array<Person>;
   selectedPersonId: string | undefined;
   onPersonChange: (personId: string) => void;
   isLoading?: boolean;

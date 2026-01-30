@@ -12,15 +12,25 @@
  * Uses module mocking to inject mocked Drizzle ORM instance and logger
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
-  mockWithErr,
   mockSerializeError,
-  clearAllMocks,
+  mockWithErr,
 } from "../../testing/shared-mocks";
+
+// Import after mocks are set up
+import {
+  getEmailNotificationPreferences,
+  notifyNewMemberJoined,
+  notifySuggestionCreated,
+  notifySuggestionUpdated,
+  sendBirthdayReminders,
+  updateEmailNotificationPreferences,
+} from "./notifications";
 
 // Mock logger module
 mock.module("@vamsa/lib/logger", () => ({
@@ -50,7 +60,7 @@ const mockDrizzleSchema = {
 
 const createMockDb = () => {
   let findFirstResult: unknown = null;
-  let findManyResults: unknown[] = [];
+  let findManyResults: Array<unknown> = [];
 
   return {
     query: {
@@ -73,7 +83,7 @@ const createMockDb = () => {
     setFindFirstResult: (result: unknown) => {
       findFirstResult = result;
     },
-    setFindManyResults: (results: unknown[]) => {
+    setFindManyResults: (results: Array<unknown>) => {
       findManyResults = results;
     },
   };
@@ -85,16 +95,6 @@ mock.module("@vamsa/api", () => ({
   drizzleDb: mockDrizzleDb,
   drizzleSchema: mockDrizzleSchema,
 }));
-
-// Import after mocks are set up
-import {
-  getEmailNotificationPreferences,
-  updateEmailNotificationPreferences,
-  notifySuggestionCreated,
-  notifySuggestionUpdated,
-  notifyNewMemberJoined,
-  sendBirthdayReminders,
-} from "./notifications";
 
 describe("notifications business logic", () => {
   beforeEach(() => {

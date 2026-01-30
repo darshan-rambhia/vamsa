@@ -1,18 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  Container,
-  PageHeader,
+  Badge,
+  Button,
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  Button,
-  Badge,
+  Container,
+  PageHeader,
 } from "@vamsa/ui";
-import { ErrorCard, ErrorBoundary } from "~/components/error";
 import { AlertTriangle } from "lucide-react";
+import { ErrorBoundary, ErrorCard } from "~/components/error";
 
 export const Route = createFileRoute("/_authenticated/dev/errors")({
   component: ErrorShowcase,

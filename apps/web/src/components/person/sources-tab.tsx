@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, Badge } from "@vamsa/ui/primitives";
-import type { PersonSourcesResponse, SourceWithEvents } from "~/server/sources";
+import { Badge, Card, CardContent } from "@vamsa/ui/primitives";
 import { SourceDetailModal } from "./source-detail-modal";
+import type { PersonSourcesResponse, SourceWithEvents } from "~/server/sources";
 
 interface SourcesTabProps {
   sources: PersonSourcesResponse;

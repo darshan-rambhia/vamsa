@@ -58,7 +58,7 @@ export interface LoadingState {
  * // Map { "node-1" => { x: 320, y: 40 }, ... }
  */
 export function calculateNodePositions<T extends GenerationNode>(
-  nodes: T[],
+  nodes: Array<T>,
   width: number,
   nodeWidth: number,
   levelHeight: number,
@@ -67,7 +67,7 @@ export function calculateNodePositions<T extends GenerationNode>(
   const nodePositions = new Map<string, Position>();
 
   // Group nodes by generation
-  const generations = new Map<number, T[]>();
+  const generations = new Map<number, Array<T>>();
   nodes.forEach((node) => {
     const gen = node.generation ?? 0;
     if (!generations.has(gen)) {
@@ -134,11 +134,11 @@ export function calculateChartDimensions(
  * // Returns only nodes visible in the viewport
  */
 export function filterVisibleNodes<T extends { id: string }>(
-  nodes: T[],
+  nodes: Array<T>,
   nodePositions: Map<string, Position>,
   viewport: Viewport | null,
   padding = 200
-): T[] {
+): Array<T> {
   // If no viewport provided, return all nodes
   if (!viewport) return nodes;
 
@@ -207,9 +207,9 @@ export function getLoadingState(nodeCount: number): LoadingState {
  * // Returns only edges where both endpoints exist
  */
 export function filterValidEdges<T extends { source: string; target: string }>(
-  edges: T[],
+  edges: Array<T>,
   nodePositions: Map<string, Position>
-): T[] {
+): Array<T> {
   return edges.filter(
     (edge) => nodePositions.has(edge.source) && nodePositions.has(edge.target)
   );

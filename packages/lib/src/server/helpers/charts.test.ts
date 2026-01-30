@@ -13,19 +13,17 @@
  * All functions are pure with no side effects, making them fully testable.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
   buildRelationshipMaps,
-  collectAncestors,
-  collectDescendants,
   calculateFanLayout,
+  collectAncestors,
   collectBowtieAncestors,
+  collectDescendants,
   collectTreeAncestors,
   collectTreeDescendants,
-  type PersonData,
-  type RelationshipData,
-  type CollectionState,
 } from "./charts";
+import type { CollectionState, PersonData, RelationshipData } from "./charts";
 
 /**
  * Helper to create a person data object
@@ -72,7 +70,7 @@ describe("chart helpers", () => {
     });
 
     it("should build childToParents map from PARENT relationships", () => {
-      const relationships: RelationshipData[] = [
+      const relationships: Array<RelationshipData> = [
         { type: "PARENT", personId: "child1", relatedPersonId: "parent1" },
         { type: "PARENT", personId: "child1", relatedPersonId: "parent2" },
       ];
@@ -86,7 +84,7 @@ describe("chart helpers", () => {
     });
 
     it("should build parentToChildren map from PARENT relationships", () => {
-      const relationships: RelationshipData[] = [
+      const relationships: Array<RelationshipData> = [
         { type: "PARENT", personId: "child1", relatedPersonId: "parent1" },
         { type: "PARENT", personId: "child2", relatedPersonId: "parent1" },
       ];
@@ -99,7 +97,7 @@ describe("chart helpers", () => {
     });
 
     it("should build spouseMap from SPOUSE relationships", () => {
-      const relationships: RelationshipData[] = [
+      const relationships: Array<RelationshipData> = [
         { type: "SPOUSE", personId: "person1", relatedPersonId: "person2" },
       ];
 
@@ -111,7 +109,7 @@ describe("chart helpers", () => {
     });
 
     it("should handle multiple relationships simultaneously", () => {
-      const relationships: RelationshipData[] = [
+      const relationships: Array<RelationshipData> = [
         { type: "PARENT", personId: "child1", relatedPersonId: "parent1" },
         { type: "PARENT", personId: "child1", relatedPersonId: "parent2" },
         { type: "SPOUSE", personId: "parent1", relatedPersonId: "parent2" },
@@ -132,7 +130,7 @@ describe("chart helpers", () => {
     });
 
     it("should ignore non-PARENT and non-SPOUSE relationships", () => {
-      const relationships: RelationshipData[] = [
+      const relationships: Array<RelationshipData> = [
         { type: "PARENT", personId: "child1", relatedPersonId: "parent1" },
         { type: "SIBLING", personId: "sibling1", relatedPersonId: "sibling2" },
         { type: "SPOUSE", personId: "person1", relatedPersonId: "person2" },

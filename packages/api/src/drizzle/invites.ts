@@ -6,10 +6,11 @@
  * packages/lib/src/server/business/invites.ts
  */
 
+import { randomBytes } from "node:crypto";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "./db";
 import { invites, persons, users } from "./schema";
-import { eq, and, desc, sql, type InferSelectModel } from "drizzle-orm";
-import { randomBytes } from "crypto";
+import type { InferSelectModel } from "drizzle-orm";
 
 // Type inference
 type Invite = InferSelectModel<typeof invites>;
@@ -37,7 +38,7 @@ interface InviteWithRelations extends Invite {
  * @returns Paginated list of invites with relations
  */
 export async function listInvites(options: ListInvitesOptions): Promise<{
-  items: InviteWithRelations[];
+  items: Array<InviteWithRelations>;
   total: number;
   page: number;
   limit: number;
@@ -68,7 +69,7 @@ export async function listInvites(options: ListInvitesOptions): Promise<{
     .offset((page - 1) * limit);
 
   // Transform results to include relations
-  const items: InviteWithRelations[] = results.map((row) => ({
+  const items: Array<InviteWithRelations> = results.map((row) => ({
     ...row.Invite,
     person: row.Person,
     invitedBy: row.User,

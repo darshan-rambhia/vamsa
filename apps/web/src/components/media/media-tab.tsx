@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@vamsa/ui/primitives";
 import { MediaUploader } from "./media-uploader";
@@ -9,11 +9,11 @@ import { MediaGallery } from "./media-gallery";
 import { MediaViewerModal } from "./media-viewer-modal";
 import { MediaMetadataEditor } from "./media-metadata-editor";
 import {
-  getPersonMedia,
-  getMediaObject,
   deleteMedia,
-  updateMediaMetadata,
+  getMediaObject,
+  getPersonMedia,
   setPrimaryPhoto,
+  updateMediaMetadata,
   uploadMedia,
 } from "~/server/media";
 

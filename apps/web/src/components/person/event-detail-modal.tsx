@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  Badge,
-  Button,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -13,19 +11,21 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Badge,
+  Button,
   Input,
   Label,
 } from "@vamsa/ui/primitives";
 import { Link } from "@tanstack/react-router";
 import { formatDate } from "@vamsa/lib";
-import { type EventType } from "@vamsa/schemas";
+import { EventFormModal } from "./event-form-modal";
+import type { EventType } from "@vamsa/schemas";
 import {
-  deleteEvent,
   addEventParticipant,
+  deleteEvent,
   removeEventParticipant,
 } from "~/server/events";
 import { searchPersons } from "~/server/persons.functions";
-import { EventFormModal } from "./event-form-modal";
 
 interface EventDetailModalProps {
   event: {

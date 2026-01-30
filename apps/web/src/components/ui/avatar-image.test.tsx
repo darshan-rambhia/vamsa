@@ -8,7 +8,7 @@
  * 4. Applies proper CSS classes for styling and sizing
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { render } from "@testing-library/react";
 import { AvatarImage } from "./avatar-image";
 

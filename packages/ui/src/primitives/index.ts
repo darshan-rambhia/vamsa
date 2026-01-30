@@ -62,3 +62,6 @@ export {
   AlertDialogAction,
   AlertDialogCancel,
 } from "./alert-dialog";
+
+// HoverCard
+export { HoverCard, HoverCardTrigger, HoverCardContent } from "./hover-card";

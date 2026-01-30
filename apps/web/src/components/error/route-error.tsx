@@ -1,11 +1,8 @@
-import {
-  useRouter,
-  type ErrorComponentProps,
-  Link,
-} from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { Button, Container } from "@vamsa/ui";
-import { ErrorCard } from "./error-card";
 import { Home } from "lucide-react";
+import { ErrorCard } from "./error-card";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 
 /**
  * Route-level error component for authenticated routes.

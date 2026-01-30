@@ -3,23 +3,23 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
+  Button,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  Button,
-  Label,
   Input,
-  Textarea,
+  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Textarea,
 } from "@vamsa/ui/primitives";
-import { createEvent, updateEvent } from "~/server/events";
-import { EventType } from "@vamsa/schemas";
 import { formatDateForInput } from "@vamsa/lib";
+import type { EventType } from "@vamsa/schemas";
+import { createEvent, updateEvent } from "~/server/events";
 
 interface EventFormModalProps {
   personId: string;

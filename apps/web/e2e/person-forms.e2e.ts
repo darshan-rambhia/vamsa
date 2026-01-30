@@ -8,13 +8,17 @@
  * - CRUD verification (data persistence and retrieval)
  */
 
-import { test, expect } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { bdd } from "./fixtures/bdd-helpers";
-import { PeopleListPage, PersonFormPage } from "./fixtures/page-objects";
+import {
+  PeopleListPage,
+  PersonFormPage,
+  gotoWithRetry,
+} from "./fixtures/page-objects";
 
 test.describe("Person Form - Create", () => {
   test("form displays with required fields", async ({ page }) => {
-    await page.goto("/people/new");
+    await gotoWithRetry(page, "/people/new");
 
     const form = page.getByTestId("person-form");
     await expect(form).toBeVisible();
@@ -25,7 +29,7 @@ test.describe("Person Form - Create", () => {
   });
 
   test("form shows all three tabs", async ({ page }) => {
-    await page.goto("/people/new");
+    await gotoWithRetry(page, "/people/new");
 
     const basicTab = page
       .locator('[role="tab"]')
@@ -43,7 +47,7 @@ test.describe("Person Form - Create", () => {
   });
 
   test("validation prevents empty submission", async ({ page }) => {
-    await page.goto("/people/new");
+    await gotoWithRetry(page, "/people/new");
 
     const submitButton = page.getByTestId("person-form-submit");
     await submitButton.click();
@@ -53,7 +57,7 @@ test.describe("Person Form - Create", () => {
   });
 
   test("validation requires first name", async ({ page }) => {
-    await page.goto("/people/new");
+    await gotoWithRetry(page, "/people/new");
 
     await page.getByTestId("person-form-lastName").fill("TestPerson");
     await page.getByTestId("person-form-submit").click();
@@ -62,7 +66,7 @@ test.describe("Person Form - Create", () => {
   });
 
   test("validation requires last name", async ({ page }) => {
-    await page.goto("/people/new");
+    await gotoWithRetry(page, "/people/new");
 
     await page.getByTestId("person-form-firstName").fill("John");
     await page.getByTestId("person-form-submit").click();
@@ -71,7 +75,7 @@ test.describe("Person Form - Create", () => {
   });
 
   test("form has proper heading", async ({ page }) => {
-    await page.goto("/people/new");
+    await gotoWithRetry(page, "/people/new");
 
     const heading = page.locator("h1, h2").filter({ hasText: "Add Person" });
     await expect(heading).toBeVisible();
@@ -85,7 +89,7 @@ test.describe("Person Form - Create", () => {
     const testLastName = "Person";
 
     await bdd.given("user is on create person form", async () => {
-      await page.goto("/people/new");
+      await gotoWithRetry(page, "/people/new");
       const form = page.getByTestId("person-form");
       await expect(form).toBeVisible();
     });
@@ -115,8 +119,15 @@ test.describe("Person Form - Create", () => {
     await bdd.and(
       "user can navigate to people list and verify data persists",
       async () => {
+        // Wait for any in-progress navigation to complete
+        await page.waitForLoadState("domcontentloaded");
+        await page.waitForTimeout(500);
+
         // Navigate to people list
-        await page.goto("/people");
+        if (!page.url().endsWith("/people")) {
+          await gotoWithRetry(page, "/people");
+          await page.waitForLoadState("domcontentloaded");
+        }
         const peopleList = new PeopleListPage(page);
         await peopleList.waitForLoad();
 
@@ -140,7 +151,7 @@ test.describe("Person Form - Create", () => {
     const testLastName = "Person";
 
     await bdd.given("user creates a person in the form", async () => {
-      await page.goto("/people/new");
+      await gotoWithRetry(page, "/people/new");
       const form = new PersonFormPage(page);
       await form.fillBasicInfo({
         firstName: testFirstName,
@@ -151,12 +162,20 @@ test.describe("Person Form - Create", () => {
     });
 
     await bdd.when("user navigates to people list and back", async () => {
+      // Wait for any in-progress navigation to complete
+      await page.waitForLoadState("domcontentloaded");
+      await page.waitForTimeout(500);
+
       // Navigate to people list
-      await page.goto("/people");
+      if (!page.url().endsWith("/people")) {
+        await gotoWithRetry(page, "/people");
+        await page.waitForLoadState("domcontentloaded");
+      }
       await page.waitForTimeout(500);
 
       // Navigate back to create form
-      await page.goto("/people/new");
+      await gotoWithRetry(page, "/people/new");
+      await page.waitForLoadState("domcontentloaded");
       await page.waitForTimeout(500);
     });
 
@@ -165,8 +184,14 @@ test.describe("Person Form - Create", () => {
       async () => {
         const peopleList = new PeopleListPage(page);
 
+        // Wait for any in-progress navigation to complete
+        await page.waitForLoadState("domcontentloaded");
+
         // Navigate to people list to verify consistency
-        await page.goto("/people");
+        if (!page.url().endsWith("/people")) {
+          await gotoWithRetry(page, "/people");
+          await page.waitForLoadState("domcontentloaded");
+        }
         await peopleList.waitForLoad();
 
         // Should load without errors
@@ -180,7 +205,7 @@ test.describe("Person Form - Create", () => {
     page,
   }) => {
     await bdd.given("user is on create person form", async () => {
-      await page.goto("/people/new");
+      await gotoWithRetry(page, "/people/new");
       const form = page.getByTestId("person-form");
       await expect(form).toBeVisible();
     });
@@ -249,7 +274,7 @@ test.describe.serial("Person Form - Edit", () => {
     page: any,
     waitForConvexSync: () => Promise<void>
   ): Promise<string | null> {
-    await page.goto("/people");
+    await gotoWithRetry(page, "/people");
     await page.waitForTimeout(500);
 
     const peopleList = new PeopleListPage(page);
@@ -272,7 +297,7 @@ test.describe.serial("Person Form - Edit", () => {
     }
 
     // Create a new person for the test - use direct approach for reliability
-    await page.goto("/people/new");
+    await gotoWithRetry(page, "/people/new");
     await page.waitForLoadState("domcontentloaded");
 
     // NETWORKIDLE EXCEPTION: Person form requires networkidle for reliable React hydration
@@ -340,7 +365,7 @@ test.describe.serial("Person Form - Edit", () => {
 
     // Navigate to person detail if not already there
     if (!page.url().includes(`/people/${personId}`)) {
-      await page.goto(`/people/${personId}`);
+      await gotoWithRetry(page, `/people/${personId}`);
     }
 
     const editButton = page
@@ -376,7 +401,7 @@ test.describe.serial("Person Form - Edit", () => {
       async () => {
         // Navigate to person detail if not already there
         if (personId && !page.url().includes(`/people/${personId}`)) {
-          await page.goto(`/people/${personId}`);
+          await gotoWithRetry(page, `/people/${personId}`);
         }
 
         // Click edit button
@@ -432,7 +457,7 @@ test.describe.serial("Person Form - Edit", () => {
 
     // Navigate to person detail if not already there
     if (!page.url().includes(`/people/${personId}`)) {
-      await page.goto(`/people/${personId}`);
+      await gotoWithRetry(page, `/people/${personId}`);
     }
 
     const editButton = page
@@ -452,7 +477,7 @@ test.describe.serial("Person Form - Edit", () => {
 
 test.describe("Person Form - Accessibility", () => {
   test("form inputs are keyboard navigable", async ({ page }) => {
-    await page.goto("/people/new");
+    await gotoWithRetry(page, "/people/new");
 
     const form = new PersonFormPage(page);
     await form.waitForFormReady();
@@ -474,7 +499,7 @@ test.describe("Person Form - Accessibility", () => {
   });
 
   test("required fields are marked", async ({ page }) => {
-    await page.goto("/people/new");
+    await gotoWithRetry(page, "/people/new");
 
     const requiredLabels = page.locator('label:has-text("*")');
     const count = await requiredLabels.count();

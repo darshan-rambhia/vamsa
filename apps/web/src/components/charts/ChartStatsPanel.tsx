@@ -128,6 +128,16 @@ const statsConfigs: Record<ChartType, StatsConfig> = {
     showBowtieCounts: false,
     hidden: true,
   },
+  list: {
+    showChartType: true,
+    showTotalPeople: true,
+    showGenerations: true,
+    showYearRange: false,
+    showRelationships: false,
+    showLivingCount: false,
+    showBowtieCounts: false,
+    hidden: false,
+  },
 };
 
 /**
@@ -189,6 +199,7 @@ export function ChartStatsPanel({ chartType, metadata }: ChartStatsPanelProps) {
       bowtie: "Bowtie Chart",
       compact: "Compact Tree",
       statistics: "Statistics",
+      list: "List View (Accessible)",
     };
     stats.push({ label: "Chart Type", value: chartNames[chartType] });
   }

@@ -10,7 +10,7 @@ const isBunRuntime = typeof globalThis.Bun !== "undefined";
 export async function hashPassword(password: string): Promise<string> {
   if (isBunRuntime) {
     // Use Node.js crypto even in Bun for cross-runtime compatibility
-    const { scrypt, randomBytes } = await import("crypto");
+    const { scrypt, randomBytes } = await import("node:crypto");
     const salt = randomBytes(16).toString("hex");
     return new Promise((resolve, reject) => {
       scrypt(password, salt, 64, (err, derivedKey) => {
@@ -20,7 +20,7 @@ export async function hashPassword(password: string): Promise<string> {
     });
   }
   // For Node.js, use the same scrypt approach
-  const { scrypt, randomBytes } = await import("crypto");
+  const { scrypt, randomBytes } = await import("node:crypto");
   const salt = randomBytes(16).toString("hex");
   return new Promise((resolve, reject) => {
     scrypt(password, salt, 64, (err, derivedKey) => {
@@ -36,7 +36,7 @@ export async function verifyPassword(
 ): Promise<boolean> {
   // Handle our scrypt format
   if (hash.startsWith("scrypt:")) {
-    const { scrypt, timingSafeEqual } = await import("crypto");
+    const { scrypt, timingSafeEqual } = await import("node:crypto");
     const [, salt, storedHash] = hash.split(":");
     return new Promise((resolve, reject) => {
       scrypt(password, salt, 64, (err, derivedKey) => {

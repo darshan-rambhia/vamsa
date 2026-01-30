@@ -4,14 +4,14 @@ import {
   Button,
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
   Input,
   Label,
   ThemeToggle,
 } from "@vamsa/ui";
-import { getInviteByToken, acceptInvite } from "~/server/invites";
+import { acceptInvite, getInviteByToken } from "~/server/invites";
 
 export const Route = createFileRoute("/invite/$token")({
   loader: async ({ params }) => {

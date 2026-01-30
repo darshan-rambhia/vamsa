@@ -1,6 +1,6 @@
-import { Card, CardContent, Badge } from "@vamsa/ui/primitives";
+import { Badge, Card, CardContent } from "@vamsa/ui/primitives";
 import { formatDate } from "@vamsa/lib";
-import { type EventType } from "@vamsa/schemas";
+import type { EventType } from "@vamsa/schemas";
 
 interface EventCardProps {
   event: {

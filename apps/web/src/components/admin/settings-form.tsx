@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { useRouter } from "@tanstack/react-router";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import {
   Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Checkbox,
   Input,
   Label,
   Textarea,
-  Checkbox,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
 } from "@vamsa/ui";
 import { updateFamilySettings } from "~/server/settings";
 

@@ -23,8 +23,10 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "vite.config.ts",
+    "playwright.config.ts",
     "server/**/*.ts",
-    "tests/**/*.ts"
+    "tests/**/*.ts",
+    "e2e/**/*.ts"
   ],
   "exclude": ["node_modules", "dist", ".stryker-tmp", "tests/integration"]
 }

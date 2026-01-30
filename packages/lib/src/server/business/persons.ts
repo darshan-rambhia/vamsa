@@ -1,18 +1,19 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, or, ilike, desc, asc, sql, SQL, isNull } from "drizzle-orm";
-import { loggers } from "@vamsa/lib/logger";
-
-const log = loggers.db;
+import { and, asc, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
 import { createPaginationMeta } from "@vamsa/schemas";
+import { loggers } from "@vamsa/lib/logger";
 import { t } from "../i18n";
 import { recordSearchMetrics } from "../metrics";
+import type { SQL } from "drizzle-orm";
 import type {
+  Address,
+  Gender,
   PersonCreateInput,
   PersonUpdateInput,
-  Address,
   SocialLinks,
-  Gender,
 } from "@vamsa/schemas";
+
+const log = loggers.db;
 
 /**
  * Type for the database client used by person functions.
@@ -20,6 +21,7 @@ import type {
  * Can be either the main database instance or a transaction object.
  */
 export type PersonDb = typeof drizzleDb;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Drizzle transaction types are complex; any is acceptable here
 export type PersonDbOrTx = PersonDb | any;
 
 /**
@@ -61,7 +63,7 @@ export async function logAuditAction(
  * @returns Drizzle where condition
  */
 export function buildPersonWhereClause(search?: string, isLiving?: boolean) {
-  const conditions: SQL<unknown>[] = [];
+  const conditions: Array<SQL<unknown>> = [];
 
   // Always exclude deleted persons
   conditions.push(isNull(drizzleSchema.persons.deletedAt));
@@ -138,7 +140,7 @@ export async function listPersonsData(
     .where(where);
 
   // Build order by clause
-  const orderByConditions: SQL<unknown>[] = [];
+  const orderByConditions: Array<SQL<unknown>> = [];
   if (sortBy === "lastName") {
     orderByConditions.push(
       sortOrder === "asc"
@@ -292,7 +294,7 @@ interface PersonWithRelationships {
   isLiving: boolean;
   createdAt: Date;
   updatedAt: Date;
-  relationshipsFrom: RelationshipWithRelatedPerson[];
+  relationshipsFrom: Array<RelationshipWithRelatedPerson>;
 }
 
 /**
@@ -600,10 +602,10 @@ export async function searchPersonsData(
   query: string,
   excludeId?: string,
   db: PersonDb = drizzleDb
-): Promise<PersonSearchResult[]> {
+): Promise<Array<PersonSearchResult>> {
   const start = Date.now();
 
-  const conditions: SQL<unknown>[] = [
+  const conditions: Array<SQL<unknown>> = [
     isNull(drizzleSchema.persons.deletedAt),
     or(
       ilike(drizzleSchema.persons.firstName, `%${query}%`),

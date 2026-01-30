@@ -5,10 +5,10 @@ import { drizzleDb, getDrizzlePoolStats } from "@vamsa/api";
 import { sql } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 import {
+  SLOW_QUERY_LOG_THRESHOLD_MS,
+  clearSlowQueries,
   getSlowQueries,
   getSlowQueryStats,
-  clearSlowQueries,
-  SLOW_QUERY_LOG_THRESHOLD_MS,
 } from "../metrics/slow-query-logger";
 
 const log = loggers.api;

@@ -33,7 +33,7 @@ export function ResponsiveImage({
 
   // Build srcSet from available responsive sizes
   const buildSrcSet = () => {
-    const sources: string[] = [];
+    const sources: Array<string> = [];
     if (thumb400Path) sources.push(`/${thumb400Path} 400w`);
     if (thumb800Path) sources.push(`/${thumb800Path} 800w`);
     if (thumb1200Path) sources.push(`/${thumb1200Path} 1200w`);

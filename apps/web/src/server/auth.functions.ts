@@ -11,13 +11,13 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import {
-  getUnclaimedProfilesHandler,
-  claimProfileHandler,
   changePasswordHandler,
-  getSessionHandler,
   checkAuthHandler,
-  logoutHandler,
+  claimProfileHandler,
   getAvailableProvidersHandler,
+  getSessionHandler,
+  getUnclaimedProfilesHandler,
+  logoutHandler,
 } from "./auth.server";
 
 /**

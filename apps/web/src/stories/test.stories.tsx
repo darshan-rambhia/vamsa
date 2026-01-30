@@ -1,6 +1,6 @@
-import type { Story } from "@ladle/react";
-import { StoryDecorator } from "./decorators";
 import { SMALL_FAMILY } from "@vamsa/lib";
+import { StoryDecorator } from "./decorators";
+import type { Story } from "@ladle/react";
 
 export const TestSetup: Story = () => {
   return (

@@ -7,21 +7,23 @@
  * @fileoverview Server-only code - never import from client components
  */
 
-import { requireAuth } from "./middleware/require-auth";
 import {
-  listPersonsData,
-  getPersonData,
   createPersonData,
-  updatePersonData,
   deletePersonData,
+  getPersonData,
+  listPersonsData,
   searchPersonsData,
-  type PersonListOptions,
-  type PersonListResult,
-  type PersonDetail,
-  type PersonCreateResult,
-  type PersonUpdateResult,
-  type PersonDeleteResult,
-  type PersonSearchResult,
+  updatePersonData,
+} from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
+import type {
+  PersonCreateResult,
+  PersonDeleteResult,
+  PersonDetail,
+  PersonListOptions,
+  PersonListResult,
+  PersonSearchResult,
+  PersonUpdateResult,
 } from "@vamsa/lib/server/business";
 import type { PersonCreateInput, PersonUpdateInput } from "@vamsa/schemas";
 
@@ -131,7 +133,7 @@ export async function deletePersonHandler(
  */
 export async function searchPersonsHandler(
   data: PersonSearchInput
-): Promise<PersonSearchResult[]> {
+): Promise<Array<PersonSearchResult>> {
   await requireAuth("VIEWER");
   return searchPersonsData(data.query, data.excludeId);
 }

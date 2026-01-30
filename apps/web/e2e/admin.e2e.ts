@@ -10,9 +10,9 @@
  * All tests follow BDD Given-When-Then structure for clarity.
  */
 
-import { test, expect } from "./fixtures";
+import { expect, test } from "./fixtures";
 import { bdd } from "./fixtures/bdd-helpers";
-import { AdminPage, Navigation } from "./fixtures/page-objects";
+import { AdminPage, Navigation, gotoWithRetry } from "./fixtures/page-objects";
 
 test.describe("Feature: Admin Operations", () => {
   test.describe("Admin Panel Access", () => {
@@ -40,7 +40,7 @@ test.describe("Feature: Admin Operations", () => {
       });
 
       await bdd.when("unauthenticated user tries to access admin", async () => {
-        await page.goto("/admin/users");
+        await gotoWithRetry(page, "/admin/users");
       });
 
       await bdd.then("user is redirected to login page", async () => {
@@ -122,7 +122,7 @@ test.describe("Feature: Admin Operations", () => {
         page,
       }) => {
         await bdd.when("member navigates to admin users page", async () => {
-          await page.goto("/admin/users");
+          await gotoWithRetry(page, "/admin/users");
           // Wait for redirect to complete
           await page.waitForTimeout(1000);
         });
@@ -137,7 +137,7 @@ test.describe("Feature: Admin Operations", () => {
         page,
       }) => {
         await bdd.when("member tries to access admin invites", async () => {
-          await page.goto("/admin/invites");
+          await gotoWithRetry(page, "/admin/invites");
           await page.waitForTimeout(500);
         });
 
@@ -151,7 +151,7 @@ test.describe("Feature: Admin Operations", () => {
         page,
       }) => {
         await bdd.when("member tries to access admin backup", async () => {
-          await page.goto("/admin/backup");
+          await gotoWithRetry(page, "/admin/backup");
           await page.waitForTimeout(500);
         });
 
@@ -171,7 +171,7 @@ test.describe("Feature: Admin Operations", () => {
         await bdd.when(
           "non-admin user tries to access admin settings",
           async () => {
-            await page.goto("/admin/settings");
+            await gotoWithRetry(page, "/admin/settings");
             await page.waitForTimeout(500);
           }
         );
@@ -200,7 +200,7 @@ test.describe("Feature: Admin Operations", () => {
       });
 
       await bdd.when("admin navigates to settings", async () => {
-        await page.goto("/admin/settings");
+        await gotoWithRetry(page, "/admin/settings");
       });
 
       await bdd.then("settings page is displayed", async () => {
@@ -212,7 +212,7 @@ test.describe("Feature: Admin Operations", () => {
 
     test("admin can view settings content", async ({ page }) => {
       await bdd.given("admin is on settings page", async () => {
-        await page.goto("/admin/settings");
+        await gotoWithRetry(page, "/admin/settings");
         const settingsContent = page.locator("main").first();
         await expect(settingsContent).toBeVisible({ timeout: 5000 });
       });
@@ -248,7 +248,7 @@ test.describe("Feature: Admin Operations", () => {
           `admin navigates to ${section.tab} section`,
           async () => {
             const sectionUrl = `/admin/${section.tab}`;
-            await page.goto(sectionUrl);
+            await gotoWithRetry(page, sectionUrl);
             await page.waitForURL(section.url, { timeout: 5000 });
           }
         );
@@ -327,7 +327,7 @@ test.describe("Feature: Admin Operations", () => {
   test.describe("Admin Default Route", () => {
     test("admin /admin route redirects to settings", async ({ page }) => {
       await bdd.given("admin navigates to /admin root", async () => {
-        await page.goto("/admin");
+        await gotoWithRetry(page, "/admin");
       });
 
       await bdd.then("admin is redirected to settings page", async () => {

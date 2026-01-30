@@ -2,22 +2,24 @@
  * Unit Tests for Dashboard Schemas
  * Tests Zod schema validation for dashboard configuration and preferences
  */
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  widgetSizeSchema,
-  widgetPositionSchema,
-  widgetConfigSchema,
+  DEFAULT_DASHBOARD_LAYOUT,
+  DEFAULT_DASHBOARD_WIDGETS,
   dashboardLayoutSchema,
   dashboardPreferencesSchema,
   saveDashboardPreferencesSchema,
-  DEFAULT_DASHBOARD_LAYOUT,
-  DEFAULT_DASHBOARD_WIDGETS,
-  type WidgetSize,
-  type WidgetPosition,
-  type WidgetConfig,
-  type DashboardLayout,
-  type DashboardPreferences,
-  type SaveDashboardPreferencesInput,
+  widgetConfigSchema,
+  widgetPositionSchema,
+  widgetSizeSchema,
+} from "./dashboard";
+import type {
+  DashboardLayout,
+  DashboardPreferences,
+  SaveDashboardPreferencesInput,
+  WidgetConfig,
+  WidgetPosition,
+  WidgetSize,
 } from "./dashboard";
 
 describe("widgetSizeSchema", () => {

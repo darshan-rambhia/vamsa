@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, Button } from "@vamsa/ui";
-import { CheckCircle2, ArrowRight } from "lucide-react";
+import { Button, Card, CardContent, CardHeader, CardTitle } from "@vamsa/ui";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { PersonForm } from "../person/person-form";
 import { createRelationship } from "~/server/relationships";
 import { updateUser } from "~/server/users";

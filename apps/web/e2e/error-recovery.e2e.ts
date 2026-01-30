@@ -12,8 +12,12 @@
  * Philosophy: Users should be able to recover from errors without losing work
  */
 
-import { test, expect, bdd, vamsaExpect } from "./fixtures";
-import { LoginPage, PersonFormPage } from "./fixtures/page-objects";
+import { bdd, expect, test, vamsaExpect } from "./fixtures";
+import {
+  LoginPage,
+  PersonFormPage,
+  gotoWithRetry,
+} from "./fixtures/page-objects";
 
 test.describe("Feature: Error Recovery", () => {
   test.describe("Form Validation Error Recovery", () => {
@@ -21,7 +25,7 @@ test.describe("Feature: Error Recovery", () => {
       page,
     }) => {
       await bdd.given("user is on person creation form", async () => {
-        await page.goto("/people/new", { waitUntil: "domcontentloaded" });
+        await gotoWithRetry(page, "/people/new");
         const form = page.getByTestId("person-form");
         await expect(form).toBeVisible({ timeout: 5000 });
       });
@@ -49,7 +53,7 @@ test.describe("Feature: Error Recovery", () => {
       page,
     }) => {
       await bdd.given("user is on person creation form", async () => {
-        await page.goto("/people/new", { waitUntil: "domcontentloaded" });
+        await gotoWithRetry(page, "/people/new");
         await expect(page.getByTestId("person-form")).toBeVisible({
           timeout: 5000,
         });
@@ -123,7 +127,7 @@ test.describe("Feature: Error Recovery", () => {
       page,
     }) => {
       await bdd.given("user is on person creation form", async () => {
-        await page.goto("/people/new", { waitUntil: "domcontentloaded" });
+        await gotoWithRetry(page, "/people/new");
         await expect(page.getByTestId("person-form")).toBeVisible({
           timeout: 5000,
         });
@@ -210,7 +214,7 @@ test.describe("Feature: Error Recovery", () => {
       page,
     }) => {
       await bdd.given("user is on dashboard", async () => {
-        await page.goto("/dashboard");
+        await gotoWithRetry(page, "/dashboard");
         await expect(page.locator("nav").first()).toBeVisible({
           timeout: 5000,
         });
@@ -218,9 +222,9 @@ test.describe("Feature: Error Recovery", () => {
 
       await bdd.when("user rapidly navigates between pages", async () => {
         // Navigate quickly without waiting for each page to fully load
-        await page.goto("/people", { waitUntil: "domcontentloaded" });
-        await page.goto("/visualize", { waitUntil: "domcontentloaded" });
-        await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+        await gotoWithRetry(page, "/people");
+        await gotoWithRetry(page, "/visualize");
+        await gotoWithRetry(page, "/dashboard");
       });
 
       await bdd.then(
@@ -242,7 +246,7 @@ test.describe("Feature: Error Recovery", () => {
       page,
     }) => {
       await bdd.given("user is on person creation form", async () => {
-        await page.goto("/people/new", { waitUntil: "domcontentloaded" });
+        await gotoWithRetry(page, "/people/new");
         await expect(page.getByTestId("person-form")).toBeVisible({
           timeout: 5000,
         });
@@ -288,7 +292,7 @@ test.describe("Feature: Error Recovery", () => {
       page,
     }) => {
       await bdd.given("user is on person creation form", async () => {
-        await page.goto("/people/new", { waitUntil: "domcontentloaded" });
+        await gotoWithRetry(page, "/people/new");
         await expect(page.getByTestId("person-form")).toBeVisible({
           timeout: 5000,
         });
@@ -376,7 +380,7 @@ test.describe("Feature: Error Recovery", () => {
       page,
     }) => {
       await bdd.given("user is on people list page", async () => {
-        await page.goto("/people");
+        await gotoWithRetry(page, "/people");
         // Wait for initial load
         await expect(page.locator("nav").first()).toBeVisible({
           timeout: 5000,
@@ -406,7 +410,7 @@ test.describe("Feature: Error Recovery", () => {
       logout: _logout,
     }) => {
       await bdd.given("user is logged in and on protected page", async () => {
-        await page.goto("/people");
+        await gotoWithRetry(page, "/people");
         await expect(page.locator("nav").first()).toBeVisible({
           timeout: 5000,
         });
@@ -420,7 +424,17 @@ test.describe("Feature: Error Recovery", () => {
       await bdd.then(
         "accessing protected page redirects to login",
         async () => {
-          await page.goto("/people", { waitUntil: "domcontentloaded" });
+          // Use try/catch for Firefox's NS_BINDING_ABORTED during auth redirect
+          try {
+            await gotoWithRetry(page, "/people");
+          } catch (error) {
+            if (
+              !(error instanceof Error) ||
+              !error.message.includes("NS_BINDING_ABORTED")
+            ) {
+              throw error;
+            }
+          }
           // Should redirect to login
           const isOnLogin = page.url().includes("/login");
           expect(isOnLogin).toBeTruthy();
@@ -433,7 +447,7 @@ test.describe("Feature: Error Recovery", () => {
       login: _login,
     }) => {
       await bdd.given("user was previously authenticated", async () => {
-        await page.goto("/people");
+        await gotoWithRetry(page, "/people");
         await expect(page.locator("nav").first()).toBeVisible({
           timeout: 5000,
         });
@@ -442,7 +456,17 @@ test.describe("Feature: Error Recovery", () => {
       await bdd.when("user session expires and they navigate", async () => {
         // Clear cookies to simulate session expiration
         await page.context().clearCookies();
-        await page.goto("/people", { waitUntil: "domcontentloaded" });
+        // Use try/catch for Firefox's NS_BINDING_ABORTED during auth redirect
+        try {
+          await gotoWithRetry(page, "/people");
+        } catch (error) {
+          if (
+            !(error instanceof Error) ||
+            !error.message.includes("NS_BINDING_ABORTED")
+          ) {
+            throw error;
+          }
+        }
       });
 
       await bdd.then("user is on login page", async () => {
@@ -464,14 +488,26 @@ test.describe("Feature: Error Recovery", () => {
     }) => {
       await bdd.given("user intends to visit protected route", async () => {
         // Start at login
-        await page.goto("/login");
+        await gotoWithRetry(page, "/login");
       });
 
       await bdd.when("user is not authenticated", async () => {
         // Ensure not authenticated
         await page.context().clearCookies();
-        // Reload to ensure fresh login form state
-        await page.reload();
+        // Reload to ensure fresh login form state (Firefox may throw NS_ERROR_FAILURE)
+        try {
+          await page.reload();
+        } catch (error) {
+          if (
+            error instanceof Error &&
+            error.message.includes("NS_ERROR_FAILURE")
+          ) {
+            // Firefox reload error - navigate directly instead
+            await gotoWithRetry(page, "/login");
+          } else {
+            throw error;
+          }
+        }
       });
 
       await bdd.and("user logs in", async () => {
@@ -487,7 +523,7 @@ test.describe("Feature: Error Recovery", () => {
           await vamsaExpect.toBeLoggedIn(page);
 
           // Should be able to navigate to protected pages
-          await page.goto("/people");
+          await gotoWithRetry(page, "/people");
           await expect(page).toHaveURL(/\/people/);
         }
       );
@@ -499,14 +535,14 @@ test.describe("Feature: Error Recovery", () => {
       page,
     }) => {
       await bdd.given("user is on dashboard", async () => {
-        await page.goto("/dashboard");
+        await gotoWithRetry(page, "/dashboard");
         await expect(page.locator("nav").first()).toBeVisible({
           timeout: 5000,
         });
       });
 
       await bdd.when("user navigates to people page", async () => {
-        await page.goto("/people");
+        await gotoWithRetry(page, "/people");
       });
 
       await bdd.then("user can go back using back button", async () => {
@@ -547,14 +583,14 @@ test.describe("Feature: Error Recovery", () => {
       page,
     }) => {
       await bdd.given("user is viewing people list", async () => {
-        await page.goto("/people");
+        await gotoWithRetry(page, "/people");
         await expect(page.locator("nav").first()).toBeVisible({
           timeout: 5000,
         });
       });
 
       await bdd.when("user navigates to new person form", async () => {
-        await page.goto("/people/new");
+        await gotoWithRetry(page, "/people/new");
         await expect(page.getByTestId("person-form")).toBeVisible({
           timeout: 5000,
         });
@@ -564,7 +600,7 @@ test.describe("Feature: Error Recovery", () => {
         "user can navigate back to people list without data loss",
         async () => {
           // Navigate back
-          await page.goto("/people");
+          await gotoWithRetry(page, "/people");
 
           // People list should still be accessible
           await expect(page).toHaveURL(/\/people/);
@@ -573,7 +609,7 @@ test.describe("Feature: Error Recovery", () => {
 
       await bdd.and("user can retry form navigation", async () => {
         // Go back to form
-        await page.goto("/people/new");
+        await gotoWithRetry(page, "/people/new");
         const form = page.getByTestId("person-form");
         await expect(form).toBeVisible({ timeout: 5000 });
       });
@@ -587,7 +623,7 @@ test.describe("Feature: Error Recovery", () => {
       const testFirstName = "DataPersist" + Date.now();
 
       await bdd.given("user is filling out person creation form", async () => {
-        await page.goto("/people/new", { waitUntil: "domcontentloaded" });
+        await gotoWithRetry(page, "/people/new");
         await expect(page.getByTestId("person-form")).toBeVisible({
           timeout: 5000,
         });
@@ -609,10 +645,10 @@ test.describe("Feature: Error Recovery", () => {
         "user can continue editing form after brief navigation",
         async () => {
           // Try to navigate away briefly
-          await page.goto("/people", { waitUntil: "domcontentloaded" });
+          await gotoWithRetry(page, "/people");
 
           // Go back to form
-          await page.goto("/people/new");
+          await gotoWithRetry(page, "/people/new");
           await expect(page.getByTestId("person-form")).toBeVisible({
             timeout: 5000,
           });
@@ -624,7 +660,7 @@ test.describe("Feature: Error Recovery", () => {
       page,
     }) => {
       await bdd.given("user is on person creation form", async () => {
-        await page.goto("/people/new", { waitUntil: "domcontentloaded" });
+        await gotoWithRetry(page, "/people/new");
         await expect(page.getByTestId("person-form")).toBeVisible({
           timeout: 5000,
         });

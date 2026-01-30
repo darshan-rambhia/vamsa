@@ -9,7 +9,7 @@
  * for unit tests. Integration tests via E2E would provide full coverage.
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
 describe("OIDCProfileClaimModal Component", () => {
   describe("Component Export", () => {
@@ -182,7 +182,7 @@ describe("OIDCProfileClaimModal Component", () => {
         isOpen = open;
       };
 
-      const states: boolean[] = [];
+      const states: Array<boolean> = [];
       for (let i = 0; i < 4; i++) {
         toggleOpen(i % 2 === 0);
         states.push(isOpen);
@@ -193,7 +193,7 @@ describe("OIDCProfileClaimModal Component", () => {
 
     it("should track multiple state changes in sequence", () => {
       let state = false;
-      const stateHistory: boolean[] = [state];
+      const stateHistory: Array<boolean> = [state];
 
       for (let i = 0; i < 5; i++) {
         state = !state;
@@ -261,7 +261,7 @@ describe("OIDCProfileClaimModal Component", () => {
     });
 
     it("should support complex state transitions", () => {
-      const states: { open: boolean; timestamp: number }[] = [];
+      const states: Array<{ open: boolean; timestamp: number }> = [];
       let isOpen = false;
 
       const transitionState = (open: boolean) => {

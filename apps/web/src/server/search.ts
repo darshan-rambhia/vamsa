@@ -4,14 +4,13 @@ import { drizzleDb } from "@vamsa/api";
 import {
   buildCombinedSearchQuery,
   buildPersonSearchCountQuery,
-  sanitizeQuery,
-  type SearchResults,
   classifyIntent,
   executeSearch,
-  type RelationshipDataMaps,
+  sanitizeQuery,
 } from "@vamsa/lib";
-import { requireAuth } from "./middleware/require-auth";
 import { loggers } from "@vamsa/lib/logger";
+import { requireAuth } from "./middleware/require-auth";
+import type { RelationshipDataMaps, SearchResults } from "@vamsa/lib";
 
 const log = loggers.db;
 
@@ -20,8 +19,8 @@ const log = loggers.db;
  */
 function convertSetMapToArrayMap(
   setMap: Map<string, Set<string>>
-): Map<string, string[]> {
-  const result = new Map<string, string[]>();
+): Map<string, Array<string>> {
+  const result = new Map<string, Array<string>>();
   setMap.forEach((set, key) => {
     result.set(key, Array.from(set));
   });

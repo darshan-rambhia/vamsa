@@ -5,12 +5,12 @@
  * and produce well-formed metric attributes.
  */
 
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
-  recordHttpRequest,
-  recordError,
-  recordDbQuery,
   recordAuthEvent,
+  recordDbQuery,
+  recordError,
+  recordHttpRequest,
 } from "./metrics";
 
 describe("metrics", () => {

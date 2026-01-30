@@ -1,6 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { getUnclaimedProfiles, claimProfile } from "~/server/auth.functions";
 import {
   Button,
   Card,
@@ -17,6 +16,7 @@ import {
   SelectValue,
   ThemeToggle,
 } from "@vamsa/ui";
+import { claimProfile, getUnclaimedProfiles } from "~/server/auth.functions";
 
 export const Route = createFileRoute("/claim-profile")({
   component: ClaimProfileComponent,
@@ -30,7 +30,7 @@ type UnclaimedProfile = {
 
 function ClaimProfileComponent() {
   const navigate = useNavigate();
-  const [profiles, setProfiles] = useState<UnclaimedProfile[]>([]);
+  const [profiles, setProfiles] = useState<Array<UnclaimedProfile>>([]);
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(true);
   const [selectedPersonId, setSelectedPersonId] = useState("");
   const [email, setEmail] = useState("");

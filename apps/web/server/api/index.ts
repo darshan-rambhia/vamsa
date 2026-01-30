@@ -1,11 +1,11 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
+import { loggers } from "@vamsa/lib/logger";
 import authRouter from "./auth";
 import personsRouter from "./persons";
 import relationshipsRouter from "./relationships";
 import calendarRouter from "./calendar";
 import metricsRouter from "./metrics";
-import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.api;
 

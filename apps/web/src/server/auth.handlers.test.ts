@@ -8,13 +8,24 @@
  * isolated from handler tests that require mocking.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
-  withStubbedServerContext,
-  testUsers,
   getStubbedSession,
+  testUsers,
+  withStubbedServerContext,
 } from "@test/server-fn-context";
 import { resetRateLimit } from "./middleware/rate-limiter";
+
+// Import handlers AFTER setting up mocks
+import {
+  changePasswordHandler,
+  checkAuthHandler,
+  claimProfileHandler,
+  getAvailableProvidersHandler,
+  getSessionHandler,
+  getUnclaimedProfilesHandler,
+  logoutHandler,
+} from "./auth.server";
 
 // =============================================================================
 // Mocks for Handler Tests
@@ -53,17 +64,6 @@ mock.module("@vamsa/lib/server/business", () => ({
   getBetterAuthProviders: mockGetBetterAuthProviders,
   betterAuthGetSessionWithUserFromCookie: getStubbedSession,
 }));
-
-// Import handlers AFTER setting up mocks
-import {
-  getUnclaimedProfilesHandler,
-  claimProfileHandler,
-  changePasswordHandler,
-  getSessionHandler,
-  checkAuthHandler,
-  logoutHandler,
-  getAvailableProvidersHandler,
-} from "./auth.server";
 
 // =============================================================================
 // Handler Tests

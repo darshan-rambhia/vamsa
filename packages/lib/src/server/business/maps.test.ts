@@ -8,7 +8,7 @@
  * - Marker type definitions and transformations
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 
 // Pure functions for geographic calculations
 function calculateDistance(
@@ -51,7 +51,7 @@ interface PlaceCluster {
   centerLng: number;
 }
 
-function createCluster(markers: MapMarker[]): PlaceCluster {
+function createCluster(markers: Array<MapMarker>): PlaceCluster {
   const lats = markers.map((p) => p.latitude);
   const lngs = markers.map((p) => p.longitude);
 
@@ -85,7 +85,7 @@ function getYearFromDate(date: Date | null): number | null {
   return date.getFullYear();
 }
 
-function calculateTimeRange(years: (number | null)[]): {
+function calculateTimeRange(years: Array<number | null>): {
   earliest: number | null;
   latest: number | null;
 } {
@@ -163,7 +163,7 @@ describe("maps business logic - geographic calculations", () => {
 
   describe("createCluster", () => {
     it("should create cluster with correct bounds and center", () => {
-      const markers: MapMarker[] = [
+      const markers: Array<MapMarker> = [
         { latitude: 40, longitude: -74 },
         { latitude: 50, longitude: -60 },
       ];
@@ -182,7 +182,7 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should handle single marker", () => {
-      const markers: MapMarker[] = [{ latitude: 40, longitude: -74 }];
+      const markers: Array<MapMarker> = [{ latitude: 40, longitude: -74 }];
 
       const cluster = createCluster(markers);
 
@@ -198,7 +198,7 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should handle markers with negative coordinates", () => {
-      const markers: MapMarker[] = [
+      const markers: Array<MapMarker> = [
         { latitude: -10, longitude: -50 },
         { latitude: -30, longitude: -60 },
       ];
@@ -214,7 +214,7 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should handle multiple markers in same cluster", () => {
-      const markers: MapMarker[] = [
+      const markers: Array<MapMarker> = [
         { latitude: 40, longitude: -74 },
         { latitude: 40.1, longitude: -73.9 },
         { latitude: 39.9, longitude: -74.1 },
@@ -296,7 +296,7 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should return null for empty years", () => {
-      const years: (number | null)[] = [];
+      const years: Array<number | null> = [];
       const range = calculateTimeRange(years);
 
       expect(range.earliest).toBeNull();
@@ -304,7 +304,7 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should return null for all null years", () => {
-      const years: (number | null)[] = [null, null, null];
+      const years: Array<number | null> = [null, null, null];
       const range = calculateTimeRange(years);
 
       expect(range.earliest).toBeNull();
@@ -312,7 +312,7 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should filter null values and calculate range", () => {
-      const years: (number | null)[] = [null, 1950, null, 2000, null];
+      const years: Array<number | null> = [null, 1950, null, 2000, null];
       const range = calculateTimeRange(years);
 
       expect(range.earliest).toBe(1950);
@@ -334,7 +334,7 @@ describe("maps business logic - geographic calculations", () => {
 
   describe("place clustering logic", () => {
     it("should cluster nearby places", () => {
-      const places: MapMarker[] = [
+      const places: Array<MapMarker> = [
         { latitude: 40.1, longitude: -74.0 },
         { latitude: 40.2, longitude: -74.1 },
         { latitude: 40.3, longitude: -74.2 },
@@ -349,7 +349,7 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should handle cluster with single outlier", () => {
-      const places: MapMarker[] = [
+      const places: Array<MapMarker> = [
         { latitude: 40, longitude: -74 },
         { latitude: 40.1, longitude: -74.1 },
         { latitude: 85, longitude: 170 }, // Outlier
@@ -366,7 +366,7 @@ describe("maps business logic - geographic calculations", () => {
 
   describe("bounds calculations", () => {
     it("should calculate correct bounds for US locations", () => {
-      const places: MapMarker[] = [
+      const places: Array<MapMarker> = [
         { latitude: 47.6, longitude: -122.3 }, // Seattle
         { latitude: 40.7, longitude: -74.0 }, // New York
         { latitude: 34.1, longitude: -118.2 }, // Los Angeles
@@ -381,7 +381,7 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should handle antimeridian edge case", () => {
-      const places: MapMarker[] = [
+      const places: Array<MapMarker> = [
         { latitude: 10, longitude: 179 },
         { latitude: 10, longitude: -179 },
       ];

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { Container, PageHeader, Card, CardContent } from "@vamsa/ui";
+import { Card, CardContent, Container, PageHeader } from "@vamsa/ui";
 import { getSuggestions } from "~/server/suggestions";
 import { SuggestionsList } from "~/components/admin/suggestions-list";
 import { AdminRouteError } from "~/components/admin/route-error";

@@ -45,14 +45,35 @@ export interface ClassificationResult {
 }
 
 /**
+ * Maximum query length to prevent ReDoS attacks
+ * Queries longer than this are treated as simple person searches
+ */
+const MAX_QUERY_LENGTH = 200;
+
+/**
+ * Name pattern - matches non-question-mark, non-newline characters (ReDoS-safe)
+ * Uses [^?\n]+ instead of .+? to prevent catastrophic backtracking
+ */
+const NAME = "[^?\\n]+";
+
+/**
  * Pattern for relationship path queries
  * Matches: "how am i related to X", "what's my relationship to X", "relationship between X and Y"
  */
 const RELATIONSHIP_PATH_PATTERNS = [
-  /how\s+(?:am\s+i|is\s+(\w+))\s+related\s+to\s+(.+?)(?:\?|$)/i,
-  /what'?s?\s+(?:my\s+)?relationship\s+(?:to|between)\s+(.+?)\s+(?:and|to)\s+(.+?)(?:\?|$)/i,
-  /relationship\s+(?:between|of)\s+(.+?)\s+and\s+(.+?)(?:\?|$)/i,
-  /am\s+i\s+related\s+to\s+(.+?)(?:\?|$)/i,
+  new RegExp(
+    `how\\s+(?:am\\s+i|is\\s+(\\w+))\\s+related\\s+to\\s+(${NAME})(?:\\?|$)`,
+    "i"
+  ),
+  new RegExp(
+    `what'?s?\\s+(?:my\\s+)?relationship\\s+(?:to|between)\\s+(${NAME})\\s+(?:and|to)\\s+(${NAME})(?:\\?|$)`,
+    "i"
+  ),
+  new RegExp(
+    `relationship\\s+(?:between|of)\\s+(${NAME})\\s+and\\s+(${NAME})(?:\\?|$)`,
+    "i"
+  ),
+  new RegExp(`am\\s+i\\s+related\\s+to\\s+(${NAME})(?:\\?|$)`, "i"),
 ];
 
 /**
@@ -60,9 +81,18 @@ const RELATIONSHIP_PATH_PATTERNS = [
  * Matches: "common ancestor of X and Y", "shared ancestor"
  */
 const COMMON_ANCESTOR_PATTERNS = [
-  /(?:common|shared)\s+ancestor(?:s)?\s+(?:of|between)\s+(.+?)\s+and\s+(.+?)(?:\?|$)/i,
-  /what'?s?\s+(?:the\s+)?(?:common|shared)\s+ancestor\s+(?:of|between)\s+(.+?)\s+and\s+(.+?)(?:\?|$)/i,
-  /find\s+(?:common|shared)\s+ancestor(?:s)?\s+(?:for|of)\s+(.+?)\s+and\s+(.+?)(?:\?|$)/i,
+  new RegExp(
+    `(?:common|shared)\\s+ancestors?\\s+(?:of|between)\\s+(${NAME})\\s+and\\s+(${NAME})(?:\\?|$)`,
+    "i"
+  ),
+  new RegExp(
+    `what'?s?\\s+(?:the\\s+)?(?:common|shared)\\s+ancestor\\s+(?:of|between)\\s+(${NAME})\\s+and\\s+(${NAME})(?:\\?|$)`,
+    "i"
+  ),
+  new RegExp(
+    `find\\s+(?:common|shared)\\s+ancestors?\\s+(?:for|of)\\s+(${NAME})\\s+and\\s+(${NAME})(?:\\?|$)`,
+    "i"
+  ),
 ];
 
 /**
@@ -70,10 +100,19 @@ const COMMON_ANCESTOR_PATTERNS = [
  * Matches: "my 2nd cousins", "cousins of X", "2nd cousins of X"
  */
 const COUSIN_FINDER_PATTERNS = [
-  /(?:my\s+)?(\d+)(?:st|nd|rd|th)?\s+cousin(?:s)?(?:\s+(?:of|with)\s+(.+?))?(?:\?|$)/i,
-  /cousin(?:s)?\s+(?:finder|of)\s+(.+?)(?:\?|$)/i,
-  /find\s+(?:my\s+)?(\d+)(?:st|nd|rd|th)?\s+cousin(?:s)?(?:\s+(?:of|with)\s+(.+?))?(?:\?|$)/i,
-  /(?:what|who)\s+(?:are\s+)?(?:my\s+)?(\d+)(?:st|nd|rd|th)?\s+cousin(?:s)?(?:\?|$)/i,
+  new RegExp(
+    `(?:my\\s+)?(\\d+)(?:st|nd|rd|th)?\\s+cousins?(?:\\s+(?:of|with)\\s+(${NAME}))?(?:\\?|$)`,
+    "i"
+  ),
+  new RegExp(`cousins?\\s+(?:finder|of)\\s+(${NAME})(?:\\?|$)`, "i"),
+  new RegExp(
+    `find\\s+(?:my\\s+)?(\\d+)(?:st|nd|rd|th)?\\s+cousins?(?:\\s+(?:of|with)\\s+(${NAME}))?(?:\\?|$)`,
+    "i"
+  ),
+  new RegExp(
+    `(?:what|who)\\s+(?:are\\s+)?(?:my\\s+)?(\\d+)(?:st|nd|rd|th)?\\s+cousins?(?:\\?|$)`,
+    "i"
+  ),
 ];
 
 /**
@@ -81,11 +120,17 @@ const COUSIN_FINDER_PATTERNS = [
  * Matches: "descendants of X", "X's children", "X's grandchildren"
  */
 const DESCENDANT_QUERY_PATTERNS = [
-  /descendant(?:s)?\s+(?:of|for)\s+(.+?)(?:\?|$)/i,
-  /(?:children|grandchildren|great-grandchildren)\s+of\s+(.+?)(?:\?|$)/i,
-  /(.+?)'?s?\s+(?:children|grandchildren|great-grandchildren)(?:\?|$)/i,
-  /find\s+descendant(?:s)?\s+(?:of|for)\s+(.+?)(?:\?|$)/i,
-  /all\s+descendant(?:s)?\s+(?:of|for)\s+(.+?)(?:\?|$)/i,
+  new RegExp(`descendants?\\s+(?:of|for)\\s+(${NAME})(?:\\?|$)`, "i"),
+  new RegExp(
+    `(?:children|grandchildren|great-grandchildren)\\s+of\\s+(${NAME})(?:\\?|$)`,
+    "i"
+  ),
+  new RegExp(
+    `(${NAME})'?s?\\s+(?:children|grandchildren|great-grandchildren)(?:\\?|$)`,
+    "i"
+  ),
+  new RegExp(`find\\s+descendants?\\s+(?:of|for)\\s+(${NAME})(?:\\?|$)`, "i"),
+  new RegExp(`all\\s+descendants?\\s+(?:of|for)\\s+(${NAME})(?:\\?|$)`, "i"),
 ];
 
 /**
@@ -93,11 +138,17 @@ const DESCENDANT_QUERY_PATTERNS = [
  * Matches: "ancestors of X", "X's parents", "X's grandparents"
  */
 const ANCESTOR_QUERY_PATTERNS = [
-  /ancestor(?:s)?\s+(?:of|for)\s+(.+?)(?:\?|$)/i,
-  /(?:parent|mother|father|grandparent|grandmother|grandfather)\(?s?\)?\s+of\s+(.+?)(?:\?|$)/i,
-  /(.+?)'?s?\s+(?:parent|mother|father|grandparent|grandmother|grandfather)(?:s)?(?:\?|$)/i,
-  /find\s+ancestor(?:s)?\s+(?:of|for)\s+(.+?)(?:\?|$)/i,
-  /all\s+ancestor(?:s)?\s+(?:of|for)\s+(.+?)(?:\?|$)/i,
+  new RegExp(`ancestors?\\s+(?:of|for)\\s+(${NAME})(?:\\?|$)`, "i"),
+  new RegExp(
+    `(?:parents?|mother|father|grandparents?|grandmother|grandfather)\\s+of\\s+(${NAME})(?:\\?|$)`,
+    "i"
+  ),
+  new RegExp(
+    `(${NAME})'?s?\\s+(?:parents?|mother|father|grandparents?|grandmother|grandfather)(?:\\?|$)`,
+    "i"
+  ),
+  new RegExp(`find\\s+ancestors?\\s+(?:of|for)\\s+(${NAME})(?:\\?|$)`, "i"),
+  new RegExp(`all\\s+ancestors?\\s+(?:of|for)\\s+(${NAME})(?:\\?|$)`, "i"),
 ];
 
 /**
@@ -152,8 +203,8 @@ function extractCousinDegree(query: string): number | undefined {
  */
 function matchPatterns(
   query: string,
-  patterns: RegExp[]
-): { groups: string[]; pattern: RegExp } | null {
+  patterns: Array<RegExp>
+): { groups: Array<string>; pattern: RegExp } | null {
   for (const pattern of patterns) {
     const match = query.match(pattern);
     if (match) {
@@ -194,6 +245,18 @@ function matchPatterns(
  */
 export function classifyIntent(query: string): ClassificationResult {
   const trimmedQuery = query.trim();
+
+  // Limit query length to prevent ReDoS attacks
+  // Long queries are treated as simple person searches
+  if (trimmedQuery.length > MAX_QUERY_LENGTH) {
+    return {
+      intent: "PERSON_SEARCH",
+      confidence: 0.3,
+      entities: {
+        person1: trimmedQuery.slice(0, MAX_QUERY_LENGTH),
+      },
+    };
+  }
 
   // Try relationship path patterns
   const relationshipMatch = matchPatterns(
@@ -289,10 +352,13 @@ export function classifyIntent(query: string): ClassificationResult {
   }
 
   // Fallback: generic person search
-  // Extract any capitalized words or quoted phrases as potential names
-  const nameMatch = trimmedQuery.match(
-    /['"]([^'"]+)['"]|(\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b)/
+  // Extract any quoted phrases or capitalized words as potential names
+  // Uses a simple pattern to avoid ReDoS - matches quoted text or capitalized sequences
+  const quotedMatch = trimmedQuery.match(/['"]([^'"]+)['"]/);
+  const capitalizedMatch = trimmedQuery.match(
+    /\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)?(?:\s[A-Z][a-z]+)?)\b/
   );
+  const nameMatch = quotedMatch || capitalizedMatch;
   const fallbackName = nameMatch ? nameMatch[1] || nameMatch[2] : undefined;
 
   return {

@@ -1,6 +1,6 @@
-import { drizzleDb, drizzleSchema } from "../db";
 import { createPaginationMeta } from "@vamsa/schemas";
-import { eq, and, desc, asc, count } from "drizzle-orm";
+import { and, asc, count, desc, eq } from "drizzle-orm";
+import { drizzleDb, drizzleSchema } from "../db";
 import {
   notifySuggestionCreated,
   notifySuggestionUpdated,

@@ -3,8 +3,9 @@
  * Tests tooltip rendering with various prop combinations
  */
 
-import { describe, it, expect } from "bun:test";
-import { ChartTooltip, type ChartTooltipProps } from "./ChartTooltip";
+import { describe, expect, it } from "bun:test";
+import { ChartTooltip } from "./ChartTooltip";
+import type { ChartTooltipProps } from "./ChartTooltip";
 
 describe("ChartTooltip Component", () => {
   // Default test data

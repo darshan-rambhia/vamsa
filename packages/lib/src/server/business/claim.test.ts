@@ -17,18 +17,26 @@
  * require mock.module() setup.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 // Mock logger for this test file
 import {
-  mockLogger,
-  mockLoggers,
-  mockLog,
-  mockSerializeError,
+  claimProfileForOIDCData,
+  getClaimableProfilesData,
+  getOIDCClaimStatusData,
+  skipProfileClaimData,
+} from "@vamsa/lib/server/business";
+import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
+  mockLog,
+  mockLogger,
+  mockLoggers,
+  mockSerializeError,
   mockStartTimer,
 } from "../../testing/shared-mocks";
+
+// Import the functions to test
 
 // Create mock drizzleDb and drizzleSchema
 const mockDrizzleSchema = {
@@ -47,7 +55,7 @@ const mockDrizzleSchema = {
 
 // Mock for the returning() call - allows tests to control the return value
 
-const mockReturning = mock(() => Promise.resolve([] as any[]));
+const mockReturning = mock(() => Promise.resolve([] as Array<any>));
 
 const mockDrizzleDb = {
   query: {
@@ -90,14 +98,6 @@ mock.module("@vamsa/lib/logger", () => ({
 mock.module("@vamsa/lib/server/business/notifications", () => ({
   notifyNewMemberJoined: mock(() => Promise.resolve(undefined)),
 }));
-
-// Import the functions to test
-import {
-  getClaimableProfilesData,
-  claimProfileForOIDCData,
-  skipProfileClaimData,
-  getOIDCClaimStatusData,
-} from "@vamsa/lib/server/business";
 
 describe("Claim Server Business Logic", () => {
   beforeEach(() => {

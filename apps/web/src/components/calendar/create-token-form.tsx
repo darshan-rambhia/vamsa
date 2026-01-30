@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { createCalendarToken } from "~/server/calendar-tokens";
 import { Button, Input, Label } from "@vamsa/ui";
+import { createCalendarToken } from "~/server/calendar-tokens";
 
 const getAppUrl = () => {
   if (typeof window !== "undefined") {
@@ -70,7 +70,7 @@ export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
     },
   });
 
-  const getCalendarUrls = (token: string): CalendarUrl[] => {
+  const getCalendarUrls = (token: string): Array<CalendarUrl> => {
     const appUrl = getAppUrl();
     return [
       {

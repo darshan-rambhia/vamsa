@@ -11,16 +11,25 @@
  * Uses module mocking for @vamsa/api, similar to claim.test.ts.
  */
 
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
-  mockLogger,
-  mockLoggers,
-  mockLog,
-  mockSerializeError,
   mockCreateContextLogger,
   mockCreateRequestLogger,
+  mockLog,
+  mockLogger,
+  mockLoggers,
+  mockSerializeError,
   mockStartTimer,
 } from "../../testing/shared-mocks";
+
+// Import after mocking
+import {
+  generateAnniversaryCalendarData,
+  generateBirthdayCalendarData,
+  generateEventsCalendarData,
+  generateRSSFeedData,
+  validateCalendarToken,
+} from "./calendar-feeds";
 
 // Create mock drizzleSchema
 const mockDrizzleSchema = {
@@ -119,15 +128,6 @@ mock.module("@vamsa/lib/logger", () => ({
   createRequestLogger: mockCreateRequestLogger,
   startTimer: mockStartTimer,
 }));
-
-// Import after mocking
-import {
-  validateCalendarToken,
-  generateRSSFeedData,
-  generateBirthdayCalendarData,
-  generateAnniversaryCalendarData,
-  generateEventsCalendarData,
-} from "./calendar-feeds";
 
 describe("Calendar Feeds Business Logic", () => {
   beforeEach(() => {

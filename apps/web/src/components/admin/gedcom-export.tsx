@@ -11,7 +11,7 @@ import {
   TabsList,
   TabsTrigger,
 } from "@vamsa/ui/primitives";
-import { exportGedcom, exportGedZip } from "~/server/gedcom";
+import { exportGedZip, exportGedcom } from "~/server/gedcom";
 
 export function GedcomExport() {
   const [error, setError] = useState<string | null>(null);

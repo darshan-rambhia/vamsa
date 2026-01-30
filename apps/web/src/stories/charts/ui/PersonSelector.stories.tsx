@@ -1,8 +1,8 @@
 import { useState } from "react";
+import { createMockNodes } from "@vamsa/lib";
 import type { Story } from "@ladle/react";
 import { PersonSelector } from "~/components/charts/PersonSelector";
 import { ThemeDecorator } from "~/stories/decorators";
-import { createMockNodes } from "@vamsa/lib";
 
 export default {
   title: "Charts/UI/PersonSelector",

@@ -1,22 +1,20 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
-  getRecentActivity,
-  getActivityFilterOptions,
-} from "~/server/dashboard";
-import {
-  Container,
-  PageHeader,
-  Card,
-  CardContent,
   Avatar,
   Badge,
+  Card,
+  CardContent,
+  Container,
+  PageHeader,
 } from "@vamsa/ui";
+import type { ActivityFilters } from "~/components/activity/ActivityFilterPanel";
 import {
-  ActivityFilterPanel,
-  type ActivityFilters,
-} from "~/components/activity/ActivityFilterPanel";
+  getActivityFilterOptions,
+  getRecentActivity,
+} from "~/server/dashboard";
+import { ActivityFilterPanel } from "~/components/activity/ActivityFilterPanel";
 
 export const Route = createFileRoute("/_authenticated/activity")({
   component: ActivityComponent,

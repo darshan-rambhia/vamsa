@@ -1,12 +1,11 @@
 import {
-  createFileRoute,
-  Outlet,
   Link,
-  useLocation,
+  Outlet,
+  createFileRoute,
   redirect,
+  useLocation,
 } from "@tanstack/react-router";
-import { Container, PageHeader, Badge } from "@vamsa/ui";
-import { cn } from "@vamsa/ui";
+import { Badge, Container, PageHeader, cn } from "@vamsa/ui";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: ({ location, context }) => {
@@ -32,7 +31,7 @@ interface AdminNavItem {
   badge?: string;
 }
 
-const adminNavItems: AdminNavItem[] = [
+const adminNavItems: Array<AdminNavItem> = [
   { href: "/admin/users", label: "Users" },
   { href: "/admin/invites", label: "Invites" },
   { href: "/admin/suggestions", label: "Suggestions" },

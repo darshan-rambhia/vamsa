@@ -1,36 +1,36 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  Button,
   Card,
   CardContent,
-  Button,
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@vamsa/ui/primitives";
-import {
-  getPersonSources,
-  getResearchNotes,
-  deleteSource,
-  deleteResearchNote,
-  getSource,
-} from "~/server/sources";
-import { SourcesTab } from "./sources-tab";
 import { ResearchNotesList } from "../source/research-notes-list";
 import { SourceForm } from "../source/source-form";
 import { ResearchNoteForm } from "../source/research-note-form";
 import { ResearchNoteModal } from "../source/research-note-modal";
+import { SourcesTab } from "./sources-tab";
 import { SourceDetailModal } from "./source-detail-modal";
 import type { SourceWithEvents } from "~/server/sources";
 import type {
-  Reliability,
-  SourceType,
   CitationFormat,
   Confidence,
+  Reliability,
+  SourceType,
 } from "@vamsa/schemas";
+import {
+  deleteResearchNote,
+  deleteSource,
+  getPersonSources,
+  getResearchNotes,
+  getSource,
+} from "~/server/sources";
 
 interface SourcesManagementTabProps {
   personId: string;
@@ -51,7 +51,7 @@ interface ResearchNote {
   findings: string;
   methodology: string | null;
   limitations: string | null;
-  relatedSources: string[];
+  relatedSources: Array<string>;
   conclusionReliability: string | null;
   createdAt: string;
   updatedAt: string;

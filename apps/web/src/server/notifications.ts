@@ -12,11 +12,11 @@
  */
 
 import { createServerFn } from "@tanstack/react-start";
-import { requireAuth } from "./middleware/require-auth";
 import {
   getEmailNotificationPreferences as getPrefs,
   updateEmailNotificationPreferences as updatePrefs,
 } from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
 
 /**
  * Get user's email notification preferences

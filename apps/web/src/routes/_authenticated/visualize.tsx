@@ -1,34 +1,35 @@
 import {
   createFileRoute,
-  useSearch,
   useNavigate,
+  useSearch,
 } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { getCurrentUser } from "~/server/auth.functions";
 import { useCallback, useId, useState } from "react";
 import {
+  Button,
+  Label,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Button,
-  Label,
 } from "@vamsa/ui";
+import type { ChartType } from "~/components/charts/ChartControls";
+import type { BowtieNode } from "~/server/charts";
+import { getCurrentUser } from "~/server/auth.functions";
 import { listPersons } from "~/server/persons.functions";
 import {
   getAncestorChart,
-  getDescendantChart,
-  getHourglassChart,
-  getFanChart,
-  getTimelineChart,
-  getRelationshipMatrix,
   getBowtieChart,
   getCompactTreeData,
+  getDescendantChart,
+  getFanChart,
+  getHourglassChart,
+  getRelationshipMatrix,
   getStatistics,
+  getTimelineChart,
   getTreeChart,
 } from "~/server/charts";
-import { type ChartType } from "~/components/charts/ChartControls";
 import { AncestorChart } from "~/components/charts/AncestorChart";
 import { DescendantChart } from "~/components/charts/DescendantChart";
 import { HourglassChart } from "~/components/charts/HourglassChart";
@@ -39,6 +40,7 @@ import { BowtieChart } from "~/components/charts/BowtieChart";
 import { CompactTree } from "~/components/charts/CompactTree";
 import { StatisticsCharts } from "~/components/charts/StatisticsCharts";
 import { TreeChart } from "~/components/charts/TreeChart";
+import { TreeListView } from "~/components/charts/TreeListView";
 import { exportToPDF, exportToPNG, exportToSVG } from "~/lib/chart-export";
 import { ChartContainer } from "~/components/charts/ChartContainer";
 import { PersonSelector } from "~/components/charts/PersonSelector";
@@ -213,12 +215,14 @@ function VisualizeComponent() {
     "ancestor",
     "fan",
     "bowtie",
+    "list",
   ].includes(visualizationType);
   const showDescendantSlider = [
     "tree",
     "hourglass",
     "descendant",
     "compact",
+    "list",
   ].includes(visualizationType);
   const showSortBy = visualizationType === "timeline";
   const showMaxPeople = visualizationType === "matrix";
@@ -234,6 +238,7 @@ function VisualizeComponent() {
     bowtie: "Bowtie Chart",
     compact: "Compact Tree",
     statistics: "Statistics",
+    list: "List View (Accessible)",
   };
 
   const getChartTitle = () => chartTypeLabels[visualizationType];
@@ -481,7 +486,7 @@ function VisualizeComponent() {
 
       {/* Chart Visualization - fills remaining space */}
       <ChartVisualization
-        type={visualizationType as ChartType}
+        type={visualizationType}
         personId={selectedPersonId}
         search={search}
         resetToken={resetToken}
@@ -553,6 +558,7 @@ function ChartVisualization({
 
       switch (chartType) {
         case "tree":
+        case "list":
           return await getTreeChart({
             data: {
               personId: selectedPersonId,
@@ -791,6 +797,14 @@ function ChartVisualization({
           resetSignal={resetToken}
         />
       )}
+      {chartType === "list" && "nodes" in chartData && selectedPersonId && (
+        <TreeListView
+          nodes={chartData.nodes}
+          edges={chartData.edges}
+          rootPersonId={selectedPersonId}
+          onNodeClick={handleNodeClick}
+        />
+      )}
       {chartType === "ancestor" && "nodes" in chartData && (
         <AncestorChart
           nodes={chartData.nodes}
@@ -841,22 +855,17 @@ function ChartVisualization({
       )}
       {chartType === "bowtie" && "nodes" in chartData && selectedPersonId && (
         <BowtieChart
-          nodes={chartData.nodes as import("~/server/charts").BowtieNode[]}
+          nodes={chartData.nodes as Array<BowtieNode>}
           edges={chartData.edges}
           rootPersonId={selectedPersonId}
           onNodeClick={handleNodeClick}
         />
       )}
       {chartType === "compact" && "flatList" in chartData && (
-        <CompactTree
-          data={chartData as import("~/server/charts").CompactTreeResult}
-          onNodeClick={handleNodeClick}
-        />
+        <CompactTree data={chartData} onNodeClick={handleNodeClick} />
       )}
       {chartType === "statistics" && "ageDistribution" in chartData && (
-        <StatisticsCharts
-          data={chartData as import("~/server/charts").StatisticsResult}
-        />
+        <StatisticsCharts data={chartData} />
       )}
     </ChartContainer>
   );

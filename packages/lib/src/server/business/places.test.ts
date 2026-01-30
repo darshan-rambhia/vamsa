@@ -19,14 +19,29 @@
  * Uses module mocking to inject mocked Drizzle ORM instance
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+// Import after mocks are set up
+import {
+  createPlaceData,
+  deletePlaceData,
+  formatPlace,
+  getPlaceChildrenData,
+  getPlaceData,
+  getPlaceHierarchyPathData,
+  linkPersonToPlaceData,
+  searchPlacesData,
+  unlinkPersonFromPlaceData,
+  updatePlaceData,
+  updatePlacePersonLinkData,
+} from "./places";
 
 // Mock logger module
 mock.module("@vamsa/lib/logger", () => ({
@@ -49,27 +64,12 @@ const mockDrizzleSchema = {
   persons: { id: {} as any },
 };
 
-// Import after mocks are set up
-import {
-  formatPlace,
-  getPlaceData,
-  searchPlacesData,
-  createPlaceData,
-  updatePlaceData,
-  deletePlaceData,
-  linkPersonToPlaceData,
-  getPlaceHierarchyPathData,
-  getPlaceChildrenData,
-  updatePlacePersonLinkData,
-  unlinkPersonFromPlaceData,
-} from "./places";
-
 // Create mock database helper
 const createMockDb = () => {
   let queryFindFirstResult: unknown = null;
-  let queryFindManyResults: unknown[] = [];
+  let queryFindManyResults: Array<unknown> = [];
   let selectCountResults: Array<{ count: number }> = [];
-  let updateReturnValue: unknown[] = [];
+  let updateReturnValue: Array<unknown> = [];
 
   const createUpdateChain = () => ({
     set: mock(() => ({
@@ -110,13 +110,13 @@ const createMockDb = () => {
     setQueryFindFirstResult: (result: unknown) => {
       queryFindFirstResult = result;
     },
-    setQueryFindManyResults: (results: unknown[]) => {
+    setQueryFindManyResults: (results: Array<unknown>) => {
       queryFindManyResults = results;
     },
     setSelectCountResults: (results: Array<{ count: number }>) => {
       selectCountResults = results;
     },
-    setUpdateReturnValue: (result: unknown[]) => {
+    setUpdateReturnValue: (result: Array<unknown>) => {
       updateReturnValue = result;
     },
   };

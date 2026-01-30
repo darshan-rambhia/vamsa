@@ -9,14 +9,25 @@
  * Uses module mocking for database dependency injection.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+import {
+  createResearchNoteData,
+  createSourceData,
+  deleteResearchNoteData,
+  deleteSourceData,
+  generateCitationData,
+  getResearchNotesData,
+  getSourceData,
+  listSourcesData,
+} from "./sources";
 
 // Mock logger
 mock.module("@vamsa/lib/logger", () => ({
@@ -74,17 +85,6 @@ mock.module("@vamsa/api", () => ({
   drizzleDb: mockDrizzleDb,
   drizzleSchema: mockDrizzleSchema,
 }));
-
-import {
-  getSourceData,
-  listSourcesData,
-  createSourceData,
-  deleteSourceData,
-  createResearchNoteData,
-  deleteResearchNoteData,
-  getResearchNotesData,
-  generateCitationData,
-} from "./sources";
 
 describe("Sources Business Logic", () => {
   beforeEach(() => {

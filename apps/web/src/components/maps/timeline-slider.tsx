@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, Button } from "@vamsa/ui";
+import { useEffect, useState } from "react";
+import { Button, Card, CardContent } from "@vamsa/ui";
 
 interface TimelineSliderProps {
   minYear: number;

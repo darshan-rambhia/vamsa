@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, Badge } from "@vamsa/ui/primitives";
+import { Badge, Card, CardContent } from "@vamsa/ui/primitives";
 
 interface PlaceCardProps {
   place: {

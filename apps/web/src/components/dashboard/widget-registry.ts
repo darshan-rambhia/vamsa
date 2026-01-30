@@ -1,3 +1,11 @@
+import { z } from "zod";
+import { RecentActivityWidget } from "./widgets/RecentActivityWidget";
+
+// Register built-in widgets
+import { PeopleStatisticsWidget } from "./widgets/PeopleStatisticsWidget";
+import { CalendarWidget } from "./widgets/CalendarWidget";
+import { QuickActionsWidget } from "./widgets/QuickActionsWidget";
+import { QuickSearchWidget } from "./widgets/QuickSearchWidget";
 import type { WidgetDefinition } from "./widgets/types";
 
 /**
@@ -137,7 +145,7 @@ class WidgetRegistry {
    * });
    * ```
    */
-  getAllWidgets(): WidgetDefinition[] {
+  getAllWidgets(): Array<WidgetDefinition> {
     return Array.from(this.registry.values());
   }
 
@@ -205,14 +213,6 @@ export const getAllWidgets = widgetRegistry.getAllWidgets.bind(widgetRegistry);
 export const unregisterWidget =
   widgetRegistry.unregisterWidget.bind(widgetRegistry);
 export const hasWidget = widgetRegistry.hasWidget.bind(widgetRegistry);
-
-// Register built-in widgets
-import { RecentActivityWidget } from "./widgets/RecentActivityWidget";
-import { PeopleStatisticsWidget } from "./widgets/PeopleStatisticsWidget";
-import { CalendarWidget } from "./widgets/CalendarWidget";
-import { QuickActionsWidget } from "./widgets/QuickActionsWidget";
-import { QuickSearchWidget } from "./widgets/QuickSearchWidget";
-import { z } from "zod";
 
 // Recent Activity Widget
 registerWidget({

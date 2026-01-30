@@ -19,7 +19,7 @@ export interface RelationshipNode {
 }
 
 export interface RelationshipPath {
-  path: RelationshipNode[];
+  path: Array<RelationshipNode>;
   relationship: string; // Human readable: "grandfather", "2nd cousin once removed"
   distance: number;
 }
@@ -28,9 +28,9 @@ export interface RelationshipPath {
  * Relationship maps for efficient graph traversal
  */
 export interface RelationshipMaps {
-  parents: Map<string, string[]>; // person ID -> array of parent IDs
-  children: Map<string, string[]>; // person ID -> array of children IDs
-  spouses: Map<string, string[]>; // person ID -> array of spouse IDs
+  parents: Map<string, Array<string>>; // person ID -> array of parent IDs
+  children: Map<string, Array<string>>; // person ID -> array of children IDs
+  spouses: Map<string, Array<string>>; // person ID -> array of spouse IDs
 }
 
 /**
@@ -99,8 +99,8 @@ export function findRelationshipPath(
   // BFS to find path
   const queue: Array<{
     id: string;
-    path: string[];
-    edges: EdgeInfo[];
+    path: Array<string>;
+    edges: Array<EdgeInfo>;
   }> = [];
   const visited = new Set<string>();
 
@@ -220,10 +220,10 @@ export function findRelationshipPath(
  * // Returns: "grandfather", "aunt", "cousin", etc.
  */
 export function calculateRelationshipName(
-  path: RelationshipNode[],
+  path: Array<RelationshipNode>,
   people: Map<string, RelationshipNode>,
   maps: RelationshipMaps,
-  edges?: EdgeInfo[]
+  edges?: Array<EdgeInfo>
 ): string {
   if (path.length === 0) return "unknown";
   if (path.length === 1) return "self";
@@ -336,7 +336,7 @@ export function calculateRelationshipName(
  * @returns Count of consecutive edges of the specified type
  */
 function countConsecutiveEdges(
-  edges: EdgeInfo[],
+  edges: Array<EdgeInfo>,
   type: EdgeInfo["type"],
   startIndex: number
 ): number {

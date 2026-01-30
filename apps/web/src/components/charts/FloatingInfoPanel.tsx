@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { cn, Button } from "@vamsa/ui";
+import { useCallback, useState } from "react";
+import { Button, cn } from "@vamsa/ui";
 import type { ChartType } from "./ChartControls";
 import type { ChartMetadata } from "./ChartStatsPanel";
 

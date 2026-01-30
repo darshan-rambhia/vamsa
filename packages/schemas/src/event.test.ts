@@ -1,12 +1,12 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  eventTypeEnum,
   eventCreateSchema,
-  eventUpdateSchema,
   eventParticipantCreateSchema,
   eventParticipantRemoveSchema,
-  type EventType,
+  eventTypeEnum,
+  eventUpdateSchema,
 } from "./event";
+import type { EventType } from "./event";
 
 describe("eventTypeEnum", () => {
   it("accepts BIRTH event type", () => {

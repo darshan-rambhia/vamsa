@@ -8,7 +8,7 @@
  */
 
 import { useState } from "react";
-import { G, Rect, Circle, Text, Line } from "react-native-svg";
+import { Circle, G, Line, Rect, Text } from "react-native-svg";
 import type { ChartNode } from "~/server/charts";
 
 // ============================================================================

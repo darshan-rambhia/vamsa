@@ -5,8 +5,8 @@
  * and optional filtering for living persons.
  */
 
-import type { RelationshipMapSet, RelationshipNode } from "./ancestors";
 import { findAncestors } from "./ancestors";
+import type { RelationshipMapSet, RelationshipNode } from "./ancestors";
 
 /**
  * Result of a descendant query including generation information
@@ -125,7 +125,7 @@ export function findDescendants(
     parentToChildren: Map<string, Set<string>>;
   },
   options?: DescendantQueryOptions
-): DescendantQueryResult[] {
+): Array<DescendantQueryResult> {
   const state: DescendantCollectionState = {
     results: new Map(),
     visited: new Set(),
@@ -183,7 +183,7 @@ export function getDescendantsAtGeneration(
   relationships: RelationshipMapSet & {
     parentToChildren: Map<string, Set<string>>;
   }
-): RelationshipNode[] {
+): Array<RelationshipNode> {
   const results = findDescendants(personId, people, relationships, {
     maxGenerations: generation,
   });
@@ -247,9 +247,9 @@ export function getDescendantsByGeneration(
     parentToChildren: Map<string, Set<string>>;
   },
   options?: DescendantQueryOptions
-): Map<number, RelationshipNode[]> {
+): Map<number, Array<RelationshipNode>> {
   const results = findDescendants(personId, people, relationships, options);
-  const grouped = new Map<number, RelationshipNode[]>();
+  const grouped = new Map<number, Array<RelationshipNode>>();
 
   results.forEach((result) => {
     if (!grouped.has(result.generation)) {
@@ -287,8 +287,8 @@ export function getAllRelatives(
   ancestorGenerations?: number,
   descendantGenerations?: number
 ): {
-  ancestors: DescendantQueryResult[];
-  descendants: DescendantQueryResult[];
+  ancestors: Array<DescendantQueryResult>;
+  descendants: Array<DescendantQueryResult>;
   totalCount: number;
 } {
   const ancestorResults = findAncestors(personId, people, relationships, {

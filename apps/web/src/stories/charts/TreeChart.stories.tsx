@@ -1,14 +1,14 @@
+import {
+  DEEP_ANCESTRY,
+  EMPTY_DATA,
+  LARGE_FAMILY,
+  LONG_NAMES,
+  SMALL_FAMILY,
+} from "@vamsa/lib";
+import { loggers } from "@vamsa/lib/logger";
 import type { Story } from "@ladle/react";
 import { TreeChart } from "~/components/charts/TreeChart";
 import { StoryDecorator } from "~/stories/decorators";
-import {
-  SMALL_FAMILY,
-  EMPTY_DATA,
-  LARGE_FAMILY,
-  DEEP_ANCESTRY,
-  LONG_NAMES,
-} from "@vamsa/lib";
-import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.api;
 

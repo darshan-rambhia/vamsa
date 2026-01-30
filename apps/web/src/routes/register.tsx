@@ -1,6 +1,5 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { signUp } from "~/lib/auth-client";
 import {
   Button,
   Card,
@@ -12,6 +11,7 @@ import {
   Label,
   ThemeToggle,
 } from "@vamsa/ui";
+import { signUp } from "~/lib/auth-client";
 
 export const Route = createFileRoute("/register")({
   component: RegisterComponent,

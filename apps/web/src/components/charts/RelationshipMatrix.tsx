@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, memo, useMemo, useEffect } from "react";
-import { Svg, G, Rect, Circle, Text, Line } from "react-native-svg";
-import type { MatrixPerson, MatrixCell } from "~/server/charts";
+import { memo, useEffect, useMemo, useState } from "react";
+import { Circle, G, Line, Rect, Svg, Text } from "react-native-svg";
 import { ZoomControls } from "./ZoomControls";
-import { useChartViewport, calculateLinearBounds } from "./useChartViewport";
+import { calculateLinearBounds, useChartViewport } from "./useChartViewport";
+import type { MatrixCell, MatrixPerson } from "~/server/charts";
 
 interface RelationshipMatrixProps {
-  people: MatrixPerson[];
-  matrix: MatrixCell[];
+  people: Array<MatrixPerson>;
+  matrix: Array<MatrixCell>;
   onNodeClick?: (nodeId: string) => void;
   resetSignal?: number;
 }

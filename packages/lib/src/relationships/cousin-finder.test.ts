@@ -3,8 +3,8 @@
  *
  * Tests the cousin relationship finding and cousin degree calculation functionality
  */
-import { describe, it, expect } from "bun:test";
-import { findCousins, calculateCousinDegree } from "./cousin-finder";
+import { describe, expect, it } from "bun:test";
+import { calculateCousinDegree, findCousins } from "./cousin-finder";
 
 interface RelationshipNode {
   id: string;
@@ -34,7 +34,7 @@ function createPerson(
  * Helper to create relationship maps
  */
 function createRelationshipMaps(
-  parentChildPairs: [string, string][]
+  parentChildPairs: Array<[string, string]>
 ): [
   Map<string, RelationshipNode>,
   Map<string, Set<string>>,

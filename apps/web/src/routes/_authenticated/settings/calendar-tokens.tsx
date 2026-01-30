@@ -1,30 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { validateSession } from "~/server/auth.functions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  getCalendarTokens,
-  rotateCalendarToken,
-  revokeCalendarToken,
-  deleteCalendarToken,
-  updateTokenName,
-} from "~/server/calendar-tokens";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  Button,
-  Badge,
-  Input,
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  Container,
-  PageHeader,
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -33,7 +10,30 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Container,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  Input,
+  PageHeader,
 } from "@vamsa/ui";
+import { validateSession } from "~/server/auth.functions";
+import {
+  deleteCalendarToken,
+  getCalendarTokens,
+  revokeCalendarToken,
+  rotateCalendarToken,
+  updateTokenName,
+} from "~/server/calendar-tokens";
 import { formatDateShort, formatRelativeTime } from "~/lib/format";
 import { CreateTokenForm } from "~/components/calendar/create-token-form";
 
@@ -74,7 +74,7 @@ type CalendarUrl = {
   url: string;
 };
 
-const getCalendarUrls = (token: string): CalendarUrl[] => {
+const getCalendarUrls = (token: string): Array<CalendarUrl> => {
   const appUrl = getAppUrl();
   return [
     {

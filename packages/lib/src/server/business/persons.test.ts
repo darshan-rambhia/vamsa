@@ -15,14 +15,25 @@
  * Uses dependency injection to mock database calls.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+import {
+  buildPersonWhereClause,
+  createPersonData,
+  deletePersonData,
+  getPersonData,
+  listPersonsData,
+  logAuditAction,
+  searchPersonsData,
+  updatePersonData,
+} from "./persons";
 
 // Mock logger
 mock.module("@vamsa/lib/logger", () => ({
@@ -96,17 +107,6 @@ mock.module("../i18n", () => ({
 mock.module("../metrics", () => ({
   recordSearchMetrics: () => undefined,
 }));
-
-import {
-  createPersonData,
-  updatePersonData,
-  deletePersonData,
-  getPersonData,
-  listPersonsData,
-  searchPersonsData,
-  logAuditAction,
-  buildPersonWhereClause,
-} from "./persons";
 
 describe("Persons Business Logic - Soft Deletes and Transactions", () => {
   beforeEach(() => {

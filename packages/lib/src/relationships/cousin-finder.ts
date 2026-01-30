@@ -63,12 +63,12 @@ export function findCousins(
   people: Map<string, RelationshipNode>,
   childToParents: Map<string, Set<string>>,
   parentToChildren: Map<string, Set<string>>
-): CousinResult[] {
+): Array<CousinResult> {
   if (degree < 1) {
     return [];
   }
 
-  const results: CousinResult[] = [];
+  const results: Array<CousinResult> = [];
   const visited = new Set<string>();
   visited.add(personId);
 

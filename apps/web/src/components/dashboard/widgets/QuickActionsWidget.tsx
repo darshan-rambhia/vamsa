@@ -2,12 +2,12 @@
 
 import { Link } from "@tanstack/react-router";
 import {
-  UserPlus,
-  Share2,
+  Download,
+  Mail,
   Search,
   Settings,
-  Mail,
-  Download,
+  Share2,
+  UserPlus,
 } from "lucide-react";
 import { cn } from "@vamsa/ui";
 import { BaseWidget } from "./BaseWidget";
@@ -34,7 +34,7 @@ interface QuickAction {
  */
 interface QuickActionsWidgetSettings {
   /** Array of actions to display (defaults to DEFAULT_ACTIONS) */
-  actions?: QuickAction[];
+  actions?: Array<QuickAction>;
 }
 
 /**
@@ -52,7 +52,7 @@ const ICON_MAP = {
 /**
  * Default quick actions
  */
-const DEFAULT_ACTIONS: QuickAction[] = [
+const DEFAULT_ACTIONS: Array<QuickAction> = [
   {
     id: "add-person",
     label: "Add Person",

@@ -16,9 +16,9 @@
  * - deleteCalendarTokenLogic: Permanently deletes a revoked token
  */
 
-import { randomBytes } from "crypto";
+import { randomBytes } from "node:crypto";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.db;

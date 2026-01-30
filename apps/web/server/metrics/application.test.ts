@@ -5,16 +5,16 @@
  * and produce well-formed metric attributes without throwing errors.
  */
 
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import {
   recordChartMetrics,
-  recordSearchMetrics,
-  recordRelationshipCalc,
-  recordGedcomImport,
+  recordFeatureUsage,
   recordGedcomExport,
+  recordGedcomImport,
   recordGedcomValidation,
   recordMediaUpload,
-  recordFeatureUsage,
+  recordRelationshipCalc,
+  recordSearchMetrics,
 } from "./application";
 
 describe("application metrics", () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, Button } from "@vamsa/ui";
+import { Button, Card, CardContent } from "@vamsa/ui";
 import { Users } from "lucide-react";
 import { SetupWizard } from "./SetupWizard";
 

@@ -17,7 +17,7 @@ interface MediaItem {
 }
 
 interface MediaGalleryProps {
-  media: MediaItem[];
+  media: Array<MediaItem>;
   isLoading?: boolean;
   onView: (mediaId: string) => void;
   onSetPrimary?: (mediaId: string) => void;

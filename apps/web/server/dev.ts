@@ -7,8 +7,8 @@
  * Usage: Import this plugin in vite.config.ts
  */
 
-import type { Plugin, ViteDevServer } from "vite";
 import { loggers } from "@vamsa/lib/logger";
+import type { Plugin, ViteDevServer } from "vite";
 
 const log = loggers.api;
 
@@ -149,7 +149,7 @@ export function vamsaDevApiPlugin(): Plugin {
             // Read body for POST requests
             let bodyText: string | undefined;
             if (req.method !== "GET" && req.method !== "HEAD") {
-              const chunks: Buffer[] = [];
+              const chunks: Array<Buffer> = [];
               for await (const chunk of req) {
                 chunks.push(chunk as Buffer);
               }
@@ -166,16 +166,13 @@ export function vamsaDevApiPlugin(): Plugin {
             // Create a minimal headers object
             const headers = new Headers();
             if (req.headers["content-type"]) {
-              headers.set(
-                "content-type",
-                req.headers["content-type"] as string
-              );
+              headers.set("content-type", req.headers["content-type"]);
             }
             if (req.headers["cookie"]) {
-              headers.set("cookie", req.headers["cookie"] as string);
+              headers.set("cookie", req.headers["cookie"]);
             }
             if (req.headers["origin"]) {
-              headers.set("origin", req.headers["origin"] as string);
+              headers.set("origin", req.headers["origin"]);
             }
 
             const request = new Request(fullUrl, {
@@ -235,7 +232,7 @@ export function vamsaDevApiPlugin(): Plugin {
           // Read the body if present
           let body: BodyInit | undefined;
           if (req.method !== "GET" && req.method !== "HEAD") {
-            const chunks: Buffer[] = [];
+            const chunks: Array<Buffer> = [];
             for await (const chunk of req) {
               chunks.push(chunk as Buffer);
             }

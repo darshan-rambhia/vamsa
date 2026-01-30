@@ -8,14 +8,17 @@
  * Uses dependency injection to mock database and external services.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+// Import after mocks are set up
+import { claimProfileData, getUnclaimedProfilesData } from "./auth";
 
 // Mock the logger before importing the module
 mock.module("@vamsa/lib/logger", () => ({
@@ -59,9 +62,6 @@ const mockNotify = mock(async () => undefined) as any;
 
 // Mock the translate function
 const mockTranslate = mock(async (key: string) => key) as any;
-
-// Import after mocks are set up
-import { getUnclaimedProfilesData, claimProfileData } from "./auth";
 
 describe("auth business logic", () => {
   beforeEach(() => {
@@ -161,7 +161,7 @@ describe("auth business logic", () => {
               // If branch: where().orderBy().then()
               return {
                 orderBy: mock(() => ({
-                  then: mock((fn: (rows: unknown[]) => unknown[]) =>
+                  then: mock((fn: (rows: Array<unknown>) => Array<unknown>) =>
                     Promise.resolve(fn(allLivingProfiles))
                   ),
                 })),
@@ -206,7 +206,7 @@ describe("auth business logic", () => {
               // If branch: where().orderBy().then()
               return {
                 orderBy: mock(() => ({
-                  then: mock((fn: (rows: unknown[]) => unknown[]) =>
+                  then: mock((fn: (rows: Array<unknown>) => Array<unknown>) =>
                     Promise.resolve(fn(livingProfiles))
                   ),
                 })),

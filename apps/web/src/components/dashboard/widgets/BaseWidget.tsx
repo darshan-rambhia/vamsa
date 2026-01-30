@@ -1,6 +1,6 @@
 "use client";
 
-import { Settings, X, RefreshCw, Loader2, AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2, RefreshCw, Settings, X } from "lucide-react";
 import {
   Button,
   Card,
@@ -52,6 +52,10 @@ export function BaseWidget({
           "flex h-full flex-col",
           // Subtle focus indicator for keyboard navigation
           "focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2",
+          // Subtle hover effect with scale and shadow
+          "transition-transform hover:scale-[1.01] hover:shadow-md",
+          // Disable animations if user prefers reduced motion
+          "motion-reduce:transform-none motion-reduce:transition-none",
           className
         )}
       >

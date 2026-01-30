@@ -1,34 +1,34 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
 import {
-  Container,
-  PageHeader,
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
   Badge,
   Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  Container,
   Input,
   Label,
+  PageHeader,
+  cn,
 } from "@vamsa/ui";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Activity,
+  AlertCircle,
+  Database,
+  ExternalLink,
+  RefreshCw,
+  Settings,
+  TrendingUp,
+  Users,
+} from "lucide-react";
 import { getMetricsSnapshot, getPrometheusStatus } from "~/server/metrics";
 import { getCurrentUser } from "~/server/auth.functions";
 import { getFamilySettings, updateFamilySettings } from "~/server/settings";
 import { AdminRouteError } from "~/components/admin/route-error";
-import {
-  Activity,
-  Database,
-  Users,
-  TrendingUp,
-  ExternalLink,
-  AlertCircle,
-  RefreshCw,
-  Settings,
-} from "lucide-react";
-import { cn } from "@vamsa/ui";
 
 export const Route = createFileRoute("/_authenticated/admin/metrics")({
   loader: async () => {

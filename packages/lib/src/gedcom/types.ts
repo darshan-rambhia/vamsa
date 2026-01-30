@@ -30,8 +30,8 @@ export interface GedcomRecord {
     | "SUBM"
     | "OTHER";
   id?: string; // xref without @ signs
-  lines: GedcomLine[];
-  tags: Map<string, GedcomLine[]>; // Fast lookup by tag
+  lines: Array<GedcomLine>;
+  tags: Map<string, Array<GedcomLine>>; // Fast lookup by tag
 }
 
 /**
@@ -39,12 +39,12 @@ export interface GedcomRecord {
  */
 export interface GedcomFile {
   header: GedcomRecord;
-  individuals: GedcomRecord[];
-  families: GedcomRecord[];
-  sources: GedcomRecord[]; // GEDCOM Phase 2: Source records
-  objects: GedcomRecord[]; // GEDCOM Phase 2: Multimedia object records
-  repositories: GedcomRecord[]; // GEDCOM Phase 2: Repository records
-  submitters: GedcomRecord[]; // GEDCOM Phase 2: Submitter records
+  individuals: Array<GedcomRecord>;
+  families: Array<GedcomRecord>;
+  sources: Array<GedcomRecord>; // GEDCOM Phase 2: Source records
+  objects: Array<GedcomRecord>; // GEDCOM Phase 2: Multimedia object records
+  repositories: Array<GedcomRecord>; // GEDCOM Phase 2: Repository records
+  submitters: Array<GedcomRecord>; // GEDCOM Phase 2: Submitter records
   trailer: GedcomRecord;
   version: string; // GEDCOM version (e.g., "5.5.1" or "7.0")
   charset: string;
@@ -67,9 +67,9 @@ export interface ParsedIndividual {
   deathDate?: string; // ISO format YYYY-MM-DD
   deathPlace?: string;
   occupation?: string;
-  notes: string[];
-  familiesAsSpouse: string[]; // Family IDs
-  familiesAsChild: string[]; // Family ID
+  notes: Array<string>;
+  familiesAsSpouse: Array<string>; // Family IDs
+  familiesAsChild: Array<string>; // Family ID
 }
 
 /**
@@ -79,11 +79,11 @@ export interface ParsedFamily {
   id: string;
   husband?: string; // Individual ID
   wife?: string; // Individual ID
-  children: string[]; // Individual IDs
+  children: Array<string>; // Individual IDs
   marriageDate?: string; // ISO format YYYY-MM-DD
   marriagePlace?: string;
   divorceDate?: string; // ISO format YYYY-MM-DD
-  notes: string[];
+  notes: Array<string>;
 }
 
 /**
@@ -121,7 +121,7 @@ export interface ParsedRepository {
   phone?: string;
   email?: string;
   website?: string;
-  notes: string[];
+  notes: Array<string>;
 }
 
 /**
@@ -133,5 +133,5 @@ export interface ParsedSubmitter {
   address?: string;
   phone?: string;
   email?: string;
-  notes: string[];
+  notes: Array<string>;
 }

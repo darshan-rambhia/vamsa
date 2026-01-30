@@ -5,14 +5,14 @@
  */
 
 import {
+  bigint,
+  boolean,
+  index,
+  integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
-  bigint,
-  integer,
-  boolean,
-  jsonb,
-  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { backupStatusEnum, backupTypeEnum, storageProviderEnum } from "./enums";

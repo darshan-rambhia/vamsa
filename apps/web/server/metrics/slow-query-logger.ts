@@ -60,7 +60,7 @@ export const SLOW_QUERY_LOG_THRESHOLD_MS = 1000;
  * In-memory ring buffer for slow queries
  * Newest queries are at the front
  */
-const slowQueries: SlowQuery[] = [];
+const slowQueries: Array<SlowQuery> = [];
 
 // ============================================
 // Functions
@@ -103,7 +103,7 @@ export function logSlowQuery(query: SlowQuery): void {
  * @param limit - Maximum number of queries to return (default: 20)
  * @returns Array of slow queries, newest first
  */
-export function getSlowQueries(limit = 20): SlowQuery[] {
+export function getSlowQueries(limit = 20): Array<SlowQuery> {
   return slowQueries.slice(0, Math.min(limit, MAX_SLOW_QUERIES));
 }
 

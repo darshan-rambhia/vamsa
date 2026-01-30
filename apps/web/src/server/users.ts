@@ -20,29 +20,28 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import {
-  userUpdateSchema,
-  type UserRole,
-  type UserUpdateInput,
-} from "@vamsa/schemas";
-import { requireAuth } from "./middleware/require-auth";
+import { userUpdateSchema } from "@vamsa/schemas";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
 import { eq } from "drizzle-orm";
 import {
-  getUsersData,
-  getUserData,
-  updateUserData,
   deleteUserData,
+  getUserData,
+  getUsersData,
   searchAvailablePersonsData,
   unlockUserAccountData,
-  type UserListOptions,
-  type UserListResult,
-  type UserDetail,
-  type UserUpdateResult,
-  type UserDeleteResult,
-  type AvailablePerson,
-  type UnlockAccountResult,
+  updateUserData,
 } from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
+import type {
+  AvailablePerson,
+  UnlockAccountResult,
+  UserDeleteResult,
+  UserDetail,
+  UserListOptions,
+  UserListResult,
+  UserUpdateResult,
+} from "@vamsa/lib/server/business";
+import type { UserUpdateInput } from "@vamsa/schemas";
 
 /**
  * User list input schema with pagination, search, and filters
@@ -80,9 +79,9 @@ export const getUsers = createServerFn({ method: "GET" })
     const options: UserListOptions = {
       page: data.page,
       limit: data.limit,
-      sortOrder: data.sortOrder as UserListOptions["sortOrder"],
+      sortOrder: data.sortOrder,
       search: data.search,
-      role: data.role as UserRole | undefined,
+      role: data.role,
       isActive: data.isActive,
     };
 
@@ -157,7 +156,7 @@ export const deleteUser = createServerFn({ method: "POST" })
  */
 export const searchAvailablePersons = createServerFn({ method: "GET" })
   .inputValidator((data: { search?: string }) => data)
-  .handler(async ({ data }): Promise<AvailablePerson[]> => {
+  .handler(async ({ data }): Promise<Array<AvailablePerson>> => {
     await requireAuth("ADMIN");
     return searchAvailablePersonsData(data.search);
   });

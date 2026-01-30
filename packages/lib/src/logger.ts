@@ -1,5 +1,5 @@
 import pino from "pino";
-import type { Logger as PinoLogger, LoggerOptions } from "pino";
+import type { LoggerOptions, Logger as PinoLogger } from "pino";
 
 /**
  * Structured Logging Utility
@@ -126,20 +126,20 @@ export interface LogContext {
  */
 export interface ErrorLogBuilder {
   /** Add additional context to the error log */
-  ctx(context: LogContext): ErrorLogBuilder;
+  ctx: (context: LogContext) => ErrorLogBuilder;
   /** Log the error with a message */
-  msg(message: string): void;
+  msg: (message: string) => void;
 }
 
 /**
  * Domain logger interface with fluent error API.
  */
 export interface DomainLogger {
-  debug(context: LogContext, message: string): void;
-  info(context: LogContext, message: string): void;
-  warn(context: LogContext, message: string): void;
-  error(context: LogContext, message: string): void;
-  fatal(context: LogContext, message: string): void;
+  debug: (context: LogContext, message: string) => void;
+  info: (context: LogContext, message: string) => void;
+  warn: (context: LogContext, message: string) => void;
+  error: (context: LogContext, message: string) => void;
+  fatal: (context: LogContext, message: string) => void;
   /**
    * Log an error object with fluent API.
    *
@@ -148,9 +148,9 @@ export interface DomainLogger {
    * log.withErr(error).ctx({ userId: '123' }).msg('User operation failed');
    * ```
    */
-  withErr(error: unknown): ErrorLogBuilder;
+  withErr: (error: unknown) => ErrorLogBuilder;
   /** Create a child logger with additional context */
-  child(context: LogContext): DomainLogger;
+  child: (context: LogContext) => DomainLogger;
 }
 
 // ============================================================================

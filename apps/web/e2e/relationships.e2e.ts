@@ -10,7 +10,7 @@
  * relationships which can't be reliably set up in parallel E2E tests.
  */
 
-import { test, expect } from "./fixtures";
+import { expect, test } from "./fixtures";
 
 // Helper to fill input with error throwing on failure
 // Uses "poke and verify" pattern - type a character, verify React responds, then continue
@@ -63,7 +63,7 @@ async function createPersonAndGoToRelationships(
   waitForConvexSync: () => Promise<void>
 ): Promise<string | null> {
   // Create a new person
-  await page.goto("/people/new");
+  await page.goto("/people/new", { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("domcontentloaded");
 
   // NETWORKIDLE EXCEPTION: Person form requires networkidle for reliable React hydration

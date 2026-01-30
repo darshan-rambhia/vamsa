@@ -1,23 +1,24 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import GridLayout, { type Layout } from "react-grid-layout";
+import GridLayout from "react-grid-layout";
 import { cn } from "@vamsa/ui";
 import { BaseWidget } from "./widgets/BaseWidget";
 import { getWidget } from "./widget-registry";
+import type { Layout } from "react-grid-layout";
 import type { WidgetConfig } from "./widgets/types";
 
 // Import react-grid-layout CSS
 import "react-grid-layout/css/styles.css";
 
 // Layout is a readonly array of LayoutItems
-type LayoutItem = Layout extends readonly (infer T)[] ? T : never;
+type LayoutItem = Layout extends ReadonlyArray<infer T> ? T : never;
 
 interface DashboardGridProps {
   /** Array of widget configurations to render */
-  widgets: WidgetConfig[];
+  widgets: Array<WidgetConfig>;
   /** Callback when layout changes (position/size) */
-  onLayoutChange: (layout: LayoutItem[]) => void;
+  onLayoutChange: (layout: Array<LayoutItem>) => void;
   /** Callback when a widget is removed */
   onWidgetRemove: (widgetId: string) => void;
   /** Callback when widget settings are changed */
@@ -59,7 +60,7 @@ export function DashboardGrid({
   isEditable = true,
 }: DashboardGridProps) {
   // Convert widget configs to react-grid-layout format
-  const layout = useMemo<LayoutItem[]>(
+  const layout = useMemo<Array<LayoutItem>>(
     () =>
       widgets.map((widget) => {
         const definition = getWidget(widget.type);
@@ -106,7 +107,7 @@ export function DashboardGrid({
   // Type assertion to work around incomplete GridLayout types
   const GridLayoutComponent = GridLayout as React.ComponentType<{
     className?: string;
-    layout: LayoutItem[];
+    layout: Array<LayoutItem>;
     rowHeight?: number;
     width?: number;
     isDraggable?: boolean;
@@ -116,7 +117,7 @@ export function DashboardGrid({
     useCSSTransforms?: boolean;
     onLayoutChange?: (layout: Layout) => void;
     draggableHandle?: string;
-    resizeHandles?: string[];
+    resizeHandles?: Array<string>;
     children?: React.ReactNode;
   }>;
 

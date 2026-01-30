@@ -1,8 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { Button, Container, PageHeader } from "@vamsa/ui";
 import { getDashboardStats } from "~/server/dashboard";
-import { Container, PageHeader, Button } from "@vamsa/ui";
 import { OnboardingDashboard } from "~/components/onboarding";
 import { ConfigurableDashboard } from "~/components/dashboard/ConfigurableDashboard";
 

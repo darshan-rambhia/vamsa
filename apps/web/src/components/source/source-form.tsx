@@ -14,12 +14,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui/primitives";
-import {
-  type SourceCreateInput,
-  type SourceUpdateInput,
-  type SourceType,
-  type CitationFormat,
-  type Confidence,
+import type {
+  CitationFormat,
+  Confidence,
+  SourceCreateInput,
+  SourceType,
+  SourceUpdateInput,
 } from "@vamsa/schemas";
 import { createSource, updateSource } from "~/server/sources";
 

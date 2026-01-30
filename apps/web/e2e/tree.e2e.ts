@@ -8,7 +8,7 @@
  * - State preservation
  */
 
-import { test, expect, VIEWPORT_ARRAY } from "./fixtures";
+import { VIEWPORT_ARRAY, expect, test } from "./fixtures";
 import { Navigation } from "./fixtures/page-objects";
 
 test.describe("Family Tree Visualization", () => {
@@ -60,7 +60,25 @@ test.describe("Family Tree Visualization", () => {
   test("user can switch chart types", async ({ page }) => {
     // Use URL-based navigation which is more reliable than dropdown interaction
     // (Radix Select dropdowns render in portals with varying selectors)
-    await page.goto("/visualize?type=ancestor");
+    // Firefox can throw NS_BINDING_ABORTED - retry until we reach the target URL
+    const targetUrl = "/visualize?type=ancestor";
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
+        // Check if we arrived at the right URL
+        if (page.url().includes("type=ancestor")) break;
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes("NS_BINDING_ABORTED")
+        ) {
+          await page.waitForTimeout(500);
+          if (page.url().includes("type=ancestor")) break;
+          continue;
+        }
+        throw error;
+      }
+    }
 
     // Wait for page to load with new chart type
     await page
@@ -91,8 +109,25 @@ test.describe("Family Tree Visualization", () => {
   });
 
   test("tree state is preserved in URL", async ({ page }) => {
-    // Navigate to timeline chart type via URL
-    await page.goto("/visualize?type=timeline");
+    // Navigate to timeline chart type via URL with retry for Firefox NS_BINDING_ABORTED
+    const targetUrl = "/visualize?type=timeline";
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
+        if (page.url().includes("type=timeline")) break;
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes("NS_BINDING_ABORTED")
+        ) {
+          await page.waitForTimeout(500);
+          if (page.url().includes("type=timeline")) break;
+          continue;
+        }
+        throw error;
+      }
+    }
+
     await page
       .locator("main")
       .first()

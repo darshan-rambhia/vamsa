@@ -16,8 +16,8 @@
  *   app.use('*', telemetryMiddleware);
  */
 
+import { activeConnections, recordHttpRequest } from "../metrics";
 import type { Context, Next } from "hono";
-import { recordHttpRequest, activeConnections } from "../metrics";
 
 /**
  * Paths to exclude from telemetry (high-frequency, low-value)

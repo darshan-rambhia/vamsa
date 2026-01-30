@@ -21,10 +21,10 @@ export interface MappingError {
  * Mapping result with diagnostics
  */
 export interface MappingResult {
-  people: VamsaPerson[];
-  relationships: VamsaRelationship[];
-  errors: MappingError[];
-  warnings: string[];
+  people: Array<VamsaPerson>;
+  relationships: Array<VamsaRelationship>;
+  errors: Array<MappingError>;
+  warnings: Array<string>;
 }
 
 /**
@@ -73,9 +73,9 @@ export interface GedcomIndividualData {
   deathDate?: string; // GEDCOM format: "15 JAN 2020"
   deathPlace?: string;
   occupation?: string;
-  notes: string[];
-  familiesAsSpouse: string[]; // xrefs like "@F1@"
-  familiesAsChild: string[]; // xref like "@F1@"
+  notes: Array<string>;
+  familiesAsSpouse: Array<string>; // xrefs like "@F1@"
+  familiesAsChild: Array<string>; // xref like "@F1@"
 }
 
 /**
@@ -86,11 +86,11 @@ export interface GedcomFamilyData {
   xref: string; // e.g., "@F1@"
   husband?: string; // xref like "@I1@"
   wife?: string; // xref like "@I2@"
-  children: string[]; // xrefs like "@I3@"
+  children: Array<string>; // xrefs like "@I3@"
   marriageDate?: string; // GEDCOM format: "10 JUN 1985"
   marriagePlace?: string;
   divorceDate?: string; // GEDCOM format: "01 JAN 2000"
-  notes: string[];
+  notes: Array<string>;
 }
 
 /**
@@ -110,7 +110,7 @@ export interface SpousePair {
   partner2: string; // Individual ID
   marriageDate?: string;
   divorceDate?: string;
-  notes?: string[];
+  notes?: Array<string>;
 }
 
 /**

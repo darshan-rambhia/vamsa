@@ -1,26 +1,24 @@
 "use client";
 
-import { type ReactNode } from "react";
 import {
-  Container,
-  PageHeader,
+  Button,
   Card,
   CardContent,
+  Container,
+  Label,
+  PageHeader,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Label,
-  Button,
 } from "@vamsa/ui";
+import type { ReactNode } from "react";
+import type { ChartMetadata } from "~/components/charts/ChartStatsPanel";
+import type { ChartType } from "~/components/charts/ChartControls";
 import { PersonSelector } from "~/components/charts/PersonSelector";
-import {
-  ChartStatsPanel,
-  type ChartMetadata,
-} from "~/components/charts/ChartStatsPanel";
+import { ChartStatsPanel } from "~/components/charts/ChartStatsPanel";
 import { ChartLegend } from "~/components/charts/ChartLegend";
-import { type ChartType } from "~/components/charts/ChartControls";
 
 interface Person {
   id: string;
@@ -37,7 +35,7 @@ export interface VisualizationLayoutProps {
 
   // Person selector (optional - some charts don't need it)
   showPersonSelector?: boolean;
-  persons?: Person[];
+  persons?: Array<Person>;
   selectedPersonId?: string;
   onPersonChange?: (id: string) => void;
   isLoadingPersons?: boolean;
@@ -72,6 +70,7 @@ const chartTypeLabels: Record<ChartType, string> = {
   bowtie: "Bowtie Chart",
   compact: "Compact Tree",
   statistics: "Statistics",
+  list: "List View (Accessible)",
 };
 
 export function VisualizationLayout({

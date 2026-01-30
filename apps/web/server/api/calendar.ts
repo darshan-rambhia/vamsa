@@ -1,7 +1,7 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
-import { eq, and, isNotNull, inArray } from "drizzle-orm";
+import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 import ical, { ICalEventRepeatingFreq } from "ical-generator";
 import RSS from "rss";

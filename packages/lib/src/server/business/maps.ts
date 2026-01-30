@@ -1,5 +1,5 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and, sql, asc, count, lte, gte, inArray } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.db;
@@ -16,7 +16,7 @@ export interface MapMarker {
   description: string | null;
   personCount: number;
   eventCount: number;
-  eventTypes: string[];
+  eventTypes: Array<string>;
   timeRange: {
     earliest: number | null;
     latest: number | null;
@@ -24,7 +24,7 @@ export interface MapMarker {
 }
 
 export interface PersonLocationMarker extends MapMarker {
-  personIds: string[];
+  personIds: Array<string>;
   people: Array<{
     id: string;
     firstName: string;
@@ -49,7 +49,7 @@ export interface TimelineMarker {
   placeType: string;
   year: number | null;
   eventType: string;
-  personIds: string[];
+  personIds: Array<string>;
 }
 
 export interface ClusterBound {
@@ -61,7 +61,7 @@ export interface ClusterBound {
 
 export interface PlaceCluster {
   bounds: ClusterBound;
-  places: MapMarker[];
+  places: Array<MapMarker>;
   centerLat: number;
   centerLng: number;
   count: number;
@@ -87,7 +87,7 @@ export async function calculateTimeRange(
     columns: { fromYear: true, toYear: true },
   });
 
-  const years: number[] = [];
+  const years: Array<number> = [];
 
   eventDates.forEach((e) => {
     if (e.date) {
@@ -142,7 +142,7 @@ export function calculateDistance(
  * @param places - Array of map markers to cluster
  * @returns Cluster object with bounds, center, and place data
  */
-export function createCluster(places: MapMarker[]): PlaceCluster {
+export function createCluster(places: Array<MapMarker>): PlaceCluster {
   const lats = places.map((p) => p.latitude);
   const lngs = places.map((p) => p.longitude);
 
@@ -177,14 +177,14 @@ export interface GetPlacesForMapOptions {
  */
 export async function getPlacesForMapData(
   options: GetPlacesForMapOptions
-): Promise<{ markers: MapMarker[]; total: number }> {
+): Promise<{ markers: Array<MapMarker>; total: number }> {
   // Get all places with coordinates
   const places = await drizzleDb.query.places.findMany({
     where: sql`"Place"."latitude" IS NOT NULL AND "Place"."longitude" IS NOT NULL`,
     orderBy: asc(drizzleSchema.places.name),
   });
 
-  const markers: MapMarker[] = [];
+  const markers: Array<MapMarker> = [];
 
   for (const place of places) {
     try {
@@ -245,7 +245,7 @@ export async function getPlacesForMapData(
  * @returns Object containing person markers and person details
  */
 export async function getPersonLocationsData(personId: string): Promise<{
-  markers: PersonLocationMarker[];
+  markers: Array<PersonLocationMarker>;
   total: number;
   person: {
     id: string;
@@ -346,7 +346,7 @@ export async function getPersonLocationsData(personId: string): Promise<{
     }
   });
 
-  const markers: PersonLocationMarker[] = [];
+  const markers: Array<PersonLocationMarker> = [];
 
   for (const place of placeMap.values()) {
     try {
@@ -417,7 +417,7 @@ export async function getPersonLocationsData(personId: string): Promise<{
  * @returns Object containing family location markers and family stats
  */
 export async function getFamilyLocationsData(): Promise<{
-  markers: FamilyLocationMarker[];
+  markers: Array<FamilyLocationMarker>;
   total: number;
   familySize: number;
 }> {
@@ -461,7 +461,7 @@ export async function getFamilyLocationsData(): Promise<{
 
   const places = placesWithFamily;
 
-  const markers: FamilyLocationMarker[] = [];
+  const markers: Array<FamilyLocationMarker> = [];
 
   for (const place of places) {
     try {
@@ -582,7 +582,7 @@ export interface GetPlacesByTimeRangeOptions {
 export async function getPlacesByTimeRangeData(
   options: GetPlacesByTimeRangeOptions
 ): Promise<{
-  markers: TimelineMarker[];
+  markers: Array<TimelineMarker>;
   total: number;
   timeRange: {
     startYear: number;
@@ -643,7 +643,7 @@ export async function getPlacesByTimeRangeData(
     }
   }
 
-  const timelineMarkers: TimelineMarker[] = [];
+  const timelineMarkers: Array<TimelineMarker> = [];
 
   for (const place of places) {
     // Skip places without coordinates (shouldn't happen due to WHERE clause)
@@ -749,7 +749,7 @@ export interface GetPlaceClusterOptions {
 export async function getPlaceClustersData(
   options: GetPlaceClusterOptions
 ): Promise<{
-  clusters: PlaceCluster[];
+  clusters: Array<PlaceCluster>;
   totalClusters: number;
   totalPlaces: number;
 }> {
@@ -766,7 +766,7 @@ export async function getPlaceClustersData(
   });
 
   // Format places as markers
-  const markers: MapMarker[] = [];
+  const markers: Array<MapMarker> = [];
   for (const place of places) {
     try {
       // Skip places without coordinates
@@ -822,8 +822,8 @@ export async function getPlaceClustersData(
   // Simple clustering algorithm: sort by latitude, then create clusters
   markers.sort((a, b) => a.latitude - b.latitude);
 
-  const clusters: PlaceCluster[] = [];
-  let currentCluster: MapMarker[] = [];
+  const clusters: Array<PlaceCluster> = [];
+  let currentCluster: Array<MapMarker> = [];
 
   for (const marker of markers) {
     if (

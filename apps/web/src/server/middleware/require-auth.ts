@@ -6,9 +6,8 @@
 
 import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
 import { betterAuthGetSessionWithUserFromCookie } from "@vamsa/lib/server/business";
-import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
+import { drizzleDb, drizzleSchema, t } from "@vamsa/lib/server";
 import { eq } from "drizzle-orm";
-import { t } from "@vamsa/lib/server";
 
 export type UserRole = "VIEWER" | "MEMBER" | "ADMIN";
 

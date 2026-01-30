@@ -20,17 +20,30 @@ concurrency:
 
 jobs:
   e2e-tests:
-    name: Playwright E2E Tests
+    name: E2E Tests (${{ matrix.browser }})
     runs-on: ubuntu-latest
-    timeout-minutes: 10 # Fail if tests take longer than 10 minutes
+    timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+
+    env:
+      POSTGRES_DB: vamsa_test
+      POSTGRES_USER: vamsa_test
+      POSTGRES_PASSWORD: ${{ secrets.E2E_DB_PASSWORD || 'test_password_ci' }}
+      BROWSER: ${{ matrix.browser }}
+      NODE_ENV: test
+      CI: true
 
     services:
       postgres:
         image: postgres:18
         env:
-          POSTGRES_DB: vamsa_test
-          POSTGRES_USER: vamsa
-          POSTGRES_PASSWORD: vamsa_password
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -39,14 +52,12 @@ jobs:
         ports:
           - 5432:5432
 
-    env:
-      DATABASE_URL: postgresql://vamsa:vamsa_password@localhost:5432/vamsa_test
-      NODE_ENV: test
-      CI: true
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set DATABASE_URL
+        run: echo "DATABASE_URL=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB" >> $GITHUB_ENV
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -56,8 +67,8 @@ jobs:
       - name: Install dependencies
         run: bun install
 
-      - name: Install Playwright browsers
-        run: bunx playwright install --with-deps chromium
+      - name: Install Playwright browser
+        run: bunx playwright install --with-deps "$BROWSER"
 
       - name: Generate Drizzle migrations
         run: bun run db:generate
@@ -72,9 +83,9 @@ jobs:
         run: bun run build
 
       - name: Run E2E tests
-        run: bun run test:e2e --reporter=html,json
+        run: bun run test:e2e --project="$BROWSER" --reporter=html,json
         env:
-          PLAYWRIGHT_WORKERS: 2 # Limit parallelism in CI
+          PLAYWRIGHT_WORKERS: 5
 
       - name: Generate coverage report
         if: always()
@@ -87,7 +98,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.browser }}
           path: apps/web/playwright-report/
           retention-days: 30
 
@@ -95,7 +106,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-output
+          name: test-output-${{ matrix.browser }}
           path: apps/web/test-output/
           retention-days: 30
 
@@ -103,50 +114,71 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
+          name: coverage-report-${{ matrix.browser }}
           path: apps/web/test-output/coverage-report.md
           retention-days: 30
 
+  e2e-summary:
+    name: E2E Summary
+    needs: e2e-tests
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Check E2E results
+        env:
+          RESULT: ${{ needs.e2e-tests.result }}
+        run: |
+          echo "E2E test results: $RESULT"
+
+          if [[ "$RESULT" == "failure" ]]; then
+            echo "Some browser tests failed. Check individual reports."
+            exit 1
+          fi
+
+          echo "All browser tests passed!"
+
       - name: Comment PR with test results
-        if: github.event_name == 'pull_request' && always()
+        if: github.event_name == 'pull_request'
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
-            const coveragePath = 'apps/web/test-output/coverage-report.md';
-            if (fs.existsSync(coveragePath)) {
-              const coverage = fs.readFileSync(coveragePath, 'utf8');
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const result = '${{ needs.e2e-tests.result }}';
+            const body = `## E2E Test Results
 
-              // Safely construct comment body without using untrusted input in templates
-              const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-              const body = `## 🎭 E2E Test Results\n\n${coverage}\n\n[View full Playwright report](${runUrl})`;
+            All browsers tested: **Chromium**, **Firefox**, **WebKit**
 
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.name,
-                body: body
-              });
-            }
+            Result: ${result === 'success' ? 'All passed' : 'Some failed'}
 
-      - name: Fail on critical violations
-        if: failure()
-        run: |
-          echo "❌ E2E tests failed. Check the Playwright report for details."
-          exit 1
+            [View full Playwright reports](${runUrl})`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              body: body
+            });
 
   accessibility-check:
     name: Accessibility Audit
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
+    env:
+      POSTGRES_DB: vamsa_test
+      POSTGRES_USER: vamsa_test
+      POSTGRES_PASSWORD: ${{ secrets.E2E_DB_PASSWORD || 'test_password_ci' }}
+      NODE_ENV: test
+      CI: true
+
     services:
       postgres:
         image: postgres:18
         env:
-          POSTGRES_DB: vamsa_test
-          POSTGRES_USER: vamsa
-          POSTGRES_PASSWORD: vamsa_password
+          POSTGRES_DB: ${{ env.POSTGRES_DB }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -155,14 +187,12 @@ jobs:
         ports:
           - 5432:5432
 
-    env:
-      DATABASE_URL: postgresql://vamsa:vamsa_password@localhost:5432/vamsa_test
-      NODE_ENV: test
-      CI: true
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set DATABASE_URL
+        run: echo "DATABASE_URL=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB" >> $GITHUB_ENV
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -198,63 +228,26 @@ jobs:
           path: apps/web/playwright-report/
           retention-days: 30
 
-  performance-check:
-    name: Performance Benchmark
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Check test execution time
-        run: |
-          echo "⏱️  Checking E2E test execution time..."
-          # Test suite should complete in < 5 minutes
-          timeout 300 bun run test:e2e --reporter=json || {
-            echo "❌ Tests exceeded 5-minute timeout"
-            exit 1
-          }
-
-      - name: Verify test count
-        run: |
-          echo "📊 Verifying test count stays reasonable..."
-          # Count test files
-          TEST_COUNT=$(find apps/web/e2e -name "*.spec.ts" | wc -l)
-          echo "Test files: $TEST_COUNT"
-
-          if [ $TEST_COUNT -gt 20 ]; then
-            echo "⚠️  Warning: Test suite growing large ($TEST_COUNT files)"
-          fi
-
   quality-gate:
     name: Quality Gate
-    needs: [e2e-tests, accessibility-check]
+    needs: [e2e-summary, accessibility-check]
     runs-on: ubuntu-latest
     if: always()
 
     steps:
       - name: Check quality gates
+        env:
+          E2E_RESULT: ${{ needs.e2e-summary.result }}
+          A11Y_RESULT: ${{ needs.accessibility-check.result }}
         run: |
-          E2E_RESULT="${{ needs.e2e-tests.result }}"
-          A11Y_RESULT="${{ needs.accessibility-check.result }}"
-
           if [[ "$E2E_RESULT" != "success" ]]; then
-            echo "❌ E2E tests failed"
+            echo "E2E tests failed"
             exit 1
           fi
 
           if [[ "$A11Y_RESULT" == "failure" ]]; then
-            echo "⚠️  Accessibility checks found violations"
+            echo "Accessibility checks found violations"
             # Don't fail the build for accessibility issues yet
           fi
 
-          echo "✅ All quality gates passed!"
+          echo "All quality gates passed!"

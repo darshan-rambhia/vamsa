@@ -1,16 +1,15 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import {
-  scoreProfileMatch,
   findSuggestedMatches,
-  isConfidentMatch,
   getBestMatch,
-  groupProfilesByMatch,
-  validateClaim,
   getClaimStatusText,
+  groupProfilesByMatch,
+  isConfidentMatch,
+  scoreProfileMatch,
   shouldShowClaimModal,
-  type ClaimingUser,
-  type ClaimableProfile,
+  validateClaim,
 } from "./profile-claim";
+import type { ClaimableProfile, ClaimingUser } from "./profile-claim";
 
 describe("Profile Claiming Utilities", () => {
   const testUser: ClaimingUser = {
@@ -19,7 +18,7 @@ describe("Profile Claiming Utilities", () => {
     oidcProvider: "google",
   };
 
-  const testProfiles: ClaimableProfile[] = [
+  const testProfiles: Array<ClaimableProfile> = [
     {
       id: "1",
       firstName: "John",

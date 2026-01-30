@@ -1,20 +1,20 @@
-import { describe, expect, it, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it } from "bun:test";
 import {
-  resetIdCounter,
-  createMockPerson,
-  createMockNodes,
-  createMockEdges,
-  createBowtieNodes,
-  createTimelineEntries,
-  createMatrixData,
-  createCompactTreeData,
-  createStatisticsData,
+  DEEP_ANCESTRY,
   EMPTY_DATA,
+  LARGE_FAMILY,
+  LONG_NAMES,
   SINGLE_PERSON,
   SMALL_FAMILY,
-  LARGE_FAMILY,
-  DEEP_ANCESTRY,
-  LONG_NAMES,
+  createBowtieNodes,
+  createCompactTreeData,
+  createMatrixData,
+  createMockEdges,
+  createMockNodes,
+  createMockPerson,
+  createStatisticsData,
+  createTimelineEntries,
+  resetIdCounter,
 } from "./chart-data";
 
 describe("createMockPerson", () => {

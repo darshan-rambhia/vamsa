@@ -14,23 +14,13 @@
  */
 
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { createPaginationMeta } from "@vamsa/schemas";
+import { and, asc, count, desc, eq, isNull, like, ne, or } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
+import type { UserRole, UserUpdateInput } from "@vamsa/schemas";
+import type { SQL } from "drizzle-orm";
 
 const log = loggers.auth;
-import { createPaginationMeta } from "@vamsa/schemas";
-import type { UserUpdateInput, UserRole } from "@vamsa/schemas";
-import {
-  eq,
-  and,
-  or,
-  like,
-  desc,
-  asc,
-  count,
-  ne,
-  isNull,
-  SQL,
-} from "drizzle-orm";
 
 /**
  * Type for the database client used by user functions.
@@ -386,8 +376,8 @@ export interface AvailablePerson {
 export async function searchAvailablePersonsData(
   search?: string,
   db: UsersDb = drizzleDb
-): Promise<AvailablePerson[]> {
-  const conditions: (SQL<unknown> | undefined)[] = [
+): Promise<Array<AvailablePerson>> {
+  const conditions: Array<SQL<unknown> | undefined> = [
     isNull(drizzleSchema.persons.createdById),
   ];
 

@@ -7,21 +7,21 @@ import {
   Scripts,
   createRootRoute,
   useRouter,
-  type ErrorComponentProps,
 } from "@tanstack/react-router";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider } from "react-i18next";
-import i18n from "~/i18n/config";
-import appCss from "~/styles.css?url";
-import printCss from "~/styles/print.css?url";
 import {
   AlertTriangle,
+  ChevronDown,
+  ChevronUp,
   Home,
   RefreshCw,
   Search,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
+import type { ErrorComponentProps } from "@tanstack/react-router";
+import i18n from "~/i18n/config";
+import appCss from "~/styles.css?url";
+import printCss from "~/styles/print.css?url";
 
 const queryClient = new QueryClient({
   defaultOptions: {

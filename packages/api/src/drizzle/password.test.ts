@@ -1,4 +1,4 @@
-import { describe, it, expect } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { hashPassword, verifyPassword } from "./password";
 
 describe("password", () => {
@@ -235,7 +235,7 @@ describe("password", () => {
       }
 
       // Time correct password verification
-      const correctTimes: number[] = [];
+      const correctTimes: Array<number> = [];
       for (let i = 0; i < 10; i++) {
         const start = performance.now();
         await verifyPassword("testpassword", hash);
@@ -243,7 +243,7 @@ describe("password", () => {
       }
 
       // Time incorrect password verification
-      const incorrectTimes: number[] = [];
+      const incorrectTimes: Array<number> = [];
       for (let i = 0; i < 10; i++) {
         const start = performance.now();
         await verifyPassword("wrongpassword", hash);

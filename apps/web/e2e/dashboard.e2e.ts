@@ -7,8 +7,12 @@
  * - Navigation between pages
  */
 
-import { test, expect } from "./fixtures";
-import { DashboardPage, Navigation } from "./fixtures/page-objects";
+import { expect, test } from "./fixtures";
+import {
+  DashboardPage,
+  Navigation,
+  gotoWithRetry,
+} from "./fixtures/page-objects";
 
 test.describe("Dashboard", () => {
   test("displays dashboard page", async ({ page }) => {
@@ -33,14 +37,14 @@ test.describe("Dashboard", () => {
 
 test.describe("Activity Feed", () => {
   test("displays activity page", async ({ page }) => {
-    await page.goto("/activity");
+    await gotoWithRetry(page, "/activity");
 
     await expect(page).toHaveURL("/activity");
     await expect(page.locator("h1, h2").first()).toBeVisible();
   });
 
   test("shows activity entries or empty state", async ({ page }) => {
-    await page.goto("/activity");
+    await gotoWithRetry(page, "/activity");
 
     // Wait for content to load
     await page.waitForTimeout(1000);
@@ -72,7 +76,7 @@ test.describe("Navigation Flow", () => {
   test("navigates through all main pages", async ({ page }) => {
     const nav = new Navigation(page);
 
-    await page.goto("/people");
+    await gotoWithRetry(page, "/people");
     await expect(page).toHaveURL("/people");
 
     await nav.goToDashboard();
@@ -90,7 +94,7 @@ test.describe("Navigation Flow", () => {
   });
 
   test("highlights active navigation item", async ({ page }) => {
-    await page.goto("/dashboard");
+    await gotoWithRetry(page, "/dashboard");
 
     await page
       .getByTestId("main-nav")

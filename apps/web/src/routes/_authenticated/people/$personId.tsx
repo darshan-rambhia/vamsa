@@ -1,23 +1,23 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
+import { calculateAge, formatDate } from "@vamsa/lib";
+import { Container } from "@vamsa/ui";
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@vamsa/ui/primitives";
+import type { PersonDetail } from "~/server/persons.functions";
 import { getPerson } from "~/server/persons.functions";
 import { getPersonEvents } from "~/server/events";
 import { getPersonPlaces } from "~/server/places";
 import { getPersonMedia } from "~/server/media";
-import { formatDate, calculateAge } from "@vamsa/lib";
-import { Container } from "@vamsa/ui";
-import {
-  Card,
-  CardContent,
-  Avatar,
-  Badge,
-  Button,
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@vamsa/ui/primitives";
-import type { PersonDetail } from "~/server/persons.functions";
 import { OverviewTab } from "~/components/person/overview-tab";
 import { RelationshipsTab } from "~/components/person/relationships-tab";
 import { EventsTab } from "~/components/person/events-tab";

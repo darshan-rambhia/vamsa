@@ -5,21 +5,21 @@
  */
 
 import {
+  boolean,
+  index,
+  jsonb,
   pgTable,
   text,
   timestamp,
-  jsonb,
-  boolean,
-  index,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 import {
-  privacyLevelEnum,
   auditActionEnum,
-  userRoleEnum,
   inviteStatusEnum,
-  suggestionTypeEnum,
+  privacyLevelEnum,
   suggestionStatusEnum,
+  suggestionTypeEnum,
+  userRoleEnum,
 } from "./enums";
 import { users } from "./user";
 import { persons } from "./person";

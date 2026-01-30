@@ -1,5 +1,7 @@
-import { Component, type ReactNode } from "react";
-import { ErrorCard, type ErrorCardProps } from "./error-card";
+import { Component } from "react";
+import { ErrorCard } from "./error-card";
+import type { ReactNode } from "react";
+import type { ErrorCardProps } from "./error-card";
 
 interface ErrorBoundaryProps {
   /** Children to render */
@@ -106,11 +108,11 @@ export class ErrorBoundary extends Component<
 /**
  * Higher-order component version of ErrorBoundary
  */
-export function withErrorBoundary<P extends object>(
-  WrappedComponent: React.ComponentType<P>,
+export function withErrorBoundary<TProps extends object>(
+  WrappedComponent: React.ComponentType<TProps>,
   errorBoundaryProps?: Omit<ErrorBoundaryProps, "children">
 ) {
-  return function WithErrorBoundary(props: P) {
+  return function WithErrorBoundary(props: TProps) {
     return (
       <ErrorBoundary {...errorBoundaryProps}>
         <WrappedComponent {...props} />

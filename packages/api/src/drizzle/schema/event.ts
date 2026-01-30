@@ -5,12 +5,12 @@
  */
 
 import {
+  date,
+  index,
   pgTable,
   text,
   timestamp,
-  date,
   unique,
-  index,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { eventTypeEnum } from "./enums";

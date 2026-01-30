@@ -14,7 +14,7 @@ import type { AccessibilityViolation } from "./test-base";
  * @param testName - Optional test context name for error reporting
  */
 export function assertNoA11yViolations(
-  violations: AccessibilityViolation[],
+  violations: Array<AccessibilityViolation>,
   testName?: string
 ): void {
   const criticalViolations = violations.filter((v) =>
@@ -41,7 +41,7 @@ export function assertNoA11yViolations(
  * @param testName - Optional test context name for error reporting
  */
 export function assertNoCriticalA11yViolations(
-  violations: AccessibilityViolation[],
+  violations: Array<AccessibilityViolation>,
   testName?: string
 ): void {
   const criticalViolations = violations.filter((v) =>
@@ -64,7 +64,7 @@ export function assertNoCriticalA11yViolations(
  * @param testName - Optional test context name for logging
  */
 export function logA11yViolations(
-  violations: AccessibilityViolation[],
+  violations: Array<AccessibilityViolation>,
   testName?: string
 ): void {
   if (violations.length === 0) {
@@ -86,7 +86,7 @@ export function logA11yViolations(
       acc[v.impact].push(v);
       return acc;
     },
-    {} as Record<string, AccessibilityViolation[]>
+    {} as Record<string, Array<AccessibilityViolation>>
   );
 
   Object.entries(byImpact).forEach(([impact, viols]) => {
@@ -106,9 +106,9 @@ export function logA11yViolations(
  * @returns Filtered array of violations
  */
 export function filterViolationsByImpact(
-  violations: AccessibilityViolation[],
-  impacts: string[]
-): AccessibilityViolation[] {
+  violations: Array<AccessibilityViolation>,
+  impacts: Array<string>
+): Array<AccessibilityViolation> {
   return violations.filter((v) => impacts.includes(v.impact));
 }
 
@@ -119,7 +119,9 @@ export function filterViolationsByImpact(
  * @param violations - Array of accessibility violations
  * @returns Summary string
  */
-export function getA11ySummary(violations: AccessibilityViolation[]): string {
+export function getA11ySummary(
+  violations: Array<AccessibilityViolation>
+): string {
   if (violations.length === 0) {
     return "No accessibility violations found";
   }

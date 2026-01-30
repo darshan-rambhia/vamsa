@@ -7,9 +7,9 @@
  * Uses i18next with the filesystem backend to load translation files.
  */
 
+import path from "node:path";
 import i18next from "i18next";
 import Backend from "i18next-fs-backend";
-import path from "path";
 
 export type I18nInstance = ReturnType<typeof i18next.createInstance>;
 
@@ -114,10 +114,10 @@ export async function t(
  * Useful for returning multiple translated messages
  */
 export async function tMultiple(
-  keys: string[],
+  keys: Array<string>,
   options?: Record<string, string | number | boolean>,
   language: string = "en"
-): Promise<string[]> {
+): Promise<Array<string>> {
   return Promise.all(keys.map((key) => t(key, options, language)));
 }
 

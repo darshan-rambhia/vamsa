@@ -1,7 +1,11 @@
 /**
  * ESLint Configuration for Vamsa Monorepo
  * Includes TypeScript, React, React Hooks, and Accessibility (a11y) rules
+ *
+ * @ts-check
+ * @type {import("eslint").Linter.Config[]}
  */
+import { defineConfig } from "eslint/config";
 import eslint from "@eslint/js";
 import tseslint from "typescript-eslint";
 import reactPlugin from "eslint-plugin-react";
@@ -9,13 +13,23 @@ import reactHooksPlugin from "eslint-plugin-react-hooks";
 import jsxA11yPlugin from "eslint-plugin-jsx-a11y";
 import prettierConfig from "eslint-config-prettier";
 import globals from "globals";
+import { tanstackConfig } from "@tanstack/eslint-config";
 
-export default tseslint.config(
+// Type assertions for plugins with incompatible flat config types
+/** @type {import("eslint").ESLint.Plugin} */
+const reactHooks = /** @type {any} */ (reactHooksPlugin);
+/** @type {import("eslint").ESLint.Plugin} */
+const jsxA11y = /** @type {any} */ (jsxA11yPlugin);
+
+export default defineConfig(
   // Base ESLint recommended rules
   eslint.configs.recommended,
 
   // TypeScript ESLint recommended rules
   ...tseslint.configs.recommended,
+
+  // TanStack ESLint configuration
+  ...tanstackConfig,
 
   // Global ignores
   {
@@ -36,6 +50,13 @@ export default tseslint.config(
       ".beads/**", // Project management
       "**/.stryker-tmp/**", // Stryker temp files
       "**/routeTree.gen.ts", // Auto-generated route tree
+      "**/scripts/**", // Scripts directory
+      "**/.ladle/**", // Ladle component browser config
+      "**/tailwind.config.ts", // Tailwind config
+      "**/drizzle.config.ts", // Drizzle config
+      "**/drizzle/schema.ts", // Drizzle schema (has own tsconfig)
+      "**/tests/integration/**", // Integration tests (excluded from main tsconfig)
+      "**/tests/setup/**", // Test setup files
     ],
   },
 
@@ -79,6 +100,12 @@ export default tseslint.config(
       "@typescript-eslint/no-empty-object-type": "off",
       "@typescript-eslint/no-require-imports": "off",
 
+      // Relax overly strict TanStack rules that flag defensive programming patterns
+      // These rules are too aggressive for real-world code with runtime checks
+      "@typescript-eslint/no-unnecessary-condition": "off",
+      "@typescript-eslint/require-await": "off",
+      "no-shadow": "off",
+
       // General code quality
       "no-console": ["warn", { allow: ["warn", "error"] }],
       "prefer-const": "error",
@@ -91,8 +118,8 @@ export default tseslint.config(
     files: ["**/*.tsx", "**/*.jsx"],
     plugins: {
       react: reactPlugin,
-      "react-hooks": reactHooksPlugin,
-      "jsx-a11y": jsxA11yPlugin,
+      "react-hooks": reactHooks,
+      "jsx-a11y": jsxA11y,
     },
     settings: {
       react: {

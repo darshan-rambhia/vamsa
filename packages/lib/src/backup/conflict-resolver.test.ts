@@ -1,9 +1,13 @@
-import { describe, it, expect, mock, beforeEach } from "bun:test";
-import {
-  ConflictResolver,
-  type DatabaseInterface,
-  type ImportedBy,
-  type Conflict,
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { ConflictResolver } from "./conflict-resolver";
+import type {
+  Conflict,
+  DatabaseInterface,
+  ImportedBy,
+  PersonRecord,
+  RelationshipRecord,
+  SettingsRecord,
+  UserRecord,
 } from "./conflict-resolver";
 
 // Mock database interface
@@ -154,8 +158,8 @@ const mockImportedBy: ImportedBy = {
 
 // Helper functions to create complete mock records
 const createMockPersonRecord = (
-  overrides: Partial<import("./conflict-resolver").PersonRecord> = {}
-): import("./conflict-resolver").PersonRecord => ({
+  overrides: Partial<PersonRecord> = {}
+): PersonRecord => ({
   id: "p1",
   firstName: "Test",
   lastName: "Person",
@@ -166,8 +170,8 @@ const createMockPersonRecord = (
 });
 
 const createMockUserRecord = (
-  overrides: Partial<import("./conflict-resolver").UserRecord> = {}
-): import("./conflict-resolver").UserRecord => ({
+  overrides: Partial<UserRecord> = {}
+): UserRecord => ({
   id: "u1",
   email: "test@example.com",
   name: null,
@@ -183,8 +187,8 @@ const createMockUserRecord = (
 });
 
 const createMockRelationshipRecord = (
-  overrides: Partial<import("./conflict-resolver").RelationshipRecord> = {}
-): import("./conflict-resolver").RelationshipRecord => ({
+  overrides: Partial<RelationshipRecord> = {}
+): RelationshipRecord => ({
   id: "r1",
   personId: "p1",
   relatedPersonId: "p2",
@@ -195,8 +199,8 @@ const createMockRelationshipRecord = (
 });
 
 const createMockSettingsRecord = (
-  overrides: Partial<import("./conflict-resolver").SettingsRecord> = {}
-): import("./conflict-resolver").SettingsRecord => ({
+  overrides: Partial<SettingsRecord> = {}
+): SettingsRecord => ({
   id: "fs1",
   familyName: "Test Family",
   description: null,
@@ -242,7 +246,7 @@ describe("ConflictResolver", () => {
     it("returns initial statistics for empty data", async () => {
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);
       const extractedFiles = new Map<string, unknown>();
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -270,7 +274,7 @@ describe("ConflictResolver", () => {
           isLiving: true,
         },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -285,7 +289,7 @@ describe("ConflictResolver", () => {
         { id: "p2", firstName: "Jane", lastName: "Doe" },
         { id: "p3", firstName: "Bob", lastName: "Smith" },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -300,7 +304,7 @@ describe("ConflictResolver", () => {
         allowSelfRegistration: false,
         requireApprovalForEdits: true,
       });
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -319,7 +323,7 @@ describe("ConflictResolver", () => {
           isActive: true,
         },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -333,7 +337,7 @@ describe("ConflictResolver", () => {
         { id: "r1", personId: "p1", relatedPersonId: "p2", type: "SPOUSE" },
         { id: "r2", personId: "p1", relatedPersonId: "p3", type: "PARENT" },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -351,7 +355,7 @@ describe("ConflictResolver", () => {
           role: "MEMBER",
         },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -370,7 +374,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/settings.json", {
         familyName: "New Family",
       });
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -390,7 +394,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/settings.json", {
         familyName: "New Family",
       });
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -407,7 +411,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/people.json", [
         { id: "p1", firstName: "John", lastName: "Doe" },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -418,7 +422,7 @@ describe("ConflictResolver", () => {
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);
       const extractedFiles = new Map<string, unknown>();
       extractedFiles.set("data/settings.json", null);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -430,7 +434,7 @@ describe("ConflictResolver", () => {
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);
       const extractedFiles = new Map<string, unknown>();
       extractedFiles.set("data/people.json", "not an array");
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -446,7 +450,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/relationships.json", []);
       extractedFiles.set("data/suggestions.json", []);
       extractedFiles.set("data/audit-logs.json", []);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -472,7 +476,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/settings.json", {
         familyName: "New Family",
       });
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -486,7 +490,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/people.json", [
         { id: "p1", firstName: "John", lastName: "Doe" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "person",
           action: "update",
@@ -509,7 +513,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/users.json", [
         { id: "u1", email: "test@example.com", name: "Test", role: "MEMBER" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "user",
           action: "update",
@@ -532,7 +536,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/relationships.json", [
         { id: "r1", personId: "p1", relatedPersonId: "p2", type: "SPOUSE" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "relationship",
           action: "update",
@@ -563,7 +567,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/settings.json", {
         familyName: "New Family",
       });
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -586,7 +590,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/people.json", [
         { id: "p1", firstName: "New", lastName: "Name" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "person",
           action: "update",
@@ -620,7 +624,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/users.json", [
         { id: "u1", email: "new@example.com", name: "Test", role: "ADMIN" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "user",
           action: "update",
@@ -650,7 +654,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/relationships.json", [
         { id: "r1", personId: "p1", relatedPersonId: "p2", type: "SPOUSE" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "relationship",
           action: "update",
@@ -676,7 +680,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/people.json", [
         { id: "p1", firstName: "John", lastName: "Doe" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "person",
           action: "update",
@@ -712,7 +716,7 @@ describe("ConflictResolver", () => {
         familyName: "New Family",
         locale: "en-US",
       });
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -736,7 +740,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/people.json", [
         { id: "p1", firstName: "Jonathan", lastName: "Doe" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "person",
           action: "update",
@@ -776,7 +780,7 @@ describe("ConflictResolver", () => {
           role: "ADMIN",
         },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "user",
           action: "update",
@@ -811,7 +815,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/relationships.json", [
         { id: "r1", personId: "p1", relatedPersonId: "p2", type: "SPOUSE" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "relationship",
           action: "update",
@@ -837,7 +841,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/people.json", [
         { id: "p1", firstName: "John", lastName: "Doe" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "person",
           action: "update",
@@ -871,7 +875,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/people.json", [
         { id: "p1", firstName: "", lastName: "Doe" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "person",
           action: "update",
@@ -893,7 +897,7 @@ describe("ConflictResolver", () => {
     it("creates conflict lookup map correctly", async () => {
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);
       const extractedFiles = new Map<string, unknown>();
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "person",
           action: "update",
@@ -916,7 +920,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/people.json", [
         { id: "p1", firstName: "John", lastName: "Doe" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "person",
           action: "update",
@@ -949,7 +953,7 @@ describe("ConflictResolver", () => {
         { id: "p1", firstName: "John", lastName: "Doe" },
         { id: "p2", firstName: "Jane", lastName: "Doe" },
       ]);
-      const conflicts: Conflict[] = [
+      const conflicts: Array<Conflict> = [
         {
           type: "person",
           action: "update",
@@ -984,7 +988,7 @@ describe("ConflictResolver", () => {
           status: "PENDING",
         },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -1012,7 +1016,7 @@ describe("ConflictResolver", () => {
           status: "PENDING",
         },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -1046,7 +1050,7 @@ describe("ConflictResolver", () => {
           status: "PENDING",
         },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -1069,7 +1073,7 @@ describe("ConflictResolver", () => {
           createdAt: new Date().toISOString(),
         },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -1098,7 +1102,7 @@ describe("ConflictResolver", () => {
           createdAt: new Date().toISOString(),
         },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -1117,7 +1121,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/people.json", [
         { id: "p1", firstName: "John", lastName: "Doe" },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -1135,7 +1139,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/settings.json", {
         familyName: "Test",
       });
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -1153,7 +1157,7 @@ describe("ConflictResolver", () => {
       extractedFiles.set("data/relationships.json", [
         { id: "r1", personId: "p1", relatedPersonId: "p2", type: "SPOUSE" },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -1177,7 +1181,7 @@ describe("ConflictResolver", () => {
         { id: "p1", firstName: "John", lastName: "Doe" },
         { id: "p2", firstName: "Jane", lastName: "Doe" },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -1200,7 +1204,7 @@ describe("ConflictResolver", () => {
           updatedAt: "2024-01-02T00:00:00.000Z",
         },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -1222,7 +1226,7 @@ describe("ConflictResolver", () => {
           lastLoginAt: "2024-01-03T00:00:00.000Z",
         },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 
@@ -1243,7 +1247,7 @@ describe("ConflictResolver", () => {
           lastLoginAt: null,
         },
       ]);
-      const conflicts: Conflict[] = [];
+      const conflicts: Array<Conflict> = [];
 
       const result = await resolver.importData(extractedFiles, conflicts);
 

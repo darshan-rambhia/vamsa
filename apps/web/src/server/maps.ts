@@ -1,19 +1,21 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import {
-  getPlacesForMapData,
-  getPersonLocationsData,
   getFamilyLocationsData,
-  getPlacesByTimeRangeData,
+  getPersonLocationsData,
   getPlaceClustersData,
-  type MapMarker,
-  type PersonLocationMarker,
-  type FamilyLocationMarker,
-  type TimelineMarker,
-  type PlaceCluster,
-  type GetPlacesForMapOptions,
-  type GetPlacesByTimeRangeOptions,
-  type GetPlaceClusterOptions,
+  getPlacesByTimeRangeData,
+  getPlacesForMapData,
+} from "@vamsa/lib/server/business";
+import type {
+  FamilyLocationMarker,
+  GetPlaceClusterOptions,
+  GetPlacesByTimeRangeOptions,
+  GetPlacesForMapOptions,
+  MapMarker,
+  PersonLocationMarker,
+  PlaceCluster,
+  TimelineMarker,
 } from "@vamsa/lib/server/business";
 
 /**
@@ -54,7 +56,7 @@ const getPlaceClusterSchema = z.object({
 export const getPlacesForMap = createServerFn({ method: "GET" })
   .inputValidator((data) => getPlacesForMapSchema.parse(data))
   .handler(
-    async ({ data }): Promise<{ markers: MapMarker[]; total: number }> => {
+    async ({ data }): Promise<{ markers: Array<MapMarker>; total: number }> => {
       const options: GetPlacesForMapOptions = {
         includeEmpty: data.includeEmpty,
       };
@@ -73,7 +75,7 @@ export const getPersonLocations = createServerFn({ method: "GET" })
     async ({
       data,
     }): Promise<{
-      markers: PersonLocationMarker[];
+      markers: Array<PersonLocationMarker>;
       total: number;
       person: {
         id: string;
@@ -93,7 +95,7 @@ export const getFamilyLocations = createServerFn({ method: "GET" })
   .inputValidator((data) => getFamilyLocationsSchema.parse(data))
   .handler(
     async (): Promise<{
-      markers: FamilyLocationMarker[];
+      markers: Array<FamilyLocationMarker>;
       total: number;
       familySize: number;
     }> => {
@@ -111,7 +113,7 @@ export const getPlacesByTimeRange = createServerFn({ method: "GET" })
     async ({
       data,
     }): Promise<{
-      markers: TimelineMarker[];
+      markers: Array<TimelineMarker>;
       total: number;
       timeRange: {
         startYear: number;
@@ -137,7 +139,7 @@ export const getPlaceClusters = createServerFn({ method: "GET" })
     async ({
       data,
     }): Promise<{
-      clusters: PlaceCluster[];
+      clusters: Array<PlaceCluster>;
       totalClusters: number;
       totalPlaces: number;
     }> => {

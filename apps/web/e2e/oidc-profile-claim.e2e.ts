@@ -12,7 +12,7 @@
  * - Create test users authenticated via OIDC with PENDING status
  */
 
-import { test, expect } from "./fixtures";
+import { expect, test } from "./fixtures";
 
 test.describe("OIDC Profile Claiming", () => {
   test.describe("Non-OIDC User Behavior", () => {
@@ -20,7 +20,7 @@ test.describe("OIDC Profile Claiming", () => {
       page,
     }) => {
       // For regular (non-OIDC) users, the profile claim modal should not appear
-      await page.goto("/dashboard");
+      await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(1000);
 
       // Check for profile claim modal specifically
@@ -34,7 +34,7 @@ test.describe("OIDC Profile Claiming", () => {
     test("settings profile page loads for authenticated users", async ({
       page,
     }) => {
-      await page.goto("/settings/profile");
+      await page.goto("/settings/profile", { waitUntil: "domcontentloaded" });
       await page.waitForTimeout(500);
 
       // Page should load with main content

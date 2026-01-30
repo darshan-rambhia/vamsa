@@ -1,24 +1,24 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import {
-  UserPlus,
+  Activity,
+  CheckCircle,
   Edit,
-  Trash2,
   LogIn,
   LogOut,
-  CheckCircle,
-  XCircle,
-  Activity,
+  Trash2,
   User,
+  UserPlus,
+  XCircle,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@vamsa/ui";
+import { getRecentActivity } from "../../../server/dashboard";
 import { BaseWidget } from "./BaseWidget";
 import type { WidgetProps } from "./types";
-import { getRecentActivity } from "../../../server/dashboard";
 
 /**
  * Widget settings interface
@@ -29,7 +29,7 @@ export interface RecentActivityWidgetSettings {
   /** Show user who performed the action */
   showUser: boolean;
   /** Filter by specific action types (empty = all) */
-  filterTypes: string[];
+  filterTypes: Array<string>;
   /** Auto-refresh interval in milliseconds (0 = disabled) */
   refreshInterval: number;
 }
@@ -194,7 +194,7 @@ export function RecentActivityWidget({ config, onRemove }: WidgetProps) {
     <BaseWidget
       config={config}
       isLoading={isLoading}
-      error={error ? (error as Error) : null}
+      error={error ? error : null}
       onRemove={onRemove}
       onRefresh={handleRefresh}
       className="flex flex-col"

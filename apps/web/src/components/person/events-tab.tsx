@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, Button } from "@vamsa/ui/primitives";
+import { Button, Card, CardContent } from "@vamsa/ui/primitives";
 import { EventTimeline } from "../events/event-timeline";
 import { EventDetailModal } from "./event-detail-modal";
 import { EventFormModal } from "./event-form-modal";
-import { type EventType } from "@vamsa/schemas";
+import type { EventType } from "@vamsa/schemas";
 
 interface EventData {
   id: string;
@@ -26,7 +26,7 @@ interface EventData {
 }
 
 interface EventsTabProps {
-  events: EventData[];
+  events: Array<EventData>;
   personId: string;
 }
 
@@ -103,7 +103,7 @@ export function EventsTab({ events, personId }: EventsTabProps) {
       acc[type].push(event);
       return acc;
     },
-    {} as Record<EventType, EventData[]>
+    {} as Record<EventType, Array<EventData>>
   );
 
   // Sort events chronologically (most recent first)

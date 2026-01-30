@@ -1,9 +1,9 @@
-import { describe, it, expect, beforeAll } from "bun:test";
+import { beforeAll, describe, expect, it } from "bun:test";
 import {
-  t,
-  tMultiple,
   getServerI18n,
   initializeServerI18n,
+  t,
+  tMultiple,
 } from "@vamsa/lib/server";
 
 /**
@@ -58,7 +58,7 @@ describe("Persons Server Function i18n Integration", () => {
       const i18n = await getServerI18n();
       const peopleNs = i18n.getResourceBundle("en", "people");
       if (peopleNs && typeof peopleNs === "object" && "title" in peopleNs) {
-        expect((peopleNs as any).title).toBe("People");
+        expect(peopleNs.title).toBe("People");
       }
     });
 
@@ -250,8 +250,8 @@ describe("Persons Server Function i18n Integration", () => {
       const i18n = await getServerI18n();
       const peopleNs = i18n.getResourceBundle("en", "people");
       if (peopleNs && typeof peopleNs === "object" && "living" in peopleNs) {
-        expect((peopleNs as any).living).toBe("Living");
-        expect((peopleNs as any).deceased).toBe("Deceased");
+        expect(peopleNs.living).toBe("Living");
+        expect(peopleNs.deceased).toBe("Deceased");
       }
     });
   });

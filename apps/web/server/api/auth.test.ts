@@ -8,7 +8,10 @@
  * - Request/response format and status codes
  */
 
-import { describe, it, expect, mock, beforeEach } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
+
+// Import after mocks are set up
+import authRouter from "./auth";
 
 // =============================================================================
 // Mocks - Must be before importing the router
@@ -24,9 +27,6 @@ mock.module("@vamsa/lib/server/business", () => ({
   betterAuthRegister: mockBetterAuthRegister,
   betterAuthSignOut: mockBetterAuthSignOut,
 }));
-
-// Import after mocks are set up
-import authRouter from "./auth";
 
 describe("Authentication API Routes", () => {
   beforeEach(() => {

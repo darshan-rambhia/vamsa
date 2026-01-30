@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Link } from "@tanstack/react-router";
-import { Card, CardHeader, CardTitle, CardContent, Badge } from "@vamsa/ui";
+import { Badge, Card, CardContent, CardHeader, CardTitle } from "@vamsa/ui";
 import type { MapMarker } from "./interactive-map";
 
 interface MapPopupProps {

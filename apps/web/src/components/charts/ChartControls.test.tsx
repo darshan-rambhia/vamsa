@@ -21,13 +21,10 @@
  * ChartControls.tsx: 99.47% line coverage, 71.43% function coverage
  */
 
-import { describe, it, expect, mock } from "bun:test";
-import { render, fireEvent } from "@testing-library/react";
-import {
-  ChartControls,
-  type ChartControlsProps,
-  type ChartType,
-} from "./ChartControls";
+import { describe, expect, it, mock } from "bun:test";
+import { fireEvent, render } from "@testing-library/react";
+import { ChartControls } from "./ChartControls";
+import type { ChartControlsProps, ChartType } from "./ChartControls";
 
 describe("ChartControls Component", () => {
   // Required props for component
@@ -452,7 +449,7 @@ describe("ChartControls Component", () => {
   });
 
   describe("Chart Type Support", () => {
-    const chartTypes: ChartType[] = [
+    const chartTypes: Array<ChartType> = [
       "tree",
       "ancestor",
       "descendant",

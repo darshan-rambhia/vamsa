@@ -42,7 +42,7 @@ export interface SourceDetail {
     findings: string;
     methodology: string | null;
     limitations: string | null;
-    relatedSources: string[];
+    relatedSources: Array<string>;
     conclusionReliability: string | null;
     createdAt: string;
     updatedAt: string;
@@ -81,7 +81,7 @@ export interface SourceListItem {
  * Source list result with pagination
  */
 export interface SourceListResult {
-  items: SourceListItem[];
+  items: Array<SourceListItem>;
   total: number;
 }
 
@@ -124,7 +124,7 @@ export interface ResearchNoteResult {
   findings: string;
   methodology: string | null;
   limitations: string | null;
-  relatedSources: string[];
+  relatedSources: Array<string>;
   conclusionReliability: string | null;
   createdAt: string;
   updatedAt: string;
@@ -157,7 +157,7 @@ export interface ResearchNotesGrouped {
     findings: string;
     methodology: string | null;
     limitations: string | null;
-    relatedSources: string[];
+    relatedSources: Array<string>;
     conclusionReliability: string | null;
     createdAt: string;
     updatedAt: string;
@@ -186,11 +186,11 @@ export interface SourceWithEvents {
   description: string | null;
   repository: string | null;
   notes: string | null;
-  eventTypes: string[];
+  eventTypes: Array<string>;
 }
 
 export interface PersonSourcesResponse {
-  [eventType: string]: SourceWithEvents[];
+  [eventType: string]: Array<SourceWithEvents>;
 }
 
 /**
@@ -956,7 +956,7 @@ function formatMLA(source: {
   publicationDate: string | null;
   repository: string | null;
 }): string {
-  const parts: string[] = [];
+  const parts: Array<string> = [];
   if (source.author) parts.push(`${source.author}.`);
   parts.push(`"${source.title}."`);
   if (source.repository) parts.push(`${source.repository},`);
@@ -970,7 +970,7 @@ function formatAPA(source: {
   publicationDate: string | null;
   repository: string | null;
 }): string {
-  const parts: string[] = [];
+  const parts: Array<string> = [];
   if (source.author) parts.push(`${source.author}`);
   if (source.publicationDate) parts.push(`(${source.publicationDate}).`);
   parts.push(`${source.title}.`);
@@ -984,7 +984,7 @@ function formatChicago(source: {
   publicationDate: string | null;
   repository: string | null;
 }): string {
-  const parts: string[] = [];
+  const parts: Array<string> = [];
   if (source.author) parts.push(`${source.author}.`);
   parts.push(`"${source.title}."`);
   if (source.repository) parts.push(`${source.repository},`);
@@ -1009,7 +1009,7 @@ function formatEvidenceExplained(source: {
   repository: string | null;
   description: string | null;
 }): string {
-  const parts: string[] = [];
+  const parts: Array<string> = [];
   if (source.author) parts.push(`${source.author},`);
   parts.push(`"${source.title},"`);
   if (source.description) parts.push(`${source.description};`);

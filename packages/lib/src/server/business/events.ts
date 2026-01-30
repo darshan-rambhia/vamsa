@@ -1,11 +1,11 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import type {
   EventCreateOutput,
-  EventUpdateOutput,
   EventParticipantCreateInput,
   EventParticipantRemoveInput,
   EventType,
+  EventUpdateOutput,
 } from "@vamsa/schemas";
 
 /**
@@ -41,7 +41,7 @@ export interface Event {
   description: string | null;
   createdAt: string;
   updatedAt: string;
-  participants: EventParticipant[];
+  participants: Array<EventParticipant>;
 }
 
 /**
@@ -99,7 +99,7 @@ function formatEvent(event: {
 export async function getPersonEventsData(
   personId: string,
   db: EventsDb = drizzleDb
-): Promise<Event[]> {
+): Promise<Array<Event>> {
   const person = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });

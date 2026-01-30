@@ -10,14 +10,22 @@
  * Uses module mocking for database dependency injection.
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
+  clearAllMocks,
+  mockLog,
   mockLogger,
   mockLoggers,
-  mockLog,
   mockSerializeError,
-  clearAllMocks,
 } from "../../testing/shared-mocks";
+
+import {
+  getFamilySettingsData,
+  getUserLanguagePreferenceData,
+  setUserLanguagePreferenceData,
+  updateFamilySettingsData,
+} from "./settings";
+import type { UpdateFamilySettingsInput } from "./settings";
 
 // Mock logger
 mock.module("@vamsa/lib/logger", () => ({
@@ -72,14 +80,6 @@ mock.module("@vamsa/api", () => ({
   drizzleDb: mockDrizzleDb,
   drizzleSchema: mockDrizzleSchema,
 }));
-
-import {
-  getFamilySettingsData,
-  updateFamilySettingsData,
-  getUserLanguagePreferenceData,
-  setUserLanguagePreferenceData,
-  type UpdateFamilySettingsInput,
-} from "./settings";
 
 describe("Settings Business Logic", () => {
   beforeEach(() => {

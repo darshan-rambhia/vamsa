@@ -1,6 +1,6 @@
 import cron from "node-cron";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 import { enforceRotationPolicy } from "@vamsa/lib/server/business";
 

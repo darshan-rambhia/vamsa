@@ -2,7 +2,56 @@
  * Page Object Models for E2E Tests
  * Provides reusable page interaction methods for common pages
  */
-import { expect, type Page, type Locator } from "@playwright/test";
+import { expect } from "@playwright/test";
+import type { Locator, Page } from "@playwright/test";
+
+/**
+ * Firefox-resilient navigation helper.
+ * Retries on NS_BINDING_ABORTED which occurs in Firefox when navigation
+ * is interrupted by a redirect.
+ */
+export async function gotoWithRetry(
+  page: Page,
+  url: string,
+  options?: {
+    waitUntil?: "load" | "domcontentloaded" | "commit";
+    timeout?: number;
+  }
+): Promise<void> {
+  const targetPath = new URL(url, "http://localhost").pathname;
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      await page.goto(url, {
+        waitUntil: options?.waitUntil ?? "domcontentloaded",
+        timeout: options?.timeout ?? 30000,
+      });
+      // Verify we reached the target URL
+      if (page.url().includes(targetPath)) {
+        return;
+      }
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        error.message.includes("NS_BINDING_ABORTED")
+      ) {
+        await page.waitForTimeout(500);
+        // Check if navigation actually succeeded despite the error
+        if (page.url().includes(targetPath)) {
+          return;
+        }
+        if (attempt < maxAttempts) {
+          continue;
+        }
+      }
+      // Re-throw non-Firefox errors or on final attempt
+      if (attempt === maxAttempts) {
+        throw error;
+      }
+    }
+  }
+}
 
 /**
  * Login Page Object
@@ -25,7 +74,7 @@ export class LoginPage {
   }
 
   async goto() {
-    await this.page.goto("/login");
+    await this.page.goto("/login", { waitUntil: "domcontentloaded" });
     // Wait for page to fully load and hydrate
     await this.page.waitForLoadState("domcontentloaded");
     // Wait for form to be ready
@@ -185,44 +234,99 @@ export class Navigation {
   }
 
   async goToDashboard() {
-    await this._clickNavLinkByTestId("nav-dashboard");
-    await this.page.waitForURL("/dashboard");
+    await this._navigateWithFallback("nav-dashboard", "/dashboard");
   }
 
   async goToPeople() {
-    await this._clickNavLinkByTestId("nav-people");
-    await this.page.waitForURL("/people");
+    await this._navigateWithFallback("nav-people", "/people");
   }
 
   async goToTree() {
     // Tree is now part of the consolidated visualizations page
-    await this._clickNavLinkByTestId("nav-visualize");
-    await this.page.waitForURL(/\/visualize/);
+    await this._navigateWithFallback("nav-visualize", "/visualize");
   }
 
   async goToVisualize() {
-    await this._clickNavLinkByTestId("nav-visualize");
-    await this.page.waitForURL(/\/visualize/);
+    await this._navigateWithFallback("nav-visualize", "/visualize");
   }
 
   async goToMaps() {
-    await this._clickNavLinkByTestId("nav-maps");
-    await this.page.waitForURL("/maps");
+    await this._navigateWithFallback("nav-maps", "/maps");
   }
 
   async goToSubscribe() {
-    await this._clickNavLinkByTestId("nav-subscribe");
-    await this.page.waitForURL("/subscribe");
+    await this._navigateWithFallback("nav-subscribe", "/subscribe");
   }
 
   async goToActivity() {
-    await this._clickNavLinkByTestId("nav-activity");
-    await this.page.waitForURL("/activity");
+    await this._navigateWithFallback("nav-activity", "/activity");
   }
 
   async goToAdmin() {
-    await this._clickNavLinkByTestId("nav-admin");
-    await this.page.waitForURL("/admin");
+    await this._navigateWithFallback("nav-admin", "/admin");
+  }
+
+  /**
+   * Navigate using click with fallback to page.goto() for Firefox reliability.
+   * Firefox can experience NS_BINDING_ABORTED when navigation is interrupted.
+   */
+  private async _navigateWithFallback(testId: string, fallbackUrl: string) {
+    const urlPattern =
+      fallbackUrl === "/visualize" ? /\/visualize/ : fallbackUrl;
+
+    // Helper to check if we're at target URL
+    const isAtTargetUrl = () => {
+      const currentUrl = this.page.url();
+      if (fallbackUrl === "/visualize") {
+        return currentUrl.includes("/visualize");
+      }
+      return currentUrl.includes(fallbackUrl);
+    };
+
+    // Check if already on target URL
+    if (isAtTargetUrl()) {
+      return;
+    }
+
+    // Try click navigation first
+    try {
+      await this._clickNavLinkByTestId(testId);
+      await this.page.waitForLoadState("domcontentloaded");
+      await this.page.waitForURL(urlPattern, { timeout: 5000 });
+      return;
+    } catch (_clickError) {
+      // Click navigation failed - fall through to direct navigation
+    }
+
+    // Fallback: Direct navigation with retry logic for Firefox NS_BINDING_ABORTED
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        await this.page.goto(fallbackUrl, { waitUntil: "domcontentloaded" });
+        await this.page.waitForURL(urlPattern, { timeout: 5000 });
+        return;
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes("NS_BINDING_ABORTED")
+        ) {
+          // Navigation was interrupted - wait and check if we arrived
+          await this.page.waitForTimeout(500);
+          if (isAtTargetUrl()) {
+            return;
+          }
+          // Not at target URL, retry
+          continue;
+        }
+        // For timeout errors, check if we're actually at the target
+        if (isAtTargetUrl()) {
+          return;
+        }
+        // Last attempt - throw the error
+        if (attempt === 3) {
+          throw error;
+        }
+      }
+    }
   }
 
   private async _clickNavLinkByTestId(testId: string) {
@@ -281,7 +385,7 @@ export class Navigation {
       }
     }
 
-    await this.page.waitForURL("/login");
+    await this.page.waitForURL("/login", { timeout: 15000 });
   }
 
   /** Check if nav is responsive (mobile) */
@@ -318,7 +422,7 @@ export class PeopleListPage {
   }
 
   async goto() {
-    await this.page.goto("/people");
+    await this.page.goto("/people", { waitUntil: "domcontentloaded" });
     // Wait for either person cards to load or empty state to be visible
     await Promise.race([
       this.personCards
@@ -404,7 +508,9 @@ export class PersonDetailPage {
   }
 
   async goto(personId: string) {
-    await this.page.goto(`/people/${personId}`);
+    await this.page.goto(`/people/${personId}`, {
+      waitUntil: "domcontentloaded",
+    });
     // Wait for person name heading to be visible
     await this.nameHeading.waitFor({ state: "visible", timeout: 5000 });
   }
@@ -423,7 +529,7 @@ export class PersonDetailPage {
 
   async goBack() {
     await this.backButton.click();
-    await this.page.waitForURL("/people");
+    await this.page.waitForURL("/people", { timeout: 15000 });
   }
 }
 
@@ -446,7 +552,7 @@ export class DashboardPage {
   }
 
   async goto() {
-    await this.page.goto("/dashboard");
+    await this.page.goto("/dashboard", { waitUntil: "domcontentloaded" });
     // Wait for welcome message or stats cards to indicate page is ready
     await Promise.race([
       this.welcomeMessage
@@ -486,24 +592,24 @@ export class AdminPage {
   }
 
   async goto() {
-    await this.page.goto("/admin");
+    await this.page.goto("/admin", { waitUntil: "domcontentloaded" });
     // Wait for admin nav to be visible
     await this.tabs.waitFor({ state: "visible", timeout: 5000 });
   }
 
   async selectUsersTab() {
     await this.usersTab.click();
-    await this.page.waitForURL(/\/admin.*users/);
+    await this.page.waitForURL(/\/admin.*users/, { timeout: 15000 });
   }
 
   async selectInvitesTab() {
     await this.invitesTab.click();
-    await this.page.waitForURL(/\/admin.*invites/);
+    await this.page.waitForURL(/\/admin.*invites/, { timeout: 15000 });
   }
 
   async selectBackupTab() {
     await this.backupTab.click();
-    await this.page.waitForURL(/\/admin.*backup/);
+    await this.page.waitForURL(/\/admin.*backup/, { timeout: 15000 });
   }
 }
 

@@ -12,20 +12,29 @@
  * Uses mock.module() to inject mocked Drizzle ORM instance
  */
 
-import { describe, it, expect, beforeEach, mock } from "bun:test";
+import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 // Mock logger for this test file
 import {
-  mockLogger,
-  mockLoggers,
-  mockLog,
-  mockWithErr,
-  mockWithErrBuilder,
-  mockSerializeError,
+  deleteCalendarTokenLogic,
+  generateCalendarTokenLogic,
+  listCalendarTokensLogic,
+  revokeCalendarTokenLogic,
+  validateCalendarTokenLogic,
+} from "@vamsa/lib/server/business";
+import {
   mockCreateContextLogger,
   mockCreateRequestLogger,
+  mockLog,
+  mockLogger,
+  mockLoggers,
+  mockSerializeError,
   mockStartTimer,
+  mockWithErr,
+  mockWithErrBuilder,
 } from "../../testing/shared-mocks";
+
+// Import the functions to test
 
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
@@ -82,15 +91,6 @@ mock.module("@vamsa/api", () => ({
   drizzleDb: mockDrizzleDb,
   drizzleSchema: mockDrizzleSchema,
 }));
-
-// Import the functions to test
-import {
-  generateCalendarTokenLogic,
-  validateCalendarTokenLogic,
-  revokeCalendarTokenLogic,
-  listCalendarTokensLogic,
-  deleteCalendarTokenLogic,
-} from "@vamsa/lib/server/business";
 
 describe("Calendar Server Functions", () => {
   beforeEach(() => {

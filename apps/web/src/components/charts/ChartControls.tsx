@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import {
+  Button,
   Card,
   CardContent,
-  Button,
   Label,
   Select,
   SelectContent,
@@ -24,7 +24,8 @@ export type ChartType =
   | "matrix"
   | "bowtie"
   | "compact"
-  | "statistics";
+  | "statistics"
+  | "list";
 
 export interface ChartControlsProps {
   chartType: ChartType;
@@ -34,6 +35,7 @@ export interface ChartControlsProps {
   maxPeople?: number;
   sortBy?: "birth" | "death" | "name";
   hideChartTypeSelector?: boolean;
+  showMiniMap?: boolean;
   onChartTypeChange?: (type: ChartType) => void;
   onGenerationsChange: (generations: number) => void;
   onAncestorGenerationsChange?: (generations: number) => void;
@@ -45,6 +47,7 @@ export interface ChartControlsProps {
   onExportSVG?: () => void;
   onPrint?: () => void;
   onResetView?: () => void;
+  onToggleMiniMap?: () => void;
   activeContextLabel?: string;
 }
 
@@ -55,6 +58,7 @@ export function ChartControls({
   maxPeople = 20,
   sortBy = "birth",
   hideChartTypeSelector = false,
+  showMiniMap = false,
   onChartTypeChange,
   onAncestorGenerationsChange,
   onDescendantGenerationsChange,
@@ -65,6 +69,7 @@ export function ChartControls({
   onExportSVG,
   onPrint,
   onResetView,
+  onToggleMiniMap,
   activeContextLabel,
 }: ChartControlsProps) {
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -110,6 +115,7 @@ export function ChartControls({
                     <SelectItem value="bowtie">Bowtie Chart</SelectItem>
                     <SelectItem value="compact">Compact Tree</SelectItem>
                     <SelectItem value="statistics">Statistics</SelectItem>
+                    <SelectItem value="list">List View (Accessible)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -198,12 +204,36 @@ export function ChartControls({
             )}
           </div>
 
-          {/* Actions: reset view + export menu */}
+          {/* Actions: mini-map toggle, reset view + export menu */}
           <div className="flex flex-wrap items-center gap-2">
             {activeContextLabel && (
               <span className="bg-muted text-muted-foreground inline-flex items-center rounded-full px-3 py-1 text-xs font-medium">
                 {activeContextLabel}
               </span>
+            )}
+            {onToggleMiniMap && (
+              <Button
+                variant={showMiniMap ? "default" : "outline"}
+                size="sm"
+                onClick={onToggleMiniMap}
+                title="Toggle mini-map"
+                aria-label="Toggle mini-map"
+              >
+                <svg
+                  className="h-4 w-4 sm:mr-1.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"
+                  />
+                </svg>
+                <span className="hidden sm:inline">Mini-map</span>
+              </Button>
             )}
             <Button
               variant="outline"

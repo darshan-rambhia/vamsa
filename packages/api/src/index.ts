@@ -1,4 +1,8 @@
 // Re-export Drizzle ORM client, schema, and pool utilities
+// Export inferred types from schema
+import type { InferSelectModel } from "drizzle-orm";
+import type { backupSettings as backupSettingsTable } from "./drizzle/schema/backup";
+
 export {
   drizzleDb,
   closeDrizzleDb,
@@ -30,10 +34,6 @@ export type PersonPlaceType =
   | "WORKED"
   | "STUDIED"
   | "OTHER";
-
-// Export inferred types from schema
-import type { InferSelectModel } from "drizzle-orm";
-import type { backupSettings as backupSettingsTable } from "./drizzle/schema/backup";
 export type BackupSettings = InferSelectModel<typeof backupSettingsTable>;
 
 // Re-export email service and templates

@@ -1,6 +1,6 @@
+import { promises as fs } from "node:fs";
+import path from "node:path";
 import sharp from "sharp";
-import { promises as fs } from "fs";
-import path from "path";
 
 export interface ImageSize {
   width: number;
@@ -25,12 +25,12 @@ export interface ProcessedImage {
     height: number;
     size: number;
   };
-  responsive: {
+  responsive: Array<{
     path: string;
     width: number;
     height: number;
     size: number;
-  }[];
+  }>;
 }
 
 /**
@@ -88,19 +88,19 @@ export async function generateThumbnail(
  */
 export async function generateResponsiveSizes(
   buffer: Buffer,
-  sizes: ImageSize[] = [
+  sizes: Array<ImageSize> = [
     { width: 400, label: "400" },
     { width: 800, label: "800" },
     { width: 1200, label: "1200" },
   ],
   options: { quality?: number } = {}
 ): Promise<
-  {
+  Array<{
     buffer: Buffer;
     width: number;
     height: number;
     label: string;
-  }[]
+  }>
 > {
   const { quality = 85 } = options;
   const image = sharp(buffer);
@@ -140,7 +140,7 @@ export async function processUploadedImage(
     quality?: number;
     webpQuality?: number;
     thumbnailSize?: number;
-    responsiveSizes?: ImageSize[];
+    responsiveSizes?: Array<ImageSize>;
   } = {}
 ): Promise<ProcessedImage> {
   const {

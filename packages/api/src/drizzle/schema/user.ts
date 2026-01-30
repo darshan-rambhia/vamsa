@@ -5,17 +5,17 @@
  */
 
 import {
+  boolean,
+  index,
+  integer,
+  jsonb,
   pgTable,
   text,
   timestamp,
-  boolean,
-  integer,
   unique,
-  index,
-  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
-import { userRoleEnum, profileClaimStatusEnum } from "./enums";
+import { profileClaimStatusEnum, userRoleEnum } from "./enums";
 
 /**
  * User table - authentication and profile management
