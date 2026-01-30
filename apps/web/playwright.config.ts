@@ -45,19 +45,25 @@ const baseURL = `http://localhost:${PORT}`;
 const shouldShowServerLogs = process.env.PLAYWRIGHT_LOGS === "true";
 
 // Build webServer config with conditional stdout/stderr handling
+// In CI: Use production server (already built), port 5432 database from GitHub Actions services
+// In local: Use dev server, port 5433 database from Docker
+const isCI = !!process.env.CI;
 const webServerConfig = {
-  command: "bun run dev",
+  // CI uses production server (faster, already built), local uses dev server (hot reload)
+  command: isCI ? "bun run start" : "bun run dev",
   url: baseURL,
   timeout: 120 * 1000,
-  reuseExistingServer: !process.env.CI,
+  reuseExistingServer: !isCI,
   // Show logs when PLAYWRIGHT_LOGS=true, otherwise suppress them ("ignore")
   stdout: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
   stderr: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
   env: {
     ...process.env,
-    // Force test database URL (override any .env setting)
-    DATABASE_URL:
-      "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
+    // In CI, use DATABASE_URL from environment (set by workflow, port 5432)
+    // In local, use Docker database on port 5433
+    DATABASE_URL: isCI
+      ? process.env.DATABASE_URL
+      : "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
     // Disable rate limiting for E2E tests to prevent flaky tests
     E2E_TESTING: "true",
   },
