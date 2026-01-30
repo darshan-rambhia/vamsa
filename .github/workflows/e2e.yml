@@ -115,13 +115,20 @@ jobs:
       - name: Build application
         run: bun run build
 
-      - name: Verify build output
+      - name: Verify build and server
         run: |
           echo "=== Checking build output ==="
           ls -la apps/web/dist/
           ls -la apps/web/dist/server/ || echo "No server directory"
-          echo "=== Testing server startup (5 second timeout) ==="
-          cd apps/web && timeout 5 bun run start || echo "Server startup test complete (timeout expected)"
+          echo "=== Testing server startup and health check ==="
+          cd apps/web && bun run start &
+          SERVER_PID=$!
+          sleep 5
+          echo "=== Checking health endpoint ==="
+          curl -v http://localhost:3000/health || echo "Health check failed"
+          echo "=== Checking if server responds ==="
+          curl -v http://localhost:3000/ || echo "Root check failed"
+          kill $SERVER_PID 2>/dev/null || true
 
       - name: Run E2E tests
         run: bun run test:e2e --project="$BROWSER" --reporter=html,json
