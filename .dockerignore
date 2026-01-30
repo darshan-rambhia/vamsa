@@ -20,15 +20,17 @@ coverage
 test-output/
 **/test-results/
 **/playwright-report/
-playwright.config.ts
+# Playwright config needed for E2E builds
+# playwright.config.ts
 *.test.ts
 *.spec.ts
 **/.stryker-tmp/
 stryker.config.json
 
-# E2E tests (not needed for production)
-apps/web/e2e/
-apps/web/tests/
+# E2E tests - NOT excluded because Dockerfile.e2e needs them
+# For production builds (Dockerfile), these are copied but not used
+# apps/web/e2e/
+# apps/web/tests/
 
 # Development tools
 .env
@@ -81,8 +83,8 @@ renovate.json
 .ladle/
 site/
 
-# Scripts (dev only)
-scripts/
+# Scripts (dev only at root level, apps/web/scripts needed for E2E)
+/scripts/
 
 # Database (local dev)
 *.db
