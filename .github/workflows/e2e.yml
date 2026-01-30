@@ -34,9 +34,17 @@ jobs:
       POSTGRES_DB: vamsa_test
       POSTGRES_USER: vamsa_test
       POSTGRES_PASSWORD: test_password_ci
+      DATABASE_URL: postgresql://vamsa_test:test_password_ci@localhost:5432/vamsa_test
       BROWSER: ${{ matrix.browser }}
       NODE_ENV: test
       CI: true
+      # Auth configuration for E2E tests
+      BETTER_AUTH_SECRET: e2e-test-secret-32-characters-long
+      BETTER_AUTH_URL: http://localhost:3000
+      APP_URL: http://localhost:3000
+      # Admin user for seeding
+      ADMIN_EMAIL: admin@e2e-test.local
+      ADMIN_PASSWORD: e2e-test-password
 
     services:
       postgres:
@@ -170,8 +178,16 @@ jobs:
       POSTGRES_DB: vamsa_test
       POSTGRES_USER: vamsa_test
       POSTGRES_PASSWORD: test_password_ci
+      DATABASE_URL: postgresql://vamsa_test:test_password_ci@localhost:5432/vamsa_test
       NODE_ENV: test
       CI: true
+      # Auth configuration for E2E tests
+      BETTER_AUTH_SECRET: e2e-test-secret-32-characters-long
+      BETTER_AUTH_URL: http://localhost:3000
+      APP_URL: http://localhost:3000
+      # Admin user for seeding
+      ADMIN_EMAIL: admin@e2e-test.local
+      ADMIN_PASSWORD: e2e-test-password
 
     services:
       postgres:
