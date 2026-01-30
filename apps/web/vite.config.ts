@@ -39,6 +39,8 @@ export default defineConfig({
       "i18next",
       "i18next-fs-backend",
       "node-cron",
+      // pg-native is an optional native addon that pg tries to import
+      "pg-native",
     ],
   },
   build: {
@@ -51,6 +53,8 @@ export default defineConfig({
         "i18next",
         "i18next-fs-backend",
         "node-cron",
+        // pg-native is an optional native addon that pg tries to import
+        "pg-native",
         // Exclude react-native from web builds (react-native-svg-web provides web implementation)
         "react-native",
       ],
