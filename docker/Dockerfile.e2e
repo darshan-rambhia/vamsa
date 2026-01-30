@@ -59,7 +59,8 @@ COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/ui/package.json ./packages/ui/
 
 # Install all dependencies fresh in the runtime stage
-RUN bun install
+# Use --force to ensure proper resolution of all packages including subpath exports
+RUN bun install --force
 
 # Copy source code and built artifacts from builder
 COPY --from=builder /app/apps/web/dist ./apps/web/dist
