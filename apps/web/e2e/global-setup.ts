@@ -167,7 +167,15 @@ async function globalSetup(config: FullConfig) {
   console.log("[E2E Setup] Initializing test environment...");
 
   // Wait for the server to be ready
-  const browser = await chromium.launch();
+  // Launch browser with args to disable HSTS preload and upgrade-insecure-requests
+  // This prevents the browser from internally redirecting http:// to https://
+  const browser = await chromium.launch({
+    args: [
+      '--disable-web-security',
+      '--allow-running-insecure-content',
+      '--disable-features=IsolateOrigins,site-per-process',
+    ],
+  });
   // Create context with ignoreHTTPSErrors to handle redirects that may point to HTTPS
   const context = await browser.newContext({ ignoreHTTPSErrors: true });
   const page = await context.newPage();
@@ -312,6 +320,7 @@ async function globalSetup(config: FullConfig) {
   console.log("[E2E Setup] Creating WebKit auth states...");
 
   const webkitBrowser = await webkit.launch();
+  // WebKit doesn't support the same args as Chromium, rely on ignoreHTTPSErrors
   const webkitContext = await webkitBrowser.newContext({ ignoreHTTPSErrors: true });
   const webkitPage = await webkitContext.newPage();
 
@@ -359,7 +368,15 @@ async function globalSetup(config: FullConfig) {
   // Firefox may handle cookies/storage differently than Chromium
   console.log("[E2E Setup] Creating Firefox auth states...");
 
-  const firefoxBrowser = await firefox.launch();
+  // Launch Firefox with prefs to disable HSTS preload
+  const firefoxBrowser = await firefox.launch({
+    firefoxUserPrefs: {
+      'security.mixed_content.block_active_content': false,
+      'security.mixed_content.block_display_content': false,
+      'network.stricttransportsecurity.preloadlist': false,
+      'security.cert_pinning.enforcement_level': 0,
+    },
+  });
   const firefoxContext = await firefoxBrowser.newContext({ ignoreHTTPSErrors: true });
   const firefoxPage = await firefoxContext.newPage();
 

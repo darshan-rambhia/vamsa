@@ -121,7 +121,17 @@ export default defineConfig({
     // Desktop browsers
     {
       name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
+      use: {
+        ...devices["Desktop Chrome"],
+        // Disable HSTS/security features that redirect HTTP to HTTPS in Docker
+        launchOptions: {
+          args: [
+            '--disable-web-security',
+            '--allow-running-insecure-content',
+            '--disable-features=IsolateOrigins,site-per-process',
+          ],
+        },
+      },
     },
     {
       name: "webkit",
@@ -132,6 +142,8 @@ export default defineConfig({
         navigationTimeout: 30000,
         // Use webkit-specific auth state (created by webkit browser in global-setup)
         storageState: path.join(__dirname, "e2e/.auth/admin-webkit.json"),
+        // Ignore HTTPS errors for Docker testing
+        ignoreHTTPSErrors: true,
       },
       // WebKit tests get longer overall timeout and more retries
       timeout: 45 * 1000,
@@ -147,6 +159,17 @@ export default defineConfig({
         navigationTimeout: 30000,
         // Use firefox-specific auth state (created by firefox browser in global-setup)
         storageState: path.join(__dirname, "e2e/.auth/admin-firefox.json"),
+        // Ignore HTTPS errors for Docker testing
+        ignoreHTTPSErrors: true,
+        // Firefox-specific: disable HSTS via user preferences
+        launchOptions: {
+          firefoxUserPrefs: {
+            'security.mixed_content.block_active_content': false,
+            'security.mixed_content.block_display_content': false,
+            'network.stricttransportsecurity.preloadlist': false,
+            'security.cert_pinning.enforcement_level': 0,
+          },
+        },
       },
       // Firefox tests get longer overall timeout and more retries
       timeout: 45 * 1000,
