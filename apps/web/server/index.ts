@@ -17,6 +17,7 @@ import { logger as honoLogger } from "hono/logger";
 import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import { secureHeaders } from "hono/secure-headers";
+import { serveStatic } from "hono/bun";
 import { loggers } from "@vamsa/lib/logger";
 import { initializeServerI18n } from "@vamsa/lib/server";
 import { auth } from "@vamsa/lib/server/business";
@@ -329,6 +330,21 @@ app.route("/api", apiRouter);
 // Media serving endpoint for image files
 // Serves images with appropriate caching headers and Content-Type
 app.get("/media/*", serveMedia);
+
+// Static file serving for assets (CSS, JS, images)
+// In production, nginx typically handles this, but we need it for:
+// - E2E testing in Docker (no nginx)
+// - Direct server access during development
+app.use(
+  "/assets/*",
+  serveStatic({
+    root: "./dist/client",
+    // Assets have content hashes in filenames, so they're immutable
+    onNotFound: (path, c) => {
+      log.warn({ path, url: c.req.url }, "Static asset not found");
+    },
+  })
+);
 
 // ============================================
 // TanStack Start Handler
