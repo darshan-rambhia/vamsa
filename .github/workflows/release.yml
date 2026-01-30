@@ -14,7 +14,7 @@ jobs:
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
-    if: github.repository == 'rambhia-org/vamsa' # Only run on main repo
+    if: github.repository == 'darshan-rambhia/vamsa' # Only run on main repo
 
     steps:
       - name: Checkout
