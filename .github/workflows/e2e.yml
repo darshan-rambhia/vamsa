@@ -76,15 +76,21 @@ jobs:
           echo "Waiting for vamsa-web to be healthy..."
           # Wait for health check to pass (up to 60 seconds)
           for i in {1..30}; do
-            if docker inspect vamsa-e2e-app --format='{{.State.Health.Status}}' 2>/dev/null | grep -q "healthy"; then
+            STATUS=$(docker inspect vamsa-e2e-app --format='{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
+            if [ "$STATUS" = "healthy" ]; then
               echo "vamsa-web is healthy!"
               break
             fi
-            echo "Waiting for health check... ($i/30)"
+            echo "Waiting for health check... ($i/30) - status: $STATUS"
             sleep 2
           done
           # Verify the service is healthy
-          docker inspect vamsa-e2e-app --format='{{.State.Health.Status}}'
+          FINAL_STATUS=$(docker inspect vamsa-e2e-app --format='{{.State.Health.Status}}')
+          echo "Final health status: $FINAL_STATUS"
+          if [ "$FINAL_STATUS" != "healthy" ]; then
+            echo "Container is not healthy! Showing logs..."
+            docker logs vamsa-e2e-app --tail 100
+          fi
 
       - name: Run E2E tests
         env:
