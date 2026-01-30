@@ -59,9 +59,9 @@ async function authenticateUser(
 
   // Verify the form was filled
   const filledEmail = await emailInput.inputValue();
-  const filledPassword = await passwordInput.inputValue();
+  const passwordFilled = (await passwordInput.inputValue()).length > 0;
   console.log(
-    `[E2E Setup] Form filled - Email: ${filledEmail}, Password length: ${filledPassword.length}`
+    `[E2E Setup] Form filled - Email: ${filledEmail}, Password: ${passwordFilled ? "filled" : "empty"}`
   );
 
   // Check if submit button is enabled
