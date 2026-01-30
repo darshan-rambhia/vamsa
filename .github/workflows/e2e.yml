@@ -73,8 +73,7 @@ jobs:
           BROWSER: ${{ matrix.browser }}
         run: |
           docker compose -f docker/docker-compose.e2e.yml up \
-            --exit-code-from e2e \
-            --abort-on-container-exit
+            --exit-code-from e2e
 
       - name: Upload Playwright report
         if: always()
