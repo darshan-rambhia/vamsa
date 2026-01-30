@@ -177,12 +177,27 @@ async function globalSetup(config: FullConfig) {
     console.log(`[Browser Console] ${msg.type()}: ${msg.text()}`);
   });
 
+  // Log requests to /login to see what headers browser sends
+  page.on("request", (request) => {
+    const url = request.url();
+    if (url.includes("/login")) {
+      console.log(`[Network Request] ${request.method()} ${url}`);
+      console.log(`[Network Request Headers]`, JSON.stringify(request.headers(), null, 2));
+    }
+  });
+
   // Log all request/response errors AND successful requests to /login (server function call)
-  page.on("response", (response) => {
+  page.on("response", async (response) => {
     const url = response.url();
     const status = response.status();
     if (!response.ok()) {
       console.error(`[Network Error] ${status} ${url}`);
+      // Log redirect location for 3xx responses
+      if (status >= 300 && status < 400) {
+        const headers = response.headers();
+        console.error(`[Network Redirect] Location: ${headers['location'] || 'not set'}`);
+        console.error(`[Network Redirect] All headers:`, JSON.stringify(headers, null, 2));
+      }
     } else if (url.includes("/login") || url.includes("server-function")) {
       console.log(`[Network] ${status} ${url}`);
     }
