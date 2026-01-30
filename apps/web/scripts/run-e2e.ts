@@ -92,7 +92,9 @@ async function main() {
   const isCI = !!process.env.CI;
 
   // Check if --logs flag is present to enable webserver logs
-  const hasServerLogs = playwrightArgs.includes("--logs");
+  // Also respect PLAYWRIGHT_LOGS environment variable if already set
+  const hasServerLogs =
+    playwrightArgs.includes("--logs") || process.env.PLAYWRIGHT_LOGS === "true";
 
   // Check if --bun-runtime flag is present to use Bun runtime for Playwright
   const useBunRuntime = playwrightArgs.includes("--bun-runtime");

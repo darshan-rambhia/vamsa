@@ -54,6 +54,8 @@ const webServerConfig = {
   url: baseURL,
   timeout: 120 * 1000,
   reuseExistingServer: !isCI,
+  // Explicitly set cwd to apps/web where the package.json is
+  cwd: __dirname,
   // Show logs when PLAYWRIGHT_LOGS=true, otherwise suppress them ("ignore")
   stdout: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
   stderr: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
