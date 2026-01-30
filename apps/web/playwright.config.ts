@@ -57,8 +57,9 @@ const webServerConfig = {
   // Explicitly set cwd to apps/web where the package.json is
   cwd: __dirname,
   // Show logs when PLAYWRIGHT_LOGS=true, otherwise suppress them ("ignore")
-  stdout: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
-  stderr: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
+  // Use "inherit" in CI to get direct output to workflow logs
+  stdout: shouldShowServerLogs ? ("inherit" as const) : ("ignore" as const),
+  stderr: shouldShowServerLogs ? ("inherit" as const) : ("ignore" as const),
   env: {
     ...process.env,
     // In CI, use DATABASE_URL from environment (set by workflow, port 5432)
