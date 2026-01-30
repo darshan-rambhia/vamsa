@@ -153,7 +153,9 @@ async function globalSetup(config: FullConfig) {
 
   // Wait for the server to be ready
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  // Create context with ignoreHTTPSErrors to handle redirects that may point to HTTPS
+  const context = await browser.newContext({ ignoreHTTPSErrors: true });
+  const page = await context.newPage();
 
   // Log all console messages for debugging
   page.on("console", (msg) => {
@@ -216,7 +218,7 @@ async function globalSetup(config: FullConfig) {
   // Pre-authenticate admin user and save state
   try {
     await authenticateUser(page, baseURL, ADMIN_CREDENTIALS, "admin");
-    const adminState = await page.context().storageState();
+    const adminState = await context.storageState();
     writeFileSync(
       path.join(storageDir, "admin.json"),
       JSON.stringify(adminState, null, 2)
@@ -230,11 +232,13 @@ async function globalSetup(config: FullConfig) {
   // Close the first page and create a fresh one for member authentication
   // This avoids session conflicts from the admin session
   await page.close();
+  await context.close();
   console.log(
     "[E2E Setup] Closed admin session page, creating fresh page for member..."
   );
 
-  const memberPage = await browser.newPage();
+  const memberContext = await browser.newContext({ ignoreHTTPSErrors: true });
+  const memberPage = await memberContext.newPage();
 
   // Set up event listeners for the new page
   memberPage.on("console", (msg) => {
@@ -258,7 +262,7 @@ async function globalSetup(config: FullConfig) {
   // Pre-authenticate member user and save state
   try {
     await authenticateUser(memberPage, baseURL, MEMBER_CREDENTIALS, "member");
-    const memberState = await memberPage.context().storageState();
+    const memberState = await memberContext.storageState();
     writeFileSync(
       path.join(storageDir, "member.json"),
       JSON.stringify(memberState, null, 2)
@@ -270,6 +274,7 @@ async function globalSetup(config: FullConfig) {
   }
 
   await memberPage.close();
+  await memberContext.close();
   await browser.close();
 
   // Also create webkit-specific auth states
@@ -277,11 +282,12 @@ async function globalSetup(config: FullConfig) {
   console.log("[E2E Setup] Creating WebKit auth states...");
 
   const webkitBrowser = await webkit.launch();
-  const webkitPage = await webkitBrowser.newPage();
+  const webkitContext = await webkitBrowser.newContext({ ignoreHTTPSErrors: true });
+  const webkitPage = await webkitContext.newPage();
 
   try {
     await authenticateUser(webkitPage, baseURL, ADMIN_CREDENTIALS, "admin");
-    const webkitAdminState = await webkitPage.context().storageState();
+    const webkitAdminState = await webkitContext.storageState();
     writeFileSync(
       path.join(storageDir, "admin-webkit.json"),
       JSON.stringify(webkitAdminState, null, 2)
@@ -293,8 +299,10 @@ async function globalSetup(config: FullConfig) {
   }
 
   await webkitPage.close();
+  await webkitContext.close();
 
-  const webkitMemberPage = await webkitBrowser.newPage();
+  const webkitMemberContext = await webkitBrowser.newContext({ ignoreHTTPSErrors: true });
+  const webkitMemberPage = await webkitMemberContext.newPage();
   try {
     await authenticateUser(
       webkitMemberPage,
@@ -302,7 +310,7 @@ async function globalSetup(config: FullConfig) {
       MEMBER_CREDENTIALS,
       "member"
     );
-    const webkitMemberState = await webkitMemberPage.context().storageState();
+    const webkitMemberState = await webkitMemberContext.storageState();
     writeFileSync(
       path.join(storageDir, "member-webkit.json"),
       JSON.stringify(webkitMemberState, null, 2)
@@ -314,6 +322,7 @@ async function globalSetup(config: FullConfig) {
   }
 
   await webkitMemberPage.close();
+  await webkitMemberContext.close();
   await webkitBrowser.close();
 
   // Also create Firefox-specific auth states
@@ -321,11 +330,12 @@ async function globalSetup(config: FullConfig) {
   console.log("[E2E Setup] Creating Firefox auth states...");
 
   const firefoxBrowser = await firefox.launch();
-  const firefoxPage = await firefoxBrowser.newPage();
+  const firefoxContext = await firefoxBrowser.newContext({ ignoreHTTPSErrors: true });
+  const firefoxPage = await firefoxContext.newPage();
 
   try {
     await authenticateUser(firefoxPage, baseURL, ADMIN_CREDENTIALS, "admin");
-    const firefoxAdminState = await firefoxPage.context().storageState();
+    const firefoxAdminState = await firefoxContext.storageState();
     writeFileSync(
       path.join(storageDir, "admin-firefox.json"),
       JSON.stringify(firefoxAdminState, null, 2)
@@ -337,8 +347,10 @@ async function globalSetup(config: FullConfig) {
   }
 
   await firefoxPage.close();
+  await firefoxContext.close();
 
-  const firefoxMemberPage = await firefoxBrowser.newPage();
+  const firefoxMemberContext = await firefoxBrowser.newContext({ ignoreHTTPSErrors: true });
+  const firefoxMemberPage = await firefoxMemberContext.newPage();
   try {
     await authenticateUser(
       firefoxMemberPage,
@@ -346,7 +358,7 @@ async function globalSetup(config: FullConfig) {
       MEMBER_CREDENTIALS,
       "member"
     );
-    const firefoxMemberState = await firefoxMemberPage.context().storageState();
+    const firefoxMemberState = await firefoxMemberContext.storageState();
     writeFileSync(
       path.join(storageDir, "member-firefox.json"),
       JSON.stringify(firefoxMemberState, null, 2)
@@ -358,6 +370,7 @@ async function globalSetup(config: FullConfig) {
   }
 
   await firefoxMemberPage.close();
+  await firefoxMemberContext.close();
   await firefoxBrowser.close();
 
   console.log("[E2E Setup] Global setup complete");
