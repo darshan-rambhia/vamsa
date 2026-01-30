@@ -28,7 +28,10 @@ services:
     # No port exposure needed - only accessed within Docker network
 
   # Application server
-  app:
+  # Using 'vamsa-web' instead of 'app' to avoid browser HSTS issues
+  # (the .app TLD is on the HSTS preload list, and browsers may treat
+  # single-word hostnames like 'app' as belonging to that TLD)
+  vamsa-web:
     image: ${E2E_IMAGE:-ghcr.io/darshan-rambhia/vamsa/e2e:latest}
     build:
       context: ..
@@ -43,8 +46,8 @@ services:
       HOST: 0.0.0.0
       DATABASE_URL: postgresql://vamsa_test:vamsa_test@db:5432/vamsa_test
       BETTER_AUTH_SECRET: e2e-test-secret-32-characters-long
-      BETTER_AUTH_URL: http://app:3000
-      APP_URL: http://app:3000
+      BETTER_AUTH_URL: http://vamsa-web:3000
+      APP_URL: http://vamsa-web:3000
       VITE_APP_NAME: Vamsa - E2E
       DISABLE_EXTERNAL_SERVICES: "true"
     command: ["bun", "run", "server/index.ts"]
@@ -89,13 +92,13 @@ services:
       dockerfile: docker/Dockerfile.e2e
     container_name: vamsa-e2e-runner
     depends_on:
-      app:
+      vamsa-web:
         condition: service_healthy
       seed:
         condition: service_completed_successfully
     environment:
       # Point tests at the app container
-      BASE_URL: http://app:3000
+      BASE_URL: http://vamsa-web:3000
       # Playwright configuration
       CI: "true"
       BROWSER: ${BROWSER:-chromium}

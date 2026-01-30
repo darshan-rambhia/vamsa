@@ -72,8 +72,8 @@ jobs:
         run: |
           docker compose -f docker/docker-compose.e2e.yml up -d db
           docker compose -f docker/docker-compose.e2e.yml up seed
-          docker compose -f docker/docker-compose.e2e.yml up -d app
-          echo "Waiting for app to be healthy..."
+          docker compose -f docker/docker-compose.e2e.yml up -d vamsa-web
+          echo "Waiting for vamsa-web to be healthy..."
           sleep 10
 
       - name: Run E2E tests

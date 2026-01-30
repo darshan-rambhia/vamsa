@@ -167,18 +167,35 @@ async function globalSetup(config: FullConfig) {
   console.log("[E2E Setup] Initializing test environment...");
 
   // Wait for the server to be ready
-  // Launch browser with args to disable HSTS preload and upgrade-insecure-requests
+  // Launch browser with args to completely disable HSTS and secure upgrade behavior
   // This prevents the browser from internally redirecting http:// to https://
   const browser = await chromium.launch({
     args: [
       '--disable-web-security',
       '--allow-running-insecure-content',
-      '--disable-features=IsolateOrigins,site-per-process',
+      '--disable-features=IsolateOrigins,site-per-process,UpgradeInsecureRequests',
+      '--ignore-certificate-errors',
+      '--test-type',
     ],
   });
-  // Create context with ignoreHTTPSErrors to handle redirects that may point to HTTPS
-  const context = await browser.newContext({ ignoreHTTPSErrors: true });
+  // Create context with ignoreHTTPSErrors and disable bypassCSP
+  const context = await browser.newContext({
+    ignoreHTTPSErrors: true,
+    bypassCSP: true,
+    // Set extra headers to prevent Upgrade-Insecure-Requests
+    extraHTTPHeaders: {
+      'Upgrade-Insecure-Requests': '0',
+    },
+  });
   const page = await context.newPage();
+
+  // Use CDP to disable security features that cause HSTS upgrades
+  const client = await context.newCDPSession(page);
+  await client.send('Security.enable');
+  await client.send('Security.setIgnoreCertificateErrors', { ignore: true });
+  // Disable HSTS
+  await client.send('Network.enable');
+  await client.send('Network.setBypassServiceWorker', { bypass: true });
 
   // Log all console messages for debugging
   page.on("console", (msg) => {
