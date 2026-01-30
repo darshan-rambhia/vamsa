@@ -28,6 +28,21 @@ async function authenticateUser(
 ) {
   console.log(`[E2E Setup] Authenticating ${userType} user...`);
 
+  // Debug: Check /login endpoint with fetch first
+  try {
+    const debugResponse = await fetch(`${baseURL}/login`, {
+      method: 'GET',
+      redirect: 'manual',
+    });
+    console.log(`[E2E Debug] /login status: ${debugResponse.status}`);
+    console.log(`[E2E Debug] /login headers:`, Object.fromEntries(debugResponse.headers.entries()));
+    if (debugResponse.status >= 300 && debugResponse.status < 400) {
+      console.log(`[E2E Debug] /login redirects to: ${debugResponse.headers.get('location')}`);
+    }
+  } catch (err) {
+    console.error(`[E2E Debug] /login fetch failed:`, err);
+  }
+
   await page.goto(`${baseURL}/login`);
   console.log(
     `[E2E Setup] Navigated to login page, current URL: ${page.url()}`
