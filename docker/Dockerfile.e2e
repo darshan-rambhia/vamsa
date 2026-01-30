@@ -60,17 +60,16 @@ COPY packages/ui/package.json ./packages/ui/
 # Install all dependencies
 RUN bun install
 
-# Copy source code and built artifacts
+# Copy source code and built artifacts from builder
 COPY --from=builder /app/apps/web/dist ./apps/web/dist
 COPY --from=builder /app/apps/web/server ./apps/web/server
+COPY --from=builder /app/apps/web/src ./apps/web/src
 COPY --from=builder /app/packages ./packages
-COPY apps/web/src ./apps/web/src
+
+# Copy E2E test files (these aren't in builder, copy from context)
 COPY apps/web/e2e ./apps/web/e2e
 COPY apps/web/playwright.config.ts ./apps/web/
 COPY apps/web/scripts ./apps/web/scripts
-
-# Copy locales for i18n
-COPY apps/web/public/locales ./apps/web/public/locales
 
 # Set working directory to web app
 WORKDIR /app/apps/web
