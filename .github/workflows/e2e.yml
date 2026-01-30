@@ -103,12 +103,14 @@ jobs:
         run: bun run test:e2e --project="$BROWSER" --reporter=html,json
         env:
           PLAYWRIGHT_WORKERS: 5
+          # Enable server logs to debug startup issues
+          PLAYWRIGHT_LOGS: true
 
       - name: Generate coverage report
         if: always()
         run: |
-          if [ -f apps/web/test-output/results.json ]; then
-            bun run apps/web/e2e/scripts/analyze-coverage.ts --output apps/web/test-output/coverage-report.md
+          if [ -f test-output/e2e/results.json ]; then
+            bun run apps/web/e2e/scripts/analyze-coverage.ts --output test-output/e2e/coverage-report.md
           fi
 
       - name: Upload Playwright report
@@ -116,7 +118,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: playwright-report-${{ matrix.browser }}
-          path: apps/web/playwright-report/
+          path: test-output/e2e/playwright/
           retention-days: 30
 
       - name: Upload test results
@@ -124,7 +126,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: test-output-${{ matrix.browser }}
-          path: apps/web/test-output/
+          path: test-output/e2e/
           retention-days: 30
 
       - name: Upload coverage report
@@ -132,7 +134,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: coverage-report-${{ matrix.browser }}
-          path: apps/web/test-output/coverage-report.md
+          path: test-output/e2e/coverage-report.md
           retention-days: 30
 
   e2e-summary:
@@ -258,7 +260,7 @@ jobs:
         uses: actions/upload-artifact@v6
         with:
           name: accessibility-report
-          path: apps/web/playwright-report/
+          path: test-output/e2e/playwright/
           retention-days: 30
 
   quality-gate:

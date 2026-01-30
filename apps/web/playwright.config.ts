@@ -45,12 +45,12 @@ const baseURL = `http://localhost:${PORT}`;
 const shouldShowServerLogs = process.env.PLAYWRIGHT_LOGS === "true";
 
 // Build webServer config with conditional stdout/stderr handling
-// In CI: Use production server (already built), port 5432 database from GitHub Actions services
-// In local: Use dev server, port 5433 database from Docker
+// Both local and CI use production server for consistency
+// Database ports differ: CI uses 5432 (GitHub Actions service), local uses 5433 (Docker)
 const isCI = !!process.env.CI;
 const webServerConfig = {
-  // CI uses production server (faster, already built), local uses dev server (hot reload)
-  command: isCI ? "bun run start" : "bun run dev",
+  // Always use production server - run-e2e.ts handles building locally
+  command: "bun run start",
   url: baseURL,
   timeout: 120 * 1000,
   reuseExistingServer: !isCI,
@@ -62,7 +62,8 @@ const webServerConfig = {
     // In CI, use DATABASE_URL from environment (set by workflow, port 5432)
     // In local, use Docker database on port 5433
     DATABASE_URL: isCI
-      ? process.env.DATABASE_URL
+      ? (process.env.DATABASE_URL ??
+        "postgresql://vamsa_test:vamsa_test@localhost:5432/vamsa_test")
       : "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
     // Disable rate limiting for E2E tests to prevent flaky tests
     E2E_TESTING: "true",
@@ -71,6 +72,11 @@ const webServerConfig = {
 
 /**
  * Playwright configuration for Vamsa E2E tests
+ *
+ * Server Strategy:
+ * - Both local and CI use production server (`bun run start`) for consistency
+ * - This ensures E2E tests run against the actual deployment configuration
+ * - The run-e2e.ts script handles building the app before running tests
  *
  * Browser Strategy:
  * - Local development: Chromium-only by default (fast feedback)

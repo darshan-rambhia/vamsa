@@ -4,10 +4,14 @@
  *
  * This script handles all steps needed to run E2E tests:
  * 1. Start PostgreSQL via Docker
- * 2. Run Drizzle migrations (push schema)
- * 3. Seed test data
+ * 2. Run Drizzle migrations (push schema) and seed test data
+ * 3. Build the application (production server)
  * 4. Run Playwright tests
  * 5. Clean up Docker containers
+ *
+ * Both local and CI use the production server (`bun run start`) for consistency.
+ * The only difference is the database port: CI uses 5432 (GitHub Actions service),
+ * local uses 5433 (Docker).
  *
  * Usage: bun run scripts/run-e2e.ts [playwright-args...]
  *
@@ -153,7 +157,7 @@ async function main() {
 
   try {
     // Step 1: Start PostgreSQL
-    log.info({}, "📦 Step 1/4: Starting PostgreSQL...");
+    log.info({}, "📦 Step 1/5: Starting PostgreSQL...");
 
     // First, ensure any old containers are removed
     log.info({}, "   - Cleaning up old containers...");
@@ -175,7 +179,7 @@ async function main() {
     log.info({}, "✅ PostgreSQL is ready\n");
 
     // Step 2: Run Drizzle migrations and seed
-    log.info({}, "🔄 Step 2/4: Running Drizzle migrations and seeding...");
+    log.info({}, "🔄 Step 2/5: Running Drizzle migrations and seeding...");
 
     // Push schema to database using Drizzle
     log.info({}, "   - Applying database schema with Drizzle...");
@@ -199,8 +203,18 @@ async function main() {
     }
     log.info({}, "✅ Test data seeded\n");
 
-    // Step 3: Run Playwright tests
-    log.info({}, "🧪 Step 3/4: Running Playwright tests...\n");
+    // Step 3: Build the application for production server
+    log.info({}, "🔨 Step 3/5: Building application...");
+    const buildResult = await run(["bun", "run", "build"], {
+      cwd: ROOT_DIR,
+    });
+    if (buildResult !== 0) {
+      throw new Error(`Build failed with exit code ${buildResult}`);
+    }
+    log.info({}, "✅ Application built\n");
+
+    // Step 4: Run Playwright tests
+    log.info({}, "🧪 Step 4/5: Running Playwright tests...\n");
 
     // Build the playwright command
     // Using `bun --bun x` runs the command with Bun as the JavaScript runtime
@@ -220,8 +234,8 @@ async function main() {
       },
     });
 
-    // Step 4: Cleanup
-    log.info({}, "\n🧹 Step 4/4: Cleaning up...");
+    // Step 5: Cleanup
+    log.info({}, "\n🧹 Step 5/5: Cleaning up...");
     await cleanup();
 
     // Exit with test result code
