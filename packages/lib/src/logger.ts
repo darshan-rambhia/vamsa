@@ -56,7 +56,8 @@ import type { LoggerOptions, Logger as PinoLogger } from "pino";
 // Configuration
 // ============================================================================
 
-const isDevelopment = process.env.NODE_ENV !== "production";
+// Only use pino-pretty in actual development, not in test/production
+const isDevelopment = process.env.NODE_ENV === "development";
 const isBrowser = typeof globalThis !== "undefined" && "window" in globalThis;
 
 const transport =
