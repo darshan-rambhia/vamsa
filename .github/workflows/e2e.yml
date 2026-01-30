@@ -32,7 +32,7 @@ jobs:
     env:
       POSTGRES_DB: vamsa_test
       POSTGRES_USER: vamsa_test
-      POSTGRES_PASSWORD: ${{ secrets.E2E_DB_PASSWORD || 'test_password_ci' }}
+      POSTGRES_PASSWORD: test_password_ci
       BROWSER: ${{ matrix.browser }}
       NODE_ENV: test
       CI: true
@@ -168,7 +168,7 @@ jobs:
     env:
       POSTGRES_DB: vamsa_test
       POSTGRES_USER: vamsa_test
-      POSTGRES_PASSWORD: ${{ secrets.E2E_DB_PASSWORD || 'test_password_ci' }}
+      POSTGRES_PASSWORD: test_password_ci
       NODE_ENV: test
       CI: true
 
