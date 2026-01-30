@@ -94,7 +94,7 @@ export default defineConfig({
   expect: {
     timeout: 10 * 1000,
   },
-  retries: process.env.CI ? 2 : 0,
+  retries: 2,
   workers: 15,
   fullyParallel: true,
   outputDir: "../../test-output/e2e/results/",
@@ -137,7 +137,7 @@ export default defineConfig({
       },
       // WebKit tests get longer overall timeout and more retries
       timeout: 45 * 1000,
-      retries: process.env.CI ? 3 : 1,
+      retries: 3,
     },
     // Firefox browser
     {
@@ -152,7 +152,7 @@ export default defineConfig({
       },
       // Firefox tests get longer overall timeout and more retries
       timeout: 45 * 1000,
-      retries: process.env.CI ? 3 : 1,
+      retries: 3,
     },
   ],
 });
