@@ -85,26 +85,11 @@ mock.module("date-fns", () => ({
   },
 }));
 
-// Mock token-rotation module
-mock.module("./token-rotation", () => ({
-  generateSecureToken: mock(
-    () => "secure-token-" + Math.random().toString(36).substring(7)
-  ),
-  rotateToken: mock(async (tokenId: string) => ({
-    id: "rotated-" + tokenId,
-    token: "new-secure-token",
-    userId: "user1",
-    createdAt: new Date(),
-    expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-  })),
-  revokeToken: mock(async (tokenId: string) => ({
-    id: tokenId,
-    token: "revoked-token",
-    userId: "user1",
-    isActive: false,
-    createdAt: new Date(),
-  })),
-}));
+// NOTE: We don't mock ./token-rotation here because:
+// 1. The tests in this file only cover verifyTokenOwnership (no rotation tests)
+// 2. mock.module() is global and persists across test files, which would
+//    interfere with token-rotation.test.ts testing the real implementation
+// 3. If rotation tests are added later, use spyOn() for test isolation
 
 describe("calendar-tokens business logic", () => {
   beforeEach(() => {

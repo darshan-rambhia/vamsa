@@ -71,7 +71,8 @@ mock.module("@vamsa/api", () => ({
   drizzleSchema: mockDrizzleSchema,
 }));
 
-// Import after mocks - these are pure functions that don't use mocked modules
+// Import after mocks - mock.module() must be called before importing
+// eslint-disable-next-line import/first
 import {
   daysSinceCreation,
   enforceRotationPolicy,
