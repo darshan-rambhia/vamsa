@@ -50,7 +50,7 @@ ENV PATH="/root/.bun/bin:${PATH}"
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and node_modules from builder (ensures consistent dependency resolution)
 COPY package.json bun.lock* bunfig.toml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/api/package.json ./packages/api/
@@ -58,8 +58,8 @@ COPY packages/lib/package.json ./packages/lib/
 COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/ui/package.json ./packages/ui/
 
-# Install all dependencies
-RUN bun install
+# Copy node_modules from builder to ensure all dependencies (including subpath exports) are resolved correctly
+COPY --from=builder /app/node_modules ./node_modules
 
 # Copy source code and built artifacts from builder
 COPY --from=builder /app/apps/web/dist ./apps/web/dist
