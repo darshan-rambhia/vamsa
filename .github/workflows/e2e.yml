@@ -115,6 +115,14 @@ jobs:
       - name: Build application
         run: bun run build
 
+      - name: Verify build output
+        run: |
+          echo "=== Checking build output ==="
+          ls -la apps/web/dist/
+          ls -la apps/web/dist/server/ || echo "No server directory"
+          echo "=== Testing server startup (5 second timeout) ==="
+          cd apps/web && timeout 5 bun run start || echo "Server startup test complete (timeout expected)"
+
       - name: Run E2E tests
         run: bun run test:e2e --project="$BROWSER" --reporter=html,json
         env:
