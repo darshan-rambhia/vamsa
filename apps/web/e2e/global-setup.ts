@@ -181,34 +181,36 @@ async function globalSetup(config: FullConfig) {
   // Use /health endpoint for server readiness check (root URL may redirect)
   const healthURL = `${baseURL}/health`;
 
+  // Use fetch() to check server readiness - simpler and doesn't follow redirects
   while (retries < maxRetries) {
     try {
-      // Use waitUntil: 'commit' to accept response as soon as HTTP response is received
-      // This avoids timeouts when the redirect target takes time to load
-      const response = await page.goto(healthURL, {
-        timeout: 10000,
-        waitUntil: 'commit'
+      const response = await fetch(healthURL, {
+        method: 'GET',
+        redirect: 'manual', // Don't follow redirects
+        signal: AbortSignal.timeout(5000),
       });
-      const status = response?.status() || 0;
+      const status = response.status;
       // Accept 2xx and 3xx as server being ready (3xx means server is up but redirecting)
       if (status >= 200 && status < 400) {
         console.log(`[E2E Setup] Server is ready at ${baseURL} (status: ${status})`);
         break;
       }
+      // If we get 4xx or 5xx, server is up but returning errors - still try
+      console.log(`[E2E Setup] Server responded with ${status}, retrying...`);
     } catch (error) {
-      retries++;
-      if (retries >= maxRetries) {
-        console.error(
-          `[E2E Setup] Server failed to start after ${maxRetries} attempts`
-        );
-        console.error(`[E2E Setup] Last error: ${error}`);
-        throw new Error(`Server not available at ${baseURL}`);
-      }
-      console.log(
-        `[E2E Setup] Waiting for server... (attempt ${retries}/${maxRetries})`
-      );
-      await new Promise((r) => setTimeout(r, 2000));
+      // Connection refused, timeout, or other network error
     }
+    retries++;
+    if (retries >= maxRetries) {
+      console.error(
+        `[E2E Setup] Server failed to start after ${maxRetries} attempts`
+      );
+      throw new Error(`Server not available at ${baseURL}`);
+    }
+    console.log(
+      `[E2E Setup] Waiting for server... (attempt ${retries}/${maxRetries})`
+    );
+    await new Promise((r) => setTimeout(r, 2000));
   }
 
   // Pre-authenticate admin user and save state
