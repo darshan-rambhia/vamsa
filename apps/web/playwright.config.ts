@@ -38,41 +38,34 @@ loadEnvFile(path.resolve(__dirname, "../../.env"));
 // Load environment variables from .env.local for tests (overrides .env)
 loadEnvFile(path.resolve(__dirname, "../../.env.local"));
 
-const PORT = process.env.PORT || 3000;
-const baseURL = `http://localhost:${PORT}`;
+// In Docker, BASE_URL points to the app container (http://app:3000)
+// Locally, we start the server ourselves on localhost
+const baseURL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+const isDocker = !!process.env.BASE_URL; // If BASE_URL is set, we're in Docker
+const isCI = !!process.env.CI;
 
 // Determine if we should show server logs
 const shouldShowServerLogs = process.env.PLAYWRIGHT_LOGS === "true";
 
-// Build webServer config with conditional stdout/stderr handling
-// Both local and CI use production server for consistency
-// Database ports differ: CI uses 5432 (GitHub Actions service), local uses 5433 (Docker)
-const isCI = !!process.env.CI;
-const webServerConfig = {
-  // Always use production server - run-e2e.ts handles building locally
-  // Use direct bun command instead of npm script for better compatibility with Playwright
-  command: "bun run server/index.ts",
-  url: baseURL,
-  timeout: 120 * 1000,
-  reuseExistingServer: !isCI,
-  // Explicitly set cwd to apps/web where the server/index.ts is
-  cwd: __dirname,
-  // Show logs when PLAYWRIGHT_LOGS=true, otherwise suppress them ("ignore")
-  // Use "inherit" in CI to get direct output to workflow logs
-  stdout: shouldShowServerLogs ? ("inherit" as const) : ("ignore" as const),
-  stderr: shouldShowServerLogs ? ("inherit" as const) : ("ignore" as const),
-  env: {
-    ...process.env,
-    // In CI, use DATABASE_URL from environment (set by workflow, port 5432)
-    // In local, use Docker database on port 5433
-    DATABASE_URL: isCI
-      ? (process.env.DATABASE_URL ??
-        "postgresql://vamsa_test:vamsa_test@localhost:5432/vamsa_test")
-      : "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
-    // Disable rate limiting for E2E tests to prevent flaky tests
-    E2E_TESTING: "true",
-  },
-};
+// Build webServer config - only used when NOT in Docker
+// In Docker, the app container is started by docker-compose
+const webServerConfig = isDocker
+  ? undefined
+  : {
+      // Use direct bun command for local development
+      command: "bun run server/index.ts",
+      url: baseURL,
+      timeout: 120 * 1000,
+      reuseExistingServer: true,
+      cwd: __dirname,
+      stdout: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
+      stderr: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
+      env: {
+        ...process.env,
+        DATABASE_URL: "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
+        E2E_TESTING: "true",
+      },
+    };
 
 /**
  * Playwright configuration for Vamsa E2E tests
@@ -110,7 +103,8 @@ export default defineConfig({
   globalSetup: "./e2e/global-setup.ts",
   globalTeardown: "./e2e/global-teardown.ts",
 
-  webServer: webServerConfig,
+  // Only start webServer when running locally (not in Docker)
+  ...(webServerConfig && { webServer: webServerConfig }),
 
   use: {
     baseURL,

@@ -139,7 +139,11 @@ async function authenticateUser(
 }
 
 async function globalSetup(config: FullConfig) {
-  const baseURL = config.projects[0]?.use?.baseURL || "http://localhost:3000";
+  // In Docker, BASE_URL points to app container; locally use config or default
+  const baseURL =
+    process.env.BASE_URL ||
+    config.projects[0]?.use?.baseURL ||
+    "http://localhost:3000";
   const storageDir = path.join(__dirname, ".auth");
 
   // Create .auth directory if it doesn't exist

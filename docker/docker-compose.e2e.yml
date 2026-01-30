@@ -1,0 +1,120 @@
+version: "3.8"
+name: vamsa-e2e
+
+# E2E Testing Composition
+#
+# Usage:
+#   Local:  docker-compose -f docker/docker-compose.e2e.yml up --exit-code-from e2e
+#   CI:     Same command (uses pre-built image from ghcr.io)
+#
+# Environment variables:
+#   E2E_IMAGE: Override the E2E runner image (default: builds locally)
+#   BROWSER:   Run specific browser (chromium, firefox, webkit)
+
+services:
+  # PostgreSQL Database for E2E tests
+  db:
+    image: postgres:18-alpine
+    container_name: vamsa-e2e-db
+    environment:
+      POSTGRES_USER: vamsa_test
+      POSTGRES_PASSWORD: vamsa_test
+      POSTGRES_DB: vamsa_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vamsa_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    # No port exposure needed - only accessed within Docker network
+
+  # Application server
+  app:
+    image: ${E2E_IMAGE:-ghcr.io/darshan-rambhia/vamsa/e2e:latest}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.e2e
+    container_name: vamsa-e2e-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: test
+      PORT: 3000
+      HOST: 0.0.0.0
+      DATABASE_URL: postgresql://vamsa_test:vamsa_test@db:5432/vamsa_test
+      BETTER_AUTH_SECRET: e2e-test-secret-32-characters-long
+      BETTER_AUTH_URL: http://localhost:3000
+      APP_URL: http://localhost:3000
+      VITE_APP_NAME: Vamsa - E2E
+      DISABLE_EXTERNAL_SERVICES: "true"
+    command: ["bun", "run", "server/index.ts"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"]
+      interval: 5s
+      timeout: 10s
+      retries: 12
+      start_period: 10s
+    expose:
+      - "3000"
+
+  # Database seeding (runs once before tests)
+  seed:
+    image: ${E2E_IMAGE:-ghcr.io/darshan-rambhia/vamsa/e2e:latest}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.e2e
+    container_name: vamsa-e2e-seed
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://vamsa_test:vamsa_test@db:5432/vamsa_test
+      ADMIN_EMAIL: admin@test.vamsa.local
+      ADMIN_PASSWORD: TestAdmin123!
+    working_dir: /app/packages/api
+    command: >
+      sh -c "
+        echo 'Applying database schema...' &&
+        bunx drizzle-kit push --force &&
+        echo 'Seeding E2E test data...' &&
+        bun run src/drizzle/seed-e2e.ts &&
+        echo 'Database ready!'
+      "
+
+  # E2E Test Runner
+  e2e:
+    image: ${E2E_IMAGE:-ghcr.io/darshan-rambhia/vamsa/e2e:latest}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.e2e
+    container_name: vamsa-e2e-runner
+    depends_on:
+      app:
+        condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+    environment:
+      # Point tests at the app container
+      BASE_URL: http://app:3000
+      # Playwright configuration
+      CI: "true"
+      BROWSER: ${BROWSER:-chromium}
+      # E2E test users
+      E2E_ADMIN_EMAIL: admin@test.vamsa.local
+      E2E_ADMIN_PASSWORD: TestAdmin123!
+      E2E_MEMBER_EMAIL: member@test.vamsa.local
+      E2E_MEMBER_PASSWORD: TestMember123!
+    volumes:
+      # Mount test output for reports
+      - ../test-output/e2e:/app/test-output/e2e
+    command: >
+      sh -c "
+        echo 'Waiting for app to be ready...' &&
+        sleep 2 &&
+        echo 'Running E2E tests on ${BROWSER:-chromium}...' &&
+        bunx playwright test --project=${BROWSER:-chromium} --reporter=html,json,list
+      "
+
+networks:
+  default:
+    name: vamsa-e2e-network

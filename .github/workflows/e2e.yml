@@ -6,7 +6,6 @@ on:
     branches: [main, develop]
     paths-ignore:
       - "**/*.md"
-      - ".github/workflows/**"
       - "docs/**"
       - ".claude/**"
       - ".vscode/**"
@@ -16,24 +15,26 @@ on:
     branches: [main, develop]
     paths-ignore:
       - "**/*.md"
-      - ".github/workflows/**"
       - "docs/**"
       - ".claude/**"
       - ".vscode/**"
       - "LICENSE"
       - ".gitignore"
-  workflow_dispatch: # Always allow manual trigger
+  workflow_dispatch:
 
-# Explicit permissions following principle of least privilege
 permissions:
-  contents: read # Required for actions/checkout
-  pull-requests: write # Required for PR comments via github-script
-  actions: read # Required for artifact operations
+  contents: read
+  packages: read
+  pull-requests: write
+  actions: read
 
-# Cancel in-progress runs for the same workflow
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  E2E_IMAGE: ghcr.io/${{ github.repository }}/e2e:latest
 
 jobs:
   e2e-tests:
@@ -46,107 +47,38 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
 
-    env:
-      # Database (matches .env.e2e pattern but uses CI port 5432)
-      POSTGRES_DB: vamsa_test
-      POSTGRES_USER: vamsa_test
-      POSTGRES_PASSWORD: vamsa_test
-      DATABASE_URL: postgresql://vamsa_test:vamsa_test@localhost:5432/vamsa_test
-      BROWSER: ${{ matrix.browser }}
-      NODE_ENV: test
-      CI: true
-      # Auth configuration
-      BETTER_AUTH_SECRET: e2e-test-secret-32-characters-long
-      BETTER_AUTH_URL: http://localhost:3000
-      APP_URL: http://localhost:3000
-      VITE_APP_NAME: Vamsa - E2E
-      # Admin user for seeding (matches .env.e2e)
-      ADMIN_EMAIL: admin@test.vamsa.local
-      ADMIN_PASSWORD: TestAdmin123!
-      # E2E test users
-      E2E_ADMIN_EMAIL: admin@test.vamsa.local
-      E2E_ADMIN_PASSWORD: TestAdmin123!
-      E2E_MEMBER_EMAIL: member@test.vamsa.local
-      E2E_MEMBER_PASSWORD: TestMember123!
-      DISABLE_EXTERNAL_SERVICES: true
-
-    services:
-      postgres:
-        image: postgres:18
-        env:
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
-      - name: Set DATABASE_URL
-        run: echo "DATABASE_URL=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB" >> $GITHUB_ENV
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          bun-version: latest
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install dependencies
-        run: bun install
-
-      - name: Install Playwright browser
-        run: bunx playwright install --with-deps "$BROWSER"
-
-      - name: Generate Drizzle migrations
-        run: bun run db:generate
-
-      - name: Run database migrations
-        run: bun run db:migrate
-
-      - name: Seed test database
-        run: bun run db:seed:e2e
-
-      - name: Build application
-        run: bun run build
-
-      - name: Verify build and server
+      - name: Pull E2E image (or build if not available)
         run: |
-          echo "=== Checking build output ==="
-          ls -la apps/web/dist/
-          ls -la apps/web/dist/server/ || echo "No server directory"
-          echo "=== Testing server startup and health check ==="
-          cd apps/web && bun run start &
-          SERVER_PID=$!
-          sleep 5
-          echo "=== Checking health endpoint ==="
-          curl -v http://localhost:3000/health || echo "Health check failed"
-          echo "=== Checking if server responds ==="
-          curl -v http://localhost:3000/ || echo "Root check failed"
-          kill $SERVER_PID 2>/dev/null || true
+          if ! docker pull $E2E_IMAGE; then
+            echo "Image not found in registry, building locally..."
+            docker build -t $E2E_IMAGE -f docker/Dockerfile.e2e .
+          fi
+
+      - name: Create test output directory
+        run: mkdir -p test-output/e2e
 
       - name: Run E2E tests
-        run: bun run test:e2e --project="$BROWSER" --reporter=html,json
         env:
-          PLAYWRIGHT_WORKERS: 5
-          # Enable server logs to debug startup issues
-          PLAYWRIGHT_LOGS: true
-
-      - name: Generate coverage report
-        if: always()
+          BROWSER: ${{ matrix.browser }}
         run: |
-          if [ -f test-output/e2e/results.json ]; then
-            bun run apps/web/e2e/scripts/analyze-coverage.ts --output test-output/e2e/coverage-report.md
-          fi
+          docker-compose -f docker/docker-compose.e2e.yml up \
+            --exit-code-from e2e \
+            --abort-on-container-exit
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report-${{ matrix.browser }}
           path: test-output/e2e/playwright/
@@ -154,19 +86,15 @@ jobs:
 
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: test-output-${{ matrix.browser }}
           path: test-output/e2e/
           retention-days: 30
 
-      - name: Upload coverage report
+      - name: Cleanup
         if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: coverage-report-${{ matrix.browser }}
-          path: test-output/e2e/coverage-report.md
-          retention-days: 30
+        run: docker-compose -f docker/docker-compose.e2e.yml down -v
 
   e2e-summary:
     name: E2E Summary
@@ -190,7 +118,7 @@ jobs:
 
       - name: Comment PR with test results
         if: github.event_name == 'pull_request'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v7
         with:
           script: |
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
@@ -199,104 +127,20 @@ jobs:
 
             All browsers tested: **Chromium**, **Firefox**, **WebKit**
 
-            Result: ${result === 'success' ? 'All passed' : 'Some failed'}
+            Result: ${result === 'success' ? '✅ All passed' : '❌ Some failed'}
 
             [View full Playwright reports](${runUrl})`;
 
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
-              repo: context.repo.name,
+              repo: context.repo.repo,
               body: body
             });
 
-  accessibility-check:
-    name: Accessibility Audit
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-
-    env:
-      # Database (matches .env.e2e pattern but uses CI port 5432)
-      POSTGRES_DB: vamsa_test
-      POSTGRES_USER: vamsa_test
-      POSTGRES_PASSWORD: vamsa_test
-      DATABASE_URL: postgresql://vamsa_test:vamsa_test@localhost:5432/vamsa_test
-      NODE_ENV: test
-      CI: true
-      # Auth configuration
-      BETTER_AUTH_SECRET: e2e-test-secret-32-characters-long
-      BETTER_AUTH_URL: http://localhost:3000
-      APP_URL: http://localhost:3000
-      VITE_APP_NAME: Vamsa - E2E
-      # Admin user for seeding (matches .env.e2e)
-      ADMIN_EMAIL: admin@test.vamsa.local
-      ADMIN_PASSWORD: TestAdmin123!
-      # E2E test users
-      E2E_ADMIN_EMAIL: admin@test.vamsa.local
-      E2E_ADMIN_PASSWORD: TestAdmin123!
-      E2E_MEMBER_EMAIL: member@test.vamsa.local
-      E2E_MEMBER_PASSWORD: TestMember123!
-      DISABLE_EXTERNAL_SERVICES: true
-
-    services:
-      postgres:
-        image: postgres:18
-        env:
-          POSTGRES_DB: ${{ env.POSTGRES_DB }}
-          POSTGRES_USER: ${{ env.POSTGRES_USER }}
-          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Set DATABASE_URL
-        run: echo "DATABASE_URL=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@localhost:5432/$POSTGRES_DB" >> $GITHUB_ENV
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Install Playwright
-        run: bunx playwright install --with-deps chromium
-
-      - name: Setup database
-        run: |
-          bun run db:generate
-          bun run db:migrate
-          bun run db:seed:e2e
-
-      - name: Build application
-        run: bun run build
-
-      - name: Run accessibility tests
-        run: |
-          # Run subset of tests with axe-core checks
-          bunx playwright test --grep="@accessibility" --reporter=html,json
-        continue-on-error: true
-
-      - name: Upload accessibility report
-        if: always()
-        uses: actions/upload-artifact@v6
-        with:
-          name: accessibility-report
-          path: test-output/e2e/playwright/
-          retention-days: 30
-
   quality-gate:
     name: Quality Gate
-    needs: [e2e-summary, accessibility-check]
+    needs: [e2e-summary]
     runs-on: ubuntu-latest
     if: always()
 
@@ -304,16 +148,10 @@ jobs:
       - name: Check quality gates
         env:
           E2E_RESULT: ${{ needs.e2e-summary.result }}
-          A11Y_RESULT: ${{ needs.accessibility-check.result }}
         run: |
           if [[ "$E2E_RESULT" != "success" ]]; then
             echo "E2E tests failed"
             exit 1
-          fi
-
-          if [[ "$A11Y_RESULT" == "failure" ]]; then
-            echo "Accessibility checks found violations"
-            # Don't fail the build for accessibility issues yet
           fi
 
           echo "All quality gates passed!"

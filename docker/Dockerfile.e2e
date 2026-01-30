@@ -1,0 +1,80 @@
+# E2E Testing Dockerfile
+#
+# This image contains:
+# - Built Vamsa application
+# - Playwright with all browsers
+# - Bun runtime
+#
+# Used for running E2E tests in CI and locally with identical environments.
+
+# =============================================================================
+# Stage 1: Build the application
+# =============================================================================
+FROM oven/bun:1-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files for dependency installation
+COPY package.json bun.lock* bunfig.toml ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/api/package.json ./packages/api/
+COPY packages/lib/package.json ./packages/lib/
+COPY packages/schemas/package.json ./packages/schemas/
+COPY packages/ui/package.json ./packages/ui/
+
+# Install all dependencies (including devDependencies for build)
+RUN bun install
+
+# Copy source code
+COPY . .
+
+# Generate Drizzle client
+WORKDIR /app/packages/api
+ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
+RUN bun run db:generate
+
+# Build the web app
+WORKDIR /app/apps/web
+RUN bun run build
+
+# =============================================================================
+# Stage 2: E2E Test Runner
+# =============================================================================
+# Use Playwright's official image which includes all browsers
+FROM mcr.microsoft.com/playwright:v1.49.0-noble
+
+# Install Bun
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json bun.lock* bunfig.toml ./
+COPY apps/web/package.json ./apps/web/
+COPY packages/api/package.json ./packages/api/
+COPY packages/lib/package.json ./packages/lib/
+COPY packages/schemas/package.json ./packages/schemas/
+COPY packages/ui/package.json ./packages/ui/
+
+# Install all dependencies
+RUN bun install
+
+# Copy source code and built artifacts
+COPY --from=builder /app/apps/web/dist ./apps/web/dist
+COPY --from=builder /app/apps/web/server ./apps/web/server
+COPY --from=builder /app/packages ./packages
+COPY apps/web/src ./apps/web/src
+COPY apps/web/e2e ./apps/web/e2e
+COPY apps/web/playwright.config.ts ./apps/web/
+COPY apps/web/scripts ./apps/web/scripts
+
+# Copy locales for i18n
+COPY apps/web/public/locales ./apps/web/public/locales
+
+# Set working directory to web app
+WORKDIR /app/apps/web
+
+# Default command runs E2E tests
+# Override with docker-compose command for different test configurations
+CMD ["bunx", "playwright", "test"]
