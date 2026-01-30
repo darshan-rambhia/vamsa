@@ -75,7 +75,7 @@ jobs:
         run: bun run db:generate
 
       - name: Run database migrations
-        run: bun run db:migrate:deploy
+        run: bun run db:migrate
 
       - name: Seed test database
         run: bun run db:seed
@@ -209,7 +209,7 @@ jobs:
       - name: Setup database
         run: |
           bun run db:generate
-          bun run db:migrate:deploy
+          bun run db:migrate
           bun run db:seed
 
       - name: Build application
