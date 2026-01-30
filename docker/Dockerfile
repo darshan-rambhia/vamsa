@@ -49,9 +49,6 @@ COPY packages/ui/package.json ./packages/ui/
 # Production dependencies only (excludes devDependencies)
 RUN bun install --production
 
-# Copy generated Drizzle client
-COPY --from=builder /app/packages/api/src/generated ./packages/api/src/generated
-
 # =============================================================================
 # Stage 3: Production runtime
 # =============================================================================
