@@ -184,8 +184,10 @@ async function globalSetup(config: FullConfig) {
   while (retries < maxRetries) {
     try {
       const response = await page.goto(healthURL, { timeout: 5000 });
-      if (response?.ok()) {
-        console.log(`[E2E Setup] Server is ready at ${baseURL}`);
+      const status = response?.status() || 0;
+      // Accept 2xx and 3xx as server being ready (3xx means server is up but redirecting)
+      if (status >= 200 && status < 400) {
+        console.log(`[E2E Setup] Server is ready at ${baseURL} (status: ${status})`);
         break;
       }
     } catch {
