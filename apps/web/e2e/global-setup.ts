@@ -178,10 +178,12 @@ async function globalSetup(config: FullConfig) {
 
   let retries = 0;
   const maxRetries = 30;
+  // Use /health endpoint for server readiness check (root URL may redirect)
+  const healthURL = `${baseURL}/health`;
 
   while (retries < maxRetries) {
     try {
-      const response = await page.goto(baseURL, { timeout: 5000 });
+      const response = await page.goto(healthURL, { timeout: 5000 });
       if (response?.ok()) {
         console.log(`[E2E Setup] Server is ready at ${baseURL}`);
         break;
