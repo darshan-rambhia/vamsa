@@ -50,11 +50,12 @@ const shouldShowServerLogs = process.env.PLAYWRIGHT_LOGS === "true";
 const isCI = !!process.env.CI;
 const webServerConfig = {
   // Always use production server - run-e2e.ts handles building locally
-  command: "bun run start",
+  // Use direct bun command instead of npm script for better compatibility with Playwright
+  command: "bun run server/index.ts",
   url: baseURL,
   timeout: 120 * 1000,
   reuseExistingServer: !isCI,
-  // Explicitly set cwd to apps/web where the package.json is
+  // Explicitly set cwd to apps/web where the server/index.ts is
   cwd: __dirname,
   // Show logs when PLAYWRIGHT_LOGS=true, otherwise suppress them ("ignore")
   // Use "inherit" in CI to get direct output to workflow logs
