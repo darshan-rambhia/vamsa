@@ -4,9 +4,25 @@ run-name: "CI · ${{ github.event.pull_request.title || github.ref_name }}"
 on:
   push:
     branches: [main, develop]
+    paths-ignore:
+      - "**/*.md"
+      - ".github/workflows/**"
+      - "docs/**"
+      - ".claude/**"
+      - ".vscode/**"
+      - "LICENSE"
+      - ".gitignore"
   pull_request:
     branches: [main, develop]
-  workflow_dispatch:
+    paths-ignore:
+      - "**/*.md"
+      - ".github/workflows/**"
+      - "docs/**"
+      - ".claude/**"
+      - ".vscode/**"
+      - "LICENSE"
+      - ".gitignore"
+  workflow_dispatch: # Always allow manual trigger
 
 # Explicit permissions following principle of least privilege
 permissions:
