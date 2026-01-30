@@ -10,6 +10,7 @@
     "bun": ">=1.0.0"
   },
   "scripts": {
+    "postinstall": "[ -f packages/api/src/drizzle/schema/index.ts ] && bun run db:generate || true",
     "// === Development ===": "",
     "dev": "bun scripts/dev.ts",
     "dev:web-only": "bun run --filter @vamsa/web dev",

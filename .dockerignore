@@ -11,6 +11,9 @@ build
 .vinxi
 .turbo
 
+# Generated files (created during Docker build)
+packages/api/src/generated
+
 # Testing
 coverage
 .nyc_output
