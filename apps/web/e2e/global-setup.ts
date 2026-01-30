@@ -183,19 +183,25 @@ async function globalSetup(config: FullConfig) {
 
   while (retries < maxRetries) {
     try {
-      const response = await page.goto(healthURL, { timeout: 5000 });
+      // Use waitUntil: 'commit' to accept response as soon as HTTP response is received
+      // This avoids timeouts when the redirect target takes time to load
+      const response = await page.goto(healthURL, {
+        timeout: 10000,
+        waitUntil: 'commit'
+      });
       const status = response?.status() || 0;
       // Accept 2xx and 3xx as server being ready (3xx means server is up but redirecting)
       if (status >= 200 && status < 400) {
         console.log(`[E2E Setup] Server is ready at ${baseURL} (status: ${status})`);
         break;
       }
-    } catch {
+    } catch (error) {
       retries++;
       if (retries >= maxRetries) {
         console.error(
           `[E2E Setup] Server failed to start after ${maxRetries} attempts`
         );
+        console.error(`[E2E Setup] Last error: ${error}`);
         throw new Error(`Server not available at ${baseURL}`);
       }
       console.log(
