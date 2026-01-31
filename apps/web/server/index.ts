@@ -338,19 +338,28 @@ app.use("/assets/*", async (c, next) => {
   const path = c.req.path;
   const filePath = `./dist/client${path}`;
 
+  // Always log asset requests in non-production for debugging
+  if (!IS_PRODUCTION) {
+    console.log(`[Static Asset] Request: ${path}`);
+  }
+
   try {
     const file = Bun.file(filePath);
     const exists = await file.exists();
+
+    if (!IS_PRODUCTION) {
+      console.log(`[Static Asset] File exists: ${exists}, path: ${filePath}`);
+    }
 
     if (exists) {
       const content = await file.arrayBuffer();
       const mimeType =
         path.endsWith(".css")
-          ? "text/css"
+          ? "text/css; charset=utf-8"
           : path.endsWith(".js")
-            ? "application/javascript"
+            ? "application/javascript; charset=utf-8"
             : path.endsWith(".json")
-              ? "application/json"
+              ? "application/json; charset=utf-8"
               : path.endsWith(".svg")
                 ? "image/svg+xml"
                 : path.endsWith(".png")
@@ -363,6 +372,10 @@ app.use("/assets/*", async (c, next) => {
                         ? "font/woff"
                         : "application/octet-stream";
 
+      if (!IS_PRODUCTION) {
+        console.log(`[Static Asset] Serving with MIME: ${mimeType}`);
+      }
+
       return new Response(content, {
         headers: {
           "Content-Type": mimeType,
@@ -370,9 +383,12 @@ app.use("/assets/*", async (c, next) => {
         },
       });
     } else {
+      // Log not found in all environments for debugging
+      console.log(`[Static Asset] NOT FOUND: ${filePath}`);
       log.warn({ path, filePath }, "Static asset not found");
     }
   } catch (error) {
+    console.log(`[Static Asset] ERROR:`, error);
     log.withErr(error).msg("Error serving static file");
   }
 
