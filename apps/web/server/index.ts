@@ -17,7 +17,6 @@ import { logger as honoLogger } from "hono/logger";
 import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import { secureHeaders } from "hono/secure-headers";
-import { serveStatic } from "hono/bun";
 import { loggers } from "@vamsa/lib/logger";
 import { initializeServerI18n } from "@vamsa/lib/server";
 import { auth } from "@vamsa/lib/server/business";
@@ -335,16 +334,50 @@ app.get("/media/*", serveMedia);
 // In production, nginx typically handles this, but we need it for:
 // - E2E testing in Docker (no nginx)
 // - Direct server access during development
-app.use(
-  "/assets/*",
-  serveStatic({
-    root: "./dist/client",
-    // Assets have content hashes in filenames, so they're immutable
-    onNotFound: (path, c) => {
-      log.warn({ path, url: c.req.url }, "Static asset not found");
-    },
-  })
-);
+app.use("/assets/*", async (c, next) => {
+  const path = c.req.path;
+  const filePath = `./dist/client${path}`;
+
+  try {
+    const file = Bun.file(filePath);
+    const exists = await file.exists();
+
+    if (exists) {
+      const content = await file.arrayBuffer();
+      const mimeType =
+        path.endsWith(".css")
+          ? "text/css"
+          : path.endsWith(".js")
+            ? "application/javascript"
+            : path.endsWith(".json")
+              ? "application/json"
+              : path.endsWith(".svg")
+                ? "image/svg+xml"
+                : path.endsWith(".png")
+                  ? "image/png"
+                  : path.endsWith(".jpg") || path.endsWith(".jpeg")
+                    ? "image/jpeg"
+                    : path.endsWith(".woff2")
+                      ? "font/woff2"
+                      : path.endsWith(".woff")
+                        ? "font/woff"
+                        : "application/octet-stream";
+
+      return new Response(content, {
+        headers: {
+          "Content-Type": mimeType,
+          "Cache-Control": "public, max-age=31536000, immutable",
+        },
+      });
+    } else {
+      log.warn({ path, filePath }, "Static asset not found");
+    }
+  } catch (error) {
+    log.withErr(error).msg("Error serving static file");
+  }
+
+  return next();
+});
 
 // ============================================
 // TanStack Start Handler
