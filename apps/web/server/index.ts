@@ -467,6 +467,20 @@ async function startServer() {
     "Server configuration"
   );
 
+  // List available static assets for debugging
+  try {
+    const { readdir } = await import("fs/promises");
+    const assetsPath = "./dist/client/assets";
+    const files = await readdir(assetsPath);
+    const cssFiles = files.filter((f) => f.endsWith(".css"));
+    const jsFiles = files.filter((f) => f.endsWith(".js")).slice(0, 5); // First 5 JS files
+    console.log(`[Startup] Assets directory: ${assetsPath}`);
+    console.log(`[Startup] CSS files found: ${cssFiles.join(", ")}`);
+    console.log(`[Startup] Sample JS files: ${jsFiles.join(", ")}`);
+  } catch (error) {
+    console.log(`[Startup] Could not list assets:`, error);
+  }
+
   // Initialize i18n for server functions
   try {
     await initializeServerI18n();
