@@ -6,9 +6,9 @@ import {
   getUserLanguagePreferenceData,
   setUserLanguagePreferenceData,
   updateFamilySettingsData,
-  type UpdateFamilySettingsInput,
 } from "@vamsa/lib/server/business/settings";
 import { requireAuth } from "./middleware/require-auth";
+import type { UpdateFamilySettingsInput } from "@vamsa/lib/server/business/settings";
 
 /**
  * Update family settings schema for input validation
@@ -19,8 +19,16 @@ const updateSettingsSchema = z.object({
   description: z.string().optional(),
   allowSelfRegistration: z.boolean(),
   requireApprovalForEdits: z.boolean(),
-  metricsDashboardUrl: z.string().url().nullable().optional(),
-  metricsApiUrl: z.string().url().nullable().optional(),
+  metricsDashboardUrl: z
+    .string()
+    .refine((val) => !val || /^https?:\/\//.test(val), "Invalid URL")
+    .nullable()
+    .optional(),
+  metricsApiUrl: z
+    .string()
+    .refine((val) => !val || /^https?:\/\//.test(val), "Invalid URL")
+    .nullable()
+    .optional(),
 });
 
 /**

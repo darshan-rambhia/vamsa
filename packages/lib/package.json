@@ -12,10 +12,14 @@
     "./gedcom": "./src/gedcom/index.ts",
     "./backup": "./src/backup/index.ts",
     "./logger": "./src/logger.ts",
-    "./server": "./src/server/index.ts",
-    "./server/business": "./src/server/business/index.ts",
     "./media": "./src/media/index.ts",
-    "./stories": "./src/stories/index.ts"
+    "./media/*": "./src/media/*.ts",
+    "./stories": "./src/stories/index.ts",
+    "./server": "./src/server/index.ts",
+    "./server/*": "./src/server/*.ts",
+    "./server/i18n": "./src/server/i18n/index.ts",
+    "./server/business": "./src/server/business/index.ts",
+    "./server/business/*": "./src/server/business/*.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

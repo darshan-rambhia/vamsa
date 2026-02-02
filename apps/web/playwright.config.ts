@@ -23,12 +23,12 @@ function loadEnvFile(filePath: string) {
         const value = valueParts
           .join("=")
           .trim()
-          .replace(/^["']|["']$/g, "");
+          .replaceAll(/(^["'])|(["']$)/g, "");
         process.env[trimmedKey] = value;
       }
     }
-  } catch (_err) {
-    // Load error, ignore
+  } catch {
+    // Silently ignore env file loading errors (file may not exist or be readable)
   }
 }
 
@@ -40,9 +40,9 @@ loadEnvFile(path.resolve(__dirname, "../../.env.local"));
 
 // In Docker, BASE_URL points to the app container (http://app:3000)
 // Locally, we start the server ourselves on localhost
-const baseURL = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+const baseURL =
+  process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
 const isDocker = !!process.env.BASE_URL; // If BASE_URL is set, we're in Docker
-const isCI = !!process.env.CI;
 
 // Determine if we should show server logs
 const shouldShowServerLogs = process.env.PLAYWRIGHT_LOGS === "true";
@@ -62,7 +62,8 @@ const webServerConfig = isDocker
       stderr: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
       env: {
         ...process.env,
-        DATABASE_URL: "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
+        DATABASE_URL:
+          "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
         E2E_TESTING: "true",
       },
     };
@@ -126,9 +127,9 @@ export default defineConfig({
         // Disable HSTS/security features that redirect HTTP to HTTPS in Docker
         launchOptions: {
           args: [
-            '--disable-web-security',
-            '--allow-running-insecure-content',
-            '--disable-features=IsolateOrigins,site-per-process',
+            "--disable-web-security",
+            "--allow-running-insecure-content",
+            "--disable-features=IsolateOrigins,site-per-process",
           ],
         },
       },
@@ -164,10 +165,10 @@ export default defineConfig({
         // Firefox-specific: disable HSTS via user preferences
         launchOptions: {
           firefoxUserPrefs: {
-            'security.mixed_content.block_active_content': false,
-            'security.mixed_content.block_display_content': false,
-            'network.stricttransportsecurity.preloadlist': false,
-            'security.cert_pinning.enforcement_level': 0,
+            "security.mixed_content.block_active_content": false,
+            "security.mixed_content.block_display_content": false,
+            "network.stricttransportsecurity.preloadlist": false,
+            "security.cert_pinning.enforcement_level": 0,
           },
         },
       },

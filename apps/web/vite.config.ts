@@ -36,7 +36,8 @@ export default defineConfig({
       "archiver",
       "arctic",
       "bcryptjs",
-      "i18next",
+      // Note: i18next is NOT external - it needs to be bundled for both SSR and client
+      // to ensure the hydration matches. Only i18next-fs-backend is server-only.
       "i18next-fs-backend",
       "node-cron",
       // pg-native is an optional native addon that pg tries to import
