@@ -70,9 +70,11 @@ test.describe("Error Handling", () => {
       // Technical details are only shown in dev mode (import.meta.env.DEV)
       // In production/test builds, this feature is disabled
       // Look for a "Technical details" element (may be a button or link)
-      const techDetailsButton = page.locator(
-        'button:has-text("Technical details"), [role="button"]:has-text("Technical details"), :text("Technical details")'
-      ).first();
+      const techDetailsButton = page
+        .locator(
+          'button:has-text("Technical details"), [role="button"]:has-text("Technical details"), :text("Technical details")'
+        )
+        .first();
 
       // Check if the element exists - it won't exist in production builds
       const buttonCount = await techDetailsButton.count();

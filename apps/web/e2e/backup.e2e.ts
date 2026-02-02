@@ -544,7 +544,9 @@ test.describe("Feature: Backup & Export", () => {
 
         // Fallback: check for any GEDCOM-related content
         const fallbackContent = page.getByText(/GEDCOM|\.ged/i).first();
-        const hasFallback = await fallbackContent.isVisible().catch(() => false);
+        const hasFallback = await fallbackContent
+          .isVisible()
+          .catch(() => false);
 
         // Description about GEDCOM import should be present
         expect(hasDescription || hasFallback).toBeTruthy();

@@ -28,7 +28,7 @@ function IndexComponent() {
   return (
     <div className="bg-background flex min-h-screen items-center justify-center">
       <div className="text-center">
-        <div className="border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent mx-auto" />
+        <div className="border-primary mx-auto h-8 w-8 animate-spin rounded-full border-4 border-t-transparent" />
         <p className="text-muted-foreground mt-4">Loading...</p>
       </div>
     </div>

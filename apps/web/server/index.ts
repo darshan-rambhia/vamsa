@@ -351,24 +351,23 @@ app.use("/assets/*", async (c, next) => {
     if (exists) {
       const content = await file.arrayBuffer();
       // Determine MIME type from file extension
-      const mimeType =
-        path.endsWith(".css")
-          ? "text/css; charset=utf-8"
-          : path.endsWith(".js")
-            ? "application/javascript; charset=utf-8"
-            : path.endsWith(".json")
-              ? "application/json; charset=utf-8"
-              : path.endsWith(".svg")
-                ? "image/svg+xml"
-                : path.endsWith(".png")
-                  ? "image/png"
-                  : path.endsWith(".jpg") || path.endsWith(".jpeg")
-                    ? "image/jpeg"
-                    : path.endsWith(".woff2")
-                      ? "font/woff2"
-                      : path.endsWith(".woff")
-                        ? "font/woff"
-                        : "application/octet-stream";
+      const mimeType = path.endsWith(".css")
+        ? "text/css; charset=utf-8"
+        : path.endsWith(".js")
+          ? "application/javascript; charset=utf-8"
+          : path.endsWith(".json")
+            ? "application/json; charset=utf-8"
+            : path.endsWith(".svg")
+              ? "image/svg+xml"
+              : path.endsWith(".png")
+                ? "image/png"
+                : path.endsWith(".jpg") || path.endsWith(".jpeg")
+                  ? "image/jpeg"
+                  : path.endsWith(".woff2")
+                    ? "font/woff2"
+                    : path.endsWith(".woff")
+                      ? "font/woff"
+                      : "application/octet-stream";
 
       return new Response(content, {
         headers: {

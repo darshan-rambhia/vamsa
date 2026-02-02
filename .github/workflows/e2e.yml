@@ -46,9 +46,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Focus on Chromium first until E2E tests are consistently passing
-        # Re-enable firefox and webkit later: [chromium, firefox, webkit]
-        browser: [chromium]
+        browser: [chromium, firefox, webkit]
 
     steps:
       - name: Checkout code
