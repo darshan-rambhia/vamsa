@@ -190,7 +190,6 @@ jobs:
           script: |
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const result = '${{ needs.e2e-tests.result }}';
-            const browsers = ['chromium', 'firefox', 'webkit'];
             const resultEmoji = result === 'success' ? '✅' : '❌';
 
             const body = `## E2E Test Results

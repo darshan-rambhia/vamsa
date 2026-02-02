@@ -44,6 +44,18 @@ const webServerConfig = isDocker
       ),
     };
 
+// Shared configuration for browsers that need extended timeouts (Firefox, WebKit)
+const EXTENDED_BROWSER_USE = {
+  actionTimeout: 15000,
+  navigationTimeout: 30000,
+  ignoreHTTPSErrors: true,
+};
+
+const EXTENDED_PROJECT_CONFIG = {
+  timeout: 45 * 1000,
+  retries: 3,
+};
+
 /**
  * Playwright configuration for Vamsa E2E tests
  *
@@ -116,30 +128,17 @@ export default defineConfig({
       name: "webkit",
       use: {
         ...devices["Desktop Safari"],
-        // WebKit needs longer timeouts for navigation and actions
-        actionTimeout: 15000,
-        navigationTimeout: 30000,
-        // Use webkit-specific auth state (created by webkit browser in global-setup)
+        ...EXTENDED_BROWSER_USE,
         storageState: path.join(__dirname, "e2e/.auth/admin-webkit.json"),
-        // Ignore HTTPS errors for Docker testing
-        ignoreHTTPSErrors: true,
       },
-      // WebKit tests get longer overall timeout and more retries
-      timeout: 45 * 1000,
-      retries: 3,
+      ...EXTENDED_PROJECT_CONFIG,
     },
-    // Firefox browser
     {
       name: "firefox",
       use: {
         ...devices["Desktop Firefox"],
-        // Firefox needs longer timeouts for navigation and actions (similar to WebKit)
-        actionTimeout: 15000,
-        navigationTimeout: 30000,
-        // Use firefox-specific auth state (created by firefox browser in global-setup)
+        ...EXTENDED_BROWSER_USE,
         storageState: path.join(__dirname, "e2e/.auth/admin-firefox.json"),
-        // Ignore HTTPS errors for Docker testing
-        ignoreHTTPSErrors: true,
         // Firefox-specific: disable HSTS via user preferences
         launchOptions: {
           firefoxUserPrefs: {
@@ -150,9 +149,7 @@ export default defineConfig({
           },
         },
       },
-      // Firefox tests get longer overall timeout and more retries
-      timeout: 45 * 1000,
-      retries: 3,
+      ...EXTENDED_PROJECT_CONFIG,
     },
   ],
 });

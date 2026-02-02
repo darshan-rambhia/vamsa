@@ -9,6 +9,15 @@
 #   BROWSER:   Run specific browser (chromium, firefox, webkit)
 name: vamsa-e2e
 
+# Shared image/build configuration
+x-e2e-image: &e2e-image
+  image: ${E2E_IMAGE:-ghcr.io/darshan-rambhia/vamsa/e2e:latest}
+  build:
+    context: ..
+    dockerfile: docker/Dockerfile.e2e
+    args:
+      SKIP_SSL_VERIFY: "true"
+
 services:
   # PostgreSQL Database for E2E tests
   db:
@@ -23,19 +32,13 @@ services:
       interval: 2s
       timeout: 5s
       retries: 10
-    # No port exposure needed - only accessed within Docker network
 
   # Application server
   # Using 'vamsa-web' instead of 'app' to avoid browser HSTS issues
   # (the .app TLD is on the HSTS preload list, and browsers may treat
   # single-word hostnames like 'app' as belonging to that TLD)
   vamsa-web:
-    image: ${E2E_IMAGE:-ghcr.io/darshan-rambhia/vamsa/e2e:latest}
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.e2e
-      args:
-        SKIP_SSL_VERIFY: "true"
+    <<: *e2e-image
     container_name: vamsa-e2e-app
     depends_on:
       db:
@@ -67,12 +70,7 @@ services:
 
   # Database seeding (runs once before tests)
   seed:
-    image: ${E2E_IMAGE:-ghcr.io/darshan-rambhia/vamsa/e2e:latest}
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.e2e
-      args:
-        SKIP_SSL_VERIFY: "true"
+    <<: *e2e-image
     container_name: vamsa-e2e-seed
     depends_on:
       db:
@@ -93,12 +91,7 @@ services:
 
   # E2E Test Runner
   e2e:
-    image: ${E2E_IMAGE:-ghcr.io/darshan-rambhia/vamsa/e2e:latest}
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.e2e
-      args:
-        SKIP_SSL_VERIFY: "true"
+    <<: *e2e-image
     container_name: vamsa-e2e-runner
     depends_on:
       vamsa-web:
@@ -123,8 +116,6 @@ services:
       - ../test-output/e2e:/app/test-output/e2e
     command: >
       sh -c "
-        echo 'Waiting for app to be ready...' &&
-        sleep 2 &&
         echo 'Running E2E tests on ${BROWSER:-chromium}...' &&
         bunx playwright test --project=${BROWSER:-chromium} --reporter=html,json,list
       "
