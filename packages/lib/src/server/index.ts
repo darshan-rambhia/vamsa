@@ -30,17 +30,12 @@ export {
   CacheControl,
 } from "../etag";
 
-// Media processing utilities (server-only due to sharp dependency)
-export {
-  type ImageSize,
-  type ProcessedImage,
-  generateWebP,
-  generateThumbnail,
-  generateResponsiveSizes,
-  processUploadedImage,
-  cleanupOldImages,
-  getMediaDir,
-} from "../media/processor";
+// ============================================================================
+// Media processing utilities - NOT EXPORTED FROM BARREL
+// ============================================================================
+// NOTE: Media processor is NOT exported from barrel to avoid pulling in sharp
+// (native image processing library) into bundles that don't need it.
+// Import directly from "@vamsa/lib/media/processor" if needed.
 
 // ============================================================================
 // Database utilities

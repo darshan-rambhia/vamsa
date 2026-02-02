@@ -1,13 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+// Import directly from settings module to avoid pulling sharp into the bundle
 import {
   getFamilySettingsData,
   getUserLanguagePreferenceData,
   setUserLanguagePreferenceData,
   updateFamilySettingsData,
-} from "@vamsa/lib/server/business";
+  type UpdateFamilySettingsInput,
+} from "@vamsa/lib/server/business/settings";
 import { requireAuth } from "./middleware/require-auth";
-import type { UpdateFamilySettingsInput } from "@vamsa/lib/server/business";
 
 /**
  * Update family settings schema for input validation

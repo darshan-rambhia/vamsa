@@ -18,7 +18,6 @@
 #   - BACKUP_KEEP_MONTHS: Months to keep monthly backups (1st of month)
 #   - HEALTHCHECK_PORT: Port for backup service health checks
 
-version: "3.8"
 name: vamsa-with-backup
 
 services:

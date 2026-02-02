@@ -1,20 +1,16 @@
-version: "3.8"
-name: vamsa-app
+name: vamsa
 
 services:
   # PostgreSQL Database
-  # SECURITY: DB_PASSWORD must be set in environment or .env file
   db:
-    image: postgres:18-alpine
+    image: postgres:17-alpine
     container_name: vamsa-db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER:-vamsa}
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required - see .env.example}
       POSTGRES_DB: ${DB_NAME:-vamsa}
-      # PostgreSQL 18 initialization arguments
       POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=en_US.UTF-8"
-    # PostgreSQL 18 optimizations
     command:
       - "postgres"
       - "-c"
@@ -53,7 +49,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # TanStack Start Application
+  # Vamsa Application (Bun + Hono + TanStack Start)
   app:
     build:
       context: ..
@@ -68,47 +64,17 @@ services:
       PORT: 3000
       HOST: 0.0.0.0
       DATABASE_URL: "postgresql://${DB_USER:-vamsa}:${DB_PASSWORD:?DB_PASSWORD is required}@db:5432/${DB_NAME:-vamsa}"
-      SESSION_SECRET: "${SESSION_SECRET:?SESSION_SECRET is required}"
+      BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}"
+    ports:
+      - "${APP_PORT:-80}:3000"
     volumes:
-      # Mount uploads directory for persistent file storage
       - uploads_data:/app/data/uploads
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1",
-        ]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-    # Don't expose port directly - nginx will handle it
-    expose:
-      - "3000"
-
-  # Nginx Reverse Proxy
-  nginx:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.nginx
-    container_name: vamsa-nginx
-    restart: unless-stopped
-    depends_on:
-      - app
-    ports:
-      - "${NGINX_PORT:-80}:80"
-    volumes:
-      # Mount static files for direct serving
-      - ../apps/web/dist/client:/app/apps/web/dist/client:ro
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 --spider http://localhost/health || exit 1",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
 volumes:
   postgres_data:

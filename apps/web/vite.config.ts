@@ -41,6 +41,8 @@ export default defineConfig({
       "node-cron",
       // pg-native is an optional native addon that pg tries to import
       "pg-native",
+      // sharp is a native image processing library that must not be bundled
+      "sharp",
     ],
   },
   build: {
@@ -50,13 +52,16 @@ export default defineConfig({
         "archiver",
         "arctic",
         "bcryptjs",
-        "i18next",
+        // Note: i18next is NOT external - it's needed on the client for react-i18next
+        // Only i18next-fs-backend is server-only
         "i18next-fs-backend",
         "node-cron",
         // pg-native is an optional native addon that pg tries to import
         "pg-native",
         // Exclude react-native from web builds (react-native-svg-web provides web implementation)
         "react-native",
+        // sharp is a native image processing library that must not be bundled
+        "sharp",
       ],
     },
   },

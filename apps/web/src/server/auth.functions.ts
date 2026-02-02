@@ -140,5 +140,11 @@ export const getAvailableProviders = createServerFn({ method: "GET" }).handler(
   getAvailableProvidersHandler
 );
 
-// Alias exports for backward compatibility
-export { getSession as getCurrentUser, checkAuth as validateSession };
+// Create separate server functions for aliases to avoid bundler initialization issues
+export const getCurrentUser = createServerFn({ method: "GET" }).handler(
+  getSessionHandler
+);
+
+export const validateSession = createServerFn({ method: "GET" }).handler(
+  checkAuthHandler
+);

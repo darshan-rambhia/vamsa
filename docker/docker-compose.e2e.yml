@@ -1,6 +1,3 @@
-version: "3.8"
-name: vamsa-e2e
-
 # E2E Testing Composition
 #
 # Usage:
@@ -10,6 +7,7 @@ name: vamsa-e2e
 # Environment variables:
 #   E2E_IMAGE: Override the E2E runner image (default: builds locally)
 #   BROWSER:   Run specific browser (chromium, firefox, webkit)
+name: vamsa-e2e
 
 services:
   # PostgreSQL Database for E2E tests
@@ -36,6 +34,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.e2e
+      args:
+        SKIP_SSL_VERIFY: "true"
     container_name: vamsa-e2e-app
     depends_on:
       db:
@@ -44,15 +44,20 @@ services:
       NODE_ENV: test
       PORT: 3000
       HOST: 0.0.0.0
-      DATABASE_URL: postgresql://vamsa_test:vamsa_test@db:5432/vamsa_test
+      DATABASE_URL: postgresql://vamsa_test:vamsa_test@db:5432/vamsa_test?sslmode=disable
       BETTER_AUTH_SECRET: e2e-test-secret-32-characters-long
       BETTER_AUTH_URL: http://vamsa-web:3000
       APP_URL: http://vamsa-web:3000
       VITE_APP_NAME: Vamsa - E2E
       DISABLE_EXTERNAL_SERVICES: "true"
+      E2E_TESTING: "true"
     command: ["bun", "run", "server/index.ts"]
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"]
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1",
+        ]
       interval: 5s
       timeout: 10s
       retries: 12
@@ -66,12 +71,14 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.e2e
+      args:
+        SKIP_SSL_VERIFY: "true"
     container_name: vamsa-e2e-seed
     depends_on:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://vamsa_test:vamsa_test@db:5432/vamsa_test
+      DATABASE_URL: postgresql://vamsa_test:vamsa_test@db:5432/vamsa_test?sslmode=disable
       ADMIN_EMAIL: admin@test.vamsa.local
       ADMIN_PASSWORD: TestAdmin123!
     working_dir: /app/packages/api
@@ -90,6 +97,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.e2e
+      args:
+        SKIP_SSL_VERIFY: "true"
     container_name: vamsa-e2e-runner
     depends_on:
       vamsa-web:

@@ -14,11 +14,12 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
+// Import directly from media processor to avoid circular barrel imports
 import {
   cleanupOldImages,
   getMediaDir,
   processUploadedImage,
-} from "@vamsa/lib/server";
+} from "@vamsa/lib/media/processor";
 import { loggers } from "@vamsa/lib/logger";
 import { recordMediaUpload } from "../metrics";
 

@@ -16,6 +16,7 @@ import { Hono } from "hono";
 import { logger as honoLogger } from "hono/logger";
 import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
+import { compress } from "hono/compress";
 import { secureHeaders } from "hono/secure-headers";
 import { loggers } from "@vamsa/lib/logger";
 import { initializeServerI18n } from "@vamsa/lib/server";
@@ -121,6 +122,10 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production";
 if (!IS_PRODUCTION) {
   app.use("*", honoLogger());
 }
+
+// Gzip/Brotli compression for responses
+// Reduces bandwidth usage significantly for text-based responses
+app.use("*", compress());
 
 // CORS configuration for React Native mobile client
 app.use(
@@ -320,7 +325,8 @@ app.use("/api/auth/forget-password/*", rateLimitMiddleware("passwordReset"));
 
 // Mount Better Auth SDK endpoints at /api/auth/*
 // This handles authentication flows from the Better Auth React client
-app.on(["POST", "GET"], "/api/auth/**", (c) => {
+// Note: Using /* instead of /** - Hono uses single * for wildcard matching
+app.on(["POST", "GET"], "/api/auth/*", (c) => {
   return auth.handler(c.req.raw);
 });
 
@@ -338,21 +344,13 @@ app.use("/assets/*", async (c, next) => {
   const path = c.req.path;
   const filePath = `./dist/client${path}`;
 
-  // Always log asset requests in non-production for debugging
-  if (!IS_PRODUCTION) {
-    console.log(`[Static Asset] Request: ${path}`);
-  }
-
   try {
     const file = Bun.file(filePath);
     const exists = await file.exists();
 
-    if (!IS_PRODUCTION) {
-      console.log(`[Static Asset] File exists: ${exists}, path: ${filePath}`);
-    }
-
     if (exists) {
       const content = await file.arrayBuffer();
+      // Determine MIME type from file extension
       const mimeType =
         path.endsWith(".css")
           ? "text/css; charset=utf-8"
@@ -372,23 +370,14 @@ app.use("/assets/*", async (c, next) => {
                         ? "font/woff"
                         : "application/octet-stream";
 
-      if (!IS_PRODUCTION) {
-        console.log(`[Static Asset] Serving with MIME: ${mimeType}`);
-      }
-
       return new Response(content, {
         headers: {
           "Content-Type": mimeType,
           "Cache-Control": "public, max-age=31536000, immutable",
         },
       });
-    } else {
-      // Log not found in all environments for debugging
-      console.log(`[Static Asset] NOT FOUND: ${filePath}`);
-      log.warn({ path, filePath }, "Static asset not found");
     }
   } catch (error) {
-    console.log(`[Static Asset] ERROR:`, error);
     log.withErr(error).msg("Error serving static file");
   }
 
@@ -466,20 +455,6 @@ async function startServer() {
     },
     "Server configuration"
   );
-
-  // List available static assets for debugging
-  try {
-    const { readdir } = await import("fs/promises");
-    const assetsPath = "./dist/client/assets";
-    const files = await readdir(assetsPath);
-    const cssFiles = files.filter((f) => f.endsWith(".css"));
-    const jsFiles = files.filter((f) => f.endsWith(".js")).slice(0, 5); // First 5 JS files
-    console.log(`[Startup] Assets directory: ${assetsPath}`);
-    console.log(`[Startup] CSS files found: ${cssFiles.join(", ")}`);
-    console.log(`[Startup] Sample JS files: ${jsFiles.join(", ")}`);
-  } catch (error) {
-    console.log(`[Startup] Could not list assets:`, error);
-  }
 
   // Initialize i18n for server functions
   try {

@@ -18,6 +18,7 @@ import {
   mediaReorderSchema,
   setPrimaryPhotoSchema,
 } from "@vamsa/schemas";
+// Import directly from media module to avoid pulling sharp into other bundles
 import {
   deleteMediaLogic,
   getMediaObjectLogic,
@@ -27,7 +28,7 @@ import {
   setPrimaryPhotoLogic,
   updateMediaMetadataLogic,
   uploadMediaLogic,
-} from "@vamsa/lib/server/business";
+} from "@vamsa/lib/server/business/media";
 
 /**
  * Get all media for a person

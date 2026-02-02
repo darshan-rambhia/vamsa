@@ -59,35 +59,29 @@ const resources = {
 
 const isServer = typeof window === "undefined";
 
-// Initialize i18n for both SSR and client
+// Configure i18n based on environment
+// On server: use default "en" language (no browser detection available)
+// On client: use LanguageDetector to check localStorage first, then navigator
+if (!isServer) {
+  i18n.use(LanguageDetector);
+}
+
 i18n.use(initReactI18next).init({
   resources,
   fallbackLng: "en",
   defaultNS: "translation",
   ns: ["translation", "common", "auth", "people", "errors"],
-  lng: "en", // Set default language for SSR
+  // Only set lng on server; on client, let LanguageDetector handle it
+  ...(isServer ? { lng: "en" } : {}),
   interpolation: {
     escapeValue: false,
   },
+  // Detection options for client-side (ignored on server)
+  detection: {
+    order: ["localStorage", "navigator", "htmlTag"],
+    caches: ["localStorage"],
+    lookupLocalStorage: "i18nextLng",
+  },
 });
-
-// Only use language detector in browser (not available during SSR)
-if (!isServer) {
-  i18n.use(LanguageDetector);
-  // Re-initialize with language detection
-  i18n.init({
-    resources,
-    fallbackLng: "en",
-    defaultNS: "translation",
-    ns: ["translation", "common", "auth", "people", "errors"],
-    interpolation: {
-      escapeValue: false,
-    },
-    detection: {
-      order: ["localStorage", "navigator", "htmlTag"],
-      caches: ["localStorage"],
-    },
-  });
-}
 
 export default i18n;

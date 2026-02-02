@@ -72,7 +72,9 @@ export * from "./places";
 // ============================================================================
 // Media & File Management
 // ============================================================================
-export * from "./media";
+// NOTE: Media module is NOT exported from barrel to avoid pulling in sharp
+// (native image processing library) into bundles that don't need it.
+// Import directly from "@vamsa/lib/server/business/media" if needed.
 
 // ============================================================================
 // Metrics & Monitoring

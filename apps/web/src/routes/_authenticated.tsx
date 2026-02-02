@@ -4,18 +4,42 @@ import {
   redirect,
   useLocation,
 } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { getCookie } from "@tanstack/react-start/server";
+// Import directly from auth-better-api to avoid pulling in media module (which imports sharp)
+import { betterAuthGetSessionWithUserFromCookie } from "@vamsa/lib/server/business/auth-better-api";
 import { Button, Nav, NavLink } from "@vamsa/ui";
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { validateSession } from "~/server/auth.functions";
 import { signOut } from "~/lib/auth-client";
 import { LanguageSwitcher } from "~/components/layout/language-switcher";
 import { OIDCProfileClaimModal } from "~/components/auth/oidc-profile-claim-modal";
 import { RouteError } from "~/components/error";
 import { CommandPalette } from "~/components/search/command-palette";
 
+const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
+
+// Inline server function to check authentication
+// This avoids the bundler circular dependency that occurs when importing from auth.functions.ts
+const checkAuthInline = createServerFn({ method: "GET" }).handler(async () => {
+  try {
+    const cookie = getCookie(BETTER_AUTH_COOKIE_NAME);
+    const user = await betterAuthGetSessionWithUserFromCookie(
+      cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
+    );
+
+    if (!user) {
+      return { valid: false, user: null };
+    }
+
+    return { valid: true, user };
+  } catch {
+    return { valid: false, user: null };
+  }
+});
+
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
-    const result = await validateSession();
+    const result = await checkAuthInline();
     if (!result.valid) {
       throw redirect({ to: "/login" });
     }

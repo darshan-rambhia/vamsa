@@ -15,7 +15,7 @@ if [ -f "$PROJECT_ROOT/.env" ]; then
 fi
 
 # Start services
-docker-compose -f "$DOCKER_DIR/docker-compose.observability.yml" up -d
+docker-compose -f "$DOCKER_DIR/observability/docker-compose.yml" up -d
 
 echo ""
 echo "Waiting for services to be healthy..."
@@ -24,7 +24,7 @@ echo "Waiting for services to be healthy..."
 timeout=90
 elapsed=0
 while [ $elapsed -lt $timeout ]; do
-    healthy_count=$(docker-compose -f "$DOCKER_DIR/docker-compose.observability.yml" ps 2>/dev/null | grep -c "(healthy)" || true)
+    healthy_count=$(docker-compose -f "$DOCKER_DIR/observability/docker-compose.yml" ps 2>/dev/null | grep -c "(healthy)" || true)
     healthy_count=${healthy_count:-0}
 
     if [ "$healthy_count" -ge 3 ]; then
@@ -46,9 +46,9 @@ echo "  Alertmanager:    http://localhost:9093"
 echo "  OTEL Collector:  http://localhost:4318 (HTTP) / localhost:4317 (gRPC)"
 echo ""
 echo "Commands:"
-echo "  Check status:    docker-compose -f docker/docker-compose.observability.yml ps"
-echo "  View logs:       docker-compose -f docker/docker-compose.observability.yml logs -f"
-echo "  Stop stack:      docker-compose -f docker/docker-compose.observability.yml down"
+echo "  Check status:    docker-compose -f docker/observability/docker-compose.yml ps"
+echo "  View logs:       docker-compose -f docker/observability/docker-compose.yml logs -f"
+echo "  Stop stack:      docker-compose -f docker/observability/docker-compose.yml down"
 echo "  Test alerts:     ./scripts/test-alerts.sh"
 echo ""
 echo "To connect your app, set:"

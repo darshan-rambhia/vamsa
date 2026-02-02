@@ -8,14 +8,17 @@
  */
 
 import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
+// Import directly from specific modules to avoid pulling in media module (which imports sharp)
 import {
   betterAuthChangePassword,
   betterAuthGetSessionWithUserFromCookie,
   betterAuthSignOut,
-  claimProfileData,
   getBetterAuthProviders,
+} from "@vamsa/lib/server/business/auth-better-api";
+import {
+  claimProfileData,
   getUnclaimedProfilesData,
-} from "@vamsa/lib/server/business";
+} from "@vamsa/lib/server/business/auth";
 import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
 import { loggers } from "@vamsa/lib/logger";
 import { checkRateLimit, getClientIP } from "./middleware/rate-limiter";

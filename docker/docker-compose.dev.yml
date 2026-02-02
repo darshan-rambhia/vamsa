@@ -1,13 +1,21 @@
-# Development-only Docker Compose
-# WARNING: Contains default credentials - DO NOT USE IN PRODUCTION
-# For production, use docker-compose.yml which requires secure credentials via .env
+# Development Docker Compose
+# Quick local development with default credentials
+#
+# Usage:
+#   docker compose -f docker/docker-compose.dev.yml up        # Start db only
+#   docker compose -f docker/docker-compose.dev.yml up -d     # Start in background
+#   docker compose -f docker/docker-compose.dev.yml --profile app up  # Start db + app
+#
+# WARNING: Uses default credentials - DO NOT USE IN PRODUCTION
+
 name: vamsa-dev
+
 services:
-  postgres:
-    image: postgres:18-alpine
+  # PostgreSQL for local development
+  db:
+    image: postgres:17-alpine
+    container_name: vamsa-dev-db
     environment:
-      # Default credentials for local development ONLY
-      # Production deployments MUST use docker-compose.yml with secure credentials
       POSTGRES_USER: vamsa
       POSTGRES_PASSWORD: vamsa
       POSTGRES_DB: vamsa
@@ -22,5 +30,32 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # Vamsa Application (optional - use profile to include)
+  # Useful for testing production builds locally
+  app:
+    profiles: ["app"]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: vamsa-dev-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      DATABASE_URL: "postgresql://vamsa:vamsa@db:5432/vamsa"
+      BETTER_AUTH_SECRET: "dev-secret-at-least-32-characters-long"
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
 volumes:
   postgres_dev_data:
+    name: vamsa-dev-postgres-data

@@ -1,11 +1,19 @@
 # Multi-stage Dockerfile for Vamsa
 #
-# For environments with corporate proxies (Zscaler), see DOCKER.md for workarounds.
+# Build args:
+#   SKIP_SSL_VERIFY=true  - Skip SSL verification (for corporate proxies like Zscaler)
+#
+# Example:
+#   docker build --build-arg SKIP_SSL_VERIFY=true -f docker/Dockerfile -t vamsa .
 
 # =============================================================================
 # Stage 1: Build
 # =============================================================================
 FROM oven/bun:1-alpine AS builder
+
+# Build arg to skip SSL verification (for corporate proxies)
+ARG SKIP_SSL_VERIFY
+ENV NODE_TLS_REJECT_UNAUTHORIZED=${SKIP_SSL_VERIFY:+0}
 
 WORKDIR /app
 
@@ -36,6 +44,10 @@ RUN bun run build
 # Stage 2: Production dependencies
 # =============================================================================
 FROM oven/bun:1-alpine AS prod-deps
+
+# Build arg to skip SSL verification (for corporate proxies)
+ARG SKIP_SSL_VERIFY
+ENV NODE_TLS_REJECT_UNAUTHORIZED=${SKIP_SSL_VERIFY:+0}
 
 WORKDIR /app
 
