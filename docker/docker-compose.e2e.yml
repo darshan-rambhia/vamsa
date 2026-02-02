@@ -58,10 +58,10 @@ services:
           "CMD-SHELL",
           "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1",
         ]
-      interval: 5s
+      interval: 2s
       timeout: 10s
-      retries: 12
-      start_period: 10s
+      retries: 30
+      start_period: 5s
     expose:
       - "3000"
 
@@ -106,6 +106,8 @@ services:
       seed:
         condition: service_completed_successfully
     environment:
+      # Docker detection for Playwright config
+      IN_DOCKER: "true"
       # Point tests at the app container
       BASE_URL: http://vamsa-web:3000
       # Playwright configuration
