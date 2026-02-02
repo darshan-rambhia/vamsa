@@ -1,48 +1,23 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { existsSync, readFileSync } from "node:fs";
+import { config } from "dotenv";
 import { defineConfig, devices } from "@playwright/test";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load environment variables from .env files manually (dotenv might not be available in all contexts)
-function loadEnvFile(filePath: string) {
-  if (!existsSync(filePath)) return;
-  try {
-    const envContent = readFileSync(filePath, "utf-8");
-    const lines = envContent.split("\n");
-    for (const line of lines) {
-      const [key, ...valueParts] = line.split("=");
-      const trimmedKey = key?.trim();
-      if (
-        trimmedKey &&
-        !trimmedKey.startsWith("#") &&
-        !process.env[trimmedKey]
-      ) {
-        const value = valueParts
-          .join("=")
-          .trim()
-          .replaceAll(/(^["'])|(["']$)/g, "");
-        process.env[trimmedKey] = value;
-      }
-    }
-  } catch {
-    // Silently ignore env file loading errors (file may not exist or be readable)
-  }
-}
+// Load environment variables from .env files (monorepo root)
+// Order: .env (base) -> .env.local (user overrides) -> .env.test (test overrides)
+config({ path: path.resolve(__dirname, "../../.env") });
+config({ path: path.resolve(__dirname, "../../.env.local") });
+// .env.test uses override:true to ensure test values take precedence
+config({ path: path.resolve(__dirname, "../../.env.test"), override: true });
 
-// Load environment variables from .env (monorepo root)
-loadEnvFile(path.resolve(__dirname, "../../.env"));
-
-// Load environment variables from .env.local for tests (overrides .env)
-loadEnvFile(path.resolve(__dirname, "../../.env.local"));
-
-// In Docker, BASE_URL points to the app container (http://app:3000)
+// In Docker, IN_DOCKER=true is set by docker-compose
 // Locally, we start the server ourselves on localhost
+const isDocker = process.env.IN_DOCKER === "true";
 const baseURL =
   process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
-const isDocker = !!process.env.BASE_URL; // If BASE_URL is set, we're in Docker
 
 // Determine if we should show server logs
 const shouldShowServerLogs = process.env.PLAYWRIGHT_LOGS === "true";
@@ -60,12 +35,13 @@ const webServerConfig = isDocker
       cwd: __dirname,
       stdout: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
       stderr: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
-      env: {
-        ...process.env,
-        DATABASE_URL:
-          "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test",
-        E2E_TESTING: "true",
-      },
+      // Test env vars loaded from .env.test
+      // Filter out undefined values to satisfy Playwright's type requirements
+      env: Object.fromEntries(
+        Object.entries(process.env).filter(
+          (entry): entry is [string, string] => entry[1] !== undefined
+        )
+      ),
     };
 
 /**
