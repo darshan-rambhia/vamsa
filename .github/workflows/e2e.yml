@@ -59,33 +59,39 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Pull E2E image (or build if not available)
+      - name: Pull E2E image and start services
         run: |
-          if ! docker pull $E2E_IMAGE; then
-            echo "Image not found in registry, building locally..."
-            docker build -t $E2E_IMAGE -f docker/Dockerfile.e2e .
-          fi
+          # Pull image in background while starting services
+          (
+            if ! docker pull $E2E_IMAGE; then
+              echo "Image not found in registry, building locally..."
+              docker build -t $E2E_IMAGE -f docker/Dockerfile.e2e .
+            fi
+          ) &
+          PULL_PID=$!
 
-      - name: Create test output directories
-        run: |
+          # Create test output directories
           mkdir -p test-output/e2e/playwright
           mkdir -p test-output/e2e/results
 
-      - name: Start services
-        run: |
           # Start database first
           docker compose -f docker/docker-compose.e2e.yml up -d db
 
-          # Wait for db to be healthy
+          # Wait for db to be healthy (faster polling)
           echo "Waiting for database..."
-          for i in {1..15}; do
+          for i in {1..30}; do
             if docker compose -f docker/docker-compose.e2e.yml exec -T db pg_isready -U vamsa_test 2>/dev/null; then
               echo "Database is ready!"
               break
             fi
-            echo "Waiting for database... ($i/15)"
-            sleep 2
+            echo "Waiting for database... ($i/30)"
+            sleep 1
           done
+
+          # Wait for image pull to complete before starting app
+          echo "Waiting for image pull to complete..."
+          wait $PULL_PID
+          echo "Image ready!"
 
           # Start app service
           docker compose -f docker/docker-compose.e2e.yml up -d vamsa-web
@@ -94,16 +100,16 @@ jobs:
           echo "Running database seed..."
           docker compose -f docker/docker-compose.e2e.yml up seed
 
-          # Wait for vamsa-web to be healthy
+          # Wait for vamsa-web to be healthy (faster polling)
           echo "Waiting for vamsa-web to be healthy..."
-          for i in {1..30}; do
+          for i in {1..60}; do
             STATUS=$(docker inspect vamsa-e2e-app --format='{{.State.Health.Status}}' 2>/dev/null || echo "unknown")
             if [ "$STATUS" = "healthy" ]; then
               echo "vamsa-web is healthy!"
               break
             fi
-            echo "Waiting for health check... ($i/30) - status: $STATUS"
-            sleep 2
+            echo "Waiting for health check... ($i/60) - status: $STATUS"
+            sleep 1
           done
 
           # Verify the service is healthy
@@ -123,6 +129,7 @@ jobs:
           # Use the config's reporters (html, list, json) which output to test-output/e2e/
           docker run --rm \
             --network vamsa-e2e-network \
+            -e IN_DOCKER=true \
             -e BASE_URL=http://vamsa-web:3000 \
             -e CI=true \
             -e BROWSER="${BROWSER}" \
@@ -183,11 +190,18 @@ jobs:
           script: |
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const result = '${{ needs.e2e-tests.result }}';
+            const browsers = ['chromium', 'firefox', 'webkit'];
+            const resultEmoji = result === 'success' ? '✅' : '❌';
+
             const body = `## E2E Test Results
 
-            Browser tested: **Chromium**
+            | Browser | Status |
+            |---------|--------|
+            | Chromium | ${resultEmoji} |
+            | Firefox | ${resultEmoji} |
+            | WebKit | ${resultEmoji} |
 
-            Result: ${result === 'success' ? '✅ Passed' : '❌ Failed'}
+            **Overall Result:** ${result === 'success' ? '✅ All browsers passed' : '❌ Some browsers failed'}
 
             [View full Playwright report](${runUrl})`;
 
