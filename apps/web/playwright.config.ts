@@ -93,7 +93,9 @@ export default defineConfig({
     timeout: 10 * 1000,
   },
   retries: 2,
-  workers: 15,
+  // Use fewer workers in CI to prevent browser crashes from memory pressure
+  // Docker containers have limited resources; 15 parallel browsers causes OOM
+  workers: process.env.CI ? 4 : 15,
   fullyParallel: true,
   outputDir: "../../test-output/e2e/results/",
   reporter: [

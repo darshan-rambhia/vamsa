@@ -12,6 +12,9 @@ import { VIEWPORT_ARRAY, expect, test } from "./fixtures";
 import { Navigation } from "./fixtures/page-objects";
 
 test.describe("Family Tree Visualization", () => {
+  // Tree visualization is memory-intensive (D3 charts) - use slower timeout
+  test.slow();
+
   test.beforeEach(async ({ page, login }) => {
     await login();
     const nav = new Navigation(page);

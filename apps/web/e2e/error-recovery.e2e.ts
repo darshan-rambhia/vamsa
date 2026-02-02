@@ -137,7 +137,26 @@ test.describe("Feature: Error Recovery", () => {
         "user fills first name but submits without last name",
         async () => {
           const firstName = "TestRecovery" + Date.now();
-          await page.getByTestId("person-form-firstName").fill(firstName);
+          const firstNameInput = page.getByTestId("person-form-firstName");
+
+          // Wait for React hydration - input must be editable and respond to input
+          await expect(firstNameInput).toBeEditable({ timeout: 5000 });
+          await page.waitForTimeout(500); // Allow React to fully hydrate
+
+          // Use click + fill + verify pattern for React controlled inputs
+          await firstNameInput.click();
+          await firstNameInput.fill(firstName);
+          await page.waitForTimeout(100);
+
+          // Verify the value was accepted by React
+          const value = await firstNameInput.inputValue();
+          if (!value.includes("TestRecovery")) {
+            // Retry with type() if fill() didn't work
+            await firstNameInput.click();
+            await firstNameInput.clear();
+            await firstNameInput.type(firstName, { delay: 30 });
+          }
+
           await page.getByTestId("person-form-submit").click();
         }
       );
@@ -630,8 +649,31 @@ test.describe("Feature: Error Recovery", () => {
       });
 
       await bdd.when("user fills in form data", async () => {
-        await page.getByTestId("person-form-firstName").fill(testFirstName);
-        await page.getByTestId("person-form-lastName").fill("PersistenceTest");
+        const firstNameInput = page.getByTestId("person-form-firstName");
+        const lastNameInput = page.getByTestId("person-form-lastName");
+
+        // Wait for React hydration - inputs must be editable
+        await expect(firstNameInput).toBeEditable({ timeout: 5000 });
+        await expect(lastNameInput).toBeEditable({ timeout: 5000 });
+        await page.waitForTimeout(500); // Allow React to fully hydrate
+
+        // Use click + fill + verify pattern for React controlled inputs
+        await firstNameInput.click();
+        await firstNameInput.fill(testFirstName);
+        await page.waitForTimeout(100);
+
+        await lastNameInput.click();
+        await lastNameInput.fill("PersistenceTest");
+        await page.waitForTimeout(100);
+
+        // Verify values were accepted
+        const firstName = await firstNameInput.inputValue();
+        if (!firstName.includes("DataPersist")) {
+          // Retry with type() if fill() didn't work
+          await firstNameInput.click();
+          await firstNameInput.clear();
+          await firstNameInput.type(testFirstName, { delay: 30 });
+        }
       });
 
       await bdd.then("form data is still present", async () => {

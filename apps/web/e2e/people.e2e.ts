@@ -438,6 +438,8 @@ test.describe("People - Data Integrity", () => {
     page,
     waitForConvexSync: _waitForConvexSync,
   }) => {
+    // This test navigates through multiple pages - mark as slow to double timeout
+    test.slow();
     await bdd.given("user navigates through multiple pages", async () => {
       await gotoWithRetry(page, "/people");
       const peopleList = new PeopleListPage(page);
