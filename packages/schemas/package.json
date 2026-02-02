@@ -19,7 +19,7 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@hono/zod-openapi": "^1.2.0",
+    "@hono/zod-openapi": "^1.2.1",
     "@vamsa/lib": "workspace:*",
     "zod": "^4.3.5",
     "zod-i18n-map": "^2.27.0"
