@@ -35,6 +35,8 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
     page,
     waitForConvexSync,
   }) => {
+    // Complex multi-step test: creates 2 persons, adds relationship, views tree - mark as slow
+    test.slow();
     const firstName1 = generateUniqueName("Parent");
     const lastName1 = "TestFamily";
     const firstName2 = generateUniqueName("Child");
@@ -352,6 +354,8 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
     page,
     waitForConvexSync,
   }) => {
+    // Complex workflow: creates person with details, searches - mark as slow
+    test.slow();
     const firstName = generateUniqueName("SearchTest");
     const lastName = "Person";
     const birthPlace = "Test City, Test Country";
@@ -524,6 +528,8 @@ test.describe("Integration Journey: Data Persistence Across Navigation", () => {
     page,
     waitForConvexSync,
   }) => {
+    // This test involves person creation plus multiple navigations - mark as slow to double timeout
+    test.slow();
     const firstName = generateUniqueName("PersistTest");
     const lastName = "DataCheck";
 
@@ -746,6 +752,8 @@ test.describe("Integration Journey: Full Feature Tour", () => {
   test("should navigate through key features without errors", async ({
     page,
   }) => {
+    // This test navigates through multiple pages - mark as slow to double timeout
+    test.slow();
     await bdd.given("user is logged in", async () => {
       await gotoWithRetry(page, "/people");
       await expect(page.locator("main")).toBeVisible({ timeout: 10000 });

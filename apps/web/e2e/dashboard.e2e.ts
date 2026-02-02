@@ -74,6 +74,8 @@ test.describe("Activity Feed", () => {
 
 test.describe("Navigation Flow", () => {
   test("navigates through all main pages", async ({ page }) => {
+    // This test navigates through multiple pages - mark as slow to double timeout
+    test.slow();
     const nav = new Navigation(page);
 
     await gotoWithRetry(page, "/people");
