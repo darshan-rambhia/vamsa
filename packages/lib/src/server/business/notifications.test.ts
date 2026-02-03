@@ -22,17 +22,7 @@ import {
   mockWithErr,
 } from "../../testing/shared-mocks";
 
-// Import after mocks are set up
-import {
-  getEmailNotificationPreferences,
-  notifyNewMemberJoined,
-  notifySuggestionCreated,
-  notifySuggestionUpdated,
-  sendBirthdayReminders,
-  updateEmailNotificationPreferences,
-} from "./notifications";
-
-// Mock logger module
+// Mock logger module BEFORE importing notifications
 mock.module("@vamsa/lib/logger", () => ({
   logger: mockLogger,
   loggers: mockLoggers,
@@ -95,6 +85,16 @@ mock.module("@vamsa/api", () => ({
   drizzleDb: mockDrizzleDb,
   drizzleSchema: mockDrizzleSchema,
 }));
+
+// Dynamic import AFTER mocks are set up
+const {
+  getEmailNotificationPreferences,
+  notifyNewMemberJoined,
+  notifySuggestionCreated,
+  notifySuggestionUpdated,
+  sendBirthdayReminders,
+  updateEmailNotificationPreferences,
+} = await import("./notifications");
 
 describe("notifications business logic", () => {
   beforeEach(() => {

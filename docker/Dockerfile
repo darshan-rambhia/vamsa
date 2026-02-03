@@ -59,7 +59,8 @@ COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/ui/package.json ./packages/ui/
 
 # Production dependencies only (excludes devDependencies)
-RUN bun install --production
+# --ignore-scripts skips lifecycle scripts like prepare (husky) which aren't needed in production
+RUN bun install --production --ignore-scripts
 
 # =============================================================================
 # Stage 3: Production runtime

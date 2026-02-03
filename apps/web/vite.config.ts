@@ -63,6 +63,11 @@ export default defineConfig({
         "react-native",
         // sharp is a native image processing library that must not be bundled
         "sharp",
+        // Node.js built-ins used by TanStack Start/Router SSR code
+        // Must be external to prevent client bundle from trying to include them
+        "node:stream",
+        "node:stream/web",
+        "node:async_hooks",
       ],
     },
   },
