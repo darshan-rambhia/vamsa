@@ -32,7 +32,7 @@ interface CreateInviteDialogProps {
 
 export function CreateInviteDialog({
   onInviteCreated,
-}: CreateInviteDialogProps) {
+}: Readonly<CreateInviteDialogProps>) {
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -102,7 +102,7 @@ export function CreateInviteDialog({
 
   const copyInviteLink = async () => {
     if (!success) return;
-    const url = `${window.location.origin}/invite/${success.token}`;
+    const url = `${globalThis.location.origin}/invite/${success.token}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch (err) {
@@ -169,7 +169,7 @@ export function CreateInviteDialog({
                   id="invite-link"
                   className="min-w-0 flex-1 truncate text-sm"
                 >
-                  {`${typeof window !== "undefined" ? window.location.origin : ""}/invite/${success.token}`}
+                  {`${globalThis.location.origin}/invite/${success.token}`}
                 </code>
                 <Button
                   type="button"

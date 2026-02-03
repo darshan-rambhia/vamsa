@@ -1,20 +1,16 @@
 /* istanbul ignore file */
 /**
- * Test Setup for Bun + jsdom
+ * Test Setup for Bun + happy-dom
  * Provides a DOM environment for React component testing
  */
-import { JSDOM } from "jsdom";
+import { Window } from "happy-dom";
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "bun:test";
 
-// Create a jsdom instance
-const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>", {
+// Create a happy-dom window instance
+const window = new Window({
   url: "http://localhost:3000",
-  pretendToBeVisual: true,
 });
-
-// Get the window and document
-const { window } = dom;
 
 // Register DOM globals that testing-library needs
 const globalAny = globalThis as Record<string, unknown>;
@@ -42,41 +38,14 @@ globalAny.FocusEvent = window.FocusEvent;
 globalAny.InputEvent = window.InputEvent;
 globalAny.MutationObserver = window.MutationObserver;
 globalAny.Range = window.Range;
-globalAny.getComputedStyle = window.getComputedStyle;
-globalAny.requestAnimationFrame = (callback: FrameRequestCallback) =>
-  window.requestAnimationFrame(callback);
-globalAny.cancelAnimationFrame = (id: number) =>
-  window.cancelAnimationFrame(id);
+globalAny.getComputedStyle = window.getComputedStyle.bind(window);
+globalAny.requestAnimationFrame = window.requestAnimationFrame.bind(window);
+globalAny.cancelAnimationFrame = window.cancelAnimationFrame.bind(window);
 globalAny.HTMLCollection = window.HTMLCollection;
 globalAny.NodeList = window.NodeList;
 globalAny.NodeFilter = window.NodeFilter;
-globalAny.ResizeObserver =
-  window.ResizeObserver ||
-  class ResizeObserver {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
-
-// Mock localStorage
-const localStorageMock = (() => {
-  let store: Record<string, string> = {};
-
-  return {
-    getItem: (key: string) => store[key] || null,
-    setItem: (key: string, value: string) => {
-      store[key] = value.toString();
-    },
-    removeItem: (key: string) => {
-      delete store[key];
-    },
-    clear: () => {
-      store = {};
-    },
-  };
-})();
-
-globalAny.localStorage = localStorageMock;
+globalAny.ResizeObserver = window.ResizeObserver;
+globalAny.localStorage = window.localStorage;
 
 // Cleanup after each test to avoid DOM pollution
 afterEach(() => {
