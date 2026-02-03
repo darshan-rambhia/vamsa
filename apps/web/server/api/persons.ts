@@ -1,7 +1,7 @@
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import {
+  cursorPaginatedResponseSchema,
   errorResponseSchema,
-  paginatedResponseSchema,
   personCreateSchema,
 } from "@vamsa/schemas";
 import {
@@ -12,6 +12,7 @@ import {
   updatePersonData as serverUpdatePerson,
 } from "@vamsa/lib/server/business";
 import { loggers } from "@vamsa/lib/logger";
+import { paginateQuery } from "@vamsa/lib/server";
 
 const log = loggers.api;
 
@@ -96,25 +97,27 @@ const personUpdateSchema = personCreateSchema.partial();
 
 /**
  * GET /api/v1/persons
- * List all persons with pagination and filtering
+ * List all persons with cursor-based pagination and filtering
  */
 const listPersonsRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["Persons"],
   summary: "List all persons",
-  description: "Get paginated list of persons with optional filtering",
+  description:
+    "Get paginated list of persons with cursor-based pagination and optional filtering",
   operationId: "listPersons",
   request: {
     query: z
       .object({
-        page: z.coerce.number().int().min(1).default(1).openapi({
-          description: "Page number (1-indexed)",
-          example: 1,
+        cursor: z.string().optional().openapi({
+          description:
+            "Cursor for the next page (from nextCursor in previous response)",
+          example: "cGVyc29uXzEwMA==",
         }),
-        limit: z.coerce.number().int().min(1).max(100).default(50).openapi({
+        limit: z.coerce.number().int().min(1).max(100).default(20).openapi({
           description: "Items per page (max 100)",
-          example: 50,
+          example: 20,
         }),
         search: z.string().optional().openapi({
           description: "Search term for name",
@@ -145,7 +148,7 @@ const listPersonsRoute = createRoute({
       description: "Persons list retrieved successfully",
       content: {
         "application/json": {
-          schema: paginatedResponseSchema(personSchema),
+          schema: cursorPaginatedResponseSchema(personSchema),
         },
       },
     },
@@ -170,37 +173,38 @@ const listPersonsRoute = createRoute({
 
 personsRouter.openapi(listPersonsRoute, async (c) => {
   try {
-    const { page, limit, search, sortBy, sortOrder, isLiving } =
+    const { cursor, limit, search, sortBy, sortOrder, isLiving } =
       c.req.valid("query");
 
-    if (page < 1 || limit < 1 || limit > 100) {
+    if (limit < 1 || limit > 100) {
       return c.json(
         {
           error: "Invalid pagination parameters",
-          details: "page must be >= 1, limit must be between 1 and 100",
+          details: "limit must be between 1 and 100",
         },
         { status: 400 }
       );
     }
 
-    const result = await serverListPersons({
-      page,
-      limit,
+    // Fetch all matching persons with filters (in production, this would use database query)
+    const allPersons = await serverListPersons({
+      page: 1,
+      limit: 10000, // Fetch all for cursor pagination
       search,
       sortBy: sortBy,
       sortOrder: sortOrder,
       isLiving,
     });
 
-    const response = {
-      ...result,
-      pagination: {
-        ...result.pagination,
-        pages: result.pagination.totalPages,
-      },
-    };
+    // Apply cursor-based pagination
+    const paginated = paginateQuery(
+      allPersons.items,
+      limit,
+      cursor,
+      (item) => item.id
+    );
 
-    return c.json(response, { status: 200 });
+    return c.json(paginated, { status: 200 });
   } catch (error) {
     log.withErr(error).msg("Error listing persons");
     return c.json({ error: "Failed to list persons" }, { status: 500 });

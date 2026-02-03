@@ -4,17 +4,7 @@
  * These tests verify that slow query logging and statistics work correctly.
  */
 
-import { beforeEach, describe, expect, mock, test } from "bun:test";
-import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
-} from "../../tests/setup/shared-mocks";
-
+import { beforeEach, describe, expect, test } from "bun:test";
 import {
   SLOW_QUERY_LOG_THRESHOLD_MS,
   clearSlowQueries,
@@ -24,18 +14,6 @@ import {
   sanitizeQueryParams,
 } from "./slow-query-logger";
 import type { SlowQuery } from "./slow-query-logger";
-
-// Mock the logger to prevent log output during tests
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  log: mockLog,
-  loggers: mockLoggers,
-  createLogger: () => mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
 
 describe("Slow Query Logger", () => {
   beforeEach(() => {

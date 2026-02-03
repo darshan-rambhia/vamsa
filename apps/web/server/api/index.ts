@@ -6,6 +6,7 @@ import personsRouter from "./persons";
 import relationshipsRouter from "./relationships";
 import calendarRouter from "./calendar";
 import metricsRouter from "./metrics";
+import batchRouter from "./batch";
 
 const log = loggers.api;
 
@@ -79,6 +80,10 @@ apiV1.doc("/openapi.json", {
       description: "Relationship management between persons",
     },
     {
+      name: "Batch",
+      description: "Batch operations for bulk create, update, and delete",
+    },
+    {
       name: "Calendar",
       description: "Calendar feeds (RSS, iCal formats)",
     },
@@ -105,6 +110,7 @@ apiV1.get("/", (c) => {
         auth: "/api/v1/auth",
         persons: "/api/v1/persons",
         relationships: "/api/v1/relationships",
+        batch: "/api/v1/batch",
         calendar: "/api/v1/calendar",
         metrics: "/api/v1/metrics",
       },
@@ -124,6 +130,7 @@ apiV1.get("/", (c) => {
 apiV1.route("/auth", authRouter);
 apiV1.route("/persons", personsRouter);
 apiV1.route("/relationships", relationshipsRouter);
+apiV1.route("/batch", batchRouter);
 apiV1.route("/calendar", calendarRouter);
 apiV1.route("/metrics", metricsRouter);
 
@@ -178,5 +185,20 @@ apiV1.onError((err, c) => {
     { status: 500 }
   );
 });
+
+/**
+ * AppType for Hono RPC client
+ *
+ * This type export enables type-safe API clients using hono/client:
+ *
+ * ```ts
+ * import { hc } from 'hono/client';
+ * import type { AppType } from '@vamsa/web/server/api';
+ *
+ * const client = hc<AppType>('https://api.vamsa.app/api/v1');
+ * const persons = await client.persons.$get();
+ * ```
+ */
+export type AppType = typeof apiV1;
 
 export default apiV1;

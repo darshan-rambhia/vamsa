@@ -7,7 +7,37 @@ export const sortOrderEnum = z.enum(["asc", "desc"]);
 export type SortOrder = z.infer<typeof sortOrderEnum>;
 
 /**
- * Base pagination input schema
+ * Cursor-based pagination input schema
+ * - cursor: optional base64-encoded cursor for the next page
+ * - limit: items per page (max 100)
+ */
+export const cursorPaginationSchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.number().int().min(1).max(100).default(20),
+});
+
+export type CursorPaginationInput = z.infer<typeof cursorPaginationSchema>;
+
+/**
+ * Cursor-based pagination response
+ */
+export const cursorPaginatedResponseSchema = <T extends z.ZodType>(
+  itemSchema: T
+) =>
+  z.object({
+    items: z.array(itemSchema),
+    nextCursor: z.string().nullable(),
+    hasMore: z.boolean(),
+  });
+
+export type CursorPaginatedResponse<T> = {
+  items: Array<T>;
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
+/**
+ * Base pagination input schema (DEPRECATED - use cursorPaginationSchema)
  * - page: 1-indexed page number
  * - limit: items per page (max 100)
  * - sortOrder: ascending or descending
