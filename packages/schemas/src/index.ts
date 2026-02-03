@@ -174,6 +174,8 @@ export {
   personListInputSchema,
   suggestionListInputSchema,
   auditLogListInputSchema,
+  cursorPaginationSchema,
+  cursorPaginatedResponseSchema,
   type SortOrder,
   type PaginationInput,
   type PaginationWithSearchInput,
@@ -182,6 +184,8 @@ export {
   type PersonListInput,
   type SuggestionListInput,
   type AuditLogListInput,
+  type CursorPaginationInput,
+  type CursorPaginatedResponse,
 } from "./pagination";
 
 // Response schemas

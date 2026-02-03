@@ -13,8 +13,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  FormField,
   Input,
-  Label,
   ThemeToggle,
 } from "@vamsa/ui";
 import { signIn } from "~/lib/auth-client";
@@ -73,7 +73,10 @@ function LoginComponent() {
       </div>
 
       {/* Login card */}
-      <Card className="animate-fade-in relative w-full max-w-md">
+      <Card
+        className="animate-fade-in relative w-full max-w-md"
+        id="main-content"
+      >
         <CardHeader className="space-y-4 text-center">
           {/* Logo */}
           <div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
@@ -158,10 +161,8 @@ function LoginComponent() {
             )}
 
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
+              <FormField label="Email address" required>
                 <Input
-                  id="email"
                   name="email"
                   type="email"
                   autoComplete="email"
@@ -171,12 +172,10 @@ function LoginComponent() {
                   placeholder="you@example.com"
                   data-testid="login-email-input"
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+              <FormField label="Password" required>
                 <Input
-                  id="password"
                   name="password"
                   type="password"
                   autoComplete="current-password"
@@ -186,7 +185,7 @@ function LoginComponent() {
                   placeholder="Enter your password"
                   data-testid="login-password-input"
                 />
-              </div>
+              </FormField>
             </div>
 
             <Button

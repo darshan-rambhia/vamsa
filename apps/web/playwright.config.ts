@@ -35,13 +35,17 @@ const webServerConfig = isDocker
       cwd: __dirname,
       stdout: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
       stderr: shouldShowServerLogs ? ("pipe" as const) : ("ignore" as const),
-      // Test env vars loaded from .env.test
+      // Test env vars loaded from .env.test + E2E flag
       // Filter out undefined values to satisfy Playwright's type requirements
-      env: Object.fromEntries(
-        Object.entries(process.env).filter(
-          (entry): entry is [string, string] => entry[1] !== undefined
-        )
-      ),
+      env: {
+        ...Object.fromEntries(
+          Object.entries(process.env).filter(
+            (entry): entry is [string, string] => entry[1] !== undefined
+          )
+        ),
+        // Set E2E_TESTING=true to disable rate limiting during E2E tests
+        E2E_TESTING: "true",
+      },
     };
 
 // Shared configuration for browsers that need extended timeouts (Firefox, WebKit)
@@ -86,6 +90,9 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 15,
   fullyParallel: true,
   outputDir: "../../test-output/e2e/results/",
+  snapshotDir: path.join(__dirname, "e2e/visual/__snapshots__"),
+  snapshotPathTemplate:
+    "{snapshotDir}/{testFileDir}/{testFileName}-{platform}{ext}",
   reporter: [
     ["html", { outputFolder: "../../test-output/e2e/playwright/" }],
     ["list"],
@@ -150,6 +157,44 @@ export default defineConfig({
         },
       },
       ...EXTENDED_PROJECT_CONFIG,
+    },
+    // Visual regression tests
+    {
+      name: "visual",
+      testMatch: "**/visual/**/*.spec.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+        // Disable HSTS/security features that redirect HTTP to HTTPS in Docker
+        launchOptions: {
+          args: [
+            "--disable-web-security",
+            "--allow-running-insecure-content",
+            "--disable-features=IsolateOrigins,site-per-process",
+          ],
+        },
+        // Consistent viewport for visual tests
+        viewport: { width: 1280, height: 720 },
+      },
+    },
+    // Performance tests
+    {
+      name: "performance",
+      testMatch: "**/performance/**/*.spec.ts",
+      use: {
+        ...devices["Desktop Chrome"],
+        // Disable HSTS/security features that redirect HTTP to HTTPS in Docker
+        launchOptions: {
+          args: [
+            "--disable-web-security",
+            "--allow-running-insecure-content",
+            "--disable-features=IsolateOrigins,site-per-process",
+          ],
+        },
+        // Standard viewport for consistent performance measurements
+        viewport: { width: 1280, height: 720 },
+      },
+      // Relaxed timeout for performance tests (more time for metrics collection)
+      timeout: 45 * 1000,
     },
   ],
 });

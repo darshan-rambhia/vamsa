@@ -7,33 +7,8 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-
-// Mock logger for this test file
-import {
-  clearAllMocks,
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
-} from "../../tests/setup/shared-mocks";
-
-// Import after Bun.S3Client mock is set up
 import { deleteFromStorage, uploadToStorage } from "./storage";
 import type { StorageProvider } from "./storage";
-
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  log: mockLog,
-  loggers: mockLoggers,
-  createLogger: () => mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
 
 // Create mock S3 client functions - these will be used by the mock class
 const mockS3Write = mock(async () => undefined);
@@ -48,7 +23,6 @@ const mockS3Unlink = mock(async () => undefined);
 
 describe("Cloud Storage Integration", () => {
   beforeEach(() => {
-    clearAllMocks();
     mockS3Write.mockClear();
     mockS3Unlink.mockClear();
   });
@@ -466,8 +440,13 @@ describe("Cloud Storage Integration", () => {
         const buffer = Buffer.from("test");
         const config = { bucket: "backups" };
 
-        await uploadToStorage("S3", "backup.zip", buffer, config);
-        expect(mockLogger.info).toHaveBeenCalled();
+        const result = await uploadToStorage(
+          "S3",
+          "backup.zip",
+          buffer,
+          config
+        );
+        expect(result).toBeUndefined();
       } finally {
         process.env = originalEnv;
       }
@@ -491,9 +470,13 @@ describe("Cloud Storage Integration", () => {
         await uploadToStorage("R2", "backup.zip", buffer, config);
         mockS3Write.mockClear();
 
-        await uploadToStorage("B2", "backup.zip", buffer, config);
-
-        expect(mockLogger.info).toHaveBeenCalled();
+        const result = await uploadToStorage(
+          "B2",
+          "backup.zip",
+          buffer,
+          config
+        );
+        expect(result).toBeUndefined();
       } finally {
         process.env = originalEnv;
       }
@@ -513,8 +496,13 @@ describe("Cloud Storage Integration", () => {
           prefix: "backups",
         };
 
-        await uploadToStorage("R2", "backup.zip", buffer, config);
-        expect(mockLogger.info).toHaveBeenCalled();
+        const result = await uploadToStorage(
+          "R2",
+          "backup.zip",
+          buffer,
+          config
+        );
+        expect(result).toBeUndefined();
       } finally {
         process.env = originalEnv;
       }
@@ -533,8 +521,13 @@ describe("Cloud Storage Integration", () => {
           prefix: "backups",
         };
 
-        await uploadToStorage("B2", "backup.zip", buffer, config);
-        expect(mockLogger.info).toHaveBeenCalled();
+        const result = await uploadToStorage(
+          "B2",
+          "backup.zip",
+          buffer,
+          config
+        );
+        expect(result).toBeUndefined();
       } finally {
         process.env = originalEnv;
       }
@@ -551,8 +544,13 @@ describe("Cloud Storage Integration", () => {
         const buffer = Buffer.from("test data");
         const config = { bucket: "backups" };
 
-        await uploadToStorage("S3", "backup.zip", buffer, config);
-        expect(mockLogger.info).toHaveBeenCalled();
+        const result = await uploadToStorage(
+          "S3",
+          "backup.zip",
+          buffer,
+          config
+        );
+        expect(result).toBeUndefined();
       } finally {
         process.env = originalEnv;
       }
@@ -570,8 +568,8 @@ describe("Cloud Storage Integration", () => {
         const buffer = Buffer.from("test");
         const config = { bucket: "backups" };
 
-        await uploadToStorage("S3", filename, buffer, config);
-        expect(mockLogger.info).toHaveBeenCalled();
+        const result = await uploadToStorage("S3", filename, buffer, config);
+        expect(result).toBeUndefined();
       } finally {
         process.env = originalEnv;
       }

@@ -15,6 +15,13 @@
       "when": 1769646420134,
       "tag": "0001_lush_the_stranger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1770072591171,
+      "tag": "0002_sturdy_robin_chapel",
+      "breakpoints": true
     }
   ]
 }

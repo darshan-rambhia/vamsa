@@ -5,9 +5,10 @@ preload = ["./tests/setup/test-logger-mock.ts", "./tests/setup/jsdom-setup.ts"]
 
 coverage = true
 
-# Exclude integration tests from default test run - they require Docker
+# Exclude integration and e2e tests from default test run
 # Run integration tests separately with: bun test tests/integration/
-exclude = ["tests/integration/**"]
+# Run e2e tests with: bun test:e2e (uses Playwright)
+exclude = ["tests/integration/**", "e2e/**"]
 
 # Exclude external packages and test files from coverage
 # Each package should only report coverage for its own code

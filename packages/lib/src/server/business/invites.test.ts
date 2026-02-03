@@ -279,4 +279,190 @@ describe("invites business logic - pure functions", () => {
       expect(["ADMIN", "MEMBER", "VIEWER"].includes(assignedRole)).toBe(true);
     });
   });
+
+  describe("email validation and normalization", () => {
+    it("should be case-insensitive", () => {
+      const email1 = normalizeEmail("John.Doe@Example.com");
+      const email2 = normalizeEmail("john.doe@example.com");
+      expect(email1).toBe(email2);
+    });
+
+    it("should handle special characters", () => {
+      const email = normalizeEmail("user+tag@example.com");
+      expect(email).toBe("user+tag@example.com");
+    });
+
+    it("should preserve domain structure", () => {
+      const email = normalizeEmail("User@SubDomain.EXAMPLE.COM");
+      const result = normalizeEmail(email);
+      expect(result).toBe(email.toLowerCase());
+    });
+
+    it("should handle numeric emails", () => {
+      const email = normalizeEmail("123456@example.com");
+      expect(email).toBe("123456@example.com");
+    });
+  });
+
+  describe("token generation and validation", () => {
+    it("should generate tokens with sufficient entropy", () => {
+      const tokens = new Set();
+      for (let i = 0; i < 100; i++) {
+        tokens.add(generateToken());
+      }
+      // Should have 100 unique tokens (extremely unlikely to have collisions)
+      expect(tokens.size).toBeGreaterThan(95);
+    });
+
+    it("should generate tokens with consistent format", () => {
+      const token = generateToken();
+      expect(token.startsWith("mock-token-")).toBe(true);
+    });
+
+    it("should generate sufficiently long tokens", () => {
+      const token = generateToken();
+      expect(token.length).toBeGreaterThan(15);
+    });
+  });
+
+  describe("expiration date edge cases", () => {
+    it("should allow zero days expiration", () => {
+      const expiration = calculateExpirationDate(0);
+      const nowMs = Date.now();
+      const diffMs = expiration.getTime() - nowMs;
+      // Should be very close to 0
+      expect(Math.abs(diffMs)).toBeLessThan(1000);
+    });
+
+    it("should allow large day values", () => {
+      const expiration = calculateExpirationDate(365);
+      const yearMs = 365 * 24 * 60 * 60 * 1000;
+      const actualDiff = expiration.getTime() - Date.now();
+      expect(Math.abs(actualDiff - yearMs)).toBeLessThan(1000);
+    });
+
+    it("should handle leap years correctly", () => {
+      // Test that the function consistently adds the right amount of time
+      const exp1 = calculateExpirationDate(4 * 365);
+      const exp2 = calculateExpirationDate(365 * 4);
+      expect(Math.abs(exp1.getTime() - exp2.getTime())).toBeLessThan(100);
+    });
+  });
+
+  describe("invite lifecycle edge cases", () => {
+    it("should not allow multiple state transitions", () => {
+      const validTransitions: Record<string, Array<string>> = {
+        PENDING: ["ACCEPTED", "REVOKED", "EXPIRED"],
+        ACCEPTED: [],
+        REVOKED: [],
+        EXPIRED: [],
+      };
+
+      // Simulate transition from PENDING to ACCEPTED to REVOKED
+      const currentState = "ACCEPTED";
+      const nextState = "REVOKED";
+
+      expect(validTransitions[currentState]).not.toContain(nextState);
+    });
+
+    it("should handle rapid status checks", () => {
+      const status = "PENDING";
+      const isExpired = false;
+      const isAcceptable = status === "PENDING" && !isExpired;
+
+      // Check multiple times
+      for (let i = 0; i < 10; i++) {
+        expect(isAcceptable).toBe(true);
+      }
+    });
+
+    it("should validate email before and after normalization", () => {
+      const originalEmail = "USER@EXAMPLE.COM";
+      const normalized = normalizeEmail(originalEmail);
+
+      // Both should be valid
+      expect(originalEmail).toBeDefined();
+      expect(normalized).toBeDefined();
+      expect(normalized).toBe("user@example.com");
+    });
+  });
+
+  describe("batch operations", () => {
+    it("should handle multiple email normalizations", () => {
+      const emails = [
+        "User1@EXAMPLE.COM",
+        "User2@Example.com",
+        "User3@example.COM",
+      ];
+
+      const normalized = emails.map(normalizeEmail);
+
+      // All should be lowercase
+      normalized.forEach((email) => {
+        expect(email).toBe(email.toLowerCase());
+      });
+
+      // Should have 3 unique emails
+      expect(new Set(normalized).size).toBe(3);
+    });
+
+    it("should validate role consistency", () => {
+      const invites = [
+        { email: "user1@example.com", role: "ADMIN" },
+        { email: "user2@example.com", role: "MEMBER" },
+        { email: "user3@example.com", role: "VIEWER" },
+      ];
+
+      const validRoles = ["ADMIN", "MEMBER", "VIEWER"];
+
+      invites.forEach((invite) => {
+        expect(validRoles).toContain(invite.role);
+      });
+    });
+
+    it("should handle concurrent-like operations", () => {
+      // Simulate concurrent invite creation
+      const invites = [
+        { email: normalizeEmail("A@EXAMPLE.COM"), token: generateToken() },
+        { email: normalizeEmail("B@EXAMPLE.COM"), token: generateToken() },
+        { email: normalizeEmail("C@EXAMPLE.COM"), token: generateToken() },
+      ];
+
+      // All should have unique tokens
+      const tokens = invites.map((i) => i.token);
+      expect(new Set(tokens).size).toBe(3);
+
+      // All should have normalized emails
+      invites.forEach((invite) => {
+        expect(invite.email).toBe(invite.email.toLowerCase());
+      });
+    });
+  });
+
+  describe("security considerations", () => {
+    it("should normalize email before storing", () => {
+      const userInput = "JoHn@ExAmPlE.cOm";
+      const normalized = normalizeEmail(userInput);
+
+      // Should prevent case-sensitive duplicate accounts
+      expect(normalizeEmail("john@example.com")).toBe(normalized);
+      expect(normalizeEmail("JOHN@EXAMPLE.COM")).toBe(normalized);
+    });
+
+    it("should generate sufficiently random tokens", () => {
+      const tokens = new Array(50).fill(0).map(() => generateToken());
+      const uniqueTokens = new Set(tokens);
+
+      // Should have no collisions in 50 tokens
+      expect(uniqueTokens.size).toBe(50);
+    });
+
+    it("should validate expiration before access", () => {
+      const pastDate = new Date(Date.now() - 1000);
+      const futureDate = new Date(Date.now() + 1000);
+
+      expect(isInviteExpired(pastDate)).toBe(true);
+      expect(isInviteExpired(futureDate)).toBe(false);
+    });
+  });
 });

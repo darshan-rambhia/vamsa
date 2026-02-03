@@ -7,8 +7,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  FormField,
   Input,
-  Label,
   ThemeToggle,
 } from "@vamsa/ui";
 import { signUp } from "~/lib/auth-client";
@@ -67,7 +67,10 @@ function RegisterComponent() {
       </div>
 
       {/* Register card */}
-      <Card className="animate-fade-in relative w-full max-w-md">
+      <Card
+        className="animate-fade-in relative w-full max-w-md"
+        id="main-content"
+      >
         <CardHeader className="space-y-4 text-center">
           {/* Logo */}
           <div className="bg-primary/10 mx-auto flex h-16 w-16 items-center justify-center rounded-full">
@@ -111,10 +114,8 @@ function RegisterComponent() {
             )}
 
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Name</Label>
+              <FormField label="Name" required>
                 <Input
-                  id="name"
                   name="name"
                   type="text"
                   autoComplete="name"
@@ -124,12 +125,10 @@ function RegisterComponent() {
                   placeholder="Your full name"
                   data-testid="register-name-input"
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
+              <FormField label="Email address" required>
                 <Input
-                  id="email"
                   name="email"
                   type="email"
                   autoComplete="email"
@@ -139,12 +138,10 @@ function RegisterComponent() {
                   placeholder="you@example.com"
                   data-testid="register-email-input"
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+              <FormField label="Password" required>
                 <Input
-                  id="password"
                   name="password"
                   type="password"
                   autoComplete="new-password"
@@ -154,12 +151,18 @@ function RegisterComponent() {
                   placeholder="Enter your password"
                   data-testid="register-password-input"
                 />
-              </div>
+              </FormField>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <FormField
+                label="Confirm Password"
+                error={
+                  error && error === "Passwords do not match"
+                    ? error
+                    : undefined
+                }
+                required
+              >
                 <Input
-                  id="confirmPassword"
                   name="confirmPassword"
                   type="password"
                   autoComplete="new-password"
@@ -169,7 +172,7 @@ function RegisterComponent() {
                   placeholder="Confirm your password"
                   data-testid="register-confirm-password-input"
                 />
-              </div>
+              </FormField>
             </div>
 
             <Button

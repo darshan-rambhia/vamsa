@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import {
+  cursorPaginatedResponseSchema,
   errorResponseSchema,
-  paginatedResponseSchema,
   relationshipCreateSchema,
 } from "@vamsa/schemas";
 import {
@@ -12,6 +12,7 @@ import {
   updateRelationshipData as serverUpdateRelationship,
 } from "@vamsa/lib/server/business";
 import { loggers } from "@vamsa/lib/logger";
+import { paginateQuery } from "@vamsa/lib/server";
 
 const log = loggers.api;
 
@@ -68,14 +69,15 @@ const relationshipUpdateSchema = z.object({
 
 /**
  * GET /api/v1/relationships
- * List relationships with optional filtering
+ * List relationships with cursor-based pagination and optional filtering
  */
 const listRelationshipsRoute = createRoute({
   method: "get",
   path: "/",
   tags: ["Relationships"],
   summary: "List relationships",
-  description: "Get relationships for a person with optional filtering",
+  description:
+    "Get relationships for a person with cursor-based pagination and optional filtering",
   operationId: "listRelationships",
   request: {
     query: z
@@ -91,13 +93,14 @@ const listRelationshipsRoute = createRoute({
             description: "Filter by relationship type",
             example: "PARENT",
           }),
-        page: z.coerce.number().int().min(1).default(1).openapi({
-          description: "Page number (1-indexed)",
-          example: 1,
+        cursor: z.string().optional().openapi({
+          description:
+            "Cursor for the next page (from nextCursor in previous response)",
+          example: "cmVsXzEwMA==",
         }),
-        limit: z.coerce.number().int().min(1).max(100).default(50).openapi({
+        limit: z.coerce.number().int().min(1).max(100).default(20).openapi({
           description: "Items per page (max 100)",
-          example: 50,
+          example: 20,
         }),
       })
       .openapi({
@@ -109,7 +112,7 @@ const listRelationshipsRoute = createRoute({
       description: "Relationships list retrieved successfully",
       content: {
         "application/json": {
-          schema: paginatedResponseSchema(relationshipSchema),
+          schema: cursorPaginatedResponseSchema(relationshipSchema),
         },
       },
     },
@@ -135,13 +138,13 @@ const listRelationshipsRoute = createRoute({
 // @ts-expect-error Hono's strict openapi handler typing doesn't support multiple status code returns; handler implementation is correct
 relationshipsRouter.openapi(listRelationshipsRoute, async (c) => {
   try {
-    const { personId, type, page, limit } = c.req.valid("query");
+    const { personId, type, cursor, limit } = c.req.valid("query");
 
-    if (page < 1 || limit < 1 || limit > 100) {
+    if (limit < 1 || limit > 100) {
       return c.json(
         {
           error: "Invalid pagination parameters",
-          details: "page must be >= 1, limit must be between 1 and 100",
+          details: "limit must be between 1 and 100",
         },
         { status: 400 as const }
       );
@@ -149,36 +152,19 @@ relationshipsRouter.openapi(listRelationshipsRoute, async (c) => {
 
     if (personId) {
       const result = await serverGetRelationships(personId, type);
-
       const items = result || [];
 
-      const total = items.length;
-      const start = (page - 1) * limit;
-      const paginatedItems = items.slice(start, start + limit);
+      // Apply cursor-based pagination
+      const paginated = paginateQuery(items, limit, cursor, (item) => item.id);
 
-      return c.json(
-        {
-          items: paginatedItems,
-          pagination: {
-            page,
-            limit,
-            total,
-            pages: Math.ceil(total / limit),
-          },
-        },
-        { status: 200 as const }
-      );
+      return c.json(paginated, { status: 200 as const });
     }
 
     return c.json(
       {
         items: [],
-        pagination: {
-          page,
-          limit,
-          total: 0,
-          pages: 0,
-        },
+        nextCursor: null,
+        hasMore: false,
       },
       { status: 200 as const }
     );
