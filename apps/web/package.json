@@ -14,6 +14,10 @@
     "test:int": "bun test ./tests/integration --timeout 30000",
     "test:e2e": "bun --env-file=../../.env run scripts/run-e2e.ts --reporter=list",
     "test:e2e:report": "playwright show-report ../../test-output/e2e/playwright",
+    "test:perf": "bun --env-file=../../.env run scripts/run-e2e.ts --project=performance --reporter=list",
+    "test:visual": "bun --env-file=../../.env run scripts/run-e2e.ts --project=visual --reporter=list",
+    "test:visual:update": "bun --env-file=../../.env run scripts/run-e2e.ts --project=visual --update-snapshots --reporter=list",
+    "check:bundle": "bun scripts/check-bundle-size.ts",
     "ladle": "ladle serve",
     "ladle:build": "ladle build"
   },

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   Button,
+  FormField,
   Input,
   Label,
   Select,
@@ -145,44 +146,37 @@ export function PersonForm({ person, onSuccess, onCancel }: PersonFormProps) {
 
         <TabsContent value="basic" className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name *</Label>
+            <FormField label="First Name" required>
               <Input
-                id="firstName"
                 name="firstName"
                 data-testid="person-form-firstName"
                 value={formData.firstName}
                 onChange={handleChange}
                 required
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name *</Label>
+            </FormField>
+            <FormField label="Last Name" required>
               <Input
-                id="lastName"
                 name="lastName"
                 data-testid="person-form-lastName"
                 value={formData.lastName}
                 onChange={handleChange}
                 required
               />
-            </div>
+            </FormField>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="maidenName">Maiden Name</Label>
+          <FormField label="Maiden Name">
             <Input
-              id="maidenName"
               name="maidenName"
               data-testid="person-form-maidenName"
               value={formData.maidenName}
               onChange={handleChange}
             />
-          </div>
+          </FormField>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
+            <FormField label="Gender">
               <Select
                 value={formData.gender}
                 onValueChange={handleGenderChange}
@@ -199,18 +193,16 @@ export function PersonForm({ person, onSuccess, onCancel }: PersonFormProps) {
                   </SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="dateOfBirth">Date of Birth</Label>
+            </FormField>
+            <FormField label="Date of Birth">
               <Input
-                id="dateOfBirth"
                 name="dateOfBirth"
                 type="date"
                 data-testid="person-form-dateOfBirth"
                 value={formData.dateOfBirth}
                 onChange={handleChange}
               />
-            </div>
+            </FormField>
           </div>
 
           <div className="flex items-center space-x-2">
@@ -227,46 +219,38 @@ export function PersonForm({ person, onSuccess, onCancel }: PersonFormProps) {
           </div>
 
           {!formData.isLiving && (
-            <div className="space-y-2">
-              <Label htmlFor="dateOfPassing">Date of Passing</Label>
+            <FormField label="Date of Passing">
               <Input
-                id="dateOfPassing"
                 name="dateOfPassing"
                 type="date"
                 data-testid="person-form-dateOfPassing"
                 value={formData.dateOfPassing}
                 onChange={handleChange}
               />
-            </div>
+            </FormField>
           )}
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="birthPlace">Birth Place</Label>
+            <FormField label="Birth Place">
               <Input
-                id="birthPlace"
                 name="birthPlace"
                 data-testid="person-form-birthPlace"
                 value={formData.birthPlace}
                 onChange={handleChange}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="nativePlace">Native Place</Label>
+            </FormField>
+            <FormField label="Native Place">
               <Input
-                id="nativePlace"
                 name="nativePlace"
                 data-testid="person-form-nativePlace"
                 value={formData.nativePlace}
                 onChange={handleChange}
               />
-            </div>
+            </FormField>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="bio">About</Label>
+          <FormField label="About">
             <textarea
-              id="bio"
               name="bio"
               data-testid="person-form-bio"
               value={formData.bio}
@@ -274,57 +258,49 @@ export function PersonForm({ person, onSuccess, onCancel }: PersonFormProps) {
               className="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-25 w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               placeholder="Brief biography or notes..."
             />
-          </div>
+          </FormField>
         </TabsContent>
 
         <TabsContent value="contact" className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <FormField label="Email">
               <Input
-                id="email"
                 name="email"
                 type="email"
                 data-testid="person-form-email"
                 value={formData.email}
                 onChange={handleChange}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+            </FormField>
+            <FormField label="Phone">
               <Input
-                id="phone"
                 name="phone"
                 data-testid="person-form-phone"
                 value={formData.phone}
                 onChange={handleChange}
               />
-            </div>
+            </FormField>
           </div>
         </TabsContent>
 
         <TabsContent value="professional" className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="profession">Profession</Label>
+            <FormField label="Profession">
               <Input
-                id="profession"
                 name="profession"
                 data-testid="person-form-profession"
                 value={formData.profession}
                 onChange={handleChange}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="employer">Employer</Label>
+            </FormField>
+            <FormField label="Employer">
               <Input
-                id="employer"
                 name="employer"
                 data-testid="person-form-employer"
                 value={formData.employer}
                 onChange={handleChange}
               />
-            </div>
+            </FormField>
           </div>
         </TabsContent>
       </Tabs>

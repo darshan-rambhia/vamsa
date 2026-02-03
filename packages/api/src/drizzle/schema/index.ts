@@ -16,6 +16,7 @@ export * from "./place";
 export * from "./media";
 export * from "./backup";
 export * from "./misc";
+export * from "./notifications";
 
 // Better Auth expects singular table names (user, session, account, verification)
 // Export aliases to support Better Auth's Drizzle adapter

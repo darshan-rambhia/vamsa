@@ -127,7 +127,7 @@
       "eslint --fix",
       "prettier --write",
       "bash -c 'bun run typecheck'",
-      "bash -c 'bun test --bail'"
+      "bash -c 'bun run test'"
     ],
     "*.{js,jsx,json,md,yml,yaml,css}": [
       "prettier --write"

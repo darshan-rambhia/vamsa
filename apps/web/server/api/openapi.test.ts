@@ -207,7 +207,7 @@ describe("Persons Endpoints Documentation", () => {
     expect(Array.isArray(listRoute.parameters)).toBe(true);
 
     const paramNames = listRoute.parameters.map((p: any) => p.name);
-    expect(paramNames).toContain("page");
+    expect(paramNames).toContain("cursor");
     expect(paramNames).toContain("limit");
     expect(paramNames).toContain("search");
     expect(paramNames).toContain("sortBy");
@@ -220,10 +220,12 @@ describe("Persons Endpoints Documentation", () => {
     const spec = await res.json();
 
     const listRoute = spec.paths["/persons"].get;
-    const pageParam = listRoute.parameters.find((p: any) => p.name === "page");
-    expect(pageParam).toBeDefined();
-    expect(pageParam.in).toBe("query");
-    expect(pageParam.required).not.toBe(true); // Has default
+    const cursorParam = listRoute.parameters.find(
+      (p: any) => p.name === "cursor"
+    );
+    expect(cursorParam).toBeDefined();
+    expect(cursorParam.in).toBe("query");
+    expect(cursorParam.required).not.toBe(true); // Optional for first page
 
     const sortByParam = listRoute.parameters.find(
       (p: any) => p.name === "sortBy"

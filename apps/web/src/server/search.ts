@@ -149,6 +149,142 @@ function isNLPQuery(query: string): boolean {
 }
 
 /**
+ * Input type for search handler
+ */
+export type SearchPeopleInput = z.infer<typeof searchPeopleInputSchema>;
+
+/**
+ * Search people by name and bio using PostgreSQL FTS
+ * Returns results ranked by relevance with query timing information.
+ *
+ * @requires VIEWER role or higher
+ * @throws Error if database query fails
+ */
+export async function searchPeopleHandler(
+  data: SearchPeopleInput
+): Promise<SearchResults<PersonSearchResultItem>> {
+  await requireAuth("VIEWER");
+
+  const startTime = Date.now();
+
+  try {
+    const sanitized = sanitizeQuery(data.query);
+
+    // Return empty results for empty queries
+    if (!sanitized) {
+      return {
+        results: [],
+        total: 0,
+        queryTime: Date.now() - startTime,
+      };
+    }
+
+    // Check if this is likely a natural language relationship query
+    if (isNLPQuery(data.query)) {
+      try {
+        // Build relationship maps for NLP handlers
+        const relationships = await buildRelationshipMaps();
+
+        // Execute NLP search
+        const nlpResult = await executeSearch(data.query, relationships);
+
+        const queryTime = Date.now() - startTime;
+
+        log.info(
+          {
+            query: data.query,
+            intentType: nlpResult.type,
+            resultCount: nlpResult.results.length,
+            queryTime,
+            explanation: nlpResult.explanation,
+          },
+          "NLP search executed"
+        );
+
+        // Transform NLP results to match search result format
+        // For now, return empty results with explanation
+        // Frontend will display the explanation instead of person list
+        return {
+          results: [],
+          total: 0,
+          queryTime,
+          // Store explanation in results metadata (needs schema update)
+        };
+      } catch (nlpError) {
+        log
+          .withErr(nlpError)
+          .ctx({ query: data.query })
+          .msg("NLP search failed, falling back to FTS");
+        // Fall through to FTS search as fallback
+      }
+    }
+
+    // Use traditional FTS search as fallback or for person name queries
+    const { sql: searchSql, params: searchParams } = buildCombinedSearchQuery(
+      data.query,
+      {
+        limit: data.limit,
+        offset: data.offset,
+        fuzzy: true,
+      }
+    );
+
+    // Build count query to get total results
+    const { sql: countSql, params: countParams } = buildPersonSearchCountQuery(
+      data.query,
+      { language: "english" }
+    );
+
+    // Execute both queries in parallel
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const client = drizzleDb.$client as any;
+    const [rawResults, countResult] = await Promise.all([
+      client.query(searchSql, searchParams),
+      client.query(countSql, countParams),
+    ]);
+
+    const total = (countResult.rows[0]?.total as number) || 0;
+
+    // Transform results to include rank and proper typing
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const results = rawResults.rows.map((row: any) => ({
+      item: {
+        id: row.id,
+        firstName: row.firstName,
+        lastName: row.lastName,
+        maidenName: row.maidenName,
+        photoUrl: row.photoUrl,
+        dateOfBirth: row.dateOfBirth,
+        dateOfPassing: row.dateOfPassing,
+        isLiving: row.isLiving,
+      },
+      rank: row.rank || row.similarity_score || 0,
+    }));
+
+    const queryTime = Date.now() - startTime;
+
+    log.info(
+      { query: data.query, resultCount: results.length, queryTime, total },
+      "FTS search executed"
+    );
+
+    return {
+      results,
+      total,
+      queryTime,
+    };
+  } catch (error) {
+    const queryTime = Date.now() - startTime;
+    log
+      .withErr(error)
+      .ctx({ query: data.query, queryTime })
+      .msg("Search query failed");
+
+    throw error;
+  }
+}
+
+/**
  * Server function: Search people by name and bio using PostgreSQL FTS
  * Returns results ranked by relevance with query timing information.
  *
@@ -172,121 +308,5 @@ export const searchPeople = createServerFn({ method: "GET" })
     return searchPeopleInputSchema.parse(data);
   })
   .handler(async ({ data }): Promise<SearchResults<PersonSearchResultItem>> => {
-    await requireAuth("VIEWER");
-
-    const startTime = Date.now();
-
-    try {
-      const sanitized = sanitizeQuery(data.query);
-
-      // Return empty results for empty queries
-      if (!sanitized) {
-        return {
-          results: [],
-          total: 0,
-          queryTime: Date.now() - startTime,
-        };
-      }
-
-      // Check if this is likely a natural language relationship query
-      if (isNLPQuery(data.query)) {
-        try {
-          // Build relationship maps for NLP handlers
-          const relationships = await buildRelationshipMaps();
-
-          // Execute NLP search
-          const nlpResult = await executeSearch(data.query, relationships);
-
-          const queryTime = Date.now() - startTime;
-
-          log.info(
-            {
-              query: data.query,
-              intentType: nlpResult.type,
-              resultCount: nlpResult.results.length,
-              queryTime,
-              explanation: nlpResult.explanation,
-            },
-            "NLP search executed"
-          );
-
-          // Transform NLP results to match search result format
-          // For now, return empty results with explanation
-          // Frontend will display the explanation instead of person list
-          return {
-            results: [],
-            total: 0,
-            queryTime,
-            // Store explanation in results metadata (needs schema update)
-          };
-        } catch (nlpError) {
-          log
-            .withErr(nlpError)
-            .ctx({ query: data.query })
-            .msg("NLP search failed, falling back to FTS");
-          // Fall through to FTS search as fallback
-        }
-      }
-
-      // Use traditional FTS search as fallback or for person name queries
-      const { sql: searchSql, params: searchParams } = buildCombinedSearchQuery(
-        data.query,
-        {
-          limit: data.limit,
-          offset: data.offset,
-          fuzzy: true,
-        }
-      );
-
-      // Build count query to get total results
-      const { sql: countSql, params: countParams } =
-        buildPersonSearchCountQuery(data.query, { language: "english" });
-
-      // Execute both queries in parallel
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const client = drizzleDb.$client as any;
-      const [rawResults, countResult] = await Promise.all([
-        client.query(searchSql, searchParams),
-        client.query(countSql, countParams),
-      ]);
-
-      const total = (countResult.rows[0]?.total as number) || 0;
-
-      // Transform results to include rank and proper typing
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const results = rawResults.rows.map((row: any) => ({
-        item: {
-          id: row.id,
-          firstName: row.firstName,
-          lastName: row.lastName,
-          maidenName: row.maidenName,
-          photoUrl: row.photoUrl,
-          dateOfBirth: row.dateOfBirth,
-          dateOfPassing: row.dateOfPassing,
-          isLiving: row.isLiving,
-        },
-        rank: row.rank || row.similarity_score || 0,
-      }));
-
-      const queryTime = Date.now() - startTime;
-
-      log.info(
-        { query: data.query, resultCount: results.length, queryTime, total },
-        "FTS search executed"
-      );
-
-      return {
-        results,
-        total,
-        queryTime,
-      };
-    } catch (error) {
-      const queryTime = Date.now() - startTime;
-      log
-        .withErr(error)
-        .ctx({ query: data.query, queryTime })
-        .msg("Search query failed");
-
-      throw error;
-    }
+    return searchPeopleHandler(data);
   });
