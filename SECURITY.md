@@ -63,4 +63,4 @@ This policy applies to the latest version of Vamsa on the `main` branch.
 2. **Input validation**: Always validate with Zod schemas
 3. **Parameterized queries**: Use Drizzle ORM, never raw SQL
 4. **Dependency updates**: Keep dependencies current
-5. **Environment variables**: Use `.env.local` for secrets (never commit)
+5. **Environment variables**: Use `.env` for secrets (gitignored, never commit)

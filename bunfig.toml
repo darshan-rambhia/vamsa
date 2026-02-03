@@ -5,7 +5,6 @@
 # Use exact versions for reproducible builds
 exact = true
 
-
 # Automatically install peer dependencies
 peer = true
 

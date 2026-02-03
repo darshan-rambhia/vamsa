@@ -37,6 +37,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      args:
+        SKIP_SSL_VERIFY: ${SKIP_SSL_VERIFY:-}
     container_name: vamsa-dev-app
     depends_on:
       db:

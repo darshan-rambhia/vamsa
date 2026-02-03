@@ -5,11 +5,6 @@ preload = ["./tests/setup/test-logger-mock.ts", "./tests/setup/jsdom-setup.ts"]
 
 coverage = true
 
-# Exclude integration and e2e tests from default test run
-# Run integration tests separately with: bun test tests/integration/
-# Run e2e tests with: bun test:e2e (uses Playwright)
-exclude = ["tests/integration/**", "e2e/**"]
-
 # Exclude external packages and test files from coverage
 # Each package should only report coverage for its own code
 coveragePathIgnorePatterns = [
@@ -19,7 +14,9 @@ coveragePathIgnorePatterns = [
   "**/*.spec.ts",
   "**/*.test.tsx",
   "**/*.spec.tsx",
-  "**/*.function.ts"        # TanStack React Start server function wrappers (not unit testable)
+  "**/*.function.ts",       # TanStack React Start server function wrappers (not unit testable)
+  "tests/integration/**",
+  "e2e/**",
 ]
 
 # Coverage thresholds disabled - Bun 1.3.x has known issues with threshold exit codes

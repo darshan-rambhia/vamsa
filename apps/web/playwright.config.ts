@@ -7,10 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment variables from .env files (monorepo root)
-// Order: .env (base) -> .env.local (user overrides) -> .env.test (test overrides)
+// .env.test overrides .env with test-specific values
 config({ path: path.resolve(__dirname, "../../.env") });
-config({ path: path.resolve(__dirname, "../../.env.local") });
-// .env.test uses override:true to ensure test values take precedence
 config({ path: path.resolve(__dirname, "../../.env.test"), override: true });
 
 // In Docker, IN_DOCKER=true is set by docker-compose
