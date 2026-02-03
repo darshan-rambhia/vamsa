@@ -29,6 +29,7 @@
     "test": "bun run --filter '*' test",
     "test:unit": "bun run --filter @vamsa/lib --filter @vamsa/ui test",
     "test:e2e": "bun run --filter @vamsa/web test:e2e",
+    "test:perf": "bun run --filter @vamsa/web test:perf",
     "test:int": "bun run --filter @vamsa/web test:int",
     "test:mutation": "bun scripts/mutation-test.ts",
     "test:mutation:lib": "bun scripts/mutation-test.ts lib",
@@ -36,6 +37,7 @@
     "test:mutation:api": "bun scripts/mutation-test.ts api",
     "test:mutation:web": "bun scripts/mutation-test.ts web",
     "test:coverage": "bun scripts/check-coverage.ts",
+    "check:bundle": "bun run --filter @vamsa/web check:bundle",
     "// === Database ===": "",
     "db:generate": "bun run --filter @vamsa/api db:generate",
     "db:push": "bun run --filter @vamsa/api db:push",
@@ -74,7 +76,8 @@
     "// === Utilities ===": "",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules bun.lock",
     "release": "bunx semantic-release",
-    "release:dry": "bunx semantic-release --dry-run"
+    "release:dry": "bunx semantic-release --dry-run",
+    "prepare": "husky"
   },
   "dependencies": {
     "@hono/swagger-ui": "0.5.3",
@@ -105,7 +108,9 @@
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.0.1",
     "globals": "17.2.0",
+    "husky": "9.1.7",
     "jsdom": "27.4.0",
+    "lint-staged": "16.2.7",
     "prettier": "3.8.1",
     "prettier-plugin-tailwindcss": "0.7.2",
     "semantic-release": "25.0.2",
@@ -116,5 +121,16 @@
     "@react-email/render": "^2.0.2",
     "hono": ">=4.11.7",
     "lodash": ">=4.17.23"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write",
+      "bash -c 'bun run typecheck'",
+      "bash -c 'bun test --bail'"
+    ],
+    "*.{js,jsx,json,md,yml,yaml,css}": [
+      "prettier --write"
+    ]
   }
 }
