@@ -4,10 +4,15 @@
  * Handles registration, unregistration, and retrieval of device push notification tokens
  */
 
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { and, eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 import type { DeviceTokenInput, DeviceTokenRecord } from "./types";
 
 const log = loggers.email;
+
+/** Type for the database instance (for DI) */
+export type DeviceTokensDb = typeof drizzleDb;
 
 /**
  * Register a new device token for push notifications
@@ -16,14 +21,12 @@ const log = loggers.email;
  * @throws Error if user not found or database error occurs
  */
 export async function registerDeviceToken(
-  input: DeviceTokenInput
+  input: DeviceTokenInput,
+  db: DeviceTokensDb = drizzleDb
 ): Promise<void> {
   try {
-    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-    const { eq, and } = await import("drizzle-orm");
-
     // Verify user exists
-    const user = await drizzleDb.query.users.findFirst({
+    const user = await db.query.users.findFirst({
       where: eq(drizzleSchema.users.id, input.userId),
       columns: { id: true },
     });
@@ -33,7 +36,7 @@ export async function registerDeviceToken(
     }
 
     // Check if token already exists for this device
-    const existingToken = await drizzleDb.query.deviceTokens.findFirst({
+    const existingToken = await db.query.deviceTokens.findFirst({
       where: and(
         eq(drizzleSchema.deviceTokens.userId, input.userId),
         eq(drizzleSchema.deviceTokens.token, input.token),
@@ -45,7 +48,7 @@ export async function registerDeviceToken(
 
     if (existingToken) {
       // Update existing token's timestamp and reactivate if needed
-      await drizzleDb
+      await db
         .update(drizzleSchema.deviceTokens)
         .set({
           isActive: true,
@@ -61,7 +64,7 @@ export async function registerDeviceToken(
     }
 
     // Create new device token
-    await drizzleDb.insert(drizzleSchema.deviceTokens).values({
+    await db.insert(drizzleSchema.deviceTokens).values({
       id: crypto.randomUUID(),
       userId: input.userId,
       token: input.token,
@@ -91,14 +94,12 @@ export async function registerDeviceToken(
  */
 export async function unregisterDeviceToken(
   userId: string,
-  deviceId: string
+  deviceId: string,
+  db: DeviceTokensDb = drizzleDb
 ): Promise<void> {
   try {
-    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-    const { eq, and } = await import("drizzle-orm");
-
     // Find and deactivate the device token
-    await drizzleDb
+    await db
       .update(drizzleSchema.deviceTokens)
       .set({
         isActive: false,
@@ -125,13 +126,11 @@ export async function unregisterDeviceToken(
  * @returns Array of active device tokens with platform info
  */
 export async function getActiveDeviceTokens(
-  userId: string
+  userId: string,
+  db: DeviceTokensDb = drizzleDb
 ): Promise<Array<DeviceTokenRecord>> {
   try {
-    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-    const { eq, and } = await import("drizzle-orm");
-
-    const tokens = await drizzleDb.query.deviceTokens.findMany({
+    const tokens = await db.query.deviceTokens.findMany({
       where: and(
         eq(drizzleSchema.deviceTokens.userId, userId),
         eq(drizzleSchema.deviceTokens.isActive, true)
@@ -155,12 +154,12 @@ export async function getActiveDeviceTokens(
  *
  * @param userId - ID of the user
  */
-export async function deactivateAllUserTokens(userId: string): Promise<void> {
+export async function deactivateAllUserTokens(
+  userId: string,
+  db: DeviceTokensDb = drizzleDb
+): Promise<void> {
   try {
-    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-    const { eq } = await import("drizzle-orm");
-
-    await drizzleDb
+    await db
       .update(drizzleSchema.deviceTokens)
       .set({
         isActive: false,

@@ -9,6 +9,9 @@ import type {
 
 const log = loggers.db;
 
+/** Type for the database instance (for DI) */
+export type RelationshipsDb = typeof drizzleDb;
+
 /**
  * List relationships for a person with optional filtering.
  *
@@ -22,7 +25,8 @@ const log = loggers.db;
  */
 export async function listRelationshipsData(
   personId: string,
-  type?: RelationshipType
+  type?: RelationshipType,
+  db: RelationshipsDb = drizzleDb
 ) {
   try {
     const whereConditions = [
@@ -32,7 +36,7 @@ export async function listRelationshipsData(
       whereConditions.push(eq(drizzleSchema.relationships.type, type));
     }
 
-    const relationships = await drizzleDb.query.relationships.findMany({
+    const relationships = await db.query.relationships.findMany({
       where:
         whereConditions.length > 1
           ? and(...whereConditions)
@@ -70,9 +74,12 @@ export async function listRelationshipsData(
  * @returns Relationship with related person information
  * @throws Error if relationship not found
  */
-export async function getRelationshipData(relationshipId: string) {
+export async function getRelationshipData(
+  relationshipId: string,
+  db: RelationshipsDb = drizzleDb
+) {
   try {
-    const relationship = await drizzleDb.query.relationships.findFirst({
+    const relationship = await db.query.relationships.findFirst({
       where: eq(drizzleSchema.relationships.id, relationshipId),
       with: {
         relatedPerson: true,
@@ -128,7 +135,8 @@ async function ensureBidirectional(
   type: string,
   marriageDate: Date | null,
   divorceDate: Date | null,
-  isActive: boolean
+  isActive: boolean,
+  db: RelationshipsDb = drizzleDb
 ) {
   try {
     // Determine inverse type and target type
@@ -142,7 +150,7 @@ async function ensureBidirectional(
     // SPOUSE and SIBLING are symmetric
 
     // Create the inverse relationship
-    await drizzleDb.insert(drizzleSchema.relationships).values({
+    await db.insert(drizzleSchema.relationships).values({
       id: crypto.randomUUID(),
       personId: relatedPersonId,
       relatedPersonId: personId,
@@ -174,7 +182,10 @@ async function ensureBidirectional(
  * @returns Created relationship ID
  * @throws Error if validation fails (self-relationship, duplicate, persons not found)
  */
-export async function createRelationshipData(input: RelationshipCreateInput) {
+export async function createRelationshipData(
+  input: RelationshipCreateInput,
+  db: RelationshipsDb = drizzleDb
+) {
   try {
     // Prevent self-relationship
     if (input.personId === input.relatedPersonId) {
@@ -183,10 +194,10 @@ export async function createRelationshipData(input: RelationshipCreateInput) {
 
     // Check that both persons exist
     const [person, relatedPerson] = await Promise.all([
-      drizzleDb.query.persons.findFirst({
+      db.query.persons.findFirst({
         where: eq(drizzleSchema.persons.id, input.personId),
       }),
-      drizzleDb.query.persons.findFirst({
+      db.query.persons.findFirst({
         where: eq(drizzleSchema.persons.id, input.relatedPersonId),
       }),
     ]);
@@ -196,7 +207,7 @@ export async function createRelationshipData(input: RelationshipCreateInput) {
     }
 
     // Check for duplicate relationship
-    const existing = await drizzleDb.query.relationships.findFirst({
+    const existing = await db.query.relationships.findFirst({
       where: and(
         eq(drizzleSchema.relationships.personId, input.personId),
         eq(drizzleSchema.relationships.relatedPersonId, input.relatedPersonId),
@@ -215,7 +226,7 @@ export async function createRelationshipData(input: RelationshipCreateInput) {
     const now = new Date();
 
     // Create the primary relationship
-    await drizzleDb.insert(drizzleSchema.relationships).values({
+    await db.insert(drizzleSchema.relationships).values({
       id: relationshipId,
       personId: input.personId,
       relatedPersonId: input.relatedPersonId,
@@ -234,7 +245,8 @@ export async function createRelationshipData(input: RelationshipCreateInput) {
       input.type,
       input.marriageDate ? new Date(input.marriageDate) : null,
       input.divorceDate ? new Date(input.divorceDate) : null,
-      isActive
+      isActive,
+      db
     );
 
     return { id: relationshipId };
@@ -257,11 +269,12 @@ export async function createRelationshipData(input: RelationshipCreateInput) {
  */
 export async function updateRelationshipData(
   relationshipId: string,
-  input: RelationshipUpdateInput
+  input: RelationshipUpdateInput,
+  db: RelationshipsDb = drizzleDb
 ) {
   try {
     // Find the relationship
-    const relationship = await drizzleDb.query.relationships.findFirst({
+    const relationship = await db.query.relationships.findFirst({
       where: eq(drizzleSchema.relationships.id, relationshipId),
     });
 
@@ -276,7 +289,7 @@ export async function updateRelationshipData(
     const now = new Date();
 
     // Update primary relationship
-    await drizzleDb
+    await db
       .update(drizzleSchema.relationships)
       .set({
         marriageDate: input.marriageDate ? new Date(input.marriageDate) : null,
@@ -288,7 +301,7 @@ export async function updateRelationshipData(
 
     // BIDIRECTIONAL SYNC for SPOUSE type
     if (relationship.type === "SPOUSE") {
-      await drizzleDb
+      await db
         .update(drizzleSchema.relationships)
         .set({
           marriageDate: input.marriageDate
@@ -334,9 +347,12 @@ export async function updateRelationshipData(
  * @param relationshipId - The ID of the relationship to delete
  * @throws Error if relationship not found
  */
-export async function deleteRelationshipData(relationshipId: string) {
+export async function deleteRelationshipData(
+  relationshipId: string,
+  db: RelationshipsDb = drizzleDb
+) {
   try {
-    const relationship = await drizzleDb.query.relationships.findFirst({
+    const relationship = await db.query.relationships.findFirst({
       where: eq(drizzleSchema.relationships.id, relationshipId),
     });
 
@@ -355,12 +371,12 @@ export async function deleteRelationshipData(relationshipId: string) {
     // SPOUSE and SIBLING are symmetric
 
     // Delete the primary relationship
-    await drizzleDb
+    await db
       .delete(drizzleSchema.relationships)
       .where(eq(drizzleSchema.relationships.id, relationshipId));
 
     // Delete the reciprocal relationship if it exists
-    await drizzleDb
+    await db
       .delete(drizzleSchema.relationships)
       .where(
         and(

@@ -20,7 +20,10 @@ import * as schema from "./schema";
 import { hashPassword } from "./password";
 
 // Load .env from monorepo root
-config({ path: path.resolve(__dirname, "../../../../.env") });
+config({
+  path: path.resolve(__dirname, "../../../../.env"),
+  quiet: true,
+});
 
 const log = loggers.seed;
 

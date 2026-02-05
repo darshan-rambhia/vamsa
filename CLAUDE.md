@@ -140,6 +140,34 @@ Skills are automatically available to agents. When working on:
 
 ## Coding Standards
 
+### Bun Test Module Mocking
+
+**Critical**: Bun's `mock.module()` only applies to the FIRST call for a given module. Subsequent calls for the same module are silently ignored. This causes non-deterministic behavior between CI and local environments when multiple test files mock the same module.
+
+**Rule**: If a preload file (configured in `bunfig.toml`) already mocks a module, test files must NOT call `mock.module()` for that module again. Instead:
+
+1. Import the mock from the preload file
+2. Configure the mock's behavior using setter methods
+
+```typescript
+// ❌ BAD - Creates non-deterministic behavior
+mock.module("@vamsa/api", () => ({
+  drizzleDb: {
+    /* custom mock */
+  },
+}));
+
+// ✅ GOOD - Import and configure the preload's mock
+import { mockDrizzleDb } from "../../../tests/setup/test-logger-mock";
+
+beforeEach(() => {
+  mockDrizzleDb.setFindFirstResult(null);
+  mockDrizzleDb.setFindManyResults([]);
+});
+```
+
+**Preload files**: See `packages/lib/tests/setup/test-logger-mock.ts` for the canonical mock setup. This file mocks `@vamsa/api` and `@vamsa/lib/logger` globally.
+
 ### Logging
 
 Always use the project's built-in logger instead of `console.log`:

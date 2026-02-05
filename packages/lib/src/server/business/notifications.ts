@@ -17,24 +17,33 @@
  * - notifySuggestionUpdated: Sends notification to submitter when suggestion is reviewed
  * - notifyNewMemberJoined: Sends notification to members when new user joins
  * - sendBirthdayReminders: Sends birthday reminder emails for today's birthdays
+ *
+ * All functions use Dependency Injection for the database connection to enable
+ * clean unit testing without mock.module() hacks.
  */
 
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.email;
+
+/** Type for the database instance (for DI) */
+export type NotificationsDb = typeof drizzleDb;
 
 /**
  * Get user's email notification preferences
  *
  * @param userId - ID of the user to retrieve preferences for
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Object with notification preference flags
  * @throws Error if user not found
  */
-export async function getEmailNotificationPreferences(userId: string) {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
-  const user = await drizzleDb.query.users.findFirst({
+export async function getEmailNotificationPreferences(
+  userId: string,
+  db: NotificationsDb = drizzleDb
+) {
+  const user = await db.query.users.findFirst({
     where: eq(drizzleSchema.users.id, userId),
     columns: { emailNotificationPreferences: true },
   });
@@ -61,6 +70,7 @@ export async function getEmailNotificationPreferences(userId: string) {
  *
  * @param userId - ID of the user updating preferences
  * @param preferences - Partial preferences object with notification flags to update
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Updated preferences object
  * @throws Error if user not found
  */
@@ -71,12 +81,10 @@ export async function updateEmailNotificationPreferences(
     suggestionsUpdated?: boolean;
     newMemberJoined?: boolean;
     birthdayReminders?: boolean;
-  }
+  },
+  db: NotificationsDb = drizzleDb
 ) {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
-  const user = await drizzleDb.query.users.findFirst({
+  const user = await db.query.users.findFirst({
     where: eq(drizzleSchema.users.id, userId),
     columns: { emailNotificationPreferences: true },
   });
@@ -100,7 +108,7 @@ export async function updateEmailNotificationPreferences(
     ...preferences,
   };
 
-  await drizzleDb
+  await db
     .update(drizzleSchema.users)
     .set({
       emailNotificationPreferences: updatedPrefs,
@@ -114,14 +122,15 @@ export async function updateEmailNotificationPreferences(
  * Send suggestion created notification to admins
  *
  * @param suggestionId - ID of the suggestion that was created
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Void. Errors are logged but don't throw
  */
-export async function notifySuggestionCreated(suggestionId: string) {
+export async function notifySuggestionCreated(
+  suggestionId: string,
+  db: NotificationsDb = drizzleDb
+) {
   try {
-    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-    const { eq } = await import("drizzle-orm");
-
-    const suggestion = await drizzleDb.query.suggestions.findFirst({
+    const suggestion = await db.query.suggestions.findFirst({
       where: eq(drizzleSchema.suggestions.id, suggestionId),
     });
 
@@ -131,7 +140,7 @@ export async function notifySuggestionCreated(suggestionId: string) {
     }
 
     // Get all admin users
-    const admins = await drizzleDb.query.users.findMany({
+    const admins = await db.query.users.findMany({
       where: eq(drizzleSchema.users.isActive, true),
     });
 
@@ -152,17 +161,16 @@ export async function notifySuggestionCreated(suggestionId: string) {
  *
  * @param suggestionId - ID of the suggestion that was reviewed
  * @param status - Review status: "APPROVED" or "REJECTED"
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Void. Errors are logged but don't throw
  */
 export async function notifySuggestionUpdated(
   suggestionId: string,
-  status: "APPROVED" | "REJECTED"
+  status: "APPROVED" | "REJECTED",
+  db: NotificationsDb = drizzleDb
 ) {
   try {
-    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-    const { eq } = await import("drizzle-orm");
-
-    const suggestion = await drizzleDb.query.suggestions.findFirst({
+    const suggestion = await db.query.suggestions.findFirst({
       where: eq(drizzleSchema.suggestions.id, suggestionId),
     });
 
@@ -188,14 +196,15 @@ export async function notifySuggestionUpdated(
  * Send new member joined notification to all active members
  *
  * @param userId - ID of the new user that joined
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Void. Errors are logged but don't throw
  */
-export async function notifyNewMemberJoined(userId: string) {
+export async function notifyNewMemberJoined(
+  userId: string,
+  db: NotificationsDb = drizzleDb
+) {
   try {
-    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-    const { eq } = await import("drizzle-orm");
-
-    const newMember = await drizzleDb.query.users.findFirst({
+    const newMember = await db.query.users.findFirst({
       where: eq(drizzleSchema.users.id, userId),
     });
 
@@ -205,7 +214,7 @@ export async function notifyNewMemberJoined(userId: string) {
     }
 
     // Get all active members except the new member
-    const members = await drizzleDb.query.users.findMany({
+    const members = await db.query.users.findMany({
       where: eq(drizzleSchema.users.isActive, true),
     });
 
@@ -224,19 +233,17 @@ export async function notifyNewMemberJoined(userId: string) {
 /**
  * Send birthday reminder emails for people with birthdays today
  *
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Void. Silently succeeds if no birthdays today or errors are logged without throwing
  */
-export async function sendBirthdayReminders() {
+export async function sendBirthdayReminders(db: NotificationsDb = drizzleDb) {
   try {
-    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-    const { eq } = await import("drizzle-orm");
-
     const today = new Date();
     const month = today.getMonth() + 1;
     const day = today.getDate();
 
     // Get all people with birthdays
-    const birthdays = await drizzleDb.query.persons.findMany({
+    const birthdays = await db.query.persons.findMany({
       where: eq(drizzleSchema.persons.isLiving, true),
     });
 
@@ -254,7 +261,7 @@ export async function sendBirthdayReminders() {
     }
 
     // Get all system users
-    const systemUser = await drizzleDb.query.users.findFirst({
+    const systemUser = await db.query.users.findFirst({
       where: eq(drizzleSchema.users.role, "ADMIN"),
     });
 

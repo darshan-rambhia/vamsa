@@ -23,6 +23,9 @@ import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.db;
 
+/** Type for the database instance (for DI) */
+export type CalendarDb = typeof drizzleDb;
+
 /**
  * Generate a new calendar token with expiration
  *
@@ -38,7 +41,8 @@ const log = loggers.db;
 export async function generateCalendarTokenLogic(
   userId: string,
   name: string | undefined,
-  expiryDays: number
+  expiryDays: number,
+  db: CalendarDb = drizzleDb
 ) {
   // Generate a cryptographically secure token
   const tokenBytes = randomBytes(32);
@@ -49,7 +53,7 @@ export async function generateCalendarTokenLogic(
   const tokenId = crypto.randomUUID();
 
   // Create the calendar token
-  const [calendarToken] = await drizzleDb
+  const [calendarToken] = await db
     .insert(drizzleSchema.calendarTokens)
     .values({
       id: tokenId,
@@ -62,7 +66,7 @@ export async function generateCalendarTokenLogic(
     .returning();
 
   // Log the action
-  await drizzleDb.insert(drizzleSchema.auditLogs).values({
+  await db.insert(drizzleSchema.auditLogs).values({
     id: crypto.randomUUID(),
     userId,
     action: "CREATE",
@@ -92,9 +96,12 @@ export async function generateCalendarTokenLogic(
  * @param token Token value to validate
  * @returns Validation result with user info if valid
  */
-export async function validateCalendarTokenLogic(token: string) {
+export async function validateCalendarTokenLogic(
+  token: string,
+  db: CalendarDb = drizzleDb
+) {
   try {
-    const calendarToken = await drizzleDb.query.calendarTokens.findFirst({
+    const calendarToken = await db.query.calendarTokens.findFirst({
       where: eq(drizzleSchema.calendarTokens.token, token),
       with: { user: true },
     });
@@ -134,10 +141,11 @@ export async function validateCalendarTokenLogic(token: string) {
  */
 export async function revokeCalendarTokenLogic(
   tokenId: string,
-  userId: string
+  userId: string,
+  db: CalendarDb = drizzleDb
 ) {
   // Find the token by ID and verify it belongs to the current user
-  const calendarToken = await drizzleDb.query.calendarTokens.findFirst({
+  const calendarToken = await db.query.calendarTokens.findFirst({
     where: eq(drizzleSchema.calendarTokens.id, tokenId),
   });
 
@@ -146,13 +154,13 @@ export async function revokeCalendarTokenLogic(
   }
 
   // Revoke the token by marking it as inactive
-  await drizzleDb
+  await db
     .update(drizzleSchema.calendarTokens)
     .set({ isActive: false })
     .where(eq(drizzleSchema.calendarTokens.id, calendarToken.id));
 
   // Log the action
-  await drizzleDb.insert(drizzleSchema.auditLogs).values({
+  await db.insert(drizzleSchema.auditLogs).values({
     id: crypto.randomUUID(),
     userId,
     action: "DELETE",
@@ -174,8 +182,11 @@ export async function revokeCalendarTokenLogic(
  * @returns Array of token records
  * @throws Error if database query fails
  */
-export async function listCalendarTokensLogic(userId: string) {
-  const tokens = await drizzleDb.query.calendarTokens.findMany({
+export async function listCalendarTokensLogic(
+  userId: string,
+  db: CalendarDb = drizzleDb
+) {
+  const tokens = await db.query.calendarTokens.findMany({
     where: eq(drizzleSchema.calendarTokens.userId, userId),
     columns: {
       id: true,
@@ -204,10 +215,11 @@ export async function listCalendarTokensLogic(userId: string) {
  */
 export async function deleteCalendarTokenLogic(
   tokenId: string,
-  userId: string
+  userId: string,
+  db: CalendarDb = drizzleDb
 ) {
   // Find the token by ID and verify it belongs to the current user
-  const calendarToken = await drizzleDb.query.calendarTokens.findFirst({
+  const calendarToken = await db.query.calendarTokens.findFirst({
     where: eq(drizzleSchema.calendarTokens.id, tokenId),
   });
 
@@ -223,12 +235,12 @@ export async function deleteCalendarTokenLogic(
   }
 
   // Delete the token permanently
-  await drizzleDb
+  await db
     .delete(drizzleSchema.calendarTokens)
     .where(eq(drizzleSchema.calendarTokens.id, calendarToken.id));
 
   // Log the action
-  await drizzleDb.insert(drizzleSchema.auditLogs).values({
+  await db.insert(drizzleSchema.auditLogs).values({
     id: crypto.randomUUID(),
     userId,
     action: "DELETE",

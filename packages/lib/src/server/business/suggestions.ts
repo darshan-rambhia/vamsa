@@ -6,6 +6,9 @@ import {
   notifySuggestionUpdated,
 } from "./notifications";
 
+/** Type for the database instance (for DI) */
+export type SuggestionsDb = typeof drizzleDb;
+
 /**
  * Options for listing suggestions with pagination and filtering
  */
@@ -73,7 +76,7 @@ export interface SuggestionReviewResult {
  */
 export async function listSuggestionsData(
   options: SuggestionListOptions,
-  db: typeof drizzleDb = drizzleDb
+  db: SuggestionsDb = drizzleDb
 ): Promise<SuggestionListResult> {
   const { page, limit, sortOrder, status } = options;
 
@@ -188,7 +191,7 @@ export async function listSuggestionsData(
  * @returns Number of suggestions with PENDING status
  */
 export async function getPendingSuggestionsCountData(
-  db: typeof drizzleDb = drizzleDb
+  db: SuggestionsDb = drizzleDb
 ): Promise<number> {
   const result = await db
     .select({ count: count() })
@@ -214,7 +217,7 @@ export async function createSuggestionData(
   suggestedData: Record<string, unknown>,
   reason: string | undefined,
   userId: string,
-  db: typeof drizzleDb = drizzleDb
+  db: SuggestionsDb = drizzleDb
 ): Promise<SuggestionCreateResult> {
   const suggestionId = crypto.randomUUID();
 
@@ -258,7 +261,7 @@ async function applySuggestionData(
     targetPersonId: string | null;
     suggestedData: unknown;
   },
-  db: typeof drizzleDb
+  db: SuggestionsDb
 ): Promise<void> {
   const data = suggestion.suggestedData as Record<string, unknown>;
 
@@ -334,7 +337,7 @@ export async function reviewSuggestionData(
   status: "APPROVED" | "REJECTED",
   reviewNote: string | undefined,
   userId: string,
-  db: typeof drizzleDb = drizzleDb
+  db: SuggestionsDb = drizzleDb
 ): Promise<SuggestionReviewResult> {
   // Get the suggestion
   const suggestionResult = await db

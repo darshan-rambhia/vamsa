@@ -38,6 +38,9 @@ import {
 } from "../helpers/charts";
 import type { CollectionState, PersonData } from "../helpers/charts";
 
+/** Type for the database instance (for DI) */
+export type ChartsDb = typeof drizzleDb;
+
 // Re-export types from the original file
 export interface ChartNode {
   id: string;
@@ -266,12 +269,13 @@ function dateToISOString(date: Date | null): string | null {
  */
 export async function getAncestorChartData(
   personId: string,
-  generations: number
+  generations: number,
+  db: ChartsDb = drizzleDb
 ): Promise<ChartLayoutResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await drizzleDb.query.persons.findFirst({
+  const rootPerson = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -280,8 +284,8 @@ export async function getAncestorChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await drizzleDb.query.persons.findMany();
-  const relationships = await drizzleDb.query.relationships.findMany();
+  const persons = await db.query.persons.findMany();
+  const relationships = await db.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -377,12 +381,13 @@ export async function getAncestorChartData(
  */
 export async function getDescendantChartData(
   personId: string,
-  generations: number
+  generations: number,
+  db: ChartsDb = drizzleDb
 ): Promise<ChartLayoutResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await drizzleDb.query.persons.findFirst({
+  const rootPerson = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -391,8 +396,8 @@ export async function getDescendantChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await drizzleDb.query.persons.findMany();
-  const relationships = await drizzleDb.query.relationships.findMany();
+  const persons = await db.query.persons.findMany();
+  const relationships = await db.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -483,12 +488,13 @@ export async function getDescendantChartData(
 export async function getHourglassChartData(
   personId: string,
   ancestorGenerations: number,
-  descendantGenerations: number
+  descendantGenerations: number,
+  db: ChartsDb = drizzleDb
 ): Promise<ChartLayoutResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await drizzleDb.query.persons.findFirst({
+  const rootPerson = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -497,8 +503,8 @@ export async function getHourglassChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await drizzleDb.query.persons.findMany();
-  const relationships = await drizzleDb.query.relationships.findMany();
+  const persons = await db.query.persons.findMany();
+  const relationships = await db.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -600,12 +606,13 @@ export async function getHourglassChartData(
  */
 export async function getFanChartData(
   personId: string,
-  generations: number
+  generations: number,
+  db: ChartsDb = drizzleDb
 ): Promise<ChartLayoutResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await drizzleDb.query.persons.findFirst({
+  const rootPerson = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -614,8 +621,8 @@ export async function getFanChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await drizzleDb.query.persons.findMany();
-  const relationships = await drizzleDb.query.relationships.findMany();
+  const persons = await db.query.persons.findMany();
+  const relationships = await db.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -709,12 +716,13 @@ export async function getFanChartData(
 export async function getTimelineChartData(
   startYear: number | undefined,
   endYear: number | undefined,
-  sortBy: "birth" | "death" | "name"
+  sortBy: "birth" | "death" | "name",
+  db: ChartsDb = drizzleDb
 ): Promise<TimelineChartResult> {
   const start = Date.now();
 
   // Fetch all persons
-  const allPersons = await drizzleDb.query.persons.findMany();
+  const allPersons = await db.query.persons.findMany();
 
   // Filter to only those with dates and convert to timeline entries
   const entries: Array<TimelineEntry> = allPersons
@@ -794,20 +802,21 @@ export async function getTimelineChartData(
  */
 export async function getRelationshipMatrixData(
   personIds: Array<string> | undefined,
-  maxPeople: number
+  maxPeople: number,
+  db: ChartsDb = drizzleDb
 ): Promise<RelationshipMatrixResult> {
   const start = Date.now();
 
   // Fetch persons
   let persons;
   if (personIds && personIds.length > 0) {
-    persons = await drizzleDb.query.persons.findMany({
+    persons = await db.query.persons.findMany({
       where: inArray(drizzleSchema.persons.id, personIds),
       limit: maxPeople,
     });
   } else {
     // Get all persons and sort in memory, then slice
-    const allPersons = await drizzleDb.query.persons.findMany();
+    const allPersons = await db.query.persons.findMany();
     persons = allPersons
       .sort((a, b) => a.lastName.localeCompare(b.lastName))
       .slice(0, maxPeople);
@@ -816,7 +825,7 @@ export async function getRelationshipMatrixData(
   // Fetch all relationships between these people
   const personIdSet = new Set(persons.map((p) => p.id));
   const personIdArray = Array.from(personIdSet);
-  const relationships = await drizzleDb.query.relationships.findMany({
+  const relationships = await db.query.relationships.findMany({
     where: and(
       inArray(drizzleSchema.relationships.personId, personIdArray),
       inArray(drizzleSchema.relationships.relatedPersonId, personIdArray)
@@ -895,12 +904,13 @@ export async function getRelationshipMatrixData(
  */
 export async function getBowtieChartData(
   personId: string,
-  generations: number
+  generations: number,
+  db: ChartsDb = drizzleDb
 ): Promise<BowtieChartResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await drizzleDb.query.persons.findFirst({
+  const rootPerson = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -909,8 +919,8 @@ export async function getBowtieChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await drizzleDb.query.persons.findMany();
-  const relationships = await drizzleDb.query.relationships.findMany();
+  const persons = await db.query.persons.findMany();
+  const relationships = await db.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -1036,12 +1046,13 @@ export async function getBowtieChartData(
  */
 export async function getCompactTreeData(
   personId: string,
-  generations: number
+  generations: number,
+  db: ChartsDb = drizzleDb
 ): Promise<CompactTreeResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await drizzleDb.query.persons.findFirst({
+  const rootPerson = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -1050,8 +1061,8 @@ export async function getCompactTreeData(
   }
 
   // Fetch all persons and relationships
-  const persons = await drizzleDb.query.persons.findMany();
-  const relationships = await drizzleDb.query.relationships.findMany();
+  const persons = await db.query.persons.findMany();
+  const relationships = await db.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])
@@ -1183,22 +1194,23 @@ export async function getCompactTreeData(
  * const result = await getStatisticsData(true)
  */
 export async function getStatisticsData(
-  includeDeceased: boolean
+  includeDeceased: boolean,
+  db: ChartsDb = drizzleDb
 ): Promise<StatisticsResult> {
   const start = Date.now();
 
   // Fetch all persons
   let persons;
   if (includeDeceased) {
-    persons = await drizzleDb.query.persons.findMany();
+    persons = await db.query.persons.findMany();
   } else {
-    persons = await drizzleDb.query.persons.findMany({
+    persons = await db.query.persons.findMany({
       where: eq(drizzleSchema.persons.isLiving, true),
     });
   }
 
   // Fetch relationships to determine generations
-  const relationships = await drizzleDb.query.relationships.findMany({
+  const relationships = await db.query.relationships.findMany({
     where: eq(drizzleSchema.relationships.type, "PARENT"),
   });
 
@@ -1483,12 +1495,13 @@ export async function getStatisticsData(
 export async function getTreeChartData(
   personId: string,
   ancestorGenerations: number,
-  descendantGenerations: number
+  descendantGenerations: number,
+  db: ChartsDb = drizzleDb
 ): Promise<ChartLayoutResult> {
   const start = Date.now();
 
   // Validate person exists
-  const rootPerson = await drizzleDb.query.persons.findFirst({
+  const rootPerson = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -1497,8 +1510,8 @@ export async function getTreeChartData(
   }
 
   // Fetch all persons and relationships
-  const persons = await drizzleDb.query.persons.findMany();
-  const relationships = await drizzleDb.query.relationships.findMany();
+  const persons = await db.query.persons.findMany();
+  const relationships = await db.query.relationships.findMany();
 
   const personMap = new Map(
     persons.map((p) => [p.id, p as unknown as PersonData])

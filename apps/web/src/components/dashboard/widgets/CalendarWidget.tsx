@@ -22,8 +22,8 @@ import {
 import { Button, cn } from "@vamsa/ui";
 import { useQuery } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
-import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { eq } from "drizzle-orm";
+// Note: drizzleDb and drizzleSchema are dynamically imported inside the server function
+// to prevent server-only modules from leaking into the client bundle
 import { z } from "zod";
 import { BaseWidget } from "./BaseWidget";
 import type { WidgetProps } from "./types";
@@ -67,6 +67,10 @@ const getUpcomingEvents = createServerFn({ method: "GET" })
     return schema.parse(data);
   })
   .handler(async ({ data }) => {
+    // Dynamic imports to keep server-only modules out of client bundle
+    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
+    const { eq } = await import("drizzle-orm");
+
     const { showBirthdays, showAnniversaries, showDeaths, monthsAhead } = data;
 
     const now = new Date();

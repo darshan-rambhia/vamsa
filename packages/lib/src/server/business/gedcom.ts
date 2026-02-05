@@ -33,6 +33,9 @@ import type { GedcomStructureError } from "../helpers/gedcom";
 
 const log = loggers.db;
 
+/** Type for the database instance (for DI) */
+export type GedcomDb = typeof drizzleDb;
+
 /**
  * Interface for file system operations used by GEDCOM export.
  * This allows dependency injection for testing.
@@ -202,7 +205,8 @@ export async function validateGedcomImport(
 export async function importGedcomData(
   fileName: string,
   fileContent: string,
-  userId: string
+  userId: string,
+  db: GedcomDb = drizzleDb
 ): Promise<ImportResult> {
   const start = Date.now();
 
@@ -236,7 +240,7 @@ export async function importGedcomData(
     const mapped = mapGedcomToEntities(gedcomFile);
 
     // Insert into database using transaction for atomicity
-    const result = await drizzleDb.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       const insertedPeople: Array<VamsaPerson> = [];
       const insertedRelationships: Array<VamsaRelationship> = [];
 
@@ -359,24 +363,27 @@ export async function importGedcomData(
  *   fs.writeFileSync("family.ged", result.gedcomContent);
  * }
  */
-export async function exportGedcomData(userId: string): Promise<ExportResult> {
+export async function exportGedcomData(
+  userId: string,
+  db: GedcomDb = drizzleDb
+): Promise<ExportResult> {
   const start = Date.now();
 
   try {
     // Fetch all people and relationships
-    const people = await drizzleDb.query.persons.findMany({
+    const people = await db.query.persons.findMany({
       orderBy: [
         asc(drizzleSchema.persons.lastName),
         asc(drizzleSchema.persons.firstName),
       ],
     });
 
-    const relationships = await drizzleDb.query.relationships.findMany({
+    const relationships = await db.query.relationships.findMany({
       orderBy: asc(drizzleSchema.relationships.createdAt),
     });
 
     // Get user info for submitter name
-    const user = await drizzleDb.query.users.findFirst({
+    const user = await db.query.users.findFirst({
       where: eq(drizzleSchema.users.id, userId),
     });
 
@@ -391,7 +398,7 @@ export async function exportGedcomData(userId: string): Promise<ExportResult> {
     );
 
     // Log audit trail
-    await drizzleDb.insert(drizzleSchema.auditLogs).values({
+    await db.insert(drizzleSchema.auditLogs).values({
       id: crypto.randomUUID(),
       userId,
       action: "CREATE",
@@ -445,32 +452,33 @@ export async function exportGedcomData(userId: string): Promise<ExportResult> {
 export async function exportGedcomDataZip(
   userId: string,
   includeMedia: boolean = true,
-  fileSystem: GedcomFileSystem = defaultFileSystem
+  fileSystem: GedcomFileSystem = defaultFileSystem,
+  db: GedcomDb = drizzleDb
 ): Promise<ExportZipResult> {
   const start = Date.now();
 
   try {
     // Fetch all people and relationships
-    const people = await drizzleDb.query.persons.findMany({
+    const people = await db.query.persons.findMany({
       orderBy: [
         asc(drizzleSchema.persons.lastName),
         asc(drizzleSchema.persons.firstName),
       ],
     });
 
-    const relationships = await drizzleDb.query.relationships.findMany({
+    const relationships = await db.query.relationships.findMany({
       orderBy: asc(drizzleSchema.relationships.createdAt),
     });
 
     // Fetch all media objects if including media
     const mediaObjects = includeMedia
-      ? await drizzleDb.query.mediaObjects.findMany({
+      ? await db.query.mediaObjects.findMany({
           orderBy: asc(drizzleSchema.mediaObjects.uploadedAt),
         })
       : [];
 
     // Get user info for submitter name
-    const user = await drizzleDb.query.users.findFirst({
+    const user = await db.query.users.findFirst({
       where: eq(drizzleSchema.users.id, userId),
     });
 
@@ -552,7 +560,7 @@ export async function exportGedcomDataZip(
     const zipBase64 = zipBuffer.toString("base64");
 
     // Log audit trail
-    await drizzleDb.insert(drizzleSchema.auditLogs).values({
+    await db.insert(drizzleSchema.auditLogs).values({
       id: crypto.randomUUID(),
       userId,
       action: "CREATE",

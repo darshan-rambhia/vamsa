@@ -6,8 +6,8 @@ import {
 } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
-// Import directly from auth-better-api to avoid pulling in media module (which imports sharp)
-import { betterAuthGetSessionWithUserFromCookie } from "@vamsa/lib/server/business/auth-better-api";
+// Note: betterAuthGetSessionWithUserFromCookie is dynamically imported inside checkAuthInline
+// to prevent server-only modules (i18next-fs-backend) from leaking into the client bundle
 import { Button, Nav, NavLink } from "@vamsa/ui";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { signOut } from "~/lib/auth-client";
@@ -20,8 +20,13 @@ const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 
 // Inline server function to check authentication
 // This avoids the bundler circular dependency that occurs when importing from auth.functions.ts
+// Uses dynamic import to prevent server-only modules from leaking into client bundle
 const checkAuthInline = createServerFn({ method: "GET" }).handler(async () => {
   try {
+    // Dynamic import to keep server-only modules (i18next-fs-backend) out of client bundle
+    const { betterAuthGetSessionWithUserFromCookie } =
+      await import("@vamsa/lib/server/business/auth-better-api");
+
     const cookie = getCookie(BETTER_AUTH_COOKIE_NAME);
     const user = await betterAuthGetSessionWithUserFromCookie(
       cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined

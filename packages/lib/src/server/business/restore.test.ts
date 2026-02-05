@@ -56,11 +56,7 @@ const createMockDb = () => {
 
   return {
     select: mock(() => ({
-      from: mock(() => ({
-        then: mock((fn: (rows: Array<unknown>) => unknown) =>
-          Promise.resolve(fn([{ personCount: 10 }]))
-        ),
-      })),
+      from: mock(() => Promise.resolve([{ personCount: 10 }])),
     })),
     insert: mock(() => ({
       values: mock(() => Promise.resolve()),
@@ -127,7 +123,7 @@ describe("restore business logic", () => {
         role: "MEMBER" as const,
       };
 
-      await expect(validateBackupData(memberUser)).rejects.toThrow(
+      expect(validateBackupData(memberUser)).rejects.toThrow(
         "Only administrators can validate backups"
       );
     });
@@ -140,7 +136,7 @@ describe("restore business logic", () => {
         role: "VIEWER" as const,
       };
 
-      await expect(validateBackupData(viewerUser)).rejects.toThrow(
+      expect(validateBackupData(viewerUser)).rejects.toThrow(
         "Only administrators can validate backups"
       );
     });
@@ -199,7 +195,7 @@ describe("restore business logic", () => {
         role: "MEMBER" as const,
       };
 
-      await expect(previewImportData(memberUser)).rejects.toThrow(
+      expect(previewImportData(memberUser)).rejects.toThrow(
         "Only administrators can preview imports"
       );
     });
@@ -275,7 +271,7 @@ describe("restore business logic", () => {
         role: "MEMBER" as const,
       };
 
-      await expect(importBackupData(memberUser, "skip")).rejects.toThrow(
+      expect(importBackupData(memberUser, "skip")).rejects.toThrow(
         "Only administrators can import backups"
       );
     });
@@ -366,7 +362,7 @@ describe("restore business logic", () => {
         role: "MEMBER" as const,
       };
 
-      await expect(getImportHistoryData(memberUser)).rejects.toThrow(
+      expect(getImportHistoryData(memberUser)).rejects.toThrow(
         "Only administrators can view import history"
       );
     });

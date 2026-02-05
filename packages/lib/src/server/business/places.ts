@@ -2,6 +2,9 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { and, asc, count, eq, ilike } from "drizzle-orm";
 
+/** Type for the database instance (for DI) */
+export type PlacesDb = typeof drizzleDb;
+
 /**
  * Local type definitions to match Drizzle enum values
  * These types are extracted from the Drizzle schema
@@ -127,9 +130,12 @@ export function formatPlace(place: {
  * @returns Place with parent reference and counts
  * @throws Error if place not found
  */
-export async function getPlaceData(id: string): Promise<PlaceWithChildren> {
+export async function getPlaceData(
+  id: string,
+  db: PlacesDb = drizzleDb
+): Promise<PlaceWithChildren> {
   // Get the place
-  const place = await drizzleDb.query.places.findFirst({
+  const place = await db.query.places.findFirst({
     where: eq(drizzleSchema.places.id, id),
     with: {
       parent: true,
@@ -141,21 +147,21 @@ export async function getPlaceData(id: string): Promise<PlaceWithChildren> {
   }
 
   // Get child count
-  const childCountResult = await drizzleDb
+  const childCountResult = await db
     .select({ count: count() })
     .from(drizzleSchema.places)
     .where(eq(drizzleSchema.places.parentId, id));
   const childCount = childCountResult[0]?.count || 0;
 
   // Get event count
-  const eventCountResult = await drizzleDb
+  const eventCountResult = await db
     .select({ count: count() })
     .from(drizzleSchema.events)
     .where(eq(drizzleSchema.events.placeId, id));
   const eventCount = eventCountResult[0]?.count || 0;
 
   // Get person count (from placePersonLinks)
-  const personCountResult = await drizzleDb
+  const personCountResult = await db
     .select({ count: count() })
     .from(drizzleSchema.placePersonLinks)
     .where(eq(drizzleSchema.placePersonLinks.placeId, id));
@@ -176,14 +182,17 @@ export async function getPlaceData(id: string): Promise<PlaceWithChildren> {
  * @param query - Search query string
  * @returns Array of matching places (max 50 results), sorted by type then name
  */
-export async function searchPlacesData(query: string): Promise<
+export async function searchPlacesData(
+  query: string,
+  db: PlacesDb = drizzleDb
+): Promise<
   Array<
     PlaceResponse & {
       parentName: string | null;
     }
   >
 > {
-  const places = await drizzleDb.query.places.findMany({
+  const places = await db.query.places.findMany({
     where: ilike(drizzleSchema.places.name, `%${query}%`),
     with: {
       parent: true,
@@ -212,9 +221,10 @@ export async function searchPlacesData(query: string): Promise<
  * @throws Error if place not found
  */
 export async function getPlaceHierarchyData(
-  id: string
+  id: string,
+  db: PlacesDb = drizzleDb
 ): Promise<Array<PlaceHierarchyItem>> {
-  const place = await drizzleDb.query.places.findFirst({
+  const place = await db.query.places.findFirst({
     where: eq(drizzleSchema.places.id, id),
     with: {
       parent: true,
@@ -236,7 +246,7 @@ export async function getPlaceHierarchyData(
 
   let current = place;
   while (current.parentId) {
-    const parent = await drizzleDb.query.places.findFirst({
+    const parent = await db.query.places.findFirst({
       where: eq(drizzleSchema.places.id, current.parentId),
       with: {
         parent: true,
@@ -264,10 +274,11 @@ export async function getPlaceHierarchyData(
  * @throws Error if person not found
  */
 export async function getPersonPlacesData(
-  personId: string
+  personId: string,
+  db: PlacesDb = drizzleDb
 ): Promise<Array<PersonPlace>> {
   // Verify person exists
-  const person = await drizzleDb.query.persons.findFirst({
+  const person = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -275,7 +286,7 @@ export async function getPersonPlacesData(
     throw new Error("Person not found");
   }
 
-  const placeLinks = await drizzleDb.query.placePersonLinks.findMany({
+  const placeLinks = await db.query.placePersonLinks.findMany({
     where: eq(drizzleSchema.placePersonLinks.personId, personId),
     with: {
       place: {

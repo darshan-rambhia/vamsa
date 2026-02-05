@@ -8,8 +8,15 @@ const __dirname = path.dirname(__filename);
 
 // Load environment variables from .env files (monorepo root)
 // .env.test overrides .env with test-specific values
-config({ path: path.resolve(__dirname, "../../.env") });
-config({ path: path.resolve(__dirname, "../../.env.test"), override: true });
+config({
+  path: path.resolve(__dirname, "../../.env"),
+  quiet: true,
+});
+config({
+  path: path.resolve(__dirname, "../../.env.test"),
+  override: true,
+  quiet: true,
+});
 
 // In Docker, IN_DOCKER=true is set by docker-compose
 // Locally, we start the server ourselves on localhost

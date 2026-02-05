@@ -1,7 +1,13 @@
 import crypto from "node:crypto";
 import { addDays, addYears } from "date-fns";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { and, eq } from "drizzle-orm";
+import { loggers } from "@vamsa/lib/logger";
 
 type RotationEvent = "password_change" | "manual" | "annual_check";
+
+/** Type for the database instance (for DI) */
+export type TokenRotationDb = typeof drizzleDb;
 
 /**
  * Generate cryptographically secure random token
@@ -19,17 +25,18 @@ export function daysSinceCreation(createdAt: Date): number {
 
 /**
  * Enforce token rotation policies for a user
+ * @param userId - ID of the user
+ * @param event - Rotation event type
+ * @param db - Database instance (defaults to drizzleDb for production)
  */
 export async function enforceRotationPolicy(
   userId: string,
-  event: RotationEvent
+  event: RotationEvent,
+  db: TokenRotationDb = drizzleDb
 ): Promise<{ rotated: number; tokens: Array<string> }> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { and, eq } = await import("drizzle-orm");
-  const { loggers } = await import("@vamsa/lib/logger");
   const log = loggers.auth;
 
-  const tokens = await drizzleDb.query.calendarTokens.findMany({
+  const tokens = await db.query.calendarTokens.findMany({
     where: and(
       eq(drizzleSchema.calendarTokens.userId, userId),
       eq(drizzleSchema.calendarTokens.isActive, true)
@@ -49,7 +56,7 @@ export async function enforceRotationPolicy(
       event === "manual";
 
     if (shouldRotate) {
-      const newToken = await rotateToken(token.id);
+      const newToken = await rotateToken(token.id, db);
       rotatedTokens.push(newToken.token);
       rotatedCount++;
 
@@ -65,12 +72,14 @@ export async function enforceRotationPolicy(
 
 /**
  * Rotate a single token with grace period
+ * @param oldTokenId - ID of the token to rotate
+ * @param db - Database instance (defaults to drizzleDb for production)
  */
-export async function rotateToken(oldTokenId: string) {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
-  const oldToken = await drizzleDb.query.calendarTokens.findFirst({
+export async function rotateToken(
+  oldTokenId: string,
+  db: TokenRotationDb = drizzleDb
+) {
+  const oldToken = await db.query.calendarTokens.findFirst({
     where: eq(drizzleSchema.calendarTokens.id, oldTokenId),
   });
 
@@ -80,7 +89,7 @@ export async function rotateToken(oldTokenId: string) {
 
   // Create new token with same settings
   const newTokenId = crypto.randomUUID();
-  const [newToken] = await drizzleDb
+  const [newToken] = await db
     .insert(drizzleSchema.calendarTokens)
     .values({
       id: newTokenId,
@@ -97,7 +106,7 @@ export async function rotateToken(oldTokenId: string) {
     .returning();
 
   // Grace period: old token valid for 30 days
-  await drizzleDb
+  await db
     .update(drizzleSchema.calendarTokens)
     .set({
       expiresAt: addDays(new Date(), 30),
@@ -110,12 +119,14 @@ export async function rotateToken(oldTokenId: string) {
 
 /**
  * Revoke a token immediately (no grace period)
+ * @param tokenId - ID of the token to revoke
+ * @param db - Database instance (defaults to drizzleDb for production)
  */
-export async function revokeToken(tokenId: string) {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
-  const [result] = await drizzleDb
+export async function revokeToken(
+  tokenId: string,
+  db: TokenRotationDb = drizzleDb
+) {
+  const [result] = await db
     .update(drizzleSchema.calendarTokens)
     .set({
       isActive: false,

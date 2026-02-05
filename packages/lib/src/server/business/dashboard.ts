@@ -17,6 +17,9 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { and, asc, count, desc, eq, inArray, sql } from "drizzle-orm";
 
+/** Type for the database instance (for DI) */
+export type DashboardDb = typeof drizzleDb;
+
 /**
  * Dashboard statistics result interface
  */
@@ -98,7 +101,9 @@ export interface ActivityFilters {
  * @example
  * const stats = await calculateFamilyStats()
  */
-async function calculateFamilyStats(): Promise<DashboardStats> {
+async function calculateFamilyStats(
+  db: DashboardDb = drizzleDb
+): Promise<DashboardStats> {
   const [
     totalPeopleResult,
     livingPeopleResult,
@@ -106,17 +111,17 @@ async function calculateFamilyStats(): Promise<DashboardStats> {
     totalRelationshipsResult,
     recentAdditions,
   ] = await Promise.all([
-    drizzleDb.select({ count: count() }).from(drizzleSchema.persons),
-    drizzleDb
+    db.select({ count: count() }).from(drizzleSchema.persons),
+    db
       .select({ count: count() })
       .from(drizzleSchema.persons)
       .where(eq(drizzleSchema.persons.isLiving, true)),
-    drizzleDb
+    db
       .select({ count: count() })
       .from(drizzleSchema.persons)
       .where(eq(drizzleSchema.persons.isLiving, false)),
-    drizzleDb.select({ count: count() }).from(drizzleSchema.relationships),
-    drizzleDb.query.persons.findMany({
+    db.select({ count: count() }).from(drizzleSchema.relationships),
+    db.query.persons.findMany({
       orderBy: desc(drizzleSchema.persons.createdAt),
       limit: 5,
       columns: {
@@ -160,8 +165,10 @@ async function calculateFamilyStats(): Promise<DashboardStats> {
  * @example
  * const stats = await getDashboardStatsData()
  */
-export async function getDashboardStatsData(): Promise<DashboardStats> {
-  return calculateFamilyStats();
+export async function getDashboardStatsData(
+  db: DashboardDb = drizzleDb
+): Promise<DashboardStats> {
+  return calculateFamilyStats(db);
 }
 
 /**
@@ -293,7 +300,8 @@ function getActivityDescription(
  * })
  */
 export async function getRecentActivityData(
-  filters: ActivityFilters = {}
+  filters: ActivityFilters = {},
+  db: DashboardDb = drizzleDb
 ): Promise<Array<ActivityLog>> {
   // Build where clause dynamically - collect all conditions
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -342,7 +350,7 @@ export async function getRecentActivityData(
   }
 
   // Fetch audit logs
-  const logs = await drizzleDb.query.auditLogs.findMany({
+  const logs = await db.query.auditLogs.findMany({
     where: whereConditions.length > 0 ? and(...whereConditions) : undefined,
     orderBy: desc(drizzleSchema.auditLogs.createdAt),
     limit: filters.limit ?? 50,
@@ -401,9 +409,11 @@ export async function getRecentActivityData(
  * @example
  * const options = await getActivityFilterOptionsData()
  */
-export async function getActivityFilterOptionsData(): Promise<ActivityFilterOption> {
+export async function getActivityFilterOptionsData(
+  db: DashboardDb = drizzleDb
+): Promise<ActivityFilterOption> {
   // Get all audit logs to aggregate action and entity types
-  const allLogs = await drizzleDb.query.auditLogs.findMany();
+  const allLogs = await db.query.auditLogs.findMany();
 
   // Aggregate action types with counts
   const actionTypeMap = new Map<string, number>();
@@ -418,7 +428,7 @@ export async function getActivityFilterOptionsData(): Promise<ActivityFilterOpti
   });
 
   // Get all users who have performed actions
-  const usersWithLogs = await drizzleDb.query.users.findMany({
+  const usersWithLogs = await db.query.users.findMany({
     columns: { id: true, name: true },
     orderBy: asc(drizzleSchema.users.name),
   });
