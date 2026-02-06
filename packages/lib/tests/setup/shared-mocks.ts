@@ -10,7 +10,8 @@
  * By using shared mocks, all tests use the same implementation.
  */
 
-import { mock } from "bun:test";
+import { vi } from "vitest";
+const mock = vi.fn;
 
 /**
  * Shared logger mock - tracks all logging calls

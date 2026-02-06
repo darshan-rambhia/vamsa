@@ -57,8 +57,7 @@ backups/
 *.sql.xz
 !backups/.gitkeep
 
-# Lockfiles (use pnpm)
-bun.lock
+# Lockfiles (keep bun.lock for reproducible builds - required by Docker CI)
 package-lock.json
 yarn.lock
 

@@ -9,7 +9,7 @@
  * 4. HTTP status codes and error responses are documented
  */
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import apiV1 from "./index";
 
 describe("Auto-Generated OpenAPI Specification", () => {

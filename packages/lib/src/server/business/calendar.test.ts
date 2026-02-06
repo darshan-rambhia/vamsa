@@ -9,10 +9,10 @@
  * - Deleting calendar tokens
  * - Error handling and authorization
  *
- * Uses mock.module() to inject mocked Drizzle ORM instance
+ * Uses vi.mock() to inject mocked Drizzle ORM instance
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock logger for this test file
 import {
@@ -32,31 +32,31 @@ import {
 
 // Create mock Drizzle helpers
 const createMockInsertChain = () => ({
-  values: mock(() => ({
-    returning: mock(() => Promise.resolve([{}])),
+  values: vi.fn(() => ({
+    returning: vi.fn(() => Promise.resolve([{}])),
   })),
 });
 
 const createMockUpdateChain = () => ({
-  set: mock(() => ({
-    where: mock(() => Promise.resolve()),
+  set: vi.fn(() => ({
+    where: vi.fn(() => Promise.resolve()),
   })),
 });
 
 const createMockDeleteChain = () => ({
-  where: mock(() => Promise.resolve()),
+  where: vi.fn(() => Promise.resolve()),
 });
 
 const mockDrizzleDb = {
-  insert: mock(() => createMockInsertChain()),
+  insert: vi.fn(() => createMockInsertChain()),
   query: {
     calendarTokens: {
-      findFirst: mock(() => Promise.resolve(null)),
-      findMany: mock(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
   },
-  update: mock(() => createMockUpdateChain()),
-  delete: mock(() => createMockDeleteChain()),
+  update: vi.fn(() => createMockUpdateChain()),
+  delete: vi.fn(() => createMockDeleteChain()),
 };
 
 describe("Calendar Server Functions", () => {

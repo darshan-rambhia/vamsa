@@ -4,7 +4,7 @@
  * These tests use the real API without mocking shared modules
  * to avoid mock leaking issues between test files.
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import apiV1 from "./index";
 
 // Note: LOG_LEVEL=error is used in test command to silence logger warnings

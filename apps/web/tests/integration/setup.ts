@@ -5,7 +5,7 @@
  * Requires a running PostgreSQL test database.
  *
  * Setup:
- *   docker-compose -f docker/docker-compose.test.yml up -d
+ *   docker compose -f docker/docker-compose.local.yml --profile test up -d --wait
  *   bun run test:int
  *
  * Environment Variables:

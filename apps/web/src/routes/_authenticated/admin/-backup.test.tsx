@@ -3,7 +3,7 @@
  * Tests tab navigation, format selection, component rendering, and quick actions
  */
 
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, vi } from "vitest";
 
 describe("Backup Page Component", () => {
   describe("Tab Navigation", () => {
@@ -263,7 +263,7 @@ describe("Backup Page Component", () => {
     it("should call triggerManualBackup when Create Backup clicked", () => {
       // When: Create Backup Now is clicked
       // Then: Call triggerManualBackup function
-      const triggerFn = mock(() => ({ success: true }));
+      const triggerFn = vi.fn(() => ({ success: true }));
       const result = triggerFn();
       expect(result.success).toBe(true);
     });
@@ -271,7 +271,7 @@ describe("Backup Page Component", () => {
     it("should call verifyLatestBackup when Verify clicked", () => {
       // When: Verify Latest Backup is clicked
       // Then: Call verifyLatestBackup function
-      const verifyFn = mock(() => ({ success: true }));
+      const verifyFn = vi.fn(() => ({ success: true }));
       const result = verifyFn();
       expect(result.success).toBe(true);
     });

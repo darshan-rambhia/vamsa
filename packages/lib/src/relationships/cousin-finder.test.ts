@@ -3,7 +3,7 @@
  *
  * Tests the cousin relationship finding and cousin degree calculation functionality
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { calculateCousinDegree, findCousins } from "./cousin-finder";
 
 interface RelationshipNode {

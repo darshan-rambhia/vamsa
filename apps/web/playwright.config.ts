@@ -48,7 +48,8 @@ const webServerConfig = isDocker
             (entry): entry is [string, string] => entry[1] !== undefined
           )
         ),
-        // Set E2E_TESTING=true to disable rate limiting during E2E tests
+        // Match CI: server runs in test mode with rate limiting disabled
+        NODE_ENV: "test",
         E2E_TESTING: "true",
       },
     };

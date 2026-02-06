@@ -5,7 +5,7 @@
  * Uses the stubbed server context for isolated testing.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   asAdmin,
   asMember,
@@ -14,34 +14,39 @@ import {
 } from "@test/server-fn-context";
 import { initializeServerI18n } from "@vamsa/lib/server";
 
-// Create a mock database that returns the authenticated user
-const mockDrizzleDb = {
-  select: () => ({
-    from: () => ({
-      where: () => ({
-        limit: async () => {
-          // Return mock user - in real scenarios this would come from the session context
-          return [
-            {
-              id: "test-user-id",
-              email: "test@example.com",
-              name: "Test User",
-              role: "VIEWER",
-              personId: null,
-              mustChangePassword: false,
-              oidcProvider: null,
-              profileClaimStatus: "PENDING",
-              createdAt: new Date(),
-              updatedAt: new Date(),
-            },
-          ];
-        },
+// Static import after vi.mock (auto-hoisted)
+import { requireAuth } from "./require-auth";
+
+// Create a mock database that returns the authenticated user (hoisted for vi.mock)
+const { mockDrizzleDb } = vi.hoisted(() => ({
+  mockDrizzleDb: {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: async () => {
+            // Return mock user - in real scenarios this would come from the session context
+            return [
+              {
+                id: "test-user-id",
+                email: "test@example.com",
+                name: "Test User",
+                role: "VIEWER",
+                personId: null,
+                mustChangePassword: false,
+                oidcProvider: null,
+                profileClaimStatus: "PENDING",
+                createdAt: new Date(),
+                updatedAt: new Date(),
+              },
+            ];
+          },
+        }),
       }),
     }),
-  }),
-};
+  },
+}));
 
-mock.module("@vamsa/lib/server/db", () => ({
+vi.mock("@vamsa/lib/server/db", () => ({
   drizzleDb: mockDrizzleDb,
   drizzleSchema: {
     users: {
@@ -52,9 +57,6 @@ mock.module("@vamsa/lib/server/db", () => ({
     },
   },
 }));
-
-// Dynamic import after mock.module
-const { requireAuth } = await import("./require-auth");
 
 beforeEach(async () => {
   await initializeServerI18n();

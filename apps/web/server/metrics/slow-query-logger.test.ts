@@ -4,7 +4,7 @@
  * These tests verify that slow query logging and statistics work correctly.
  */
 
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "vitest";
 import {
   SLOW_QUERY_LOG_THRESHOLD_MS,
   clearSlowQueries,

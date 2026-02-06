@@ -11,7 +11,7 @@
  * - Redirects from /tree and /charts work correctly
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import type { VisualizationType } from "~/routes/_authenticated/visualize";
 
 // Mock the route validation function

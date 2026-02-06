@@ -44,6 +44,7 @@ export default defineConfig(
       "**/convex/_generated/**",
       "**/*.config.js",
       "**/*.config.mjs",
+      "**/vitest.config.ts",
       "**/postcss.config.mjs",
       "docs/**", // Documentation
       "site/**", // Ladle build output

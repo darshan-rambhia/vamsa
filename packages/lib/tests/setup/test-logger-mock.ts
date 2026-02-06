@@ -18,7 +18,7 @@
  * 4. Cleans up test-generated files in data/uploads after all tests complete
  */
 
-import { mock, afterAll } from "bun:test";
+import { vi, afterAll } from "vitest";
 import { rm } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -35,7 +35,7 @@ import {
 
 // Mock logger module using shared mocks
 // This ensures test files can verify calls on the same mock objects
-mock.module("@vamsa/lib/logger", () => ({
+vi.mock("@vamsa/lib/logger", () => ({
   logger: mockLogger,
   log: mockLog,
   loggers: mockLoggers,
@@ -47,7 +47,7 @@ mock.module("@vamsa/lib/logger", () => ({
 }));
 
 // Also mock the direct path in case some files use it
-mock.module("../../src/logger", () => ({
+vi.mock("../../src/logger", () => ({
   logger: mockLogger,
   log: mockLog,
   loggers: mockLoggers,
@@ -65,62 +65,62 @@ let mockFindManyResults: Array<unknown> = [];
 
 // Create a generic query namespace with configurable results
 const createQueryNamespace = () => ({
-  findFirst: mock(async () => mockFindFirstResult),
-  findMany: mock(async () => mockFindManyResults),
+  findFirst: vi.fn(async () => mockFindFirstResult),
+  findMany: vi.fn(async () => mockFindManyResults),
 });
 
 // Create mock insert chain
 const createMockInsertChain = () => ({
-  values: mock(() => ({
-    returning: mock(() => Promise.resolve([])),
+  values: vi.fn(() => ({
+    returning: vi.fn(() => Promise.resolve([])),
   })),
 });
 
 // Create mock update chain
 const createMockUpdateChain = () => ({
-  set: mock(() => ({
-    where: mock(() => Promise.resolve()),
+  set: vi.fn(() => ({
+    where: vi.fn(() => Promise.resolve()),
   })),
 });
 
 // Create mock delete chain
 const createMockDeleteChain = () => ({
-  where: mock(() => Promise.resolve()),
+  where: vi.fn(() => Promise.resolve()),
 });
 
 // Create a mock Drizzle db with configurable query results
 // All query namespaces share the same configurable result variables
 const mockDrizzleDb = {
-  select: mock(() => ({
-    from: mock(() => ({
-      where: mock(() => ({
-        orderBy: mock(() => ({
-          limit: mock(() => ({
-            offset: mock(() => Promise.resolve([])),
+  select: vi.fn(() => ({
+    from: vi.fn(() => ({
+      where: vi.fn(() => ({
+        orderBy: vi.fn(() => ({
+          limit: vi.fn(() => ({
+            offset: vi.fn(() => Promise.resolve([])),
           })),
         })),
-        limit: mock(() => Promise.resolve([])),
+        limit: vi.fn(() => Promise.resolve([])),
       })),
-      leftJoin: mock(() => ({
-        where: mock(() => ({
-          orderBy: mock(() => ({
-            limit: mock(() => ({
-              offset: mock(() => Promise.resolve([])),
+      leftJoin: vi.fn(() => ({
+        where: vi.fn(() => ({
+          orderBy: vi.fn(() => ({
+            limit: vi.fn(() => ({
+              offset: vi.fn(() => Promise.resolve([])),
             })),
           })),
         })),
       })),
     })),
   })),
-  insert: mock(() => createMockInsertChain()),
-  update: mock(() => createMockUpdateChain()),
-  delete: mock(() => createMockDeleteChain()),
-  transaction: mock((fn: (tx: unknown) => Promise<unknown>) =>
+  insert: vi.fn(() => createMockInsertChain()),
+  update: vi.fn(() => createMockUpdateChain()),
+  delete: vi.fn(() => createMockDeleteChain()),
+  transaction: vi.fn((fn: (tx: unknown) => Promise<unknown>) =>
     fn(mockDrizzleDb)
   ),
   // Query API - all namespaces share the same configurable result variables
   // Tests can override specific namespace methods if needed:
-  //   mockDrizzleDb.query.calendarTokens.findFirst = mock(async () => customResult)
+  //   mockDrizzleDb.query.calendarTokens.findFirst = vi.fn(async () => customResult)
   query: {
     // Core entities
     users: createQueryNamespace(),
@@ -184,8 +184,10 @@ const mockDrizzleDb = {
       "eventParticipants",
     ] as const;
     for (const ns of namespaces) {
-      mockDrizzleDb.query[ns].findFirst = mock(async () => mockFindFirstResult);
-      mockDrizzleDb.query[ns].findMany = mock(async () => mockFindManyResults);
+      mockDrizzleDb.query[ns].findFirst = vi.fn(
+        async () => mockFindFirstResult
+      );
+      mockDrizzleDb.query[ns].findMany = vi.fn(async () => mockFindManyResults);
     }
   },
 };
@@ -234,7 +236,7 @@ const mockDrizzleSchema = {
 
 // Mock @vamsa/api to prevent real database initialization
 // Include all exports to prevent import errors
-mock.module("@vamsa/api", () => ({
+vi.mock("@vamsa/api", () => ({
   // Drizzle ORM mocks
   drizzleDb: mockDrizzleDb,
   drizzleSchema: mockDrizzleSchema,
@@ -253,6 +255,30 @@ mock.module("@vamsa/api", () => ({
   createSuggestionUpdatedEmail: () => ({}),
   createNewMemberEmail: () => ({}),
   createBirthdayReminderEmail: () => ({}),
+}));
+
+// Mock better-auth library to prevent real auth initialization in tests
+vi.mock("better-auth", () => ({
+  betterAuth: vi.fn(() => ({
+    api: {
+      signInEmail: vi.fn(),
+      signUpEmail: vi.fn(),
+      getSession: vi.fn(),
+      changePassword: vi.fn(),
+      signOut: vi.fn(),
+    },
+  })),
+}));
+
+// Mock better-auth plugins
+vi.mock("better-auth/plugins", () => ({
+  bearer: vi.fn(() => ({})),
+  genericOAuth: vi.fn(() => ({})),
+}));
+
+// Mock better-auth adapters
+vi.mock("better-auth/adapters/drizzle", () => ({
+  drizzleAdapter: vi.fn(() => ({})),
 }));
 
 // Initialize i18n once at setup - this happens after mocking

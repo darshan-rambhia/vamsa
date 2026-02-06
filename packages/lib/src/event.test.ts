@@ -10,7 +10,7 @@
  * - EVENT_TYPE_LABELS: Label object completeness
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   EVENT_TYPE_LABELS,
   EVENT_TYPE_TO_GEDCOM,

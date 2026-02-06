@@ -24,7 +24,7 @@
     "db:seed:e2e": "bun src/drizzle/seed-e2e.ts",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit",
-    "test": "bun test src"
+    "test": "bun run vitest run"
   },
   "dependencies": {
     "@vamsa/schemas": "workspace:*",

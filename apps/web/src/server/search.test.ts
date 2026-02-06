@@ -9,7 +9,7 @@
  * - Authentication requirements
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { asAdmin, asUnauthenticated, asViewer } from "@test/server-fn-context";
 import { initializeServerI18n } from "@vamsa/lib/server";
 import { searchPeopleHandler } from "./search";
@@ -18,117 +18,121 @@ beforeEach(async () => {
   await initializeServerI18n();
 });
 
-// Mock the search query builders and classifiers
-const mockBuildCombinedSearchQuery = mock(
-  (_query: string, _options?: unknown) => ({
-    sql: "SELECT * FROM persons WHERE ... LIMIT 20",
-    params: ["john"],
-  })
-);
+// Hoist mocks so they're available in vi.mock() factory
+const {
+  mockBuildCombinedSearchQuery,
+  mockBuildPersonSearchCountQuery,
+  mockClassifyIntent,
+  mockExecuteSearch,
+  mockSanitizeQuery,
+  mockDrizzleDb,
+} = vi.hoisted(() => {
+  const createSelectBuilder = () => {
+    const builder = {
+      from: () => builder,
+      where: () => builder,
+      leftJoin: () => builder,
+      limit: () => builder,
+      then: (resolve: (value: unknown) => void) => {
+        // Return mock user for auth check
+        resolve([
+          {
+            id: "test-user-id",
+            email: "test@example.com",
+            name: "Test User",
+            emailVerified: true,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        ]);
+      },
+    };
+    return builder;
+  };
 
-const mockBuildPersonSearchCountQuery = mock(
-  (_query: string, _options?: unknown) => ({
-    sql: "SELECT COUNT(*) as total FROM persons WHERE ...",
-    params: ["john"],
-  })
-);
-
-const mockClassifyIntent = mock(() => ({
-  intent: "PERSON_SEARCH",
-  confidence: 0.5,
-}));
-
-const mockExecuteSearch = mock(async () => ({
-  type: "PERSON_SEARCH",
-  results: [],
-  explanation: "No results found",
-}));
-
-const mockSanitizeQuery = mock((query: string) => {
-  const trimmed = query.trim();
-  return trimmed.length > 0 ? trimmed : "";
-});
-
-// Mock drizzle database
-// Create a chainable select builder mock
-const createSelectBuilder = () => {
-  const builder = {
-    from: () => builder,
-    where: () => builder,
-    leftJoin: () => builder,
-    limit: () => builder,
-    then: (resolve: (value: unknown) => void) => {
-      // Return mock user for auth check
-      resolve([
-        {
-          id: "test-user-id",
-          email: "test@example.com",
-          name: "Test User",
-          emailVerified: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+  return {
+    mockBuildCombinedSearchQuery: vi.fn(
+      (_query: string, _options?: unknown) => ({
+        sql: "SELECT * FROM persons WHERE ... LIMIT 20",
+        params: ["john"],
+      })
+    ),
+    mockBuildPersonSearchCountQuery: vi.fn(
+      (_query: string, _options?: unknown) => ({
+        sql: "SELECT COUNT(*) as total FROM persons WHERE ...",
+        params: ["john"],
+      })
+    ),
+    mockClassifyIntent: vi.fn(() => ({
+      intent: "PERSON_SEARCH",
+      confidence: 0.5,
+    })),
+    mockExecuteSearch: vi.fn(async () => ({
+      type: "PERSON_SEARCH",
+      results: [],
+      explanation: "No results found",
+    })),
+    mockSanitizeQuery: vi.fn((query: string) => {
+      const trimmed = query.trim();
+      return trimmed.length > 0 ? trimmed : "";
+    }),
+    mockDrizzleDb: {
+      select: () => createSelectBuilder(),
+      query: {
+        persons: {
+          findMany: async () => [
+            {
+              id: "person-1",
+              firstName: "John",
+              lastName: "Doe",
+              gender: "male",
+              dateOfBirth: new Date("1990-01-15"),
+              dateOfPassing: null,
+              isLiving: true,
+              photoUrl: null,
+            },
+          ],
         },
-      ]);
+        relationships: {
+          findMany: async () => [
+            {
+              personId: "person-1",
+              relatedPersonId: "person-2",
+              type: "SPOUSE",
+            },
+          ],
+        },
+      },
+      $client: {
+        query: async (sql: string, _params: Array<unknown>) => {
+          if (sql.includes("COUNT")) {
+            return {
+              rows: [{ total: 1 }],
+            };
+          }
+          return {
+            rows: [
+              {
+                id: "person-1",
+                firstName: "John",
+                lastName: "Doe",
+                maidenName: null,
+                photoUrl: null,
+                dateOfBirth: new Date("1990-01-15"),
+                dateOfPassing: null,
+                isLiving: true,
+                rank: 0.5,
+              },
+            ],
+          };
+        },
+      },
     },
   };
-  return builder;
-};
-
-const mockDrizzleDb = {
-  select: () => createSelectBuilder(),
-  query: {
-    persons: {
-      findMany: async () => [
-        {
-          id: "person-1",
-          firstName: "John",
-          lastName: "Doe",
-          gender: "male",
-          dateOfBirth: new Date("1990-01-15"),
-          dateOfPassing: null,
-          isLiving: true,
-          photoUrl: null,
-        },
-      ],
-    },
-    relationships: {
-      findMany: async () => [
-        {
-          personId: "person-1",
-          relatedPersonId: "person-2",
-          type: "SPOUSE",
-        },
-      ],
-    },
-  },
-  $client: {
-    query: async (sql: string, _params: Array<unknown>) => {
-      if (sql.includes("COUNT")) {
-        return {
-          rows: [{ total: 1 }],
-        };
-      }
-      return {
-        rows: [
-          {
-            id: "person-1",
-            firstName: "John",
-            lastName: "Doe",
-            maidenName: null,
-            photoUrl: null,
-            dateOfBirth: new Date("1990-01-15"),
-            dateOfPassing: null,
-            isLiving: true,
-            rank: 0.5,
-          },
-        ],
-      };
-    },
-  },
-};
+});
 
 // Set up mocks before importing the handler
-mock.module("@vamsa/lib", () => ({
+vi.mock("@vamsa/lib", () => ({
   buildCombinedSearchQuery: mockBuildCombinedSearchQuery,
   buildPersonSearchCountQuery: mockBuildPersonSearchCountQuery,
   classifyIntent: mockClassifyIntent,
@@ -138,8 +142,29 @@ mock.module("@vamsa/lib", () => ({
   SearchResults: {},
 }));
 
-mock.module("@vamsa/api", () => ({
+vi.mock("@vamsa/api", () => ({
   drizzleDb: mockDrizzleDb,
+}));
+
+// Mock the require-auth middleware to prevent DATABASE_URL errors
+vi.mock("./middleware/require-auth", () => ({
+  requireAuth: async (requiredRole: string = "VIEWER") => {
+    // Import getStubbedSession from the test context
+    const { getStubbedSession } = await import("@test/server-fn-context");
+    const user = await getStubbedSession();
+    if (!user) {
+      throw new Error("errors:auth.notAuthenticated");
+    }
+    const roleHierarchy: Record<string, number> = {
+      VIEWER: 0,
+      MEMBER: 1,
+      ADMIN: 2,
+    };
+    if (roleHierarchy[user.role] < roleHierarchy[requiredRole]) {
+      throw new Error(`Requires ${requiredRole} role or higher`);
+    }
+    return user;
+  },
 }));
 
 // Note: Real logger is used - no mocking needed

@@ -13,7 +13,7 @@
  * DO NOT call mock.module() here - the preload already handles it.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   clearAllMocks,
   mockLogger,
@@ -234,12 +234,12 @@ describe("notifications business logic", () => {
       ];
 
       let callCount = 0;
-      mockDrizzleDb.query.suggestions.findFirst = mock(async () => {
+      mockDrizzleDb.query.suggestions.findFirst = vi.fn(async () => {
         callCount++;
         return suggestion;
       }) as any;
 
-      mockDrizzleDb.query.users.findMany = mock(async () => {
+      mockDrizzleDb.query.users.findMany = vi.fn(async () => {
         callCount++;
         return admins;
       }) as any;
@@ -254,7 +254,9 @@ describe("notifications business logic", () => {
     });
 
     it("should log error when suggestion not found", async () => {
-      mockDrizzleDb.query.suggestions.findFirst = mock(async () => null) as any;
+      mockDrizzleDb.query.suggestions.findFirst = vi.fn(
+        async () => null
+      ) as any;
 
       await notifySuggestionCreated("nonexistent-suggestion", mockDrizzleDb);
 
@@ -267,10 +269,10 @@ describe("notifications business logic", () => {
     it("should log warning when no admins found", async () => {
       const suggestion = { id: "suggestion-1", content: "Test suggestion" };
 
-      mockDrizzleDb.query.suggestions.findFirst = mock(
+      mockDrizzleDb.query.suggestions.findFirst = vi.fn(
         async () => suggestion
       ) as any;
-      mockDrizzleDb.query.users.findMany = mock(async () => []) as any;
+      mockDrizzleDb.query.users.findMany = vi.fn(async () => []) as any;
 
       await notifySuggestionCreated("suggestion-1", mockDrizzleDb);
 
@@ -281,7 +283,7 @@ describe("notifications business logic", () => {
     });
 
     it("should not throw on database error", async () => {
-      mockDrizzleDb.query.suggestions.findFirst = mock(async () => {
+      mockDrizzleDb.query.suggestions.findFirst = vi.fn(async () => {
         throw new Error("DB Error");
       }) as any;
 
@@ -296,7 +298,7 @@ describe("notifications business logic", () => {
     it("should log when suggestion is found with APPROVED status", async () => {
       const suggestion = { id: "suggestion-1", content: "Test suggestion" };
 
-      mockDrizzleDb.query.suggestions.findFirst = mock(
+      mockDrizzleDb.query.suggestions.findFirst = vi.fn(
         async () => suggestion
       ) as any;
 
@@ -311,7 +313,7 @@ describe("notifications business logic", () => {
     it("should log when suggestion is found with REJECTED status", async () => {
       const suggestion = { id: "suggestion-1", content: "Test suggestion" };
 
-      mockDrizzleDb.query.suggestions.findFirst = mock(
+      mockDrizzleDb.query.suggestions.findFirst = vi.fn(
         async () => suggestion
       ) as any;
 
@@ -324,7 +326,9 @@ describe("notifications business logic", () => {
     });
 
     it("should log error when suggestion not found", async () => {
-      mockDrizzleDb.query.suggestions.findFirst = mock(async () => null) as any;
+      mockDrizzleDb.query.suggestions.findFirst = vi.fn(
+        async () => null
+      ) as any;
 
       await notifySuggestionUpdated(
         "nonexistent-suggestion",
@@ -339,7 +343,7 @@ describe("notifications business logic", () => {
     });
 
     it("should not throw on database error", async () => {
-      mockDrizzleDb.query.suggestions.findFirst = mock(async () => {
+      mockDrizzleDb.query.suggestions.findFirst = vi.fn(async () => {
         throw new Error("DB Error");
       }) as any;
 
@@ -359,12 +363,12 @@ describe("notifications business logic", () => {
       ];
 
       let callCount = 0;
-      mockDrizzleDb.query.users.findFirst = mock(async () => {
+      mockDrizzleDb.query.users.findFirst = vi.fn(async () => {
         callCount++;
         return newMember;
       }) as any;
 
-      mockDrizzleDb.query.users.findMany = mock(async () => {
+      mockDrizzleDb.query.users.findMany = vi.fn(async () => {
         callCount++;
         return members;
       }) as any;
@@ -379,7 +383,7 @@ describe("notifications business logic", () => {
     });
 
     it("should log error when new member not found", async () => {
-      mockDrizzleDb.query.users.findFirst = mock(async () => null) as any;
+      mockDrizzleDb.query.users.findFirst = vi.fn(async () => null) as any;
 
       await notifyNewMemberJoined("nonexistent-user", mockDrizzleDb);
 
@@ -392,8 +396,8 @@ describe("notifications business logic", () => {
     it("should log warning when no members found to notify", async () => {
       const newMember = { id: "user-1", email: "user1@test.com" };
 
-      mockDrizzleDb.query.users.findFirst = mock(async () => newMember) as any;
-      mockDrizzleDb.query.users.findMany = mock(async () => []) as any;
+      mockDrizzleDb.query.users.findFirst = vi.fn(async () => newMember) as any;
+      mockDrizzleDb.query.users.findMany = vi.fn(async () => []) as any;
 
       await notifyNewMemberJoined("user-1", mockDrizzleDb);
 
@@ -404,7 +408,7 @@ describe("notifications business logic", () => {
     });
 
     it("should not throw on database error", async () => {
-      mockDrizzleDb.query.users.findFirst = mock(async () => {
+      mockDrizzleDb.query.users.findFirst = vi.fn(async () => {
         throw new Error("DB Error");
       }) as any;
 
@@ -417,7 +421,7 @@ describe("notifications business logic", () => {
 
   describe("sendBirthdayReminders", () => {
     it("should silently return when no birthdays today", async () => {
-      mockDrizzleDb.query.persons.findMany = mock(async () => []) as any;
+      mockDrizzleDb.query.persons.findMany = vi.fn(async () => []) as any;
 
       await sendBirthdayReminders(mockDrizzleDb);
 
@@ -450,12 +454,12 @@ describe("notifications business logic", () => {
       };
 
       let findManyCallCount = 0;
-      mockDrizzleDb.query.persons.findMany = mock(async () => {
+      mockDrizzleDb.query.persons.findMany = vi.fn(async () => {
         findManyCallCount++;
         return peopleWithBirthday;
       }) as any;
 
-      mockDrizzleDb.query.users.findFirst = mock(async () => {
+      mockDrizzleDb.query.users.findFirst = vi.fn(async () => {
         return adminUser;
       }) as any;
 
@@ -485,7 +489,7 @@ describe("notifications business logic", () => {
         },
       ];
 
-      mockDrizzleDb.query.persons.findMany = mock(
+      mockDrizzleDb.query.persons.findMany = vi.fn(
         async () => personsData
       ) as any;
 
@@ -508,10 +512,10 @@ describe("notifications business logic", () => {
         },
       ];
 
-      mockDrizzleDb.query.persons.findMany = mock(
+      mockDrizzleDb.query.persons.findMany = vi.fn(
         async () => peopleWithBirthday
       ) as any;
-      mockDrizzleDb.query.users.findFirst = mock(async () => null) as any;
+      mockDrizzleDb.query.users.findFirst = vi.fn(async () => null) as any;
 
       await sendBirthdayReminders(mockDrizzleDb);
 
@@ -535,7 +539,7 @@ describe("notifications business logic", () => {
         },
       ];
 
-      mockDrizzleDb.query.persons.findMany = mock(
+      mockDrizzleDb.query.persons.findMany = vi.fn(
         async () => personsWithNullBirthday
       ) as any;
 
@@ -546,7 +550,7 @@ describe("notifications business logic", () => {
     });
 
     it("should not throw on database error", async () => {
-      mockDrizzleDb.query.persons.findMany = mock(async () => {
+      mockDrizzleDb.query.persons.findMany = vi.fn(async () => {
         throw new Error("DB Error");
       }) as any;
 

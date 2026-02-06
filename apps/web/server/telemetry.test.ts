@@ -9,7 +9,7 @@
  * - Configuration object structure
  */
 
-import { afterEach, describe, expect, it } from "bun:test";
+import { afterEach, describe, expect, it } from "vitest";
 import {
   getTelemetryConfig,
   isTelemetryEnabled,
@@ -279,6 +279,7 @@ describe("Telemetry Module", () => {
       delete process.env.OTEL_SERVICE_NAME;
       delete process.env.APP_VERSION;
       delete process.env.NODE_ENV;
+      delete process.env.OTEL_EXPORTER_OTLP_ENDPOINT;
 
       const config = getTelemetryConfig();
       expect(config.enabled).toBe(true);

@@ -5,7 +5,7 @@
  * and produce well-formed metric attributes.
  */
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import {
   recordAuthEvent,
   recordDbQuery,

@@ -2,7 +2,7 @@
  * Unit Tests for Response Schemas
  * Tests Zod schema validation for API response formats including error, success, pagination
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { z } from "@hono/zod-openapi";
 import {
   errorResponseSchema,

@@ -2,7 +2,7 @@
  * Unit Tests for GEDCOM Mapper
  * Tests bidirectional mapping between GEDCOM and Vamsa data models
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { GedcomMapper } from "./mapper";
 import { GedcomParser } from "./parser";
 import type { VamsaPerson, VamsaRelationship } from "./mapper-types";

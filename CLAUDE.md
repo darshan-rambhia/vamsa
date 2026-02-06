@@ -79,8 +79,9 @@ bun run lint:fix        # Fix ESLint issues
 bun run format          # Format code with Prettier
 bun run format:check    # Check formatting without modifying
 bun run typecheck       # Run TypeScript type checks
-bun run test            # Run all unit tests
+bun run test            # Run all unit tests (Vitest)
 bun run test:unit       # Run lib and ui unit tests
+bun run test:coverage   # Run tests with coverage (Vitest)
 bun run test:e2e        # Run E2E tests with Playwright
 ```
 
@@ -120,10 +121,10 @@ Skills provide domain-specific knowledge and patterns. Use the Skill tool to inv
 
 ### Available Skills
 
-| Skill     | When to Use                                        | Files                                                                  |
-| --------- | -------------------------------------------------- | ---------------------------------------------------------------------- |
-| `testing` | Writing unit tests (Bun) or E2E tests (Playwright) | `.claude/skills/testing/SKILL.md`, `unit-recipes.md`, `e2e-recipes.md` |
-| `design`  | Building UI components, applying design system     | `.claude/skills/design/SKILL.md`, `tokens.md`, `patterns.md`           |
+| Skill     | When to Use                                           | Files                                                                  |
+| --------- | ----------------------------------------------------- | ---------------------------------------------------------------------- |
+| `testing` | Writing unit tests (Vitest) or E2E tests (Playwright) | `.claude/skills/testing/SKILL.md`, `unit-recipes.md`, `e2e-recipes.md` |
+| `design`  | Building UI components, applying design system        | `.claude/skills/design/SKILL.md`, `tokens.md`, `patterns.md`           |
 
 ### When to Invoke Skills
 
@@ -140,24 +141,37 @@ Skills are automatically available to agents. When working on:
 
 ## Coding Standards
 
-### Bun Test Module Mocking
+### Vitest Module Mocking
 
-**Critical**: Bun's `mock.module()` only applies to the FIRST call for a given module. Subsequent calls for the same module are silently ignored. This causes non-deterministic behavior between CI and local environments when multiple test files mock the same module.
-
-**Rule**: If a preload file (configured in `bunfig.toml`) already mocks a module, test files must NOT call `mock.module()` for that module again. Instead:
-
-1. Import the mock from the preload file
-2. Configure the mock's behavior using setter methods
+Unit tests use **Vitest** (not Bun's test runner). Import test utilities from `"vitest"`:
 
 ```typescript
-// ❌ BAD - Creates non-deterministic behavior
-mock.module("@vamsa/api", () => ({
-  drizzleDb: {
-    /* custom mock */
-  },
+import { describe, it, expect, vi, beforeEach } from "vitest";
+```
+
+**Key patterns:**
+
+```typescript
+// Mock a module
+vi.mock("@vamsa/lib/server/business", () => ({
+  listPersonsData: vi.fn(async () => ({ items: [], pagination: {} })),
 }));
 
-// ✅ GOOD - Import and configure the preload's mock
+// Use vi.hoisted() when mock variables are referenced in vi.mock() factories
+const { mockFn } = vi.hoisted(() => ({
+  mockFn: vi.fn(async () => ({ success: true })),
+}));
+
+vi.mock("some-module", () => ({
+  doSomething: mockFn,
+}));
+```
+
+**Setup files**: Each package has a `vitest.config.ts` with `setupFiles` replacing the old `bunfig.toml [test].preload`. See `packages/lib/tests/setup/test-logger-mock.ts` for the canonical mock setup.
+
+**DI pattern**: Business logic tests use dependency injection via `mockDrizzleDb` (from the setup file) instead of mocking modules directly. Configure mock behavior in `beforeEach`:
+
+```typescript
 import { mockDrizzleDb } from "../../../tests/setup/test-logger-mock";
 
 beforeEach(() => {
@@ -165,8 +179,6 @@ beforeEach(() => {
   mockDrizzleDb.setFindManyResults([]);
 });
 ```
-
-**Preload files**: See `packages/lib/tests/setup/test-logger-mock.ts` for the canonical mock setup. This file mocks `@vamsa/api` and `@vamsa/lib/logger` globally.
 
 ### Logging
 

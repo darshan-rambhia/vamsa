@@ -10,7 +10,7 @@
  * Uses module mocking for database dependency injection.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllMocks } from "../../testing/shared-mocks";
 
 import {
@@ -21,15 +21,15 @@ import {
 
 // Create mock drizzle database
 const mockDrizzleDb = {
-  select: mock(() => ({
-    from: mock(() => ({
-      where: mock(() => Promise.resolve([{ count: 0 }])),
-      leftJoin: mock(() => ({
-        leftJoin: mock(() => ({
-          where: mock(() => ({
-            orderBy: mock(() => ({
-              limit: mock(() => ({
-                offset: mock(() => Promise.resolve([])),
+  select: vi.fn(() => ({
+    from: vi.fn(() => ({
+      where: vi.fn(() => Promise.resolve([{ count: 0 }])),
+      leftJoin: vi.fn(() => ({
+        leftJoin: vi.fn(() => ({
+          where: vi.fn(() => ({
+            orderBy: vi.fn(() => ({
+              limit: vi.fn(() => ({
+                offset: vi.fn(() => Promise.resolve([])),
               })),
             })),
           })),
@@ -37,23 +37,23 @@ const mockDrizzleDb = {
       })),
     })),
   })),
-  insert: mock(() => ({
-    values: mock(() => ({
-      returning: mock(() => Promise.resolve([])),
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({
+      returning: vi.fn(() => Promise.resolve([])),
     })),
   })),
-  update: mock(() => ({
-    set: mock(() => ({
-      where: mock(() => Promise.resolve({})),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn(() => Promise.resolve({})),
     })),
   })),
 };
 
 // Mock notifications
-const mockNotifySuggestionCreated = mock(() => Promise.resolve());
-const mockNotifySuggestionUpdated = mock(() => Promise.resolve());
+const mockNotifySuggestionCreated = vi.fn(() => Promise.resolve());
+const mockNotifySuggestionUpdated = vi.fn(() => Promise.resolve());
 
-mock.module("@vamsa/lib/server/business/notifications", () => ({
+vi.mock("@vamsa/lib/server/business/notifications", () => ({
   notifySuggestionCreated: mockNotifySuggestionCreated,
   notifySuggestionUpdated: mockNotifySuggestionUpdated,
 }));
@@ -61,9 +61,9 @@ mock.module("@vamsa/lib/server/business/notifications", () => ({
 describe("Suggestions Business Logic", () => {
   beforeEach(() => {
     clearAllMocks();
-    (mockDrizzleDb.select as ReturnType<typeof mock>).mockClear();
-    (mockDrizzleDb.insert as ReturnType<typeof mock>).mockClear();
-    (mockDrizzleDb.update as ReturnType<typeof mock>).mockClear();
+    (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockClear();
+    (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockClear();
+    (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockClear();
     mockNotifySuggestionCreated.mockClear();
     mockNotifySuggestionUpdated.mockClear();
   });
@@ -102,9 +102,9 @@ describe("Suggestions Business Logic", () => {
   describe("getPendingSuggestionsCountData", () => {
     it("should return count of pending suggestions", async () => {
       // Set up mock to return count
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockReturnValueOnce({
-        from: mock(() => ({
-          where: mock(() => Promise.resolve([{ count: 5 }])),
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        from: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve([{ count: 5 }])),
         })),
       } as any);
 
@@ -114,9 +114,9 @@ describe("Suggestions Business Logic", () => {
     });
 
     it("should return 0 when no pending suggestions", async () => {
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockReturnValueOnce({
-        from: mock(() => ({
-          where: mock(() => Promise.resolve([{ count: 0 }])),
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        from: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve([{ count: 0 }])),
         })),
       } as any);
 
@@ -126,9 +126,9 @@ describe("Suggestions Business Logic", () => {
     });
 
     it("should handle null count result", async () => {
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockReturnValueOnce({
-        from: mock(() => ({
-          where: mock(() => Promise.resolve([])),
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        from: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve([])),
         })),
       } as any);
 
@@ -140,7 +140,7 @@ describe("Suggestions Business Logic", () => {
 
   describe("createSuggestionData", () => {
     it("should create a new suggestion and return id, type, status", async () => {
-      const mockReturning = mock(() =>
+      const mockReturning = vi.fn(() =>
         Promise.resolve([
           {
             id: "sug-1",
@@ -150,8 +150,8 @@ describe("Suggestions Business Logic", () => {
         ])
       );
 
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValueOnce({
-        values: mock(() => ({ returning: mockReturning })),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        values: vi.fn(() => ({ returning: mockReturning })),
       } as any);
 
       const result = await createSuggestionData(
@@ -169,10 +169,10 @@ describe("Suggestions Business Logic", () => {
     });
 
     it("should throw error if insert returns no result", async () => {
-      const mockReturning = mock(() => Promise.resolve([]));
+      const mockReturning = vi.fn(() => Promise.resolve([]));
 
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValueOnce({
-        values: mock(() => ({ returning: mockReturning })),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        values: vi.fn(() => ({ returning: mockReturning })),
       } as any);
 
       try {

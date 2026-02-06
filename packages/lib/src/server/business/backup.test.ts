@@ -16,7 +16,7 @@
  * 4. Verify logging and metric recording
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 // Import functions to test
@@ -170,11 +170,11 @@ describe("backup business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => {
             selectCallCount++;
             return {
-              orderBy: mock(() =>
+              orderBy: vi.fn(() =>
                 Promise.resolve(
                   selectCallCount === 1
                     ? mockPersons
@@ -185,10 +185,10 @@ describe("backup business logic", () => {
                         : []
                 )
               ),
-              where: mock(() => ({
-                orderBy: mock(() => Promise.resolve([])),
+              where: vi.fn(() => ({
+                orderBy: vi.fn(() => Promise.resolve([])),
               })),
-              limit: mock(() => Promise.resolve(mockSettings)),
+              limit: vi.fn(() => Promise.resolve(mockSettings)),
             };
           }),
         })),
@@ -222,13 +222,13 @@ describe("backup business logic", () => {
       ];
 
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            orderBy: mock(() => Promise.resolve([])),
-            where: mock(() => ({
-              orderBy: mock(() => Promise.resolve(mockAuditLogs)),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            orderBy: vi.fn(() => Promise.resolve([])),
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => Promise.resolve(mockAuditLogs)),
             })),
-            limit: mock(() => Promise.resolve([])),
+            limit: vi.fn(() => Promise.resolve([])),
           })),
         })),
       } as any;
@@ -256,13 +256,13 @@ describe("backup business logic", () => {
       ];
 
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            orderBy: mock(() => Promise.resolve(mockMedia)),
-            where: mock(() => ({
-              orderBy: mock(() => Promise.resolve([])),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            orderBy: vi.fn(() => Promise.resolve(mockMedia)),
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => Promise.resolve([])),
             })),
-            limit: mock(() => Promise.resolve([])),
+            limit: vi.fn(() => Promise.resolve([])),
           })),
         })),
       } as any;
@@ -282,13 +282,13 @@ describe("backup business logic", () => {
 
     it("should exclude password fields from users", async () => {
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            orderBy: mock(() => Promise.resolve([])),
-            where: mock(() => ({
-              orderBy: mock(() => Promise.resolve([])),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            orderBy: vi.fn(() => Promise.resolve([])),
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => Promise.resolve([])),
             })),
-            limit: mock(() => Promise.resolve([])),
+            limit: vi.fn(() => Promise.resolve([])),
           })),
         })),
       } as any;
@@ -311,13 +311,13 @@ describe("backup business logic", () => {
 
     it("should return null for settings when none exist", async () => {
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            orderBy: mock(() => Promise.resolve([])),
-            where: mock(() => ({
-              orderBy: mock(() => Promise.resolve([])),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            orderBy: vi.fn(() => Promise.resolve([])),
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => Promise.resolve([])),
             })),
-            limit: mock(() => Promise.resolve([])),
+            limit: vi.fn(() => Promise.resolve([])),
           })),
         })),
       } as any;

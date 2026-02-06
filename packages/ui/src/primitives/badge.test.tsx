@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Badge Component
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { render } from "@testing-library/react";
 import { Badge, badgeVariants } from "./badge";
 

@@ -22,12 +22,21 @@ docker compose -f docker/docker-compose.yml up -d
 
 ### Development vs Production
 
-| File                            | Purpose                | Credentials                   |
-| ------------------------------- | ---------------------- | ----------------------------- |
-| `docker/docker-compose.dev.yml` | Local development only | Hardcoded defaults (insecure) |
-| `docker/docker-compose.yml`     | Production deployment  | Required via `.env` file      |
+| File                              | Purpose                  | Credentials                   |
+| --------------------------------- | ------------------------ | ----------------------------- |
+| `docker/docker-compose.local.yml` | Local dev, test, and E2E | Hardcoded defaults (insecure) |
+| `docker/docker-compose.yml`       | Production deployment    | Required via `.env` file      |
 
-**Never use `docker-compose.dev.yml` in production!** It contains default credentials for convenience during local development.
+**Never use `docker-compose.local.yml` in production!** It contains default credentials for convenience during local development.
+
+The local compose file uses profiles to separate concerns:
+
+| Profile   | Services       | Use Case                   |
+| --------- | -------------- | -------------------------- |
+| `dev`     | `db`           | Dev database on port 5432  |
+| `dev-app` | `db` + `app`   | Dev database + app server  |
+| `test`    | `test-db`      | Test database on port 5433 |
+| `e2e`     | Full E2E stack | Docker-based E2E testing   |
 
 ## Required Environment Variables
 
@@ -76,14 +85,17 @@ docker compose -f docker/docker-compose.yml down -v
 
 ## Development Setup
 
-For local development, use the dev compose file:
+For local development, use the local compose file with the `dev` profile:
 
 ```bash
 # Start PostgreSQL only for local development
-docker compose -f docker/docker-compose.dev.yml up -d
+docker compose -f docker/docker-compose.local.yml --profile dev up -d
 
 # Then run the app locally
 bun run dev
+
+# Or start PostgreSQL + app together (test production builds locally)
+docker compose -f docker/docker-compose.local.yml --profile dev-app up -d
 ```
 
 ## Health Checks

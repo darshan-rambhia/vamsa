@@ -3,7 +3,7 @@
  * Tests tooltip rendering with various prop combinations
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { ChartTooltip } from "./ChartTooltip";
 import type { ChartTooltipProps } from "./ChartTooltip";
 

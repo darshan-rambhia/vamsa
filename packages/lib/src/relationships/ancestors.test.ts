@@ -3,7 +3,7 @@
  *
  * Tests the ancestor finding and lineage tracking functionality.
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   countAncestors,
   findAncestors,

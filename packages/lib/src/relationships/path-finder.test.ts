@@ -3,7 +3,7 @@
  *
  * Tests the path finding and relationship name calculation functionality
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { calculateRelationshipName, findRelationshipPath } from "./path-finder";
 import type { RelationshipMaps, RelationshipNode } from "./path-finder";
 

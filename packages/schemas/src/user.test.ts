@@ -2,7 +2,7 @@
  * Unit Tests for User Schemas
  * Tests Zod schema validation for user management, authentication, and registration
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   changePasswordSchema,
   claimProfileSchema,

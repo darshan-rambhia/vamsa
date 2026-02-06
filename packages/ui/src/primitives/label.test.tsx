@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Label Component
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { render } from "@testing-library/react";
 import { Label } from "./label";
 

@@ -1,7 +1,7 @@
 /**
  * Unit Tests for UI Utility Functions
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { cn } from "./utils";
 
 describe("cn (class name utility)", () => {

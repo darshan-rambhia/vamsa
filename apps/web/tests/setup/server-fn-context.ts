@@ -58,24 +58,23 @@
  *
  * ## Mocking Business Logic
  *
- * For business logic dependencies, use Bun's mock.module() in your test file:
+ * For business logic dependencies, use Bun's vi.mock() in your test file:
  *
  * ```typescript
- * import { mock } from "bun:test";
+ * import { vi } from "vitest";
  *
- * const mockListPersonsData = mock(async () => ({ persons: [], total: 0 }));
+ * const mockListPersonsData = vi.fn(async () => ({ persons: [], total: 0 }));
  *
- * mock.module("@vamsa/lib/server/business", () => ({
+ * vi.mock("@vamsa/lib/server/business", () => ({
  *   listPersonsData: mockListPersonsData,
  *   // Add other stubs as needed
  * }));
  *
- * // Import handler AFTER setting up mocks
  * import { _listPersonsHandler } from "./persons";
  * ```
  */
 
-import { mock } from "bun:test";
+import { vi } from "vitest";
 import { createMockUser, testUsers } from "./server-fn-fixtures";
 import type { MockAuthUser } from "./server-fn-fixtures";
 
@@ -222,7 +221,7 @@ function ensureStubsInstalled(): void {
   stubsInstalled = true;
 
   // Stub @tanstack/react-start/server
-  mock.module("@tanstack/react-start/server", () => ({
+  vi.mock("@tanstack/react-start/server", () => ({
     getCookie: getStubbedCookie,
     setCookie: setStubbedCookie,
     deleteCookie: deleteStubbedCookie,
@@ -230,28 +229,26 @@ function ensureStubsInstalled(): void {
   }));
 
   // Stub auth function used by requireAuth
-  mock.module("@vamsa/lib/server/business/auth-better-api", () => ({
+  vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
     betterAuthGetSessionWithUserFromCookie: getStubbedSession,
     betterAuthLogin: async () => {
-      throw new Error("betterAuthLogin: Use mock.module() in your test");
+      throw new Error("betterAuthLogin: Use vi.mock() in your test");
     },
     betterAuthRegister: async () => {
-      throw new Error("betterAuthRegister: Use mock.module() in your test");
+      throw new Error("betterAuthRegister: Use vi.mock() in your test");
     },
     betterAuthGetSession: async () => {
-      throw new Error("betterAuthGetSession: Use mock.module() in your test");
+      throw new Error("betterAuthGetSession: Use vi.mock() in your test");
     },
     betterAuthChangePassword: async () => {
-      throw new Error(
-        "betterAuthChangePassword: Use mock.module() in your test"
-      );
+      throw new Error("betterAuthChangePassword: Use vi.mock() in your test");
     },
     betterAuthSignOut: async () => {
-      throw new Error("betterAuthSignOut: Use mock.module() in your test");
+      throw new Error("betterAuthSignOut: Use vi.mock() in your test");
     },
     betterAuthGetSessionWithUser: async () => {
       throw new Error(
-        "betterAuthGetSessionWithUser: Use mock.module() in your test"
+        "betterAuthGetSessionWithUser: Use vi.mock() in your test"
       );
     },
     getBetterAuthProviders: () => ({

@@ -9,7 +9,7 @@
  * for unit tests. Integration tests via E2E would provide full coverage.
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 
 describe("OIDCProfileClaimModal Component", () => {
   describe("Component Export", () => {

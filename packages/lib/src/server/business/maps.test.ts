@@ -8,7 +8,7 @@
  * - Marker type definitions and transformations
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 
 // Pure functions for geographic calculations
 function calculateDistance(

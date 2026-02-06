@@ -36,7 +36,7 @@
     "test:mutation:ui": "bun scripts/mutation-test.ts ui",
     "test:mutation:api": "bun scripts/mutation-test.ts api",
     "test:mutation:web": "bun scripts/mutation-test.ts web",
-    "test:coverage": "bun scripts/check-coverage.ts",
+    "test:coverage": "bun run vitest run --coverage",
     "check:bundle": "bun run --filter @vamsa/web check:bundle",
     "// === Database ===": "",
     "db:generate": "bun run --filter @vamsa/api db:generate",
@@ -59,13 +59,13 @@
     "docker:build": "docker build -f docker/Dockerfile -t vamsa-app .",
     "docker:build:ssl-skip": "docker build -f docker/Dockerfile -t vamsa-app --build-arg SKIP_SSL_VERIFY=true .",
     "// === Docker (Development) ===": "",
-    "docker:dev": "docker compose --env-file .env -f docker/docker-compose.dev.yml up -d",
-    "docker:dev:app": "docker compose --env-file .env -f docker/docker-compose.dev.yml --profile app up -d",
-    "docker:dev:down": "docker compose --env-file .env -f docker/docker-compose.dev.yml --profile app down",
-    "docker:dev:logs": "docker compose --env-file .env -f docker/docker-compose.dev.yml logs -f",
+    "docker:dev": "docker compose -f docker/docker-compose.local.yml --profile dev up -d",
+    "docker:dev:app": "docker compose -f docker/docker-compose.local.yml --profile dev-app up -d",
+    "docker:dev:down": "docker compose -f docker/docker-compose.local.yml --profile dev --profile dev-app down",
+    "docker:dev:logs": "docker compose -f docker/docker-compose.local.yml --profile dev logs -f",
     "// === Docker (E2E) ===": "",
-    "docker:e2e": "docker compose --env-file .env -f docker/docker-compose.e2e.yml up --exit-code-from e2e --abort-on-container-exit",
-    "docker:e2e:down": "docker compose --env-file .env -f docker/docker-compose.e2e.yml down -v",
+    "docker:e2e": "docker compose -f docker/docker-compose.local.yml --profile e2e up --exit-code-from e2e --abort-on-container-exit",
+    "docker:e2e:down": "docker compose -f docker/docker-compose.local.yml --profile e2e down -v",
     "docker:e2e:build": "docker build -t ghcr.io/darshan-rambhia/vamsa/e2e:local -f docker/Dockerfile.e2e .",
     "// === Docker (Backup) ===": "",
     "docker:backup": "docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.backup.yml up -d",
@@ -77,7 +77,7 @@
     "// === Utilities ===": "",
     "setup": "bun scripts/setup-env.ts",
     "setup:docker": "bun scripts/setup-env.ts --docker",
-    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules bun.lock",
+    "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules",
     "release": "bunx semantic-release",
     "release:dry": "bunx semantic-release --dry-run",
     "prepare": "husky"
@@ -103,6 +103,7 @@
     "@testing-library/react": "16.3.2",
     "@types/bun": "latest",
     "@types/node": "25.2.0",
+    "@vitest/coverage-v8": "4.0.18",
     "conventional-changelog-conventionalcommits": "9.1.0",
     "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
@@ -117,7 +118,9 @@
     "prettier-plugin-tailwindcss": "0.7.2",
     "semantic-release": "25.0.3",
     "typescript": "5.9.3",
-    "typescript-eslint": "8.54.0"
+    "typescript-eslint": "8.54.0",
+    "vite-tsconfig-paths": "6.0.5",
+    "vitest": "4.0.18"
   },
   "overrides": {
     "@react-email/render": "^2.0.4",
@@ -131,8 +134,7 @@
     "*.{ts,tsx}": [
       "eslint --fix",
       "prettier --write",
-      "bash -c 'bun run typecheck'",
-      "bash -c 'bun run test'"
+      "bash -c 'bun run typecheck'"
     ],
     "*.{js,jsx,json,md,yml,yaml,css}": [
       "prettier --write"

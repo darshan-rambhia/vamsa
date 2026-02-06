@@ -11,7 +11,7 @@
  * Integration tests would verify the full chart generation pipeline.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 // NOTE: Do NOT mock "../helpers/charts" here - it causes test pollution
@@ -22,8 +22,8 @@ import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 import { exportChartAsPDF, exportChartAsSVG } from "./charts";
 
 // Mock metrics module
-mock.module("../metrics", () => ({
-  recordChartMetrics: mock(() => undefined),
+vi.mock("../metrics", () => ({
+  recordChartMetrics: vi.fn(() => undefined),
 }));
 
 describe("charts business logic", () => {

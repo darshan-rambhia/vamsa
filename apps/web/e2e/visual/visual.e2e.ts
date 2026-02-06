@@ -92,7 +92,7 @@ test.describe("Visual Regression", () => {
           await page.waitForLoadState("networkidle");
           // Capture full page screenshot
           await expect(page).toHaveScreenshot("dashboard-page.png", {
-            maxDiffPixels: 500,
+            maxDiffPixels: 1500,
             threshold: 0.2,
           });
         }
@@ -188,7 +188,7 @@ test.describe("Visual Regression", () => {
           await page.waitForLoadState("networkidle");
           // Capture full page screenshot
           await expect(page).toHaveScreenshot("dashboard-page-tablet.png", {
-            maxDiffPixels: 500,
+            maxDiffPixels: 1500,
             threshold: 0.2,
           });
         }

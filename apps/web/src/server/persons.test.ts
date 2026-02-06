@@ -5,7 +5,7 @@
  * withStubbedServerContext for isolated testing.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createMockUser,
   getStubbedSession,
@@ -24,49 +24,53 @@ import {
 } from "./persons.server";
 
 // Mock business logic BEFORE importing handlers
-const mockListPersonsData = mock(async () => ({
-  items: [
+const {
+  mockListPersonsData,
+  mockGetPersonData,
+  mockCreatePersonData,
+  mockUpdatePersonData,
+  mockDeletePersonData,
+  mockSearchPersonsData,
+} = vi.hoisted(() => ({
+  mockListPersonsData: vi.fn(async () => ({
+    items: [
+      { id: "person-1", firstName: "John", lastName: "Doe" },
+      { id: "person-2", firstName: "Jane", lastName: "Smith" },
+    ],
+    pagination: {
+      total: 2,
+      page: 1,
+      limit: 50,
+      totalPages: 1,
+      hasNext: false,
+      hasPrev: false,
+    },
+  })),
+  mockGetPersonData: vi.fn(async () => ({
+    id: "person-1",
+    firstName: "John",
+    lastName: "Doe",
+    email: "john@example.com",
+    isLiving: true,
+    relationships: [],
+  })),
+  mockCreatePersonData: vi.fn(async () => ({
+    id: "new-person-id",
+  })),
+  mockUpdatePersonData: vi.fn(async () => ({
+    id: "person-1",
+  })),
+  mockDeletePersonData: vi.fn(async () => ({
+    success: true,
+  })),
+  mockSearchPersonsData: vi.fn(async () => [
     { id: "person-1", firstName: "John", lastName: "Doe" },
-    { id: "person-2", firstName: "Jane", lastName: "Smith" },
-  ],
-  pagination: {
-    total: 2,
-    page: 1,
-    limit: 50,
-    totalPages: 1,
-    hasNext: false,
-    hasPrev: false,
-  },
+  ]),
 }));
-
-const mockGetPersonData = mock(async () => ({
-  id: "person-1",
-  firstName: "John",
-  lastName: "Doe",
-  email: "john@example.com",
-  isLiving: true,
-  relationships: [],
-}));
-
-const mockCreatePersonData = mock(async () => ({
-  id: "new-person-id",
-}));
-
-const mockUpdatePersonData = mock(async () => ({
-  id: "person-1",
-}));
-
-const mockDeletePersonData = mock(async () => ({
-  success: true,
-}));
-
-const mockSearchPersonsData = mock(async () => [
-  { id: "person-1", firstName: "John", lastName: "Doe" },
-]);
 
 // Mock business logic - MUST include betterAuthGetSessionWithUserFromCookie
 // to work with withStubbedServerContext
-mock.module("@vamsa/lib/server/business", () => ({
+vi.mock("@vamsa/lib/server/business", () => ({
   listPersonsData: mockListPersonsData,
   getPersonData: mockGetPersonData,
   createPersonData: mockCreatePersonData,
@@ -78,7 +82,7 @@ mock.module("@vamsa/lib/server/business", () => ({
 
 // Mock the requireAuth middleware to use our stubbed session directly
 // This avoids needing to mock the database and keeps other tests working
-mock.module("./middleware/require-auth", () => ({
+vi.mock("./middleware/require-auth", () => ({
   requireAuth: async (requiredRole: string = "VIEWER") => {
     const user = await getStubbedSession();
     if (!user) {

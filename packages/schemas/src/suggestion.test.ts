@@ -2,7 +2,7 @@
  * Unit Tests for Suggestion Schemas
  * Tests Zod schema validation for suggestion creation, review, and status management
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   suggestionCreateSchema,
   suggestionReviewSchema,

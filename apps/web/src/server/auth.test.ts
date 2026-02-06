@@ -8,7 +8,7 @@
  * Note: Handler tests are in auth.handlers.test.ts to avoid mock conflicts.
  */
 
-import { beforeAll, describe, expect, it } from "bun:test";
+import { beforeAll, describe, expect, it } from "vitest";
 import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
 import {
   getServerI18n,

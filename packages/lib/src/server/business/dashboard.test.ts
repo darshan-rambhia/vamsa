@@ -8,10 +8,10 @@
  * - Formatting helpers (action types, entity types, descriptions)
  * - Error handling and edge cases
  *
- * Testing approach: Module mocking with mock.module() for @vamsa/api
+ * Testing approach: Module mocking with vi.mock() for @vamsa/api
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getActivityFilterOptionsData,
   getDashboardStatsData,
@@ -23,40 +23,42 @@ import { mockLogger } from "../../testing/shared-mocks";
 
 // Create mock drizzleDb
 const mockDrizzleDb = {
-  select: mock(() => ({
-    from: mock(() => ({
-      where: mock(() => Promise.resolve([])),
+  select: vi.fn(() => ({
+    from: vi.fn(() => ({
+      where: vi.fn(() => Promise.resolve([])),
     })),
   })),
   query: {
     persons: {
-      findMany: mock(() => Promise.resolve([])),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
     relationships: {
-      findMany: mock(() => Promise.resolve([])),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
     auditLogs: {
-      findMany: mock(() => Promise.resolve([])),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
     users: {
-      findMany: mock(() => Promise.resolve([])),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
   },
 };
 
 describe("Dashboard Server Business Logic", () => {
   beforeEach(() => {
-    (mockDrizzleDb.select as ReturnType<typeof mock>).mockClear();
+    (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockClear();
     (
-      mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
-    (mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>).mockClear();
+    (
+      mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
+    ).mockClear();
     mockLogger.error.mockClear();
     mockLogger.debug.mockClear();
     mockLogger.info.mockClear();
@@ -124,7 +126,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData({}, mockDrizzleDb as any);
@@ -150,7 +152,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData({}, mockDrizzleDb as any);
@@ -181,7 +183,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData({}, mockDrizzleDb as any);
@@ -206,7 +208,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData(
@@ -234,7 +236,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData(
@@ -262,7 +264,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData(
@@ -293,7 +295,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData(
@@ -332,7 +334,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData(
@@ -360,7 +362,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData({}, mockDrizzleDb as any);
@@ -383,7 +385,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData({}, mockDrizzleDb as any);
@@ -404,7 +406,7 @@ describe("Dashboard Server Business Logic", () => {
       }));
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData(
@@ -430,7 +432,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData({}, mockDrizzleDb as any);
@@ -453,7 +455,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData({}, mockDrizzleDb as any);
@@ -476,7 +478,7 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
 
       const result = await getRecentActivityData({}, mockDrizzleDb as any);
@@ -516,10 +518,10 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockUsers);
 
       const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
@@ -557,10 +559,10 @@ describe("Dashboard Server Business Logic", () => {
       const mockUsers = [{ id: "user-1", name: "Admin" }];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockUsers);
 
       const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
@@ -596,10 +598,10 @@ describe("Dashboard Server Business Logic", () => {
       const mockUsers = [{ id: "user-1", name: "Admin" }];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockUsers);
 
       const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
@@ -632,10 +634,10 @@ describe("Dashboard Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockUsers);
 
       const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
@@ -663,10 +665,10 @@ describe("Dashboard Server Business Logic", () => {
       const mockUsers = [{ id: "user-1", name: "Admin" }];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockUsers);
 
       const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
@@ -696,10 +698,10 @@ describe("Dashboard Server Business Logic", () => {
       const mockUsers = [{ id: "user-1", name: "Admin" }];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockUsers);
 
       const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
@@ -717,10 +719,10 @@ describe("Dashboard Server Business Logic", () => {
 
     it("should handle empty audit logs", async () => {
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue([]);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue([]);
 
       const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
@@ -743,10 +745,10 @@ describe("Dashboard Server Business Logic", () => {
       const mockUsers = [{ id: "user-1", name: "Admin" }];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockUsers);
 
       const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
@@ -770,10 +772,10 @@ describe("Dashboard Server Business Logic", () => {
       const mockUsers = [{ id: "user-1", name: "Admin" }];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockUsers);
 
       const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
@@ -797,10 +799,10 @@ describe("Dashboard Server Business Logic", () => {
       const mockUsers = [{ id: "user-1", name: null }];
 
       (
-        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockLogs);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValue(mockUsers);
 
       const result = await getActivityFilterOptionsData(mockDrizzleDb as any);

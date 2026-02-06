@@ -4,7 +4,7 @@
  * Tests person operations against a real PostgreSQL database.
  *
  * To run:
- *   1. Start test database: docker-compose -f docker/docker-compose.test.yml up -d
+ *   1. Start test database: docker compose -f docker/docker-compose.local.yml --profile test up -d --wait
  *   2. Run tests: bun run test:int
  */
 

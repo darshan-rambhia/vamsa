@@ -14,7 +14,7 @@
  * Coverage: 18 tests across 7 describe blocks
  */
 
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
 import { TreeListView } from "./TreeListView";
 import type { ChartEdge, ChartNode } from "~/server/charts";
@@ -84,7 +84,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       expect(container).toBeDefined();
@@ -96,7 +96,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       const tree = container.querySelector('[role="tree"]');
@@ -109,7 +109,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       const tree = container.querySelector('[role="tree"]');
@@ -122,7 +122,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId={undefined}
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       expect(getByText(/no tree data available/i)).toBeDefined();
@@ -136,7 +136,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       const treeitems = container.querySelectorAll('[role="treeitem"]');
@@ -149,7 +149,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       expect(getByText(/John Doe/i)).toBeDefined();
@@ -161,7 +161,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       expect(getByText("Living")).toBeDefined();
@@ -173,7 +173,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       expect(getByText(/Generation 0/i)).toBeDefined();
@@ -187,7 +187,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       const treeitem = container.querySelector('[role="treeitem"]');
@@ -200,7 +200,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       const treeitem = container.querySelector('[role="treeitem"]');
@@ -213,7 +213,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       const treeitem = container.querySelector('[role="treeitem"]');
@@ -223,7 +223,7 @@ describe("TreeListView Component", () => {
 
   describe("Node Click Handler", () => {
     it("should call onNodeClick when node is clicked", () => {
-      const onNodeClick = mock(() => {});
+      const onNodeClick = vi.fn(() => {});
       const { container } = render(
         <TreeListView
           nodes={mockNodes}
@@ -247,7 +247,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       const treeitem = container.querySelector('[role="treeitem"]');
@@ -266,7 +266,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       const treeitem = container.querySelector('[role="treeitem"]');
@@ -282,7 +282,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       const treeitem = container.querySelector('[role="treeitem"]');
@@ -298,7 +298,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       const treeitem = container.querySelector('[role="treeitem"]');
@@ -316,7 +316,7 @@ describe("TreeListView Component", () => {
           nodes={mockNodes}
           edges={mockEdges}
           rootPersonId="1"
-          onNodeClick={mock(() => {})}
+          onNodeClick={vi.fn(() => {})}
         />
       );
       const treeitem = container.querySelector('[role="treeitem"]');

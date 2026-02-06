@@ -12,7 +12,7 @@
  * fitToContainer, etc.) are tested via E2E tests as they require actual DOM/SVG elements.
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   calculateBoundingBox,
   calculateFitScale,

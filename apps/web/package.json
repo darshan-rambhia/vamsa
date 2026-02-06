@@ -10,7 +10,7 @@
     "start": "bun run server/index.ts",
     "start:prod": "NODE_ENV=production bun run server/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "LOG_LEVEL=silent bun test ./src ./server ./tests --ignore='**/integration/**'",
+    "test": "LOG_LEVEL=silent bun run vitest run",
     "test:int": "bun test ./tests/integration --timeout 30000",
     "test:e2e": "bun --env-file=../../.env run scripts/run-e2e.ts --reporter=list",
     "test:e2e:report": "playwright show-report ../../test-output/e2e/playwright",

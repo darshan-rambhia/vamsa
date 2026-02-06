@@ -5,7 +5,7 @@
  * for testing TanStack Start server function handlers.
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   asAdmin,
   asMember,

@@ -12,17 +12,28 @@
  * - Validation and error handling
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mocks must be before importing router
-const mockCreatePerson = mock(async () => ({ id: "person_001" }));
-const mockUpdatePerson = mock(async () => ({ id: "person_001" }));
-const mockDeletePerson = mock(async () => undefined);
-const mockCreateRelationship = mock(async () => ({ id: "rel_001" }));
-const mockUpdateRelationship = mock(async () => ({ id: "rel_001" }));
-const mockDeleteRelationship = mock(async () => undefined);
+// Hoist mock functions so they're available in vi.mock() factory
+const {
+  mockCreatePerson,
+  mockUpdatePerson,
+  mockDeletePerson,
+  mockCreateRelationship,
+  mockUpdateRelationship,
+  mockDeleteRelationship,
+  mockTransaction,
+} = vi.hoisted(() => ({
+  mockCreatePerson: vi.fn(async () => ({ id: "person_001" })),
+  mockUpdatePerson: vi.fn(async () => ({ id: "person_001" })),
+  mockDeletePerson: vi.fn(async () => undefined),
+  mockCreateRelationship: vi.fn(async () => ({ id: "rel_001" })),
+  mockUpdateRelationship: vi.fn(async () => ({ id: "rel_001" })),
+  mockDeleteRelationship: vi.fn(async () => undefined),
+  mockTransaction: vi.fn(async (callback) => callback(null)),
+}));
 
-mock.module("@vamsa/lib/server/business", () => ({
+vi.mock("@vamsa/lib/server/business", () => ({
   createPersonData: mockCreatePerson,
   updatePersonData: mockUpdatePerson,
   deletePersonData: mockDeletePerson,
@@ -31,11 +42,7 @@ mock.module("@vamsa/lib/server/business", () => ({
   deleteRelationshipData: mockDeleteRelationship,
 }));
 
-const mockTransaction = mock(async (callback) => {
-  return callback(null);
-});
-
-mock.module("../db", () => ({
+vi.mock("../db", () => ({
   db: {
     transaction: mockTransaction,
   },

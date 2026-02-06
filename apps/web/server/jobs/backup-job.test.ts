@@ -6,7 +6,7 @@
  * - rotateBackups: Delete old backups based on retention settings
  */
 
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, vi } from "vitest";
 // Note: performBackup is imported dynamically AFTER mocks are set up
 // to avoid loading server/db.ts before it can be mocked
 
@@ -14,24 +14,24 @@ import { describe, expect, it, mock } from "bun:test";
 type BackupType = "DAILY" | "WEEKLY" | "MONTHLY" | "MANUAL";
 
 // Mock filesystem
-mock.module("fs/promises", () => ({
-  mkdir: mock(async () => undefined),
-  writeFile: mock(async () => undefined),
-  stat: mock(async () => ({ isFile: () => true })),
-  unlink: mock(async () => undefined),
+vi.mock("fs/promises", () => ({
+  mkdir: vi.fn(async () => undefined),
+  writeFile: vi.fn(async () => undefined),
+  stat: vi.fn(async () => ({ isFile: () => true })),
+  unlink: vi.fn(async () => undefined),
 }));
 
 // Mock archiver - must emit data events for lib backup tests to work
-mock.module("archiver", () => ({
-  default: mock(() => {
+vi.mock("archiver", () => ({
+  default: vi.fn(() => {
     const handlers: Record<
       string,
       Array<(...args: Array<unknown>) => void>
     > = {};
     return {
-      append: mock(() => undefined),
-      file: mock(() => undefined),
-      finalize: mock(() => {
+      append: vi.fn(() => undefined),
+      file: vi.fn(() => undefined),
+      finalize: vi.fn(() => {
         // Emit a data chunk and then end event
         setTimeout(() => {
           if (handlers["data"]) {
@@ -44,46 +44,46 @@ mock.module("archiver", () => ({
           }
         }, 10);
       }),
-      on: mock((event: string, handler: (...args: Array<unknown>) => void) => {
+      on: vi.fn((event: string, handler: (...args: Array<unknown>) => void) => {
         if (!handlers[event]) handlers[event] = [];
         handlers[event].push(handler);
-        return { on: mock(() => undefined) }; // chainable
+        return { on: vi.fn(() => undefined) }; // chainable
       }),
-      pipe: mock(() => undefined),
+      pipe: vi.fn(() => undefined),
     };
   }),
 }));
 
 // Mock drizzle db module with chainable query builders
 const createMockQueryBuilder = (data: Array<unknown>) => ({
-  from: mock(() => createMockQueryBuilder(data)),
-  where: mock(() => createMockQueryBuilder(data)),
-  orderBy: mock(() => createMockQueryBuilder(data)),
-  limit: mock(() => Promise.resolve(data)),
-  offset: mock(() => createMockQueryBuilder(data)),
-  innerJoin: mock(() => createMockQueryBuilder(data)),
-  leftJoin: mock(() => createMockQueryBuilder(data)),
+  from: vi.fn(() => createMockQueryBuilder(data)),
+  where: vi.fn(() => createMockQueryBuilder(data)),
+  orderBy: vi.fn(() => createMockQueryBuilder(data)),
+  limit: vi.fn(() => Promise.resolve(data)),
+  offset: vi.fn(() => createMockQueryBuilder(data)),
+  innerJoin: vi.fn(() => createMockQueryBuilder(data)),
+  leftJoin: vi.fn(() => createMockQueryBuilder(data)),
   then: (resolve: (value: Array<unknown>) => void) =>
     Promise.resolve(data).then(resolve),
 });
 
 const createMockInsertBuilder = () => ({
-  values: mock(() => ({
-    returning: mock(() => Promise.resolve([{ id: "backup-1" }])),
+  values: vi.fn(() => ({
+    returning: vi.fn(() => Promise.resolve([{ id: "backup-1" }])),
   })),
 });
 
 const createMockUpdateBuilder = () => ({
-  set: mock(() => ({
-    where: mock(() => ({
-      returning: mock(() => Promise.resolve([{ id: "backup-1" }])),
+  set: vi.fn(() => ({
+    where: vi.fn(() => ({
+      returning: vi.fn(() => Promise.resolve([{ id: "backup-1" }])),
     })),
   })),
 });
 
-mock.module("../db", () => ({
+vi.mock("../db", () => ({
   db: {
-    select: mock(() =>
+    select: vi.fn(() =>
       createMockQueryBuilder([
         {
           id: "settings-1",
@@ -113,8 +113,8 @@ mock.module("../db", () => ({
         },
       ])
     ),
-    insert: mock(() => createMockInsertBuilder()),
-    update: mock(() => createMockUpdateBuilder()),
+    insert: vi.fn(() => createMockInsertBuilder()),
+    update: vi.fn(() => createMockUpdateBuilder()),
   },
   drizzleSchema: {
     backupSettings: {},
@@ -133,9 +133,9 @@ mock.module("../db", () => ({
 
 // Mock AWS SDK for storage (instead of mocking ./storage directly)
 // This allows storage.test.ts to run its own tests without mock pollution
-mock.module("@aws-sdk/client-s3", () => ({
+vi.mock("@aws-sdk/client-s3", () => ({
   S3Client: class MockS3Client {
-    send = mock(async () => ({}));
+    send = vi.fn(async () => ({}));
   },
   PutObjectCommand: class MockPutObjectCommand {
     constructor(_args: unknown) {}

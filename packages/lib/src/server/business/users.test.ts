@@ -12,7 +12,7 @@
  * Uses dependency injection to mock database calls.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 import {
@@ -45,14 +45,14 @@ describe("Users Business Logic", () => {
       ];
 
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => Promise.resolve([{ count: 1 }])),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve([{ count: 1 }])),
           })),
         })),
         query: {
           users: {
-            findMany: mock(() => Promise.resolve(mockUsers)),
+            findMany: vi.fn(() => Promise.resolve(mockUsers)),
           },
         },
       } as any;
@@ -69,14 +69,14 @@ describe("Users Business Logic", () => {
 
     it("should filter users by search (email)", async () => {
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => Promise.resolve([{ count: 0 }])),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve([{ count: 0 }])),
           })),
         })),
         query: {
           users: {
-            findMany: mock(() => Promise.resolve([])),
+            findMany: vi.fn(() => Promise.resolve([])),
           },
         },
       } as any;
@@ -91,14 +91,14 @@ describe("Users Business Logic", () => {
 
     it("should filter users by role", async () => {
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => Promise.resolve([{ count: 0 }])),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve([{ count: 0 }])),
           })),
         })),
         query: {
           users: {
-            findMany: mock(() => Promise.resolve([])),
+            findMany: vi.fn(() => Promise.resolve([])),
           },
         },
       } as any;
@@ -113,14 +113,14 @@ describe("Users Business Logic", () => {
 
     it("should filter users by active status", async () => {
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => Promise.resolve([{ count: 0 }])),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve([{ count: 0 }])),
           })),
         })),
         query: {
           users: {
-            findMany: mock(() => Promise.resolve([])),
+            findMany: vi.fn(() => Promise.resolve([])),
           },
         },
       } as any;
@@ -140,14 +140,14 @@ describe("Users Business Logic", () => {
 
     it("should sort users by creation date ascending", async () => {
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => Promise.resolve([{ count: 0 }])),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve([{ count: 0 }])),
           })),
         })),
         query: {
           users: {
-            findMany: mock(() => Promise.resolve([])),
+            findMany: vi.fn(() => Promise.resolve([])),
           },
         },
       } as any;
@@ -172,14 +172,14 @@ describe("Users Business Logic", () => {
       ];
 
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => Promise.resolve([{ count: 1 }])),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve([{ count: 1 }])),
           })),
         })),
         query: {
           users: {
-            findMany: mock(() => Promise.resolve(mockUsers)),
+            findMany: vi.fn(() => Promise.resolve(mockUsers)),
           },
         },
       } as any;
@@ -212,7 +212,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(mockUser)),
+            findFirst: vi.fn(() => Promise.resolve(mockUser)),
           },
         },
       } as any;
@@ -228,7 +228,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(null)),
+            findFirst: vi.fn(() => Promise.resolve(null)),
           },
         },
       } as any;
@@ -259,7 +259,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(mockUser)),
+            findFirst: vi.fn(() => Promise.resolve(mockUser)),
           },
         },
       } as any;
@@ -294,13 +294,13 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(existingUser)),
+            findFirst: vi.fn(() => Promise.resolve(existingUser)),
           },
         },
-        update: mock(() => ({
-          set: mock(() => ({
-            where: mock(() => ({
-              returning: mock(() => Promise.resolve([updatedUser])),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn(() => ({
+              returning: vi.fn(() => Promise.resolve([updatedUser])),
             })),
           })),
         })),
@@ -330,7 +330,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(existingUser)),
+            findFirst: vi.fn(() => Promise.resolve(existingUser)),
           },
         },
       } as any;
@@ -356,7 +356,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(existingUser)),
+            findFirst: vi.fn(() => Promise.resolve(existingUser)),
           },
         },
       } as any;
@@ -373,7 +373,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(null)),
+            findFirst: vi.fn(() => Promise.resolve(null)),
           },
         },
       } as any;
@@ -404,10 +404,10 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(existingUser)),
+            findFirst: vi.fn(() => Promise.resolve(existingUser)),
           },
           persons: {
-            findFirst: mock(() => Promise.resolve(null)),
+            findFirst: vi.fn(() => Promise.resolve(null)),
           },
         },
       } as any;
@@ -443,7 +443,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => {
+            findFirst: vi.fn(() => {
               findFirstCallCount++;
               if (findFirstCallCount === 1)
                 return Promise.resolve(existingUser);
@@ -451,7 +451,7 @@ describe("Users Business Logic", () => {
             }),
           },
           persons: {
-            findFirst: mock(() => Promise.resolve(mockPerson)),
+            findFirst: vi.fn(() => Promise.resolve(mockPerson)),
           },
         },
       } as any;
@@ -493,13 +493,13 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(existingUser)),
+            findFirst: vi.fn(() => Promise.resolve(existingUser)),
           },
         },
-        update: mock(() => ({
-          set: mock(() => ({
-            where: mock(() => ({
-              returning: mock(() => Promise.resolve([updatedUser])),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn(() => ({
+              returning: vi.fn(() => Promise.resolve([updatedUser])),
             })),
           })),
         })),
@@ -526,11 +526,11 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(mockUser)),
+            findFirst: vi.fn(() => Promise.resolve(mockUser)),
           },
         },
-        delete: mock(() => ({
-          where: mock(() => Promise.resolve({})),
+        delete: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
         })),
       } as any;
 
@@ -544,7 +544,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(null)),
+            findFirst: vi.fn(() => Promise.resolve(null)),
           },
         },
       } as any;
@@ -561,7 +561,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(null)),
+            findFirst: vi.fn(() => Promise.resolve(null)),
           },
         },
       } as any;
@@ -595,7 +595,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           persons: {
-            findMany: mock(() => Promise.resolve(mockPersons)),
+            findMany: vi.fn(() => Promise.resolve(mockPersons)),
           },
         },
       } as any;
@@ -610,7 +610,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           persons: {
-            findMany: mock(() =>
+            findMany: vi.fn(() =>
               Promise.resolve([
                 {
                   id: "person-1",
@@ -634,7 +634,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           persons: {
-            findMany: mock(() =>
+            findMany: vi.fn(() =>
               Promise.resolve([
                 {
                   id: "person-1",
@@ -665,7 +665,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           persons: {
-            findMany: mock(() => Promise.resolve(mockPersons.slice(0, 20))),
+            findMany: vi.fn(() => Promise.resolve(mockPersons.slice(0, 20))),
           },
         },
       } as any;
@@ -679,7 +679,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           persons: {
-            findMany: mock(() => Promise.resolve([])),
+            findMany: vi.fn(() => Promise.resolve([])),
           },
         },
       } as any;
@@ -697,16 +697,16 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(mockUser)),
+            findFirst: vi.fn(() => Promise.resolve(mockUser)),
           },
         },
-        update: mock(() => ({
-          set: mock((data: any) => {
+        update: vi.fn(() => ({
+          set: vi.fn((data: any) => {
             expect(data.failedLoginAttempts).toBe(0);
             expect(data.lockedUntil).toBeNull();
             expect(data.lastFailedLoginAt).toBeNull();
             return {
-              where: mock(() => Promise.resolve({})),
+              where: vi.fn(() => Promise.resolve({})),
             };
           }),
         })),
@@ -722,7 +722,7 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(null)),
+            findFirst: vi.fn(() => Promise.resolve(null)),
           },
         },
       } as any;
@@ -741,18 +741,18 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(mockUser)),
+            findFirst: vi.fn(() => Promise.resolve(mockUser)),
           },
         },
-        update: mock(() => ({
-          set: mock((data: any) => {
+        update: vi.fn(() => ({
+          set: vi.fn((data: any) => {
             expect(data).toEqual({
               failedLoginAttempts: 0,
               lockedUntil: null,
               lastFailedLoginAt: null,
             });
             return {
-              where: mock(() => Promise.resolve({})),
+              where: vi.fn(() => Promise.resolve({})),
             };
           }),
         })),

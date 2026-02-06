@@ -2,7 +2,7 @@
  * Unit Tests for Source Schemas
  * Tests Zod schema validation for source management and research notes
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   citationFormatEnum,
   citationGenerateSchema,
