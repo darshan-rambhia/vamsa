@@ -9,84 +9,24 @@
  * - notifyNewMemberJoined: Send notification to members when new user joins
  * - sendBirthdayReminders: Send birthday reminder emails for today's birthdays
  *
- * Uses module mocking to inject mocked Drizzle ORM instance and logger
+ * Uses preload mocks (from bunfig.toml) for logger and database.
+ * DO NOT call mock.module() here - the preload already handles it.
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import {
   clearAllMocks,
-  mockLog,
   mockLogger,
-  mockLoggers,
-  mockSerializeError,
   mockWithErr,
 } from "../../testing/shared-mocks";
+// Import drizzleDb from @vamsa/api - at test time this is the preload's mock
+// eslint-disable-next-line import/order
+import { drizzleDb } from "@vamsa/api";
 
-// Mock logger module BEFORE importing notifications
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
+// Cast to access mock helper methods (setFindFirstResult, resetQueryMocks, etc.)
+const mockDrizzleDb = drizzleDb as any;
 
-// Mock Drizzle database and schema
-const mockDrizzleSchema = {
-  users: {
-    id: {} as any,
-    emailNotificationPreferences: {} as any,
-    isActive: {} as any,
-    role: {} as any,
-  },
-  suggestions: {
-    id: {} as any,
-  },
-  persons: {
-    id: {} as any,
-    isLiving: {} as any,
-    dateOfBirth: {} as any,
-  },
-};
-
-const createMockDb = () => {
-  let findFirstResult: unknown = null;
-  let findManyResults: Array<unknown> = [];
-
-  return {
-    query: {
-      users: {
-        findFirst: mock(async () => findFirstResult),
-        findMany: mock(async () => findManyResults),
-      },
-      suggestions: {
-        findFirst: mock(async () => findFirstResult),
-      },
-      persons: {
-        findMany: mock(async () => findManyResults),
-      },
-    },
-    update: mock(() => ({
-      set: mock(() => ({
-        where: mock(() => Promise.resolve()),
-      })),
-    })),
-    setFindFirstResult: (result: unknown) => {
-      findFirstResult = result;
-    },
-    setFindManyResults: (results: Array<unknown>) => {
-      findManyResults = results;
-    },
-  };
-};
-
-const mockDrizzleDb = createMockDb();
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
-
-// Dynamic import AFTER mocks are set up
+// Dynamic import AFTER mocks are set up by preload
 const {
   getEmailNotificationPreferences,
   notifyNewMemberJoined,
@@ -99,8 +39,8 @@ const {
 describe("notifications business logic", () => {
   beforeEach(() => {
     clearAllMocks();
-    mockDrizzleDb.setFindFirstResult(null);
-    mockDrizzleDb.setFindManyResults([]);
+    // Reset query mocks to use closure variables (in case previous tests replaced them)
+    mockDrizzleDb.resetQueryMocks();
   });
 
   describe("getEmailNotificationPreferences", () => {

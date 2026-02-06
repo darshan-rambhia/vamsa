@@ -24,47 +24,12 @@ import {
   validateGedcomImport,
 } from "@vamsa/lib/server/business";
 import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
   mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
   mockWithErr,
   mockWithErrBuilder,
 } from "../../testing/shared-mocks";
 
 // Import the functions to test
-
-// Create mock drizzleSchema
-const mockDrizzleSchema = {
-  persons: {
-    id: "id",
-    firstName: "firstName",
-    lastName: "lastName",
-    createdAt: "createdAt",
-  },
-  relationships: {
-    id: "id",
-    createdAt: "createdAt",
-  },
-  auditLogs: {
-    id: "id",
-    userId: "userId",
-    action: "action",
-    entityType: "entityType",
-    createdAt: "createdAt",
-  },
-  users: {
-    id: "id",
-    name: "name",
-  },
-  mediaObjects: {
-    id: "id",
-    uploadedAt: "uploadedAt",
-  },
-};
 
 // Create mock drizzleDb
 const mockDrizzleDb = {
@@ -100,21 +65,6 @@ const mockDrizzleDb = {
 const mockRecordGedcomImport = mock(() => undefined);
 const mockRecordGedcomExport = mock(() => undefined);
 const mockRecordGedcomValidation = mock(() => undefined);
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
-
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
 
 mock.module("@vamsa/lib/server/business/metrics", () => ({
   recordGedcomImport: mockRecordGedcomImport,
@@ -196,7 +146,12 @@ describe("GEDCOM Server Business Logic", () => {
 
   describe("importGedcomData", () => {
     it("should reject non-.ged files", async () => {
-      const result = await importGedcomData("family.txt", "content", "user-1");
+      const result = await importGedcomData(
+        "family.txt",
+        "content",
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.success).toBe(false);
       expect(result.message).toContain(".ged");
@@ -206,7 +161,8 @@ describe("GEDCOM Server Business Logic", () => {
       const result = await importGedcomData(
         "family.ged",
         "0 HEAD\n0 TRLR",
-        "user-1"
+        "user-1",
+        mockDrizzleDb as any
       );
 
       expect(result).toBeDefined();
@@ -215,7 +171,12 @@ describe("GEDCOM Server Business Logic", () => {
     });
 
     it("should accept userId parameter", async () => {
-      const result = await importGedcomData("family.ged", "0 HEAD", "user-123");
+      const result = await importGedcomData(
+        "family.ged",
+        "0 HEAD",
+        "user-123",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
       expect(typeof result.success).toBe("boolean");
@@ -229,7 +190,12 @@ describe("GEDCOM Server Business Logic", () => {
         throw new Error("Import failed");
       });
 
-      const result = await importGedcomData("family.ged", "0 HEAD", "user-1");
+      const result = await importGedcomData(
+        "family.ged",
+        "0 HEAD",
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.success).toBe(false);
     });
@@ -250,7 +216,12 @@ describe("GEDCOM Server Business Logic", () => {
         }
       );
 
-      const result = await importGedcomData("family.ged", "0 HEAD", "user-1");
+      const result = await importGedcomData(
+        "family.ged",
+        "0 HEAD",
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       if (result.success) {
         expect(result.imported).toBeDefined();
@@ -275,7 +246,7 @@ describe("GEDCOM Server Business Logic", () => {
         })),
       });
 
-      const result = await exportGedcomData("user-1");
+      const result = await exportGedcomData("user-1", mockDrizzleDb as any);
 
       expect(result).toBeDefined();
       expect(typeof result.success).toBe("boolean");
@@ -298,7 +269,7 @@ describe("GEDCOM Server Business Logic", () => {
         })),
       });
 
-      const result = await exportGedcomData("user-123");
+      const result = await exportGedcomData("user-123", mockDrizzleDb as any);
 
       expect(result).toBeDefined();
       expect(mockDrizzleDb.query.users.findFirst).toHaveBeenCalled();
@@ -309,7 +280,7 @@ describe("GEDCOM Server Business Logic", () => {
         mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
       ).mockRejectedValueOnce(new Error("Database error"));
 
-      const result = await exportGedcomData("user-1");
+      const result = await exportGedcomData("user-1", mockDrizzleDb as any);
 
       expect(result.success).toBe(false);
       expect(mockWithErr).toHaveBeenCalled();
@@ -331,7 +302,7 @@ describe("GEDCOM Server Business Logic", () => {
         })),
       });
 
-      const result = await exportGedcomData("user-1");
+      const result = await exportGedcomData("user-1", mockDrizzleDb as any);
 
       if (result.success) {
         expect(result.gedcomContent).toBeDefined();

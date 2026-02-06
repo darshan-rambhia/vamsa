@@ -17,44 +17,9 @@ import {
   getDashboardStatsData,
   getRecentActivityData,
 } from "@vamsa/lib/server/business";
-import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
-} from "../../testing/shared-mocks";
+import { mockLogger } from "../../testing/shared-mocks";
 
 // Import the functions to test
-
-// Create mock drizzleSchema
-const mockDrizzleSchema = {
-  persons: {
-    id: "id",
-    firstName: "firstName",
-    lastName: "lastName",
-    isLiving: "isLiving",
-    createdAt: "createdAt",
-  },
-  relationships: {
-    id: "id",
-  },
-  auditLogs: {
-    id: "id",
-    userId: "userId",
-    action: "action",
-    entityType: "entityType",
-    entityId: "entityId",
-    newData: "newData",
-    createdAt: "createdAt",
-  },
-  users: {
-    id: "id",
-    name: "name",
-  },
-};
 
 // Create mock drizzleDb
 const mockDrizzleDb = {
@@ -78,21 +43,6 @@ const mockDrizzleDb = {
     },
   },
 };
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
-
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
 
 describe("Dashboard Server Business Logic", () => {
   beforeEach(() => {
@@ -119,7 +69,7 @@ describe("Dashboard Server Business Logic", () => {
       // returns arrays through Promise.all. We can't easily test the complex
       // Drizzle query chains without integration tests, so we test the response shape.
 
-      const result = await getDashboardStatsData();
+      const result = await getDashboardStatsData(mockDrizzleDb as any);
 
       expect(result).toBeDefined();
       expect(typeof result.totalPeople).toBe("number");
@@ -130,7 +80,7 @@ describe("Dashboard Server Business Logic", () => {
     });
 
     it("should return recent additions as array", async () => {
-      const result = await getDashboardStatsData();
+      const result = await getDashboardStatsData(mockDrizzleDb as any);
 
       expect(Array.isArray(result.recentAdditions)).toBe(true);
       if (result.recentAdditions.length > 0) {
@@ -143,7 +93,7 @@ describe("Dashboard Server Business Logic", () => {
     });
 
     it("should have non-negative statistics", async () => {
-      const result = await getDashboardStatsData();
+      const result = await getDashboardStatsData(mockDrizzleDb as any);
 
       expect(result.totalPeople).toBeGreaterThanOrEqual(0);
       expect(result.livingPeople).toBeGreaterThanOrEqual(0);
@@ -152,7 +102,7 @@ describe("Dashboard Server Business Logic", () => {
     });
 
     it("should limit recent additions", async () => {
-      const result = await getDashboardStatsData();
+      const result = await getDashboardStatsData(mockDrizzleDb as any);
 
       expect(result.recentAdditions.length).toBeLessThanOrEqual(5);
     });
@@ -177,7 +127,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData();
+      const result = await getRecentActivityData({}, mockDrizzleDb as any);
 
       expect(result).toBeDefined();
       expect(Array.isArray(result)).toBe(true);
@@ -203,7 +153,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData();
+      const result = await getRecentActivityData({}, mockDrizzleDb as any);
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe("log-1");
@@ -234,7 +184,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData();
+      const result = await getRecentActivityData({}, mockDrizzleDb as any);
 
       expect(result[0].description).toContain("Added");
       expect(result[0].description).toContain("John");
@@ -259,9 +209,12 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData({
-        actionTypes: ["UPDATE"],
-      });
+      const result = await getRecentActivityData(
+        {
+          actionTypes: ["UPDATE"],
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
     });
@@ -284,9 +237,12 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData({
-        entityTypes: ["USER"],
-      });
+      const result = await getRecentActivityData(
+        {
+          entityTypes: ["USER"],
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
     });
@@ -309,9 +265,12 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData({
-        userId: "user-1",
-      });
+      const result = await getRecentActivityData(
+        {
+          userId: "user-1",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
     });
@@ -337,10 +296,13 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData({
-        dateFrom,
-        dateTo,
-      });
+      const result = await getRecentActivityData(
+        {
+          dateFrom,
+          dateTo,
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
     });
@@ -373,9 +335,12 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData({
-        searchQuery: "john",
-      });
+      const result = await getRecentActivityData(
+        {
+          searchQuery: "john",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.length).toBeLessThanOrEqual(mockLogs.length);
     });
@@ -398,7 +363,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData();
+      const result = await getRecentActivityData({}, mockDrizzleDb as any);
 
       expect(result[0].user).toBeNull();
     });
@@ -421,7 +386,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData();
+      const result = await getRecentActivityData({}, mockDrizzleDb as any);
 
       expect(result[0].user?.name).toBe("Unknown");
     });
@@ -442,7 +407,10 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData({ limit: 10 });
+      const result = await getRecentActivityData(
+        { limit: 10 },
+        mockDrizzleDb as any
+      );
 
       expect(result.length).toBeLessThanOrEqual(10);
     });
@@ -465,7 +433,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData();
+      const result = await getRecentActivityData({}, mockDrizzleDb as any);
 
       expect(result[0].description).toContain("Removed");
     });
@@ -488,7 +456,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData();
+      const result = await getRecentActivityData({}, mockDrizzleDb as any);
 
       expect(result[0].description).toBe("Logged in");
     });
@@ -511,7 +479,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockLogs);
 
-      const result = await getRecentActivityData();
+      const result = await getRecentActivityData({}, mockDrizzleDb as any);
 
       expect(result[0].description).toContain("Updated");
       expect(result[0].description).toContain("John");
@@ -554,7 +522,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockUsers);
 
-      const result = await getActivityFilterOptionsData();
+      const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
 
       expect(result.actionTypes).toBeDefined();
       expect(result.entityTypes).toBeDefined();
@@ -595,7 +563,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockUsers);
 
-      const result = await getActivityFilterOptionsData();
+      const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
 
       const createCount = result.actionTypes.find(
         (a) => a.value === "CREATE"
@@ -634,7 +602,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockUsers);
 
-      const result = await getActivityFilterOptionsData();
+      const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
 
       const personCount = result.entityTypes.find(
         (e) => e.value === "PERSON"
@@ -670,7 +638,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockUsers);
 
-      const result = await getActivityFilterOptionsData();
+      const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
 
       expect(result.users.length).toBe(1);
       expect(result.users[0].value).toBe("user-1");
@@ -701,7 +669,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockUsers);
 
-      const result = await getActivityFilterOptionsData();
+      const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
 
       const createLabel = result.actionTypes.find(
         (a) => a.value === "CREATE"
@@ -734,7 +702,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockUsers);
 
-      const result = await getActivityFilterOptionsData();
+      const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
 
       const personLabel = result.entityTypes.find(
         (e) => e.value === "PERSON"
@@ -755,7 +723,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
       ).mockResolvedValue([]);
 
-      const result = await getActivityFilterOptionsData();
+      const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
 
       expect(result.actionTypes).toEqual([]);
       expect(result.entityTypes).toEqual([]);
@@ -781,7 +749,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockUsers);
 
-      const result = await getActivityFilterOptionsData();
+      const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
 
       const customLabel = result.actionTypes.find(
         (a) => a.value === "CUSTOM_ACTION"
@@ -808,7 +776,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockUsers);
 
-      const result = await getActivityFilterOptionsData();
+      const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
 
       const customLabel = result.entityTypes.find(
         (e) => e.value === "CUSTOM_ENTITY"
@@ -835,7 +803,7 @@ describe("Dashboard Server Business Logic", () => {
         mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
       ).mockResolvedValue(mockUsers);
 
-      const result = await getActivityFilterOptionsData();
+      const result = await getActivityFilterOptionsData(mockDrizzleDb as any);
 
       expect(result.users[0].label).toBe("Unknown");
     });

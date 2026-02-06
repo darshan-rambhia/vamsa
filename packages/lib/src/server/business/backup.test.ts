@@ -17,13 +17,7 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 // Import functions to test
 import {
@@ -34,47 +28,6 @@ import {
   scheduleBackupJob,
   validateBackupFile,
 } from "./backup";
-
-// Mock the logger before importing modules
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Mock drizzle schema
-const mockDrizzleSchema = {
-  persons: { id: "id", lastName: "lastName", firstName: "firstName" },
-  relationships: {
-    id: "id",
-    createdAt: "createdAt",
-  },
-  users: {
-    id: "id",
-    email: "email",
-    name: "name",
-    personId: "personId",
-    role: "role",
-    isActive: "isActive",
-    mustChangePassword: "mustChangePassword",
-    invitedById: "invitedById",
-    createdAt: "createdAt",
-    updatedAt: "updatedAt",
-    lastLoginAt: "lastLoginAt",
-    preferredLanguage: "preferredLanguage",
-  },
-  suggestions: { id: "id", submittedAt: "submittedAt" },
-  familySettings: { id: "id" },
-  auditLogs: { id: "id", createdAt: "createdAt" },
-  mediaObjects: { id: "id", uploadedAt: "uploadedAt", filePath: "filePath" },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: {} as any, // Will be injected via DI
-  drizzleSchema: mockDrizzleSchema,
-  drizzleConfig: {},
-}));
 
 // Default test objects - tests can customize specific fields via spread
 const createDefaultImportOptions = (
@@ -215,23 +168,29 @@ describe("backup business logic", () => {
       ];
       const mockSettings = [{ id: "s1", familyName: "Doe Family" }];
 
+      let selectCallCount = 0;
       const mockDb = {
         select: mock(() => ({
-          from: mock(() => ({
-            orderBy: mock((col: unknown) =>
-              Promise.resolve(
-                col === mockDrizzleSchema.users
-                  ? mockUsers
-                  : col === mockDrizzleSchema.persons
+          from: mock(() => {
+            selectCallCount++;
+            return {
+              orderBy: mock(() =>
+                Promise.resolve(
+                  selectCallCount === 1
                     ? mockPersons
-                    : mockRelationships
-              )
-            ),
-            where: mock(() => ({
-              orderBy: mock(() => Promise.resolve([])),
-            })),
-            limit: mock(() => Promise.resolve(mockSettings)),
-          })),
+                    : selectCallCount === 2
+                      ? mockRelationships
+                      : selectCallCount === 3
+                        ? mockUsers
+                        : []
+                )
+              ),
+              where: mock(() => ({
+                orderBy: mock(() => Promise.resolve([])),
+              })),
+              limit: mock(() => Promise.resolve(mockSettings)),
+            };
+          }),
         })),
       } as any;
 

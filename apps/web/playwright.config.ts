@@ -96,8 +96,7 @@ export default defineConfig({
   fullyParallel: true,
   outputDir: "../../test-output/e2e/results/",
   snapshotDir: path.join(__dirname, "e2e/visual/__snapshots__"),
-  snapshotPathTemplate:
-    "{snapshotDir}/{testFileDir}/{testFileName}-{platform}{ext}",
+  snapshotPathTemplate: "{snapshotDir}/{testFileDir}/{arg}-{platform}{ext}",
   reporter: [
     ["html", { outputFolder: "../../test-output/e2e/playwright/" }],
     ["list"],

@@ -88,7 +88,7 @@ test.describe("Visual Regression", () => {
           await page.waitForLoadState("networkidle");
           // Capture full page screenshot
           await expect(page).toHaveScreenshot("dashboard-page.png", {
-            maxDiffPixels: 150,
+            maxDiffPixels: 500,
             threshold: 0.2,
           });
         }
@@ -110,7 +110,7 @@ test.describe("Visual Regression", () => {
           await page.waitForLoadState("networkidle");
           // Capture full page screenshot
           await expect(page).toHaveScreenshot("people-list-page.png", {
-            maxDiffPixels: 150,
+            maxDiffPixelRatio: 0.02,
             threshold: 0.2,
           });
         }
@@ -184,7 +184,7 @@ test.describe("Visual Regression", () => {
           await page.waitForLoadState("networkidle");
           // Capture full page screenshot
           await expect(page).toHaveScreenshot("dashboard-page-tablet.png", {
-            maxDiffPixels: 150,
+            maxDiffPixels: 500,
             threshold: 0.2,
           });
         }

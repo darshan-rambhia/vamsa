@@ -144,6 +144,7 @@ const mockDrizzleDb = {
     verifications: createQueryNamespace(),
     researchNotes: createQueryNamespace(),
     emailLogs: createQueryNamespace(),
+    eventParticipants: createQueryNamespace(),
   },
   // Helper methods for tests to configure results
   // These set the closure variables used by ALL query namespaces
@@ -152,6 +153,40 @@ const mockDrizzleDb = {
   },
   setFindManyResults: (results: Array<unknown>) => {
     mockFindManyResults = results;
+  },
+  // Reset all query namespaces to use the closure variables again
+  // Call this in beforeEach if any test replaces query methods directly
+  resetQueryMocks: () => {
+    mockFindFirstResult = null;
+    mockFindManyResults = [];
+    // Reset all query namespaces to read from closure variables
+    const namespaces = [
+      "users",
+      "persons",
+      "relationships",
+      "events",
+      "places",
+      "suggestions",
+      "calendarTokens",
+      "auditLogs",
+      "familySettings",
+      "sources",
+      "eventSources",
+      "placePersonLinks",
+      "mediaObjects",
+      "backups",
+      "invites",
+      "accounts",
+      "sessions",
+      "verifications",
+      "researchNotes",
+      "emailLogs",
+      "eventParticipants",
+    ] as const;
+    for (const ns of namespaces) {
+      mockDrizzleDb.query[ns].findFirst = mock(async () => mockFindFirstResult);
+      mockDrizzleDb.query[ns].findMany = mock(async () => mockFindManyResults);
+    }
   },
 };
 
@@ -194,6 +229,7 @@ const mockDrizzleSchema = {
   emailLogs: createMockTable(),
   placePersonLinks: createMockTable(),
   eventSources: createMockTable(),
+  eventParticipants: createMockTable(),
 };
 
 // Mock @vamsa/api to prevent real database initialization

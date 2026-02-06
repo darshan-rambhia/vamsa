@@ -18,13 +18,7 @@
  */
 
 import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 // Import after mocks are set up
 import {
@@ -37,14 +31,6 @@ import {
   betterAuthSignOut,
   getBetterAuthProviders,
 } from "./auth-better-api";
-
-// Mock the logger before importing the module
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
 
 // Mock auth module
 const mockBetterAuthApi = {

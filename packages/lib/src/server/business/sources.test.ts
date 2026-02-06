@@ -10,13 +10,7 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { clearAllMocks } from "../../testing/shared-mocks";
 
 import {
   createResearchNoteData,
@@ -29,15 +23,7 @@ import {
   listSourcesData,
 } from "./sources";
 
-// Mock logger
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Create mock drizzle database and schema
+// Create mock drizzle database
 const mockDrizzleDb = {
   query: {
     sources: {
@@ -73,18 +59,6 @@ const mockDrizzleDb = {
     where: mock(() => Promise.resolve({})),
   })),
 };
-
-const mockDrizzleSchema = {
-  sources: { id: "id" },
-  eventSources: { id: "id", sourceId: "sourceId", personId: "personId" },
-  researchNotes: { id: "id", sourceId: "sourceId", personId: "personId" },
-  persons: { id: "id", firstName: "firstName", lastName: "lastName" },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
 
 describe("Sources Business Logic", () => {
   beforeEach(() => {
@@ -147,7 +121,7 @@ describe("Sources Business Logic", () => {
         mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce([]);
 
-      const result = await getSourceData("source-1");
+      const result = await getSourceData("source-1", mockDrizzleDb as any);
 
       expect(result.id).toBe("source-1");
       expect(result.title).toBe("Census 1900");
@@ -163,7 +137,7 @@ describe("Sources Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await getSourceData("nonexistent");
+        await getSourceData("nonexistent", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Source not found");
@@ -233,7 +207,7 @@ describe("Sources Business Logic", () => {
         mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockResearchNotes);
 
-      const result = await getSourceData("source-1");
+      const result = await getSourceData("source-1", mockDrizzleDb as any);
 
       expect(result.eventCount).toBe(2);
       expect(result.researchNoteCount).toBe(1);
@@ -252,7 +226,11 @@ describe("Sources Business Logic", () => {
         mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce([]);
 
-      const result = await listSourcesData();
+      const result = await listSourcesData(
+        undefined,
+        undefined,
+        mockDrizzleDb as any
+      );
 
       expect(result.items).toHaveLength(0);
       expect(result.total).toBe(0);
@@ -283,7 +261,11 @@ describe("Sources Business Logic", () => {
         mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce([]);
 
-      const result = await listSourcesData();
+      const result = await listSourcesData(
+        undefined,
+        undefined,
+        mockDrizzleDb as any
+      );
 
       expect(result.items[0].createdAt).toBe(now.toISOString());
       expect(result.items[0].updatedAt).toBe(now.toISOString());
@@ -311,13 +293,16 @@ describe("Sources Business Logic", () => {
         values: mock(() => ({ returning: mockReturning })),
       } as any);
 
-      const result = await createSourceData({
-        title: "New Source",
-        author: "Author",
-        publicationDate: "2024",
-        sourceType: "Book",
-        confidence: "High",
-      });
+      const result = await createSourceData(
+        {
+          title: "New Source",
+          author: "Author",
+          publicationDate: "2024",
+          sourceType: "Book",
+          confidence: "High",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.title).toBe("New Source");
       expect(result.id).toBe("new-source");
@@ -332,7 +317,7 @@ describe("Sources Business Logic", () => {
         id: "source-1",
       });
 
-      const result = await deleteSourceData("source-1");
+      const result = await deleteSourceData("source-1", mockDrizzleDb as any);
 
       expect(result.success).toBe(true);
     });
@@ -343,7 +328,7 @@ describe("Sources Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await deleteSourceData("nonexistent");
+        await deleteSourceData("nonexistent", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Source not found");
@@ -384,12 +369,15 @@ describe("Sources Business Logic", () => {
         values: mock(() => ({ returning: mockReturning })),
       } as any);
 
-      const result = await createResearchNoteData({
-        sourceId: "source-1",
-        personId: "p-1",
-        eventType: "birth",
-        findings: "Found record",
-      });
+      const result = await createResearchNoteData(
+        {
+          sourceId: "source-1",
+          personId: "p-1",
+          eventType: "birth",
+          findings: "Found record",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.findings).toBe("Found record");
       expect(result.person.firstName).toBe("John");
@@ -401,12 +389,15 @@ describe("Sources Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await createResearchNoteData({
-          sourceId: "nonexistent",
-          personId: "p-1",
-          eventType: "birth",
-          findings: "Found",
-        });
+        await createResearchNoteData(
+          {
+            sourceId: "nonexistent",
+            personId: "p-1",
+            eventType: "birth",
+            findings: "Found",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Source not found");
@@ -424,12 +415,15 @@ describe("Sources Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await createResearchNoteData({
-          sourceId: "source-1",
-          personId: "nonexistent",
-          eventType: "birth",
-          findings: "Found",
-        });
+        await createResearchNoteData(
+          {
+            sourceId: "source-1",
+            personId: "nonexistent",
+            eventType: "birth",
+            findings: "Found",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Person not found");
@@ -445,7 +439,10 @@ describe("Sources Business Logic", () => {
         id: "note-1",
       });
 
-      const result = await deleteResearchNoteData("note-1");
+      const result = await deleteResearchNoteData(
+        "note-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.success).toBe(true);
     });
@@ -456,7 +453,7 @@ describe("Sources Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await deleteResearchNoteData("nonexistent");
+        await deleteResearchNoteData("nonexistent", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Research note not found");
@@ -475,7 +472,7 @@ describe("Sources Business Logic", () => {
         mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce([]);
 
-      const result = await getResearchNotesData("p-1");
+      const result = await getResearchNotesData("p-1", mockDrizzleDb as any);
 
       expect(result).toEqual({});
     });
@@ -486,7 +483,7 @@ describe("Sources Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await getResearchNotesData("nonexistent");
+        await getResearchNotesData("nonexistent", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Person not found");
@@ -509,7 +506,11 @@ describe("Sources Business Logic", () => {
         mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockSource);
 
-      const result = await generateCitationData("source-1", "MLA");
+      const result = await generateCitationData(
+        "source-1",
+        "MLA",
+        mockDrizzleDb as any
+      );
 
       expect(result.format).toBe("MLA");
       expect(result.citation).toContain("Census Data");
@@ -522,7 +523,7 @@ describe("Sources Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await generateCitationData("nonexistent", "MLA");
+        await generateCitationData("nonexistent", "MLA", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Failed to generate citation");

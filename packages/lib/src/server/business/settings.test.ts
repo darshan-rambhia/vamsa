@@ -11,13 +11,7 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 import {
   getFamilySettingsData,
@@ -27,15 +21,7 @@ import {
 } from "./settings";
 import type { UpdateFamilySettingsInput } from "./settings";
 
-// Mock logger
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Create mock drizzle database and schema
+// Create mock drizzle database
 const mockDrizzleDb = {
   query: {
     familySettings: {
@@ -59,28 +45,6 @@ const mockDrizzleDb = {
   })),
 };
 
-const mockDrizzleSchema = {
-  familySettings: {
-    id: "id",
-    familyName: "familyName",
-    description: "description",
-    allowSelfRegistration: "allowSelfRegistration",
-    requireApprovalForEdits: "requireApprovalForEdits",
-    metricsDashboardUrl: "metricsDashboardUrl",
-    metricsApiUrl: "metricsApiUrl",
-    updatedAt: "updatedAt",
-  },
-  users: {
-    id: "id",
-    preferredLanguage: "preferredLanguage",
-  },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
-
 describe("Settings Business Logic", () => {
   beforeEach(() => {
     clearAllMocks();
@@ -100,7 +64,7 @@ describe("Settings Business Logic", () => {
         mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(null);
 
-      const result = await getFamilySettingsData();
+      const result = await getFamilySettingsData(mockDrizzleDb as any);
 
       expect(result).toEqual({
         id: null,
@@ -133,7 +97,7 @@ describe("Settings Business Logic", () => {
         mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockSettings);
 
-      const result = await getFamilySettingsData();
+      const result = await getFamilySettingsData(mockDrizzleDb as any);
 
       expect(result).toEqual(mockSettings);
     });
@@ -153,7 +117,7 @@ describe("Settings Business Logic", () => {
         mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockSettings);
 
-      const result = await getFamilySettingsData();
+      const result = await getFamilySettingsData(mockDrizzleDb as any);
 
       expect(result.description).toBe("");
       expect(result.metricsDashboardUrl).toBeNull();
@@ -195,7 +159,8 @@ describe("Settings Business Logic", () => {
       const result = await updateFamilySettingsData(
         updateData,
         "ADMIN",
-        "user-123"
+        "user-123",
+        mockDrizzleDb as any
       );
 
       expect(result.familyName).toBe("New Family");
@@ -248,7 +213,8 @@ describe("Settings Business Logic", () => {
       const result = await updateFamilySettingsData(
         updateData,
         "ADMIN",
-        "user-123"
+        "user-123",
+        mockDrizzleDb as any
       );
 
       expect(result.familyName).toBe("Updated Family");
@@ -291,7 +257,12 @@ describe("Settings Business Logic", () => {
         })),
       } as any);
 
-      await updateFamilySettingsData(updateData, "ADMIN", "user-123");
+      await updateFamilySettingsData(
+        updateData,
+        "ADMIN",
+        "user-123",
+        mockDrizzleDb as any
+      );
 
       expect(mockDrizzleDb.update).toHaveBeenCalled();
     });
@@ -308,7 +279,10 @@ describe("Settings Business Logic", () => {
         mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockUser);
 
-      const result = await getUserLanguagePreferenceData("user-123");
+      const result = await getUserLanguagePreferenceData(
+        "user-123",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBe("es");
     });
@@ -323,7 +297,10 @@ describe("Settings Business Logic", () => {
         mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockUser);
 
-      const result = await getUserLanguagePreferenceData("user-123");
+      const result = await getUserLanguagePreferenceData(
+        "user-123",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBe("en");
     });
@@ -334,7 +311,10 @@ describe("Settings Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await getUserLanguagePreferenceData("nonexistent-user");
+        await getUserLanguagePreferenceData(
+          "nonexistent-user",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -361,7 +341,11 @@ describe("Settings Business Logic", () => {
         })),
       } as any);
 
-      const result = await setUserLanguagePreferenceData("user-123", "hi");
+      const result = await setUserLanguagePreferenceData(
+        "user-123",
+        "hi",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBe("hi");
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -383,7 +367,11 @@ describe("Settings Business Logic", () => {
         })),
       } as any);
 
-      const result = await setUserLanguagePreferenceData("user-123", "es");
+      const result = await setUserLanguagePreferenceData(
+        "user-123",
+        "es",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBe("en");
     });
@@ -402,7 +390,11 @@ describe("Settings Business Logic", () => {
           })),
         } as any);
 
-        const result = await setUserLanguagePreferenceData("user-123", lang);
+        const result = await setUserLanguagePreferenceData(
+          "user-123",
+          lang,
+          mockDrizzleDb as any
+        );
 
         expect(result).toBe(lang);
       }

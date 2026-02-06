@@ -6,51 +6,15 @@
  * - claimProfileData: Creating user accounts linked to Person profiles
  *
  * Uses dependency injection to mock database and external services.
+ * Mocks are provided by preload file (tests/setup/test-logger-mock.ts).
+ * DO NOT call mock.module() here - it can corrupt shared mocks.
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
-// Import after mocks are set up
-import { claimProfileData, getUnclaimedProfilesData } from "./auth";
-
-// Mock the logger before importing the module
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  createLogger: () => mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Create mock column references that behave like Drizzle columns
-const createMockColumn = (name: string) => ({ name, _: { name } });
-
-// Mock @vamsa/api to provide drizzleSchema
-const mockDrizzleSchema = {
-  users: {
-    id: createMockColumn("id"),
-    personId: createMockColumn("personId"),
-    email: createMockColumn("email"),
-  },
-  persons: {
-    id: createMockColumn("id"),
-    firstName: createMockColumn("firstName"),
-    lastName: createMockColumn("lastName"),
-    isLiving: createMockColumn("isLiving"),
-  },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: {}, // Will be overridden in tests via DI
-  drizzleSchema: mockDrizzleSchema,
-}));
+// Dynamic import ensures module loads AFTER preload mocks are applied
+const { claimProfileData, getUnclaimedProfilesData } = await import("./auth");
 
 // Mock the register function - cast to any to avoid strict type checking
 const mockRegister = mock(async () => ({
@@ -158,13 +122,9 @@ describe("auth business logic", () => {
                 // First call: return claimed personIds
                 return Promise.resolve(claimedPersonIds);
               }
-              // If branch: where().orderBy().then()
+              // If branch: where().orderBy() returns a promise
               return {
-                orderBy: mock(() => ({
-                  then: mock((fn: (rows: Array<unknown>) => Array<unknown>) =>
-                    Promise.resolve(fn(allLivingProfiles))
-                  ),
-                })),
+                orderBy: mock(() => Promise.resolve(allLivingProfiles)),
               };
             }),
           })),
@@ -203,13 +163,9 @@ describe("auth business logic", () => {
               if (selectCallCount === 1) {
                 return Promise.resolve(usersWithPeople);
               }
-              // If branch: where().orderBy().then()
+              // If branch: where().orderBy() returns a promise
               return {
-                orderBy: mock(() => ({
-                  then: mock((fn: (rows: Array<unknown>) => Array<unknown>) =>
-                    Promise.resolve(fn(livingProfiles))
-                  ),
-                })),
+                orderBy: mock(() => Promise.resolve(livingProfiles)),
               };
             }),
           })),
@@ -240,7 +196,7 @@ describe("auth business logic", () => {
         })),
       } as any;
 
-      await expect(
+      expect(
         claimProfileData(
           "test@example.com",
           "nonexistent",
@@ -276,7 +232,7 @@ describe("auth business logic", () => {
         })),
       } as any;
 
-      await expect(
+      expect(
         claimProfileData(
           "test@example.com",
           "person-1",
@@ -321,7 +277,7 @@ describe("auth business logic", () => {
         })),
       } as any;
 
-      await expect(
+      expect(
         claimProfileData(
           "test@example.com",
           "person-1",
@@ -369,7 +325,7 @@ describe("auth business logic", () => {
         })),
       } as any;
 
-      await expect(
+      expect(
         claimProfileData(
           "test@example.com",
           "person-1",
@@ -518,7 +474,7 @@ describe("auth business logic", () => {
 
       mockRegister.mockResolvedValueOnce(null);
 
-      await expect(
+      expect(
         claimProfileData(
           "test@example.com",
           "person-1",

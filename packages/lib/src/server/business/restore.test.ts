@@ -11,13 +11,7 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { clearAllMocks } from "../../testing/shared-mocks";
 
 // Import after mocks are set up
 import {
@@ -26,29 +20,6 @@ import {
   previewImportData,
   validateBackupData,
 } from "./restore";
-
-// Mock logger module
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Mock Drizzle schema
-const mockDrizzleSchema = {
-  persons: { id: {} as any },
-  users: { id: {} as any },
-  relationships: { id: {} as any },
-  suggestions: { id: {} as any },
-  auditLogs: {
-    id: {} as any,
-    userId: {} as any,
-    entityType: {} as any,
-    createdAt: {} as any,
-    newData: {} as any,
-  },
-};
 
 // Create mock database helper
 const createMockDb = () => {
@@ -87,11 +58,6 @@ const mockDrizzleDb = createMockDb();
 mockDrizzleDb.query.auditLogs = {
   findMany: mock(() => Promise.resolve([])),
 };
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
 
 describe("restore business logic", () => {
   beforeEach(() => {
@@ -181,7 +147,7 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      const result = await previewImportData(adminUser);
+      const result = await previewImportData(adminUser, mockDrizzleDb as any);
 
       expect(result.statistics).toBeDefined();
       expect(result.statistics.existingItems).toBeDefined();
@@ -195,9 +161,9 @@ describe("restore business logic", () => {
         role: "MEMBER" as const,
       };
 
-      expect(previewImportData(memberUser)).rejects.toThrow(
-        "Only administrators can preview imports"
-      );
+      expect(
+        previewImportData(memberUser, mockDrizzleDb as any)
+      ).rejects.toThrow("Only administrators can preview imports");
     });
 
     it("should return estimated duration", async () => {
@@ -208,7 +174,7 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      const result = await previewImportData(adminUser);
+      const result = await previewImportData(adminUser, mockDrizzleDb as any);
 
       expect(result.estimatedDuration).toBeDefined();
       expect(result.estimatedDuration.minSeconds).toBe(5);
@@ -225,7 +191,11 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      const result = await importBackupData(adminUser, "skip");
+      const result = await importBackupData(
+        adminUser,
+        "skip",
+        mockDrizzleDb as any
+      );
 
       expect(result.success).toBe(true);
       expect(result.strategy).toBe("skip");
@@ -244,7 +214,11 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      const result = await importBackupData(adminUser, "replace");
+      const result = await importBackupData(
+        adminUser,
+        "replace",
+        mockDrizzleDb as any
+      );
 
       expect(result.success).toBe(true);
       expect(result.strategy).toBe("replace");
@@ -258,7 +232,11 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      const result = await importBackupData(adminUser);
+      const result = await importBackupData(
+        adminUser,
+        undefined,
+        mockDrizzleDb as any
+      );
 
       expect(result.strategy).toBe("skip");
     });
@@ -271,9 +249,9 @@ describe("restore business logic", () => {
         role: "MEMBER" as const,
       };
 
-      expect(importBackupData(memberUser, "skip")).rejects.toThrow(
-        "Only administrators can import backups"
-      );
+      expect(
+        importBackupData(memberUser, "skip", mockDrizzleDb as any)
+      ).rejects.toThrow("Only administrators can import backups");
     });
 
     it("should include import statistics", async () => {
@@ -284,7 +262,11 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      const result = await importBackupData(adminUser, "skip");
+      const result = await importBackupData(
+        adminUser,
+        "skip",
+        mockDrizzleDb as any
+      );
 
       expect(result.statistics).toMatchObject({
         peopleImported: 0,
@@ -307,7 +289,7 @@ describe("restore business logic", () => {
       // Note: We can't easily replace drizzleDb after mock.module
       // So we test error logging through the catch block
       try {
-        await importBackupData(adminUser, "skip");
+        await importBackupData(adminUser, "skip", mockDrizzleDb as any);
       } catch (error) {
         // Expected to throw
         expect(error).toBeDefined();
@@ -322,7 +304,11 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      const result = await importBackupData(adminUser, "skip");
+      const result = await importBackupData(
+        adminUser,
+        "skip",
+        mockDrizzleDb as any
+      );
 
       expect(result.importedAt).toBeDefined();
       // Should be ISO string
@@ -349,7 +335,10 @@ describe("restore business logic", () => {
         },
       ]) as any;
 
-      const result = await getImportHistoryData(adminUser);
+      const result = await getImportHistoryData(
+        adminUser,
+        mockDrizzleDb as any
+      );
 
       expect(Array.isArray(result)).toBe(true);
     });
@@ -362,9 +351,9 @@ describe("restore business logic", () => {
         role: "MEMBER" as const,
       };
 
-      expect(getImportHistoryData(memberUser)).rejects.toThrow(
-        "Only administrators can view import history"
-      );
+      expect(
+        getImportHistoryData(memberUser, mockDrizzleDb as any)
+      ).rejects.toThrow("Only administrators can view import history");
     });
 
     it("should return history with success flag", async () => {
@@ -393,7 +382,10 @@ describe("restore business logic", () => {
         },
       ]) as any;
 
-      const result = await getImportHistoryData(adminUser);
+      const result = await getImportHistoryData(
+        adminUser,
+        mockDrizzleDb as any
+      );
 
       // Result should show success status based on entityType
       expect(Array.isArray(result)).toBe(true);
@@ -424,7 +416,10 @@ describe("restore business logic", () => {
         return entries;
       }) as any;
 
-      const result = await getImportHistoryData(adminUser);
+      const result = await getImportHistoryData(
+        adminUser,
+        mockDrizzleDb as any
+      );
 
       expect(Array.isArray(result)).toBe(true);
       expect(result).toHaveLength(50);
@@ -448,7 +443,10 @@ describe("restore business logic", () => {
         },
       ]) as any;
 
-      const result = await getImportHistoryData(adminUser);
+      const result = await getImportHistoryData(
+        adminUser,
+        mockDrizzleDb as any
+      );
 
       expect(Array.isArray(result)).toBe(true);
       // Should use email when name is null
@@ -463,7 +461,10 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      const result = await getImportHistoryData(adminUser);
+      const result = await getImportHistoryData(
+        adminUser,
+        mockDrizzleDb as any
+      );
 
       expect(Array.isArray(result)).toBe(true);
     });
@@ -486,7 +487,10 @@ describe("restore business logic", () => {
         },
       ]) as any;
 
-      const result = await getImportHistoryData(adminUser);
+      const result = await getImportHistoryData(
+        adminUser,
+        mockDrizzleDb as any
+      );
 
       expect(Array.isArray(result)).toBe(true);
       // Check success flag is false for BACKUP_IMPORT_FAILED
@@ -511,7 +515,10 @@ describe("restore business logic", () => {
         },
       ]) as any;
 
-      const result = await getImportHistoryData(adminUser);
+      const result = await getImportHistoryData(
+        adminUser,
+        mockDrizzleDb as any
+      );
 
       expect(Array.isArray(result)).toBe(true);
       expect(result[0]?.strategy).toBe("unknown");

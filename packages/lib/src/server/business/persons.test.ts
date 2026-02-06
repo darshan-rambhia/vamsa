@@ -16,13 +16,8 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { drizzleSchema } from "@vamsa/api";
+import { clearAllMocks } from "../../testing/shared-mocks";
 
 import {
   buildPersonWhereClause,
@@ -34,62 +29,6 @@ import {
   searchPersonsData,
   updatePersonData,
 } from "./persons";
-
-// Mock logger
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Create mock schema
-const mockDrizzleSchema = {
-  persons: {
-    id: "id",
-    firstName: "firstName",
-    lastName: "lastName",
-    maidenName: "maidenName",
-    dateOfBirth: "dateOfBirth",
-    dateOfPassing: "dateOfPassing",
-    birthPlace: "birthPlace",
-    nativePlace: "nativePlace",
-    gender: "gender",
-    photoUrl: "photoUrl",
-    bio: "bio",
-    email: "email",
-    phone: "phone",
-    currentAddress: "currentAddress",
-    workAddress: "workAddress",
-    profession: "profession",
-    employer: "employer",
-    socialLinks: "socialLinks",
-    isLiving: "isLiving",
-    createdAt: "createdAt",
-    updatedAt: "updatedAt",
-    createdById: "createdById",
-    deletedAt: "deletedAt",
-  },
-  auditLogs: {
-    id: "id",
-    userId: "userId",
-    action: "action",
-    entityType: "entityType",
-    entityId: "entityId",
-    previousData: "previousData",
-    newData: "newData",
-  },
-  users: {
-    id: "id",
-    role: "role",
-    personId: "personId",
-  },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: {},
-  drizzleSchema: mockDrizzleSchema,
-}));
 
 mock.module("@vamsa/schemas", () => ({
   createPaginationMeta: (page: number, limit: number, total: number) => ({
@@ -652,7 +591,7 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
           // Track if audit insert is called
           const originalInsert = mockTx.insert;
           mockTx.insert = mock((table: unknown) => {
-            if (table === mockDrizzleSchema.auditLogs) {
+            if (table === drizzleSchema.auditLogs) {
               // Audit insert called
             }
             return originalInsert(table);
@@ -1053,7 +992,7 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
               })),
             })),
             insert: mock((table: unknown) => {
-              if (table === mockDrizzleSchema.auditLogs) {
+              if (table === drizzleSchema.auditLogs) {
                 auditDataCaptured = true;
               }
               return {

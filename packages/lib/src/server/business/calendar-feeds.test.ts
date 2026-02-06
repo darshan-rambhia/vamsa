@@ -12,15 +12,7 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
-} from "../../testing/shared-mocks";
+import { mockLogger } from "../../testing/shared-mocks";
 
 // Import after mocking
 import {
@@ -30,54 +22,6 @@ import {
   generateRSSFeedData,
   validateCalendarToken,
 } from "./calendar-feeds";
-
-// Create mock drizzleSchema
-const mockDrizzleSchema = {
-  calendarTokens: {
-    id: "id",
-    token: "token",
-    userId: "userId",
-    isActive: "isActive",
-    expiresAt: "expiresAt",
-    lastUsedAt: "lastUsedAt",
-  },
-  auditLogs: {
-    entityType: "entityType",
-    entityId: "entityId",
-    action: "action",
-    newData: "newData",
-    createdAt: "createdAt",
-    userId: "userId",
-  },
-  users: {
-    id: "id",
-    name: "name",
-    email: "email",
-  },
-  persons: {
-    id: "id",
-    firstName: "firstName",
-    lastName: "lastName",
-    dateOfBirth: "dateOfBirth",
-    dateOfPassing: "dateOfPassing",
-    isLiving: "isLiving",
-  },
-  relationships: {
-    id: "id",
-    type: "type",
-    personId: "personId",
-    relatedPersonId: "relatedPersonId",
-    marriageDate: "marriageDate",
-  },
-  events: {
-    id: "id",
-    type: "type",
-    date: "date",
-    description: "description",
-    place: "place",
-    personId: "personId",
-  },
-};
 
 // Create mock drizzleDb
 const mockDrizzleDb = {
@@ -113,21 +57,8 @@ const mockDrizzleDb = {
   })),
 };
 
-// Mock modules
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
-
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
+// Create mock drizzleDb and drizzleSchema are defined above
+// Mocks for @vamsa/api and @vamsa/lib/logger are handled by preload
 
 describe("Calendar Feeds Business Logic", () => {
   beforeEach(() => {
@@ -158,7 +89,10 @@ describe("Calendar Feeds Business Logic", () => {
         })
       );
 
-      const result = await validateCalendarToken("valid-token-123");
+      const result = await validateCalendarToken(
+        "valid-token-123",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(true);
       expect(result.tokenRecord?.id).toBe("token-1");
@@ -176,7 +110,10 @@ describe("Calendar Feeds Business Logic", () => {
         })
       );
 
-      const result = await validateCalendarToken("nonexistent-token");
+      const result = await validateCalendarToken(
+        "nonexistent-token",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Token not found");
@@ -201,7 +138,10 @@ describe("Calendar Feeds Business Logic", () => {
         })
       );
 
-      const result = await validateCalendarToken("inactive-token");
+      const result = await validateCalendarToken(
+        "inactive-token",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Token is inactive");
@@ -226,7 +166,10 @@ describe("Calendar Feeds Business Logic", () => {
         })
       );
 
-      const result = await validateCalendarToken("expired-token");
+      const result = await validateCalendarToken(
+        "expired-token",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Token has expired");
@@ -245,9 +188,17 @@ describe("Calendar Feeds Business Logic", () => {
         })
       );
 
-      await expect(
-        generateRSSFeedData("invalid-token", "https://example.com")
-      ).rejects.toThrow("Token not found");
+      try {
+        await generateRSSFeedData(
+          "invalid-token",
+          "https://example.com",
+          mockDrizzleDb as any
+        );
+        expect.unreachable("should have thrown");
+      } catch (err) {
+        expect(err instanceof Error).toBe(true);
+        expect((err as Error).message).toBe("Token not found");
+      }
     });
 
     it("should generate RSS XML for valid token", async () => {
@@ -299,7 +250,8 @@ describe("Calendar Feeds Business Logic", () => {
 
       const xml = await generateRSSFeedData(
         "valid-token",
-        "https://example.com"
+        "https://example.com",
+        mockDrizzleDb as any
       );
 
       expect(xml).toContain("<?xml");
@@ -338,7 +290,10 @@ describe("Calendar Feeds Business Logic", () => {
         })
       );
 
-      const ics = await generateBirthdayCalendarData("https://example.com");
+      const ics = await generateBirthdayCalendarData(
+        "https://example.com",
+        mockDrizzleDb as any
+      );
 
       expect(ics).toContain("BEGIN:VCALENDAR");
       expect(ics).toContain("Family Birthdays");
@@ -369,7 +324,10 @@ describe("Calendar Feeds Business Logic", () => {
         })
       );
 
-      const ics = await generateBirthdayCalendarData("https://example.com");
+      const ics = await generateBirthdayCalendarData(
+        "https://example.com",
+        mockDrizzleDb as any
+      );
 
       expect(ics).toContain("BEGIN:VCALENDAR");
       expect(ics).not.toContain("John Doe");
@@ -423,7 +381,10 @@ describe("Calendar Feeds Business Logic", () => {
         })
       );
 
-      const ics = await generateAnniversaryCalendarData("https://example.com");
+      const ics = await generateAnniversaryCalendarData(
+        "https://example.com",
+        mockDrizzleDb as any
+      );
 
       expect(ics).toContain("BEGIN:VCALENDAR");
       expect(ics).toContain("Family Anniversaries");
@@ -466,7 +427,10 @@ describe("Calendar Feeds Business Logic", () => {
         })
       );
 
-      const ics = await generateEventsCalendarData("https://example.com");
+      const ics = await generateEventsCalendarData(
+        "https://example.com",
+        mockDrizzleDb as any
+      );
 
       expect(ics).toContain("BEGIN:VCALENDAR");
       expect(ics).toContain("Family Events");
@@ -500,7 +464,10 @@ describe("Calendar Feeds Business Logic", () => {
         })
       );
 
-      const ics = await generateEventsCalendarData("https://example.com");
+      const ics = await generateEventsCalendarData(
+        "https://example.com",
+        mockDrizzleDb as any
+      );
 
       expect(ics).toContain("BEGIN:VCALENDAR");
       expect(ics).not.toContain("BIRTH: Test Person");

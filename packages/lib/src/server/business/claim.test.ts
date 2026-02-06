@@ -26,35 +26,11 @@ import {
   getOIDCClaimStatusData,
   skipProfileClaimData,
 } from "@vamsa/lib/server/business";
-import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
-} from "../../testing/shared-mocks";
+import { mockLogger } from "../../testing/shared-mocks";
 
 // Import the functions to test
 
-// Create mock drizzleDb and drizzleSchema
-const mockDrizzleSchema = {
-  users: {
-    id: "id",
-    personId: "personId",
-    oidcProvider: "oidcProvider",
-  },
-  persons: {
-    id: "id",
-    isLiving: "isLiving",
-    lastName: "lastName",
-    firstName: "firstName",
-  },
-};
-
 // Mock for the returning() call - allows tests to control the return value
-
 const mockReturning = mock(() => Promise.resolve([] as Array<any>));
 
 const mockDrizzleDb = {
@@ -78,21 +54,6 @@ const mockDrizzleDb = {
     })),
   })),
 };
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
-
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
 
 // Mock the notifications module to avoid dependency on it
 mock.module("@vamsa/lib/server/business/notifications", () => ({
@@ -156,7 +117,10 @@ describe("Claim Server Business Logic", () => {
         mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockProfiles);
 
-      const result = await getClaimableProfilesData("user-1");
+      const result = await getClaimableProfilesData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.all).toHaveLength(2);
       expect(result.suggested).toBeDefined();
@@ -189,7 +153,10 @@ describe("Claim Server Business Logic", () => {
         mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce([]);
 
-      const result = await getClaimableProfilesData("user-1");
+      const result = await getClaimableProfilesData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.all).toHaveLength(0);
       // Verify persons.findMany was called to fetch unclaimed profiles
@@ -216,7 +183,7 @@ describe("Claim Server Business Logic", () => {
         mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce([]);
 
-      await getClaimableProfilesData("user-1");
+      await getClaimableProfilesData("user-1", mockDrizzleDb as any);
 
       // Verify persons.findMany was called to filter for living profiles
       // (actual filter logic is verified via integration tests)
@@ -260,7 +227,10 @@ describe("Claim Server Business Logic", () => {
         mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockProfiles);
 
-      const result = await getClaimableProfilesData("user-1");
+      const result = await getClaimableProfilesData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.suggested.length).toBeLessThanOrEqual(5);
     });
@@ -271,7 +241,10 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await getClaimableProfilesData("nonexistent-user");
+        await getClaimableProfilesData(
+          "nonexistent-user",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -290,7 +263,7 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await getClaimableProfilesData("user-1");
+        await getClaimableProfilesData("user-1", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -334,7 +307,11 @@ describe("Claim Server Business Logic", () => {
       // Mock returning() to return array with updated user (Drizzle returns array)
       mockReturning.mockResolvedValueOnce([updatedUser]);
 
-      const result = await claimProfileForOIDCData("user-1", "person-1");
+      const result = await claimProfileForOIDCData(
+        "user-1",
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.success).toBe(true);
       expect(result.userId).toBe("user-1");
@@ -347,7 +324,11 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await claimProfileForOIDCData("nonexistent-user", "person-1");
+        await claimProfileForOIDCData(
+          "nonexistent-user",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -366,7 +347,11 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1");
+        await claimProfileForOIDCData(
+          "user-1",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -390,7 +375,11 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1");
+        await claimProfileForOIDCData(
+          "user-1",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -414,7 +403,11 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1");
+        await claimProfileForOIDCData(
+          "user-1",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -441,7 +434,11 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await claimProfileForOIDCData("user-1", "nonexistent-person");
+        await claimProfileForOIDCData(
+          "user-1",
+          "nonexistent-person",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -473,7 +470,11 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(mockPerson);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1");
+        await claimProfileForOIDCData(
+          "user-1",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -512,7 +513,11 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(mockPerson);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1");
+        await claimProfileForOIDCData(
+          "user-1",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -554,7 +559,11 @@ describe("Claim Server Business Logic", () => {
         },
       ]);
 
-      const result = await claimProfileForOIDCData("user-1", "person-1");
+      const result = await claimProfileForOIDCData(
+        "user-1",
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       // Verify update was called and result is successful
       expect(mockDrizzleDb.update).toHaveBeenCalled();
@@ -576,7 +585,7 @@ describe("Claim Server Business Logic", () => {
       // skipProfileClaimData uses .update().set().where() without .returning()
       // The mock's where() returns a thenable, so await works
 
-      const result = await skipProfileClaimData("user-1");
+      const result = await skipProfileClaimData("user-1", mockDrizzleDb as any);
 
       expect(result.success).toBe(true);
       expect(mockDrizzleDb.update).toHaveBeenCalled();
@@ -588,7 +597,7 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await skipProfileClaimData("nonexistent-user");
+        await skipProfileClaimData("nonexistent-user", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -607,7 +616,7 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await skipProfileClaimData("user-1");
+        await skipProfileClaimData("user-1", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -629,7 +638,7 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await skipProfileClaimData("user-1");
+        await skipProfileClaimData("user-1", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -666,7 +675,10 @@ describe("Claim Server Business Logic", () => {
         mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockPerson);
 
-      const result = await getOIDCClaimStatusData("user-1");
+      const result = await getOIDCClaimStatusData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
       expect(result?.userId).toBe("user-1");
@@ -690,7 +702,10 @@ describe("Claim Server Business Logic", () => {
         mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockUser);
 
-      const result = await getOIDCClaimStatusData("user-1");
+      const result = await getOIDCClaimStatusData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
       expect(result?.userId).toBe("user-1");
@@ -711,7 +726,10 @@ describe("Claim Server Business Logic", () => {
         mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockUser);
 
-      const result = await getOIDCClaimStatusData("user-1");
+      const result = await getOIDCClaimStatusData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeNull();
     });
@@ -722,7 +740,7 @@ describe("Claim Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await getOIDCClaimStatusData("nonexistent-user");
+        await getOIDCClaimStatusData("nonexistent-user", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -755,7 +773,10 @@ describe("Claim Server Business Logic", () => {
         mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockPerson);
 
-      const result = await getOIDCClaimStatusData("user-1");
+      const result = await getOIDCClaimStatusData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result?.person?.firstName).toBe("John");
       expect(result?.person?.lastName).toBe("Doe");

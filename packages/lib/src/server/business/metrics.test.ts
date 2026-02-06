@@ -10,6 +10,7 @@
  */
 
 import { describe, expect, it, mock } from "bun:test";
+import { drizzleDb } from "@vamsa/api";
 import {
   getMetricsSnapshotData,
   getPrometheusStatusData,
@@ -20,30 +21,6 @@ import {
 } from "./metrics";
 
 import type { MetricSnapshot } from "./metrics";
-
-// Mock modules before importing the code under test
-mock.module("@vamsa/lib/logger", () => ({
-  loggers: {
-    db: {
-      warn: mock(() => {}),
-      withErr: () => ({
-        ctx: () => ({
-          msg: mock(() => {}),
-        }),
-      }),
-    },
-  },
-}));
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: {
-    query: {
-      familySettings: {
-        findFirst: mock(() => Promise.resolve(null)),
-      },
-    },
-  },
-}));
 
 describe("Metrics Business Logic", () => {
   describe("queryPrometheus", () => {
@@ -487,7 +464,7 @@ describe("Metrics Business Logic", () => {
         })
       ) as any;
 
-      const result = await getPrometheusStatusData();
+      const result = await getPrometheusStatusData(drizzleDb);
 
       expect(result).toBeDefined();
       expect(result.available).toBeDefined();
@@ -506,7 +483,7 @@ describe("Metrics Business Logic", () => {
         })
       ) as any;
 
-      const result = await getPrometheusStatusData();
+      const result = await getPrometheusStatusData(drizzleDb);
 
       expect(result.available).toBe(false);
 
@@ -521,7 +498,7 @@ describe("Metrics Business Logic", () => {
         })
       ) as any;
 
-      const result = await getPrometheusStatusData();
+      const result = await getPrometheusStatusData(drizzleDb);
 
       // Should have default URLs
       expect(typeof result.url).toBe("string");
@@ -538,7 +515,7 @@ describe("Metrics Business Logic", () => {
         })
       ) as any;
 
-      const result = await getPrometheusStatusData();
+      const result = await getPrometheusStatusData(drizzleDb);
 
       // Should be a boolean
       expect(typeof result.usingCustomUrls).toBe("boolean");

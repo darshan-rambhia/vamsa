@@ -10,8 +10,11 @@ peer = true
 
 [test]
 # Test configuration
-# Preload root test setup for DOM globals
-preload = ["./tests/setup/root-test-setup.ts"]
+# Preload root test setup for DOM globals and logger mocks
+preload = [
+  "./tests/setup/root-test-setup.ts",
+  "./packages/lib/tests/setup/test-logger-mock.ts"
+]
 coverage = true
 coverageReporter = ["text", "lcov"]
 

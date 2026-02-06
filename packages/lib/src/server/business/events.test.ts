@@ -23,41 +23,9 @@ import {
   removeEventParticipantData,
   updateEventData,
 } from "@vamsa/lib/server/business";
-import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
-} from "../../testing/shared-mocks";
+import { mockLogger } from "../../testing/shared-mocks";
 
 // Import the functions to test
-
-// Create mock drizzleSchema
-const mockDrizzleSchema = {
-  persons: {
-    id: "id",
-  },
-  events: {
-    id: "id",
-    personId: "personId",
-    type: "type",
-    date: "date",
-    place: "place",
-    description: "description",
-    createdAt: "createdAt",
-    updatedAt: "updatedAt",
-  },
-  eventParticipants: {
-    id: "id",
-    eventId: "eventId",
-    personId: "personId",
-    role: "role",
-    createdAt: "createdAt",
-  },
-};
 
 // Create mock drizzleDb
 const mockDrizzleDb = {
@@ -88,21 +56,6 @@ const mockDrizzleDb = {
   })),
 };
 
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
-
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
-
 describe("Events Server Business Logic", () => {
   beforeEach(() => {
     (
@@ -130,7 +83,7 @@ describe("Events Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await getPersonEventsData("nonexistent-person");
+        await getPersonEventsData("nonexistent-person", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -169,7 +122,10 @@ describe("Events Server Business Logic", () => {
         mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockEvents);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBe(1);
@@ -201,7 +157,10 @@ describe("Events Server Business Logic", () => {
         mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockEvents);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(result[0].date).toBe("2024-01-15");
     });
@@ -231,7 +190,10 @@ describe("Events Server Business Logic", () => {
         mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockEvents);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(result[0].createdAt).toBe(createdAtDate.toISOString());
       expect(result[0].updatedAt).toBe(updatedAtDate.toISOString());
@@ -275,7 +237,10 @@ describe("Events Server Business Logic", () => {
         mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockEvents);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(result[0].participants.length).toBe(2);
       expect(result[0].participants[0].role).toBe("Groom");
@@ -292,7 +257,10 @@ describe("Events Server Business Logic", () => {
         mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce([]);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBe(0);
@@ -321,7 +289,10 @@ describe("Events Server Business Logic", () => {
         mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockEvents);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
     });
@@ -334,10 +305,13 @@ describe("Events Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await createEventData({
-          personId: "nonexistent-person",
-          type: "BIRTH",
-        });
+        await createEventData(
+          {
+            personId: "nonexistent-person",
+            type: "BIRTH",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -382,13 +356,16 @@ describe("Events Server Business Logic", () => {
         mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockEvent);
 
-      const result = await createEventData({
-        personId: "person-1",
-        type: "BIRTH",
-        date: new Date("1990-01-15"),
-        place: "New York",
-        description: "Birth event",
-      });
+      const result = await createEventData(
+        {
+          personId: "person-1",
+          type: "BIRTH",
+          date: new Date("1990-01-15"),
+          place: "New York",
+          description: "Birth event",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.id).toBe("event-1");
       expect(result.personId).toBe("person-1");
@@ -424,10 +401,13 @@ describe("Events Server Business Logic", () => {
         mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockEvent);
 
-      const result = await createEventData({
-        personId: "person-1",
-        type: "BIRTH",
-      });
+      const result = await createEventData(
+        {
+          personId: "person-1",
+          type: "BIRTH",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.id).toBe("event-1");
       expect(result.place).toBeNull();
@@ -447,10 +427,13 @@ describe("Events Server Business Logic", () => {
       });
 
       try {
-        await createEventData({
-          personId: "person-1",
-          type: "BIRTH",
-        });
+        await createEventData(
+          {
+            personId: "person-1",
+            type: "BIRTH",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -484,10 +467,13 @@ describe("Events Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await createEventData({
-          personId: "person-1",
-          type: "BIRTH",
-        });
+        await createEventData(
+          {
+            personId: "person-1",
+            type: "BIRTH",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -503,9 +489,13 @@ describe("Events Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await updateEventData("nonexistent-event", {
-          type: "MARRIAGE",
-        });
+        await updateEventData(
+          "nonexistent-event",
+          {
+            type: "MARRIAGE",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -539,9 +529,13 @@ describe("Events Server Business Logic", () => {
         })),
       });
 
-      const result = await updateEventData("event-1", {
-        type: "MARRIAGE",
-      });
+      const result = await updateEventData(
+        "event-1",
+        {
+          type: "MARRIAGE",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.type).toBe("MARRIAGE");
     });
@@ -572,9 +566,13 @@ describe("Events Server Business Logic", () => {
         })),
       });
 
-      const result = await updateEventData("event-1", {
-        date: new Date("2021-06-15"),
-      });
+      const result = await updateEventData(
+        "event-1",
+        {
+          date: new Date("2021-06-15"),
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.date).toBe("2021-06-15");
     });
@@ -606,10 +604,14 @@ describe("Events Server Business Logic", () => {
         })),
       });
 
-      const result = await updateEventData("event-1", {
-        place: "New Place",
-        description: "New desc",
-      });
+      const result = await updateEventData(
+        "event-1",
+        {
+          place: "New Place",
+          description: "New desc",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.place).toBe("New Place");
       expect(result.description).toBe("New desc");
@@ -637,9 +639,13 @@ describe("Events Server Business Logic", () => {
       });
 
       try {
-        await updateEventData("event-1", {
-          type: "MARRIAGE",
-        });
+        await updateEventData(
+          "event-1",
+          {
+            type: "MARRIAGE",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -655,7 +661,7 @@ describe("Events Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await deleteEventData("nonexistent-event");
+        await deleteEventData("nonexistent-event", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -682,7 +688,7 @@ describe("Events Server Business Logic", () => {
         where: mock(() => Promise.resolve({})),
       });
 
-      const result = await deleteEventData("event-1");
+      const result = await deleteEventData("event-1", mockDrizzleDb as any);
 
       expect(result.success).toBe(true);
       expect(mockDrizzleDb.delete).toHaveBeenCalled();
@@ -696,10 +702,13 @@ describe("Events Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await addEventParticipantData({
-          eventId: "nonexistent-event",
-          personId: "person-1",
-        });
+        await addEventParticipantData(
+          {
+            eventId: "nonexistent-event",
+            personId: "person-1",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -713,10 +722,13 @@ describe("Events Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await addEventParticipantData({
-          eventId: "event-1",
-          personId: "person-1",
-        });
+        await addEventParticipantData(
+          {
+            eventId: "event-1",
+            personId: "person-1",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -736,10 +748,13 @@ describe("Events Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await addEventParticipantData({
-          eventId: "event-1",
-          personId: "person-2",
-        });
+        await addEventParticipantData(
+          {
+            eventId: "event-1",
+            personId: "person-2",
+          },
+          mockDrizzleDb as any
+        );
       } catch (err) {
         expect(err instanceof Error).toBe(true);
       }
@@ -755,10 +770,13 @@ describe("Events Server Business Logic", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await removeEventParticipantData({
-          eventId: "event-1",
-          personId: "person-1",
-        });
+        await removeEventParticipantData(
+          {
+            eventId: "event-1",
+            personId: "person-1",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -784,10 +802,13 @@ describe("Events Server Business Logic", () => {
         where: mock(() => Promise.resolve({})),
       });
 
-      const result = await removeEventParticipantData({
-        eventId: "event-1",
-        personId: "person-2",
-      });
+      const result = await removeEventParticipantData(
+        {
+          eventId: "event-1",
+          personId: "person-2",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
       expect(typeof result.success).toBe("boolean");

@@ -41,7 +41,7 @@ jobs:
     name: E2E Tests (${{ matrix.browser }})
     runs-on: ubuntu-latest
     # Webkit tests can take longer due to browser stability issues
-    timeout-minutes: 20
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false

@@ -20,13 +20,7 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { clearAllMocks } from "../../testing/shared-mocks";
 
 // Import after mocks are set up
 import {
@@ -42,27 +36,6 @@ import {
   updatePlaceData,
   updatePlacePersonLinkData,
 } from "./places";
-
-// Mock logger module
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Mock Drizzle schema
-const mockDrizzleSchema = {
-  places: {
-    id: {} as any,
-    parentId: {} as any,
-    name: {} as any,
-    placeType: {} as any,
-  },
-  events: { placeId: {} as any },
-  placePersonLinks: { placeId: {} as any, personId: {} as any },
-  persons: { id: {} as any },
-};
 
 // Create mock database helper
 const createMockDb = () => {
@@ -123,11 +96,6 @@ const createMockDb = () => {
 };
 
 const mockDrizzleDb = createMockDb();
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
 
 describe("places business logic", () => {
   beforeEach(() => {
@@ -208,7 +176,7 @@ describe("places business logic", () => {
       mockDrizzleDb.setQueryFindFirstResult(place);
       mockDrizzleDb.setSelectCountResults([{ count: 5 }]);
 
-      const result = await getPlaceData("place-1");
+      const result = await getPlaceData("place-1", mockDrizzleDb as any);
 
       expect(result).toMatchObject({
         id: "place-1",
@@ -222,9 +190,9 @@ describe("places business logic", () => {
     it("should throw error when place not found", async () => {
       mockDrizzleDb.setQueryFindFirstResult(null);
 
-      await expect(getPlaceData("nonexistent")).rejects.toThrow(
-        "Place not found"
-      );
+      await expect(
+        getPlaceData("nonexistent", mockDrizzleDb as any)
+      ).rejects.toThrow("Place not found");
     });
   });
 
@@ -259,7 +227,7 @@ describe("places business logic", () => {
 
       mockDrizzleDb.setQueryFindManyResults(places);
 
-      const result = await searchPlacesData("London");
+      const result = await searchPlacesData("London", mockDrizzleDb as any);
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
@@ -271,7 +239,10 @@ describe("places business logic", () => {
     it("should return empty array when no matches", async () => {
       mockDrizzleDb.setQueryFindManyResults([]);
 
-      const result = await searchPlacesData("NonExistentPlace");
+      const result = await searchPlacesData(
+        "NonExistentPlace",
+        mockDrizzleDb as any
+      );
 
       expect(result).toEqual([]);
     });
@@ -295,7 +266,7 @@ describe("places business logic", () => {
 
       mockDrizzleDb.setQueryFindManyResults(places);
 
-      const result = await searchPlacesData("Earth");
+      const result = await searchPlacesData("Earth", mockDrizzleDb as any);
 
       expect(result[0]).toMatchObject({
         name: "Earth",
@@ -345,11 +316,14 @@ describe("places business logic", () => {
         })),
       })) as any;
 
-      const result = await createPlaceData({
-        name: "Manchester",
-        placeType: "CITY",
-        parentId: "country-1",
-      });
+      const result = await createPlaceData(
+        {
+          name: "Manchester",
+          placeType: "CITY",
+          parentId: "country-1",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result).toMatchObject({
         name: "Manchester",
@@ -377,10 +351,13 @@ describe("places business logic", () => {
         })),
       })) as any;
 
-      const result = await createPlaceData({
-        name: "Earth",
-        placeType: "REGION",
-      });
+      const result = await createPlaceData(
+        {
+          name: "Earth",
+          placeType: "REGION",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result).toMatchObject({
         name: "Earth",
@@ -392,11 +369,14 @@ describe("places business logic", () => {
       mockDrizzleDb.query.places.findFirst = mock(async () => null) as any;
 
       await expect(
-        createPlaceData({
-          name: "Manchester",
-          placeType: "CITY",
-          parentId: "nonexistent",
-        })
+        createPlaceData(
+          {
+            name: "Manchester",
+            placeType: "CITY",
+            parentId: "nonexistent",
+          },
+          mockDrizzleDb as any
+        )
       ).rejects.toThrow("Parent place not found");
     });
 
@@ -408,10 +388,13 @@ describe("places business logic", () => {
       })) as any;
 
       await expect(
-        createPlaceData({
-          name: "Manchester",
-          placeType: "CITY",
-        })
+        createPlaceData(
+          {
+            name: "Manchester",
+            placeType: "CITY",
+          },
+          mockDrizzleDb as any
+        )
       ).rejects.toThrow("Failed to create place");
     });
   });
@@ -438,9 +421,13 @@ describe("places business logic", () => {
       ) as any;
       mockDrizzleDb.setUpdateReturnValue([updatedPlace]);
 
-      const result = await updatePlaceData("place-1", {
-        name: "Greater London",
-      });
+      const result = await updatePlaceData(
+        "place-1",
+        {
+          name: "Greater London",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result).toMatchObject({
         name: "Greater London",
@@ -451,7 +438,11 @@ describe("places business logic", () => {
       mockDrizzleDb.query.places.findFirst = mock(async () => null) as any;
 
       await expect(
-        updatePlaceData("nonexistent", { name: "New Name" })
+        updatePlaceData(
+          "nonexistent",
+          { name: "New Name" },
+          mockDrizzleDb as any
+        )
       ).rejects.toThrow("Place not found");
     });
 
@@ -472,7 +463,11 @@ describe("places business logic", () => {
       mockDrizzleDb.query.places.findFirst = mock(async () => place) as any;
 
       await expect(
-        updatePlaceData("place-1", { parentId: "place-1" })
+        updatePlaceData(
+          "place-1",
+          { parentId: "place-1" },
+          mockDrizzleDb as any
+        )
       ).rejects.toThrow("A place cannot be its own parent");
     });
   });
@@ -495,7 +490,7 @@ describe("places business logic", () => {
       mockDrizzleDb.query.places.findFirst = mock(async () => place) as any;
       mockDrizzleDb.setSelectCountResults([{ count: 0 }]);
 
-      const result = await deletePlaceData("place-1");
+      const result = await deletePlaceData("place-1", mockDrizzleDb as any);
 
       expect(result).toEqual({ success: true });
     });
@@ -517,7 +512,9 @@ describe("places business logic", () => {
       mockDrizzleDb.query.places.findFirst = mock(async () => place) as any;
       mockDrizzleDb.setSelectCountResults([{ count: 5 }]);
 
-      await expect(deletePlaceData("place-1")).rejects.toThrow(
+      await expect(
+        deletePlaceData("place-1", mockDrizzleDb as any)
+      ).rejects.toThrow(
         "Cannot delete place: 5 child places exist under this place"
       );
     });
@@ -525,9 +522,9 @@ describe("places business logic", () => {
     it("should throw error when place not found", async () => {
       mockDrizzleDb.query.places.findFirst = mock(async () => null) as any;
 
-      await expect(deletePlaceData("nonexistent")).rejects.toThrow(
-        "Place not found"
-      );
+      await expect(
+        deletePlaceData("nonexistent", mockDrizzleDb as any)
+      ).rejects.toThrow("Place not found");
     });
   });
 
@@ -581,13 +578,16 @@ describe("places business logic", () => {
         values: mock(() => Promise.resolve()),
       })) as any;
 
-      const result = await linkPersonToPlaceData({
-        personId: "person-1",
-        placeId: "place-1",
-        fromYear: 2000,
-        toYear: 2010,
-        type: "LIVED",
-      });
+      const result = await linkPersonToPlaceData(
+        {
+          personId: "person-1",
+          placeId: "place-1",
+          fromYear: 2000,
+          toYear: 2010,
+          type: "LIVED",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result).toMatchObject({
         fromYear: 2000,
@@ -600,10 +600,13 @@ describe("places business logic", () => {
       mockDrizzleDb.query.persons.findFirst = mock(async () => null) as any;
 
       await expect(
-        linkPersonToPlaceData({
-          personId: "nonexistent",
-          placeId: "place-1",
-        })
+        linkPersonToPlaceData(
+          {
+            personId: "nonexistent",
+            placeId: "place-1",
+          },
+          mockDrizzleDb as any
+        )
       ).rejects.toThrow("Person not found");
     });
 
@@ -613,10 +616,13 @@ describe("places business logic", () => {
       mockDrizzleDb.query.places.findFirst = mock(async () => null) as any;
 
       await expect(
-        linkPersonToPlaceData({
-          personId: "person-1",
-          placeId: "nonexistent",
-        })
+        linkPersonToPlaceData(
+          {
+            personId: "person-1",
+            placeId: "nonexistent",
+          },
+          mockDrizzleDb as any
+        )
       ).rejects.toThrow("Place not found");
     });
   });
@@ -669,7 +675,10 @@ describe("places business logic", () => {
         return null;
       }) as any;
 
-      const result = await getPlaceHierarchyPathData("place-3");
+      const result = await getPlaceHierarchyPathData(
+        "place-3",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBe("Europe, England, London");
     });
@@ -677,9 +686,9 @@ describe("places business logic", () => {
     it("should throw error when place not found", async () => {
       mockDrizzleDb.query.places.findFirst = mock(async () => null) as any;
 
-      await expect(getPlaceHierarchyPathData("nonexistent")).rejects.toThrow(
-        "Place not found"
-      );
+      await expect(
+        getPlaceHierarchyPathData("nonexistent", mockDrizzleDb as any)
+      ).rejects.toThrow("Place not found");
     });
   });
 
@@ -702,7 +711,10 @@ describe("places business logic", () => {
 
       mockDrizzleDb.setQueryFindManyResults(children);
 
-      const result = await getPlaceChildrenData("place-1");
+      const result = await getPlaceChildrenData(
+        "place-1",
+        mockDrizzleDb as any
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({ name: "City A" });
@@ -758,11 +770,15 @@ describe("places business logic", () => {
         })),
       })) as any;
 
-      const result = await updatePlacePersonLinkData("link-1", {
-        fromYear: 2005,
-        toYear: 2015,
-        type: "WORKED",
-      });
+      const result = await updatePlacePersonLinkData(
+        "link-1",
+        {
+          fromYear: 2005,
+          toYear: 2015,
+          type: "WORKED",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result).toMatchObject({
         fromYear: 2005,
@@ -777,7 +793,11 @@ describe("places business logic", () => {
       ) as any;
 
       await expect(
-        updatePlacePersonLinkData("nonexistent", { fromYear: 2005 })
+        updatePlacePersonLinkData(
+          "nonexistent",
+          { fromYear: 2005 },
+          mockDrizzleDb as any
+        )
       ).rejects.toThrow("Place-person link not found");
     });
   });
@@ -797,7 +817,10 @@ describe("places business logic", () => {
         where: mock(() => Promise.resolve()),
       })) as any;
 
-      const result = await unlinkPersonFromPlaceData("link-1");
+      const result = await unlinkPersonFromPlaceData(
+        "link-1",
+        mockDrizzleDb as any
+      );
 
       expect(result).toEqual({ success: true });
     });
@@ -807,9 +830,9 @@ describe("places business logic", () => {
         async () => null
       ) as any;
 
-      await expect(unlinkPersonFromPlaceData("nonexistent")).rejects.toThrow(
-        "Place-person link not found"
-      );
+      await expect(
+        unlinkPersonFromPlaceData("nonexistent", mockDrizzleDb as any)
+      ).rejects.toThrow("Place-person link not found");
     });
   });
 });

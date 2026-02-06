@@ -22,13 +22,7 @@ import {
   updateRelationshipData,
 } from "@vamsa/lib/server/business";
 import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
   mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
   mockWithErr,
   mockWithErrBuilder,
 } from "../../testing/shared-mocks";
@@ -36,20 +30,6 @@ import type {
   RelationshipCreateInput,
   RelationshipUpdateInput,
 } from "@vamsa/schemas";
-
-// Mock logger for this test file
-
-// Import the functions to test
-
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
 
 // Create mock drizzleDb and drizzleSchema - these must be stable references
 // that are reused (not reassigned) because mock.module captures the reference
@@ -75,23 +55,6 @@ const mockDrizzleDb = {
     where: mock(() => Promise.resolve({})),
   })),
 };
-
-const mockDrizzleSchema = {
-  relationships: {
-    id: "id",
-    personId: "personId",
-    relatedPersonId: "relatedPersonId",
-    type: "type",
-  },
-  persons: {
-    id: "id",
-  },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
 
 // Helper to clear all drizzle mocks between tests
 function clearDrizzleMocks() {
@@ -141,7 +104,11 @@ describe("Relationship Server Functions", () => {
         mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockRelationships);
 
-      const result = await listRelationshipsData(personId);
+      const result = await listRelationshipsData(
+        personId,
+        undefined,
+        mockDrizzleDb as any
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe("SPOUSE");
@@ -174,7 +141,11 @@ describe("Relationship Server Functions", () => {
         mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockRelationships);
 
-      const result = await listRelationshipsData(personId, type);
+      const result = await listRelationshipsData(
+        personId,
+        type,
+        mockDrizzleDb as any
+      );
 
       expect(result).toHaveLength(1);
       expect(result[0].type).toBe("PARENT");
@@ -186,7 +157,11 @@ describe("Relationship Server Functions", () => {
         mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce([]);
 
-      const result = await listRelationshipsData("person-1");
+      const result = await listRelationshipsData(
+        "person-1",
+        undefined,
+        mockDrizzleDb as any
+      );
 
       expect(result).toHaveLength(0);
     });
@@ -238,7 +213,11 @@ describe("Relationship Server Functions", () => {
         mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockRelationships);
 
-      const result = await listRelationshipsData("person-1");
+      const result = await listRelationshipsData(
+        "person-1",
+        undefined,
+        mockDrizzleDb as any
+      );
 
       expect(result).toHaveLength(3);
       expect(result[0].type).toBe("SPOUSE");
@@ -267,7 +246,11 @@ describe("Relationship Server Functions", () => {
         mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockRelationships);
 
-      const result = await listRelationshipsData("person-1");
+      const result = await listRelationshipsData(
+        "person-1",
+        undefined,
+        mockDrizzleDb as any
+      );
 
       expect(result[0].marriageDate).toBe("2010-06-15");
       expect(result[0].divorceDate).toBe("2020-01-10");
@@ -294,7 +277,11 @@ describe("Relationship Server Functions", () => {
         mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockRelationships);
 
-      const result = await listRelationshipsData("person-1");
+      const result = await listRelationshipsData(
+        "person-1",
+        undefined,
+        mockDrizzleDb as any
+      );
 
       expect(result[0].marriageDate).toBeNull();
       expect(result[0].divorceDate).toBeNull();
@@ -307,7 +294,11 @@ describe("Relationship Server Functions", () => {
       ).mockRejectedValueOnce(error);
 
       try {
-        await listRelationshipsData("person-1");
+        await listRelationshipsData(
+          "person-1",
+          undefined,
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err).toBe(error);
@@ -338,7 +329,10 @@ describe("Relationship Server Functions", () => {
         mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockRelationship);
 
-      const result = await getRelationshipData(relationshipId);
+      const result = await getRelationshipData(
+        relationshipId,
+        mockDrizzleDb as any
+      );
 
       expect(result.id).toBe(relationshipId);
       expect(result.personId).toBe("person-1");
@@ -367,7 +361,7 @@ describe("Relationship Server Functions", () => {
         mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockRelationship);
 
-      const result = await getRelationshipData("rel-1");
+      const result = await getRelationshipData("rel-1", mockDrizzleDb as any);
 
       expect(result.marriageDate).toBe("2010-06-15");
       expect(result.divorceDate).toBe("2020-01-10");
@@ -379,7 +373,7 @@ describe("Relationship Server Functions", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await getRelationshipData("rel-nonexistent");
+        await getRelationshipData("rel-nonexistent", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -407,7 +401,7 @@ describe("Relationship Server Functions", () => {
         mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
       ).mockResolvedValueOnce(mockRelationship);
 
-      const result = await getRelationshipData("rel-1");
+      const result = await getRelationshipData("rel-1", mockDrizzleDb as any);
 
       expect(result.relatedPerson).toBeDefined();
       expect(result.relatedPerson.id).toBe("person-2");
@@ -422,7 +416,7 @@ describe("Relationship Server Functions", () => {
       ).mockRejectedValueOnce(error);
 
       try {
-        await getRelationshipData("rel-1");
+        await getRelationshipData("rel-1", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err).toBe(error);
@@ -449,7 +443,7 @@ describe("Relationship Server Functions", () => {
         values: mock(() => Promise.resolve({})),
       });
 
-      const result = await createRelationshipData(input);
+      const result = await createRelationshipData(input, mockDrizzleDb as any);
 
       expect(result.id).toBeDefined();
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
@@ -473,7 +467,7 @@ describe("Relationship Server Functions", () => {
         values: mock(() => Promise.resolve({})),
       });
 
-      const result = await createRelationshipData(input);
+      const result = await createRelationshipData(input, mockDrizzleDb as any);
 
       expect(result.id).toBeDefined();
     });
@@ -497,7 +491,7 @@ describe("Relationship Server Functions", () => {
         values: mock(() => Promise.resolve({})),
       });
 
-      await createRelationshipData(input);
+      await createRelationshipData(input, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
     });
@@ -519,7 +513,7 @@ describe("Relationship Server Functions", () => {
         values: mock(() => Promise.resolve({})),
       });
 
-      await createRelationshipData(input);
+      await createRelationshipData(input, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
     });
@@ -532,7 +526,7 @@ describe("Relationship Server Functions", () => {
       };
 
       try {
-        await createRelationshipData(input);
+        await createRelationshipData(input, mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -554,7 +548,7 @@ describe("Relationship Server Functions", () => {
         .mockResolvedValueOnce(null);
 
       try {
-        await createRelationshipData(input);
+        await createRelationshipData(input, mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -581,7 +575,7 @@ describe("Relationship Server Functions", () => {
       });
 
       try {
-        await createRelationshipData(input);
+        await createRelationshipData(input, mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -608,7 +602,7 @@ describe("Relationship Server Functions", () => {
         values: mock(() => Promise.resolve({})),
       });
 
-      await createRelationshipData(input);
+      await createRelationshipData(input, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
     });
@@ -630,7 +624,7 @@ describe("Relationship Server Functions", () => {
         values: mock(() => Promise.resolve({})),
       });
 
-      await createRelationshipData(input);
+      await createRelationshipData(input, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
     });
@@ -652,7 +646,7 @@ describe("Relationship Server Functions", () => {
         values: mock(() => Promise.resolve({})),
       });
 
-      await createRelationshipData(input);
+      await createRelationshipData(input, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
     });
@@ -674,7 +668,7 @@ describe("Relationship Server Functions", () => {
         values: mock(() => Promise.resolve({})),
       });
 
-      await createRelationshipData(input);
+      await createRelationshipData(input, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
     });
@@ -702,7 +696,7 @@ describe("Relationship Server Functions", () => {
       });
 
       try {
-        await createRelationshipData(input);
+        await createRelationshipData(input, mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err).toBe(error);
@@ -729,7 +723,7 @@ describe("Relationship Server Functions", () => {
         values: mock(() => Promise.resolve({})),
       });
 
-      await createRelationshipData(input);
+      await createRelationshipData(input, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
     });
@@ -751,7 +745,7 @@ describe("Relationship Server Functions", () => {
         values: mock(() => Promise.resolve({})),
       });
 
-      const result = await createRelationshipData(input);
+      const result = await createRelationshipData(input, mockDrizzleDb as any);
 
       expect(result.id).toBeDefined();
     });
@@ -784,7 +778,11 @@ describe("Relationship Server Functions", () => {
         })),
       });
 
-      const result = await updateRelationshipData(relationshipId, input);
+      const result = await updateRelationshipData(
+        relationshipId,
+        input,
+        mockDrizzleDb as any
+      );
 
       expect(result.id).toBe(relationshipId);
       expect(mockDrizzleDb.update).toHaveBeenCalled();
@@ -815,7 +813,7 @@ describe("Relationship Server Functions", () => {
         })),
       });
 
-      await updateRelationshipData(relationshipId, input);
+      await updateRelationshipData(relationshipId, input, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.update).toHaveBeenCalled();
     });
@@ -845,7 +843,7 @@ describe("Relationship Server Functions", () => {
         })),
       });
 
-      await updateRelationshipData(relationshipId, input);
+      await updateRelationshipData(relationshipId, input, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.update).toHaveBeenCalled();
     });
@@ -878,7 +876,7 @@ describe("Relationship Server Functions", () => {
       const updateCalls = (mockDrizzleDb.update as ReturnType<typeof mock>).mock
         .calls.length;
 
-      await updateRelationshipData(relationshipId, input);
+      await updateRelationshipData(relationshipId, input, mockDrizzleDb as any);
 
       // Should only be called once (not twice for bidirectional sync)
       expect(
@@ -892,7 +890,11 @@ describe("Relationship Server Functions", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await updateRelationshipData("rel-nonexistent", {});
+        await updateRelationshipData(
+          "rel-nonexistent",
+          {},
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -925,7 +927,11 @@ describe("Relationship Server Functions", () => {
       });
 
       try {
-        await updateRelationshipData(relationshipId, input);
+        await updateRelationshipData(
+          relationshipId,
+          input,
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err).toBe(error);
@@ -954,7 +960,10 @@ describe("Relationship Server Functions", () => {
         where: mock(() => Promise.resolve({})),
       });
 
-      const result = await deleteRelationshipData(relationshipId);
+      const result = await deleteRelationshipData(
+        relationshipId,
+        mockDrizzleDb as any
+      );
 
       expect(result.success).toBe(true);
       expect(mockDrizzleDb.delete).toHaveBeenCalled();
@@ -979,7 +988,7 @@ describe("Relationship Server Functions", () => {
         where: mock(() => Promise.resolve({})),
       });
 
-      await deleteRelationshipData(relationshipId);
+      await deleteRelationshipData(relationshipId, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.delete).toHaveBeenCalled();
     });
@@ -1003,7 +1012,7 @@ describe("Relationship Server Functions", () => {
         where: mock(() => Promise.resolve({})),
       });
 
-      await deleteRelationshipData(relationshipId);
+      await deleteRelationshipData(relationshipId, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.delete).toHaveBeenCalled();
     });
@@ -1014,7 +1023,7 @@ describe("Relationship Server Functions", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await deleteRelationshipData("rel-nonexistent");
+        await deleteRelationshipData("rel-nonexistent", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -1041,7 +1050,7 @@ describe("Relationship Server Functions", () => {
       });
 
       try {
-        await deleteRelationshipData(relationshipId);
+        await deleteRelationshipData(relationshipId, mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err).toBe(error);
@@ -1066,7 +1075,10 @@ describe("Relationship Server Functions", () => {
         where: mock(() => Promise.resolve({})),
       });
 
-      const result = await deleteRelationshipData(relationshipId);
+      const result = await deleteRelationshipData(
+        relationshipId,
+        mockDrizzleDb as any
+      );
 
       expect(result).toEqual({ success: true });
     });
@@ -1079,7 +1091,11 @@ describe("Relationship Server Functions", () => {
       ).mockRejectedValueOnce(new Error("DB error"));
 
       try {
-        await listRelationshipsData("person-1");
+        await listRelationshipsData(
+          "person-1",
+          undefined,
+          mockDrizzleDb as any
+        );
       } catch {
         // Expected
       }
@@ -1103,7 +1119,7 @@ describe("Relationship Server Functions", () => {
       ).mockRejectedValueOnce(originalError);
 
       try {
-        await getRelationshipData("rel-1");
+        await getRelationshipData("rel-1", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err).toBe(originalError);
@@ -1129,7 +1145,7 @@ describe("Relationship Server Functions", () => {
         values: mock(() => Promise.resolve({})),
       });
 
-      await createRelationshipData(input);
+      await createRelationshipData(input, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
     });
@@ -1157,7 +1173,7 @@ describe("Relationship Server Functions", () => {
         })),
       });
 
-      await updateRelationshipData(relationshipId, input);
+      await updateRelationshipData(relationshipId, input, mockDrizzleDb as any);
 
       expect(mockDrizzleDb.update).toHaveBeenCalled();
     });

@@ -13,13 +13,7 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 import {
   deleteUserData,
@@ -29,43 +23,6 @@ import {
   unlockUserAccountData,
   updateUserData,
 } from "./users";
-
-// Mock logger
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Create mock schema
-const mockDrizzleSchema = {
-  users: {
-    id: "id",
-    email: "email",
-    name: "name",
-    role: "role",
-    isActive: "isActive",
-    personId: "personId",
-    createdAt: "createdAt",
-    lastLoginAt: "lastLoginAt",
-    failedLoginAttempts: "failedLoginAttempts",
-    lockedUntil: "lockedUntil",
-    lastFailedLoginAt: "lastFailedLoginAt",
-  },
-  persons: {
-    id: "id",
-    firstName: "firstName",
-    lastName: "lastName",
-    dateOfBirth: "dateOfBirth",
-    createdById: "createdById",
-  },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: {},
-  drizzleSchema: mockDrizzleSchema,
-}));
 
 describe("Users Business Logic", () => {
   beforeEach(() => {

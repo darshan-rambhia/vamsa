@@ -11,13 +11,7 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { clearAllMocks } from "../../testing/shared-mocks";
 
 import {
   createSuggestionData,
@@ -25,15 +19,7 @@ import {
   listSuggestionsData,
 } from "./suggestions";
 
-// Mock logger
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Create mock drizzle database and schema
+// Create mock drizzle database
 const mockDrizzleDb = {
   select: mock(() => ({
     from: mock(() => ({
@@ -62,22 +48,6 @@ const mockDrizzleDb = {
     })),
   })),
 };
-
-const mockDrizzleSchema = {
-  suggestions: {
-    id: "id",
-    status: "status",
-    submittedById: "submittedById",
-    submittedAt: "submittedAt",
-  },
-  persons: { id: "id", firstName: "firstName", lastName: "lastName" },
-  users: { id: "id", name: "name", email: "email" },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
 
 // Mock notifications
 const mockNotifySuggestionCreated = mock(() => Promise.resolve());

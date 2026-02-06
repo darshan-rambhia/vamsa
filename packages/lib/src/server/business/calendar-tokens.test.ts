@@ -13,68 +13,13 @@
  */
 
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 // Import functions to test
 import { verifyTokenOwnership } from "./calendar-tokens";
 
-// Mock the logger before importing modules
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Mock drizzle schema
-const mockDrizzleSchema = {
-  calendarTokens: {
-    id: "id",
-    userId: "userId",
-    token: "token",
-    name: "name",
-    rotationPolicy: "rotationPolicy",
-    expiresAt: "expiresAt",
-    isActive: "isActive",
-    createdAt: "createdAt",
-  },
-  users: {
-    id: "id",
-    email: "email",
-    name: "name",
-  },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: {
-    query: {
-      calendarTokens: {
-        findMany: mock(() => Promise.resolve([])),
-        findFirst: mock(() => Promise.resolve(null)),
-      },
-    },
-    insert: mock(() => ({
-      values: mock(() => ({
-        returning: mock(() => Promise.resolve([])),
-      })),
-    })),
-    update: mock(() => ({
-      set: mock(() => ({
-        where: mock(() => Promise.resolve({})),
-      })),
-    })),
-    delete: mock(() => ({
-      where: mock(() => Promise.resolve({})),
-    })),
-  } as any,
-  drizzleSchema: mockDrizzleSchema,
-}));
+// Note: @vamsa/api mocking is handled by the preload file
+// drizzleSchema and drizzleDb are available from there
 
 // Mock date-fns
 mock.module("date-fns", () => ({
