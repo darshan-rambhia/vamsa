@@ -48,7 +48,10 @@ describe("notifications business logic", () => {
       const user = { id: "user-1", emailNotificationPreferences: null };
       mockDrizzleDb.setFindFirstResult(user);
 
-      const result = await getEmailNotificationPreferences("user-1");
+      const result = await getEmailNotificationPreferences(
+        "user-1",
+        mockDrizzleDb
+      );
 
       expect(result).toEqual({
         suggestionsCreated: true,
@@ -68,7 +71,10 @@ describe("notifications business logic", () => {
       const user = { id: "user-1", emailNotificationPreferences: preferences };
       mockDrizzleDb.setFindFirstResult(user);
 
-      const result = await getEmailNotificationPreferences("user-1");
+      const result = await getEmailNotificationPreferences(
+        "user-1",
+        mockDrizzleDb
+      );
 
       expect(result).toEqual(preferences);
     });
@@ -77,7 +83,10 @@ describe("notifications business logic", () => {
       const user = { id: "user-1", emailNotificationPreferences: {} };
       mockDrizzleDb.setFindFirstResult(user);
 
-      const result = await getEmailNotificationPreferences("user-1");
+      const result = await getEmailNotificationPreferences(
+        "user-1",
+        mockDrizzleDb
+      );
 
       expect(result).toBeDefined();
     });
@@ -85,9 +94,11 @@ describe("notifications business logic", () => {
     it("should throw error when user not found", async () => {
       mockDrizzleDb.setFindFirstResult(null);
 
-      await expect(
-        getEmailNotificationPreferences("nonexistent-user")
-      ).rejects.toThrow("User not found");
+      const promise = getEmailNotificationPreferences(
+        "nonexistent-user",
+        mockDrizzleDb
+      );
+      await expect(promise).rejects.toThrow("User not found");
     });
   });
 
@@ -104,10 +115,14 @@ describe("notifications business logic", () => {
       };
       mockDrizzleDb.setFindFirstResult(user);
 
-      const result = await updateEmailNotificationPreferences("user-1", {
-        suggestionsCreated: false,
-        birthdayReminders: false,
-      });
+      const result = await updateEmailNotificationPreferences(
+        "user-1",
+        {
+          suggestionsCreated: false,
+          birthdayReminders: false,
+        },
+        mockDrizzleDb
+      );
 
       expect(result).toEqual({
         suggestionsCreated: false,
@@ -129,9 +144,13 @@ describe("notifications business logic", () => {
       };
       mockDrizzleDb.setFindFirstResult(user);
 
-      const result = await updateEmailNotificationPreferences("user-1", {
-        suggestionsCreated: true,
-      });
+      const result = await updateEmailNotificationPreferences(
+        "user-1",
+        {
+          suggestionsCreated: true,
+        },
+        mockDrizzleDb
+      );
 
       expect(result).toEqual({
         suggestionsCreated: true,
@@ -145,9 +164,13 @@ describe("notifications business logic", () => {
       const user = { id: "user-1", emailNotificationPreferences: null };
       mockDrizzleDb.setFindFirstResult(user);
 
-      const result = await updateEmailNotificationPreferences("user-1", {
-        suggestionsCreated: false,
-      });
+      const result = await updateEmailNotificationPreferences(
+        "user-1",
+        {
+          suggestionsCreated: false,
+        },
+        mockDrizzleDb
+      );
 
       expect(result).toEqual({
         suggestionsCreated: false,
@@ -160,11 +183,14 @@ describe("notifications business logic", () => {
     it("should throw error when user not found", async () => {
       mockDrizzleDb.setFindFirstResult(null);
 
-      await expect(
-        updateEmailNotificationPreferences("nonexistent-user", {
+      const promise = updateEmailNotificationPreferences(
+        "nonexistent-user",
+        {
           suggestionsCreated: false,
-        })
-      ).rejects.toThrow("User not found");
+        },
+        mockDrizzleDb
+      );
+      await expect(promise).rejects.toThrow("User not found");
     });
 
     it("should update all preferences when all provided", async () => {
@@ -179,12 +205,16 @@ describe("notifications business logic", () => {
       };
       mockDrizzleDb.setFindFirstResult(user);
 
-      const result = await updateEmailNotificationPreferences("user-1", {
-        suggestionsCreated: false,
-        suggestionsUpdated: false,
-        newMemberJoined: false,
-        birthdayReminders: false,
-      });
+      const result = await updateEmailNotificationPreferences(
+        "user-1",
+        {
+          suggestionsCreated: false,
+          suggestionsUpdated: false,
+          newMemberJoined: false,
+          birthdayReminders: false,
+        },
+        mockDrizzleDb
+      );
 
       expect(result).toEqual({
         suggestionsCreated: false,
@@ -214,7 +244,7 @@ describe("notifications business logic", () => {
         return admins;
       }) as any;
 
-      await notifySuggestionCreated("suggestion-1");
+      await notifySuggestionCreated("suggestion-1", mockDrizzleDb);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         { suggestionId: "suggestion-1" },
@@ -226,7 +256,7 @@ describe("notifications business logic", () => {
     it("should log error when suggestion not found", async () => {
       mockDrizzleDb.query.suggestions.findFirst = mock(async () => null) as any;
 
-      await notifySuggestionCreated("nonexistent-suggestion");
+      await notifySuggestionCreated("nonexistent-suggestion", mockDrizzleDb);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         { suggestionId: "nonexistent-suggestion" },
@@ -242,7 +272,7 @@ describe("notifications business logic", () => {
       ) as any;
       mockDrizzleDb.query.users.findMany = mock(async () => []) as any;
 
-      await notifySuggestionCreated("suggestion-1");
+      await notifySuggestionCreated("suggestion-1", mockDrizzleDb);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         {},
@@ -251,12 +281,12 @@ describe("notifications business logic", () => {
     });
 
     it("should not throw on database error", async () => {
-      mockDrizzleDb.query.suggestions.findFirst = mock(async () =>
-        Promise.reject(new Error("DB Error"))
-      ) as any;
+      mockDrizzleDb.query.suggestions.findFirst = mock(async () => {
+        throw new Error("DB Error");
+      }) as any;
 
       // Should not throw
-      await notifySuggestionCreated("suggestion-1");
+      await notifySuggestionCreated("suggestion-1", mockDrizzleDb);
 
       expect(mockWithErr).toHaveBeenCalled();
     });
@@ -270,7 +300,7 @@ describe("notifications business logic", () => {
         async () => suggestion
       ) as any;
 
-      await notifySuggestionUpdated("suggestion-1", "APPROVED");
+      await notifySuggestionUpdated("suggestion-1", "APPROVED", mockDrizzleDb);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         { suggestionId: "suggestion-1", status: "APPROVED" },
@@ -285,7 +315,7 @@ describe("notifications business logic", () => {
         async () => suggestion
       ) as any;
 
-      await notifySuggestionUpdated("suggestion-1", "REJECTED");
+      await notifySuggestionUpdated("suggestion-1", "REJECTED", mockDrizzleDb);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         { suggestionId: "suggestion-1", status: "REJECTED" },
@@ -296,7 +326,11 @@ describe("notifications business logic", () => {
     it("should log error when suggestion not found", async () => {
       mockDrizzleDb.query.suggestions.findFirst = mock(async () => null) as any;
 
-      await notifySuggestionUpdated("nonexistent-suggestion", "APPROVED");
+      await notifySuggestionUpdated(
+        "nonexistent-suggestion",
+        "APPROVED",
+        mockDrizzleDb
+      );
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         { suggestionId: "nonexistent-suggestion" },
@@ -305,12 +339,12 @@ describe("notifications business logic", () => {
     });
 
     it("should not throw on database error", async () => {
-      mockDrizzleDb.query.suggestions.findFirst = mock(async () =>
-        Promise.reject(new Error("DB Error"))
-      ) as any;
+      mockDrizzleDb.query.suggestions.findFirst = mock(async () => {
+        throw new Error("DB Error");
+      }) as any;
 
       // Should not throw
-      await notifySuggestionUpdated("suggestion-1", "APPROVED");
+      await notifySuggestionUpdated("suggestion-1", "APPROVED", mockDrizzleDb);
 
       expect(mockWithErr).toHaveBeenCalled();
     });
@@ -335,7 +369,7 @@ describe("notifications business logic", () => {
         return members;
       }) as any;
 
-      await notifyNewMemberJoined("user-1");
+      await notifyNewMemberJoined("user-1", mockDrizzleDb);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         { userId: "user-1" },
@@ -347,7 +381,7 @@ describe("notifications business logic", () => {
     it("should log error when new member not found", async () => {
       mockDrizzleDb.query.users.findFirst = mock(async () => null) as any;
 
-      await notifyNewMemberJoined("nonexistent-user");
+      await notifyNewMemberJoined("nonexistent-user", mockDrizzleDb);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         { userId: "nonexistent-user" },
@@ -361,7 +395,7 @@ describe("notifications business logic", () => {
       mockDrizzleDb.query.users.findFirst = mock(async () => newMember) as any;
       mockDrizzleDb.query.users.findMany = mock(async () => []) as any;
 
-      await notifyNewMemberJoined("user-1");
+      await notifyNewMemberJoined("user-1", mockDrizzleDb);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         {},
@@ -370,12 +404,12 @@ describe("notifications business logic", () => {
     });
 
     it("should not throw on database error", async () => {
-      mockDrizzleDb.query.users.findFirst = mock(async () =>
-        Promise.reject(new Error("DB Error"))
-      ) as any;
+      mockDrizzleDb.query.users.findFirst = mock(async () => {
+        throw new Error("DB Error");
+      }) as any;
 
       // Should not throw
-      await notifyNewMemberJoined("user-1");
+      await notifyNewMemberJoined("user-1", mockDrizzleDb);
 
       expect(mockWithErr).toHaveBeenCalled();
     });
@@ -385,7 +419,7 @@ describe("notifications business logic", () => {
     it("should silently return when no birthdays today", async () => {
       mockDrizzleDb.query.persons.findMany = mock(async () => []) as any;
 
-      await sendBirthdayReminders();
+      await sendBirthdayReminders(mockDrizzleDb);
 
       // Should not log anything when no birthdays
       expect(mockLogger.info).not.toHaveBeenCalled();
@@ -425,7 +459,7 @@ describe("notifications business logic", () => {
         return adminUser;
       }) as any;
 
-      await sendBirthdayReminders();
+      await sendBirthdayReminders(mockDrizzleDb);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         { count: 2 },
@@ -455,7 +489,7 @@ describe("notifications business logic", () => {
         async () => personsData
       ) as any;
 
-      await sendBirthdayReminders();
+      await sendBirthdayReminders(mockDrizzleDb);
 
       // No logger calls for no birthdays
       expect(mockLogger.info).not.toHaveBeenCalled();
@@ -479,7 +513,7 @@ describe("notifications business logic", () => {
       ) as any;
       mockDrizzleDb.query.users.findFirst = mock(async () => null) as any;
 
-      await sendBirthdayReminders();
+      await sendBirthdayReminders(mockDrizzleDb);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         {},
@@ -505,19 +539,19 @@ describe("notifications business logic", () => {
         async () => personsWithNullBirthday
       ) as any;
 
-      await sendBirthdayReminders();
+      await sendBirthdayReminders(mockDrizzleDb);
 
       // Should not log anything when no valid birthdays
       expect(mockLogger.info).not.toHaveBeenCalled();
     });
 
     it("should not throw on database error", async () => {
-      mockDrizzleDb.query.persons.findMany = mock(async () =>
-        Promise.reject(new Error("DB Error"))
-      ) as any;
+      mockDrizzleDb.query.persons.findMany = mock(async () => {
+        throw new Error("DB Error");
+      }) as any;
 
       // Should not throw
-      await sendBirthdayReminders();
+      await sendBirthdayReminders(mockDrizzleDb);
 
       expect(mockWithErr).toHaveBeenCalled();
     });

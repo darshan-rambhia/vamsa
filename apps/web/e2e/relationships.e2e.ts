@@ -10,7 +10,7 @@
  * relationships which can't be reliably set up in parallel E2E tests.
  */
 
-import { expect, test } from "./fixtures";
+import { expect, test, waitForHydration } from "./fixtures";
 
 // Helper to fill input with error throwing on failure
 // Uses "poke and verify" pattern - type a character, verify React responds, then continue
@@ -65,21 +65,7 @@ async function createPersonAndGoToRelationships(
   // Create a new person
   await page.goto("/people/new", { waitUntil: "domcontentloaded" });
   await page.waitForLoadState("domcontentloaded");
-
-  // NETWORKIDLE EXCEPTION: Person form requires networkidle for reliable React hydration
-  //
-  // WHY THIS IS NEEDED:
-  // Under parallel test execution, React controlled inputs can be "visible" and "editable"
-  // before React attaches onChange handlers. When you type into such an input:
-  // 1. Native browser input accepts the text
-  // 2. React hydrates and reconciles with empty state
-  // 3. React RESETS the input to empty (the state value)
-  //
-  // This is critical because all relationship tests depend on successfully creating a person first.
-  //
-  // FUTURE IMPROVEMENT: If we find a deterministic way to detect React hydration completion
-  // (e.g., a data attribute set after hydration, or a custom event), we can remove this.
-  await page.waitForLoadState("networkidle").catch(() => {});
+  await waitForHydration(page);
 
   const firstNameInput = page.getByTestId("person-form-firstName");
   await firstNameInput.waitFor({ state: "visible", timeout: 10000 });

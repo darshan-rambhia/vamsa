@@ -3,6 +3,7 @@
  * Provides reusable page interaction methods for common pages
  */
 import { expect } from "@playwright/test";
+import { waitForHydration } from "./test-base";
 import type { Locator, Page } from "@playwright/test";
 
 /**
@@ -83,24 +84,9 @@ export class LoginPage {
   }
 
   async login(email: string, password: string) {
-    // Wait for page to be fully loaded
+    // Wait for page to be fully loaded and React to hydrate
     await this.page.waitForLoadState("domcontentloaded");
-
-    // NETWORKIDLE EXCEPTION: Login form requires networkidle for reliable React hydration
-    //
-    // WHY THIS IS NEEDED:
-    // Under parallel test execution, React controlled inputs can be "visible" and "editable"
-    // before React attaches onChange handlers. When you type into such an input:
-    // 1. Native browser input accepts the text
-    // 2. React hydrates and reconciles with empty state
-    // 3. React RESETS the input to empty (the state value)
-    //
-    // The networkidle wait ensures all JS bundles are loaded and executed before we interact.
-    // This is particularly critical for login since it's the gateway to all authenticated tests.
-    //
-    // FUTURE IMPROVEMENT: If we find a deterministic way to detect React hydration completion
-    // (e.g., a data attribute set after hydration, or a custom event), we can remove this.
-    await this.page.waitForLoadState("networkidle").catch(() => {});
+    await waitForHydration(this.page);
 
     // Wait for login form to be visible
     await this.page

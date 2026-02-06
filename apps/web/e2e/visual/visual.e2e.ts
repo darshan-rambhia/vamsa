@@ -5,6 +5,10 @@
 import { expect, test } from "@playwright/test";
 import { bdd } from "../fixtures";
 
+// Skip visual regression tests in CI - baselines are platform-specific (darwin vs linux)
+// and font rendering differences make cross-platform comparison unreliable
+test.skip(!!process.env.CI, "Visual tests require platform-specific baselines");
+
 test.describe("Visual Regression", () => {
   test.beforeEach(async ({ page }) => {
     // Set consistent viewport for all visual tests

@@ -2,7 +2,7 @@
  * Playwright Global Setup
  * Runs once before all tests - sets up test environment and pre-authenticates users
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium, firefox, webkit } from "@playwright/test";
@@ -221,6 +221,15 @@ async function globalSetup(config: FullConfig) {
     "-firefox",
     false
   );
+
+  // Verify required auth state files were created
+  const requiredAuthFiles = ["admin.json", "member.json"];
+  for (const file of requiredAuthFiles) {
+    const filePath = path.join(storageDir, file);
+    if (!existsSync(filePath)) {
+      throw new Error(`Required auth state file missing: ${filePath}`);
+    }
+  }
 
   console.log("[E2E Setup] Global setup complete");
 }

@@ -41,7 +41,6 @@ async function ensurePersonExists(
   await gotoWithRetry(page, `/people/${personId}`);
 
   // Wait for the page to load - either the person's name or an h1 element
-  await page.waitForLoadState("networkidle");
   await page
     .locator("h1")
     .first()

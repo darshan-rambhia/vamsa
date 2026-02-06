@@ -8,7 +8,7 @@
  * - CRUD verification (data persistence and retrieval)
  */
 
-import { expect, test } from "./fixtures";
+import { expect, test, waitForHydration } from "./fixtures";
 import { bdd } from "./fixtures/bdd-helpers";
 import {
   PeopleListPage,
@@ -299,21 +299,7 @@ test.describe.serial("Person Form - Edit", () => {
     // Create a new person for the test - use direct approach for reliability
     await gotoWithRetry(page, "/people/new");
     await page.waitForLoadState("domcontentloaded");
-
-    // NETWORKIDLE EXCEPTION: Person form requires networkidle for reliable React hydration
-    //
-    // WHY THIS IS NEEDED:
-    // Under parallel test execution, React controlled inputs can be "visible" and "editable"
-    // before React attaches onChange handlers. When you type into such an input:
-    // 1. Native browser input accepts the text
-    // 2. React hydrates and reconciles with empty state
-    // 3. React RESETS the input to empty (the state value)
-    //
-    // This is critical because the edit tests depend on successfully creating a person first.
-    //
-    // FUTURE IMPROVEMENT: If we find a deterministic way to detect React hydration completion
-    // (e.g., a data attribute set after hydration, or a custom event), we can remove this.
-    await page.waitForLoadState("networkidle").catch(() => {});
+    await waitForHydration(page);
 
     // Wait for form to be ready
     const firstNameInput = page.getByTestId("person-form-firstName");
