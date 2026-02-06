@@ -11,7 +11,7 @@
  * Uses module mocking for @vamsa/api, similar to claim.test.ts.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { mockLogger } from "../../testing/shared-mocks";
 
 // Import after mocking
@@ -25,34 +25,34 @@ import {
 
 // Create mock drizzleDb
 const mockDrizzleDb = {
-  select: mock(() => ({
-    from: mock(() => ({
-      where: mock(() => ({
-        limit: mock(() => Promise.resolve([])),
-        orderBy: mock(() => Promise.resolve([])),
+  select: vi.fn(() => ({
+    from: vi.fn(() => ({
+      where: vi.fn(() => ({
+        limit: vi.fn(() => Promise.resolve([])),
+        orderBy: vi.fn(() => Promise.resolve([])),
       })),
-      leftJoin: mock(() => ({
-        where: mock(() => ({
-          orderBy: mock(() => ({
-            limit: mock(() => Promise.resolve([])),
+      leftJoin: vi.fn(() => ({
+        where: vi.fn(() => ({
+          orderBy: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([])),
           })),
         })),
       })),
-      innerJoin: mock(() => ({
-        where: mock(() => ({
-          orderBy: mock(() => Promise.resolve([])),
+      innerJoin: vi.fn(() => ({
+        where: vi.fn(() => ({
+          orderBy: vi.fn(() => Promise.resolve([])),
         })),
-        innerJoin: mock(() => ({
-          where: mock(() => ({
-            orderBy: mock(() => Promise.resolve([])),
+        innerJoin: vi.fn(() => ({
+          where: vi.fn(() => ({
+            orderBy: vi.fn(() => Promise.resolve([])),
           })),
         })),
       })),
     })),
   })),
-  update: mock(() => ({
-    set: mock(() => ({
-      where: mock(() => Promise.resolve({})),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn(() => Promise.resolve({})),
     })),
   })),
 };
@@ -79,11 +79,11 @@ describe("Calendar Feeds Business Logic", () => {
       };
 
       // Reset the main mock for this test
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([mockToken])),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([mockToken])),
             })),
           })),
         })
@@ -100,11 +100,11 @@ describe("Calendar Feeds Business Logic", () => {
     });
 
     it("should return valid=false for non-existent token", async () => {
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([])),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
             })),
           })),
         })
@@ -128,11 +128,11 @@ describe("Calendar Feeds Business Logic", () => {
         expiresAt: new Date(Date.now() + 86400000),
       };
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([mockToken])),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([mockToken])),
             })),
           })),
         })
@@ -156,11 +156,11 @@ describe("Calendar Feeds Business Logic", () => {
         expiresAt: new Date(Date.now() - 86400000), // Yesterday
       };
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([mockToken])),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([mockToken])),
             })),
           })),
         })
@@ -178,11 +178,11 @@ describe("Calendar Feeds Business Logic", () => {
 
   describe("generateRSSFeedData", () => {
     it("should throw error for invalid token", async () => {
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([])),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
             })),
           })),
         })
@@ -222,24 +222,24 @@ describe("Calendar Feeds Business Logic", () => {
       ];
 
       let callCount = 0;
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => {
+          from: vi.fn(() => {
             callCount++;
             if (callCount === 1) {
               // Token validation
               return {
-                where: mock(() => ({
-                  limit: mock(() => Promise.resolve([mockToken])),
+                where: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve([mockToken])),
                 })),
               };
             }
             // Audit logs
             return {
-              leftJoin: mock(() => ({
-                where: mock(() => ({
-                  orderBy: mock(() => ({
-                    limit: mock(() => Promise.resolve(mockUpdates)),
+              leftJoin: vi.fn(() => ({
+                where: vi.fn(() => ({
+                  orderBy: vi.fn(() => ({
+                    limit: vi.fn(() => Promise.resolve(mockUpdates)),
                   })),
                 })),
               })),
@@ -280,11 +280,11 @@ describe("Calendar Feeds Business Logic", () => {
         },
       ];
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              orderBy: mock(() => Promise.resolve(mockPeople)),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => Promise.resolve(mockPeople)),
             })),
           })),
         })
@@ -314,11 +314,11 @@ describe("Calendar Feeds Business Logic", () => {
         },
       ];
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              orderBy: mock(() => Promise.resolve(mockPeople)),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => Promise.resolve(mockPeople)),
             })),
           })),
         })
@@ -355,17 +355,17 @@ describe("Calendar Feeds Business Logic", () => {
       ];
 
       let selectCall = 0;
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => {
+          from: vi.fn(() => {
             selectCall++;
             if (selectCall === 1) {
               // Marriages query
               return {
-                innerJoin: mock(() => ({
-                  innerJoin: mock(() => ({
-                    where: mock(() => ({
-                      orderBy: mock(() => Promise.resolve(mockMarriages)),
+                innerJoin: vi.fn(() => ({
+                  innerJoin: vi.fn(() => ({
+                    where: vi.fn(() => ({
+                      orderBy: vi.fn(() => Promise.resolve(mockMarriages)),
                     })),
                   })),
                 })),
@@ -373,8 +373,8 @@ describe("Calendar Feeds Business Logic", () => {
             }
             // Deceased query
             return {
-              where: mock(() => ({
-                orderBy: mock(() => Promise.resolve(mockDeceased)),
+              where: vi.fn(() => ({
+                orderBy: vi.fn(() => Promise.resolve(mockDeceased)),
               })),
             };
           }),
@@ -415,12 +415,12 @@ describe("Calendar Feeds Business Logic", () => {
         },
       ];
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            innerJoin: mock(() => ({
-              where: mock(() => ({
-                orderBy: mock(() => Promise.resolve(mockEvents)),
+          from: vi.fn(() => ({
+            innerJoin: vi.fn(() => ({
+              where: vi.fn(() => ({
+                orderBy: vi.fn(() => Promise.resolve(mockEvents)),
               })),
             })),
           })),
@@ -452,12 +452,12 @@ describe("Calendar Feeds Business Logic", () => {
         },
       ];
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            innerJoin: mock(() => ({
-              where: mock(() => ({
-                orderBy: mock(() => Promise.resolve(mockEvents)),
+          from: vi.fn(() => ({
+            innerJoin: vi.fn(() => ({
+              where: vi.fn(() => ({
+                orderBy: vi.fn(() => Promise.resolve(mockEvents)),
               })),
             })),
           })),

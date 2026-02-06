@@ -10,22 +10,22 @@
  * DO NOT call mock.module() here - it can corrupt shared mocks.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 // Dynamic import ensures module loads AFTER preload mocks are applied
 const { claimProfileData, getUnclaimedProfilesData } = await import("./auth");
 
 // Mock the register function - cast to any to avoid strict type checking
-const mockRegister = mock(async () => ({
+const mockRegister = vi.fn(async () => ({
   user: { id: "new-user-id" },
 })) as any;
 
 // Mock the notification function
-const mockNotify = mock(async () => undefined) as any;
+const mockNotify = vi.fn(async () => undefined) as any;
 
 // Mock the translate function
-const mockTranslate = mock(async (key: string) => key) as any;
+const mockTranslate = vi.fn(async (key: string) => key) as any;
 
 describe("auth business logic", () => {
   beforeEach(() => {
@@ -42,9 +42,9 @@ describe("auth business logic", () => {
       // Second call (else branch): get living persons - returns empty
       let selectCallCount = 0;
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => {
               selectCallCount++;
               if (selectCallCount === 1) {
                 // First call: get users with personIds - return empty
@@ -52,7 +52,7 @@ describe("auth business logic", () => {
               }
               // Else branch: where is followed by orderBy
               return {
-                orderBy: mock(() => Promise.resolve([])),
+                orderBy: vi.fn(() => Promise.resolve([])),
               };
             }),
           })),
@@ -74,9 +74,9 @@ describe("auth business logic", () => {
       // Second call (else branch) returns all living persons
       let selectCallCount = 0;
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => {
               selectCallCount++;
               if (selectCallCount === 1) {
                 // First call: get users with personIds - return empty
@@ -84,7 +84,7 @@ describe("auth business logic", () => {
               }
               // Else branch: where().orderBy()
               return {
-                orderBy: mock(() => Promise.resolve(livingProfiles)),
+                orderBy: vi.fn(() => Promise.resolve(livingProfiles)),
               };
             }),
           })),
@@ -114,9 +114,9 @@ describe("auth business logic", () => {
       // Second call (if branch): living persons, followed by .then() filter
       let selectCallCount = 0;
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => {
               selectCallCount++;
               if (selectCallCount === 1) {
                 // First call: return claimed personIds
@@ -124,7 +124,7 @@ describe("auth business logic", () => {
               }
               // If branch: where().orderBy() returns a promise
               return {
-                orderBy: mock(() => Promise.resolve(allLivingProfiles)),
+                orderBy: vi.fn(() => Promise.resolve(allLivingProfiles)),
               };
             }),
           })),
@@ -156,16 +156,16 @@ describe("auth business logic", () => {
       // Second call (if branch): living persons with .then() filter
       let selectCallCount = 0;
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => {
               selectCallCount++;
               if (selectCallCount === 1) {
                 return Promise.resolve(usersWithPeople);
               }
               // If branch: where().orderBy() returns a promise
               return {
-                orderBy: mock(() => Promise.resolve(livingProfiles)),
+                orderBy: vi.fn(() => Promise.resolve(livingProfiles)),
               };
             }),
           })),
@@ -187,16 +187,16 @@ describe("auth business logic", () => {
   describe("claimProfileData", () => {
     it("should reject non-existent person", async () => {
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([])), // No person found
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])), // No person found
             })),
           })),
         })),
       } as any;
 
-      expect(
+      await expect(
         claimProfileData(
           "test@example.com",
           "nonexistent",
@@ -223,16 +223,16 @@ describe("auth business logic", () => {
       };
 
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([deceasedPerson])),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([deceasedPerson])),
             })),
           })),
         })),
       } as any;
 
-      expect(
+      await expect(
         claimProfileData(
           "test@example.com",
           "person-1",
@@ -262,10 +262,10 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => {
                 selectCallCount++;
                 if (selectCallCount === 1) {
                   return Promise.resolve([livingPerson]);
@@ -277,7 +277,7 @@ describe("auth business logic", () => {
         })),
       } as any;
 
-      expect(
+      await expect(
         claimProfileData(
           "test@example.com",
           "person-1",
@@ -307,10 +307,10 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => {
                 selectCallCount++;
                 if (selectCallCount === 1) {
                   return Promise.resolve([livingPerson]); // Person exists
@@ -325,7 +325,7 @@ describe("auth business logic", () => {
         })),
       } as any;
 
-      expect(
+      await expect(
         claimProfileData(
           "test@example.com",
           "person-1",
@@ -354,16 +354,16 @@ describe("auth business logic", () => {
       let selectCallCount = 0;
 
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => {
               selectCallCount++;
               if (selectCallCount === 3) {
                 // Email check - capture the normalized email
                 // The condition contains the email being checked
               }
               return {
-                limit: mock(() => {
+                limit: vi.fn(() => {
                   if (selectCallCount === 1)
                     return Promise.resolve([livingPerson]);
                   if (selectCallCount === 2) return Promise.resolve([]); // Not claimed
@@ -373,9 +373,9 @@ describe("auth business logic", () => {
             }),
           })),
         })),
-        update: mock(() => ({
-          set: mock(() => ({
-            where: mock(() => Promise.resolve()),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve()),
           })),
         })),
       } as any;
@@ -410,10 +410,10 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => {
                 selectCallCount++;
                 if (selectCallCount === 1)
                   return Promise.resolve([livingPerson]);
@@ -422,9 +422,9 @@ describe("auth business logic", () => {
             })),
           })),
         })),
-        update: mock(() => ({
-          set: mock(() => ({
-            where: mock(() => Promise.resolve()),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve()),
           })),
         })),
       } as any;
@@ -458,10 +458,10 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => {
                 selectCallCount++;
                 if (selectCallCount === 1)
                   return Promise.resolve([livingPerson]);
@@ -474,7 +474,7 @@ describe("auth business logic", () => {
 
       mockRegister.mockResolvedValueOnce(null);
 
-      expect(
+      await expect(
         claimProfileData(
           "test@example.com",
           "person-1",
@@ -504,10 +504,10 @@ describe("auth business logic", () => {
       let capturedSetData: unknown = null;
 
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => {
                 selectCallCount++;
                 if (selectCallCount === 1)
                   return Promise.resolve([livingPerson]);
@@ -516,11 +516,11 @@ describe("auth business logic", () => {
             })),
           })),
         })),
-        update: mock(() => ({
-          set: mock((data: unknown) => {
+        update: vi.fn(() => ({
+          set: vi.fn((data: unknown) => {
             capturedSetData = data;
             return {
-              where: mock(() => Promise.resolve()),
+              where: vi.fn(() => Promise.resolve()),
             };
           }),
         })),
@@ -556,10 +556,10 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => {
                 selectCallCount++;
                 if (selectCallCount === 1)
                   return Promise.resolve([livingPerson]);
@@ -568,9 +568,9 @@ describe("auth business logic", () => {
             })),
           })),
         })),
-        update: mock(() => ({
-          set: mock(() => ({
-            where: mock(() => Promise.resolve()),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve()),
           })),
         })),
       } as any;
@@ -578,7 +578,7 @@ describe("auth business logic", () => {
       mockRegister.mockResolvedValueOnce({ user: { id: "new-user-123" } });
 
       // Make notification fail
-      const failingNotify = mock(async () => {
+      const failingNotify = vi.fn(async () => {
         throw new Error("Notification service unavailable");
       });
 
@@ -610,10 +610,10 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => {
                 selectCallCount++;
                 if (selectCallCount === 1)
                   return Promise.resolve([livingPerson]);
@@ -622,9 +622,9 @@ describe("auth business logic", () => {
             })),
           })),
         })),
-        update: mock(() => ({
-          set: mock(() => ({
-            where: mock(() => Promise.resolve()),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve()),
           })),
         })),
       } as any;

@@ -15,7 +15,7 @@
  * Uses dependency injection to mock database calls.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { drizzleSchema } from "@vamsa/api";
 import { clearAllMocks } from "../../testing/shared-mocks";
 
@@ -30,7 +30,7 @@ import {
   updatePersonData,
 } from "./persons";
 
-mock.module("@vamsa/schemas", () => ({
+vi.mock("@vamsa/schemas", () => ({
   createPaginationMeta: (page: number, limit: number, total: number) => ({
     page,
     limit,
@@ -39,11 +39,11 @@ mock.module("@vamsa/schemas", () => ({
   }),
 }));
 
-mock.module("../i18n", () => ({
+vi.mock("../i18n", () => ({
   t: async (key: string) => key,
 }));
 
-mock.module("../metrics", () => ({
+vi.mock("../metrics", () => ({
   recordSearchMetrics: () => undefined,
 }));
 
@@ -95,24 +95,24 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => mockPerson),
+            findFirst: vi.fn(async () => mockPerson),
           },
         },
-        transaction: mock(async (fn: (tx: any) => Promise<unknown>) => {
+        transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => {
           const mockTx = {
-            update: mock(() => ({
-              set: mock((data: Record<string, unknown>) => {
+            update: vi.fn(() => ({
+              set: vi.fn((data: Record<string, unknown>) => {
                 capturedUpdateData = data;
                 return {
-                  where: mock(() => ({
-                    returning: mock(async () => [mockPerson]),
+                  where: vi.fn(() => ({
+                    returning: vi.fn(async () => [mockPerson]),
                   })),
                 };
               }),
             })),
-            insert: mock(() => ({
-              values: mock(() => ({
-                returning: mock(async () => []),
+            insert: vi.fn(() => ({
+              values: vi.fn(() => ({
+                returning: vi.fn(async () => []),
               })),
             })),
           };
@@ -137,7 +137,7 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => null),
+            findFirst: vi.fn(async () => null),
           },
         },
       } as any;
@@ -164,21 +164,21 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => mockPerson),
+            findFirst: vi.fn(async () => mockPerson),
           },
         },
-        transaction: mock(async (fn: (tx: any) => Promise<unknown>) => {
+        transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => {
           const mockTx = {
-            update: mock(() => ({
-              set: mock(() => ({
-                where: mock(() => ({
-                  returning: mock(async () => [mockPerson]),
+            update: vi.fn(() => ({
+              set: vi.fn(() => ({
+                where: vi.fn(() => ({
+                  returning: vi.fn(async () => [mockPerson]),
                 })),
               })),
             })),
-            insert: mock(async (_table: unknown) => ({
-              values: mock(async () => ({
-                returning: mock(async () => []),
+            insert: vi.fn(async (_table: unknown) => ({
+              values: vi.fn(async () => ({
+                returning: vi.fn(async () => []),
               })),
             })),
           };
@@ -198,7 +198,7 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => null),
+            findFirst: vi.fn(async () => null),
           },
         },
       } as any;
@@ -242,7 +242,7 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => mockPerson),
+            findFirst: vi.fn(async () => mockPerson),
           },
         },
       } as any;
@@ -281,9 +281,9 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       ];
 
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(async () => [{ count: 1 }]),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(async () => [{ count: 1 }]),
           })),
         })),
         query: {},
@@ -291,23 +291,23 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
 
       // Properly mock the double select chain: first for count, then for persons
       let selectCallCount = 0;
-      mockDb.select = mock((_arg?: unknown) => {
+      mockDb.select = vi.fn((_arg?: unknown) => {
         selectCallCount++;
         if (selectCallCount === 1) {
           // First select() call - for count query
           return {
-            from: mock(() => ({
-              where: mock(async () => [{ count: 1 }]),
+            from: vi.fn(() => ({
+              where: vi.fn(async () => [{ count: 1 }]),
             })),
           };
         } else {
           // Second select() call - for person records
           return {
-            from: mock(() => ({
-              where: mock(() => ({
-                orderBy: mock(() => ({
-                  limit: mock(() => ({
-                    offset: mock(async () => mockPersons),
+            from: vi.fn(() => ({
+              where: vi.fn(() => ({
+                orderBy: vi.fn(() => ({
+                  limit: vi.fn(() => ({
+                    offset: vi.fn(async () => mockPersons),
                   })),
                 })),
               })),
@@ -328,23 +328,23 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
     it("should respect search filter while excluding deleted", async () => {
       let selectCallCount = 0;
       const mockDb = {
-        select: mock((_arg?: unknown) => {
+        select: vi.fn((_arg?: unknown) => {
           selectCallCount++;
           if (selectCallCount === 1) {
             // First select() for count
             return {
-              from: mock(() => ({
-                where: mock(async () => [{ count: 0 }]),
+              from: vi.fn(() => ({
+                where: vi.fn(async () => [{ count: 0 }]),
               })),
             };
           } else {
             // Second select() for persons
             return {
-              from: mock(() => ({
-                where: mock(() => ({
-                  orderBy: mock(() => ({
-                    limit: mock(() => ({
-                      offset: mock(async () => []),
+              from: vi.fn(() => ({
+                where: vi.fn(() => ({
+                  orderBy: vi.fn(() => ({
+                    limit: vi.fn(() => ({
+                      offset: vi.fn(async () => []),
                     })),
                   })),
                 })),
@@ -374,11 +374,11 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const query = "John";
 
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              orderBy: mock(() => ({
-                limit: mock(async () => []),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => ({
+                limit: vi.fn(async () => []),
               })),
             })),
           })),
@@ -395,11 +395,11 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const excludeId = "person-1";
 
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              orderBy: mock(() => ({
-                limit: mock(async () => []),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => ({
+                limit: vi.fn(async () => []),
               })),
             })),
           })),
@@ -424,11 +424,11 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       ];
 
       const mockDb = {
-        select: mock(() => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              orderBy: mock(() => ({
-                limit: mock(async () => mockResults),
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => ({
+                limit: vi.fn(async () => mockResults),
               })),
             })),
           })),
@@ -450,7 +450,7 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => null),
+            findFirst: vi.fn(async () => null),
           },
         },
       } as any;
@@ -487,24 +487,24 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => mockExisting),
+            findFirst: vi.fn(async () => mockExisting),
           },
           users: {
-            findFirst: mock(async () => null),
+            findFirst: vi.fn(async () => null),
           },
         },
-        transaction: mock(async (fn: (tx: any) => Promise<unknown>) => {
+        transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => {
           const mockTx = {
-            update: mock(() => ({
-              set: mock(() => ({
-                where: mock(() => ({
-                  returning: mock(async () => [mockUpdated]),
+            update: vi.fn(() => ({
+              set: vi.fn(() => ({
+                where: vi.fn(() => ({
+                  returning: vi.fn(async () => [mockUpdated]),
                 })),
               })),
             })),
-            insert: mock(() => ({
-              values: mock(() => ({
-                returning: mock(async () => []),
+            insert: vi.fn(() => ({
+              values: vi.fn(() => ({
+                returning: vi.fn(async () => []),
               })),
             })),
           };
@@ -538,10 +538,10 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => mockExisting),
+            findFirst: vi.fn(async () => mockExisting),
           },
           users: {
-            findFirst: mock(async () => ({
+            findFirst: vi.fn(async () => ({
               id: userId,
               role: "MEMBER",
             })),
@@ -576,12 +576,12 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       let transactionCalled = false;
 
       const mockDb = {
-        transaction: mock(async (fn: (tx: any) => Promise<unknown>) => {
+        transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => {
           transactionCalled = true;
           const mockTx = {
-            insert: mock((_table: unknown) => ({
-              values: mock(() => ({
-                returning: mock(async () => [
+            insert: vi.fn((_table: unknown) => ({
+              values: vi.fn(() => ({
+                returning: vi.fn(async () => [
                   { id: "new-person-1", ...personData },
                 ]),
               })),
@@ -590,7 +590,7 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
 
           // Track if audit insert is called
           const originalInsert = mockTx.insert;
-          mockTx.insert = mock((table: unknown) => {
+          mockTx.insert = vi.fn((table: unknown) => {
             if (table === drizzleSchema.auditLogs) {
               // Audit insert called
             }
@@ -616,11 +616,11 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       };
 
       const mockDb = {
-        transaction: mock(async (fn: (tx: any) => Promise<unknown>) => {
+        transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => {
           const mockTx = {
-            insert: mock(() => ({
-              values: mock(() => ({
-                returning: mock(async () => [{ id: "new-person-1" }]),
+            insert: vi.fn(() => ({
+              values: vi.fn(() => ({
+                returning: vi.fn(async () => [{ id: "new-person-1" }]),
               })),
             })),
           };
@@ -651,27 +651,27 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => mockExisting),
+            findFirst: vi.fn(async () => mockExisting),
           },
           users: {
-            findFirst: mock(async () => null),
+            findFirst: vi.fn(async () => null),
           },
         },
-        transaction: mock(async (fn: (tx: any) => Promise<unknown>) => {
+        transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => {
           transactionCalled = true;
           const mockTx = {
-            update: mock(() => ({
-              set: mock(() => ({
-                where: mock(() => ({
-                  returning: mock(async () => [
+            update: vi.fn(() => ({
+              set: vi.fn(() => ({
+                where: vi.fn(() => ({
+                  returning: vi.fn(async () => [
                     { id: personId, ...updateData },
                   ]),
                 })),
               })),
             })),
-            insert: mock(() => ({
-              values: mock(() => ({
-                returning: mock(async () => []),
+            insert: vi.fn(() => ({
+              values: vi.fn(() => ({
+                returning: vi.fn(async () => []),
               })),
             })),
           };
@@ -708,29 +708,29 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => mockExisting),
+            findFirst: vi.fn(async () => mockExisting),
           },
           users: {
-            findFirst: mock(async () => null),
+            findFirst: vi.fn(async () => null),
           },
         },
-        transaction: mock(async (fn: (tx: any) => Promise<unknown>) => {
+        transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => {
           const mockTx = {
-            update: mock(() => {
+            update: vi.fn(() => {
               updateCalls++;
               return {
-                set: mock(() => ({
-                  where: mock(() => ({
-                    returning: mock(async () => [{ id: personId }]),
+                set: vi.fn(() => ({
+                  where: vi.fn(() => ({
+                    returning: vi.fn(async () => [{ id: personId }]),
                   })),
                 })),
               };
             }),
-            insert: mock(() => {
+            insert: vi.fn(() => {
               insertCalls++;
               return {
-                values: mock(() => ({
-                  returning: mock(async () => []),
+                values: vi.fn(() => ({
+                  returning: vi.fn(async () => []),
                 })),
               };
             }),
@@ -763,22 +763,22 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => mockPerson),
+            findFirst: vi.fn(async () => mockPerson),
           },
         },
-        transaction: mock(async (fn: (tx: any) => Promise<unknown>) => {
+        transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => {
           transactionCalled = true;
           const mockTx = {
-            update: mock(() => ({
-              set: mock(() => ({
-                where: mock(() => ({
-                  returning: mock(async () => [mockPerson]),
+            update: vi.fn(() => ({
+              set: vi.fn(() => ({
+                where: vi.fn(() => ({
+                  returning: vi.fn(async () => [mockPerson]),
                 })),
               })),
             })),
-            insert: mock(() => ({
-              values: mock(() => ({
-                returning: mock(async () => []),
+            insert: vi.fn(() => ({
+              values: vi.fn(() => ({
+                returning: vi.fn(async () => []),
               })),
             })),
           };
@@ -809,26 +809,26 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => mockPerson),
+            findFirst: vi.fn(async () => mockPerson),
           },
         },
-        transaction: mock(async (fn: (tx: any) => Promise<unknown>) => {
+        transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => {
           const mockTx = {
-            update: mock(() => {
+            update: vi.fn(() => {
               updateCalls++;
               return {
-                set: mock(() => ({
-                  where: mock(() => ({
-                    returning: mock(async () => []),
+                set: vi.fn(() => ({
+                  where: vi.fn(() => ({
+                    returning: vi.fn(async () => []),
                   })),
                 })),
               };
             }),
-            insert: mock(() => {
+            insert: vi.fn(() => {
               insertCalls++;
               return {
-                values: mock(() => ({
-                  returning: mock(async () => []),
+                values: vi.fn(() => ({
+                  returning: vi.fn(async () => []),
                 })),
               };
             }),
@@ -852,8 +852,8 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const newData = { firstName: "John", lastName: "Doe" };
 
       const mockTx = {
-        insert: mock(() => ({
-          values: mock(() => ({})),
+        insert: vi.fn(() => ({
+          values: vi.fn(() => ({})),
         })),
       } as any;
 
@@ -874,8 +874,8 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const personId = "person-1";
 
       const mockTx = {
-        insert: mock(() => ({
-          values: mock(async () => {
+        insert: vi.fn(() => ({
+          values: vi.fn(async () => {
             throw new Error("Audit insert failed");
           }),
         })),
@@ -910,7 +910,7 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async (_query: unknown) => {
+            findFirst: vi.fn(async (_query: unknown) => {
               // After deletion, deleted persons should not be found
               if (deletedAtSet) {
                 return null;
@@ -919,25 +919,25 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
             }),
           },
         },
-        transaction: mock(async (fn: (tx: any) => Promise<unknown>) => {
+        transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => {
           const mockTx = {
-            update: mock(() => ({
-              set: mock((data: any) => {
+            update: vi.fn(() => ({
+              set: vi.fn((data: any) => {
                 if (data.deletedAt) {
                   deletedAtSet = true;
                 }
                 return {
-                  where: mock(() => ({
-                    returning: mock(async () => [
+                  where: vi.fn(() => ({
+                    returning: vi.fn(async () => [
                       { ...mockPerson, deletedAt: new Date() },
                     ]),
                   })),
                 };
               }),
             })),
-            insert: mock(() => ({
-              values: mock(() => ({
-                returning: mock(async () => []),
+            insert: vi.fn(() => ({
+              values: vi.fn(() => ({
+                returning: vi.fn(async () => []),
               })),
             })),
           };
@@ -974,30 +974,30 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
       const mockDb = {
         query: {
           persons: {
-            findFirst: mock(async () => mockExisting),
+            findFirst: vi.fn(async () => mockExisting),
           },
           users: {
-            findFirst: mock(async () => null),
+            findFirst: vi.fn(async () => null),
           },
         },
-        transaction: mock(async (fn: (tx: any) => Promise<unknown>) => {
+        transaction: vi.fn(async (fn: (tx: any) => Promise<unknown>) => {
           const mockTx = {
-            update: mock(() => ({
-              set: mock(() => ({
-                where: mock(() => ({
-                  returning: mock(async () => [
+            update: vi.fn(() => ({
+              set: vi.fn(() => ({
+                where: vi.fn(() => ({
+                  returning: vi.fn(async () => [
                     { id: personId, ...updateData },
                   ]),
                 })),
               })),
             })),
-            insert: mock((table: unknown) => {
+            insert: vi.fn((table: unknown) => {
               if (table === drizzleSchema.auditLogs) {
                 auditDataCaptured = true;
               }
               return {
-                values: mock(() => ({
-                  returning: mock(async () => []),
+                values: vi.fn(() => ({
+                  returning: vi.fn(async () => []),
                 })),
               };
             }),

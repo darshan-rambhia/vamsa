@@ -12,7 +12,7 @@
  * - Logging for security-critical operations
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 // Import functions to test
@@ -22,7 +22,7 @@ import { verifyTokenOwnership } from "./calendar-tokens";
 // drizzleSchema and drizzleDb are available from there
 
 // Mock date-fns
-mock.module("date-fns", () => ({
+vi.mock("date-fns", () => ({
   addYears: (date: Date, years: number) => {
     const result = new Date(date);
     result.setFullYear(result.getFullYear() + years);
@@ -32,7 +32,7 @@ mock.module("date-fns", () => ({
 
 // NOTE: We don't mock ./token-rotation here because:
 // 1. The tests in this file only cover verifyTokenOwnership (no rotation tests)
-// 2. mock.module() is global and persists across test files, which would
+// 2. vi.mock() is global and persists across test files, which would
 //    interfere with token-rotation.test.ts testing the real implementation
 // 3. If rotation tests are added later, use spyOn() for test isolation
 

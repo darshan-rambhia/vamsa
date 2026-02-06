@@ -10,10 +10,10 @@
  * - Error handling and validation
  * - Edge cases (self-relationships, duplicates, missing data)
  *
- * Uses mock.module() to mock the drizzleDb module
+ * Uses vi.mock() to mock the drizzleDb module
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   createRelationshipData,
   deleteRelationshipData,
@@ -36,40 +36,40 @@ import type {
 const mockDrizzleDb = {
   query: {
     relationships: {
-      findMany: mock(() => Promise.resolve([])),
-      findFirst: mock(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
     },
     persons: {
-      findFirst: mock(() => Promise.resolve(null)),
+      findFirst: vi.fn(() => Promise.resolve(null)),
     },
   },
-  insert: mock(() => ({
-    values: mock(() => Promise.resolve({})),
+  insert: vi.fn(() => ({
+    values: vi.fn(() => Promise.resolve({})),
   })),
-  update: mock(() => ({
-    set: mock(() => ({
-      where: mock(() => Promise.resolve({})),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn(() => Promise.resolve({})),
     })),
   })),
-  delete: mock(() => ({
-    where: mock(() => Promise.resolve({})),
+  delete: vi.fn(() => ({
+    where: vi.fn(() => Promise.resolve({})),
   })),
 };
 
 // Helper to clear all drizzle mocks between tests
 function clearDrizzleMocks() {
   (
-    mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+    mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
   ).mockClear();
   (
-    mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+    mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
   ).mockClear();
   (
-    mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+    mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
   ).mockClear();
-  (mockDrizzleDb.insert as ReturnType<typeof mock>).mockClear();
-  (mockDrizzleDb.update as ReturnType<typeof mock>).mockClear();
-  (mockDrizzleDb.delete as ReturnType<typeof mock>).mockClear();
+  (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockClear();
+  (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockClear();
+  (mockDrizzleDb.delete as ReturnType<typeof vi.fn>).mockClear();
 }
 
 describe("Relationship Server Functions", () => {
@@ -101,7 +101,7 @@ describe("Relationship Server Functions", () => {
       ];
 
       (
-        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockRelationships);
 
       const result = await listRelationshipsData(
@@ -138,7 +138,7 @@ describe("Relationship Server Functions", () => {
       ];
 
       (
-        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockRelationships);
 
       const result = await listRelationshipsData(
@@ -154,7 +154,7 @@ describe("Relationship Server Functions", () => {
 
     it("should return empty array when no relationships exist", async () => {
       (
-        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
 
       const result = await listRelationshipsData(
@@ -210,7 +210,7 @@ describe("Relationship Server Functions", () => {
       ];
 
       (
-        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockRelationships);
 
       const result = await listRelationshipsData(
@@ -243,7 +243,7 @@ describe("Relationship Server Functions", () => {
       ];
 
       (
-        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockRelationships);
 
       const result = await listRelationshipsData(
@@ -274,7 +274,7 @@ describe("Relationship Server Functions", () => {
       ];
 
       (
-        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockRelationships);
 
       const result = await listRelationshipsData(
@@ -290,7 +290,7 @@ describe("Relationship Server Functions", () => {
     it("should throw and log error on database failure", async () => {
       const error = new Error("Database error");
       (
-        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
       ).mockRejectedValueOnce(error);
 
       try {
@@ -326,7 +326,7 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockRelationship);
 
       const result = await getRelationshipData(
@@ -358,7 +358,7 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockRelationship);
 
       const result = await getRelationshipData("rel-1", mockDrizzleDb as any);
@@ -369,7 +369,7 @@ describe("Relationship Server Functions", () => {
 
     it("should throw error when relationship not found", async () => {
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
@@ -398,7 +398,7 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockRelationship);
 
       const result = await getRelationshipData("rel-1", mockDrizzleDb as any);
@@ -412,7 +412,7 @@ describe("Relationship Server Functions", () => {
     it("should throw and log error on database failure", async () => {
       const error = new Error("Database error");
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockRejectedValueOnce(error);
 
       try {
@@ -433,14 +433,14 @@ describe("Relationship Server Functions", () => {
         type: "PARENT",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => Promise.resolve({})),
       });
 
       const result = await createRelationshipData(input, mockDrizzleDb as any);
@@ -457,14 +457,14 @@ describe("Relationship Server Functions", () => {
         marriageDate: "2010-06-15",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => Promise.resolve({})),
       });
 
       const result = await createRelationshipData(input, mockDrizzleDb as any);
@@ -481,14 +481,14 @@ describe("Relationship Server Functions", () => {
         divorceDate: "2020-01-10",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => Promise.resolve({})),
       });
 
       await createRelationshipData(input, mockDrizzleDb as any);
@@ -503,14 +503,14 @@ describe("Relationship Server Functions", () => {
         type: "CHILD",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => Promise.resolve({})),
       });
 
       await createRelationshipData(input, mockDrizzleDb as any);
@@ -543,7 +543,7 @@ describe("Relationship Server Functions", () => {
         type: "SPOUSE",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce(null);
 
@@ -565,11 +565,11 @@ describe("Relationship Server Functions", () => {
         type: "SPOUSE",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce({
         id: "rel-existing",
       });
@@ -592,14 +592,14 @@ describe("Relationship Server Functions", () => {
         type: "PARENT",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => Promise.resolve({})),
       });
 
       await createRelationshipData(input, mockDrizzleDb as any);
@@ -614,14 +614,14 @@ describe("Relationship Server Functions", () => {
         type: "CHILD",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => Promise.resolve({})),
       });
 
       await createRelationshipData(input, mockDrizzleDb as any);
@@ -636,14 +636,14 @@ describe("Relationship Server Functions", () => {
         type: "SPOUSE",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => Promise.resolve({})),
       });
 
       await createRelationshipData(input, mockDrizzleDb as any);
@@ -658,14 +658,14 @@ describe("Relationship Server Functions", () => {
         type: "SIBLING",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => Promise.resolve({})),
       });
 
       await createRelationshipData(input, mockDrizzleDb as any);
@@ -680,19 +680,19 @@ describe("Relationship Server Functions", () => {
         type: "SPOUSE",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       const error = new Error("Bidirectional sync failed");
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValueOnce({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        values: vi.fn(() => Promise.resolve({})),
       });
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValueOnce({
-        values: mock(() => Promise.reject(error)),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        values: vi.fn(() => Promise.reject(error)),
       });
 
       try {
@@ -713,14 +713,14 @@ describe("Relationship Server Functions", () => {
         divorceDate: "2020-01-10",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => Promise.resolve({})),
       });
 
       await createRelationshipData(input, mockDrizzleDb as any);
@@ -735,14 +735,14 @@ describe("Relationship Server Functions", () => {
         type: "SPOUSE",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "person-1" })
         .mockResolvedValueOnce({ id: "person-2" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => Promise.resolve({})),
       });
 
       const result = await createRelationshipData(input, mockDrizzleDb as any);
@@ -770,11 +770,11 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockExisting);
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValue({
-        set: mock(() => ({
-          where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValue({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
         })),
       });
 
@@ -805,11 +805,11 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockExisting);
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValue({
-        set: mock(() => ({
-          where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValue({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
         })),
       });
 
@@ -835,11 +835,11 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockExisting);
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValue({
-        set: mock(() => ({
-          where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValue({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
         })),
       });
 
@@ -865,28 +865,28 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockExisting);
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValue({
-        set: mock(() => ({
-          where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValue({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
         })),
       });
 
-      const updateCalls = (mockDrizzleDb.update as ReturnType<typeof mock>).mock
-        .calls.length;
+      const updateCalls = (mockDrizzleDb.update as ReturnType<typeof vi.fn>)
+        .mock.calls.length;
 
       await updateRelationshipData(relationshipId, input, mockDrizzleDb as any);
 
       // Should only be called once (not twice for bidirectional sync)
       expect(
-        (mockDrizzleDb.update as ReturnType<typeof mock>).mock.calls.length
+        (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mock.calls.length
       ).toBe(updateCalls + 1);
     });
 
     it("should throw error when relationship not found", async () => {
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
@@ -917,12 +917,12 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockExisting);
       const error = new Error("Database error");
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValue({
-        set: mock(() => ({
-          where: mock(() => Promise.reject(error)),
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValue({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.reject(error)),
         })),
       });
 
@@ -954,10 +954,10 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockExisting);
-      (mockDrizzleDb.delete as ReturnType<typeof mock>).mockReturnValue({
-        where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.delete as ReturnType<typeof vi.fn>).mockReturnValue({
+        where: vi.fn(() => Promise.resolve({})),
       });
 
       const result = await deleteRelationshipData(
@@ -982,10 +982,10 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockExisting);
-      (mockDrizzleDb.delete as ReturnType<typeof mock>).mockReturnValue({
-        where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.delete as ReturnType<typeof vi.fn>).mockReturnValue({
+        where: vi.fn(() => Promise.resolve({})),
       });
 
       await deleteRelationshipData(relationshipId, mockDrizzleDb as any);
@@ -1006,10 +1006,10 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockExisting);
-      (mockDrizzleDb.delete as ReturnType<typeof mock>).mockReturnValue({
-        where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.delete as ReturnType<typeof vi.fn>).mockReturnValue({
+        where: vi.fn(() => Promise.resolve({})),
       });
 
       await deleteRelationshipData(relationshipId, mockDrizzleDb as any);
@@ -1019,7 +1019,7 @@ describe("Relationship Server Functions", () => {
 
     it("should throw error when relationship not found", async () => {
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
@@ -1042,11 +1042,11 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockExisting);
       const error = new Error("Database error");
-      (mockDrizzleDb.delete as ReturnType<typeof mock>).mockReturnValue({
-        where: mock(() => Promise.reject(error)),
+      (mockDrizzleDb.delete as ReturnType<typeof vi.fn>).mockReturnValue({
+        where: vi.fn(() => Promise.reject(error)),
       });
 
       try {
@@ -1069,10 +1069,10 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockExisting);
-      (mockDrizzleDb.delete as ReturnType<typeof mock>).mockReturnValue({
-        where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.delete as ReturnType<typeof vi.fn>).mockReturnValue({
+        where: vi.fn(() => Promise.resolve({})),
       });
 
       const result = await deleteRelationshipData(
@@ -1087,7 +1087,7 @@ describe("Relationship Server Functions", () => {
   describe("Error handling across all functions", () => {
     it("should log errors with context", async () => {
       (
-        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
       ).mockRejectedValueOnce(new Error("DB error"));
 
       try {
@@ -1115,7 +1115,7 @@ describe("Relationship Server Functions", () => {
     it("should preserve original error when throwing", async () => {
       const originalError = new Error("Original error");
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockRejectedValueOnce(originalError);
 
       try {
@@ -1135,14 +1135,14 @@ describe("Relationship Server Functions", () => {
         type: "PARENT",
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce({ id: "parent" })
         .mockResolvedValueOnce({ id: "child" });
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => Promise.resolve({})),
       });
 
       await createRelationshipData(input, mockDrizzleDb as any);
@@ -1165,11 +1165,11 @@ describe("Relationship Server Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockExisting);
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValue({
-        set: mock(() => ({
-          where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValue({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
         })),
       });
 

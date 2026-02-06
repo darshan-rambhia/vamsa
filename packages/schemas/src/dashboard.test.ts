@@ -2,7 +2,7 @@
  * Unit Tests for Dashboard Schemas
  * Tests Zod schema validation for dashboard configuration and preferences
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   DEFAULT_DASHBOARD_LAYOUT,
   DEFAULT_DASHBOARD_WIDGETS,

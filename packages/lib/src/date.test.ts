@@ -2,7 +2,7 @@
  * Unit Tests for Date Utilities
  * Tests all date parsing, formatting, and calculation functions
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import {
   calculateAge,
   createDateOnly,

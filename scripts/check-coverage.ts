@@ -2,8 +2,9 @@
 /**
  * Coverage threshold checker for CI
  *
- * Parses coverage output and fails if below thresholds.
- * Run after `bun test` to enforce coverage standards.
+ * Runs Vitest with coverage and checks thresholds per package.
+ * Each package's vitest.config.ts can define its own coverage thresholds,
+ * but this script provides a unified report.
  */
 
 import { $ } from "bun";
@@ -14,7 +15,6 @@ interface CoverageThresholds {
 }
 
 // Coverage thresholds per package
-// Set slightly below current to prevent regression while allowing room to improve
 const thresholds: Record<string, CoverageThresholds> = {
   "@vamsa/lib": { lines: 80, branches: 80 },
   "@vamsa/ui": { lines: 95, branches: 95 },
@@ -33,65 +33,72 @@ interface PackageCoverage {
 async function runTestsWithCoverage(): Promise<string> {
   console.log("Running tests with coverage...\n");
 
-  const result = await $`bun run test 2>&1`.text();
+  const result =
+    await $`bun run vitest run --coverage --coverage.reporter=text 2>&1`.text();
   return result;
 }
 
 function parseCoverageOutput(output: string): PackageCoverage[] {
   const results: PackageCoverage[] = [];
 
-  // Parse coverage summary lines from bun test output
-  // Format: "@vamsa/lib test: All files   |   98.82 |   95.00 | ..."
-  const packagePatterns = [
-    { prefix: "@vamsa/lib test:", name: "@vamsa/lib" },
-    { prefix: "@vamsa/ui test:", name: "@vamsa/ui" },
-    { prefix: "@vamsa/api test:", name: "@vamsa/api" },
-    { prefix: "@vamsa/schemas test:", name: "@vamsa/schemas" },
-    { prefix: "@vamsa/web test:", name: "@vamsa/web" },
-  ];
-
+  // Vitest workspace output format:
+  // After each project's tests, coverage is printed like:
+  //  Project: lib
+  //  ...
+  //  All files   |   98.82 |   95.00 | ...
+  //
+  // We detect which project by looking for project headers
   const lines = output.split("\n");
 
-  for (const { prefix, name } of packagePatterns) {
-    let foundCoverage = false;
+  // Map Vitest project names to package names
+  const projectToPackage: Record<string, string> = {
+    lib: "@vamsa/lib",
+    ui: "@vamsa/ui",
+    api: "@vamsa/api",
+    schemas: "@vamsa/schemas",
+    web: "@vamsa/web",
+  };
 
-    for (const line of lines) {
-      // Look for lines that start with the package prefix AND contain "All files"
-      if (line.includes(prefix) && line.includes("All files")) {
-        // Parse: "@vamsa/lib test: All files   |   98.82 |   95.00 | ..."
-        const match = line.match(
-          /All files\s*\|\s*([\d.]+)\s*\|\s*([\d.]+)\s*\|/
-        );
-        if (match) {
-          const linesPercent = parseFloat(match[1]);
-          const branchesPercent = parseFloat(match[2]);
-          const threshold = thresholds[name] || { lines: 80, branches: 70 };
+  let currentProject: string | null = null;
 
+  for (const line of lines) {
+    // Detect project switches in Vitest output
+    // Format varies but typically includes project name in brackets or headers
+    for (const [project, pkg] of Object.entries(projectToPackage)) {
+      // Match patterns like "✓ lib src/..." or "❯ lib src/..." or "Project: lib"
+      const projectPattern = new RegExp(
+        `(?:^\\s*[✓❯×]\\s+${project}\\s|Project:\\s*${project}\\b|^\\s*${project}\\s*\\|)`,
+        "i"
+      );
+      if (projectPattern.test(line)) {
+        currentProject = pkg;
+      }
+    }
+
+    // Parse "All files" coverage line
+    if (line.includes("All files")) {
+      const match = line.match(
+        /All files\s*\|\s*([\d.]+)\s*\|\s*([\d.]+)\s*\|/
+      );
+      if (match && currentProject) {
+        const linesPercent = parseFloat(match[1]);
+        const branchesPercent = parseFloat(match[2]);
+        const threshold = thresholds[currentProject] || {
+          lines: 80,
+          branches: 70,
+        };
+
+        // Don't add duplicates
+        if (!results.find((r) => r.name === currentProject)) {
           results.push({
-            name,
+            name: currentProject,
             lines: linesPercent,
             branches: branchesPercent,
             passed:
               linesPercent >= threshold.lines &&
               branchesPercent >= threshold.branches,
           });
-          foundCoverage = true;
-          break;
         }
-      }
-    }
-
-    if (!foundCoverage) {
-      // Package might not have coverage output, mark as passed if tests ran
-      const hasTests = output.includes(`${prefix}`) && output.includes("pass");
-      if (hasTests) {
-        // No coverage data available, assume passing
-        results.push({
-          name,
-          lines: -1,
-          branches: -1,
-          passed: true,
-        });
       }
     }
   }
@@ -136,8 +143,8 @@ async function main() {
   try {
     const output = await runTestsWithCoverage();
 
-    // Check if tests passed
-    if (output.includes("fail") && !output.includes("0 fail")) {
+    // Check if tests passed - look for Vitest failure indicators
+    if (output.includes("Tests  ") && output.includes("failed")) {
       console.error(
         "\n❌ Tests failed! Fix failing tests before checking coverage."
       );
@@ -148,9 +155,8 @@ async function main() {
 
     if (results.length === 0) {
       console.log(
-        "⚠️  No coverage data found. Tests may not be generating coverage."
+        "⚠️  No coverage data found. Ensure vitest.config.ts has coverage configured."
       );
-      console.log("Ensure bunfig.toml has coverage = true");
       process.exit(0);
     }
 

@@ -3,7 +3,7 @@
  * Tests rendering, user interactions, form submission, and error handling
  */
 
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, vi } from "vitest";
 
 describe("BackupScheduleSettings Component", () => {
   const mockSettings = {
@@ -261,7 +261,7 @@ describe("BackupScheduleSettings Component", () => {
     it("should call updateBackupSettings on save", () => {
       // When: User clicks save button
       // Then: Call updateBackupSettings function
-      const updateCalled = mock(() => true);
+      const updateCalled = vi.fn(() => true);
       const result = updateCalled();
       expect(result).toBe(true);
     });

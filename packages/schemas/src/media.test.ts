@@ -2,7 +2,7 @@
  * Unit Tests for Media Schemas
  * Tests Zod schema validation for media management and uploads
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   linkMediaToEventSchema,
   mediaFormatEnum,

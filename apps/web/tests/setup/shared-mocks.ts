@@ -2,39 +2,35 @@
  * Shared mock implementations for tests
  *
  * This file provides shared mock implementations that can be used across
- * multiple test files. Using shared mocks prevents mock.module() pollution
- * where different test files define conflicting mocks for the same modules.
- *
- * IMPORTANT: When multiple test files mock the same module using mock.module(),
- * only the first mock takes effect (due to how Bun's module cache works).
- * By using shared mocks, all tests use the same implementation.
+ * multiple test files. Using shared mocks ensures all tests use the same
+ * mock objects for consistent verification.
  */
 
-import { mock } from "bun:test";
+import { vi } from "vitest";
 
 /**
  * Shared logger mock - tracks all logging calls (OLD pino logger pattern)
  * Reset with mockLogger.info.mockClear() etc in beforeEach
  */
 export const mockLogger = {
-  trace: mock(() => undefined),
-  debug: mock(() => undefined),
-  info: mock(() => undefined),
-  warn: mock(() => undefined),
-  error: mock(() => undefined),
-  fatal: mock(() => undefined),
-  child: mock(() => mockLogger),
+  trace: vi.fn(() => undefined),
+  debug: vi.fn(() => undefined),
+  info: vi.fn(() => undefined),
+  warn: vi.fn(() => undefined),
+  error: vi.fn(() => undefined),
+  fatal: vi.fn(() => undefined),
+  child: vi.fn(() => mockLogger),
 };
 
 /**
  * Create a mock error log builder for the fluent API
  */
 export const mockWithErrBuilder = {
-  ctx: mock(() => mockWithErrBuilder),
-  msg: mock(() => undefined),
+  ctx: vi.fn(() => mockWithErrBuilder),
+  msg: vi.fn(() => undefined),
 };
 
-export const mockWithErr = mock(() => mockWithErrBuilder);
+export const mockWithErr = vi.fn(() => mockWithErrBuilder);
 
 /**
  * Shared domain logger mock - all domain loggers share these mocks
@@ -48,7 +44,7 @@ export const mockDomainLogger = {
   error: mockLogger.error,
   fatal: mockLogger.fatal,
   withErr: mockWithErr,
-  child: mock(() => mockDomainLogger),
+  child: vi.fn(() => mockDomainLogger),
 };
 
 /**
@@ -73,7 +69,7 @@ export const mockLog = mockDomainLogger;
 /**
  * Shared serializeError mock - matches the real implementation
  */
-export const mockSerializeError = mock((error: unknown) => {
+export const mockSerializeError = vi.fn((error: unknown) => {
   if (error instanceof Error) {
     return {
       name: error.name,
@@ -91,26 +87,26 @@ export const mockSerializeError = mock((error: unknown) => {
 /**
  * Shared createContextLogger mock - returns a logger with the same interface
  */
-export const mockCreateContextLogger = mock((_context: unknown) => ({
-  trace: mock((..._args: Array<unknown>) => undefined),
-  debug: mock((..._args: Array<unknown>) => undefined),
-  info: mock((..._args: Array<unknown>) => undefined),
-  warn: mock((..._args: Array<unknown>) => undefined),
-  error: mock((..._args: Array<unknown>) => undefined),
-  fatal: mock((..._args: Array<unknown>) => undefined),
+export const mockCreateContextLogger = vi.fn((_context: unknown) => ({
+  trace: vi.fn((..._args: Array<unknown>) => undefined),
+  debug: vi.fn((..._args: Array<unknown>) => undefined),
+  info: vi.fn((..._args: Array<unknown>) => undefined),
+  warn: vi.fn((..._args: Array<unknown>) => undefined),
+  error: vi.fn((..._args: Array<unknown>) => undefined),
+  fatal: vi.fn((..._args: Array<unknown>) => undefined),
 }));
 
 /**
  * Shared createRequestLogger mock - returns a domain logger
  */
-export const mockCreateRequestLogger = mock(
+export const mockCreateRequestLogger = vi.fn(
   (_requestId: string) => mockDomainLogger
 );
 
 /**
  * Shared startTimer mock - returns a function that returns elapsed time
  */
-export const mockStartTimer = mock(() => mock(() => 0));
+export const mockStartTimer = vi.fn(() => vi.fn(() => 0));
 
 /**
  * Clear all mock call histories

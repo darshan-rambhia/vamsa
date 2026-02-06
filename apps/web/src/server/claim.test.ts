@@ -7,7 +7,7 @@
  * Business logic (findSuggestedMatches, validateClaim) is tested in @vamsa/lib.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   getStubbedSession,
   testUsers,
@@ -26,60 +26,64 @@ import {
 // Mocks for Handler Tests
 // =============================================================================
 
-const mockGetClaimableProfilesData = mock(async () => ({
-  all: [
-    {
-      id: "person-1",
-      firstName: "John",
-      lastName: "Doe",
-      email: "john.doe@example.com",
-      dateOfBirth: null,
-    },
-    {
-      id: "person-2",
-      firstName: "Jane",
-      lastName: "Smith",
-      email: "jane.smith@example.com",
-      dateOfBirth: null,
-    },
-  ],
-  suggested: [
-    {
-      id: "person-1",
-      firstName: "John",
-      lastName: "Doe",
-      email: "john.doe@example.com",
-      dateOfBirth: null,
-      score: 100,
-      matchReason: "Email match",
-    },
-  ],
+const {
+  mockGetClaimableProfilesData,
+  mockClaimProfileForOIDCData,
+  mockSkipProfileClaimData,
+  mockGetOIDCClaimStatusData,
+} = vi.hoisted(() => ({
+  mockGetClaimableProfilesData: vi.fn(async () => ({
+    all: [
+      {
+        id: "person-1",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john.doe@example.com",
+        dateOfBirth: null,
+      },
+      {
+        id: "person-2",
+        firstName: "Jane",
+        lastName: "Smith",
+        email: "jane.smith@example.com",
+        dateOfBirth: null,
+      },
+    ],
+    suggested: [
+      {
+        id: "person-1",
+        firstName: "John",
+        lastName: "Doe",
+        email: "john.doe@example.com",
+        dateOfBirth: null,
+        score: 100,
+        matchReason: "Email match",
+      },
+    ],
+  })),
+  mockClaimProfileForOIDCData: vi.fn(async () => ({
+    success: true,
+    userId: "user-1",
+  })),
+  mockSkipProfileClaimData: vi.fn(async () => ({
+    success: true,
+  })),
+  mockGetOIDCClaimStatusData: vi.fn(
+    async () =>
+      ({
+        userId: "user-1",
+        email: "test@example.com",
+        name: "Test User",
+        oidcProvider: "google",
+        profileClaimStatus: "PENDING",
+        profileClaimedAt: null,
+        personId: null,
+        person: null,
+      }) as unknown
+  ),
 }));
 
-const mockClaimProfileForOIDCData = mock(async () => ({
-  success: true,
-  userId: "user-1",
-}));
-
-const mockSkipProfileClaimData = mock(async () => ({
-  success: true,
-}));
-
-const mockGetOIDCClaimStatusData = mock(
-  async () =>
-    ({
-      userId: "user-1",
-      email: "test@example.com",
-      name: "Test User",
-      oidcProvider: "google",
-      profileClaimStatus: "PENDING",
-      profileClaimedAt: null,
-      personId: null,
-      person: null,
-    }) as unknown
-);
-
-mock.module("@vamsa/lib/server/business", () => ({
+vi.mock("@vamsa/lib/server/business", () => ({
   getClaimableProfilesData: mockGetClaimableProfilesData,
   claimProfileForOIDCData: mockClaimProfileForOIDCData,
   skipProfileClaimData: mockSkipProfileClaimData,

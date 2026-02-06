@@ -14,11 +14,23 @@
  */
 
 import path from "node:path";
+import { cleanup } from "@testing-library/react";
+import { afterEach } from "vitest";
 import { initializeServerI18n, setLocalesPath } from "@vamsa/lib/server";
 
-// Set locales path relative to cwd
+// Clean up DOM between tests to prevent "Found multiple elements" errors
+afterEach(() => {
+  cleanup();
+});
+
+// Set locales path relative to this file (apps/web/tests/setup/test-logger-mock.ts)
+// Locales are at: apps/web/src/i18n/locales/{{lng}}/{{ns}}.json
+// Relative path from this file: ../../src/i18n/locales/{{lng}}/{{ns}}.json
 setLocalesPath(
-  path.join(process.cwd(), "src/i18n/locales/{{lng}}/{{ns}}.json")
+  path.resolve(
+    import.meta.dirname,
+    "../../src/i18n/locales/{{lng}}/{{ns}}.json"
+  )
 );
 
 // Initialize i18n once at setup

@@ -120,15 +120,10 @@ export default defineConfig({
   },
   ssr: {
     external: [
-      // Server-only dependencies from packages/lib that shouldn't be bundled
+      // Server-only dependencies that shouldn't be bundled into SSR
       "archiver",
       "arctic",
       "bcryptjs",
-      // Database packages - must be external for server-side only usage
-      "drizzle-orm",
-      "pg",
-      "pg-pool",
-      "pgpass",
       // Note: i18next is NOT external - it needs to be bundled for both SSR and client
       // to ensure the hydration matches. Only i18next-fs-backend is server-only.
       "i18next-fs-backend",
@@ -138,12 +133,9 @@ export default defineConfig({
       // sharp is a native image processing library that must not be bundled
       "sharp",
     ],
-    noExternal: [
-      // Ensure @vamsa/* packages are bundled so tree-shaking works
-      "@vamsa/api",
-      "@vamsa/lib",
-      "@vamsa/schemas",
-    ],
+    // Note: Do NOT add drizzle-orm/pg to ssr.external or @vamsa/* to noExternal.
+    // drizzle-orm/pg must be bundled into the SSR output so the production server
+    // doesn't need to resolve them from node_modules at runtime (which fails in Docker).
   },
   build: {
     rollupOptions: {

@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Write meaningful tests for Vamsa using Bun (unit) and Playwright (E2E). Use this skill when creating or modifying tests. See unit-recipes.md and e2e-recipes.md for domain-specific patterns.
+description: Write meaningful tests for Vamsa using Vitest (unit) and Playwright (E2E). Use this skill when creating or modifying tests. See unit-recipes.md and e2e-recipes.md for domain-specific patterns.
 license: MIT
 ---
 
@@ -29,7 +29,7 @@ This skill provides testing standards for Vamsa.
 
 ---
 
-# Unit Testing (Bun)
+# Unit Testing (Vitest)
 
 ## Philosophy: Honest Minimal Tests
 
@@ -84,7 +84,7 @@ describe("Button", () => {
 // Test actual logic and user interactions
 describe("SearchInput", () => {
   test("calls onSearch when form is submitted", () => {
-    const onSearch = mock(() => {});
+    const onSearch = vi.fn();
     const { getByRole } = render(<SearchInput onSearch={onSearch} />);
 
     const input = getByRole("searchbox");
@@ -308,43 +308,34 @@ await expect(page.getByText("Success")).toBeVisible({ timeout: 3000 });
 ## Commands
 
 ```bash
-# Unit tests
-bun run test                # All unit tests
+# Unit tests (Vitest)
+bun run test                # All unit tests (runs each package's vitest)
 bun run test:unit           # lib and ui only
-bun run test:coverage       # With coverage report
+bun run vitest run          # Run from root workspace (all projects)
 
-# E2E tests
+# E2E tests (Playwright)
 bun run test:e2e            # All E2E tests
 bun run test:e2e --ui       # Interactive mode
 bun run test:e2e auth.spec.ts  # Specific file
 bun run test:e2e --grep "login"  # Pattern match
 
 # Specific package
-cd packages/lib && bun test
-cd packages/ui && bun test
-cd apps/web && bun test
+cd packages/lib && bun run test
+cd packages/ui && bun run test
+cd apps/web && bun run test
 ```
 
 ## Coverage Requirements
 
-From `bunfig.toml`:
+Configured per-package in `vitest.config.ts` with native Vitest coverage thresholds:
 
-```toml
-[test.coverageThreshold]
-lines = 95
-functions = 95
-branches = 90
-
-[test.coverageThreshold."@vamsa/lib"]
-lines = 98.82
-functions = 98.12
-branches = 95
-
-[test.coverageThreshold."@vamsa/ui"]
-lines = 100
-functions = 100
-branches = 100
-```
+| Package        | Lines | Branches |
+| -------------- | ----- | -------- |
+| @vamsa/lib     | 80%   | 80%      |
+| @vamsa/ui      | 95%   | 95%      |
+| @vamsa/api     | 80%   | 70%      |
+| @vamsa/schemas | 90%   | 85%      |
+| @vamsa/web     | 55%   | 65%      |
 
 **Coverage must come from meaningful tests, not fake ones.**
 
@@ -377,7 +368,8 @@ branches = 100
 
 ## Unit Testing
 
-- `bunfig.toml` - Test configuration and coverage thresholds
+- `vitest.config.ts` (root) - Workspace project list
+- `packages/*/vitest.config.ts` - Per-package test config
 - `packages/ui/src/test-setup.ts` - Test environment setup
 - `packages/ui/src/primitives/button.test.tsx` - Good rendering example
 - `packages/lib/src/relationships.test.ts` - Good logic example

@@ -13,7 +13,7 @@
  * All functions are pure with no side effects, making them fully testable.
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   buildRelationshipMaps,
   calculateFanLayout,

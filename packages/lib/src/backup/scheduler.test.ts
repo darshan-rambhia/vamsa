@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   calculateRetentionDate,
   describeSchedule,
@@ -626,7 +626,7 @@ describe("generateBackupFilename", () => {
 
   it("uses custom extension", () => {
     const filename = generateBackupFilename("DAILY", "tar.gz");
-    expect(filename).toEndWith(".tar.gz");
+    expect(filename.endsWith(".tar.gz")).toBe(true);
   });
 });
 

@@ -17,11 +17,12 @@
  * - Enables dual auth: web uses cookies, mobile uses bearer tokens
  */
 
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
+import type { vi } from "vitest";
 
-// Import after mocks are set up
-import {
+// Dynamic import to ensure module loads AFTER setup mocks are applied
+const {
   betterAuthChangePassword,
   betterAuthGetSession,
   betterAuthGetSessionWithUser,
@@ -30,52 +31,14 @@ import {
   betterAuthRegister,
   betterAuthSignOut,
   getBetterAuthProviders,
-} from "./auth-better-api";
+} = await import("./auth-better-api");
 
-// Mock auth module
-const mockBetterAuthApi = {
-  signInEmail: mock(async () => ({
-    user: { id: "user1" },
-    session: {
-      id: "session1",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId: "user1",
-      expiresAt: new Date(),
-      token: "token1",
-    },
-  })) as any,
-  signUpEmail: mock(async () => ({
-    user: { id: "user2" },
-    session: {
-      id: "session2",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId: "user2",
-      expiresAt: new Date(),
-      token: "token2",
-    },
-  })) as any,
-  getSession: mock(async () => ({
-    user: { id: "user1" },
-    session: {
-      id: "session1",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      userId: "user1",
-      expiresAt: new Date(),
-      token: "token1",
-    },
-  })) as any,
-  changePassword: mock(async () => ({ success: true })) as any,
-  signOut: mock(async () => undefined) as any,
-};
+// Import auth to access the mocked API
+const { auth } = await import("./auth-better");
 
-mock.module("./auth-better", () => ({
-  auth: {
-    api: mockBetterAuthApi,
-  },
-}));
+// Get reference to the mocked API functions (cast since better-auth is mocked with vi.fn())
+type MockedApi = Record<string, ReturnType<typeof vi.fn>>;
+const mockBetterAuthApi = auth.api as unknown as MockedApi;
 
 describe("auth-better-api", () => {
   beforeEach(() => {

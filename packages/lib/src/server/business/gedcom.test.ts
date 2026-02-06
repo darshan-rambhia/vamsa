@@ -16,7 +16,7 @@
  * the actual business logic integration with these utilities.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   exportGedcomData,
   exportGedcomDataZip,
@@ -35,38 +35,38 @@ import {
 const mockDrizzleDb = {
   query: {
     persons: {
-      findMany: mock(() => Promise.resolve([])),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
     relationships: {
-      findMany: mock(() => Promise.resolve([])),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
     users: {
-      findFirst: mock(() => Promise.resolve(null)),
-      findMany: mock(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
     auditLogs: {
-      findMany: mock(() => Promise.resolve([])),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
     mediaObjects: {
-      findMany: mock(() => Promise.resolve([])),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
   },
-  insert: mock(() => ({
-    values: mock(() => ({
-      returning: mock(() => Promise.resolve([{}])),
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({
+      returning: vi.fn(() => Promise.resolve([{}])),
     })),
   })),
-  transaction: mock((cb: (db: typeof mockDrizzleDb) => Promise<unknown>) =>
+  transaction: vi.fn((cb: (db: typeof mockDrizzleDb) => Promise<unknown>) =>
     cb(mockDrizzleDb)
   ),
 };
 
 // Create mock metrics functions
-const mockRecordGedcomImport = mock(() => undefined);
-const mockRecordGedcomExport = mock(() => undefined);
-const mockRecordGedcomValidation = mock(() => undefined);
+const mockRecordGedcomImport = vi.fn(() => undefined);
+const mockRecordGedcomExport = vi.fn(() => undefined);
+const mockRecordGedcomValidation = vi.fn(() => undefined);
 
-mock.module("@vamsa/lib/server/business/metrics", () => ({
+vi.mock("@vamsa/lib/server/business/metrics", () => ({
   recordGedcomImport: mockRecordGedcomImport,
   recordGedcomExport: mockRecordGedcomExport,
   recordGedcomValidation: mockRecordGedcomValidation,
@@ -75,23 +75,25 @@ mock.module("@vamsa/lib/server/business/metrics", () => ({
 describe("GEDCOM Server Business Logic", () => {
   beforeEach(() => {
     (
-      mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
-    ).mockClear();
-    (mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>).mockClear();
-    (
-      mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.mediaObjects.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
-    (mockDrizzleDb.insert as ReturnType<typeof mock>).mockClear();
-    (mockDrizzleDb.transaction as ReturnType<typeof mock>).mockClear();
+    (
+      mockDrizzleDb.query.auditLogs.findMany as ReturnType<typeof vi.fn>
+    ).mockClear();
+    (
+      mockDrizzleDb.query.mediaObjects.findMany as ReturnType<typeof vi.fn>
+    ).mockClear();
+    (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockClear();
+    (mockDrizzleDb.transaction as ReturnType<typeof vi.fn>).mockClear();
     mockRecordGedcomImport.mockClear();
     mockRecordGedcomExport.mockClear();
     mockRecordGedcomValidation.mockClear();
@@ -185,7 +187,7 @@ describe("GEDCOM Server Business Logic", () => {
     it("should handle import errors", async () => {
       // Force an error by using mock implementation that throws
       (
-        mockDrizzleDb.transaction as ReturnType<typeof mock>
+        mockDrizzleDb.transaction as ReturnType<typeof vi.fn>
       ).mockImplementationOnce(async () => {
         throw new Error("Import failed");
       });
@@ -202,14 +204,14 @@ describe("GEDCOM Server Business Logic", () => {
 
     it("should include optional import counts when successful", async () => {
       (
-        mockDrizzleDb.transaction as ReturnType<typeof mock>
+        mockDrizzleDb.transaction as ReturnType<typeof vi.fn>
       ).mockImplementationOnce(
         async (cb: (db: typeof mockDrizzleDb) => Promise<unknown>) => {
           return cb({
             ...mockDrizzleDb,
-            insert: mock(() => ({
-              values: mock(() => ({
-                returning: mock(() => Promise.resolve([{}])),
+            insert: vi.fn(() => ({
+              values: vi.fn(() => ({
+                returning: vi.fn(() => Promise.resolve([{}])),
               })),
             })),
           });
@@ -232,17 +234,17 @@ describe("GEDCOM Server Business Logic", () => {
   describe("exportGedcomData", () => {
     it("should export GEDCOM data successfully", async () => {
       (
-        mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValueOnce({
-        values: mock(() => ({
-          returning: mock(() => Promise.resolve([{}])),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([{}])),
         })),
       });
 
@@ -255,17 +257,17 @@ describe("GEDCOM Server Business Logic", () => {
 
     it("should accept user for audit trail", async () => {
       (
-        mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValueOnce({
-        values: mock(() => ({
-          returning: mock(() => Promise.resolve([{}])),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([{}])),
         })),
       });
 
@@ -277,7 +279,7 @@ describe("GEDCOM Server Business Logic", () => {
 
     it("should handle export errors", async () => {
       (
-        mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
       ).mockRejectedValueOnce(new Error("Database error"));
 
       const result = await exportGedcomData("user-1", mockDrizzleDb as any);
@@ -288,17 +290,17 @@ describe("GEDCOM Server Business Logic", () => {
 
     it("should include GEDCOM content in successful export", async () => {
       (
-        mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.relationships.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValueOnce({
-        values: mock(() => ({
-          returning: mock(() => Promise.resolve([{}])),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([{}])),
         })),
       });
 

@@ -1,11 +1,11 @@
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
 import { MiniMap } from "./MiniMap";
 
 describe("MiniMap", () => {
   const mockTreeBounds = { width: 1000, height: 600 };
   const mockViewport = { x: 100, y: 50, width: 400, height: 300 };
-  const mockOnNavigate = mock(() => {});
+  const mockOnNavigate = vi.fn(() => {});
 
   const createNodes = (count: number) =>
     Array.from({ length: count }, (_, i) => ({
@@ -123,7 +123,7 @@ describe("MiniMap", () => {
 
     // Mock getBoundingClientRect
     if (svg) {
-      svg.getBoundingClientRect = mock(() => ({
+      svg.getBoundingClientRect = vi.fn(() => ({
         left: 0,
         top: 0,
         width: 150,

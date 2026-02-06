@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Email Templates
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import {
   createBirthdayReminderEmail,
   createNewMemberEmail,

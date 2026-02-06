@@ -4,7 +4,7 @@
  * Tests scheduler initialization, job creation, and management
  */
 
-import { afterEach, beforeEach, describe, expect, it, mock } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 // Import after mocks are set up
 import {
@@ -27,17 +27,24 @@ type MockSettings = {
   monthlyDay: number;
 } | null;
 
-// Track mock calls
-let mockSettingsResult: MockSettings = null;
-const mockPerformBackup = mock(async () => "backup-1");
+// Track mock calls - use an object wrapper so the reference stays stable
+const mockState = vi.hoisted(() => ({
+  settingsResult: null as MockSettings,
+}));
+
+const { mockPerformBackup } = vi.hoisted(() => ({
+  mockPerformBackup: vi.fn(async () => "backup-1"),
+}));
 
 // Mock the modules with Drizzle-style chainable queries
-mock.module("../db", () => {
+vi.mock("../db", () => {
   // Create chainable mock for select().from().limit()
   const createSelectChain = () => ({
     from: () => ({
       limit: () =>
-        Promise.resolve(mockSettingsResult ? [mockSettingsResult] : []),
+        Promise.resolve(
+          mockState.settingsResult ? [mockState.settingsResult] : []
+        ),
     }),
   });
 
@@ -51,13 +58,13 @@ mock.module("../db", () => {
   };
 });
 
-mock.module("./backup-job", () => ({
+vi.mock("./backup-job", () => ({
   performBackup: mockPerformBackup,
 }));
 
 describe("Backup Scheduler", () => {
   beforeEach(() => {
-    mockSettingsResult = null;
+    mockState.settingsResult = null;
     mockPerformBackup.mockReset();
   });
 
@@ -67,7 +74,7 @@ describe("Backup Scheduler", () => {
 
   describe("initBackupScheduler", () => {
     it("should create no jobs when no settings exist", async () => {
-      mockSettingsResult = null;
+      mockState.settingsResult = null;
 
       await initBackupScheduler();
 
@@ -77,7 +84,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should create daily job when daily backup is enabled", async () => {
-      mockSettingsResult = {
+      mockState.settingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:30",
@@ -98,7 +105,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should create weekly job when weekly backup is enabled", async () => {
-      mockSettingsResult = {
+      mockState.settingsResult = {
         id: "settings-1",
         dailyEnabled: false,
         dailyTime: "02:00",
@@ -118,7 +125,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should create monthly job when monthly backup is enabled", async () => {
-      mockSettingsResult = {
+      mockState.settingsResult = {
         id: "settings-1",
         dailyEnabled: false,
         dailyTime: "02:00",
@@ -138,7 +145,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should create all jobs when all schedules are enabled", async () => {
-      mockSettingsResult = {
+      mockState.settingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -160,7 +167,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should stop existing jobs before reinitializing", async () => {
-      mockSettingsResult = {
+      mockState.settingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -183,7 +190,7 @@ describe("Backup Scheduler", () => {
 
   describe("stopBackupScheduler", () => {
     it("should stop all running jobs", async () => {
-      mockSettingsResult = {
+      mockState.settingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -222,7 +229,7 @@ describe("Backup Scheduler", () => {
 
   describe("refreshBackupScheduler", () => {
     it("should reinitialize with current settings", async () => {
-      mockSettingsResult = {
+      mockState.settingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -243,7 +250,7 @@ describe("Backup Scheduler", () => {
 
     it("should pick up changed settings", async () => {
       // Start with daily only
-      mockSettingsResult = {
+      mockState.settingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -259,7 +266,7 @@ describe("Backup Scheduler", () => {
       expect(getSchedulerStatus().jobCount).toBe(1);
 
       // Change to weekly only
-      mockSettingsResult = {
+      mockState.settingsResult = {
         id: "settings-1",
         dailyEnabled: false,
         dailyTime: "02:00",
@@ -293,7 +300,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should have job count match jobs array length", async () => {
-      mockSettingsResult = {
+      mockState.settingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",
@@ -312,7 +319,7 @@ describe("Backup Scheduler", () => {
     });
 
     it("should return job objects with name and status", async () => {
-      mockSettingsResult = {
+      mockState.settingsResult = {
         id: "settings-1",
         dailyEnabled: true,
         dailyTime: "02:00",

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ConflictResolver } from "./conflict-resolver";
 import type {
   Conflict,
@@ -16,8 +16,8 @@ function createMockDb(): DatabaseInterface {
 
   return {
     person: {
-      findUnique: mock(() => Promise.resolve(null)),
-      create: mock(() =>
+      findUnique: vi.fn(() => Promise.resolve(null)),
+      create: vi.fn(() =>
         Promise.resolve({
           id: "p1",
           firstName: "Test",
@@ -27,7 +27,7 @@ function createMockDb(): DatabaseInterface {
           updatedAt: now,
         })
       ),
-      update: mock(() =>
+      update: vi.fn(() =>
         Promise.resolve({
           id: "p1",
           firstName: "Test",
@@ -39,8 +39,8 @@ function createMockDb(): DatabaseInterface {
       ),
     },
     user: {
-      findUnique: mock(() => Promise.resolve(null)),
-      create: mock(() =>
+      findUnique: vi.fn(() => Promise.resolve(null)),
+      create: vi.fn(() =>
         Promise.resolve({
           id: "u1",
           email: "test@example.com",
@@ -55,7 +55,7 @@ function createMockDb(): DatabaseInterface {
           lastLoginAt: null,
         })
       ),
-      update: mock(() =>
+      update: vi.fn(() =>
         Promise.resolve({
           id: "u1",
           email: "test@example.com",
@@ -72,9 +72,9 @@ function createMockDb(): DatabaseInterface {
       ),
     },
     relationship: {
-      findUnique: mock(() => Promise.resolve(null)),
-      findFirst: mock(() => Promise.resolve(null)),
-      create: mock(() =>
+      findUnique: vi.fn(() => Promise.resolve(null)),
+      findFirst: vi.fn(() => Promise.resolve(null)),
+      create: vi.fn(() =>
         Promise.resolve({
           id: "r1",
           personId: "p1",
@@ -84,7 +84,7 @@ function createMockDb(): DatabaseInterface {
           updatedAt: now,
         })
       ),
-      update: mock(() =>
+      update: vi.fn(() =>
         Promise.resolve({
           id: "r1",
           personId: "p1",
@@ -96,7 +96,7 @@ function createMockDb(): DatabaseInterface {
       ),
     },
     suggestion: {
-      create: mock(() =>
+      create: vi.fn(() =>
         Promise.resolve({
           id: "s1",
           type: "PERSON_UPDATE",
@@ -113,8 +113,8 @@ function createMockDb(): DatabaseInterface {
       ),
     },
     familySettings: {
-      findFirst: mock(() => Promise.resolve(null)),
-      create: mock(() =>
+      findFirst: vi.fn(() => Promise.resolve(null)),
+      create: vi.fn(() =>
         Promise.resolve({
           id: "fs1",
           familyName: "Test Family",
@@ -122,7 +122,7 @@ function createMockDb(): DatabaseInterface {
           locale: "en",
         })
       ),
-      update: mock(() =>
+      update: vi.fn(() =>
         Promise.resolve({
           id: "fs1",
           familyName: "Test Family",
@@ -132,7 +132,7 @@ function createMockDb(): DatabaseInterface {
       ),
     },
     auditLog: {
-      create: mock(() =>
+      create: vi.fn(() =>
         Promise.resolve({
           id: "al1",
           userId: "u1",
@@ -363,7 +363,7 @@ describe("ConflictResolver", () => {
     });
 
     it("skips existing settings when strategy is skip", async () => {
-      mockDb.familySettings.findFirst = mock(() =>
+      mockDb.familySettings.findFirst = vi.fn(() =>
         Promise.resolve(
           createMockSettingsRecord({ id: "fs1", familyName: "Existing" })
         )
@@ -383,7 +383,7 @@ describe("ConflictResolver", () => {
     });
 
     it("replaces existing settings when strategy is replace", async () => {
-      mockDb.familySettings.findFirst = mock(() =>
+      mockDb.familySettings.findFirst = vi.fn(() =>
         Promise.resolve(
           createMockSettingsRecord({ id: "fs1", familyName: "Existing" })
         )
@@ -402,7 +402,7 @@ describe("ConflictResolver", () => {
     });
 
     it("handles import errors gracefully", async () => {
-      mockDb.person.create = mock(() =>
+      mockDb.person.create = vi.fn(() =>
         Promise.reject(new Error("Database error"))
       );
 
@@ -465,7 +465,7 @@ describe("ConflictResolver", () => {
 
   describe("strategy: skip", () => {
     it("handles skip strategy for settings", async () => {
-      mockDb.familySettings.findFirst = mock(() =>
+      mockDb.familySettings.findFirst = vi.fn(() =>
         Promise.resolve(
           createMockSettingsRecord({ id: "fs1", familyName: "Existing Family" })
         )
@@ -556,7 +556,7 @@ describe("ConflictResolver", () => {
 
   describe("strategy: replace", () => {
     it("handles replace strategy for settings", async () => {
-      mockDb.familySettings.findFirst = mock(() =>
+      mockDb.familySettings.findFirst = vi.fn(() =>
         Promise.resolve(
           createMockSettingsRecord({ id: "fs1", familyName: "Existing Family" })
         )
@@ -575,7 +575,7 @@ describe("ConflictResolver", () => {
     });
 
     it("replaces existing person with conflict", async () => {
-      mockDb.person.findUnique = mock(() =>
+      mockDb.person.findUnique = vi.fn(() =>
         Promise.resolve(
           createMockPersonRecord({
             id: "p1",
@@ -609,7 +609,7 @@ describe("ConflictResolver", () => {
     });
 
     it("replaces existing user with conflict", async () => {
-      mockDb.user.findUnique = mock(() =>
+      mockDb.user.findUnique = vi.fn(() =>
         Promise.resolve(
           createMockUserRecord({
             id: "u1",
@@ -643,7 +643,7 @@ describe("ConflictResolver", () => {
     });
 
     it("replaces existing relationship with conflict", async () => {
-      mockDb.relationship.findUnique = mock(() =>
+      mockDb.relationship.findUnique = vi.fn(() =>
         Promise.resolve(
           createMockRelationshipRecord({ id: "r1", type: "PARENT" })
         )
@@ -673,7 +673,7 @@ describe("ConflictResolver", () => {
     });
 
     it("creates new record when existing not found during replace", async () => {
-      mockDb.person.findUnique = mock(() => Promise.resolve(null));
+      mockDb.person.findUnique = vi.fn(() => Promise.resolve(null));
 
       const resolver = new ConflictResolver("replace", mockImportedBy, mockDb);
       const extractedFiles = new Map<string, unknown>();
@@ -700,7 +700,7 @@ describe("ConflictResolver", () => {
 
   describe("strategy: merge", () => {
     it("merges existing settings with incoming data", async () => {
-      mockDb.familySettings.findFirst = mock(() =>
+      mockDb.familySettings.findFirst = vi.fn(() =>
         Promise.resolve(
           createMockSettingsRecord({
             id: "fs1",
@@ -724,7 +724,7 @@ describe("ConflictResolver", () => {
     });
 
     it("merges existing person with incoming data", async () => {
-      mockDb.person.findUnique = mock(() =>
+      mockDb.person.findUnique = vi.fn(() =>
         Promise.resolve(
           createMockPersonRecord({
             id: "p1",
@@ -759,7 +759,7 @@ describe("ConflictResolver", () => {
     });
 
     it("merges existing user with incoming data", async () => {
-      mockDb.user.findUnique = mock(() =>
+      mockDb.user.findUnique = vi.fn(() =>
         Promise.resolve(
           createMockUserRecord({
             id: "u1",
@@ -799,7 +799,7 @@ describe("ConflictResolver", () => {
     });
 
     it("merges existing relationship with incoming data", async () => {
-      mockDb.relationship.findUnique = mock(() =>
+      mockDb.relationship.findUnique = vi.fn(() =>
         Promise.resolve(
           createMockRelationshipRecord({
             id: "r1",
@@ -834,7 +834,7 @@ describe("ConflictResolver", () => {
     });
 
     it("creates new record when existing not found during merge", async () => {
-      mockDb.person.findUnique = mock(() => Promise.resolve(null));
+      mockDb.person.findUnique = vi.fn(() => Promise.resolve(null));
 
       const resolver = new ConflictResolver("merge", mockImportedBy, mockDb);
       const extractedFiles = new Map<string, unknown>();
@@ -859,7 +859,7 @@ describe("ConflictResolver", () => {
     });
 
     it("preserves existing values when incoming is empty", async () => {
-      mockDb.person.findUnique = mock(() =>
+      mockDb.person.findUnique = vi.fn(() =>
         Promise.resolve(
           createMockPersonRecord({
             id: "p1",
@@ -975,7 +975,7 @@ describe("ConflictResolver", () => {
 
   describe("suggestions import", () => {
     it("skips suggestion when submitter not found", async () => {
-      mockDb.user.findUnique = mock(() => Promise.resolve(null));
+      mockDb.user.findUnique = vi.fn(() => Promise.resolve(null));
 
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);
       const extractedFiles = new Map<string, unknown>();
@@ -997,12 +997,12 @@ describe("ConflictResolver", () => {
     });
 
     it("skips suggestion when target person not found", async () => {
-      mockDb.user.findUnique = mock(() =>
+      mockDb.user.findUnique = vi.fn(() =>
         Promise.resolve(
           createMockUserRecord({ id: "u1", email: "test@example.com" })
         )
       );
-      mockDb.person.findUnique = mock(() => Promise.resolve(null));
+      mockDb.person.findUnique = vi.fn(() => Promise.resolve(null));
 
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);
       const extractedFiles = new Map<string, unknown>();
@@ -1027,12 +1027,12 @@ describe("ConflictResolver", () => {
     });
 
     it("imports suggestion when all references exist", async () => {
-      mockDb.user.findUnique = mock(() =>
+      mockDb.user.findUnique = vi.fn(() =>
         Promise.resolve(
           createMockUserRecord({ id: "u1", email: "test@example.com" })
         )
       );
-      mockDb.person.findUnique = mock(() =>
+      mockDb.person.findUnique = vi.fn(() =>
         Promise.resolve(createMockPersonRecord({ id: "p1", firstName: "John" }))
       );
 
@@ -1060,7 +1060,7 @@ describe("ConflictResolver", () => {
 
   describe("audit logs import", () => {
     it("skips audit log when user not found", async () => {
-      mockDb.user.findUnique = mock(() => Promise.resolve(null));
+      mockDb.user.findUnique = vi.fn(() => Promise.resolve(null));
 
       const resolver = new ConflictResolver("skip", mockImportedBy, mockDb);
       const extractedFiles = new Map<string, unknown>();
@@ -1084,7 +1084,7 @@ describe("ConflictResolver", () => {
     });
 
     it("imports audit log when user exists", async () => {
-      mockDb.user.findUnique = mock(() =>
+      mockDb.user.findUnique = vi.fn(() =>
         Promise.resolve(
           createMockUserRecord({ id: "u1", email: "test@example.com" })
         )
@@ -1112,7 +1112,7 @@ describe("ConflictResolver", () => {
 
   describe("error handling", () => {
     it("captures person creation error in errors array", async () => {
-      mockDb.person.create = mock(() =>
+      mockDb.person.create = vi.fn(() =>
         Promise.reject(new Error("Database constraint violation"))
       );
 
@@ -1130,7 +1130,7 @@ describe("ConflictResolver", () => {
     });
 
     it("captures settings creation error in errors array", async () => {
-      mockDb.familySettings.create = mock(() =>
+      mockDb.familySettings.create = vi.fn(() =>
         Promise.reject(new Error("Settings error"))
       );
 
@@ -1148,7 +1148,7 @@ describe("ConflictResolver", () => {
     });
 
     it("captures relationship creation error in errors array", async () => {
-      mockDb.relationship.create = mock(() =>
+      mockDb.relationship.create = vi.fn(() =>
         Promise.reject(new Error("Relationship error"))
       );
 
@@ -1167,7 +1167,7 @@ describe("ConflictResolver", () => {
 
     it("continues processing after individual item errors", async () => {
       let callCount = 0;
-      mockDb.person.create = mock(() => {
+      mockDb.person.create = vi.fn(() => {
         callCount++;
         if (callCount === 1) {
           return Promise.reject(new Error("First person error"));

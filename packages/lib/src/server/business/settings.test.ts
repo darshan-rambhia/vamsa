@@ -10,7 +10,7 @@
  * Uses module mocking for database dependency injection.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 import {
@@ -25,21 +25,21 @@ import type { UpdateFamilySettingsInput } from "./settings";
 const mockDrizzleDb = {
   query: {
     familySettings: {
-      findFirst: mock(() => Promise.resolve(null)),
+      findFirst: vi.fn(() => Promise.resolve(null)),
     },
     users: {
-      findFirst: mock(() => Promise.resolve(null)),
+      findFirst: vi.fn(() => Promise.resolve(null)),
     },
   },
-  insert: mock(() => ({
-    values: mock(() => ({
-      returning: mock(() => Promise.resolve([])),
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({
+      returning: vi.fn(() => Promise.resolve([])),
     })),
   })),
-  update: mock(() => ({
-    set: mock(() => ({
-      where: mock(() => ({
-        returning: mock(() => Promise.resolve([])),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn(() => ({
+        returning: vi.fn(() => Promise.resolve([])),
       })),
     })),
   })),
@@ -49,19 +49,19 @@ describe("Settings Business Logic", () => {
   beforeEach(() => {
     clearAllMocks();
     (
-      mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof mock>
+      mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+      mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
     ).mockClear();
-    (mockDrizzleDb.insert as ReturnType<typeof mock>).mockClear();
-    (mockDrizzleDb.update as ReturnType<typeof mock>).mockClear();
+    (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockClear();
+    (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockClear();
   });
 
   describe("getFamilySettingsData", () => {
     it("should return default family settings when none exist", async () => {
       (
-        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       const result = await getFamilySettingsData(mockDrizzleDb as any);
@@ -94,7 +94,7 @@ describe("Settings Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockSettings);
 
       const result = await getFamilySettingsData(mockDrizzleDb as any);
@@ -114,7 +114,7 @@ describe("Settings Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockSettings);
 
       const result = await getFamilySettingsData(mockDrizzleDb as any);
@@ -148,12 +148,12 @@ describe("Settings Business Logic", () => {
 
       // Mock: first findFirst returns null, insert returns created settings
       (
-        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
-      const mockReturning = mock(() => Promise.resolve([createdSettings]));
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValueOnce({
-        values: mock(() => ({ returning: mockReturning })),
+      const mockReturning = vi.fn(() => Promise.resolve([createdSettings]));
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        values: vi.fn(() => ({ returning: mockReturning })),
       } as any);
 
       const result = await updateFamilySettingsData(
@@ -200,13 +200,13 @@ describe("Settings Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(existingSettings);
 
-      const mockReturning = mock(() => Promise.resolve([updatedSettings]));
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValueOnce({
-        set: mock(() => ({
-          where: mock(() => ({ returning: mockReturning })),
+      const mockReturning = vi.fn(() => Promise.resolve([updatedSettings]));
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        set: vi.fn(() => ({
+          where: vi.fn(() => ({ returning: mockReturning })),
         })),
       } as any);
 
@@ -245,15 +245,15 @@ describe("Settings Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.familySettings.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(existingSettings);
 
-      const mockReturning = mock(() =>
+      const mockReturning = vi.fn(() =>
         Promise.resolve([{ ...existingSettings }])
       );
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValueOnce({
-        set: mock(() => ({
-          where: mock(() => ({ returning: mockReturning })),
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        set: vi.fn(() => ({
+          where: vi.fn(() => ({ returning: mockReturning })),
         })),
       } as any);
 
@@ -276,7 +276,7 @@ describe("Settings Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
 
       const result = await getUserLanguagePreferenceData(
@@ -294,7 +294,7 @@ describe("Settings Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
 
       const result = await getUserLanguagePreferenceData(
@@ -307,7 +307,7 @@ describe("Settings Business Logic", () => {
 
     it("should throw error when user not found", async () => {
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
@@ -334,10 +334,10 @@ describe("Settings Business Logic", () => {
         preferredLanguage: "hi",
       };
 
-      const mockReturning = mock(() => Promise.resolve([updateData]));
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValueOnce({
-        set: mock(() => ({
-          where: mock(() => ({ returning: mockReturning })),
+      const mockReturning = vi.fn(() => Promise.resolve([updateData]));
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        set: vi.fn(() => ({
+          where: vi.fn(() => ({ returning: mockReturning })),
         })),
       } as any);
 
@@ -360,10 +360,10 @@ describe("Settings Business Logic", () => {
         preferredLanguage: null,
       };
 
-      const mockReturning = mock(() => Promise.resolve([updateData]));
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValueOnce({
-        set: mock(() => ({
-          where: mock(() => ({ returning: mockReturning })),
+      const mockReturning = vi.fn(() => Promise.resolve([updateData]));
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        set: vi.fn(() => ({
+          where: vi.fn(() => ({ returning: mockReturning })),
         })),
       } as any);
 
@@ -380,10 +380,10 @@ describe("Settings Business Logic", () => {
       const languages = ["en", "hi", "es"];
 
       for (const lang of languages) {
-        (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValueOnce({
-          set: mock(() => ({
-            where: mock(() => ({
-              returning: mock(() =>
+        (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+          set: vi.fn(() => ({
+            where: vi.fn(() => ({
+              returning: vi.fn(() =>
                 Promise.resolve([{ id: "user-123", preferredLanguage: lang }])
               ),
             })),

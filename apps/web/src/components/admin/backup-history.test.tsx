@@ -3,7 +3,7 @@
  * Tests rendering, table display, status badges, and action buttons
  */
 
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, vi } from "vitest";
 
 describe("BackupHistory Component", () => {
   const mockBackups = [
@@ -349,7 +349,7 @@ describe("BackupHistory Component", () => {
     it("should call downloadBackup when download clicked", () => {
       // When: User clicks download
       // Then: Call downloadBackup function
-      const downloadFn = mock((_id: string) => ({ url: `/download/${_id}` }));
+      const downloadFn = vi.fn((_id: string) => ({ url: `/download/${_id}` }));
       const backup = mockBackups[0];
       const result = downloadFn(backup.id);
       expect(result.url).toContain("backup-1");
@@ -358,7 +358,7 @@ describe("BackupHistory Component", () => {
     it("should call verifyBackup when verify clicked", () => {
       // When: User clicks verify
       // Then: Call verifyBackup function
-      const verifyFn = mock((_id: string) => ({ success: true }));
+      const verifyFn = vi.fn((_id: string) => ({ success: true }));
       const backup = mockBackups[0];
       const result = verifyFn(backup.id);
       expect(result.success).toBe(true);
@@ -367,7 +367,7 @@ describe("BackupHistory Component", () => {
     it("should call deleteBackup when delete clicked", () => {
       // When: User clicks delete
       // Then: Call deleteBackup function
-      const deleteFn = mock((_id: string) => ({ deleted: true }));
+      const deleteFn = vi.fn((_id: string) => ({ deleted: true }));
       const backup = mockBackups[0];
       const result = deleteFn(backup.id);
       expect(result.deleted).toBe(true);

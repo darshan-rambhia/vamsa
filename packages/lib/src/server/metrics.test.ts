@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Metrics
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import {
   recordChartMetrics,
   recordGedcomExport,

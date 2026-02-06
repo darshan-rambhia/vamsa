@@ -2,7 +2,7 @@
  * Unit Tests for GEDCOM Parser
  * Tests parsing of GEDCOM 5.5.1 and 7.0 format files
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { GedcomParser } from "./parser";
 
 describe("GedcomParser", () => {

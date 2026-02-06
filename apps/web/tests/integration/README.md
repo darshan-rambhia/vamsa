@@ -10,13 +10,13 @@ Integration tests validate server functions and business logic against a real Po
 ### 1. Start Test Database
 
 ```bash
-docker-compose -f docker/docker-compose.test.yml up -d
+docker compose -f docker/docker-compose.local.yml --profile test up -d
 ```
 
 Wait for the database to be healthy:
 
 ```bash
-docker-compose -f docker/docker-compose.test.yml logs postgres
+docker compose -f docker/docker-compose.local.yml --profile test logs postgres
 # Look for "database system is ready to accept connections"
 ```
 
@@ -35,12 +35,12 @@ bun test ./tests/integration/persons.int.ts
 ### 3. Stop Test Database
 
 ```bash
-docker-compose -f docker/docker-compose.test.yml down -v
+docker compose -f docker/docker-compose.local.yml --profile test down -v
 ```
 
 ## Environment Setup
 
-Integration tests use test database credentials defined in `docker-compose.test.yml`:
+Integration tests use test database credentials defined in `docker-compose.local.yml` (test profile):
 
 - **Host**: localhost
 - **Port**: 5433 (non-standard port to avoid conflicts with dev database on 5432)
@@ -305,7 +305,7 @@ To optimize:
 Test database is not running. Start it:
 
 ```bash
-docker-compose -f docker/docker-compose.test.yml up -d
+docker compose -f docker/docker-compose.local.yml --profile test up -d
 ```
 
 ### "Database does not exist" Error
@@ -313,7 +313,7 @@ docker-compose -f docker/docker-compose.test.yml up -d
 Database hasn't finished initializing. Wait and retry:
 
 ```bash
-docker-compose -f docker/docker-compose.test.yml logs postgres
+docker compose -f docker/docker-compose.local.yml --profile test logs postgres
 ```
 
 ### "Foreign key violation" Error

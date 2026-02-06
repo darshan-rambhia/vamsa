@@ -11,7 +11,7 @@
  * These tests focus on business rule validation and error handling.
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 
 // Simple pure functions to test
 function normalizeEmail(email: string): string {

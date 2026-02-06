@@ -10,7 +10,7 @@
  * Uses module mocking to inject mocked Drizzle ORM instance and logger
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllMocks } from "../../testing/shared-mocks";
 
 // Import after mocks are set up
@@ -26,21 +26,21 @@ const createMockDb = () => {
   let transactionResult: unknown = null;
 
   return {
-    select: mock(() => ({
-      from: mock(() => Promise.resolve([{ personCount: 10 }])),
+    select: vi.fn(() => ({
+      from: vi.fn(() => Promise.resolve([{ personCount: 10 }])),
     })),
-    insert: mock(() => ({
-      values: mock(() => Promise.resolve()),
+    insert: vi.fn(() => ({
+      values: vi.fn(() => Promise.resolve()),
     })),
     query: {
       auditLogs: {
-        findMany: mock(() => Promise.resolve([])),
+        findMany: vi.fn(() => Promise.resolve([])),
       },
     },
-    transaction: mock(async (callback: (tx: unknown) => Promise<unknown>) => {
+    transaction: vi.fn(async (callback: (tx: unknown) => Promise<unknown>) => {
       const mockTx = {
-        insert: mock(() => ({
-          values: mock(() => Promise.resolve()),
+        insert: vi.fn(() => ({
+          values: vi.fn(() => Promise.resolve()),
         })),
       };
       transactionResult = await callback(mockTx);
@@ -56,7 +56,7 @@ const mockDrizzleDb = createMockDb();
 
 // Add auditLogs query to the mock
 mockDrizzleDb.query.auditLogs = {
-  findMany: mock(() => Promise.resolve([])),
+  findMany: vi.fn(() => Promise.resolve([])),
 };
 
 describe("restore business logic", () => {
@@ -325,7 +325,7 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      mockDrizzleDb.query.auditLogs.findMany = mock(async () => [
+      mockDrizzleDb.query.auditLogs.findMany = vi.fn(async () => [
         {
           id: "log-1",
           createdAt: new Date("2024-01-01"),
@@ -365,7 +365,7 @@ describe("restore business logic", () => {
       };
 
       // Mock with both successful and failed imports
-      mockDrizzleDb.query.auditLogs.findMany = mock(async () => [
+      mockDrizzleDb.query.auditLogs.findMany = vi.fn(async () => [
         {
           id: "log-1",
           createdAt: new Date("2024-01-01"),
@@ -402,7 +402,7 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      mockDrizzleDb.query.auditLogs.findMany = mock(async () => {
+      mockDrizzleDb.query.auditLogs.findMany = vi.fn(async () => {
         const entries = [];
         for (let i = 0; i < 50; i++) {
           entries.push({
@@ -433,7 +433,7 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      mockDrizzleDb.query.auditLogs.findMany = mock(async () => [
+      mockDrizzleDb.query.auditLogs.findMany = vi.fn(async () => [
         {
           id: "log-1",
           createdAt: new Date("2024-01-01"),
@@ -477,7 +477,7 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      mockDrizzleDb.query.auditLogs.findMany = mock(async () => [
+      mockDrizzleDb.query.auditLogs.findMany = vi.fn(async () => [
         {
           id: "log-1",
           createdAt: new Date("2024-01-01"),
@@ -505,7 +505,7 @@ describe("restore business logic", () => {
         role: "ADMIN" as const,
       };
 
-      mockDrizzleDb.query.auditLogs.findMany = mock(async () => [
+      mockDrizzleDb.query.auditLogs.findMany = vi.fn(async () => [
         {
           id: "log-1",
           createdAt: new Date("2024-01-01"),

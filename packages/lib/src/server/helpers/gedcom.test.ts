@@ -13,7 +13,7 @@
  * All functions are pure with no side effects, making them fully testable.
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   calculateGedcomStatistics,
   formatGedcomFileName,
@@ -390,13 +390,13 @@ describe("GEDCOM helpers", () => {
     it("should end with .ged extension", () => {
       const fileName = formatGedcomFileName();
 
-      expect(fileName).toEndWith(".ged");
+      expect(fileName.endsWith(".ged")).toBe(true);
     });
 
     it("should start with family-tree prefix", () => {
       const fileName = formatGedcomFileName();
 
-      expect(fileName).toStartWith("family-tree-");
+      expect(fileName.startsWith("family-tree-")).toBe(true);
     });
 
     it("should generate consistent format", () => {

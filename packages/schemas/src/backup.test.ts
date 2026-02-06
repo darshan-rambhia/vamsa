@@ -2,17 +2,22 @@
  * Unit Tests for Backup Export Schemas
  * Tests Zod schema validation for backup operations
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   backupExportSchema,
   backupImportOptionsSchema,
   backupMetadataSchema,
   backupSchema,
   backupSettingsSchema,
+  backupStatusEnum,
+  backupTypeEnum,
   backupValidationPreviewSchema,
   conflictResolutionStrategy,
   conflictSchema,
+  importPreviewSchema,
   importResultSchema,
+  listBackupsInputSchema,
+  storageProviderEnum,
   validationResultSchema,
 } from "./backup";
 import type { BackupExportInput, BackupMetadata } from "./backup";
@@ -852,9 +857,7 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() =>
-        require("./backup").importPreviewSchema.parse(preview)
-      ).not.toThrow();
+      expect(() => importPreviewSchema.parse(preview)).not.toThrow();
     });
 
     it("should validate import preview with no conflicts", () => {
@@ -884,9 +887,7 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() =>
-        require("./backup").importPreviewSchema.parse(preview)
-      ).not.toThrow();
+      expect(() => importPreviewSchema.parse(preview)).not.toThrow();
     });
 
     it("should validate import preview with zero duration", () => {
@@ -916,9 +917,7 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() =>
-        require("./backup").importPreviewSchema.parse(preview)
-      ).not.toThrow();
+      expect(() => importPreviewSchema.parse(preview)).not.toThrow();
     });
 
     it("should validate import preview with large numbers", () => {
@@ -948,9 +947,7 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() =>
-        require("./backup").importPreviewSchema.parse(preview)
-      ).not.toThrow();
+      expect(() => importPreviewSchema.parse(preview)).not.toThrow();
     });
   });
 
@@ -981,9 +978,7 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() =>
-        require("./backup").importPreviewSchema.parse(preview)
-      ).toThrow();
+      expect(() => importPreviewSchema.parse(preview)).toThrow();
     });
 
     it("should reject missing statistics", () => {
@@ -995,9 +990,7 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() =>
-        require("./backup").importPreviewSchema.parse(preview)
-      ).toThrow();
+      expect(() => importPreviewSchema.parse(preview)).toThrow();
     });
 
     it("should reject missing estimatedDuration", () => {
@@ -1023,9 +1016,7 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() =>
-        require("./backup").importPreviewSchema.parse(preview)
-      ).toThrow();
+      expect(() => importPreviewSchema.parse(preview)).toThrow();
     });
 
     it("should reject negative duration values", () => {
@@ -1055,9 +1046,7 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() =>
-        require("./backup").importPreviewSchema.parse(preview)
-      ).not.toThrow();
+      expect(() => importPreviewSchema.parse(preview)).not.toThrow();
     });
 
     it("should reject negative statistics", () => {
@@ -1087,9 +1076,7 @@ describe("importPreviewSchema", () => {
         },
       };
 
-      expect(() =>
-        require("./backup").importPreviewSchema.parse(preview)
-      ).not.toThrow();
+      expect(() => importPreviewSchema.parse(preview)).not.toThrow();
     });
   });
 });
@@ -1097,104 +1084,87 @@ describe("importPreviewSchema", () => {
 describe("Enum schemas", () => {
   describe("storageProviderEnum", () => {
     it("should accept LOCAL provider", () => {
-      const { storageProviderEnum } = require("./backup");
       const parsed = storageProviderEnum.parse("LOCAL");
       expect(parsed).toBe("LOCAL");
     });
 
     it("should accept S3 provider", () => {
-      const { storageProviderEnum } = require("./backup");
       const parsed = storageProviderEnum.parse("S3");
       expect(parsed).toBe("S3");
     });
 
     it("should accept R2 provider", () => {
-      const { storageProviderEnum } = require("./backup");
       const parsed = storageProviderEnum.parse("R2");
       expect(parsed).toBe("R2");
     });
 
     it("should accept B2 provider", () => {
-      const { storageProviderEnum } = require("./backup");
       const parsed = storageProviderEnum.parse("B2");
       expect(parsed).toBe("B2");
     });
 
     it("should reject invalid provider", () => {
-      const { storageProviderEnum } = require("./backup");
       expect(() => storageProviderEnum.parse("INVALID")).toThrow();
     });
 
     it("should reject lowercase provider", () => {
-      const { storageProviderEnum } = require("./backup");
       expect(() => storageProviderEnum.parse("local")).toThrow();
     });
   });
 
   describe("backupStatusEnum", () => {
     it("should accept PENDING status", () => {
-      const { backupStatusEnum } = require("./backup");
       const parsed = backupStatusEnum.parse("PENDING");
       expect(parsed).toBe("PENDING");
     });
 
     it("should accept IN_PROGRESS status", () => {
-      const { backupStatusEnum } = require("./backup");
       const parsed = backupStatusEnum.parse("IN_PROGRESS");
       expect(parsed).toBe("IN_PROGRESS");
     });
 
     it("should accept COMPLETED status", () => {
-      const { backupStatusEnum } = require("./backup");
       const parsed = backupStatusEnum.parse("COMPLETED");
       expect(parsed).toBe("COMPLETED");
     });
 
     it("should accept FAILED status", () => {
-      const { backupStatusEnum } = require("./backup");
       const parsed = backupStatusEnum.parse("FAILED");
       expect(parsed).toBe("FAILED");
     });
 
     it("should accept DELETED status", () => {
-      const { backupStatusEnum } = require("./backup");
       const parsed = backupStatusEnum.parse("DELETED");
       expect(parsed).toBe("DELETED");
     });
 
     it("should reject invalid status", () => {
-      const { backupStatusEnum } = require("./backup");
       expect(() => backupStatusEnum.parse("UNKNOWN")).toThrow();
     });
   });
 
   describe("backupTypeEnum", () => {
     it("should accept DAILY type", () => {
-      const { backupTypeEnum } = require("./backup");
       const parsed = backupTypeEnum.parse("DAILY");
       expect(parsed).toBe("DAILY");
     });
 
     it("should accept WEEKLY type", () => {
-      const { backupTypeEnum } = require("./backup");
       const parsed = backupTypeEnum.parse("WEEKLY");
       expect(parsed).toBe("WEEKLY");
     });
 
     it("should accept MONTHLY type", () => {
-      const { backupTypeEnum } = require("./backup");
       const parsed = backupTypeEnum.parse("MONTHLY");
       expect(parsed).toBe("MONTHLY");
     });
 
     it("should accept MANUAL type", () => {
-      const { backupTypeEnum } = require("./backup");
       const parsed = backupTypeEnum.parse("MANUAL");
       expect(parsed).toBe("MANUAL");
     });
 
     it("should reject invalid type", () => {
-      const { backupTypeEnum } = require("./backup");
       expect(() => backupTypeEnum.parse("HOURLY")).toThrow();
     });
   });
@@ -1203,7 +1173,6 @@ describe("Enum schemas", () => {
 describe("backupSettingsSchema", () => {
   describe("Valid backup settings", () => {
     it("should validate with all defaults", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = {};
 
       const parsed = backupSettingsSchema.parse(settings);
@@ -1228,7 +1197,6 @@ describe("backupSettingsSchema", () => {
     });
 
     it("should validate complete settings", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = {
         id: "settings-1",
         dailyEnabled: true,
@@ -1258,21 +1226,18 @@ describe("backupSettingsSchema", () => {
     });
 
     it("should validate with weeklyDay boundary 0", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { weeklyDay: 0 };
       const parsed = backupSettingsSchema.parse(settings);
       expect(parsed.weeklyDay).toBe(0);
     });
 
     it("should validate with weeklyDay boundary 6", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { weeklyDay: 6 };
       const parsed = backupSettingsSchema.parse(settings);
       expect(parsed.weeklyDay).toBe(6);
     });
 
     it("should validate all weeklyDay values", () => {
-      const { backupSettingsSchema } = require("./backup");
       for (let day = 0; day <= 6; day++) {
         const settings = { weeklyDay: day };
         const parsed = backupSettingsSchema.parse(settings);
@@ -1281,21 +1246,18 @@ describe("backupSettingsSchema", () => {
     });
 
     it("should validate monthlyDay boundary 1", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { monthlyDay: 1 };
       const parsed = backupSettingsSchema.parse(settings);
       expect(parsed.monthlyDay).toBe(1);
     });
 
     it("should validate monthlyDay boundary 28", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { monthlyDay: 28 };
       const parsed = backupSettingsSchema.parse(settings);
       expect(parsed.monthlyDay).toBe(28);
     });
 
     it("should validate compressLevel from 0 to 9", () => {
-      const { backupSettingsSchema } = require("./backup");
       for (let level = 0; level <= 9; level++) {
         const settings = { compressLevel: level };
         const parsed = backupSettingsSchema.parse(settings);
@@ -1304,7 +1266,6 @@ describe("backupSettingsSchema", () => {
     });
 
     it("should validate minimum retention values", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = {
         dailyRetention: 1,
         weeklyRetention: 1,
@@ -1314,7 +1275,6 @@ describe("backupSettingsSchema", () => {
     });
 
     it("should validate large retention values", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = {
         dailyRetention: 365,
         weeklyRetention: 52,
@@ -1324,7 +1284,6 @@ describe("backupSettingsSchema", () => {
     });
 
     it("should validate with null storageBucket", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = {
         storageBucket: null,
       };
@@ -1332,7 +1291,6 @@ describe("backupSettingsSchema", () => {
     });
 
     it("should validate with null storageRegion", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = {
         storageRegion: null,
       };
@@ -1340,7 +1298,6 @@ describe("backupSettingsSchema", () => {
     });
 
     it("should validate with null notificationEmails", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = {
         notificationEmails: null,
       };
@@ -1348,7 +1305,6 @@ describe("backupSettingsSchema", () => {
     });
 
     it("should validate all storage providers", () => {
-      const { backupSettingsSchema } = require("./backup");
       const providers = ["LOCAL", "S3", "R2", "B2"];
       providers.forEach((provider) => {
         const settings = { storageProvider: provider };
@@ -1360,67 +1316,56 @@ describe("backupSettingsSchema", () => {
 
   describe("Invalid backup settings", () => {
     it("should reject weeklyDay below 0", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { weeklyDay: -1 };
       expect(() => backupSettingsSchema.parse(settings)).toThrow();
     });
 
     it("should reject weeklyDay above 6", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { weeklyDay: 7 };
       expect(() => backupSettingsSchema.parse(settings)).toThrow();
     });
 
     it("should reject monthlyDay below 1", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { monthlyDay: 0 };
       expect(() => backupSettingsSchema.parse(settings)).toThrow();
     });
 
     it("should reject monthlyDay above 28", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { monthlyDay: 29 };
       expect(() => backupSettingsSchema.parse(settings)).toThrow();
     });
 
     it("should reject compressLevel below 0", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { compressLevel: -1 };
       expect(() => backupSettingsSchema.parse(settings)).toThrow();
     });
 
     it("should reject compressLevel above 9", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { compressLevel: 10 };
       expect(() => backupSettingsSchema.parse(settings)).toThrow();
     });
 
     it("should reject dailyRetention below 1", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { dailyRetention: 0 };
       expect(() => backupSettingsSchema.parse(settings)).toThrow();
     });
 
     it("should reject weeklyRetention below 1", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { weeklyRetention: 0 };
       expect(() => backupSettingsSchema.parse(settings)).toThrow();
     });
 
     it("should reject monthlyRetention below 1", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { monthlyRetention: 0 };
       expect(() => backupSettingsSchema.parse(settings)).toThrow();
     });
 
     it("should reject non-boolean dailyEnabled", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { dailyEnabled: "yes" };
       expect(() => backupSettingsSchema.parse(settings)).toThrow();
     });
 
     it("should reject invalid storageProvider", () => {
-      const { backupSettingsSchema } = require("./backup");
       const settings = { storageProvider: "INVALID" };
       expect(() => backupSettingsSchema.parse(settings)).toThrow();
     });
@@ -1430,7 +1375,6 @@ describe("backupSettingsSchema", () => {
 describe("backupSchema", () => {
   describe("Valid backups", () => {
     it("should validate complete backup", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: "backup-2024-01-24.tar.gz",
@@ -1452,7 +1396,6 @@ describe("backupSchema", () => {
     });
 
     it("should validate with Date objects", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: "backup.tar.gz",
@@ -1474,7 +1417,6 @@ describe("backupSchema", () => {
     });
 
     it("should validate with null counts", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: "backup.tar.gz",
@@ -1496,7 +1438,6 @@ describe("backupSchema", () => {
     });
 
     it("should validate with error message", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: "backup.tar.gz",
@@ -1518,7 +1459,6 @@ describe("backupSchema", () => {
     });
 
     it("should validate with deletedAt date", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: "backup.tar.gz",
@@ -1540,7 +1480,6 @@ describe("backupSchema", () => {
     });
 
     it("should validate with large size", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: "backup.tar.gz",
@@ -1562,7 +1501,6 @@ describe("backupSchema", () => {
     });
 
     it("should validate all backup types", () => {
-      const { backupSchema } = require("./backup");
       const types = ["DAILY", "WEEKLY", "MONTHLY", "MANUAL"];
       types.forEach((type) => {
         const backup = {
@@ -1587,7 +1525,6 @@ describe("backupSchema", () => {
     });
 
     it("should validate all backup statuses", () => {
-      const { backupSchema } = require("./backup");
       const statuses = [
         "PENDING",
         "IN_PROGRESS",
@@ -1618,7 +1555,6 @@ describe("backupSchema", () => {
     });
 
     it("should validate all storage locations", () => {
-      const { backupSchema } = require("./backup");
       const locations = ["LOCAL", "S3", "R2", "B2"];
       locations.forEach((location) => {
         const backup = {
@@ -1643,7 +1579,6 @@ describe("backupSchema", () => {
     });
 
     it("should validate with zero counts", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: "backup.tar.gz",
@@ -1665,7 +1600,6 @@ describe("backupSchema", () => {
     });
 
     it("should validate with zero size", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: "backup.tar.gz",
@@ -1689,7 +1623,6 @@ describe("backupSchema", () => {
 
   describe("Invalid backups", () => {
     it("should reject missing id", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         filename: "backup.tar.gz",
         type: "DAILY",
@@ -1710,7 +1643,6 @@ describe("backupSchema", () => {
     });
 
     it("should reject missing filename", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         type: "DAILY",
@@ -1731,7 +1663,6 @@ describe("backupSchema", () => {
     });
 
     it("should reject invalid type", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: "backup.tar.gz",
@@ -1753,7 +1684,6 @@ describe("backupSchema", () => {
     });
 
     it("should reject invalid status", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: "backup.tar.gz",
@@ -1775,7 +1705,6 @@ describe("backupSchema", () => {
     });
 
     it("should reject invalid location", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: "backup.tar.gz",
@@ -1797,7 +1726,6 @@ describe("backupSchema", () => {
     });
 
     it("should reject non-string filename", () => {
-      const { backupSchema } = require("./backup");
       const backup = {
         id: "backup-1",
         filename: 123,
@@ -1823,7 +1751,6 @@ describe("backupSchema", () => {
 describe("listBackupsInputSchema", () => {
   describe("Valid list inputs", () => {
     it("should validate with defaults", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = {};
       const parsed = listBackupsInputSchema.parse(input);
 
@@ -1832,7 +1759,6 @@ describe("listBackupsInputSchema", () => {
     });
 
     it("should validate minimum limit (1)", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { limit: 1 };
       const parsed = listBackupsInputSchema.parse(input);
 
@@ -1840,7 +1766,6 @@ describe("listBackupsInputSchema", () => {
     });
 
     it("should validate maximum limit (100)", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { limit: 100 };
       const parsed = listBackupsInputSchema.parse(input);
 
@@ -1848,7 +1773,6 @@ describe("listBackupsInputSchema", () => {
     });
 
     it("should validate mid-range limits", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const limits = [10, 25, 50, 75, 100];
       limits.forEach((limit) => {
         const input = { limit };
@@ -1858,7 +1782,6 @@ describe("listBackupsInputSchema", () => {
     });
 
     it("should validate zero offset", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { offset: 0 };
       const parsed = listBackupsInputSchema.parse(input);
 
@@ -1866,7 +1789,6 @@ describe("listBackupsInputSchema", () => {
     });
 
     it("should validate large offset", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { offset: 10000 };
       const parsed = listBackupsInputSchema.parse(input);
 
@@ -1874,7 +1796,6 @@ describe("listBackupsInputSchema", () => {
     });
 
     it("should validate complete pagination input", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { limit: 25, offset: 50 };
       const parsed = listBackupsInputSchema.parse(input);
 
@@ -1885,31 +1806,26 @@ describe("listBackupsInputSchema", () => {
 
   describe("Invalid list inputs", () => {
     it("should reject limit below 1", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { limit: 0 };
       expect(() => listBackupsInputSchema.parse(input)).toThrow();
     });
 
     it("should reject limit above 100", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { limit: 101 };
       expect(() => listBackupsInputSchema.parse(input)).toThrow();
     });
 
     it("should reject negative offset", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { offset: -1 };
       expect(() => listBackupsInputSchema.parse(input)).toThrow();
     });
 
     it("should reject non-integer limit", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { limit: "50" };
       expect(() => listBackupsInputSchema.parse(input)).toThrow();
     });
 
     it("should accept float limit (coerced)", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { limit: 50.5 };
       // Zod accepts floats for number fields
       const parsed = listBackupsInputSchema.parse(input);
@@ -1917,13 +1833,11 @@ describe("listBackupsInputSchema", () => {
     });
 
     it("should reject non-integer offset", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { offset: "10" };
       expect(() => listBackupsInputSchema.parse(input)).toThrow();
     });
 
     it("should accept float offset (coerced)", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { offset: 10.5 };
       // Zod accepts floats for number fields
       const parsed = listBackupsInputSchema.parse(input);
@@ -1931,7 +1845,6 @@ describe("listBackupsInputSchema", () => {
     });
 
     it("should reject null values", () => {
-      const { listBackupsInputSchema } = require("./backup");
       const input = { limit: null };
       expect(() => listBackupsInputSchema.parse(input)).toThrow();
     });

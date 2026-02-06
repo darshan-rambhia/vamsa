@@ -19,7 +19,7 @@
  * Uses module mocking to inject mocked Drizzle ORM instance
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllMocks } from "../../testing/shared-mocks";
 
 // Import after mocks are set up
@@ -45,9 +45,9 @@ const createMockDb = () => {
   let updateReturnValue: Array<unknown> = [];
 
   const createUpdateChain = () => ({
-    set: mock(() => ({
-      where: mock(() => ({
-        returning: mock(() => Promise.resolve(updateReturnValue)),
+    set: vi.fn(() => ({
+      where: vi.fn(() => ({
+        returning: vi.fn(() => Promise.resolve(updateReturnValue)),
       })),
     })),
   });
@@ -55,30 +55,30 @@ const createMockDb = () => {
   return {
     query: {
       places: {
-        findFirst: mock(async () => queryFindFirstResult),
-        findMany: mock(async () => queryFindManyResults),
+        findFirst: vi.fn(async () => queryFindFirstResult),
+        findMany: vi.fn(async () => queryFindManyResults),
       },
       placePersonLinks: {
-        findFirst: mock(async () => null),
-        findMany: mock(async () => queryFindManyResults),
+        findFirst: vi.fn(async () => null),
+        findMany: vi.fn(async () => queryFindManyResults),
       },
       persons: {
-        findFirst: mock(async () => queryFindFirstResult),
+        findFirst: vi.fn(async () => queryFindFirstResult),
       },
     },
-    select: mock(() => ({
-      from: mock(() => ({
-        where: mock(() => Promise.resolve(selectCountResults)),
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(() => Promise.resolve(selectCountResults)),
       })),
     })),
-    insert: mock(() => ({
-      values: mock(() => ({
-        returning: mock(() => Promise.resolve([queryFindFirstResult])),
+    insert: vi.fn(() => ({
+      values: vi.fn(() => ({
+        returning: vi.fn(() => Promise.resolve([queryFindFirstResult])),
       })),
     })),
-    update: mock(() => createUpdateChain()),
-    delete: mock(() => ({
-      where: mock(() => Promise.resolve()),
+    update: vi.fn(() => createUpdateChain()),
+    delete: vi.fn(() => ({
+      where: vi.fn(() => Promise.resolve()),
     })),
     setQueryFindFirstResult: (result: unknown) => {
       queryFindFirstResult = result;
@@ -304,15 +304,15 @@ describe("places business logic", () => {
       };
 
       let callCount = 0;
-      mockDrizzleDb.query.places.findFirst = mock(async () => {
+      mockDrizzleDb.query.places.findFirst = vi.fn(async () => {
         callCount++;
         if (callCount === 1) return parentPlace;
         return newPlace;
       }) as any;
 
-      mockDrizzleDb.insert = mock(() => ({
-        values: mock(() => ({
-          returning: mock(() => Promise.resolve([newPlace])),
+      mockDrizzleDb.insert = vi.fn(() => ({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([newPlace])),
         })),
       })) as any;
 
@@ -345,9 +345,9 @@ describe("places business logic", () => {
         updatedAt: new Date(),
       };
 
-      mockDrizzleDb.insert = mock(() => ({
-        values: mock(() => ({
-          returning: mock(() => Promise.resolve([newPlace])),
+      mockDrizzleDb.insert = vi.fn(() => ({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([newPlace])),
         })),
       })) as any;
 
@@ -366,7 +366,7 @@ describe("places business logic", () => {
     });
 
     it("should throw error when parent not found", async () => {
-      mockDrizzleDb.query.places.findFirst = mock(async () => null) as any;
+      mockDrizzleDb.query.places.findFirst = vi.fn(async () => null) as any;
 
       await expect(
         createPlaceData(
@@ -381,9 +381,9 @@ describe("places business logic", () => {
     });
 
     it("should throw error when insert returns empty", async () => {
-      mockDrizzleDb.insert = mock(() => ({
-        values: mock(() => ({
-          returning: mock(() => Promise.resolve([])),
+      mockDrizzleDb.insert = vi.fn(() => ({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([])),
         })),
       })) as any;
 
@@ -416,7 +416,7 @@ describe("places business logic", () => {
 
       const updatedPlace = { ...existingPlace, name: "Greater London" };
 
-      mockDrizzleDb.query.places.findFirst = mock(
+      mockDrizzleDb.query.places.findFirst = vi.fn(
         async () => existingPlace
       ) as any;
       mockDrizzleDb.setUpdateReturnValue([updatedPlace]);
@@ -435,7 +435,7 @@ describe("places business logic", () => {
     });
 
     it("should throw error when place not found", async () => {
-      mockDrizzleDb.query.places.findFirst = mock(async () => null) as any;
+      mockDrizzleDb.query.places.findFirst = vi.fn(async () => null) as any;
 
       await expect(
         updatePlaceData(
@@ -460,7 +460,7 @@ describe("places business logic", () => {
         updatedAt: new Date(),
       };
 
-      mockDrizzleDb.query.places.findFirst = mock(async () => place) as any;
+      mockDrizzleDb.query.places.findFirst = vi.fn(async () => place) as any;
 
       await expect(
         updatePlaceData(
@@ -487,7 +487,7 @@ describe("places business logic", () => {
         updatedAt: new Date(),
       };
 
-      mockDrizzleDb.query.places.findFirst = mock(async () => place) as any;
+      mockDrizzleDb.query.places.findFirst = vi.fn(async () => place) as any;
       mockDrizzleDb.setSelectCountResults([{ count: 0 }]);
 
       const result = await deletePlaceData("place-1", mockDrizzleDb as any);
@@ -509,7 +509,7 @@ describe("places business logic", () => {
         updatedAt: new Date(),
       };
 
-      mockDrizzleDb.query.places.findFirst = mock(async () => place) as any;
+      mockDrizzleDb.query.places.findFirst = vi.fn(async () => place) as any;
       mockDrizzleDb.setSelectCountResults([{ count: 5 }]);
 
       await expect(
@@ -520,7 +520,7 @@ describe("places business logic", () => {
     });
 
     it("should throw error when place not found", async () => {
-      mockDrizzleDb.query.places.findFirst = mock(async () => null) as any;
+      mockDrizzleDb.query.places.findFirst = vi.fn(async () => null) as any;
 
       await expect(
         deletePlaceData("nonexistent", mockDrizzleDb as any)
@@ -557,11 +557,11 @@ describe("places business logic", () => {
       };
 
       // Create separate mocks for different queries
-      const personsQuery = mock(async () => person) as any;
-      const placesQuery = mock(async () => place) as any;
+      const personsQuery = vi.fn(async () => person) as any;
+      const placesQuery = vi.fn(async () => place) as any;
 
       let placePersonLinksFindCount = 0;
-      const placePersonLinksQuery = mock(async () => {
+      const placePersonLinksQuery = vi.fn(async () => {
         placePersonLinksFindCount++;
         if (placePersonLinksFindCount === 1) {
           return null; // First call: check for duplicate returns nothing
@@ -574,8 +574,8 @@ describe("places business logic", () => {
       mockDrizzleDb.query.places.findFirst = placesQuery;
       mockDrizzleDb.query.placePersonLinks.findFirst = placePersonLinksQuery;
 
-      mockDrizzleDb.insert = mock(() => ({
-        values: mock(() => Promise.resolve()),
+      mockDrizzleDb.insert = vi.fn(() => ({
+        values: vi.fn(() => Promise.resolve()),
       })) as any;
 
       const result = await linkPersonToPlaceData(
@@ -597,7 +597,7 @@ describe("places business logic", () => {
     });
 
     it("should throw error when person not found", async () => {
-      mockDrizzleDb.query.persons.findFirst = mock(async () => null) as any;
+      mockDrizzleDb.query.persons.findFirst = vi.fn(async () => null) as any;
 
       await expect(
         linkPersonToPlaceData(
@@ -612,8 +612,8 @@ describe("places business logic", () => {
 
     it("should throw error when place not found", async () => {
       const person = { id: "person-1", firstName: "John" };
-      mockDrizzleDb.query.persons.findFirst = mock(async () => person) as any;
-      mockDrizzleDb.query.places.findFirst = mock(async () => null) as any;
+      mockDrizzleDb.query.persons.findFirst = vi.fn(async () => person) as any;
+      mockDrizzleDb.query.places.findFirst = vi.fn(async () => null) as any;
 
       await expect(
         linkPersonToPlaceData(
@@ -667,7 +667,7 @@ describe("places business logic", () => {
       };
 
       let callCount = 0;
-      mockDrizzleDb.query.places.findFirst = mock(async () => {
+      mockDrizzleDb.query.places.findFirst = vi.fn(async () => {
         callCount++;
         if (callCount === 1) return place;
         if (callCount === 2) return place.parent;
@@ -684,7 +684,7 @@ describe("places business logic", () => {
     });
 
     it("should throw error when place not found", async () => {
-      mockDrizzleDb.query.places.findFirst = mock(async () => null) as any;
+      mockDrizzleDb.query.places.findFirst = vi.fn(async () => null) as any;
 
       await expect(
         getPlaceHierarchyPathData("nonexistent", mockDrizzleDb as any)
@@ -755,7 +755,7 @@ describe("places business logic", () => {
       };
 
       let findFirstCallCount = 0;
-      mockDrizzleDb.query.placePersonLinks.findFirst = mock(async () => {
+      mockDrizzleDb.query.placePersonLinks.findFirst = vi.fn(async () => {
         findFirstCallCount++;
         if (findFirstCallCount === 1) {
           return link; // First call: verify link exists
@@ -764,9 +764,9 @@ describe("places business logic", () => {
         return updatedLink;
       }) as any;
 
-      mockDrizzleDb.update = mock(() => ({
-        set: mock(() => ({
-          where: mock(() => Promise.resolve()),
+      mockDrizzleDb.update = vi.fn(() => ({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve()),
         })),
       })) as any;
 
@@ -788,7 +788,7 @@ describe("places business logic", () => {
     });
 
     it("should throw error when link not found", async () => {
-      mockDrizzleDb.query.placePersonLinks.findFirst = mock(
+      mockDrizzleDb.query.placePersonLinks.findFirst = vi.fn(
         async () => null
       ) as any;
 
@@ -810,11 +810,11 @@ describe("places business logic", () => {
         placeId: "place-1",
       };
 
-      mockDrizzleDb.query.placePersonLinks.findFirst = mock(
+      mockDrizzleDb.query.placePersonLinks.findFirst = vi.fn(
         async () => link
       ) as any;
-      mockDrizzleDb.delete = mock(() => ({
-        where: mock(() => Promise.resolve()),
+      mockDrizzleDb.delete = vi.fn(() => ({
+        where: vi.fn(() => Promise.resolve()),
       })) as any;
 
       const result = await unlinkPersonFromPlaceData(
@@ -826,7 +826,7 @@ describe("places business logic", () => {
     });
 
     it("should throw error when link not found", async () => {
-      mockDrizzleDb.query.placePersonLinks.findFirst = mock(
+      mockDrizzleDb.query.placePersonLinks.findFirst = vi.fn(
         async () => null
       ) as any;
 

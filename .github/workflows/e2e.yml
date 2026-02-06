@@ -69,7 +69,7 @@ jobs:
     name: E2E Tests (${{ matrix.browser }})
     needs: build-image
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
 
     strategy:
       fail-fast: false
@@ -97,12 +97,12 @@ jobs:
           mkdir -p test-output/e2e/results
 
           # Start database first
-          docker compose -f docker/docker-compose.e2e.yml up -d db
+          docker compose -f docker/docker-compose.local.yml --profile e2e up -d e2e-db
 
           # Wait for db to be healthy (faster polling)
           echo "Waiting for database..."
           for i in {1..30}; do
-            if docker compose -f docker/docker-compose.e2e.yml exec -T db pg_isready -U vamsa_test 2>/dev/null; then
+            if docker compose -f docker/docker-compose.local.yml --profile e2e exec -T e2e-db pg_isready -U vamsa_test 2>/dev/null; then
               echo "Database is ready!"
               break
             fi
@@ -111,11 +111,11 @@ jobs:
           done
 
           # Start app service (--no-build since image is pre-built)
-          docker compose -f docker/docker-compose.e2e.yml up -d --no-build vamsa-web
+          docker compose -f docker/docker-compose.local.yml --profile e2e up -d --no-build vamsa-web
 
           # Run seed (waits for completion)
           echo "Running database seed..."
-          docker compose -f docker/docker-compose.e2e.yml up --no-build seed
+          docker compose -f docker/docker-compose.local.yml --profile e2e up --no-build seed
           SEED_EXIT=$(docker inspect vamsa-e2e-seed --format='{{.State.ExitCode}}')
           if [ "$SEED_EXIT" != "0" ]; then
             echo "Seed failed with exit code $SEED_EXIT"
@@ -182,9 +182,17 @@ jobs:
           retention-days: 30
           if-no-files-found: ignore
 
+      - name: Capture server logs
+        if: always()
+        run: |
+          echo "=== vamsa-web server logs ==="
+          docker logs vamsa-e2e-app --tail 200 2>&1 || echo "No server logs available"
+          echo "=== seed container logs ==="
+          docker logs vamsa-e2e-seed --tail 50 2>&1 || echo "No seed logs available"
+
       - name: Cleanup
         if: always()
-        run: docker compose -f docker/docker-compose.e2e.yml down -v
+        run: docker compose -f docker/docker-compose.local.yml --profile e2e down -v
 
   e2e-summary:
     name: E2E Summary

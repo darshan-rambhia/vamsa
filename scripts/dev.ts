@@ -7,14 +7,15 @@
 import { $ } from "bun";
 import { logger } from "../packages/lib/src/logger";
 
-const DOCKER_COMPOSE_FILE = "docker/docker-compose.dev.yml";
+const DOCKER_COMPOSE_FILE = "docker/docker-compose.local.yml";
+const DOCKER_PROFILE = "dev";
 
 async function main() {
   logger.info("Starting Vamsa development environment...");
 
   // Start postgres container
   logger.info("Starting PostgreSQL...");
-  await $`docker-compose -f ${DOCKER_COMPOSE_FILE} up -d`.quiet();
+  await $`docker-compose -f ${DOCKER_COMPOSE_FILE} --profile ${DOCKER_PROFILE} up -d`.quiet();
 
   // Wait for postgres to be ready
   logger.info("Waiting for PostgreSQL to be ready...");
@@ -25,7 +26,7 @@ async function main() {
   while (!ready && attempts < maxAttempts) {
     try {
       const result =
-        await $`docker-compose -f ${DOCKER_COMPOSE_FILE} exec -T postgres pg_isready -U vamsa`
+        await $`docker-compose -f ${DOCKER_COMPOSE_FILE} --profile ${DOCKER_PROFILE} exec -T db pg_isready -U vamsa`
           .quiet()
           .nothrow();
       if (result.exitCode === 0) {

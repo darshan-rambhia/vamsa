@@ -5,7 +5,7 @@
  * and produce well-formed metric attributes without throwing errors.
  */
 
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import {
   recordChartMetrics,
   recordFeatureUsage,

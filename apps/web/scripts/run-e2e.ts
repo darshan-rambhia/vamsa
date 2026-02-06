@@ -27,7 +27,6 @@
  */
 
 import { spawn } from "bun";
-import { existsSync, unlinkSync, writeFileSync } from "fs";
 import { resolve } from "path";
 import { loggers } from "@vamsa/lib/logger";
 
@@ -35,31 +34,13 @@ const log = loggers.api;
 
 const ROOT_DIR = resolve(import.meta.dirname, "../../..");
 const API_DIR = resolve(ROOT_DIR, "packages/api");
-const DOCKER_DIR = resolve(ROOT_DIR, "docker");
 const WEB_DIR = resolve(ROOT_DIR, "apps/web");
 
-// Docker compose file for E2E tests (db only)
-const E2E_COMPOSE = `
-services:
-  db:
-    image: postgres:18-alpine
-    ports:
-      - "5433:5432"
-    environment:
-      - POSTGRES_USER=vamsa_test
-      - POSTGRES_PASSWORD=vamsa_test
-      - POSTGRES_DB=vamsa_test
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vamsa_test"]
-      interval: 2s
-      timeout: 5s
-      retries: 10
-`;
+const COMPOSE_FILE = resolve(ROOT_DIR, "docker/docker-compose.local.yml");
+const COMPOSE_PROFILE = "test";
 
 const E2E_DATABASE_URL =
-  "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test";
-
-const composeFile = resolve(DOCKER_DIR, "docker-compose.test.yml");
+  "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test?sslmode=disable";
 
 async function run(
   cmd: string[],
@@ -78,12 +59,18 @@ async function run(
 
 async function cleanup() {
   log.info({}, "🧹 Cleaning up...");
-  await run(["docker-compose", "-f", composeFile, "down", "-v"], {
-    quiet: true,
-  });
-  if (existsSync(composeFile)) {
-    unlinkSync(composeFile);
-  }
+  await run(
+    [
+      "docker-compose",
+      "-f",
+      COMPOSE_FILE,
+      "--profile",
+      COMPOSE_PROFILE,
+      "down",
+      "-v",
+    ],
+    { quiet: true }
+  );
   log.info({}, "✅ Cleanup complete\n");
 }
 
@@ -154,23 +141,31 @@ async function main() {
   }
 
   // Local development: Start Docker, run migrations, seed, then run tests
-  // Create temp docker-compose file for E2E
-  writeFileSync(composeFile, E2E_COMPOSE);
-
   try {
     // Step 1: Start PostgreSQL
     log.info({}, "📦 Step 1/5: Starting PostgreSQL...");
 
     // First, ensure any old containers are removed
     log.info({}, "   - Cleaning up old containers...");
-    await run(["docker-compose", "-f", composeFile, "down", "-v"], {
-      quiet: true,
-    });
+    await run(
+      [
+        "docker-compose",
+        "-f",
+        COMPOSE_FILE,
+        "--profile",
+        COMPOSE_PROFILE,
+        "down",
+        "-v",
+      ],
+      { quiet: true }
+    );
 
     const dockerResult = await run([
       "docker-compose",
       "-f",
-      composeFile,
+      COMPOSE_FILE,
+      "--profile",
+      COMPOSE_PROFILE,
       "up",
       "-d",
       "--wait",

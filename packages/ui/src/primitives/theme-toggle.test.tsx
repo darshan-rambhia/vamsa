@@ -2,8 +2,7 @@
  * Unit Tests for ThemeToggle Component
  * Tests theme toggle functionality, state management, and DOM/localStorage interactions
  */
-import "../test-setup";
-import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { render } from "@testing-library/react";
 import React from "react";
 import { ThemeToggle } from "./theme-toggle";
@@ -12,12 +11,16 @@ describe("ThemeToggle", () => {
   beforeEach(() => {
     // Clear DOM classList and localStorage before each test
     document.documentElement.classList.remove("dark");
-    localStorage.clear();
+    if (typeof localStorage !== "undefined" && localStorage.clear) {
+      localStorage.clear();
+    }
   });
 
   afterEach(() => {
     document.documentElement.classList.remove("dark");
-    localStorage.clear();
+    if (typeof localStorage !== "undefined" && localStorage.clear) {
+      localStorage.clear();
+    }
   });
 
   describe("rendering", () => {

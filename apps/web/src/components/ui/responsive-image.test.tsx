@@ -9,7 +9,7 @@
  * 5. Applies lazy loading and priority settings
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { ResponsiveImage } from "./responsive-image";
 

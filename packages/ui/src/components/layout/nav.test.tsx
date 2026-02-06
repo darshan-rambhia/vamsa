@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Nav Components
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
 import { Nav, NavLink } from "./nav";
 

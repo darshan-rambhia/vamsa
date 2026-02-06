@@ -8,7 +8,7 @@
  * - calculateInitials: Name to initials conversion
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   buildSrcSet,
   calculateInitials,
