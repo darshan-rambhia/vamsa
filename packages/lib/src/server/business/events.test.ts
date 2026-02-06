@@ -14,7 +14,7 @@
  * Testing approach: Module mocking with mock.module() for @vamsa/api
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   addEventParticipantData,
   createEventData,
@@ -23,114 +23,69 @@ import {
   removeEventParticipantData,
   updateEventData,
 } from "@vamsa/lib/server/business";
-import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
-} from "../../testing/shared-mocks";
+import { mockLogger } from "../../testing/shared-mocks";
 
 // Import the functions to test
-
-// Create mock drizzleSchema
-const mockDrizzleSchema = {
-  persons: {
-    id: "id",
-  },
-  events: {
-    id: "id",
-    personId: "personId",
-    type: "type",
-    date: "date",
-    place: "place",
-    description: "description",
-    createdAt: "createdAt",
-    updatedAt: "updatedAt",
-  },
-  eventParticipants: {
-    id: "id",
-    eventId: "eventId",
-    personId: "personId",
-    role: "role",
-    createdAt: "createdAt",
-  },
-};
 
 // Create mock drizzleDb
 const mockDrizzleDb = {
   query: {
     persons: {
-      findFirst: mock(() => Promise.resolve(null)),
+      findFirst: vi.fn(() => Promise.resolve(null)),
     },
     events: {
-      findFirst: mock(() => Promise.resolve(null)),
-      findMany: mock(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
     eventParticipants: {
-      findFirst: mock(() => Promise.resolve(null)),
+      findFirst: vi.fn(() => Promise.resolve(null)),
     },
   },
-  insert: mock(() => ({
-    values: mock(() => ({
-      returning: mock(() => Promise.resolve([{}])),
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({
+      returning: vi.fn(() => Promise.resolve([{}])),
     })),
   })),
-  update: mock(() => ({
-    set: mock(() => ({
-      where: mock(() => Promise.resolve({})),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn(() => Promise.resolve({})),
     })),
   })),
-  delete: mock(() => ({
-    where: mock(() => Promise.resolve({})),
+  delete: vi.fn(() => ({
+    where: vi.fn(() => Promise.resolve({})),
   })),
 };
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
-
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
 
 describe("Events Server Business Logic", () => {
   beforeEach(() => {
     (
-      mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+      mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
+      mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.events.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.eventParticipants.findFirst as ReturnType<typeof mock>
+      mockDrizzleDb.query.eventParticipants.findFirst as ReturnType<
+        typeof vi.fn
+      >
     ).mockClear();
-    (mockDrizzleDb.insert as ReturnType<typeof mock>).mockClear();
-    (mockDrizzleDb.update as ReturnType<typeof mock>).mockClear();
-    (mockDrizzleDb.delete as ReturnType<typeof mock>).mockClear();
+    (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockClear();
+    (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockClear();
+    (mockDrizzleDb.delete as ReturnType<typeof vi.fn>).mockClear();
     mockLogger.error.mockClear();
   });
 
   describe("getPersonEventsData", () => {
     it("should throw error when person not found", async () => {
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await getPersonEventsData("nonexistent-person");
+        await getPersonEventsData("nonexistent-person", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -163,13 +118,16 @@ describe("Events Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
       (
-        mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockEvents);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBe(1);
@@ -195,13 +153,16 @@ describe("Events Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
       (
-        mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockEvents);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(result[0].date).toBe("2024-01-15");
     });
@@ -225,13 +186,16 @@ describe("Events Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
       (
-        mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockEvents);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(result[0].createdAt).toBe(createdAtDate.toISOString());
       expect(result[0].updatedAt).toBe(updatedAtDate.toISOString());
@@ -269,13 +233,16 @@ describe("Events Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
       (
-        mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockEvents);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(result[0].participants.length).toBe(2);
       expect(result[0].participants[0].role).toBe("Groom");
@@ -286,13 +253,16 @@ describe("Events Server Business Logic", () => {
       const mockPerson = { id: "person-1" };
 
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
       (
-        mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(Array.isArray(result)).toBe(true);
       expect(result.length).toBe(0);
@@ -315,13 +285,16 @@ describe("Events Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
       (
-        mockDrizzleDb.query.events.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockEvents);
 
-      const result = await getPersonEventsData("person-1");
+      const result = await getPersonEventsData(
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
     });
@@ -330,14 +303,17 @@ describe("Events Server Business Logic", () => {
   describe("createEventData", () => {
     it("should throw error when person not found", async () => {
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await createEventData({
-          personId: "nonexistent-person",
-          type: "BIRTH",
-        });
+        await createEventData(
+          {
+            personId: "nonexistent-person",
+            type: "BIRTH",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -370,25 +346,28 @@ describe("Events Server Business Logic", () => {
         ],
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(mockPerson)
         .mockResolvedValueOnce(mockEvent);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => ({
-          returning: mock(() => Promise.resolve([createdEvent])),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([createdEvent])),
         })),
       });
       (
-        mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockEvent);
 
-      const result = await createEventData({
-        personId: "person-1",
-        type: "BIRTH",
-        date: new Date("1990-01-15"),
-        place: "New York",
-        description: "Birth event",
-      });
+      const result = await createEventData(
+        {
+          personId: "person-1",
+          type: "BIRTH",
+          date: new Date("1990-01-15"),
+          place: "New York",
+          description: "Birth event",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.id).toBe("event-1");
       expect(result.personId).toBe("person-1");
@@ -412,22 +391,25 @@ describe("Events Server Business Logic", () => {
         participants: [],
       };
 
-      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(mockPerson)
         .mockResolvedValueOnce(mockEvent);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => ({
-          returning: mock(() => Promise.resolve([createdEvent])),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([createdEvent])),
         })),
       });
       (
-        mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockEvent);
 
-      const result = await createEventData({
-        personId: "person-1",
-        type: "BIRTH",
-      });
+      const result = await createEventData(
+        {
+          personId: "person-1",
+          type: "BIRTH",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.id).toBe("event-1");
       expect(result.place).toBeNull();
@@ -438,19 +420,22 @@ describe("Events Server Business Logic", () => {
       const mockPerson = { id: "person-1" };
 
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => ({
-          returning: mock(() => Promise.resolve([])),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([])),
         })),
       });
 
       try {
-        await createEventData({
-          personId: "person-1",
-          type: "BIRTH",
-        });
+        await createEventData(
+          {
+            personId: "person-1",
+            type: "BIRTH",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -472,22 +457,25 @@ describe("Events Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValue({
-        values: mock(() => ({
-          returning: mock(() => Promise.resolve([createdEvent])),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValue({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([createdEvent])),
         })),
       });
       (
-        mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await createEventData({
-          personId: "person-1",
-          type: "BIRTH",
-        });
+        await createEventData(
+          {
+            personId: "person-1",
+            type: "BIRTH",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -499,13 +487,17 @@ describe("Events Server Business Logic", () => {
   describe("updateEventData", () => {
     it("should throw error when event not found", async () => {
       (
-        mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await updateEventData("nonexistent-event", {
-          type: "MARRIAGE",
-        });
+        await updateEventData(
+          "nonexistent-event",
+          {
+            type: "MARRIAGE",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -530,18 +522,22 @@ describe("Events Server Business Logic", () => {
         participants: [],
       };
 
-      (mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(existingEvent)
         .mockResolvedValueOnce(updatedEvent);
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValue({
-        set: mock(() => ({
-          where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValue({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
         })),
       });
 
-      const result = await updateEventData("event-1", {
-        type: "MARRIAGE",
-      });
+      const result = await updateEventData(
+        "event-1",
+        {
+          type: "MARRIAGE",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.type).toBe("MARRIAGE");
     });
@@ -563,18 +559,22 @@ describe("Events Server Business Logic", () => {
         participants: [],
       };
 
-      (mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(existingEvent)
         .mockResolvedValueOnce(updatedEvent);
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValue({
-        set: mock(() => ({
-          where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValue({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
         })),
       });
 
-      const result = await updateEventData("event-1", {
-        date: new Date("2021-06-15"),
-      });
+      const result = await updateEventData(
+        "event-1",
+        {
+          date: new Date("2021-06-15"),
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.date).toBe("2021-06-15");
     });
@@ -597,19 +597,23 @@ describe("Events Server Business Logic", () => {
         participants: [],
       };
 
-      (mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(existingEvent)
         .mockResolvedValueOnce(updatedEvent);
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValue({
-        set: mock(() => ({
-          where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValue({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
         })),
       });
 
-      const result = await updateEventData("event-1", {
-        place: "New Place",
-        description: "New desc",
-      });
+      const result = await updateEventData(
+        "event-1",
+        {
+          place: "New Place",
+          description: "New desc",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.place).toBe("New Place");
       expect(result.description).toBe("New desc");
@@ -627,19 +631,23 @@ describe("Events Server Business Logic", () => {
         updatedAt: new Date(),
       };
 
-      (mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(existingEvent)
         .mockResolvedValueOnce(null);
-      (mockDrizzleDb.update as ReturnType<typeof mock>).mockReturnValue({
-        set: mock(() => ({
-          where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockReturnValue({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
         })),
       });
 
       try {
-        await updateEventData("event-1", {
-          type: "MARRIAGE",
-        });
+        await updateEventData(
+          "event-1",
+          {
+            type: "MARRIAGE",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -651,11 +659,11 @@ describe("Events Server Business Logic", () => {
   describe("deleteEventData", () => {
     it("should throw error when event not found", async () => {
       (
-        mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await deleteEventData("nonexistent-event");
+        await deleteEventData("nonexistent-event", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -676,13 +684,13 @@ describe("Events Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(existingEvent);
-      (mockDrizzleDb.delete as ReturnType<typeof mock>).mockReturnValue({
-        where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.delete as ReturnType<typeof vi.fn>).mockReturnValue({
+        where: vi.fn(() => Promise.resolve({})),
       });
 
-      const result = await deleteEventData("event-1");
+      const result = await deleteEventData("event-1", mockDrizzleDb as any);
 
       expect(result.success).toBe(true);
       expect(mockDrizzleDb.delete).toHaveBeenCalled();
@@ -692,14 +700,17 @@ describe("Events Server Business Logic", () => {
   describe("addEventParticipantData", () => {
     it("should throw error when event not found", async () => {
       (
-        mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await addEventParticipantData({
-          eventId: "nonexistent-event",
-          personId: "person-1",
-        });
+        await addEventParticipantData(
+          {
+            eventId: "nonexistent-event",
+            personId: "person-1",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -709,14 +720,17 @@ describe("Events Server Business Logic", () => {
 
     it("should check for event existence before operations", async () => {
       (
-        mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await addEventParticipantData({
-          eventId: "event-1",
-          personId: "person-1",
-        });
+        await addEventParticipantData(
+          {
+            eventId: "event-1",
+            personId: "person-1",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -729,17 +743,20 @@ describe("Events Server Business Logic", () => {
       // Basic validation that the function checks necessary conditions
       const mockEvent = { id: "event-1", personId: "person-1" };
       (
-        mockDrizzleDb.query.events.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.events.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockEvent);
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await addEventParticipantData({
-          eventId: "event-1",
-          personId: "person-2",
-        });
+        await addEventParticipantData(
+          {
+            eventId: "event-1",
+            personId: "person-2",
+          },
+          mockDrizzleDb as any
+        );
       } catch (err) {
         expect(err instanceof Error).toBe(true);
       }
@@ -750,15 +767,18 @@ describe("Events Server Business Logic", () => {
     it("should throw error when participant not found", async () => {
       (
         mockDrizzleDb.query.eventParticipants.findFirst as ReturnType<
-          typeof mock
+          typeof vi.fn
         >
       ).mockResolvedValueOnce(null);
 
       try {
-        await removeEventParticipantData({
-          eventId: "event-1",
-          personId: "person-1",
-        });
+        await removeEventParticipantData(
+          {
+            eventId: "event-1",
+            personId: "person-1",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -777,17 +797,20 @@ describe("Events Server Business Logic", () => {
 
       (
         mockDrizzleDb.query.eventParticipants.findFirst as ReturnType<
-          typeof mock
+          typeof vi.fn
         >
       ).mockResolvedValueOnce(mockParticipant);
-      (mockDrizzleDb.delete as ReturnType<typeof mock>).mockReturnValueOnce({
-        where: mock(() => Promise.resolve({})),
+      (mockDrizzleDb.delete as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        where: vi.fn(() => Promise.resolve({})),
       });
 
-      const result = await removeEventParticipantData({
-        eventId: "event-1",
-        personId: "person-2",
-      });
+      const result = await removeEventParticipantData(
+        {
+          eventId: "event-1",
+          personId: "person-2",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
       expect(typeof result.success).toBe("boolean");

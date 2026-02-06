@@ -5,19 +5,10 @@
 # Use exact versions for reproducible builds
 exact = true
 
-
 # Automatically install peer dependencies
 peer = true
 
-[test]
-# Test configuration
-# Preload root test setup for DOM globals
-preload = ["./tests/setup/root-test-setup.ts"]
-coverage = true
-coverageReporter = ["text", "lcov"]
-
-# E2E tests use .e2e.ts extension (not .spec.ts) to avoid being picked up by bun test
-# Playwright is configured to find .e2e.ts files in apps/web/playwright.config.ts
+# [test] section removed - tests now use Vitest (vitest.config.ts per package)
 
 [run]
 # Shell to use for scripts (bun or system)

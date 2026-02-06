@@ -2,7 +2,7 @@
  * Unit Tests for GEDCOM Generator
  * Tests generation of GEDCOM 5.5.1 and 7.0 format files
  */
-import { beforeEach, describe, expect, test } from "bun:test";
+import { beforeEach, describe, expect, test } from "vitest";
 import { GedcomGenerator } from "./generator";
 import type { GedcomFamilyData, GedcomIndividualData } from "./mapper-types";
 

@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, vi } from "vitest";
 import { useTreeKeyboardNav } from "./useTreeKeyboardNav";
 import type { ChartEdge, ChartNode } from "~/server/charts";
 
@@ -178,8 +178,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: "ArrowDown",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -202,8 +202,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: "ArrowDown",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -213,8 +213,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: "ArrowUp",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -238,8 +238,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: "ArrowRight",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -262,8 +262,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: "ArrowDown",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -273,8 +273,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: "ArrowLeft",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -295,13 +295,13 @@ describe("useTreeKeyboardNav", () => {
 
       expect(result.current.focusedNodeId).toBe("A");
 
-      const preventDefaultMock = mock();
+      const preventDefaultMock = vi.fn();
 
       act(() => {
         result.current.handleKeyDown({
           key: "ArrowUp",
           preventDefault: preventDefaultMock,
-          stopPropagation: mock(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -324,13 +324,13 @@ describe("useTreeKeyboardNav", () => {
 
       expect(result.current.focusedNodeId).toBe("A");
 
-      const preventDefaultMock = mock();
+      const preventDefaultMock = vi.fn();
 
       act(() => {
         result.current.handleKeyDown({
           key: "ArrowLeft",
           preventDefault: preventDefaultMock,
-          stopPropagation: mock(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -363,8 +363,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: "Home",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -388,8 +388,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: "End",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -401,7 +401,7 @@ describe("useTreeKeyboardNav", () => {
     it("should call onActivate when Enter is pressed", () => {
       const nodes = createTestNodes();
       const edges = createTestEdges();
-      const onActivate = mock();
+      const onActivate = vi.fn();
 
       const { result } = renderHook(() =>
         useTreeKeyboardNav({
@@ -415,8 +415,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: "Enter",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -426,7 +426,7 @@ describe("useTreeKeyboardNav", () => {
     it("should call onSelect and update selectedNodeId when Space is pressed", () => {
       const nodes = createTestNodes();
       const edges = createTestEdges();
-      const onSelect = mock();
+      const onSelect = vi.fn();
 
       const { result } = renderHook(() =>
         useTreeKeyboardNav({
@@ -442,8 +442,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: " ",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -454,7 +454,7 @@ describe("useTreeKeyboardNav", () => {
     it("should update aria-selected for selected node", () => {
       const nodes = createTestNodes();
       const edges = createTestEdges();
-      const onSelect = mock();
+      const onSelect = vi.fn();
 
       const { result } = renderHook(() =>
         useTreeKeyboardNav({
@@ -469,8 +469,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: " ",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -560,8 +560,8 @@ describe("useTreeKeyboardNav", () => {
         act(() => {
           result.current.handleKeyDown({
             key: "ArrowDown",
-            preventDefault: mock(),
-            stopPropagation: mock(),
+            preventDefault: vi.fn(),
+            stopPropagation: vi.fn(),
           } as unknown as React.KeyboardEvent);
         });
       }
@@ -573,8 +573,8 @@ describe("useTreeKeyboardNav", () => {
         act(() => {
           result.current.handleKeyDown({
             key: "ArrowUp",
-            preventDefault: mock(),
-            stopPropagation: mock(),
+            preventDefault: vi.fn(),
+            stopPropagation: vi.fn(),
           } as unknown as React.KeyboardEvent);
         });
       }
@@ -612,8 +612,8 @@ describe("useTreeKeyboardNav", () => {
       act(() => {
         result.current.handleKeyDown({
           key: "ArrowRight",
-          preventDefault: mock(),
-          stopPropagation: mock(),
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
         } as unknown as React.KeyboardEvent);
       });
 
@@ -663,8 +663,8 @@ describe("useTreeKeyboardNav", () => {
         act(() => {
           result.current.handleKeyDown({
             key,
-            preventDefault: mock(),
-            stopPropagation: mock(),
+            preventDefault: vi.fn(),
+            stopPropagation: vi.fn(),
           } as unknown as React.KeyboardEvent);
         });
 
@@ -684,8 +684,8 @@ describe("useTreeKeyboardNav", () => {
         })
       );
 
-      const preventDefaultMock = mock();
-      const stopPropagationMock = mock();
+      const preventDefaultMock = vi.fn();
+      const stopPropagationMock = vi.fn();
 
       act(() => {
         result.current.handleKeyDown({
@@ -711,8 +711,8 @@ describe("useTreeKeyboardNav", () => {
         })
       );
 
-      const preventDefaultMock = mock();
-      const stopPropagationMock = mock();
+      const preventDefaultMock = vi.fn();
+      const stopPropagationMock = vi.fn();
 
       act(() => {
         result.current.handleKeyDown({

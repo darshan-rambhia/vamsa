@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, it } from "vitest";
 import { Hono } from "hono";
 import { RATE_LIMITS, resetRateLimit } from "./rate-limiter";
 import { rateLimitMiddleware } from "./hono-rate-limiter";

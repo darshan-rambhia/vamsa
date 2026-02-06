@@ -5,6 +5,11 @@ import { loggers } from "@vamsa/lib/logger";
 const log = loggers.db;
 
 /**
+ * Type for the database instance (for DI)
+ */
+export type MapsDb = typeof drizzleDb;
+
+/**
  * Type definitions for map responses
  */
 export interface MapMarker {
@@ -70,19 +75,21 @@ export interface PlaceCluster {
 /**
  * Calculate the earliest and latest years from events and person-place links for a place
  * @param placeId - ID of the place
+ * @param db - Drizzle database instance
  * @returns Object with earliest and latest years
  */
 export async function calculateTimeRange(
-  placeId: string
+  placeId: string,
+  db: MapsDb = drizzleDb
 ): Promise<{ earliest: number | null; latest: number | null }> {
   // Get time range from events
-  const eventDates = await drizzleDb.query.events.findMany({
+  const eventDates = await db.query.events.findMany({
     where: eq(drizzleSchema.events.placeId, placeId),
     columns: { date: true },
   });
 
   // Get time range from person-place links
-  const personLinks = await drizzleDb.query.placePersonLinks.findMany({
+  const personLinks = await db.query.placePersonLinks.findMany({
     where: eq(drizzleSchema.placePersonLinks.placeId, placeId),
     columns: { fromYear: true, toYear: true },
   });
@@ -173,13 +180,15 @@ export interface GetPlacesForMapOptions {
 /**
  * Get all places with geographic data for map display
  * @param options - Query options (includeEmpty flag)
+ * @param db - Drizzle database instance
  * @returns Object containing array of map markers and total count
  */
 export async function getPlacesForMapData(
-  options: GetPlacesForMapOptions
+  options: GetPlacesForMapOptions,
+  db: MapsDb = drizzleDb
 ): Promise<{ markers: Array<MapMarker>; total: number }> {
   // Get all places with coordinates
-  const places = await drizzleDb.query.places.findMany({
+  const places = await db.query.places.findMany({
     where: sql`"Place"."latitude" IS NOT NULL AND "Place"."longitude" IS NOT NULL`,
     orderBy: asc(drizzleSchema.places.name),
   });
@@ -192,12 +201,12 @@ export async function getPlacesForMapData(
       if (!place.latitude || !place.longitude) continue;
 
       // Get events and person links for this place
-      const events = await drizzleDb.query.events.findMany({
+      const events = await db.query.events.findMany({
         where: eq(drizzleSchema.events.placeId, place.id),
         columns: { type: true },
       });
 
-      const personLinks = await drizzleDb.query.placePersonLinks.findMany({
+      const personLinks = await db.query.placePersonLinks.findMany({
         where: eq(drizzleSchema.placePersonLinks.placeId, place.id),
       });
 
@@ -242,9 +251,13 @@ export async function getPlacesForMapData(
 /**
  * Get all places associated with a specific person for map visualization
  * @param personId - ID of the person to get locations for
+ * @param db - Drizzle database instance
  * @returns Object containing person markers and person details
  */
-export async function getPersonLocationsData(personId: string): Promise<{
+export async function getPersonLocationsData(
+  personId: string,
+  db: MapsDb = drizzleDb
+): Promise<{
   markers: Array<PersonLocationMarker>;
   total: number;
   person: {
@@ -253,7 +266,7 @@ export async function getPersonLocationsData(personId: string): Promise<{
     lastName: string;
   };
 }> {
-  const person = await drizzleDb.query.persons.findFirst({
+  const person = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -262,7 +275,7 @@ export async function getPersonLocationsData(personId: string): Promise<{
   }
 
   // Get places from person-place links
-  const personPlaceLinks = await drizzleDb.query.placePersonLinks.findMany({
+  const personPlaceLinks = await db.query.placePersonLinks.findMany({
     where: eq(drizzleSchema.placePersonLinks.personId, personId),
     with: {
       place: {
@@ -276,7 +289,7 @@ export async function getPersonLocationsData(personId: string): Promise<{
   });
 
   // Get places from events
-  const eventPlaces = await drizzleDb.query.events.findMany({
+  const eventPlaces = await db.query.events.findMany({
     where: eq(drizzleSchema.events.personId, personId),
   });
 
@@ -318,7 +331,7 @@ export async function getPersonLocationsData(personId: string): Promise<{
     .filter((id): id is string => id !== null);
   const eventPlacesDetails =
     eventPlaceIds.length > 0
-      ? await drizzleDb.query.places.findMany({
+      ? await db.query.places.findMany({
           where: inArray(drizzleSchema.places.id, eventPlaceIds),
         })
       : [];
@@ -351,7 +364,7 @@ export async function getPersonLocationsData(personId: string): Promise<{
   for (const place of placeMap.values()) {
     try {
       // Get all people at this place (for clustering)
-      const peopleAtPlace = await drizzleDb.query.placePersonLinks.findMany({
+      const peopleAtPlace = await db.query.placePersonLinks.findMany({
         where: eq(drizzleSchema.placePersonLinks.placeId, place.id),
         with: {
           person: {
@@ -365,7 +378,7 @@ export async function getPersonLocationsData(personId: string): Promise<{
         },
       });
 
-      const events = await drizzleDb.query.events.findMany({
+      const events = await db.query.events.findMany({
         where: eq(drizzleSchema.events.placeId, place.id),
       });
 
@@ -414,22 +427,23 @@ export async function getPersonLocationsData(personId: string): Promise<{
 
 /**
  * Get all places in the family tree for map visualization
+ * @param db - Drizzle database instance
  * @returns Object containing family location markers and family stats
  */
-export async function getFamilyLocationsData(): Promise<{
+export async function getFamilyLocationsData(db: MapsDb = drizzleDb): Promise<{
   markers: Array<FamilyLocationMarker>;
   total: number;
   familySize: number;
 }> {
   // Get all persons in the family
-  const persons = await drizzleDb.query.persons.findMany({
+  const persons = await db.query.persons.findMany({
     columns: { id: true },
   });
 
   const personIds = persons.map((p) => p.id);
 
   // Get all places with coordinates linked to family members - use simpler approach
-  const allPlaces = await drizzleDb.query.places.findMany({
+  const allPlaces = await db.query.places.findMany({
     where: and(
       sql`"Place"."latitude" IS NOT NULL AND "Place"."longitude" IS NOT NULL`
     ),
@@ -440,14 +454,14 @@ export async function getFamilyLocationsData(): Promise<{
   const placesWithFamily: typeof allPlaces = [];
 
   for (const place of allPlaces) {
-    const hasPersonLink = await drizzleDb.query.placePersonLinks.findFirst({
+    const hasPersonLink = await db.query.placePersonLinks.findFirst({
       where: and(
         eq(drizzleSchema.placePersonLinks.placeId, place.id),
         inArray(drizzleSchema.placePersonLinks.personId, personIds)
       ),
     });
 
-    const hasEvent = await drizzleDb.query.events.findFirst({
+    const hasEvent = await db.query.events.findFirst({
       where: and(
         eq(drizzleSchema.events.placeId, place.id),
         inArray(drizzleSchema.events.personId, personIds)
@@ -469,7 +483,7 @@ export async function getFamilyLocationsData(): Promise<{
       if (!place.latitude || !place.longitude) continue;
 
       // Get place-person links for this place
-      const personLinks = await drizzleDb.query.placePersonLinks.findMany({
+      const personLinks = await db.query.placePersonLinks.findMany({
         where: eq(drizzleSchema.placePersonLinks.placeId, place.id),
         with: {
           person: {
@@ -484,7 +498,7 @@ export async function getFamilyLocationsData(): Promise<{
       });
 
       // Get events for this place
-      const events = await drizzleDb.query.events.findMany({
+      const events = await db.query.events.findMany({
         where: eq(drizzleSchema.events.placeId, place.id),
         with: {
           person: {
@@ -577,10 +591,12 @@ export interface GetPlacesByTimeRangeOptions {
 /**
  * Get places filtered by date range for timeline visualization
  * @param options - Query options (startYear and endYear)
+ * @param db - Drizzle database instance
  * @returns Object containing timeline markers and time range info
  */
 export async function getPlacesByTimeRangeData(
-  options: GetPlacesByTimeRangeOptions
+  options: GetPlacesByTimeRangeOptions,
+  db: MapsDb = drizzleDb
 ): Promise<{
   markers: Array<TimelineMarker>;
   total: number;
@@ -594,14 +610,14 @@ export async function getPlacesByTimeRangeData(
   const endDate = new Date(`${endYear}-12-31`);
 
   // Get all places with coordinates
-  const allPlaces = await drizzleDb.query.places.findMany({
+  const allPlaces = await db.query.places.findMany({
     where: sql`"Place"."latitude" IS NOT NULL AND "Place"."longitude" IS NOT NULL`,
   });
 
   // Filter places that have events in the time range
   const places: typeof allPlaces = [];
   for (const place of allPlaces) {
-    const eventsInRange = await drizzleDb.query.events.findMany({
+    const eventsInRange = await db.query.events.findMany({
       where: and(
         eq(drizzleSchema.events.placeId, place.id),
         gte(drizzleSchema.events.date, startDate),
@@ -618,7 +634,7 @@ export async function getPlacesByTimeRangeData(
       },
     });
 
-    const personLinksInRange = await drizzleDb.query.placePersonLinks.findMany({
+    const personLinksInRange = await db.query.placePersonLinks.findMany({
       where: eq(drizzleSchema.placePersonLinks.placeId, place.id),
       with: {
         person: {
@@ -650,7 +666,7 @@ export async function getPlacesByTimeRangeData(
     if (!place.latitude || !place.longitude) continue;
 
     // Get events in the time range
-    const eventsInRange = await drizzleDb.query.events.findMany({
+    const eventsInRange = await db.query.events.findMany({
       where: and(
         eq(drizzleSchema.events.placeId, place.id),
         gte(drizzleSchema.events.date, startDate),
@@ -659,7 +675,7 @@ export async function getPlacesByTimeRangeData(
     });
 
     // Get person links for this place
-    const personLinks = await drizzleDb.query.placePersonLinks.findMany({
+    const personLinks = await db.query.placePersonLinks.findMany({
       where: eq(drizzleSchema.placePersonLinks.placeId, place.id),
     });
 
@@ -744,10 +760,12 @@ export interface GetPlaceClusterOptions {
 /**
  * Get clustered places by geographic bounds for efficient map rendering
  * @param options - Query options (bounds and clusterSize)
+ * @param db - Drizzle database instance
  * @returns Object containing place clusters with stats
  */
 export async function getPlaceClustersData(
-  options: GetPlaceClusterOptions
+  options: GetPlaceClusterOptions,
+  db: MapsDb = drizzleDb
 ): Promise<{
   clusters: Array<PlaceCluster>;
   totalClusters: number;
@@ -756,7 +774,7 @@ export async function getPlaceClustersData(
   const { bounds, clusterSize } = options;
 
   // Get all places within the bounds
-  const places = await drizzleDb.query.places.findMany({
+  const places = await db.query.places.findMany({
     where: and(
       gte(drizzleSchema.places.latitude, bounds.minLat),
       lte(drizzleSchema.places.latitude, bounds.maxLat),
@@ -773,12 +791,12 @@ export async function getPlaceClustersData(
       if (!place.latitude || !place.longitude) continue;
 
       // Check if place has events or person links
-      const eventCount = await drizzleDb
+      const eventCount = await db
         .select({ count: count() })
         .from(drizzleSchema.events)
         .where(eq(drizzleSchema.events.placeId, place.id));
 
-      const personLinkCount = await drizzleDb
+      const personLinkCount = await db
         .select({ count: count() })
         .from(drizzleSchema.placePersonLinks)
         .where(eq(drizzleSchema.placePersonLinks.placeId, place.id));
@@ -791,7 +809,7 @@ export async function getPlaceClustersData(
       }
 
       // Get event types for this place
-      const events = await drizzleDb.query.events.findMany({
+      const events = await db.query.events.findMany({
         where: eq(drizzleSchema.events.placeId, place.id),
         columns: { type: true },
       });

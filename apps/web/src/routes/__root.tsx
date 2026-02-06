@@ -1,5 +1,5 @@
 /// <reference types="vite/client" />
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import {
   HeadContent,
   Link,
@@ -285,6 +285,10 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+  useLayoutEffect(() => {
+    document.documentElement.dataset.hydrated = "true";
+  }, []);
+
   return (
     <RootDocument>
       <Outlet />

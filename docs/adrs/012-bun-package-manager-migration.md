@@ -70,7 +70,6 @@ packages:
 | External Package | Bun Built-in | Notes |
 |-----------------|--------------|-------|
 | `bcryptjs` | `Bun.password.hash()` | Uses argon2id (more secure than bcrypt) |
-| `dotenv` | Removed | Bun auto-loads `.env` files |
 | `@aws-sdk/client-s3` | `Bun.S3Client` | Native S3 client (Bun 1.2+) |
 
 **Example - Password Hashing:**
@@ -183,7 +182,6 @@ Bun's package installation inside Docker containers may fail in environments wit
 
 ### Source Code
 - `packages/lib/src/server/business/invites.ts` - Bun.password
-- `packages/api/prisma/seed.ts` - Bun.password, removed dotenv
 - `apps/web/server/jobs/storage.ts` - Bun.S3Client
 - `apps/web/server/index.ts` - Fixed TanStack handler types
 

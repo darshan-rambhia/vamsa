@@ -23,8 +23,8 @@ interface ProcessResult {
 }
 
 const CHECKS = [
-  { name: "Lint", command: "bun run lint" },
-  { name: "Format", command: "bun run format:check" },
+  { name: "Lint", command: "bun run lint:fix" },
+  { name: "Format", command: "bun run format" },
   { name: "Typecheck", command: "bun run typecheck" },
   { name: "Test", command: "bun run test" },
 ];

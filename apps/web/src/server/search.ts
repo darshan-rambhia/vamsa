@@ -12,6 +12,9 @@ import { loggers } from "@vamsa/lib/logger";
 import { requireAuth } from "./middleware/require-auth";
 import type { RelationshipDataMaps, SearchResults } from "@vamsa/lib";
 
+/** Type for the database instance (for DI) */
+export type SearchDb = typeof drizzleDb;
+
 const log = loggers.db;
 
 /**
@@ -54,12 +57,15 @@ const searchPeopleInputSchema = z.object({
  * Build relationship data maps from database for use by relationship handlers
  * Fetches all persons and creates parent/child/spouse maps
  *
+ * @param db Database instance to use (for DI)
  * @returns RelationshipDataMaps with people map and relationship maps
  */
-async function buildRelationshipMaps(): Promise<RelationshipDataMaps> {
+async function buildRelationshipMaps(
+  db: SearchDb = drizzleDb
+): Promise<RelationshipDataMaps> {
   try {
     // Fetch all persons
-    const persons = await drizzleDb.query.persons.findMany();
+    const persons = await db.query.persons.findMany();
 
     // Create people map
     const people = new Map(
@@ -79,7 +85,7 @@ async function buildRelationshipMaps(): Promise<RelationshipDataMaps> {
     );
 
     // Fetch all relationships
-    const rels = await drizzleDb.query.relationships.findMany();
+    const rels = await db.query.relationships.findMany();
 
     // Create parent/child/spouse maps (using Sets as required by relationship modules)
     const parents = new Map<string, Set<string>>();

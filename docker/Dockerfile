@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Multi-stage Dockerfile for Vamsa
 #
 # Build args:
@@ -9,7 +10,8 @@
 # =============================================================================
 # Stage 1: Build
 # =============================================================================
-FROM oven/bun:1-alpine AS builder
+# Use BUILDPLATFORM to run builder natively (avoids slow QEMU emulation)
+FROM --platform=$BUILDPLATFORM oven/bun:1-alpine AS builder
 
 # Build arg to skip SSL verification (for corporate proxies)
 ARG SKIP_SSL_VERIFY
@@ -18,15 +20,19 @@ ENV NODE_TLS_REJECT_UNAUTHORIZED=${SKIP_SSL_VERIFY:+0}
 WORKDIR /app
 
 # Copy package files for dependency installation
-COPY package.json bun.lock* bunfig.toml ./
+COPY package.json bun.lock bunfig.toml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/api/package.json ./packages/api/
+COPY packages/client/package.json ./packages/client/
 COPY packages/lib/package.json ./packages/lib/
+COPY packages/query-hooks/package.json ./packages/query-hooks/
 COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/ui/package.json ./packages/ui/
 
 # Install all dependencies
-RUN bun install
+# --frozen-lockfile: faster, skips dependency resolution
+# --ignore-scripts: skips prepare/postinstall (husky not needed in Docker)
+RUN bun install --frozen-lockfile --ignore-scripts
 
 # Copy source code
 COPY . .
@@ -43,7 +49,8 @@ RUN bun run build
 # =============================================================================
 # Stage 2: Production dependencies
 # =============================================================================
-FROM oven/bun:1-alpine AS prod-deps
+# Use BUILDPLATFORM for native speed during dependency installation
+FROM --platform=$BUILDPLATFORM oven/bun:1-alpine AS prod-deps
 
 # Build arg to skip SSL verification (for corporate proxies)
 ARG SKIP_SSL_VERIFY
@@ -51,19 +58,24 @@ ENV NODE_TLS_REJECT_UNAUTHORIZED=${SKIP_SSL_VERIFY:+0}
 
 WORKDIR /app
 
-COPY package.json bun.lock* bunfig.toml ./
+COPY package.json bun.lock bunfig.toml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/api/package.json ./packages/api/
+COPY packages/client/package.json ./packages/client/
 COPY packages/lib/package.json ./packages/lib/
+COPY packages/query-hooks/package.json ./packages/query-hooks/
 COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/ui/package.json ./packages/ui/
 
 # Production dependencies only (excludes devDependencies)
-RUN bun install --production
+# --frozen-lockfile: faster, skips dependency resolution
+# --ignore-scripts: skips lifecycle scripts like prepare (husky)
+RUN bun install --production --frozen-lockfile --ignore-scripts
 
 # =============================================================================
 # Stage 3: Production runtime
 # =============================================================================
+# TARGETPLATFORM is implicit default, no need to specify
 FROM oven/bun:1-alpine AS runner
 
 WORKDIR /app

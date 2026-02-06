@@ -1,7 +1,7 @@
 ---
 name: tester
 description: Use this agent when you need comprehensive test coverage including unit tests with Bun and E2E tests with Playwright. This agent ensures your code meets quality standards and coverage thresholds. Examples:\n\n<example>\nContext: New feature needs test coverage\nuser: "I just implemented the backup feature, can we add tests?"\nassistant: "I'll use the tester agent to write unit tests and E2E tests covering the backup functionality."\n<Task tool call to tester agent>\n</example>\n\n<example>\nContext: Coverage is below threshold\nuser: "Our test coverage dropped to 75%, we need to get it back up"\nassistant: "I'll use the tester agent to analyze coverage gaps and add tests for uncovered code paths."\n<Task tool call to tester agent>\n</example>
-model: haiku
+model: sonnet
 color: yellow
 tools: Read, Write, Edit, Bash, Glob, Grep
 ---

@@ -9,10 +9,10 @@
  * - Deleting calendar tokens
  * - Error handling and authorization
  *
- * Uses mock.module() to inject mocked Drizzle ORM instance
+ * Uses vi.mock() to inject mocked Drizzle ORM instance
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock logger for this test file
 import {
@@ -23,74 +23,41 @@ import {
   validateCalendarTokenLogic,
 } from "@vamsa/lib/server/business";
 import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
   mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
   mockWithErr,
   mockWithErrBuilder,
 } from "../../testing/shared-mocks";
 
 // Import the functions to test
 
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
-
 // Create mock Drizzle helpers
 const createMockInsertChain = () => ({
-  values: mock(() => ({
-    returning: mock(() => Promise.resolve([{}])),
+  values: vi.fn(() => ({
+    returning: vi.fn(() => Promise.resolve([{}])),
   })),
 });
 
 const createMockUpdateChain = () => ({
-  set: mock(() => ({
-    where: mock(() => Promise.resolve()),
+  set: vi.fn(() => ({
+    where: vi.fn(() => Promise.resolve()),
   })),
 });
 
 const createMockDeleteChain = () => ({
-  where: mock(() => Promise.resolve()),
+  where: vi.fn(() => Promise.resolve()),
 });
 
 const mockDrizzleDb = {
-  insert: mock(() => createMockInsertChain()),
+  insert: vi.fn(() => createMockInsertChain()),
   query: {
     calendarTokens: {
-      findFirst: mock(() => Promise.resolve(null)),
-      findMany: mock(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
   },
-  update: mock(() => createMockUpdateChain()),
-  delete: mock(() => createMockDeleteChain()),
+  update: vi.fn(() => createMockUpdateChain()),
+  delete: vi.fn(() => createMockDeleteChain()),
 };
-
-const mockDrizzleSchema = {
-  calendarTokens: {
-    token: {} as any,
-    id: {} as any,
-    userId: {} as any,
-    createdAt: {} as any,
-  },
-  auditLogs: {
-    userId: {} as any,
-  },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
 
 describe("Calendar Server Functions", () => {
   beforeEach(() => {
@@ -128,7 +95,8 @@ describe("Calendar Server Functions", () => {
       const result = await generateCalendarTokenLogic(
         userId,
         tokenName,
-        expiryDays
+        expiryDays,
+        mockDrizzleDb as any
       );
 
       expect(result.success).toBe(true);
@@ -153,7 +121,12 @@ describe("Calendar Server Functions", () => {
       });
       (mockDrizzleDb.insert as any).mockReturnValueOnce(insertChain);
 
-      await generateCalendarTokenLogic("user-1", undefined, 90);
+      await generateCalendarTokenLogic(
+        "user-1",
+        undefined,
+        90,
+        mockDrizzleDb as any
+      );
 
       // Verify that drizzle insert was called
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
@@ -175,7 +148,12 @@ describe("Calendar Server Functions", () => {
       });
       (mockDrizzleDb.insert as any).mockReturnValueOnce(insertChain);
 
-      await generateCalendarTokenLogic("user-1", undefined, 30);
+      await generateCalendarTokenLogic(
+        "user-1",
+        undefined,
+        30,
+        mockDrizzleDb as any
+      );
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         { userId: "user-1" },
@@ -203,7 +181,10 @@ describe("Calendar Server Functions", () => {
         mockDrizzleDb.query.calendarTokens.findFirst as any
       ).mockResolvedValueOnce(mockToken);
 
-      const result = await validateCalendarTokenLogic("abc123");
+      const result = await validateCalendarTokenLogic(
+        "abc123",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(true);
       expect(result.user).toEqual({
@@ -230,7 +211,10 @@ describe("Calendar Server Functions", () => {
         mockDrizzleDb.query.calendarTokens.findFirst as any
       ).mockResolvedValueOnce(mockToken);
 
-      const result = await validateCalendarTokenLogic("abc123");
+      const result = await validateCalendarTokenLogic(
+        "abc123",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(false);
       expect(result.user).toBeNull();
@@ -254,7 +238,10 @@ describe("Calendar Server Functions", () => {
         mockDrizzleDb.query.calendarTokens.findFirst as any
       ).mockResolvedValueOnce(mockToken);
 
-      const result = await validateCalendarTokenLogic("abc123");
+      const result = await validateCalendarTokenLogic(
+        "abc123",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(false);
       expect(result.user).toBeNull();
@@ -265,7 +252,10 @@ describe("Calendar Server Functions", () => {
         mockDrizzleDb.query.calendarTokens.findFirst as any
       ).mockResolvedValueOnce(null);
 
-      const result = await validateCalendarTokenLogic("nonexistent");
+      const result = await validateCalendarTokenLogic(
+        "nonexistent",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(false);
       expect(result.user).toBeNull();
@@ -277,7 +267,10 @@ describe("Calendar Server Functions", () => {
         mockDrizzleDb.query.calendarTokens.findFirst as any
       ).mockRejectedValueOnce(error);
 
-      const result = await validateCalendarTokenLogic("abc123");
+      const result = await validateCalendarTokenLogic(
+        "abc123",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(false);
       expect(result.user).toBeNull();
@@ -306,7 +299,11 @@ describe("Calendar Server Functions", () => {
       });
       (mockDrizzleDb.update as any).mockReturnValueOnce(updateChain);
 
-      const result = await revokeCalendarTokenLogic(tokenId, userId);
+      const result = await revokeCalendarTokenLogic(
+        tokenId,
+        userId,
+        mockDrizzleDb as any
+      );
 
       expect(result.success).toBe(true);
       expect(mockDrizzleDb.update).toHaveBeenCalled();
@@ -318,7 +315,11 @@ describe("Calendar Server Functions", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await revokeCalendarTokenLogic("token-nonexistent", "user-1");
+        await revokeCalendarTokenLogic(
+          "token-nonexistent",
+          "user-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -340,7 +341,11 @@ describe("Calendar Server Functions", () => {
       ).mockResolvedValueOnce(mockToken);
 
       try {
-        await revokeCalendarTokenLogic("token-1", "user-1");
+        await revokeCalendarTokenLogic(
+          "token-1",
+          "user-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -377,7 +382,10 @@ describe("Calendar Server Functions", () => {
         mockDrizzleDb.query.calendarTokens.findMany as any
       ).mockResolvedValueOnce(mockTokens);
 
-      const result = await listCalendarTokensLogic(userId);
+      const result = await listCalendarTokensLogic(
+        userId,
+        mockDrizzleDb as any
+      );
 
       expect(result).toHaveLength(2);
       expect(result[0].name).toBe("Token 1");
@@ -389,7 +397,10 @@ describe("Calendar Server Functions", () => {
         mockDrizzleDb.query.calendarTokens.findMany as any
       ).mockResolvedValueOnce([]);
 
-      const result = await listCalendarTokensLogic("user-1");
+      const result = await listCalendarTokensLogic(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result).toHaveLength(0);
     });
@@ -414,7 +425,11 @@ describe("Calendar Server Functions", () => {
       (deleteChain.where as any).mockResolvedValueOnce(undefined);
       (mockDrizzleDb.delete as any).mockReturnValueOnce(deleteChain);
 
-      const result = await deleteCalendarTokenLogic(tokenId, userId);
+      const result = await deleteCalendarTokenLogic(
+        tokenId,
+        userId,
+        mockDrizzleDb as any
+      );
 
       expect(result.success).toBe(true);
       expect(mockDrizzleDb.delete).toHaveBeenCalled();
@@ -426,7 +441,11 @@ describe("Calendar Server Functions", () => {
       ).mockResolvedValueOnce(null);
 
       try {
-        await deleteCalendarTokenLogic("token-nonexistent", "user-1");
+        await deleteCalendarTokenLogic(
+          "token-nonexistent",
+          "user-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -448,7 +467,11 @@ describe("Calendar Server Functions", () => {
       ).mockResolvedValueOnce(mockToken);
 
       try {
-        await deleteCalendarTokenLogic("token-1", "user-1");
+        await deleteCalendarTokenLogic(
+          "token-1",
+          "user-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -470,7 +493,11 @@ describe("Calendar Server Functions", () => {
       ).mockResolvedValueOnce(mockToken);
 
       try {
-        await deleteCalendarTokenLogic("token-1", "user-1");
+        await deleteCalendarTokenLogic(
+          "token-1",
+          "user-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);

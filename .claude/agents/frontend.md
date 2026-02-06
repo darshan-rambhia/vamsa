@@ -131,10 +131,43 @@ bun run build
 
 If ANY fail, fix before reporting complete.
 
+## Dependency Injection Pattern
+
+**CRITICAL:** When creating hooks or utilities that depend on external services, use dependency injection for testability.
+
+```typescript
+// ✅ GOOD - DI with default for hooks/utilities
+export function usePersonData(
+  personId: string,
+  fetcher = defaultFetcher // Accepts mock in tests
+) {
+  return useQuery({
+    queryKey: ["person", personId],
+    queryFn: () => fetcher(`/api/persons/${personId}`),
+  });
+}
+
+// ✅ GOOD - Component with injectable data source
+export function PersonList({
+  loadPersons = defaultLoadPersons,
+}: {
+  loadPersons?: () => Promise<Person[]>;
+}) {
+  // ...
+}
+```
+
+### Benefits
+
+- Tests can pass mocks directly without complex module mocking
+- Clear, explicit dependencies
+- Easier to test edge cases and error states
+
 ## Rules
 
 - Server Components by default
 - No `as any`, `@ts-ignore`, `@ts-expect-error`
 - Follow existing patterns in codebase
 - Add loading states and error handling
+- Use Dependency Injection for external dependencies in hooks/utilities
 - Never mark beads complete (only reviewer can)

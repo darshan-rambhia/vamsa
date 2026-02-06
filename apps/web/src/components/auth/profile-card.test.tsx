@@ -5,7 +5,7 @@
  * and a claim button. Tests cover rendering, prop handling, and user interactions.
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { ProfileCard } from "./profile-card";
 

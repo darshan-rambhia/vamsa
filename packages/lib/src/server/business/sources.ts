@@ -1,6 +1,11 @@
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { and, asc, desc, eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.db;
+
+/** Type for the database instance (for DI) */
+export type SourcesDb = typeof drizzleDb;
 
 /**
  * Source details with related data
@@ -196,14 +201,15 @@ export interface PersonSourcesResponse {
 /**
  * Get a single source with all details
  * @param sourceId - The ID of the source to fetch
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Complete source details with related data
  * @throws Error if source not found
  */
-export async function getSourceData(sourceId: string): Promise<SourceDetail> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
-  const source = await drizzleDb.query.sources.findFirst({
+export async function getSourceData(
+  sourceId: string,
+  db: SourcesDb = drizzleDb
+): Promise<SourceDetail> {
+  const source = await db.query.sources.findFirst({
     where: eq(drizzleSchema.sources.id, sourceId),
   });
 
@@ -212,11 +218,11 @@ export async function getSourceData(sourceId: string): Promise<SourceDetail> {
   }
 
   // Fetch related data
-  const eventSources = await drizzleDb.query.eventSources.findMany({
+  const eventSources = await db.query.eventSources.findMany({
     where: eq(drizzleSchema.eventSources.sourceId, sourceId),
   });
 
-  const researchNotes = await drizzleDb.query.researchNotes.findMany({
+  const researchNotes = await db.query.researchNotes.findMany({
     where: eq(drizzleSchema.researchNotes.sourceId, sourceId),
   });
 
@@ -277,18 +283,17 @@ export async function getSourceData(sourceId: string): Promise<SourceDetail> {
  * List all sources with optional filters
  * @param type - Optional source type filter
  * @param personId - Optional person ID filter
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns List of sources matching filters
  */
 export async function listSourcesData(
   type?: string,
-  personId?: string
+  personId?: string,
+  db: SourcesDb = drizzleDb
 ): Promise<SourceListResult> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq, desc } = await import("drizzle-orm");
-
   const where = type ? eq(drizzleSchema.sources.sourceType, type) : undefined;
 
-  const sources = await drizzleDb.query.sources.findMany({
+  const sources = await db.query.sources.findMany({
     where,
     orderBy: desc(drizzleSchema.sources.createdAt),
   });
@@ -296,11 +301,11 @@ export async function listSourcesData(
   // Filter by personId if provided (client-side filtering)
   let filtered = sources;
   if (personId) {
-    const eventSources = await drizzleDb.query.eventSources.findMany({
+    const eventSources = await db.query.eventSources.findMany({
       where: eq(drizzleSchema.eventSources.personId, personId),
     });
 
-    const researchNotes = await drizzleDb.query.researchNotes.findMany({
+    const researchNotes = await db.query.researchNotes.findMany({
       where: eq(drizzleSchema.researchNotes.personId, personId),
     });
 
@@ -332,30 +337,32 @@ export async function listSourcesData(
 /**
  * Create a new source
  * @param data - Source creation data
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Created source
  */
-export async function createSourceData(data: {
-  title: string;
-  author?: string | null;
-  publicationDate?: string | null;
-  description?: string | null;
-  repository?: string | null;
-  notes?: string | null;
-  sourceType?: string | null;
-  citationFormat?: string | null;
-  doi?: string | null;
-  url?: string | null;
-  isbn?: string | null;
-  callNumber?: string | null;
-  accessDate?: string | null;
-  confidence?: string | null;
-}): Promise<SourceCreateResult> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-
+export async function createSourceData(
+  data: {
+    title: string;
+    author?: string | null;
+    publicationDate?: string | null;
+    description?: string | null;
+    repository?: string | null;
+    notes?: string | null;
+    sourceType?: string | null;
+    citationFormat?: string | null;
+    doi?: string | null;
+    url?: string | null;
+    isbn?: string | null;
+    callNumber?: string | null;
+    accessDate?: string | null;
+    confidence?: string | null;
+  },
+  db: SourcesDb = drizzleDb
+): Promise<SourceCreateResult> {
   const sourceId = crypto.randomUUID();
   const now = new Date();
 
-  const [source] = await drizzleDb
+  const [source] = await db
     .insert(drizzleSchema.sources)
     .values({
       id: sourceId,
@@ -393,6 +400,7 @@ export async function createSourceData(data: {
  * Update an existing source
  * @param id - Source ID
  * @param updates - Fields to update
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Updated source
  * @throws Error if source not found
  */
@@ -413,13 +421,11 @@ export async function updateSourceData(
     callNumber: string | null;
     accessDate: string | null;
     confidence: string | null;
-  }>
+  }>,
+  db: SourcesDb = drizzleDb
 ): Promise<SourceUpdateResult> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
   // Verify source exists
-  const source = await drizzleDb.query.sources.findFirst({
+  const source = await db.query.sources.findFirst({
     where: eq(drizzleSchema.sources.id, id),
   });
 
@@ -436,7 +442,7 @@ export async function updateSourceData(
     updateData.accessDate = new Date(updates.accessDate);
   }
 
-  const [updatedSource] = await drizzleDb
+  const [updatedSource] = await db
     .update(drizzleSchema.sources)
     .set(updateData)
     .where(eq(drizzleSchema.sources.id, id))
@@ -457,17 +463,16 @@ export async function updateSourceData(
 /**
  * Delete a source
  * @param sourceId - Source ID to delete
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Success indicator
  * @throws Error if source not found
  */
 export async function deleteSourceData(
-  sourceId: string
+  sourceId: string,
+  db: SourcesDb = drizzleDb
 ): Promise<{ success: boolean }> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
   // Verify source exists
-  const source = await drizzleDb.query.sources.findFirst({
+  const source = await db.query.sources.findFirst({
     where: eq(drizzleSchema.sources.id, sourceId),
   });
 
@@ -475,7 +480,7 @@ export async function deleteSourceData(
     throw new Error("Source not found");
   }
 
-  await drizzleDb
+  await db
     .delete(drizzleSchema.sources)
     .where(eq(drizzleSchema.sources.id, sourceId));
 
@@ -485,24 +490,25 @@ export async function deleteSourceData(
 /**
  * Create a research note
  * @param data - Research note creation data
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Created research note
  * @throws Error if source or person not found
  */
-export async function createResearchNoteData(data: {
-  sourceId: string;
-  personId: string;
-  eventType: string;
-  findings: string;
-  methodology?: string | null;
-  limitations?: string | null;
-  relatedSources?: string;
-  conclusionReliability?: string | null;
-}): Promise<ResearchNoteResult> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
+export async function createResearchNoteData(
+  data: {
+    sourceId: string;
+    personId: string;
+    eventType: string;
+    findings: string;
+    methodology?: string | null;
+    limitations?: string | null;
+    relatedSources?: string;
+    conclusionReliability?: string | null;
+  },
+  db: SourcesDb = drizzleDb
+): Promise<ResearchNoteResult> {
   // Verify source exists
-  const source = await drizzleDb.query.sources.findFirst({
+  const source = await db.query.sources.findFirst({
     where: eq(drizzleSchema.sources.id, data.sourceId),
   });
 
@@ -511,7 +517,7 @@ export async function createResearchNoteData(data: {
   }
 
   // Verify person exists
-  const person = await drizzleDb.query.persons.findFirst({
+  const person = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, data.personId),
   });
 
@@ -522,7 +528,7 @@ export async function createResearchNoteData(data: {
   const noteId = crypto.randomUUID();
   const now = new Date();
 
-  const [researchNote] = await drizzleDb
+  const [researchNote] = await db
     .insert(drizzleSchema.researchNotes)
     .values({
       id: noteId,
@@ -564,6 +570,7 @@ export async function createResearchNoteData(data: {
  * Update a research note
  * @param id - Research note ID
  * @param updates - Fields to update
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Updated research note
  * @throws Error if research note not found
  */
@@ -578,13 +585,11 @@ export async function updateResearchNoteData(
     limitations: string | null;
     relatedSources: string;
     conclusionReliability: string | null;
-  }>
+  }>,
+  db: SourcesDb = drizzleDb
 ): Promise<ResearchNoteResult> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
   // Verify research note exists
-  const researchNote = await drizzleDb.query.researchNotes.findFirst({
+  const researchNote = await db.query.researchNotes.findFirst({
     where: eq(drizzleSchema.researchNotes.id, id),
   });
 
@@ -597,13 +602,13 @@ export async function updateResearchNoteData(
     updatedAt: new Date(),
   };
 
-  const [updatedNote] = await drizzleDb
+  const [updatedNote] = await db
     .update(drizzleSchema.researchNotes)
     .set(updateData)
     .where(eq(drizzleSchema.researchNotes.id, id))
     .returning();
 
-  const person = await drizzleDb.query.persons.findFirst({
+  const person = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, updatedNote.personId),
   });
 
@@ -632,17 +637,16 @@ export async function updateResearchNoteData(
 /**
  * Delete a research note
  * @param noteId - Research note ID to delete
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Success indicator
  * @throws Error if research note not found
  */
 export async function deleteResearchNoteData(
-  noteId: string
+  noteId: string,
+  db: SourcesDb = drizzleDb
 ): Promise<{ success: boolean }> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
   // Verify research note exists
-  const researchNote = await drizzleDb.query.researchNotes.findFirst({
+  const researchNote = await db.query.researchNotes.findFirst({
     where: eq(drizzleSchema.researchNotes.id, noteId),
   });
 
@@ -650,7 +654,7 @@ export async function deleteResearchNoteData(
     throw new Error("Research note not found");
   }
 
-  await drizzleDb
+  await db
     .delete(drizzleSchema.researchNotes)
     .where(eq(drizzleSchema.researchNotes.id, noteId));
 
@@ -660,21 +664,22 @@ export async function deleteResearchNoteData(
 /**
  * Link source to event with confidence and notes
  * @param data - Link data including sourceId, personId, eventType, confidence, sourceNotes
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Created or updated event source link
  * @throws Error if source or person not found
  */
-export async function linkSourceToEventData(data: {
-  sourceId: string;
-  personId: string;
-  eventType: string;
-  confidence?: string | null;
-  sourceNotes?: string | null;
-}): Promise<EventSourceResult> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq, and } = await import("drizzle-orm");
-
+export async function linkSourceToEventData(
+  data: {
+    sourceId: string;
+    personId: string;
+    eventType: string;
+    confidence?: string | null;
+    sourceNotes?: string | null;
+  },
+  db: SourcesDb = drizzleDb
+): Promise<EventSourceResult> {
   // Verify source exists
-  const source = await drizzleDb.query.sources.findFirst({
+  const source = await db.query.sources.findFirst({
     where: eq(drizzleSchema.sources.id, data.sourceId),
   });
 
@@ -683,7 +688,7 @@ export async function linkSourceToEventData(data: {
   }
 
   // Verify person exists
-  const person = await drizzleDb.query.persons.findFirst({
+  const person = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, data.personId),
   });
 
@@ -692,7 +697,7 @@ export async function linkSourceToEventData(data: {
   }
 
   // Check if link already exists
-  const existingLink = await drizzleDb.query.eventSources.findFirst({
+  const existingLink = await db.query.eventSources.findFirst({
     where: and(
       eq(drizzleSchema.eventSources.sourceId, data.sourceId),
       eq(drizzleSchema.eventSources.personId, data.personId),
@@ -702,7 +707,7 @@ export async function linkSourceToEventData(data: {
 
   if (existingLink) {
     // Update existing link
-    const [updated] = await drizzleDb
+    const [updated] = await db
       .update(drizzleSchema.eventSources)
       .set({
         confidence: data.confidence || null,
@@ -723,7 +728,7 @@ export async function linkSourceToEventData(data: {
 
   // Create new link
   const linkId = crypto.randomUUID();
-  const [eventSource] = await drizzleDb
+  const [eventSource] = await db
     .insert(drizzleSchema.eventSources)
     .values({
       id: linkId,
@@ -748,17 +753,16 @@ export async function linkSourceToEventData(data: {
 /**
  * Get all research notes for a person, grouped by event type
  * @param personId - Person ID
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Research notes grouped by event type
  * @throws Error if person not found
  */
 export async function getResearchNotesData(
-  personId: string
+  personId: string,
+  db: SourcesDb = drizzleDb
 ): Promise<ResearchNotesGrouped> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq, asc, desc } = await import("drizzle-orm");
-
   // Verify person exists
-  const person = await drizzleDb.query.persons.findFirst({
+  const person = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -766,7 +770,7 @@ export async function getResearchNotesData(
     throw new Error("Person not found");
   }
 
-  const researchNotes = await drizzleDb.query.researchNotes.findMany({
+  const researchNotes = await db.query.researchNotes.findMany({
     where: eq(drizzleSchema.researchNotes.personId, personId),
     orderBy: [
       asc(drizzleSchema.researchNotes.eventType),
@@ -811,16 +815,15 @@ export async function getResearchNotesData(
 /**
  * Get all sources for a person, grouped by event type (legacy format)
  * @param personId - Person ID
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Sources grouped by event type
  */
 export async function getPersonSourcesData(
-  personId: string
+  personId: string,
+  db: SourcesDb = drizzleDb
 ): Promise<PersonSourcesResponse> {
   try {
-    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-    const { eq, asc } = await import("drizzle-orm");
-
-    const eventSources = await drizzleDb.query.eventSources.findMany({
+    const eventSources = await db.query.eventSources.findMany({
       where: eq(drizzleSchema.eventSources.personId, personId),
       orderBy: [
         asc(drizzleSchema.eventSources.eventType),
@@ -845,7 +848,7 @@ export async function getPersonSourcesData(
 
       if (!existingSource) {
         // Fetch source details
-        const source = await drizzleDb.query.sources.findFirst({
+        const source = await db.query.sources.findFirst({
           where: eq(drizzleSchema.sources.id, es.sourceId),
         });
 
@@ -894,17 +897,16 @@ export interface GeneratedCitation {
  * Generate a formatted citation for a source
  * @param sourceId - Source ID to generate citation for
  * @param format - Citation format (MLA, APA, etc.)
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Generated citation string
  */
 export async function generateCitationData(
   sourceId: string,
-  format: CitationFormat = "MLA"
+  format: CitationFormat = "MLA",
+  db: SourcesDb = drizzleDb
 ): Promise<GeneratedCitation> {
   try {
-    const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-    const { eq } = await import("drizzle-orm");
-
-    const source = await drizzleDb.query.sources.findFirst({
+    const source = await db.query.sources.findFirst({
       where: eq(drizzleSchema.sources.id, sourceId),
     });
 

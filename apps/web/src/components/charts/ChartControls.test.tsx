@@ -21,7 +21,7 @@
  * ChartControls.tsx: 99.47% line coverage, 71.43% function coverage
  */
 
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, vi } from "vitest";
 import { fireEvent, render } from "@testing-library/react";
 import { ChartControls } from "./ChartControls";
 import type { ChartControlsProps, ChartType } from "./ChartControls";
@@ -31,8 +31,8 @@ describe("ChartControls Component", () => {
   const defaultProps: ChartControlsProps = {
     chartType: "ancestor",
     generations: 3,
-    onGenerationsChange: mock(() => {}),
-    onResetView: mock(() => {}),
+    onGenerationsChange: vi.fn(() => {}),
+    onResetView: vi.fn(() => {}),
   };
 
   describe("Component Export", () => {
@@ -97,7 +97,7 @@ describe("ChartControls Component", () => {
           {...defaultProps}
           chartType="ancestor"
           ancestorGenerations={3}
-          onAncestorGenerationsChange={mock(() => {})}
+          onAncestorGenerationsChange={vi.fn(() => {})}
         />
       );
       const labels = container.querySelectorAll("label");
@@ -114,7 +114,7 @@ describe("ChartControls Component", () => {
           chartType="tree"
           ancestorGenerations={2}
           descendantGenerations={2}
-          onAncestorGenerationsChange={mock(() => {})}
+          onAncestorGenerationsChange={vi.fn(() => {})}
         />
       );
       const labels = container.querySelectorAll("label");
@@ -162,7 +162,7 @@ describe("ChartControls Component", () => {
           {...defaultProps}
           chartType="descendant"
           descendantGenerations={3}
-          onDescendantGenerationsChange={mock(() => {})}
+          onDescendantGenerationsChange={vi.fn(() => {})}
         />
       );
       const labels = container.querySelectorAll("label");
@@ -179,7 +179,7 @@ describe("ChartControls Component", () => {
           chartType="tree"
           ancestorGenerations={2}
           descendantGenerations={2}
-          onDescendantGenerationsChange={mock(() => {})}
+          onDescendantGenerationsChange={vi.fn(() => {})}
         />
       );
       const labels = container.querySelectorAll("label");
@@ -227,7 +227,7 @@ describe("ChartControls Component", () => {
           {...defaultProps}
           chartType="timeline"
           sortBy="birth"
-          onSortByChange={mock(() => {})}
+          onSortByChange={vi.fn(() => {})}
         />
       );
       const labels = container.querySelectorAll("label");
@@ -256,7 +256,7 @@ describe("ChartControls Component", () => {
           {...defaultProps}
           chartType="matrix"
           maxPeople={25}
-          onMaxPeopleChange={mock(() => {})}
+          onMaxPeopleChange={vi.fn(() => {})}
         />
       );
       const labels = container.querySelectorAll("label");
@@ -303,7 +303,7 @@ describe("ChartControls Component", () => {
 
   describe("Reset View Button", () => {
     it("should call onResetView when reset button is clicked", () => {
-      const onResetView = mock(() => {});
+      const onResetView = vi.fn(() => {});
       const { getByRole } = render(
         <ChartControls {...defaultProps} onResetView={onResetView} />
       );
@@ -322,7 +322,7 @@ describe("ChartControls Component", () => {
   describe("Export Menu Toggle", () => {
     it("should open export menu when export button is clicked", () => {
       const { getByRole, getByText } = render(
-        <ChartControls {...defaultProps} onExportPDF={mock(() => {})} />
+        <ChartControls {...defaultProps} onExportPDF={vi.fn(() => {})} />
       );
       const exportButton = getByRole("button", { name: /export|share/i });
       fireEvent.click(exportButton);
@@ -333,7 +333,7 @@ describe("ChartControls Component", () => {
 
     it("should close export menu when export button is clicked again", () => {
       const { getByRole, queryByText } = render(
-        <ChartControls {...defaultProps} onExportPDF={mock(() => {})} />
+        <ChartControls {...defaultProps} onExportPDF={vi.fn(() => {})} />
       );
       const exportButton = getByRole("button", { name: /export|share/i });
       fireEvent.click(exportButton);
@@ -345,7 +345,7 @@ describe("ChartControls Component", () => {
 
   describe("Export Functions", () => {
     it("should call onExportPDF when PDF export is clicked", () => {
-      const onExportPDF = mock(() => {});
+      const onExportPDF = vi.fn(() => {});
       const { getByRole, getByText } = render(
         <ChartControls {...defaultProps} onExportPDF={onExportPDF} />
       );
@@ -360,7 +360,7 @@ describe("ChartControls Component", () => {
     });
 
     it("should call onExportPNG when PNG export is clicked", () => {
-      const onExportPNG = mock(() => {});
+      const onExportPNG = vi.fn(() => {});
       const { getByRole, getByText } = render(
         <ChartControls {...defaultProps} onExportPNG={onExportPNG} />
       );
@@ -375,7 +375,7 @@ describe("ChartControls Component", () => {
     });
 
     it("should call onExportSVG when SVG export is clicked", () => {
-      const onExportSVG = mock(() => {});
+      const onExportSVG = vi.fn(() => {});
       const { getByRole, getByText } = render(
         <ChartControls {...defaultProps} onExportSVG={onExportSVG} />
       );
@@ -390,7 +390,7 @@ describe("ChartControls Component", () => {
     });
 
     it("should call onPrint when print is clicked", () => {
-      const onPrint = mock(() => {});
+      const onPrint = vi.fn(() => {});
       const { getByRole, getByText } = render(
         <ChartControls {...defaultProps} onPrint={onPrint} />
       );
@@ -406,7 +406,7 @@ describe("ChartControls Component", () => {
 
     it("should fall back to window.print when onPrint is not provided", () => {
       const originalPrint = window.print;
-      window.print = mock(() => {});
+      window.print = vi.fn(() => {});
 
       try {
         const { getByRole, getByText } = render(
@@ -478,8 +478,8 @@ describe("ChartControls Component", () => {
         <ChartControls
           chartType="ancestor"
           generations={3}
-          onGenerationsChange={mock(() => {})}
-          onResetView={mock(() => {})}
+          onGenerationsChange={vi.fn(() => {})}
+          onResetView={vi.fn(() => {})}
         />
       );
       expect(container).toBeDefined();
@@ -490,8 +490,8 @@ describe("ChartControls Component", () => {
         <ChartControls
           chartType="tree"
           generations={3}
-          onGenerationsChange={mock(() => {})}
-          onResetView={mock(() => {})}
+          onGenerationsChange={vi.fn(() => {})}
+          onResetView={vi.fn(() => {})}
         />
       );
       expect(container).toBeDefined();
@@ -502,8 +502,8 @@ describe("ChartControls Component", () => {
         <ChartControls
           chartType="matrix"
           generations={3}
-          onGenerationsChange={mock(() => {})}
-          onResetView={mock(() => {})}
+          onGenerationsChange={vi.fn(() => {})}
+          onResetView={vi.fn(() => {})}
         />
       );
       expect(container).toBeDefined();
@@ -514,8 +514,8 @@ describe("ChartControls Component", () => {
         <ChartControls
           chartType="timeline"
           generations={3}
-          onGenerationsChange={mock(() => {})}
-          onResetView={mock(() => {})}
+          onGenerationsChange={vi.fn(() => {})}
+          onResetView={vi.fn(() => {})}
         />
       );
       expect(container).toBeDefined();

@@ -8,15 +8,11 @@
  * isolated from handler tests that require mocking.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  getStubbedSession,
-  testUsers,
-  withStubbedServerContext,
-} from "@test/server-fn-context";
-import { resetRateLimit } from "./middleware/rate-limiter";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Import handlers AFTER setting up mocks
+// Now we can import test utilities (but we'll implement our own context helper)
+import { testUsers } from "@test/server-fn-fixtures";
+import { resetRateLimit } from "./middleware/rate-limiter";
 import {
   changePasswordHandler,
   checkAuthHandler,
@@ -31,39 +27,121 @@ import {
 // Mocks for Handler Tests
 // =============================================================================
 
-const mockGetUnclaimedProfilesData = mock(async () => [
-  { id: "person-1", firstName: "John", lastName: "Doe" },
-  { id: "person-2", firstName: "Jane", lastName: "Smith" },
-]);
-
-const mockClaimProfileData = mock(async () => ({
-  userId: "new-user-id",
-  success: true,
+// Create mock functions using vi.hoisted to ensure they're available in vi.mock factories
+const {
+  mockGetUnclaimedProfilesData,
+  mockClaimProfileData,
+  mockBetterAuthChangePassword,
+  mockBetterAuthSignOut,
+  mockGetBetterAuthProviders,
+  mockBetterAuthGetSessionWithUserFromCookie,
+  mockGetCookie,
+  mockSetCookie,
+  mockDeleteCookie,
+  mockGetHeaders,
+} = vi.hoisted(() => ({
+  mockGetUnclaimedProfilesData: vi.fn(async () => [
+    { id: "person-1", firstName: "John", lastName: "Doe" },
+    { id: "person-2", firstName: "Jane", lastName: "Smith" },
+  ]),
+  mockClaimProfileData: vi.fn(async () => ({
+    userId: "new-user-id",
+    success: true,
+  })),
+  mockBetterAuthChangePassword: vi.fn(async () => undefined),
+  mockBetterAuthSignOut: vi.fn(async () => undefined),
+  mockGetBetterAuthProviders: vi.fn(() => ({
+    google: true,
+    github: false,
+    microsoft: false,
+    oidc: true,
+  })),
+  mockBetterAuthGetSessionWithUserFromCookie: vi.fn(
+    async (_cookie: string | undefined) => {
+      return null as any;
+    }
+  ),
+  // TanStack Start server mocks
+  mockGetCookie: vi.fn((_name: string): string | undefined => undefined),
+  mockSetCookie: vi.fn(),
+  mockDeleteCookie: vi.fn(),
+  mockGetHeaders: vi.fn(() => ({})),
 }));
 
-const mockBetterAuthChangePassword = mock(async () => undefined);
-
-const mockBetterAuthSignOut = mock(async () => undefined);
-
-const mockGetBetterAuthProviders = mock(() => ({
-  google: true,
-  github: false,
-  microsoft: false,
-  oidc: true,
+// Mock TanStack Start server functions
+vi.mock("@tanstack/react-start/server", () => ({
+  getCookie: mockGetCookie,
+  setCookie: mockSetCookie,
+  deleteCookie: mockDeleteCookie,
+  getHeaders: mockGetHeaders,
 }));
 
-// Note: We intentionally do NOT mock rate-limiter to avoid mock.module
-// conflicts with rate-limiter.test.ts. Instead, we reset rate limits in
-// beforeEach and let the real rate limiter run.
-
-mock.module("@vamsa/lib/server/business", () => ({
-  getUnclaimedProfilesData: mockGetUnclaimedProfilesData,
-  claimProfileData: mockClaimProfileData,
+// Mock the business logic modules
+// IMPORTANT: Must come BEFORE importing @test/server-fn-context, otherwise
+// server-fn-context.ts's vi.mock() calls will take precedence
+vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
   betterAuthChangePassword: mockBetterAuthChangePassword,
   betterAuthSignOut: mockBetterAuthSignOut,
   getBetterAuthProviders: mockGetBetterAuthProviders,
-  betterAuthGetSessionWithUserFromCookie: getStubbedSession,
+  betterAuthGetSessionWithUserFromCookie:
+    mockBetterAuthGetSessionWithUserFromCookie,
+  // Stubs for functions not used in these tests
+  betterAuthLogin: async () => {
+    throw new Error("betterAuthLogin: Not implemented in test");
+  },
+  betterAuthRegister: async () => {
+    throw new Error("betterAuthRegister: Not implemented in test");
+  },
+  betterAuthGetSession: async () => {
+    throw new Error("betterAuthGetSession: Not implemented in test");
+  },
+  betterAuthGetSessionWithUser: async () => {
+    throw new Error("betterAuthGetSessionWithUser: Not implemented in test");
+  },
 }));
+
+vi.mock("@vamsa/lib/server/business/auth", () => ({
+  getUnclaimedProfilesData: mockGetUnclaimedProfilesData,
+  claimProfileData: mockClaimProfileData,
+}));
+
+// =============================================================================
+// Test Context Helper
+// =============================================================================
+
+/**
+ * Minimal context helper that uses our local mocks
+ */
+interface TestContext {
+  user?: (typeof testUsers)[keyof typeof testUsers] | null;
+  cookies?: Record<string, string>;
+}
+
+async function withContext<T>(
+  context: TestContext,
+  fn: () => T | Promise<T>
+): Promise<T> {
+  // Setup mocks for this context
+  mockGetCookie.mockImplementation((name: string): string | undefined => {
+    if (context.cookies && name in context.cookies) {
+      return context.cookies[name];
+    }
+    if (context.user && name === "better-auth.session_token") {
+      return `stub-session-${context.user.id}`;
+    }
+    return undefined;
+  });
+
+  mockBetterAuthGetSessionWithUserFromCookie.mockImplementation(
+    async () => (context.user ?? null) as any
+  );
+
+  try {
+    return await fn();
+  } finally {
+    // Cleanup is handled by beforeEach/afterEach
+  }
+}
 
 // =============================================================================
 // Handler Tests
@@ -71,20 +149,41 @@ mock.module("@vamsa/lib/server/business", () => ({
 
 describe("Auth Handlers", () => {
   beforeEach(() => {
-    mockGetUnclaimedProfilesData.mockClear();
-    mockClaimProfileData.mockClear();
-    mockBetterAuthChangePassword.mockClear();
-    mockBetterAuthSignOut.mockClear();
-    mockGetBetterAuthProviders.mockClear();
+    // Clear all mock call history
+    vi.clearAllMocks();
+
+    // Reset mock implementations to defaults
+    mockGetUnclaimedProfilesData.mockResolvedValue([
+      { id: "person-1", firstName: "John", lastName: "Doe" },
+      { id: "person-2", firstName: "Jane", lastName: "Smith" },
+    ]);
+
+    mockClaimProfileData.mockResolvedValue({
+      userId: "new-user-id",
+      success: true,
+    });
+
+    mockBetterAuthChangePassword.mockResolvedValue(undefined);
+    mockBetterAuthSignOut.mockResolvedValue(undefined);
+    mockGetBetterAuthProviders.mockReturnValue({
+      google: true,
+      github: false,
+      microsoft: false,
+      oidc: true,
+    });
+
     // Reset rate limits to ensure clean state for each test
     resetRateLimit("claimProfile", "127.0.0.1");
   });
 
+  afterEach(() => {
+    // Restore all mocks to their default state
+    vi.restoreAllMocks();
+  });
+
   describe("getUnclaimedProfilesHandler", () => {
     it("returns unclaimed profiles", async () => {
-      const { result } = await withStubbedServerContext({}, () =>
-        getUnclaimedProfilesHandler()
-      );
+      const result = await withContext({}, () => getUnclaimedProfilesHandler());
 
       expect(result).toHaveLength(2);
       expect(result[0].firstName).toBe("John");
@@ -100,7 +199,7 @@ describe("Auth Handlers", () => {
     };
 
     it("claims profile with valid data", async () => {
-      const { result } = await withStubbedServerContext({}, () =>
+      const result = await withContext({}, () =>
         claimProfileHandler(validClaimData)
       );
 
@@ -116,7 +215,7 @@ describe("Auth Handlers", () => {
     it("validates input with schema", async () => {
       // Invalid email should be rejected by schema
       await expect(
-        withStubbedServerContext({}, () =>
+        withContext({}, () =>
           claimProfileHandler({
             email: "not-an-email",
             personId: "person-1",
@@ -135,9 +234,8 @@ describe("Auth Handlers", () => {
     };
 
     it("changes password for authenticated user", async () => {
-      const { result } = await withStubbedServerContext(
-        { user: testUsers.member },
-        () => changePasswordHandler(validPasswordData)
+      const result = await withContext({ user: testUsers.member }, () =>
+        changePasswordHandler(validPasswordData)
       );
 
       expect(result.success).toBe(true);
@@ -147,9 +245,8 @@ describe("Auth Handlers", () => {
 
   describe("getSessionHandler", () => {
     it("returns user when authenticated", async () => {
-      const { result } = await withStubbedServerContext(
-        { user: testUsers.viewer },
-        () => getSessionHandler()
+      const result = await withContext({ user: testUsers.viewer }, () =>
+        getSessionHandler()
       );
 
       expect(result).not.toBeNull();
@@ -157,9 +254,7 @@ describe("Auth Handlers", () => {
     });
 
     it("returns null when not authenticated", async () => {
-      const { result } = await withStubbedServerContext({}, () =>
-        getSessionHandler()
-      );
+      const result = await withContext({}, () => getSessionHandler());
 
       expect(result).toBeNull();
     });
@@ -167,9 +262,8 @@ describe("Auth Handlers", () => {
 
   describe("checkAuthHandler", () => {
     it("returns valid true with user when authenticated", async () => {
-      const { result } = await withStubbedServerContext(
-        { user: testUsers.admin },
-        () => checkAuthHandler()
+      const result = await withContext({ user: testUsers.admin }, () =>
+        checkAuthHandler()
       );
 
       expect(result.valid).toBe(true);
@@ -178,9 +272,7 @@ describe("Auth Handlers", () => {
     });
 
     it("returns valid false when not authenticated", async () => {
-      const { result } = await withStubbedServerContext({}, () =>
-        checkAuthHandler()
-      );
+      const result = await withContext({}, () => checkAuthHandler());
 
       expect(result.valid).toBe(false);
       expect(result.user).toBeNull();
@@ -189,9 +281,8 @@ describe("Auth Handlers", () => {
 
   describe("logoutHandler", () => {
     it("logs out authenticated user", async () => {
-      const { result } = await withStubbedServerContext(
-        { user: testUsers.member },
-        () => logoutHandler()
+      const result = await withContext({ user: testUsers.member }, () =>
+        logoutHandler()
       );
 
       expect(result.success).toBe(true);
@@ -199,9 +290,7 @@ describe("Auth Handlers", () => {
     });
 
     it("succeeds even without active session", async () => {
-      const { result } = await withStubbedServerContext({}, () =>
-        logoutHandler()
-      );
+      const result = await withContext({}, () => logoutHandler());
 
       expect(result.success).toBe(true);
     });
@@ -209,7 +298,7 @@ describe("Auth Handlers", () => {
 
   describe("getAvailableProvidersHandler", () => {
     it("returns available auth providers", async () => {
-      const { result } = await withStubbedServerContext({}, () =>
+      const result = await withContext({}, () =>
         getAvailableProvidersHandler()
       );
 

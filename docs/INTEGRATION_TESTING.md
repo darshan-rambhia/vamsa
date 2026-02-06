@@ -17,13 +17,13 @@ Integration tests bridge the gap between unit tests (mocked database) and E2E te
 ### 1. Start Test Database
 
 ```bash
-docker-compose -f docker/docker-compose.test.yml up -d
+docker compose -f docker/docker-compose.local.yml --profile test up -d
 ```
 
 Verify it's healthy:
 
 ```bash
-docker-compose -f docker/docker-compose.test.yml logs postgres
+docker compose -f docker/docker-compose.local.yml --profile test logs postgres
 ```
 
 ### 2. Run Integration Tests
@@ -42,14 +42,14 @@ bun test ./tests/integration/persons.int.ts
 ### 3. Stop Test Database
 
 ```bash
-docker-compose -f docker/docker-compose.test.yml down -v
+docker compose -f docker/docker-compose.local.yml --profile test down -v
 ```
 
 ## Architecture
 
 ### Test Database Configuration
 
-- **Location**: `docker/docker-compose.test.yml`
+- **Location**: `docker/docker-compose.local.yml` (test profile)
 - **Host**: localhost
 - **Port**: 5433 (non-standard to avoid conflicts)
 - **Database**: vamsa_test
@@ -323,7 +323,7 @@ bun test tests/integration/**/*.int.ts
 Test database not running:
 
 ```bash
-docker-compose -f docker/docker-compose.test.yml up -d
+docker compose -f docker/docker-compose.local.yml --profile test up -d
 ```
 
 ### Database Does Not Exist
@@ -331,7 +331,7 @@ docker-compose -f docker/docker-compose.test.yml up -d
 Database hasn't finished initializing. Wait and check:
 
 ```bash
-docker-compose -f docker/docker-compose.test.yml logs postgres
+docker compose -f docker/docker-compose.local.yml --profile test logs postgres
 # Look for "database system is ready to accept connections"
 ```
 

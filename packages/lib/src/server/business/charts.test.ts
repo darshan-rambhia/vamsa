@@ -11,14 +11,8 @@
  * Integration tests would verify the full chart generation pipeline.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 // NOTE: Do NOT mock "../helpers/charts" here - it causes test pollution
 // because Bun's mock.module persists across test files. The export
@@ -27,57 +21,9 @@ import {
 // Import functions to test
 import { exportChartAsPDF, exportChartAsSVG } from "./charts";
 
-// Mock the logger before importing modules
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Mock drizzle schema
-const mockDrizzleSchema = {
-  persons: {
-    id: "id",
-    firstName: "firstName",
-    lastName: "lastName",
-    dateOfBirth: "dateOfBirth",
-    dateOfPassing: "dateOfPassing",
-    isLiving: "isLiving",
-    photoUrl: "photoUrl",
-    gender: "gender",
-    birthPlace: "birthPlace",
-  },
-  relationships: {
-    id: "id",
-    personId: "personId",
-    relatedPersonId: "relatedPersonId",
-    type: "type",
-    createdAt: "createdAt",
-  },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: {
-    query: {
-      persons: {
-        findFirst: mock(() => Promise.resolve(null)),
-        findMany: mock(() => Promise.resolve([])),
-      },
-      relationships: {
-        findMany: mock(() => Promise.resolve([])),
-      },
-    },
-  } as any,
-  drizzleSchema: mockDrizzleSchema,
-  eq: () => ({}),
-  and: () => ({}),
-  inArray: () => ({}),
-}));
-
 // Mock metrics module
-mock.module("../metrics", () => ({
-  recordChartMetrics: mock(() => undefined),
+vi.mock("../metrics", () => ({
+  recordChartMetrics: vi.fn(() => undefined),
 }));
 
 describe("charts business logic", () => {
@@ -186,9 +132,8 @@ describe("charts business logic", () => {
 
     it("should support chart data structures", () => {
       // Verify mock setup is complete
-      expect(mockDrizzleSchema).toBeDefined();
-      expect(mockDrizzleSchema.persons).toBeDefined();
-      expect(mockDrizzleSchema.relationships).toBeDefined();
+      expect(mockLogger).toBeDefined();
+      expect(typeof mockLogger.info).toBe("function");
     });
 
     it("should define valid chart types", () => {

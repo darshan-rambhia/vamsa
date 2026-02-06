@@ -78,6 +78,80 @@ export interface TestFixtures {
 }
 
 /**
+ * Wait for React hydration to complete.
+ * Checks for the data-hydrated attribute set by RootComponent after mount.
+ */
+export async function waitForHydration(page: Page, timeout = 5000) {
+  await page.waitForFunction(
+    () => document.documentElement.dataset.hydrated === "true",
+    { timeout }
+  );
+}
+
+/**
+ * Fill an email input using the "poke and verify" pattern.
+ * Types the first character, waits for React reconciliation, then types the rest.
+ */
+async function fillEmailWithPokeVerify(
+  page: Page,
+  emailInput: ReturnType<Page["getByTestId"]>,
+  email: string
+): Promise<void> {
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    await emailInput.click();
+    await page.waitForTimeout(50);
+    await emailInput.clear();
+
+    await emailInput.pressSequentially(email.charAt(0), { delay: 50 });
+    await page.waitForTimeout(200);
+
+    const firstChar = await emailInput.inputValue();
+    if (firstChar !== email.charAt(0)) {
+      await page.waitForTimeout(300 * attempt);
+      continue;
+    }
+
+    await emailInput.pressSequentially(email.slice(1), { delay: 20 });
+    await page.waitForTimeout(200);
+
+    const emailValue = await emailInput.inputValue();
+    if (emailValue === email) return;
+
+    await page.waitForTimeout(200 * attempt);
+  }
+}
+
+/**
+ * Fill a password input with retry logic.
+ * Falls back to selectText + pressSequentially if fill() doesn't stick.
+ */
+async function fillPasswordWithRetry(
+  page: Page,
+  passwordInput: ReturnType<Page["getByTestId"]>,
+  password: string
+): Promise<void> {
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    await passwordInput.click();
+    await page.waitForTimeout(100);
+    await passwordInput.fill(password);
+    await page.waitForTimeout(150);
+
+    const passwordValue = await passwordInput.inputValue();
+    if (passwordValue === password) return;
+
+    if (attempt < 3) {
+      await passwordInput.click();
+      await passwordInput.selectText().catch(() => {});
+      await passwordInput.pressSequentially(password, { delay: 30 });
+      await page.waitForTimeout(100);
+
+      const retryValue = await passwordInput.inputValue();
+      if (retryValue === password) return;
+    }
+  }
+}
+
+/**
  * Device breakpoint detection utilities
  */
 export function getDeviceType(width: number): "mobile" | "tablet" | "desktop" {
@@ -132,24 +206,9 @@ export const test = base.extend<TestFixtures>({
         await page.goto("/login");
       }
 
-      // Wait for page to fully load
+      // Wait for page to fully load and React to hydrate
       await page.waitForLoadState("domcontentloaded");
-
-      // NETWORKIDLE EXCEPTION: Login form requires networkidle for reliable React hydration
-      //
-      // WHY THIS IS NEEDED:
-      // Under parallel test execution, React controlled inputs can be "visible" and "editable"
-      // before React attaches onChange handlers. When you type into such an input:
-      // 1. Native browser input accepts the text
-      // 2. React hydrates and reconciles with empty state
-      // 3. React RESETS the input to empty (the state value)
-      //
-      // The networkidle wait ensures all JS bundles are loaded and executed before we interact.
-      // This is particularly critical for login since it's the gateway to all authenticated tests.
-      //
-      // FUTURE IMPROVEMENT: If we find a deterministic way to detect React hydration completion
-      // (e.g., a data attribute set after hydration, or a custom event), we can remove this.
-      await page.waitForLoadState("networkidle").catch(() => {});
+      await waitForHydration(page);
 
       // Wait for the login form to be visible using test IDs (same as global setup)
       const loginForm = page.getByTestId("login-form");
@@ -169,56 +228,9 @@ export const test = base.extend<TestFixtures>({
       // Additional hydration buffer for parallel execution
       await page.waitForTimeout(500);
 
-      // Fill email with "poke and verify" pattern - verify React responds before typing rest
-      for (let attempt = 1; attempt <= 5; attempt++) {
-        await emailInput.click();
-        await page.waitForTimeout(50);
-        await emailInput.clear();
-
-        // Poke: type first character and wait for React reconciliation
-        await emailInput.type(user.email.charAt(0), { delay: 50 });
-        // CRITICAL: Wait for React to potentially reset controlled input
-        await page.waitForTimeout(200);
-
-        const firstChar = await emailInput.inputValue();
-        if (firstChar !== user.email.charAt(0)) {
-          // React either not hydrated or reset the value - wait longer
-          await page.waitForTimeout(300 * attempt);
-          continue;
-        }
-
-        // React accepted the character - type the rest
-        await emailInput.type(user.email.slice(1), { delay: 20 });
-        await page.waitForTimeout(200);
-
-        const emailValue = await emailInput.inputValue();
-        if (emailValue === user.email) break;
-
-        // Value mismatch - wait and retry
-        await page.waitForTimeout(200 * attempt);
-      }
-
-      // Fill password with retry loop
-      for (let attempt = 1; attempt <= 3; attempt++) {
-        await passwordInput.click();
-        await page.waitForTimeout(100);
-        await passwordInput.fill(user.password);
-        await page.waitForTimeout(150);
-
-        const passwordValue = await passwordInput.inputValue();
-        if (passwordValue === user.password) break;
-
-        // Retry with selectText + type
-        if (attempt < 3) {
-          await passwordInput.click();
-          await passwordInput.selectText().catch(() => {});
-          await passwordInput.type(user.password, { delay: 30 });
-          await page.waitForTimeout(100);
-
-          const retryValue = await passwordInput.inputValue();
-          if (retryValue === user.password) break;
-        }
-      }
+      // Fill email and password with retry logic
+      await fillEmailWithPokeVerify(page, emailInput, user.email);
+      await fillPasswordWithRetry(page, passwordInput, user.password);
 
       // Verify form was filled (don't log password-related values to avoid security scanner warnings)
       const filledEmail = await emailInput.inputValue();
@@ -324,16 +336,16 @@ export const test = base.extend<TestFixtures>({
         await page.evaluate(() => {
           try {
             localStorage.clear();
-          } catch (_e) {
+          } catch {
             // Ignore localStorage errors (cross-origin)
           }
           try {
             sessionStorage.clear();
-          } catch (_e) {
+          } catch {
             // Ignore sessionStorage errors (cross-origin)
           }
         });
-      } catch (_e) {
+      } catch {
         // Ignore page.evaluate errors for pages that restrict storage access
       }
 
@@ -467,7 +479,7 @@ export const test = base.extend<TestFixtures>({
 });
 
 // Re-export expect for convenience
-export { expect };
+export { expect } from "@playwright/test";
 
 /**
  * Custom expect matchers for Vamsa-specific assertions

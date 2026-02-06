@@ -99,10 +99,46 @@ bun run build
 
 If ANY fail, fix before reporting complete.
 
+## Dependency Injection Pattern
+
+**CRITICAL:** All business logic functions MUST accept dependencies as parameters with defaults. This enables clean unit testing without mock.module() hacks.
+
+```typescript
+// ✅ GOOD - DI with default
+export async function getEmailNotificationPreferences(
+  userId: string,
+  db = drizzleDb  // Accepts mock in tests, uses real db in production
+) {
+  const user = await db.query.users.findFirst({...});
+  return user?.preferences;
+}
+
+// ❌ BAD - No DI, hard to test
+export async function getEmailNotificationPreferences(userId: string) {
+  const user = await drizzleDb.query.users.findFirst({...});
+  return user?.preferences;
+}
+```
+
+### Benefits
+
+- Tests pass mock directly: `await myFunction(params, mockDb)`
+- No mock.module() conflicts between tests
+- Clear, explicit dependencies
+- Same behavior locally and in CI
+
+### What to Inject
+
+- Database (`db = drizzleDb`)
+- Email service (`emailService = defaultEmailService`)
+- External APIs
+- Logger (if needed for testing)
+
 ## Rules
 
 - Auth check first in every action
 - Validate all input with Zod
 - No `as any`, `@ts-ignore`, `@ts-expect-error`
 - Call `revalidatePath()` after mutations
+- Use Dependency Injection for all external dependencies
 - Never mark beads complete (only reviewer can)

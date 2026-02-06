@@ -13,7 +13,7 @@
  * - Search and discovery workflows
  */
 
-import { expect, test } from "./fixtures/test-base";
+import { expect, test, waitForHydration } from "./fixtures/test-base";
 import { bdd } from "./fixtures/bdd-helpers";
 import {
   Navigation,
@@ -103,11 +103,9 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
     await bdd.then(
       "first person is created and visible in the list",
       async () => {
-        // Wait for any in-progress navigation to complete before navigating
-        await page.waitForLoadState("networkidle").catch(() => {});
+        // Wait for page to stabilize after form submission
         await page.waitForLoadState("domcontentloaded");
-        // Additional wait for WebKit to stabilize after form submission
-        await page.waitForTimeout(1000);
+        await waitForHydration(page);
 
         // We captured the person ID from the API response - use it to verify
         if (createdPersonId1) {
@@ -604,10 +602,9 @@ test.describe("Integration Journey: Data Persistence Across Navigation", () => {
     });
 
     await bdd.and("user can search for the person and find it", async () => {
-      // Wait for any in-progress navigation to complete before navigating
-      await page.waitForLoadState("networkidle").catch(() => {});
+      // Wait for page to stabilize before navigating
       await page.waitForLoadState("domcontentloaded");
-      await page.waitForTimeout(500);
+      await waitForHydration(page);
 
       // Only navigate if we're not already on the people list page
       const currentUrl = page.url();

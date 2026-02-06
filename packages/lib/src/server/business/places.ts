@@ -2,6 +2,9 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { and, asc, count, eq, ilike } from "drizzle-orm";
 
+/** Type for the database instance (for DI) */
+export type PlacesDb = typeof drizzleDb;
+
 /**
  * Local type definitions to match Drizzle enum values
  * These types are extracted from the Drizzle schema
@@ -127,9 +130,12 @@ export function formatPlace(place: {
  * @returns Place with parent reference and counts
  * @throws Error if place not found
  */
-export async function getPlaceData(id: string): Promise<PlaceWithChildren> {
+export async function getPlaceData(
+  id: string,
+  db: PlacesDb = drizzleDb
+): Promise<PlaceWithChildren> {
   // Get the place
-  const place = await drizzleDb.query.places.findFirst({
+  const place = await db.query.places.findFirst({
     where: eq(drizzleSchema.places.id, id),
     with: {
       parent: true,
@@ -141,21 +147,21 @@ export async function getPlaceData(id: string): Promise<PlaceWithChildren> {
   }
 
   // Get child count
-  const childCountResult = await drizzleDb
+  const childCountResult = await db
     .select({ count: count() })
     .from(drizzleSchema.places)
     .where(eq(drizzleSchema.places.parentId, id));
   const childCount = childCountResult[0]?.count || 0;
 
   // Get event count
-  const eventCountResult = await drizzleDb
+  const eventCountResult = await db
     .select({ count: count() })
     .from(drizzleSchema.events)
     .where(eq(drizzleSchema.events.placeId, id));
   const eventCount = eventCountResult[0]?.count || 0;
 
   // Get person count (from placePersonLinks)
-  const personCountResult = await drizzleDb
+  const personCountResult = await db
     .select({ count: count() })
     .from(drizzleSchema.placePersonLinks)
     .where(eq(drizzleSchema.placePersonLinks.placeId, id));
@@ -176,14 +182,17 @@ export async function getPlaceData(id: string): Promise<PlaceWithChildren> {
  * @param query - Search query string
  * @returns Array of matching places (max 50 results), sorted by type then name
  */
-export async function searchPlacesData(query: string): Promise<
+export async function searchPlacesData(
+  query: string,
+  db: PlacesDb = drizzleDb
+): Promise<
   Array<
     PlaceResponse & {
       parentName: string | null;
     }
   >
 > {
-  const places = await drizzleDb.query.places.findMany({
+  const places = await db.query.places.findMany({
     where: ilike(drizzleSchema.places.name, `%${query}%`),
     with: {
       parent: true,
@@ -212,9 +221,10 @@ export async function searchPlacesData(query: string): Promise<
  * @throws Error if place not found
  */
 export async function getPlaceHierarchyData(
-  id: string
+  id: string,
+  db: PlacesDb = drizzleDb
 ): Promise<Array<PlaceHierarchyItem>> {
-  const place = await drizzleDb.query.places.findFirst({
+  const place = await db.query.places.findFirst({
     where: eq(drizzleSchema.places.id, id),
     with: {
       parent: true,
@@ -236,7 +246,7 @@ export async function getPlaceHierarchyData(
 
   let current = place;
   while (current.parentId) {
-    const parent = await drizzleDb.query.places.findFirst({
+    const parent = await db.query.places.findFirst({
       where: eq(drizzleSchema.places.id, current.parentId),
       with: {
         parent: true,
@@ -264,10 +274,11 @@ export async function getPlaceHierarchyData(
  * @throws Error if person not found
  */
 export async function getPersonPlacesData(
-  personId: string
+  personId: string,
+  db: PlacesDb = drizzleDb
 ): Promise<Array<PersonPlace>> {
   // Verify person exists
-  const person = await drizzleDb.query.persons.findFirst({
+  const person = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, personId),
   });
 
@@ -275,7 +286,7 @@ export async function getPersonPlacesData(
     throw new Error("Person not found");
   }
 
-  const placeLinks = await drizzleDb.query.placePersonLinks.findMany({
+  const placeLinks = await db.query.placePersonLinks.findMany({
     where: eq(drizzleSchema.placePersonLinks.personId, personId),
     with: {
       place: {
@@ -304,18 +315,21 @@ export async function getPersonPlacesData(
  * @returns Created place with formatted response
  * @throws Error if parent place not found
  */
-export async function createPlaceData(data: {
-  name: string;
-  placeType: PlaceType;
-  latitude?: number | null;
-  longitude?: number | null;
-  parentId?: string | null;
-  description?: string | null;
-  alternativeNames?: Array<string> | null;
-}): Promise<PlaceResponse> {
+export async function createPlaceData(
+  data: {
+    name: string;
+    placeType: PlaceType;
+    latitude?: number | null;
+    longitude?: number | null;
+    parentId?: string | null;
+    description?: string | null;
+    alternativeNames?: Array<string> | null;
+  },
+  db: PlacesDb = drizzleDb
+): Promise<PlaceResponse> {
   // Verify parent place exists if parentId is provided
   if (data.parentId) {
-    const parentPlace = await drizzleDb.query.places.findFirst({
+    const parentPlace = await db.query.places.findFirst({
       where: eq(drizzleSchema.places.id, data.parentId),
     });
 
@@ -324,7 +338,7 @@ export async function createPlaceData(data: {
     }
   }
 
-  const result = await drizzleDb
+  const result = await db
     .insert(drizzleSchema.places)
     .values({
       id: crypto.randomUUID(),
@@ -366,10 +380,11 @@ export async function updatePlaceData(
     parentId?: string | null;
     description?: string | null;
     alternativeNames?: Array<string> | null;
-  }
+  },
+  db: PlacesDb = drizzleDb
 ): Promise<PlaceResponse> {
   // Verify place exists
-  const existingPlace = await drizzleDb.query.places.findFirst({
+  const existingPlace = await db.query.places.findFirst({
     where: eq(drizzleSchema.places.id, id),
   });
 
@@ -379,7 +394,7 @@ export async function updatePlaceData(
 
   // Verify parent place exists if parentId is being updated
   if (updates.parentId && updates.parentId !== null) {
-    const parentPlace = await drizzleDb.query.places.findFirst({
+    const parentPlace = await db.query.places.findFirst({
       where: eq(drizzleSchema.places.id, updates.parentId),
     });
 
@@ -407,7 +422,7 @@ export async function updatePlaceData(
     updateData.alternativeNames = updates.alternativeNames || undefined;
   }
 
-  const result = await drizzleDb
+  const result = await db
     .update(drizzleSchema.places)
     .set(updateData)
     .where(eq(drizzleSchema.places.id, id))
@@ -427,9 +442,12 @@ export async function updatePlaceData(
  * @returns Success status
  * @throws Error if place not found or is still in use
  */
-export async function deletePlaceData(id: string): Promise<{ success: true }> {
+export async function deletePlaceData(
+  id: string,
+  db: PlacesDb = drizzleDb
+): Promise<{ success: true }> {
   // Verify place exists
-  const place = await drizzleDb.query.places.findFirst({
+  const place = await db.query.places.findFirst({
     where: eq(drizzleSchema.places.id, id),
   });
 
@@ -438,7 +456,7 @@ export async function deletePlaceData(id: string): Promise<{ success: true }> {
   }
 
   // Check for child places
-  const childCount = await drizzleDb
+  const childCount = await db
     .select({ count: count() })
     .from(drizzleSchema.places)
     .where(eq(drizzleSchema.places.parentId, id));
@@ -450,7 +468,7 @@ export async function deletePlaceData(id: string): Promise<{ success: true }> {
   }
 
   // Check for events
-  const eventCount = await drizzleDb
+  const eventCount = await db
     .select({ count: count() })
     .from(drizzleSchema.events)
     .where(eq(drizzleSchema.events.placeId, id));
@@ -462,7 +480,7 @@ export async function deletePlaceData(id: string): Promise<{ success: true }> {
   }
 
   // Check for person links
-  const personLinkCount = await drizzleDb
+  const personLinkCount = await db
     .select({ count: count() })
     .from(drizzleSchema.placePersonLinks)
     .where(eq(drizzleSchema.placePersonLinks.placeId, id));
@@ -473,9 +491,7 @@ export async function deletePlaceData(id: string): Promise<{ success: true }> {
     );
   }
 
-  await drizzleDb
-    .delete(drizzleSchema.places)
-    .where(eq(drizzleSchema.places.id, id));
+  await db.delete(drizzleSchema.places).where(eq(drizzleSchema.places.id, id));
 
   return { success: true };
 }
@@ -487,13 +503,16 @@ export async function deletePlaceData(id: string): Promise<{ success: true }> {
  * @returns Created link with place details
  * @throws Error if person/place not found or duplicate link exists
  */
-export async function linkPersonToPlaceData(data: {
-  personId: string;
-  placeId: string;
-  fromYear?: number | null;
-  toYear?: number | null;
-  type?: PersonPlaceType | null;
-}): Promise<{
+export async function linkPersonToPlaceData(
+  data: {
+    personId: string;
+    placeId: string;
+    fromYear?: number | null;
+    toYear?: number | null;
+    type?: PersonPlaceType | null;
+  },
+  db: PlacesDb = drizzleDb
+): Promise<{
   id: string;
   place: PlaceResponse;
   fromYear: number | null;
@@ -502,7 +521,7 @@ export async function linkPersonToPlaceData(data: {
   createdAt: string;
 }> {
   // Verify person exists
-  const person = await drizzleDb.query.persons.findFirst({
+  const person = await db.query.persons.findFirst({
     where: eq(drizzleSchema.persons.id, data.personId),
   });
 
@@ -511,7 +530,7 @@ export async function linkPersonToPlaceData(data: {
   }
 
   // Verify place exists
-  const place = await drizzleDb.query.places.findFirst({
+  const place = await db.query.places.findFirst({
     where: eq(drizzleSchema.places.id, data.placeId),
   });
 
@@ -521,7 +540,7 @@ export async function linkPersonToPlaceData(data: {
 
   // Check if link already exists with the same type
   if (data.type) {
-    const existingLink = await drizzleDb.query.placePersonLinks.findFirst({
+    const existingLink = await db.query.placePersonLinks.findFirst({
       where: and(
         eq(drizzleSchema.placePersonLinks.personId, data.personId),
         eq(drizzleSchema.placePersonLinks.placeId, data.placeId),
@@ -537,7 +556,7 @@ export async function linkPersonToPlaceData(data: {
   }
 
   const linkId = crypto.randomUUID();
-  await drizzleDb.insert(drizzleSchema.placePersonLinks).values({
+  await db.insert(drizzleSchema.placePersonLinks).values({
     id: linkId,
     personId: data.personId,
     placeId: data.placeId,
@@ -548,7 +567,7 @@ export async function linkPersonToPlaceData(data: {
   });
 
   // Fetch the created link with place details
-  const createdLink = await drizzleDb.query.placePersonLinks.findFirst({
+  const createdLink = await db.query.placePersonLinks.findFirst({
     where: eq(drizzleSchema.placePersonLinks.id, linkId),
     with: {
       place: {
@@ -581,8 +600,11 @@ export async function linkPersonToPlaceData(data: {
  * @returns Comma-separated string of place names from root to target
  * @throws Error if place not found
  */
-export async function getPlaceHierarchyPathData(id: string): Promise<string> {
-  const place = await drizzleDb.query.places.findFirst({
+export async function getPlaceHierarchyPathData(
+  id: string,
+  db: PlacesDb = drizzleDb
+): Promise<string> {
+  const place = await db.query.places.findFirst({
     where: eq(drizzleSchema.places.id, id),
     with: {
       parent: true,
@@ -597,7 +619,7 @@ export async function getPlaceHierarchyPathData(id: string): Promise<string> {
 
   let current = place;
   while (current.parentId) {
-    const parent = await drizzleDb.query.places.findFirst({
+    const parent = await db.query.places.findFirst({
       where: eq(drizzleSchema.places.id, current.parentId),
       with: {
         parent: true,
@@ -619,9 +641,10 @@ export async function getPlaceHierarchyPathData(id: string): Promise<string> {
  * @returns Array of child places sorted by type then name
  */
 export async function getPlaceChildrenData(
-  parentId: string
+  parentId: string,
+  db: PlacesDb = drizzleDb
 ): Promise<Array<PlaceResponse>> {
-  const children = await drizzleDb.query.places.findMany({
+  const children = await db.query.places.findMany({
     where: eq(drizzleSchema.places.parentId, parentId),
     orderBy: [
       asc(drizzleSchema.places.placeType),
@@ -645,10 +668,11 @@ export async function updatePlacePersonLinkData(
     fromYear?: number | null;
     toYear?: number | null;
     type?: PersonPlaceType | null;
-  }
+  },
+  db: PlacesDb = drizzleDb
 ): Promise<UpdatedPlacePersonLink> {
   // Verify link exists
-  const link = await drizzleDb.query.placePersonLinks.findFirst({
+  const link = await db.query.placePersonLinks.findFirst({
     where: eq(drizzleSchema.placePersonLinks.id, linkId),
   });
 
@@ -661,13 +685,13 @@ export async function updatePlacePersonLinkData(
   if (updates.toYear !== undefined) updateData.toYear = updates.toYear;
   if (updates.type !== undefined) updateData.type = updates.type;
 
-  await drizzleDb
+  await db
     .update(drizzleSchema.placePersonLinks)
     .set(updateData)
     .where(eq(drizzleSchema.placePersonLinks.id, linkId));
 
   // Fetch the updated link with place details
-  const linkWithPlace = await drizzleDb.query.placePersonLinks.findFirst({
+  const linkWithPlace = await db.query.placePersonLinks.findFirst({
     where: eq(drizzleSchema.placePersonLinks.id, linkId),
     with: {
       place: {
@@ -699,10 +723,11 @@ export async function updatePlacePersonLinkData(
  * @throws Error if link not found
  */
 export async function unlinkPersonFromPlaceData(
-  linkId: string
+  linkId: string,
+  db: PlacesDb = drizzleDb
 ): Promise<{ success: true }> {
   // Verify link exists
-  const link = await drizzleDb.query.placePersonLinks.findFirst({
+  const link = await db.query.placePersonLinks.findFirst({
     where: eq(drizzleSchema.placePersonLinks.id, linkId),
   });
 
@@ -710,7 +735,7 @@ export async function unlinkPersonFromPlaceData(
     throw new Error("Place-person link not found");
   }
 
-  await drizzleDb
+  await db
     .delete(drizzleSchema.placePersonLinks)
     .where(eq(drizzleSchema.placePersonLinks.id, linkId));
 

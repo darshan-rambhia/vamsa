@@ -1,7 +1,7 @@
 /**
  * Unit Tests for Avatar Component
  */
-import { describe, expect, test } from "bun:test";
+import { describe, expect, test } from "vitest";
 import { render } from "@testing-library/react";
 import { Avatar } from "./avatar";
 

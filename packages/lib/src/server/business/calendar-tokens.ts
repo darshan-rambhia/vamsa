@@ -1,4 +1,6 @@
 import { addYears } from "date-fns";
+import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { and, desc, eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 
 import {
@@ -8,6 +10,9 @@ import {
 } from "./token-rotation";
 
 const log = loggers.auth;
+
+/** Type for the database instance (for DI) */
+export type CalendarTokensDb = typeof drizzleDb;
 
 export interface CreateCalendarTokenInput {
   name?: string;
@@ -32,13 +37,14 @@ export interface DeleteCalendarTokenResult {
 /**
  * Get current user's calendar tokens
  * @param userId - ID of the authenticated user
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns List of calendar tokens for the user, ordered by creation date (newest first)
  */
-export async function getCalendarTokensData(userId: string) {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq, desc } = await import("drizzle-orm");
-
-  return drizzleDb.query.calendarTokens.findMany({
+export async function getCalendarTokensData(
+  userId: string,
+  db: CalendarTokensDb = drizzleDb
+) {
+  return db.query.calendarTokens.findMany({
     where: eq(drizzleSchema.calendarTokens.userId, userId),
     orderBy: desc(drizzleSchema.calendarTokens.createdAt),
   });
@@ -48,18 +54,18 @@ export async function getCalendarTokensData(userId: string) {
  * Create new calendar token for a user
  * @param userId - ID of the user creating the token
  * @param input - Token creation input (name and rotation policy)
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Created calendar token
  */
 export async function createCalendarTokenData(
   userId: string,
-  input: CreateCalendarTokenInput
+  input: CreateCalendarTokenInput,
+  db: CalendarTokensDb = drizzleDb
 ) {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-
   const tokenId = crypto.randomUUID();
   const token = generateSecureToken();
 
-  const [created] = await drizzleDb
+  const [created] = await db
     .insert(drizzleSchema.calendarTokens)
     .values({
       id: tokenId,
@@ -84,14 +90,16 @@ export async function createCalendarTokenData(
  * Verify token ownership - check if token belongs to user
  * @param tokenId - ID of the token to verify
  * @param userId - ID of the user claiming ownership
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns The token if it exists and belongs to the user
  * @throws Error if token not found or doesn't belong to user
  */
-export async function verifyTokenOwnership(tokenId: string, userId: string) {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq, and } = await import("drizzle-orm");
-
-  const existingToken = await drizzleDb.query.calendarTokens.findFirst({
+export async function verifyTokenOwnership(
+  tokenId: string,
+  userId: string,
+  db: CalendarTokensDb = drizzleDb
+) {
+  const existingToken = await db.query.calendarTokens.findFirst({
     where: and(
       eq(drizzleSchema.calendarTokens.id, tokenId),
       eq(drizzleSchema.calendarTokens.userId, userId)
@@ -109,12 +117,17 @@ export async function verifyTokenOwnership(tokenId: string, userId: string) {
  * Rotate a calendar token manually
  * @param tokenId - ID of the token to rotate
  * @param userId - ID of the user performing the rotation
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns The newly created token after rotation
  * @throws Error if token not found or doesn't belong to user
  */
-export async function rotateCalendarTokenData(tokenId: string, userId: string) {
+export async function rotateCalendarTokenData(
+  tokenId: string,
+  userId: string,
+  db: CalendarTokensDb = drizzleDb
+) {
   // Verify user owns this token
-  await verifyTokenOwnership(tokenId, userId);
+  await verifyTokenOwnership(tokenId, userId, db);
 
   const newToken = await rotateToken(tokenId);
 
@@ -130,12 +143,17 @@ export async function rotateCalendarTokenData(tokenId: string, userId: string) {
  * Revoke a calendar token immediately
  * @param tokenId - ID of the token to revoke
  * @param userId - ID of the user performing the revocation
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns The revoked token
  * @throws Error if token not found or doesn't belong to user
  */
-export async function revokeCalendarTokenData(tokenId: string, userId: string) {
+export async function revokeCalendarTokenData(
+  tokenId: string,
+  userId: string,
+  db: CalendarTokensDb = drizzleDb
+) {
   // Verify user owns this token
-  await verifyTokenOwnership(tokenId, userId);
+  await verifyTokenOwnership(tokenId, userId, db);
 
   const revokedToken = await revokeToken(tokenId);
 
@@ -149,21 +167,20 @@ export async function revokeCalendarTokenData(tokenId: string, userId: string) {
  * @param tokenId - ID of the token to update
  * @param name - New name for the token
  * @param userId - ID of the user performing the update
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Updated token with name and timestamp
  * @throws Error if token not found or doesn't belong to user
  */
 export async function updateTokenNameData(
   tokenId: string,
   name: string,
-  userId: string
+  userId: string,
+  db: CalendarTokensDb = drizzleDb
 ): Promise<UpdateTokenNameResult> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
   // Verify user owns this token
-  await verifyTokenOwnership(tokenId, userId);
+  await verifyTokenOwnership(tokenId, userId, db);
 
-  const [updatedToken] = await drizzleDb
+  const [updatedToken] = await db
     .update(drizzleSchema.calendarTokens)
     .set({ name })
     .where(eq(drizzleSchema.calendarTokens.id, tokenId))
@@ -184,18 +201,17 @@ export async function updateTokenNameData(
  * Delete a revoked calendar token (permanent deletion)
  * @param tokenId - ID of the token to delete
  * @param userId - ID of the user performing the deletion
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns Success status with deleted token ID
  * @throws Error if token not found, doesn't belong to user, or is still active
  */
 export async function deleteCalendarTokenData(
   tokenId: string,
-  userId: string
+  userId: string,
+  db: CalendarTokensDb = drizzleDb
 ): Promise<DeleteCalendarTokenResult> {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { eq } = await import("drizzle-orm");
-
   // Verify user owns this token
-  const existingToken = await verifyTokenOwnership(tokenId, userId);
+  const existingToken = await verifyTokenOwnership(tokenId, userId, db);
 
   // Only allow deletion of revoked (inactive) tokens
   if (existingToken.isActive) {
@@ -203,7 +219,7 @@ export async function deleteCalendarTokenData(
   }
 
   // Permanently delete the token
-  await drizzleDb
+  await db
     .delete(drizzleSchema.calendarTokens)
     .where(eq(drizzleSchema.calendarTokens.id, tokenId));
 
@@ -214,13 +230,13 @@ export async function deleteCalendarTokenData(
 
 /**
  * Get all calendar tokens across all users (Admin only)
+ * @param db - Database instance (defaults to drizzleDb for production)
  * @returns List of all calendar tokens with user information, ordered by creation date
  */
-export async function getAllCalendarTokensData() {
-  const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
-  const { desc } = await import("drizzle-orm");
-
-  return drizzleDb.query.calendarTokens.findMany({
+export async function getAllCalendarTokensData(
+  db: CalendarTokensDb = drizzleDb
+) {
+  return db.query.calendarTokens.findMany({
     with: {
       user: {
         columns: {

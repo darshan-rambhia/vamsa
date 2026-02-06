@@ -6,7 +6,7 @@
  * - Formatting utilities and error handling
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { sendBackupNotification } from "./notifications";
 import type { BackupNotificationInput } from "./notifications";
 

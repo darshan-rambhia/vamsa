@@ -4,7 +4,7 @@
  * These tests use the real API without mocking shared modules
  * to avoid mock leaking issues between test files.
  */
-import { afterEach, beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   SLOW_QUERY_LOG_THRESHOLD_MS,
   clearSlowQueries,

@@ -3,7 +3,7 @@
  *
  * Tests the descendant finding and generation tracking functionality
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   countDescendants,
   findDescendants,

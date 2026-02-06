@@ -9,14 +9,8 @@
  * Uses module mocking for database dependency injection.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { clearAllMocks } from "../../testing/shared-mocks";
 
 import {
   createResearchNoteData,
@@ -29,90 +23,70 @@ import {
   listSourcesData,
 } from "./sources";
 
-// Mock logger
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Create mock drizzle database and schema
+// Create mock drizzle database
 const mockDrizzleDb = {
   query: {
     sources: {
-      findFirst: mock(() => Promise.resolve(null)),
-      findMany: mock(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
     eventSources: {
-      findMany: mock(() => Promise.resolve([])),
-      findFirst: mock(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
     },
     researchNotes: {
-      findMany: mock(() => Promise.resolve([])),
-      findFirst: mock(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
     },
     persons: {
-      findFirst: mock(() => Promise.resolve(null)),
-      findMany: mock(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
   },
-  insert: mock(() => ({
-    values: mock(() => ({
-      returning: mock(() => Promise.resolve([])),
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({
+      returning: vi.fn(() => Promise.resolve([])),
     })),
   })),
-  update: mock(() => ({
-    set: mock(() => ({
-      where: mock(() => ({
-        returning: mock(() => Promise.resolve([])),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn(() => ({
+        returning: vi.fn(() => Promise.resolve([])),
       })),
     })),
   })),
-  delete: mock(() => ({
-    where: mock(() => Promise.resolve({})),
+  delete: vi.fn(() => ({
+    where: vi.fn(() => Promise.resolve({})),
   })),
 };
-
-const mockDrizzleSchema = {
-  sources: { id: "id" },
-  eventSources: { id: "id", sourceId: "sourceId", personId: "personId" },
-  researchNotes: { id: "id", sourceId: "sourceId", personId: "personId" },
-  persons: { id: "id", firstName: "firstName", lastName: "lastName" },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
 
 describe("Sources Business Logic", () => {
   beforeEach(() => {
     clearAllMocks();
     (
-      mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
+      mockDrizzleDb.query.sources.findFirst as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.sources.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.sources.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.eventSources.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.eventSources.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.eventSources.findFirst as ReturnType<typeof mock>
+      mockDrizzleDb.query.eventSources.findFirst as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.researchNotes.findFirst as ReturnType<typeof mock>
+      mockDrizzleDb.query.researchNotes.findFirst as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+      mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
     ).mockClear();
-    (mockDrizzleDb.insert as ReturnType<typeof mock>).mockClear();
-    (mockDrizzleDb.update as ReturnType<typeof mock>).mockClear();
-    (mockDrizzleDb.delete as ReturnType<typeof mock>).mockClear();
+    (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockClear();
+    (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockClear();
+    (mockDrizzleDb.delete as ReturnType<typeof vi.fn>).mockClear();
   });
 
   describe("getSourceData", () => {
@@ -138,16 +112,16 @@ describe("Sources Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockSource);
       (
-        mockDrizzleDb.query.eventSources.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.eventSources.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
 
-      const result = await getSourceData("source-1");
+      const result = await getSourceData("source-1", mockDrizzleDb as any);
 
       expect(result.id).toBe("source-1");
       expect(result.title).toBe("Census 1900");
@@ -159,11 +133,11 @@ describe("Sources Business Logic", () => {
 
     it("should throw error when source not found", async () => {
       (
-        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await getSourceData("nonexistent");
+        await getSourceData("nonexistent", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Source not found");
@@ -224,16 +198,16 @@ describe("Sources Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockSource);
       (
-        mockDrizzleDb.query.eventSources.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.eventSources.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockEventSources);
       (
-        mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockResearchNotes);
 
-      const result = await getSourceData("source-1");
+      const result = await getSourceData("source-1", mockDrizzleDb as any);
 
       expect(result.eventCount).toBe(2);
       expect(result.researchNoteCount).toBe(1);
@@ -243,16 +217,20 @@ describe("Sources Business Logic", () => {
   describe("listSourcesData", () => {
     it("should list sources and handle empty results", async () => {
       (
-        mockDrizzleDb.query.sources.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.eventSources.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.eventSources.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
 
-      const result = await listSourcesData();
+      const result = await listSourcesData(
+        undefined,
+        undefined,
+        mockDrizzleDb as any
+      );
 
       expect(result.items).toHaveLength(0);
       expect(result.total).toBe(0);
@@ -274,16 +252,20 @@ describe("Sources Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.sources.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockSources);
       (
-        mockDrizzleDb.query.eventSources.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.eventSources.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
 
-      const result = await listSourcesData();
+      const result = await listSourcesData(
+        undefined,
+        undefined,
+        mockDrizzleDb as any
+      );
 
       expect(result.items[0].createdAt).toBe(now.toISOString());
       expect(result.items[0].updatedAt).toBe(now.toISOString());
@@ -292,7 +274,7 @@ describe("Sources Business Logic", () => {
 
   describe("createSourceData", () => {
     it("should create source with all fields", async () => {
-      const mockReturning = mock(() =>
+      const mockReturning = vi.fn(() =>
         Promise.resolve([
           {
             id: "new-source",
@@ -307,17 +289,20 @@ describe("Sources Business Logic", () => {
         ])
       );
 
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValueOnce({
-        values: mock(() => ({ returning: mockReturning })),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        values: vi.fn(() => ({ returning: mockReturning })),
       } as any);
 
-      const result = await createSourceData({
-        title: "New Source",
-        author: "Author",
-        publicationDate: "2024",
-        sourceType: "Book",
-        confidence: "High",
-      });
+      const result = await createSourceData(
+        {
+          title: "New Source",
+          author: "Author",
+          publicationDate: "2024",
+          sourceType: "Book",
+          confidence: "High",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.title).toBe("New Source");
       expect(result.id).toBe("new-source");
@@ -327,23 +312,23 @@ describe("Sources Business Logic", () => {
   describe("deleteSourceData", () => {
     it("should delete a source", async () => {
       (
-        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce({
         id: "source-1",
       });
 
-      const result = await deleteSourceData("source-1");
+      const result = await deleteSourceData("source-1", mockDrizzleDb as any);
 
       expect(result.success).toBe(true);
     });
 
     it("should throw error when source not found", async () => {
       (
-        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await deleteSourceData("nonexistent");
+        await deleteSourceData("nonexistent", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Source not found");
@@ -354,7 +339,7 @@ describe("Sources Business Logic", () => {
   describe("createResearchNoteData", () => {
     it("should create research note with person data", async () => {
       const mockPerson = { id: "p-1", firstName: "John", lastName: "Doe" };
-      const mockReturning = mock(() =>
+      const mockReturning = vi.fn(() =>
         Promise.resolve([
           {
             id: "note-1",
@@ -373,23 +358,26 @@ describe("Sources Business Logic", () => {
       );
 
       (
-        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce({
         id: "source-1",
       });
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
-      (mockDrizzleDb.insert as ReturnType<typeof mock>).mockReturnValueOnce({
-        values: mock(() => ({ returning: mockReturning })),
+      (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockReturnValueOnce({
+        values: vi.fn(() => ({ returning: mockReturning })),
       } as any);
 
-      const result = await createResearchNoteData({
-        sourceId: "source-1",
-        personId: "p-1",
-        eventType: "birth",
-        findings: "Found record",
-      });
+      const result = await createResearchNoteData(
+        {
+          sourceId: "source-1",
+          personId: "p-1",
+          eventType: "birth",
+          findings: "Found record",
+        },
+        mockDrizzleDb as any
+      );
 
       expect(result.findings).toBe("Found record");
       expect(result.person.firstName).toBe("John");
@@ -397,16 +385,19 @@ describe("Sources Business Logic", () => {
 
     it("should throw error when source not found", async () => {
       (
-        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await createResearchNoteData({
-          sourceId: "nonexistent",
-          personId: "p-1",
-          eventType: "birth",
-          findings: "Found",
-        });
+        await createResearchNoteData(
+          {
+            sourceId: "nonexistent",
+            personId: "p-1",
+            eventType: "birth",
+            findings: "Found",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Source not found");
@@ -415,21 +406,24 @@ describe("Sources Business Logic", () => {
 
     it("should throw error when person not found", async () => {
       (
-        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce({
         id: "source-1",
       });
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await createResearchNoteData({
-          sourceId: "source-1",
-          personId: "nonexistent",
-          eventType: "birth",
-          findings: "Found",
-        });
+        await createResearchNoteData(
+          {
+            sourceId: "source-1",
+            personId: "nonexistent",
+            eventType: "birth",
+            findings: "Found",
+          },
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Person not found");
@@ -440,23 +434,26 @@ describe("Sources Business Logic", () => {
   describe("deleteResearchNoteData", () => {
     it("should delete research note", async () => {
       (
-        mockDrizzleDb.query.researchNotes.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.researchNotes.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce({
         id: "note-1",
       });
 
-      const result = await deleteResearchNoteData("note-1");
+      const result = await deleteResearchNoteData(
+        "note-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.success).toBe(true);
     });
 
     it("should throw error when note not found", async () => {
       (
-        mockDrizzleDb.query.researchNotes.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.researchNotes.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await deleteResearchNoteData("nonexistent");
+        await deleteResearchNoteData("nonexistent", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Research note not found");
@@ -469,24 +466,24 @@ describe("Sources Business Logic", () => {
       const mockPerson = { id: "p-1", firstName: "John", lastName: "Doe" };
 
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
       (
-        mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.researchNotes.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
 
-      const result = await getResearchNotesData("p-1");
+      const result = await getResearchNotesData("p-1", mockDrizzleDb as any);
 
       expect(result).toEqual({});
     });
 
     it("should throw error when person not found", async () => {
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await getResearchNotesData("nonexistent");
+        await getResearchNotesData("nonexistent", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Person not found");
@@ -506,10 +503,14 @@ describe("Sources Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockSource);
 
-      const result = await generateCitationData("source-1", "MLA");
+      const result = await generateCitationData(
+        "source-1",
+        "MLA",
+        mockDrizzleDb as any
+      );
 
       expect(result.format).toBe("MLA");
       expect(result.citation).toContain("Census Data");
@@ -518,11 +519,11 @@ describe("Sources Business Logic", () => {
 
     it("should throw error when source not found", async () => {
       (
-        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.sources.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await generateCitationData("nonexistent", "MLA");
+        await generateCitationData("nonexistent", "MLA", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect((err as Error).message).toBe("Failed to generate citation");

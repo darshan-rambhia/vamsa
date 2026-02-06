@@ -7,7 +7,7 @@
  * - Preference merging logic
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 
 describe("Notification Server Functions", () => {
   describe("Email Notification Preferences", () => {

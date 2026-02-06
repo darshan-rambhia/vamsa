@@ -3,7 +3,7 @@ name: vamsa
 services:
   # PostgreSQL Database
   db:
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     container_name: vamsa-db
     restart: unless-stopped
     environment:
@@ -54,6 +54,8 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile
+      args:
+        SKIP_SSL_VERIFY: ${SKIP_SSL_VERIFY:-}
     container_name: vamsa-app
     restart: unless-stopped
     depends_on:

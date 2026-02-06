@@ -10,6 +10,9 @@ import type {
 
 const log = loggers.db;
 
+/** Type for the database instance (for DI) */
+export type RestoreDb = typeof drizzleDb;
+
 /**
  * User type for restore functions
  */
@@ -85,7 +88,10 @@ export async function validateBackupData(
  * @returns Import preview with existing data counts
  * @throws Error if user lacks admin permissions
  */
-export async function previewImportData(user: User): Promise<ImportPreview> {
+export async function previewImportData(
+  user: User,
+  db: RestoreDb = drizzleDb
+): Promise<ImportPreview> {
   try {
     // Verify admin permissions
     if (user.role !== "ADMIN") {
@@ -99,19 +105,19 @@ export async function previewImportData(user: User): Promise<ImportPreview> {
       { relationshipCount },
       { suggestionCount },
     ] = await Promise.all([
-      drizzleDb
+      db
         .select({ personCount: count() })
         .from(drizzleSchema.persons)
         .then((r) => ({ personCount: r[0]?.personCount ?? 0 })),
-      drizzleDb
+      db
         .select({ userCount: count() })
         .from(drizzleSchema.users)
         .then((r) => ({ userCount: r[0]?.userCount ?? 0 })),
-      drizzleDb
+      db
         .select({ relationshipCount: count() })
         .from(drizzleSchema.relationships)
         .then((r) => ({ relationshipCount: r[0]?.relationshipCount ?? 0 })),
-      drizzleDb
+      db
         .select({ suggestionCount: count() })
         .from(drizzleSchema.suggestions)
         .then((r) => ({ suggestionCount: r[0]?.suggestionCount ?? 0 })),
@@ -164,7 +170,8 @@ export async function previewImportData(user: User): Promise<ImportPreview> {
  */
 export async function importBackupData(
   user: User,
-  strategy: ConflictResolutionStrategy = "skip"
+  strategy: ConflictResolutionStrategy = "skip",
+  db: RestoreDb = drizzleDb
 ): Promise<ImportResult> {
   try {
     // Validate admin permissions
@@ -183,7 +190,7 @@ export async function importBackupData(
     // 7. Create audit log
     // 8. Commit transaction
 
-    const result = await drizzleDb.transaction(async (tx) => {
+    const result = await db.transaction(async (tx) => {
       // Log the import action
       await tx.insert(drizzleSchema.auditLogs).values({
         id: crypto.randomUUID(),
@@ -237,7 +244,7 @@ export async function importBackupData(
 
     // Log failed import attempt
     try {
-      await drizzleDb.insert(drizzleSchema.auditLogs).values({
+      await db.insert(drizzleSchema.auditLogs).values({
         id: crypto.randomUUID(),
         userId: user.id,
         action: "CREATE",
@@ -264,7 +271,10 @@ export async function importBackupData(
  * @returns List of recent imports (max 50)
  * @throws Error if user lacks admin permissions
  */
-export async function getImportHistoryData(user: User): Promise<
+export async function getImportHistoryData(
+  user: User,
+  db: RestoreDb = drizzleDb
+): Promise<
   Array<{
     id: string;
     importedAt: string;
@@ -280,7 +290,7 @@ export async function getImportHistoryData(user: User): Promise<
       throw new Error("Only administrators can view import history");
     }
 
-    const auditLogs = await drizzleDb.query.auditLogs.findMany({
+    const auditLogs = await db.query.auditLogs.findMany({
       where: (auditLogsTable) =>
         or(
           eq(auditLogsTable.entityType, "BACKUP_IMPORT"),

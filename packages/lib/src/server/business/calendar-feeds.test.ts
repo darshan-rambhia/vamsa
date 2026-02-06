@@ -11,16 +11,8 @@
  * Uses module mocking for @vamsa/api, similar to claim.test.ts.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
-} from "../../testing/shared-mocks";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mockLogger } from "../../testing/shared-mocks";
 
 // Import after mocking
 import {
@@ -31,103 +23,42 @@ import {
   validateCalendarToken,
 } from "./calendar-feeds";
 
-// Create mock drizzleSchema
-const mockDrizzleSchema = {
-  calendarTokens: {
-    id: "id",
-    token: "token",
-    userId: "userId",
-    isActive: "isActive",
-    expiresAt: "expiresAt",
-    lastUsedAt: "lastUsedAt",
-  },
-  auditLogs: {
-    entityType: "entityType",
-    entityId: "entityId",
-    action: "action",
-    newData: "newData",
-    createdAt: "createdAt",
-    userId: "userId",
-  },
-  users: {
-    id: "id",
-    name: "name",
-    email: "email",
-  },
-  persons: {
-    id: "id",
-    firstName: "firstName",
-    lastName: "lastName",
-    dateOfBirth: "dateOfBirth",
-    dateOfPassing: "dateOfPassing",
-    isLiving: "isLiving",
-  },
-  relationships: {
-    id: "id",
-    type: "type",
-    personId: "personId",
-    relatedPersonId: "relatedPersonId",
-    marriageDate: "marriageDate",
-  },
-  events: {
-    id: "id",
-    type: "type",
-    date: "date",
-    description: "description",
-    place: "place",
-    personId: "personId",
-  },
-};
-
 // Create mock drizzleDb
 const mockDrizzleDb = {
-  select: mock(() => ({
-    from: mock(() => ({
-      where: mock(() => ({
-        limit: mock(() => Promise.resolve([])),
-        orderBy: mock(() => Promise.resolve([])),
+  select: vi.fn(() => ({
+    from: vi.fn(() => ({
+      where: vi.fn(() => ({
+        limit: vi.fn(() => Promise.resolve([])),
+        orderBy: vi.fn(() => Promise.resolve([])),
       })),
-      leftJoin: mock(() => ({
-        where: mock(() => ({
-          orderBy: mock(() => ({
-            limit: mock(() => Promise.resolve([])),
+      leftJoin: vi.fn(() => ({
+        where: vi.fn(() => ({
+          orderBy: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([])),
           })),
         })),
       })),
-      innerJoin: mock(() => ({
-        where: mock(() => ({
-          orderBy: mock(() => Promise.resolve([])),
+      innerJoin: vi.fn(() => ({
+        where: vi.fn(() => ({
+          orderBy: vi.fn(() => Promise.resolve([])),
         })),
-        innerJoin: mock(() => ({
-          where: mock(() => ({
-            orderBy: mock(() => Promise.resolve([])),
+        innerJoin: vi.fn(() => ({
+          where: vi.fn(() => ({
+            orderBy: vi.fn(() => Promise.resolve([])),
           })),
         })),
       })),
     })),
   })),
-  update: mock(() => ({
-    set: mock(() => ({
-      where: mock(() => Promise.resolve({})),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn(() => Promise.resolve({})),
     })),
   })),
 };
 
-// Mock modules
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
-
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
+// Create mock drizzleDb and drizzleSchema are defined above
+// Mocks for @vamsa/api and @vamsa/lib/logger are handled by preload
 
 describe("Calendar Feeds Business Logic", () => {
   beforeEach(() => {
@@ -148,17 +79,20 @@ describe("Calendar Feeds Business Logic", () => {
       };
 
       // Reset the main mock for this test
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([mockToken])),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([mockToken])),
             })),
           })),
         })
       );
 
-      const result = await validateCalendarToken("valid-token-123");
+      const result = await validateCalendarToken(
+        "valid-token-123",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(true);
       expect(result.tokenRecord?.id).toBe("token-1");
@@ -166,17 +100,20 @@ describe("Calendar Feeds Business Logic", () => {
     });
 
     it("should return valid=false for non-existent token", async () => {
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([])),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
             })),
           })),
         })
       );
 
-      const result = await validateCalendarToken("nonexistent-token");
+      const result = await validateCalendarToken(
+        "nonexistent-token",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Token not found");
@@ -191,17 +128,20 @@ describe("Calendar Feeds Business Logic", () => {
         expiresAt: new Date(Date.now() + 86400000),
       };
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([mockToken])),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([mockToken])),
             })),
           })),
         })
       );
 
-      const result = await validateCalendarToken("inactive-token");
+      const result = await validateCalendarToken(
+        "inactive-token",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Token is inactive");
@@ -216,17 +156,20 @@ describe("Calendar Feeds Business Logic", () => {
         expiresAt: new Date(Date.now() - 86400000), // Yesterday
       };
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([mockToken])),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([mockToken])),
             })),
           })),
         })
       );
 
-      const result = await validateCalendarToken("expired-token");
+      const result = await validateCalendarToken(
+        "expired-token",
+        mockDrizzleDb as any
+      );
 
       expect(result.valid).toBe(false);
       expect(result.error).toBe("Token has expired");
@@ -235,19 +178,27 @@ describe("Calendar Feeds Business Logic", () => {
 
   describe("generateRSSFeedData", () => {
     it("should throw error for invalid token", async () => {
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              limit: mock(() => Promise.resolve([])),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
             })),
           })),
         })
       );
 
-      await expect(
-        generateRSSFeedData("invalid-token", "https://example.com")
-      ).rejects.toThrow("Token not found");
+      try {
+        await generateRSSFeedData(
+          "invalid-token",
+          "https://example.com",
+          mockDrizzleDb as any
+        );
+        expect.unreachable("should have thrown");
+      } catch (err) {
+        expect(err instanceof Error).toBe(true);
+        expect((err as Error).message).toBe("Token not found");
+      }
     });
 
     it("should generate RSS XML for valid token", async () => {
@@ -271,24 +222,24 @@ describe("Calendar Feeds Business Logic", () => {
       ];
 
       let callCount = 0;
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => {
+          from: vi.fn(() => {
             callCount++;
             if (callCount === 1) {
               // Token validation
               return {
-                where: mock(() => ({
-                  limit: mock(() => Promise.resolve([mockToken])),
+                where: vi.fn(() => ({
+                  limit: vi.fn(() => Promise.resolve([mockToken])),
                 })),
               };
             }
             // Audit logs
             return {
-              leftJoin: mock(() => ({
-                where: mock(() => ({
-                  orderBy: mock(() => ({
-                    limit: mock(() => Promise.resolve(mockUpdates)),
+              leftJoin: vi.fn(() => ({
+                where: vi.fn(() => ({
+                  orderBy: vi.fn(() => ({
+                    limit: vi.fn(() => Promise.resolve(mockUpdates)),
                   })),
                 })),
               })),
@@ -299,7 +250,8 @@ describe("Calendar Feeds Business Logic", () => {
 
       const xml = await generateRSSFeedData(
         "valid-token",
-        "https://example.com"
+        "https://example.com",
+        mockDrizzleDb as any
       );
 
       expect(xml).toContain("<?xml");
@@ -328,17 +280,20 @@ describe("Calendar Feeds Business Logic", () => {
         },
       ];
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              orderBy: mock(() => Promise.resolve(mockPeople)),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => Promise.resolve(mockPeople)),
             })),
           })),
         })
       );
 
-      const ics = await generateBirthdayCalendarData("https://example.com");
+      const ics = await generateBirthdayCalendarData(
+        "https://example.com",
+        mockDrizzleDb as any
+      );
 
       expect(ics).toContain("BEGIN:VCALENDAR");
       expect(ics).toContain("Family Birthdays");
@@ -359,17 +314,20 @@ describe("Calendar Feeds Business Logic", () => {
         },
       ];
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            where: mock(() => ({
-              orderBy: mock(() => Promise.resolve(mockPeople)),
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              orderBy: vi.fn(() => Promise.resolve(mockPeople)),
             })),
           })),
         })
       );
 
-      const ics = await generateBirthdayCalendarData("https://example.com");
+      const ics = await generateBirthdayCalendarData(
+        "https://example.com",
+        mockDrizzleDb as any
+      );
 
       expect(ics).toContain("BEGIN:VCALENDAR");
       expect(ics).not.toContain("John Doe");
@@ -397,17 +355,17 @@ describe("Calendar Feeds Business Logic", () => {
       ];
 
       let selectCall = 0;
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => {
+          from: vi.fn(() => {
             selectCall++;
             if (selectCall === 1) {
               // Marriages query
               return {
-                innerJoin: mock(() => ({
-                  innerJoin: mock(() => ({
-                    where: mock(() => ({
-                      orderBy: mock(() => Promise.resolve(mockMarriages)),
+                innerJoin: vi.fn(() => ({
+                  innerJoin: vi.fn(() => ({
+                    where: vi.fn(() => ({
+                      orderBy: vi.fn(() => Promise.resolve(mockMarriages)),
                     })),
                   })),
                 })),
@@ -415,15 +373,18 @@ describe("Calendar Feeds Business Logic", () => {
             }
             // Deceased query
             return {
-              where: mock(() => ({
-                orderBy: mock(() => Promise.resolve(mockDeceased)),
+              where: vi.fn(() => ({
+                orderBy: vi.fn(() => Promise.resolve(mockDeceased)),
               })),
             };
           }),
         })
       );
 
-      const ics = await generateAnniversaryCalendarData("https://example.com");
+      const ics = await generateAnniversaryCalendarData(
+        "https://example.com",
+        mockDrizzleDb as any
+      );
 
       expect(ics).toContain("BEGIN:VCALENDAR");
       expect(ics).toContain("Family Anniversaries");
@@ -454,19 +415,22 @@ describe("Calendar Feeds Business Logic", () => {
         },
       ];
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            innerJoin: mock(() => ({
-              where: mock(() => ({
-                orderBy: mock(() => Promise.resolve(mockEvents)),
+          from: vi.fn(() => ({
+            innerJoin: vi.fn(() => ({
+              where: vi.fn(() => ({
+                orderBy: vi.fn(() => Promise.resolve(mockEvents)),
               })),
             })),
           })),
         })
       );
 
-      const ics = await generateEventsCalendarData("https://example.com");
+      const ics = await generateEventsCalendarData(
+        "https://example.com",
+        mockDrizzleDb as any
+      );
 
       expect(ics).toContain("BEGIN:VCALENDAR");
       expect(ics).toContain("Family Events");
@@ -488,19 +452,22 @@ describe("Calendar Feeds Business Logic", () => {
         },
       ];
 
-      (mockDrizzleDb.select as ReturnType<typeof mock>).mockImplementation(
+      (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockImplementation(
         () => ({
-          from: mock(() => ({
-            innerJoin: mock(() => ({
-              where: mock(() => ({
-                orderBy: mock(() => Promise.resolve(mockEvents)),
+          from: vi.fn(() => ({
+            innerJoin: vi.fn(() => ({
+              where: vi.fn(() => ({
+                orderBy: vi.fn(() => Promise.resolve(mockEvents)),
               })),
             })),
           })),
         })
       );
 
-      const ics = await generateEventsCalendarData("https://example.com");
+      const ics = await generateEventsCalendarData(
+        "https://example.com",
+        mockDrizzleDb as any
+      );
 
       expect(ics).toContain("BEGIN:VCALENDAR");
       expect(ics).not.toContain("BIRTH: Test Person");

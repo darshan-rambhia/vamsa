@@ -17,7 +17,7 @@
  * ChartSkeleton.tsx: 100% line coverage, 100% function coverage
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { render } from "@testing-library/react";
 import { ChartSkeleton } from "./ChartSkeleton";
 

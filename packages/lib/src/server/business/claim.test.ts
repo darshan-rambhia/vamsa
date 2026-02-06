@@ -14,10 +14,10 @@
  * 2. DI injection (new tests) - passes mock db directly via DI parameters
  *
  * The DI approach is preferred for new tests as it's more explicit and doesn't
- * require mock.module() setup.
+ * require vi.mock() setup.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock logger for this test file
 import {
@@ -26,51 +26,27 @@ import {
   getOIDCClaimStatusData,
   skipProfileClaimData,
 } from "@vamsa/lib/server/business";
-import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
-} from "../../testing/shared-mocks";
+import { mockLogger } from "../../testing/shared-mocks";
 
 // Import the functions to test
 
-// Create mock drizzleDb and drizzleSchema
-const mockDrizzleSchema = {
-  users: {
-    id: "id",
-    personId: "personId",
-    oidcProvider: "oidcProvider",
-  },
-  persons: {
-    id: "id",
-    isLiving: "isLiving",
-    lastName: "lastName",
-    firstName: "firstName",
-  },
-};
-
 // Mock for the returning() call - allows tests to control the return value
-
-const mockReturning = mock(() => Promise.resolve([] as Array<any>));
+const mockReturning = vi.fn(() => Promise.resolve([] as Array<any>));
 
 const mockDrizzleDb = {
   query: {
     users: {
-      findFirst: mock(() => Promise.resolve(null)),
-      findMany: mock(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
     persons: {
-      findFirst: mock(() => Promise.resolve(null)),
-      findMany: mock(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
   },
-  update: mock(() => ({
-    set: mock(() => ({
-      where: mock(() => {
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn(() => {
         // Return a thenable with returning() for Drizzle's fluent API
         const result = Promise.resolve({});
         return Object.assign(result, { returning: mockReturning });
@@ -79,40 +55,27 @@ const mockDrizzleDb = {
   })),
 };
 
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
-
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
-
 // Mock the notifications module to avoid dependency on it
-mock.module("@vamsa/lib/server/business/notifications", () => ({
-  notifyNewMemberJoined: mock(() => Promise.resolve(undefined)),
+vi.mock("@vamsa/lib/server/business/notifications", () => ({
+  notifyNewMemberJoined: vi.fn(() => Promise.resolve(undefined)),
 }));
 
 describe("Claim Server Business Logic", () => {
   beforeEach(() => {
     // Clear all mocks before each test
     (
-      mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
-    ).mockClear();
-    (mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>).mockClear();
-    (
-      mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+      mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
-    (mockDrizzleDb.update as ReturnType<typeof mock>).mockClear();
+    (
+      mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
+    ).mockClear();
+    (
+      mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
+    ).mockClear();
+    (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockClear();
     mockReturning.mockClear();
     mockLogger.error.mockClear();
     mockLogger.debug.mockClear();
@@ -147,16 +110,19 @@ describe("Claim Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockProfiles);
 
-      const result = await getClaimableProfilesData("user-1");
+      const result = await getClaimableProfilesData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.all).toHaveLength(2);
       expect(result.suggested).toBeDefined();
@@ -180,21 +146,24 @@ describe("Claim Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(claimedProfiles);
       (
-        mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
 
-      const result = await getClaimableProfilesData("user-1");
+      const result = await getClaimableProfilesData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.all).toHaveLength(0);
       // Verify persons.findMany was called to fetch unclaimed profiles
       expect(
-        mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
       ).toHaveBeenCalled();
     });
 
@@ -207,21 +176,21 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
 
-      await getClaimableProfilesData("user-1");
+      await getClaimableProfilesData("user-1", mockDrizzleDb as any);
 
       // Verify persons.findMany was called to filter for living profiles
       // (actual filter logic is verified via integration tests)
       expect(
-        mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
       ).toHaveBeenCalled();
     });
 
@@ -251,27 +220,33 @@ describe("Claim Server Business Logic", () => {
       ];
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
       (
-        mockDrizzleDb.query.users.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
       (
-        mockDrizzleDb.query.persons.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockProfiles);
 
-      const result = await getClaimableProfilesData("user-1");
+      const result = await getClaimableProfilesData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.suggested.length).toBeLessThanOrEqual(5);
     });
 
     it("should throw error when user not found", async () => {
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await getClaimableProfilesData("nonexistent-user");
+        await getClaimableProfilesData(
+          "nonexistent-user",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -286,11 +261,11 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await getClaimableProfilesData("user-1");
+        await getClaimableProfilesData("user-1", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -325,16 +300,20 @@ describe("Claim Server Business Logic", () => {
         profileClaimStatus: "CLAIMED",
       };
 
-      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(mockUser)
         .mockResolvedValueOnce(null); // Check for existing claim
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
       // Mock returning() to return array with updated user (Drizzle returns array)
       mockReturning.mockResolvedValueOnce([updatedUser]);
 
-      const result = await claimProfileForOIDCData("user-1", "person-1");
+      const result = await claimProfileForOIDCData(
+        "user-1",
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       expect(result.success).toBe(true);
       expect(result.userId).toBe("user-1");
@@ -343,11 +322,15 @@ describe("Claim Server Business Logic", () => {
 
     it("should throw error when user not found", async () => {
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await claimProfileForOIDCData("nonexistent-user", "person-1");
+        await claimProfileForOIDCData(
+          "nonexistent-user",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -362,11 +345,15 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1");
+        await claimProfileForOIDCData(
+          "user-1",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -386,11 +373,15 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1");
+        await claimProfileForOIDCData(
+          "user-1",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -410,11 +401,15 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1");
+        await claimProfileForOIDCData(
+          "user-1",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -434,14 +429,18 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await claimProfileForOIDCData("user-1", "nonexistent-person");
+        await claimProfileForOIDCData(
+          "user-1",
+          "nonexistent-person",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -466,14 +465,18 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1");
+        await claimProfileForOIDCData(
+          "user-1",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -504,15 +507,19 @@ describe("Claim Server Business Logic", () => {
         personId: "person-1",
       };
 
-      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(mockUser)
         .mockResolvedValueOnce(existingClaim); // Check for existing claim
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
 
       try {
-        await claimProfileForOIDCData("user-1", "person-1");
+        await claimProfileForOIDCData(
+          "user-1",
+          "person-1",
+          mockDrizzleDb as any
+        );
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -538,11 +545,11 @@ describe("Claim Server Business Logic", () => {
         isLiving: true,
       };
 
-      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>)
+      (mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>)
         .mockResolvedValueOnce(mockUser)
         .mockResolvedValueOnce(null);
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
       // Mock returning() to return array with updated user
       mockReturning.mockResolvedValueOnce([
@@ -554,7 +561,11 @@ describe("Claim Server Business Logic", () => {
         },
       ]);
 
-      const result = await claimProfileForOIDCData("user-1", "person-1");
+      const result = await claimProfileForOIDCData(
+        "user-1",
+        "person-1",
+        mockDrizzleDb as any
+      );
 
       // Verify update was called and result is successful
       expect(mockDrizzleDb.update).toHaveBeenCalled();
@@ -571,12 +582,12 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
       // skipProfileClaimData uses .update().set().where() without .returning()
       // The mock's where() returns a thenable, so await works
 
-      const result = await skipProfileClaimData("user-1");
+      const result = await skipProfileClaimData("user-1", mockDrizzleDb as any);
 
       expect(result.success).toBe(true);
       expect(mockDrizzleDb.update).toHaveBeenCalled();
@@ -584,11 +595,11 @@ describe("Claim Server Business Logic", () => {
 
     it("should throw error when user not found", async () => {
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await skipProfileClaimData("nonexistent-user");
+        await skipProfileClaimData("nonexistent-user", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -603,11 +614,11 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await skipProfileClaimData("user-1");
+        await skipProfileClaimData("user-1", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -625,11 +636,11 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
 
       try {
-        await skipProfileClaimData("user-1");
+        await skipProfileClaimData("user-1", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -660,13 +671,16 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
 
-      const result = await getOIDCClaimStatusData("user-1");
+      const result = await getOIDCClaimStatusData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
       expect(result?.userId).toBe("user-1");
@@ -687,10 +701,13 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
 
-      const result = await getOIDCClaimStatusData("user-1");
+      const result = await getOIDCClaimStatusData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeDefined();
       expect(result?.userId).toBe("user-1");
@@ -708,21 +725,24 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
 
-      const result = await getOIDCClaimStatusData("user-1");
+      const result = await getOIDCClaimStatusData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result).toBeNull();
     });
 
     it("should throw error when user not found", async () => {
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await getOIDCClaimStatusData("nonexistent-user");
+        await getOIDCClaimStatusData("nonexistent-user", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -749,13 +769,16 @@ describe("Claim Server Business Logic", () => {
       };
 
       (
-        mockDrizzleDb.query.users.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.users.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockUser);
       (
-        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.persons.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(mockPerson);
 
-      const result = await getOIDCClaimStatusData("user-1");
+      const result = await getOIDCClaimStatusData(
+        "user-1",
+        mockDrizzleDb as any
+      );
 
       expect(result?.person?.firstName).toBe("John");
       expect(result?.person?.lastName).toBe("Doe");
@@ -770,7 +793,7 @@ describe("Claim Server Business Logic", () => {
      *
      * Benefits:
      * - More explicit test setup
-     * - No need for mock.module() at file level
+     * - No need for vi.mock() at file level
      * - Easier to understand what's being tested
      * - Tests are more isolated
      */
@@ -797,11 +820,11 @@ describe("Claim Server Business Logic", () => {
       const inlineDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(mockUser)),
-            findMany: mock(() => Promise.resolve([])),
+            findFirst: vi.fn(() => Promise.resolve(mockUser)),
+            findMany: vi.fn(() => Promise.resolve([])),
           },
           persons: {
-            findMany: mock(() => Promise.resolve(mockProfiles)),
+            findMany: vi.fn(() => Promise.resolve(mockProfiles)),
           },
         },
       } as any;
@@ -837,7 +860,7 @@ describe("Claim Server Business Logic", () => {
       };
 
       let notifyCalled = false;
-      const mockNotify = mock(() => {
+      const mockNotify = vi.fn(() => {
         notifyCalled = true;
         return Promise.resolve();
       });
@@ -846,19 +869,20 @@ describe("Claim Server Business Logic", () => {
       const inlineDb = {
         query: {
           users: {
-            findFirst: mock()
+            findFirst: vi
+              .fn()
               .mockResolvedValueOnce(mockUser) // First call: fetch user
               .mockResolvedValueOnce(null), // Second call: check existing claim
           },
           persons: {
-            findFirst: mock(() => Promise.resolve(mockPerson)),
+            findFirst: vi.fn(() => Promise.resolve(mockPerson)),
           },
         },
-        update: mock(() => ({
-          set: mock(() => ({
-            where: mock(() =>
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn(() =>
               Object.assign(Promise.resolve({}), {
-                returning: mock(() => Promise.resolve([updatedUser])),
+                returning: vi.fn(() => Promise.resolve([updatedUser])),
               })
             ),
           })),
@@ -887,12 +911,12 @@ describe("Claim Server Business Logic", () => {
       const inlineDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(mockUser)),
+            findFirst: vi.fn(() => Promise.resolve(mockUser)),
           },
         },
-        update: mock(() => ({
-          set: mock(() => ({
-            where: mock(() => Promise.resolve({})),
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve({})),
           })),
         })),
       } as any;
@@ -917,7 +941,7 @@ describe("Claim Server Business Logic", () => {
       const inlineDb = {
         query: {
           users: {
-            findFirst: mock(() => Promise.resolve(mockUser)),
+            findFirst: vi.fn(() => Promise.resolve(mockUser)),
           },
         },
       } as any;

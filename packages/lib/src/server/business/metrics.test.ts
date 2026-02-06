@@ -9,7 +9,8 @@
  * - Metric data structure validation
  */
 
-import { describe, expect, it, mock } from "bun:test";
+import { describe, expect, it, vi } from "vitest";
+import { drizzleDb } from "@vamsa/api";
 import {
   getMetricsSnapshotData,
   getPrometheusStatusData,
@@ -20,30 +21,6 @@ import {
 } from "./metrics";
 
 import type { MetricSnapshot } from "./metrics";
-
-// Mock modules before importing the code under test
-mock.module("@vamsa/lib/logger", () => ({
-  loggers: {
-    db: {
-      warn: mock(() => {}),
-      withErr: () => ({
-        ctx: () => ({
-          msg: mock(() => {}),
-        }),
-      }),
-    },
-  },
-}));
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: {
-    query: {
-      familySettings: {
-        findFirst: mock(() => Promise.resolve(null)),
-      },
-    },
-  },
-}));
 
 describe("Metrics Business Logic", () => {
   describe("queryPrometheus", () => {
@@ -56,7 +33,7 @@ describe("Metrics Business Logic", () => {
     it("should handle network errors gracefully", async () => {
       // Mock fetch to throw network error
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() => {
+      globalThis.fetch = vi.fn(() => {
         throw new Error("Network error");
       }) as any;
 
@@ -68,7 +45,7 @@ describe("Metrics Business Logic", () => {
 
     it("should parse valid Prometheus response", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
           json: () =>
@@ -95,7 +72,7 @@ describe("Metrics Business Logic", () => {
 
     it("should return 0 for non-success response", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
           json: () =>
@@ -114,7 +91,7 @@ describe("Metrics Business Logic", () => {
 
     it("should handle NaN values", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
           json: () =>
@@ -142,7 +119,7 @@ describe("Metrics Business Logic", () => {
   describe("queryPrometheusVector", () => {
     it("should return empty object on network error", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() => {
+      globalThis.fetch = vi.fn(() => {
         throw new Error("Network error");
       }) as any;
 
@@ -154,7 +131,7 @@ describe("Metrics Business Logic", () => {
 
     it("should parse vector response with labels", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
           json: () =>
@@ -185,7 +162,7 @@ describe("Metrics Business Logic", () => {
 
     it("should use custom label name", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
           json: () =>
@@ -211,7 +188,7 @@ describe("Metrics Business Logic", () => {
 
     it("should return empty object for non-success response", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
           json: () =>
@@ -230,7 +207,7 @@ describe("Metrics Business Logic", () => {
 
     it("should handle missing labels with 'unknown'", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
           json: () =>
@@ -259,7 +236,7 @@ describe("Metrics Business Logic", () => {
   describe("isPrometheusAvailable", () => {
     it("should return boolean for availability check", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
         })
@@ -273,7 +250,7 @@ describe("Metrics Business Logic", () => {
 
     it("should return false on network error", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() => {
+      globalThis.fetch = vi.fn(() => {
         throw new Error("Network error");
       }) as any;
 
@@ -285,7 +262,7 @@ describe("Metrics Business Logic", () => {
 
     it("should return false on non-ok response", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: false,
           status: 503,
@@ -302,7 +279,7 @@ describe("Metrics Business Logic", () => {
   describe("isPrometheusAvailableAt", () => {
     it("should return true for available Prometheus", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
         })
@@ -316,7 +293,7 @@ describe("Metrics Business Logic", () => {
 
     it("should return false for unavailable Prometheus", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: false,
         })
@@ -330,7 +307,7 @@ describe("Metrics Business Logic", () => {
 
     it("should handle timeout", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() => {
+      globalThis.fetch = vi.fn(() => {
         throw new Error("Timeout");
       }) as any;
 
@@ -346,7 +323,7 @@ describe("Metrics Business Logic", () => {
       const originalFetch = globalThis.fetch;
       let callCount = 0;
 
-      globalThis.fetch = mock(() => {
+      globalThis.fetch = vi.fn(() => {
         callCount++;
         if (callCount === 1) {
           // First call checks Prometheus availability
@@ -379,7 +356,7 @@ describe("Metrics Business Logic", () => {
 
     it("should return unavailable status when Prometheus is down", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: false,
         })
@@ -399,7 +376,7 @@ describe("Metrics Business Logic", () => {
       const originalFetch = globalThis.fetch;
       let callCount = 0;
 
-      globalThis.fetch = mock(() => {
+      globalThis.fetch = vi.fn(() => {
         callCount++;
         if (callCount === 1) {
           // Prometheus availability check
@@ -442,7 +419,7 @@ describe("Metrics Business Logic", () => {
       const originalFetch = globalThis.fetch;
       let callCount = 0;
 
-      globalThis.fetch = mock(() => {
+      globalThis.fetch = vi.fn(() => {
         callCount++;
         if (callCount === 1) {
           return Promise.resolve({ ok: true });
@@ -481,13 +458,13 @@ describe("Metrics Business Logic", () => {
   describe("getPrometheusStatusData", () => {
     it("should return status with availability", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
         })
       ) as any;
 
-      const result = await getPrometheusStatusData();
+      const result = await getPrometheusStatusData(drizzleDb);
 
       expect(result).toBeDefined();
       expect(result.available).toBeDefined();
@@ -500,13 +477,13 @@ describe("Metrics Business Logic", () => {
 
     it("should return false availability when Prometheus unavailable", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: false,
         })
       ) as any;
 
-      const result = await getPrometheusStatusData();
+      const result = await getPrometheusStatusData(drizzleDb);
 
       expect(result.available).toBe(false);
 
@@ -515,13 +492,13 @@ describe("Metrics Business Logic", () => {
 
     it("should use environment URLs", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
         })
       ) as any;
 
-      const result = await getPrometheusStatusData();
+      const result = await getPrometheusStatusData(drizzleDb);
 
       // Should have default URLs
       expect(typeof result.url).toBe("string");
@@ -532,13 +509,13 @@ describe("Metrics Business Logic", () => {
 
     it("should indicate custom URLs when used", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
         })
       ) as any;
 
-      const result = await getPrometheusStatusData();
+      const result = await getPrometheusStatusData(drizzleDb);
 
       // Should be a boolean
       expect(typeof result.usingCustomUrls).toBe("boolean");
@@ -628,7 +605,7 @@ describe("Metrics Business Logic", () => {
   describe("Error handling edge cases", () => {
     it("should handle empty Prometheus response", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
           json: () =>
@@ -647,7 +624,7 @@ describe("Metrics Business Logic", () => {
 
     it("should handle malformed JSON response", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: true,
           json: () => {
@@ -664,7 +641,7 @@ describe("Metrics Business Logic", () => {
 
     it("should handle HTTP error responses", async () => {
       const originalFetch = globalThis.fetch;
-      globalThis.fetch = mock(() =>
+      globalThis.fetch = vi.fn(() =>
         Promise.resolve({
           ok: false,
           status: 500,

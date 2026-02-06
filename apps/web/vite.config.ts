@@ -7,9 +7,97 @@ import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import { config } from "dotenv";
 import { vamsaDevApiPlugin } from "./server/dev";
+import type { Plugin } from "vite";
+
+/**
+ * Vite plugin to stub out server-only modules for client builds.
+ * This prevents "Failed to resolve module specifier" errors in the browser
+ * when server code accidentally references server-only modules.
+ *
+ * Only stubs modules that are purely server-side and have no client purpose:
+ * - i18next-fs-backend: Filesystem backend for i18n (server-only)
+ * - pg/pg-pool/pgpass/pg-native: PostgreSQL drivers (server-only)
+ *
+ * Does NOT stub:
+ * - drizzle-orm: Schema definitions may be needed for types
+ * - archiver/arctic/bcryptjs/node-cron/sharp: May cause build issues if stubbed
+ */
+function serverOnlyStubPlugin(): Plugin {
+  // Module stubs with their required exports
+  // Each stub provides the minimum exports needed to satisfy import statements
+  const moduleStubs: Record<string, string> = {
+    // i18next-fs-backend exports a default Backend class
+    "i18next-fs-backend": `
+      class Backend { init() {} read() {} }
+      export default Backend;
+    `,
+    // pg exports Pool class and types
+    pg: `
+      export class Pool {
+        constructor() {}
+        connect() { return Promise.resolve(); }
+        query() { return Promise.resolve({ rows: [] }); }
+        end() { return Promise.resolve(); }
+        on() {}
+        get totalCount() { return 0; }
+        get idleCount() { return 0; }
+        get waitingCount() { return 0; }
+      }
+      export class Client {
+        constructor() {}
+        connect() { return Promise.resolve(); }
+        query() { return Promise.resolve({ rows: [] }); }
+        end() { return Promise.resolve(); }
+      }
+      export default { Pool, Client };
+    `,
+    // pg-pool is just the Pool class
+    "pg-pool": `
+      export default class Pool {
+        constructor() {}
+        connect() { return Promise.resolve(); }
+        query() { return Promise.resolve({ rows: [] }); }
+        end() { return Promise.resolve(); }
+        on() {}
+      }
+    `,
+    // pgpass and pg-native are optional and rarely used directly
+    pgpass: `export default {};`,
+    "pg-native": `export default {};`,
+  };
+
+  const serverOnlyModules = Object.keys(moduleStubs);
+
+  return {
+    name: "server-only-stub",
+    enforce: "pre",
+    resolveId(id, importer, options) {
+      // Only apply to client builds (not SSR)
+      if (options.ssr) return null;
+
+      // Check if this is a server-only module
+      if (serverOnlyModules.includes(id)) {
+        // Return a virtual module that will be handled by load()
+        return `\0server-stub:${id}`;
+      }
+      return null;
+    },
+    load(id) {
+      // Handle virtual server-only stubs
+      if (id.startsWith("\0server-stub:")) {
+        const moduleName = id.replace("\0server-stub:", "");
+        return moduleStubs[moduleName] || `export default {};`;
+      }
+      return null;
+    },
+  };
+}
 
 // Load .env from monorepo root for server-side code (Drizzle, Better Auth, etc.)
-config({ path: path.resolve(__dirname, "../../.env") });
+config({
+  path: path.resolve(__dirname, "../../.env"),
+  quiet: true,
+});
 
 export default defineConfig({
   // Load .env from monorepo root
@@ -32,7 +120,7 @@ export default defineConfig({
   },
   ssr: {
     external: [
-      // Server-only dependencies from packages/lib that shouldn't be bundled
+      // Server-only dependencies that shouldn't be bundled into SSR
       "archiver",
       "arctic",
       "bcryptjs",
@@ -45,28 +133,32 @@ export default defineConfig({
       // sharp is a native image processing library that must not be bundled
       "sharp",
     ],
+    // Note: Do NOT add drizzle-orm/pg to ssr.external or @vamsa/* to noExternal.
+    // drizzle-orm/pg must be bundled into the SSR output so the production server
+    // doesn't need to resolve them from node_modules at runtime (which fails in Docker).
   },
   build: {
     rollupOptions: {
       external: [
-        // Server-only dependencies from packages/lib that shouldn't be bundled
-        "archiver",
-        "arctic",
-        "bcryptjs",
-        // Note: i18next is NOT external - it's needed on the client for react-i18next
-        // Only i18next-fs-backend is server-only
-        "i18next-fs-backend",
-        "node-cron",
-        // pg-native is an optional native addon that pg tries to import
-        "pg-native",
+        // Note: Server-only modules (drizzle-orm, pg, i18next-fs-backend, etc.)
+        // are NOT externalized for client builds. Instead, they are stubbed
+        // by the serverOnlyStubPlugin() to prevent browser errors.
+        // They ARE externalized for SSR in ssr.external above.
         // Exclude react-native from web builds (react-native-svg-web provides web implementation)
         "react-native",
         // sharp is a native image processing library that must not be bundled
         "sharp",
+        // Node.js built-ins used by TanStack Start/Router SSR code
+        // Must be external to prevent client bundle from trying to include them
+        "node:stream",
+        "node:stream/web",
+        "node:async_hooks",
       ],
     },
   },
   plugins: [
+    // Stub server-only modules for client builds to prevent browser errors
+    serverOnlyStubPlugin(),
     // Add API routes in dev mode for dev/prod parity
     vamsaDevApiPlugin(),
     tailwindcss(),

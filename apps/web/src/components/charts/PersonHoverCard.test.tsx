@@ -3,7 +3,7 @@
  * Tests hover card rendering with various prop combinations
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { PersonHoverCard } from "./PersonHoverCard";
 import type { PersonHoverCardProps } from "./PersonHoverCard";
 

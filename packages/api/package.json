@@ -24,17 +24,17 @@
     "db:seed:e2e": "bun src/drizzle/seed-e2e.ts",
     "db:studio": "drizzle-kit studio",
     "typecheck": "tsc --noEmit",
-    "test": "bun test src"
+    "test": "bun run vitest run"
   },
   "dependencies": {
     "@vamsa/schemas": "workspace:*",
     "dotenv": "17.2.3",
     "drizzle-orm": "0.45.1",
-    "pg": "^8.17.1",
+    "pg": "^8.18.0",
     "resend": "^6.7.0"
   },
   "devDependencies": {
-    "@types/bun": "^1.2.18",
+    "@types/bun": "^1.3.8",
     "@types/node": "^25.0.8",
     "@types/pg": "^8.16.0",
     "@vamsa/lib": "workspace:*",

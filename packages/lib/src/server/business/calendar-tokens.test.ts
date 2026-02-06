@@ -12,72 +12,17 @@
  * - Logging for security-critical operations
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  clearAllMocks,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-} from "../../testing/shared-mocks";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 // Import functions to test
 import { verifyTokenOwnership } from "./calendar-tokens";
 
-// Mock the logger before importing modules
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-}));
-
-// Mock drizzle schema
-const mockDrizzleSchema = {
-  calendarTokens: {
-    id: "id",
-    userId: "userId",
-    token: "token",
-    name: "name",
-    rotationPolicy: "rotationPolicy",
-    expiresAt: "expiresAt",
-    isActive: "isActive",
-    createdAt: "createdAt",
-  },
-  users: {
-    id: "id",
-    email: "email",
-    name: "name",
-  },
-};
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: {
-    query: {
-      calendarTokens: {
-        findMany: mock(() => Promise.resolve([])),
-        findFirst: mock(() => Promise.resolve(null)),
-      },
-    },
-    insert: mock(() => ({
-      values: mock(() => ({
-        returning: mock(() => Promise.resolve([])),
-      })),
-    })),
-    update: mock(() => ({
-      set: mock(() => ({
-        where: mock(() => Promise.resolve({})),
-      })),
-    })),
-    delete: mock(() => ({
-      where: mock(() => Promise.resolve({})),
-    })),
-  } as any,
-  drizzleSchema: mockDrizzleSchema,
-}));
+// Note: @vamsa/api mocking is handled by the preload file
+// drizzleSchema and drizzleDb are available from there
 
 // Mock date-fns
-mock.module("date-fns", () => ({
+vi.mock("date-fns", () => ({
   addYears: (date: Date, years: number) => {
     const result = new Date(date);
     result.setFullYear(result.getFullYear() + years);
@@ -87,7 +32,7 @@ mock.module("date-fns", () => ({
 
 // NOTE: We don't mock ./token-rotation here because:
 // 1. The tests in this file only cover verifyTokenOwnership (no rotation tests)
-// 2. mock.module() is global and persists across test files, which would
+// 2. vi.mock() is global and persists across test files, which would
 //    interfere with token-rotation.test.ts testing the real implementation
 // 3. If rotation tests are added later, use spyOn() for test isolation
 

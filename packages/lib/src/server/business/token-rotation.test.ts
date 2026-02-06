@@ -12,37 +12,33 @@
  * allowing mock.module() to intercept them reliably.
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
-import {
-  mockCreateContextLogger,
-  mockCreateRequestLogger,
-  mockLog,
-  mockLogger,
-  mockLoggers,
-  mockSerializeError,
-  mockStartTimer,
-} from "../../testing/shared-mocks";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { mockLogger } from "../../testing/shared-mocks";
 
 // Mock for returning() in update chain - allows tests to control the return value
-const mockUpdateReturning = mock(() => Promise.resolve([{}] as Array<unknown>));
+const mockUpdateReturning = vi.fn(() =>
+  Promise.resolve([{}] as Array<unknown>)
+);
 // Mock for returning() in insert chain
-const mockInsertReturning = mock(() => Promise.resolve([{}] as Array<unknown>));
+const mockInsertReturning = vi.fn(() =>
+  Promise.resolve([{}] as Array<unknown>)
+);
 
 const mockDrizzleDb = {
-  insert: mock(() => ({
-    values: mock(() => ({
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({
       returning: mockInsertReturning,
     })),
   })),
   query: {
     calendarTokens: {
-      findFirst: mock(() => Promise.resolve(null)),
-      findMany: mock(() => Promise.resolve([])),
+      findFirst: vi.fn(() => Promise.resolve(null)),
+      findMany: vi.fn(() => Promise.resolve([])),
     },
   },
-  update: mock(() => ({
-    set: mock(() => ({
-      where: mock(() => {
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn(() => {
         // Return a thenable with returning() for Drizzle's fluent API
         const result = Promise.resolve({});
         return Object.assign(result, { returning: mockUpdateReturning });
@@ -50,26 +46,6 @@ const mockDrizzleDb = {
     })),
   })),
 };
-
-const mockDrizzleSchema = {
-  calendarTokens: {} as unknown,
-};
-
-// Set up mocks BEFORE any imports of modules that use them
-mock.module("@vamsa/lib/logger", () => ({
-  logger: mockLogger,
-  loggers: mockLoggers,
-  log: mockLog,
-  serializeError: mockSerializeError,
-  createContextLogger: mockCreateContextLogger,
-  createRequestLogger: mockCreateRequestLogger,
-  startTimer: mockStartTimer,
-}));
-
-mock.module("@vamsa/api", () => ({
-  drizzleDb: mockDrizzleDb,
-  drizzleSchema: mockDrizzleSchema,
-}));
 
 // Import after mocks - mock.module() must be called before importing
 // eslint-disable-next-line import/first
@@ -85,14 +61,14 @@ describe("Token Rotation Functions", () => {
   beforeEach(() => {
     mockLogger.info.mockClear();
     mockLogger.error.mockClear();
-    (mockDrizzleDb.insert as ReturnType<typeof mock>).mockClear();
+    (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockClear();
     (
-      mockDrizzleDb.query.calendarTokens.findFirst as ReturnType<typeof mock>
+      mockDrizzleDb.query.calendarTokens.findFirst as ReturnType<typeof vi.fn>
     ).mockClear();
     (
-      mockDrizzleDb.query.calendarTokens.findMany as ReturnType<typeof mock>
+      mockDrizzleDb.query.calendarTokens.findMany as ReturnType<typeof vi.fn>
     ).mockClear();
-    (mockDrizzleDb.update as ReturnType<typeof mock>).mockClear();
+    (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockClear();
     mockUpdateReturning.mockClear();
     mockInsertReturning.mockClear();
   });
@@ -144,10 +120,14 @@ describe("Token Rotation Functions", () => {
   describe("enforceRotationPolicy", () => {
     it("should return empty result when no tokens exist", async () => {
       (
-        mockDrizzleDb.query.calendarTokens.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.calendarTokens.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([]);
 
-      const result = await enforceRotationPolicy("user-1", "manual");
+      const result = await enforceRotationPolicy(
+        "user-1",
+        "manual",
+        mockDrizzleDb as any
+      );
 
       expect(result.rotated).toBe(0);
       expect(result.tokens).toEqual([]);
@@ -175,16 +155,20 @@ describe("Token Rotation Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.calendarTokens.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.calendarTokens.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([existingToken]);
       (
-        mockDrizzleDb.query.calendarTokens.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.calendarTokens.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(existingToken);
 
       // Mock insert returning() for new token creation
       mockInsertReturning.mockResolvedValueOnce([newToken]);
 
-      const result = await enforceRotationPolicy("user-1", "manual");
+      const result = await enforceRotationPolicy(
+        "user-1",
+        "manual",
+        mockDrizzleDb as any
+      );
 
       expect(result.rotated).toBe(1);
       expect(result.tokens).toHaveLength(1);
@@ -201,10 +185,14 @@ describe("Token Rotation Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.calendarTokens.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.calendarTokens.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([existingToken]);
 
-      const result = await enforceRotationPolicy("user-1", "password_change");
+      const result = await enforceRotationPolicy(
+        "user-1",
+        "password_change",
+        mockDrizzleDb as any
+      );
 
       expect(result.rotated).toBe(0);
       expect(result.tokens).toEqual([]);
@@ -228,16 +216,20 @@ describe("Token Rotation Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.calendarTokens.findMany as ReturnType<typeof mock>
+        mockDrizzleDb.query.calendarTokens.findMany as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce([oldToken]);
       (
-        mockDrizzleDb.query.calendarTokens.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.calendarTokens.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(oldToken);
 
       // Mock insert returning() for new token creation
       mockInsertReturning.mockResolvedValueOnce([newToken]);
 
-      const result = await enforceRotationPolicy("user-1", "annual_check");
+      const result = await enforceRotationPolicy(
+        "user-1",
+        "annual_check",
+        mockDrizzleDb as any
+      );
 
       expect(result.rotated).toBe(1);
     });
@@ -264,13 +256,13 @@ describe("Token Rotation Functions", () => {
       };
 
       (
-        mockDrizzleDb.query.calendarTokens.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.calendarTokens.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(oldToken);
 
       // Mock insert returning() for new token creation
       mockInsertReturning.mockResolvedValueOnce([newToken]);
 
-      const result = await rotateToken("old-id");
+      const result = await rotateToken("old-id", mockDrizzleDb as any);
 
       expect(result.id).toBe("new-id");
       expect(mockDrizzleDb.insert).toHaveBeenCalled();
@@ -279,11 +271,11 @@ describe("Token Rotation Functions", () => {
 
     it("should throw error if token not found", async () => {
       (
-        mockDrizzleDb.query.calendarTokens.findFirst as ReturnType<typeof mock>
+        mockDrizzleDb.query.calendarTokens.findFirst as ReturnType<typeof vi.fn>
       ).mockResolvedValueOnce(null);
 
       try {
-        await rotateToken("nonexistent");
+        await rotateToken("nonexistent", mockDrizzleDb as any);
         expect.unreachable("should have thrown");
       } catch (err) {
         expect(err instanceof Error).toBe(true);
@@ -298,7 +290,7 @@ describe("Token Rotation Functions", () => {
         { id: "token-1", isActive: false },
       ]);
 
-      const result = await revokeToken("token-1");
+      const result = await revokeToken("token-1", mockDrizzleDb as any);
 
       expect(mockDrizzleDb.update).toHaveBeenCalled();
       expect(result).toBeDefined();
@@ -315,7 +307,7 @@ describe("Token Rotation Functions", () => {
 
       mockUpdateReturning.mockResolvedValueOnce([updatedToken]);
 
-      const result = await revokeToken("token-1");
+      const result = await revokeToken("token-1", mockDrizzleDb as any);
 
       expect(result).toBeDefined();
       expect(result.id).toBe("token-1");

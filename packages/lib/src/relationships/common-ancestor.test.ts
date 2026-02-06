@@ -3,7 +3,7 @@
  *
  * Tests the lowest common ancestor (LCA) and all common ancestors functionality
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import { findAllCommonAncestors, findCommonAncestor } from "./common-ancestor";
 
 interface RelationshipNode {

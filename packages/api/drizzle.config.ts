@@ -1,9 +1,12 @@
 import { defineConfig } from "drizzle-kit";
 import { config } from "dotenv";
-import path from "path";
+import path from "node:path";
 
 // Load .env from monorepo root
-config({ path: path.resolve(__dirname, "../../.env") });
+config({
+  path: path.resolve(__dirname, "../../.env"),
+  quiet: true,
+});
 
 export default defineConfig({
   schema: "./src/drizzle/schema/index.ts",

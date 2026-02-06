@@ -406,11 +406,14 @@ The database schema is in `packages/api/src/drizzle/schema/`.
 The project provides several Docker Compose configurations:
 
 ```bash
-# Development (PostgreSQL + Web App)
+# Production (PostgreSQL + Web App)
 docker compose -f docker/docker-compose.yml up -d
 
-# Development mode (just PostgreSQL)
-docker compose -f docker/docker-compose.dev.yml up -d
+# Development (just PostgreSQL)
+docker compose -f docker/docker-compose.local.yml --profile dev up -d
+
+# Development (PostgreSQL + app server)
+docker compose -f docker/docker-compose.local.yml --profile dev-app up -d
 
 # Observability stack (Prometheus, Grafana, etc.)
 docker compose -f docker/docker-compose.observability.yml up -d

@@ -8,7 +8,7 @@
  * - Display order calculation
  */
 
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 
 // Helper functions for media operations
 function getFileExtension(mimeType: string): string {
@@ -123,7 +123,7 @@ describe("media business logic - file handling", () => {
 
       imageTypes.forEach((type) => {
         const ext = getFileExtension(type);
-        expect(ext).toStartWith(".");
+        expect(ext.startsWith(".")).toBe(true);
         expect(ext).not.toBe(".bin");
       });
     });

@@ -4,6 +4,90 @@ Domain-specific testing patterns and fixtures for Vamsa. Use these as templates 
 
 ---
 
+## Module Mocking (Critical Pattern)
+
+**Warning**: Bun's `mock.module()` only applies to the **first call** for a given module. Subsequent calls are silently ignored. This causes CI/local test divergence when multiple test files mock the same module with different structures.
+
+### The Rule
+
+If a preload file already mocks a module, **DO NOT** call `mock.module()` for that module in your test file. Instead, import and configure the preload's mock.
+
+### Preload Files
+
+The `packages/lib/tests/setup/test-logger-mock.ts` file (configured in `bunfig.toml`) mocks:
+
+- `@vamsa/api` - Drizzle DB, email service
+- `@vamsa/lib/logger` - Logger functions
+
+### Pattern: Using Preload Mocks
+
+```typescript
+/**
+ * IMPORTANT: This test uses the shared mocks from preload (test-logger-mock.ts).
+ * Do NOT call mock.module() for @vamsa/api or @vamsa/lib/logger here.
+ */
+import { beforeEach, describe, expect, it } from "bun:test";
+import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
+import { mockDrizzleDb } from "../../../tests/setup/test-logger-mock";
+
+// Import module under test AFTER mocks are set up (use dynamic import if needed)
+const { myFunction } = await import("./my-module");
+
+describe("my module", () => {
+  beforeEach(() => {
+    clearAllMocks();
+    // Configure mock behavior for this test suite
+    mockDrizzleDb.setFindFirstResult(null);
+    mockDrizzleDb.setFindManyResults([]);
+  });
+
+  it("handles user lookup", async () => {
+    // Set up specific return value for this test
+    mockDrizzleDb.setFindFirstResult({ id: "user-1", name: "Test User" });
+
+    const result = await myFunction("user-1");
+
+    expect(result.name).toBe("Test User");
+    expect(mockLogger.info).toHaveBeenCalled();
+  });
+});
+```
+
+### Anti-Pattern: Duplicate mock.module() Calls
+
+```typescript
+// ❌ BAD - This mock may be ignored if preload already mocked @vamsa/api
+import { mock } from "bun:test";
+
+mock.module("@vamsa/api", () => ({
+  drizzleDb: {
+    query: { users: { findFirst: async () => ({ id: "test" }) } },
+  },
+}));
+```
+
+### Configuring Mock Query Results
+
+The preload's `mockDrizzleDb` provides setter methods for test-specific behavior:
+
+```typescript
+// For single-record queries (findFirst)
+mockDrizzleDb.setFindFirstResult({ id: "user-1", email: "test@example.com" });
+mockDrizzleDb.setFindFirstResult(null); // Simulate "not found"
+
+// For multi-record queries (findMany)
+mockDrizzleDb.setFindManyResults([
+  { id: "user-1", email: "user1@test.com" },
+  { id: "user-2", email: "user2@test.com" },
+]);
+mockDrizzleDb.setFindManyResults([]); // Simulate empty results
+
+// For specific query methods (override when needed)
+mockDrizzleDb.query.users.findFirst = mock(async () => customResult);
+```
+
+---
+
 ## React Component Testing
 
 ### Package Capabilities

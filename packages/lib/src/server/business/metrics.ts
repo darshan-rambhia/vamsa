@@ -21,6 +21,9 @@ import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.db;
 
+/** Type for the database instance (for DI) */
+export type MetricsDb = typeof drizzleDb;
+
 /**
  * Prometheus API response structure
  */
@@ -286,14 +289,16 @@ export async function getMetricsSnapshotData(): Promise<MetricSnapshot> {
  *
  * @returns Status object with availability, URLs, and custom URL flag
  */
-export async function getPrometheusStatusData(): Promise<{
+export async function getPrometheusStatusData(
+  db: MetricsDb = drizzleDb
+): Promise<{
   available: boolean;
   url: string;
   grafanaUrl: string;
   usingCustomUrls: boolean;
 }> {
   // Check FamilySettings for custom URLs
-  const settings = await drizzleDb.query.familySettings.findFirst({
+  const settings = await db.query.familySettings.findFirst({
     columns: {
       metricsDashboardUrl: true,
       metricsApiUrl: true,

@@ -7,11 +7,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load environment variables from .env files (monorepo root)
-// Order: .env (base) -> .env.local (user overrides) -> .env.test (test overrides)
-config({ path: path.resolve(__dirname, "../../.env") });
-config({ path: path.resolve(__dirname, "../../.env.local") });
-// .env.test uses override:true to ensure test values take precedence
-config({ path: path.resolve(__dirname, "../../.env.test"), override: true });
+// .env.test overrides .env with test-specific values
+config({
+  path: path.resolve(__dirname, "../../.env"),
+  quiet: true,
+});
+config({
+  path: path.resolve(__dirname, "../../.env.test"),
+  override: true,
+  quiet: true,
+});
 
 // In Docker, IN_DOCKER=true is set by docker-compose
 // Locally, we start the server ourselves on localhost
@@ -43,7 +48,8 @@ const webServerConfig = isDocker
             (entry): entry is [string, string] => entry[1] !== undefined
           )
         ),
-        // Set E2E_TESTING=true to disable rate limiting during E2E tests
+        // Match CI: server runs in test mode with rate limiting disabled
+        NODE_ENV: "test",
         E2E_TESTING: "true",
       },
     };
@@ -91,8 +97,7 @@ export default defineConfig({
   fullyParallel: true,
   outputDir: "../../test-output/e2e/results/",
   snapshotDir: path.join(__dirname, "e2e/visual/__snapshots__"),
-  snapshotPathTemplate:
-    "{snapshotDir}/{testFileDir}/{testFileName}-{platform}{ext}",
+  snapshotPathTemplate: "{snapshotDir}/{testFileDir}/{arg}-{platform}{ext}",
   reporter: [
     ["html", { outputFolder: "../../test-output/e2e/playwright/" }],
     ["list"],

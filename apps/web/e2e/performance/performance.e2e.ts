@@ -6,12 +6,13 @@
  * - Navigation responsiveness
  *
  * Performance Budgets:
- * - Page navigation: 6s (networkidle)
+ * - Page navigation: 6s (hydration complete)
  * - DOM Content Loaded: 3.5s
  * - Navigation between pages: 3s
  */
 
 import { expect, test } from "@playwright/test";
+import { waitForHydration } from "../fixtures/test-base";
 
 test.describe("Performance Metrics", () => {
   test("login page loads within performance budget", async ({ page }) => {
@@ -25,10 +26,8 @@ test.describe("Performance Metrics", () => {
     });
     const domContentLoadedTime = Date.now() - startTime;
 
-    // Continue waiting for full network idle
-    await page.waitForLoadState("networkidle").catch(() => {
-      // It's ok if networkidle times out, we're measuring domcontentloaded
-    });
+    // Wait for React hydration to complete
+    await waitForHydration(page);
     const fullLoadTime = Date.now() - startTime;
 
     // Login form should be visible and interactive

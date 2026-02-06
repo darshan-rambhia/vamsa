@@ -2,7 +2,7 @@
  * Unit Tests for Pagination Schemas
  * Tests Zod schema validation for pagination inputs, metadata, and related functionality
  */
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import {
   auditLogListInputSchema,
   createPaginationMeta,

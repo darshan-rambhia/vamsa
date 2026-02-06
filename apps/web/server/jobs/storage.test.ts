@@ -6,17 +6,17 @@
  * - deleteFromStorage: Delete backup from cloud storage
  */
 
-import { beforeEach, describe, expect, it, mock } from "bun:test";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deleteFromStorage, uploadToStorage } from "./storage";
 import type { StorageProvider } from "./storage";
 
 // Create mock S3 client functions - these will be used by the mock class
-const mockS3Write = mock(async () => undefined);
-const mockS3Unlink = mock(async () => undefined);
+const mockS3Write = vi.fn(async () => undefined);
+const mockS3Unlink = vi.fn(async () => undefined);
 
-// Mock Bun.S3Client BEFORE importing storage.ts
-// This ensures the lazy-initialized s3Client uses our mock
-(Bun as any).S3Client = class MockS3Client {
+// Define Bun global for Vitest (not available outside Bun runtime)
+(globalThis as any).Bun = (globalThis as any).Bun || {};
+(globalThis as any).Bun.S3Client = class MockS3Client {
   write = mockS3Write;
   unlink = mockS3Unlink;
 };

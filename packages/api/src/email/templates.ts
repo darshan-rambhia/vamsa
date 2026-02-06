@@ -243,6 +243,7 @@ export function createBirthdayReminderEmail(
   const birthDateStr = birthDate.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
+    timeZone: "UTC",
   });
 
   const html = `
