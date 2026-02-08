@@ -4,6 +4,8 @@
 
 Integration tests bridge the gap between unit tests (mocked database) and E2E tests (full browser). They test server functions and business logic against a real PostgreSQL database without browser overhead.
 
+> **Note**: Integration tests intentionally use `bun:test` (not Vitest) because they run against a real database and benefit from Bun's native test runner performance. Unit tests use Vitest.
+
 ### Testing Pyramid
 
 ```

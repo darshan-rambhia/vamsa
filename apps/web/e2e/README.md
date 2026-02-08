@@ -26,7 +26,7 @@ Our E2E tests focus on **functional user workflows**, not fake benchmarks or vis
 ❌ Visual regression (use Percy or Chromatic if needed)
 ❌ Performance benchmarks (use Lighthouse or dedicated perf tools)
 ❌ Fake "happy path" tests that don't validate real functionality
-❌ Unit test equivalents (use Bun test for those)
+❌ Unit test equivalents (use Vitest for those)
 
 ## Performance Metrics
 
@@ -76,46 +76,46 @@ test("should login with valid credentials", async ({ page }) => {
 
 ```bash
 # Install dependencies
-pnpm install
+bun install
 
 # Install Playwright browsers (one-time)
-npx playwright install
+bunx playwright install
 ```
 
 ### Run All Tests
 
 ```bash
 # Run all E2E tests
-pnpm test:e2e
+bun run test:e2e
 
 # Run with UI mode (interactive)
-pnpm test:e2e --ui
+bun run test:e2e --ui
 
 # Run specific test file
-pnpm test:e2e auth.spec.ts
+bun run test:e2e auth.spec.ts
 
 # Run tests matching a title
-pnpm test:e2e --grep "login"
+bun run test:e2e --grep "login"
 ```
 
 ### Debug Mode
 
 ```bash
 # Run in debug mode with Playwright Inspector
-pnpm test:e2e --debug
+bun run test:e2e --debug
 
 # Run specific test in debug mode
-pnpm test:e2e auth.spec.ts:12 --debug
+bun run test:e2e auth.spec.ts:12 --debug
 ```
 
 ### Generate Reports
 
 ```bash
 # Run tests and generate HTML report
-pnpm test:e2e --reporter=html
+bun run test:e2e --reporter=html
 
 # Open the report
-npx playwright show-report
+bunx playwright show-report
 ```
 
 ## Writing New Tests
@@ -315,7 +315,7 @@ Tests run automatically on every PR and push to main:
 ```yaml
 # .github/workflows/e2e.yml
 - name: Run E2E tests
-  run: pnpm test:e2e --reporter=html,json
+  run: bun run test:e2e --reporter=html,json
 
 - name: Upload test results
   uses: actions/upload-artifact@v3
@@ -358,13 +358,13 @@ test("should be accessible", async ({ page, makeAxeBuilder }) => {
 1. **Database state**: Ensure your local test database is clean
 
    ```bash
-   pnpm db:reset:test
+   bun run db:reset:test
    ```
 
 2. **Browser version**: Update Playwright browsers
 
    ```bash
-   npx playwright install
+   bunx playwright install
    ```
 
 3. **Port conflicts**: Make sure port 3000 is available
@@ -378,7 +378,7 @@ test("should be accessible", async ({ page, makeAxeBuilder }) => {
 1. **Run in parallel**: Playwright runs tests in parallel by default
 
    ```bash
-   pnpm test:e2e --workers=4
+   bun run test:e2e --workers=4
    ```
 
 2. **Use storageState**: Reuse authentication instead of logging in every test

@@ -6,32 +6,27 @@ Domain-specific testing patterns and fixtures for Vamsa. Use these as templates 
 
 ## Module Mocking (Critical Pattern)
 
-**Warning**: Bun's `mock.module()` only applies to the **first call** for a given module. Subsequent calls are silently ignored. This causes CI/local test divergence when multiple test files mock the same module with different structures.
+**Rule**: If a setup file already mocks a module, **DO NOT** call `vi.mock()` for that module in your test file. Instead, import and configure the setup file's mock.
 
-### The Rule
+### Setup Files
 
-If a preload file already mocks a module, **DO NOT** call `mock.module()` for that module in your test file. Instead, import and configure the preload's mock.
-
-### Preload Files
-
-The `packages/lib/tests/setup/test-logger-mock.ts` file (configured in `bunfig.toml`) mocks:
+The `packages/lib/tests/setup/test-logger-mock.ts` file (configured in `vitest.config.ts` as `setupFiles`) mocks:
 
 - `@vamsa/api` - Drizzle DB, email service
 - `@vamsa/lib/logger` - Logger functions
 
-### Pattern: Using Preload Mocks
+### Pattern: Using Setup Mocks
 
 ```typescript
 /**
- * IMPORTANT: This test uses the shared mocks from preload (test-logger-mock.ts).
- * Do NOT call mock.module() for @vamsa/api or @vamsa/lib/logger here.
+ * IMPORTANT: This test uses the shared mocks from setup (test-logger-mock.ts).
+ * Do NOT call vi.mock() for @vamsa/api or @vamsa/lib/logger here.
  */
-import { beforeEach, describe, expect, it } from "bun:test";
+import { beforeEach, describe, expect, it } from "vitest";
 import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 import { mockDrizzleDb } from "../../../tests/setup/test-logger-mock";
 
-// Import module under test AFTER mocks are set up (use dynamic import if needed)
-const { myFunction } = await import("./my-module");
+import { myFunction } from "./my-module";
 
 describe("my module", () => {
   beforeEach(() => {
@@ -53,13 +48,13 @@ describe("my module", () => {
 });
 ```
 
-### Anti-Pattern: Duplicate mock.module() Calls
+### Anti-Pattern: Duplicate vi.mock() Calls
 
 ```typescript
-// ❌ BAD - This mock may be ignored if preload already mocked @vamsa/api
-import { mock } from "bun:test";
+// ❌ BAD - This mock may conflict if setup already mocked @vamsa/api
+import { vi } from "vitest";
 
-mock.module("@vamsa/api", () => ({
+vi.mock("@vamsa/api", () => ({
   drizzleDb: {
     query: { users: { findFirst: async () => ({ id: "test" }) } },
   },
@@ -83,7 +78,7 @@ mockDrizzleDb.setFindManyResults([
 mockDrizzleDb.setFindManyResults([]); // Simulate empty results
 
 // For specific query methods (override when needed)
-mockDrizzleDb.query.users.findFirst = mock(async () => customResult);
+mockDrizzleDb.query.users.findFirst = vi.fn(async () => customResult);
 ```
 
 ---
@@ -95,8 +90,8 @@ mockDrizzleDb.query.users.findFirst = mock(async () => customResult);
 | Package      | Test Utilities                    |
 | ------------ | --------------------------------- |
 | `@vamsa/ui`  | `@testing-library/react`, `jsdom` |
-| `@vamsa/lib` | Bun test only (no DOM)            |
-| `apps/web`   | Bun test + Playwright E2E         |
+| `@vamsa/lib` | Vitest only (no DOM)              |
+| `apps/web`   | Vitest + Playwright E2E           |
 
 ### Pattern: Component with Mock Data
 

@@ -30,8 +30,7 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 Before contributing, ensure you have the following installed:
 
 - **Bun** 1.0 or higher ([installation guide](https://bun.sh/))
-- **Docker** and **Docker Compose** (for PostgreSQL and observability stack)
-- **pnpm** (comes with Bun, or install separately)
+- **Docker** and **Docker Compose** (for PostgreSQL and services)
 - **Git** for version control
 
 ### Forking the Repository
@@ -96,7 +95,7 @@ The application will be available at http://localhost:5173.
 
 ## Project Structure
 
-Vamsa is a monorepo managed with **pnpm workspaces** and **Turborepo**:
+Vamsa is a monorepo managed with **Bun workspaces**:
 
 ```
 vamsa/
@@ -416,7 +415,7 @@ docker compose -f docker/docker-compose.local.yml --profile dev up -d
 docker compose -f docker/docker-compose.local.yml --profile dev-app up -d
 
 # Observability stack (Prometheus, Grafana, etc.)
-docker compose -f docker/docker-compose.observability.yml up -d
+bun run observability
 
 # Stop all services
 docker compose -f docker/docker-compose.yml down
@@ -449,7 +448,13 @@ Vamsa includes an observability stack with OpenTelemetry, Prometheus, and Grafan
 
 ```bash
 # Start observability services
-bun run observability:start
+bun run observability
+
+# Stop observability services
+bun run observability:down
+
+# View observability logs
+bun run observability:logs
 
 # Access Grafana: http://localhost:3001 (admin/admin)
 # Access Prometheus: http://localhost:9090

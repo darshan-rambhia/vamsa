@@ -167,7 +167,7 @@ vi.mock("some-module", () => ({
 }));
 ```
 
-**Setup files**: Each package has a `vitest.config.ts` with `setupFiles` replacing the old `bunfig.toml [test].preload`. See `packages/lib/tests/setup/test-logger-mock.ts` for the canonical mock setup.
+**Setup files**: Each package has a `vitest.config.ts` with `setupFiles`. See `packages/lib/tests/setup/test-logger-mock.ts` for the canonical mock setup.
 
 **DI pattern**: Business logic tests use dependency injection via `mockDrizzleDb` (from the setup file) instead of mocking modules directly. Configure mock behavior in `beforeEach`:
 
