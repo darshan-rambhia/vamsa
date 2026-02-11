@@ -70,7 +70,7 @@ export async function runSuggestAgent(
  * The model is prompted to output structured suggestions, but as text.
  * This parser extracts them best-effort.
  */
-function parseSuggestions(text: string): Array<Suggestion> {
+export function parseSuggestions(text: string): Array<Suggestion> {
   const suggestions: Array<Suggestion> = [];
 
   // Try to extract JSON array if the model outputs one

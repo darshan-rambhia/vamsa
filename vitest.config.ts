@@ -10,6 +10,7 @@ export default defineConfig({
       "./packages/lib",
       "./packages/ui",
       "./apps/web",
+      "./apps/ai",
     ],
   },
 });
