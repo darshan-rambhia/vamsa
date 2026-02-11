@@ -94,10 +94,9 @@
           "columns": [
             {
               "expression": "userId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -110,13 +109,87 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "Account_providerId_accountId_unique": {
-          "columns": ["providerId", "accountId"],
+          "name": "Account_providerId_accountId_unique",
           "nullsNotDistinct": false,
-          "name": "Account_providerId_accountId_unique"
+          "columns": ["providerId", "accountId"]
         }
       },
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.DashboardPreferences": {
+      "name": "DashboardPreferences",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "layout": {
+          "name": "layout",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"widgets\":[]}'::jsonb"
+        },
+        "widgets": {
+          "name": "widgets",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'[]'::jsonb"
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_dashboardPreferences_userId": {
+          "name": "idx_dashboardPreferences_userId",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "DashboardPreferences_userId_unique": {
+          "name": "DashboardPreferences_userId_unique",
+          "nullsNotDistinct": false,
+          "columns": ["userId"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.Session": {
@@ -174,15 +247,14 @@
         }
       },
       "indexes": {
-        "idx_session_expiresAt": {
-          "name": "idx_session_expiresAt",
+        "idx_session_userId": {
+          "name": "idx_session_userId",
           "columns": [
             {
-              "expression": "expiresAt",
+              "expression": "userId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamp_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -190,15 +262,14 @@
           "method": "btree",
           "with": {}
         },
-        "idx_session_userId": {
-          "name": "idx_session_userId",
+        "idx_session_expiresAt": {
+          "name": "idx_session_expiresAt",
           "columns": [
             {
-              "expression": "userId",
+              "expression": "expiresAt",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -211,433 +282,13 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "Session_token_unique": {
-          "columns": ["token"],
+          "name": "Session_token_unique",
           "nullsNotDistinct": false,
-          "name": "Session_token_unique"
+          "columns": ["token"]
         }
       },
-      "checkConstraints": {},
       "policies": {},
-      "isRLSEnabled": false
-    },
-    "public.Relationship": {
-      "name": "Relationship",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "personId": {
-          "name": "personId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "relatedPersonId": {
-          "name": "relatedPersonId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "type": {
-          "name": "type",
-          "type": "RelationshipType",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "marriageDate": {
-          "name": "marriageDate",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "divorceDate": {
-          "name": "divorceDate",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "isActive": {
-          "name": "isActive",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "isAutoGenerated": {
-          "name": "isAutoGenerated",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "sourceRelationshipId": {
-          "name": "sourceRelationshipId",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updatedAt": {
-          "name": "updatedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "idx_relationship_isAutoGenerated": {
-          "name": "idx_relationship_isAutoGenerated",
-          "columns": [
-            {
-              "expression": "isAutoGenerated",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "bool_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_relationship_personId": {
-          "name": "idx_relationship_personId",
-          "columns": [
-            {
-              "expression": "personId",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_relationship_personId_type": {
-          "name": "idx_relationship_personId_type",
-          "columns": [
-            {
-              "expression": "personId",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            },
-            {
-              "expression": "type",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "enum_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_relationship_relatedPersonId": {
-          "name": "idx_relationship_relatedPersonId",
-          "columns": [
-            {
-              "expression": "relatedPersonId",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_relationship_relatedPersonId_type": {
-          "name": "idx_relationship_relatedPersonId_type",
-          "columns": [
-            {
-              "expression": "relatedPersonId",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            },
-            {
-              "expression": "type",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "enum_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_relationship_sourceRelationshipId": {
-          "name": "idx_relationship_sourceRelationshipId",
-          "columns": [
-            {
-              "expression": "sourceRelationshipId",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "Relationship_personId_relatedPersonId_type_unique": {
-          "columns": ["type", "relatedPersonId", "personId"],
-          "nullsNotDistinct": false,
-          "name": "Relationship_personId_relatedPersonId_type_unique"
-        }
-      },
       "checkConstraints": {},
-      "policies": {},
-      "isRLSEnabled": false
-    },
-    "public.Person": {
-      "name": "Person",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "firstName": {
-          "name": "firstName",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "lastName": {
-          "name": "lastName",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "maidenName": {
-          "name": "maidenName",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "dateOfBirth": {
-          "name": "dateOfBirth",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "dateOfPassing": {
-          "name": "dateOfPassing",
-          "type": "date",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "birthPlace": {
-          "name": "birthPlace",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "nativePlace": {
-          "name": "nativePlace",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "gender": {
-          "name": "gender",
-          "type": "Gender",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "photoUrl": {
-          "name": "photoUrl",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "bio": {
-          "name": "bio",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "email": {
-          "name": "email",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "phone": {
-          "name": "phone",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "currentAddress": {
-          "name": "currentAddress",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "workAddress": {
-          "name": "workAddress",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "profession": {
-          "name": "profession",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "employer": {
-          "name": "employer",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "socialLinks": {
-          "name": "socialLinks",
-          "type": "jsonb",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "isLiving": {
-          "name": "isLiving",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": true
-        },
-        "createdAt": {
-          "name": "createdAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updatedAt": {
-          "name": "updatedAt",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "createdById": {
-          "name": "createdById",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        }
-      },
-      "indexes": {
-        "idx_person_createdById": {
-          "name": "idx_person_createdById",
-          "columns": [
-            {
-              "expression": "createdById",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_person_dateOfBirth": {
-          "name": "idx_person_dateOfBirth",
-          "columns": [
-            {
-              "expression": "dateOfBirth",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "date_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_person_isLiving": {
-          "name": "idx_person_isLiving",
-          "columns": [
-            {
-              "expression": "isLiving",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "bool_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_person_lastName_firstName": {
-          "name": "idx_person_lastName_firstName",
-          "columns": [
-            {
-              "expression": "lastName",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            },
-            {
-              "expression": "firstName",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {},
-      "policies": {},
       "isRLSEnabled": false
     },
     "public.User": {
@@ -800,26 +451,9 @@
           "columns": [
             {
               "expression": "email",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_user_oidcProvider": {
-          "name": "idx_user_oidcProvider",
-          "columns": [
-            {
-              "expression": "oidcProvider",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -832,10 +466,24 @@
           "columns": [
             {
               "expression": "personId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_user_oidcProvider": {
+          "name": "idx_user_oidcProvider",
+          "columns": [
+            {
+              "expression": "oidcProvider",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -848,23 +496,23 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "User_email_unique": {
-          "columns": ["email"],
+          "name": "User_email_unique",
           "nullsNotDistinct": false,
-          "name": "User_email_unique"
+          "columns": ["email"]
         },
         "User_personId_unique": {
-          "columns": ["personId"],
+          "name": "User_personId_unique",
           "nullsNotDistinct": false,
-          "name": "User_personId_unique"
+          "columns": ["personId"]
         },
         "User_oidcProvider_oidcSubject_unique": {
-          "columns": ["oidcSubject", "oidcProvider"],
+          "name": "User_oidcProvider_oidcSubject_unique",
           "nullsNotDistinct": false,
-          "name": "User_oidcProvider_oidcSubject_unique"
+          "columns": ["oidcSubject", "oidcProvider"]
         }
       },
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.Verification": {
@@ -915,10 +563,9 @@
           "columns": [
             {
               "expression": "identifier",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -930,8 +577,436 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Person": {
+      "name": "Person",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "firstName": {
+          "name": "firstName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "lastName": {
+          "name": "lastName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "maidenName": {
+          "name": "maidenName",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dateOfBirth": {
+          "name": "dateOfBirth",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dateOfPassing": {
+          "name": "dateOfPassing",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "birthPlace": {
+          "name": "birthPlace",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "nativePlace": {
+          "name": "nativePlace",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "gender": {
+          "name": "gender",
+          "type": "Gender",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "photoUrl": {
+          "name": "photoUrl",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bio": {
+          "name": "bio",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "name": "phone",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "currentAddress": {
+          "name": "currentAddress",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "workAddress": {
+          "name": "workAddress",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "profession": {
+          "name": "profession",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "employer": {
+          "name": "employer",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "socialLinks": {
+          "name": "socialLinks",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isLiving": {
+          "name": "isLiving",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "createdById": {
+          "name": "createdById",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deletedAt": {
+          "name": "deletedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_person_lastName_firstName": {
+          "name": "idx_person_lastName_firstName",
+          "columns": [
+            {
+              "expression": "lastName",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "firstName",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_person_createdById": {
+          "name": "idx_person_createdById",
+          "columns": [
+            {
+              "expression": "createdById",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_person_dateOfBirth": {
+          "name": "idx_person_dateOfBirth",
+          "columns": [
+            {
+              "expression": "dateOfBirth",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_person_isLiving": {
+          "name": "idx_person_isLiving",
+          "columns": [
+            {
+              "expression": "isLiving",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_person_deletedAt": {
+          "name": "idx_person_deletedAt",
+          "columns": [
+            {
+              "expression": "deletedAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Relationship": {
+      "name": "Relationship",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "personId": {
+          "name": "personId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "relatedPersonId": {
+          "name": "relatedPersonId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "RelationshipType",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "marriageDate": {
+          "name": "marriageDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "divorceDate": {
+          "name": "divorceDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "isAutoGenerated": {
+          "name": "isAutoGenerated",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "sourceRelationshipId": {
+          "name": "sourceRelationshipId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_relationship_personId": {
+          "name": "idx_relationship_personId",
+          "columns": [
+            {
+              "expression": "personId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_relationship_relatedPersonId": {
+          "name": "idx_relationship_relatedPersonId",
+          "columns": [
+            {
+              "expression": "relatedPersonId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_relationship_personId_type": {
+          "name": "idx_relationship_personId_type",
+          "columns": [
+            {
+              "expression": "personId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_relationship_relatedPersonId_type": {
+          "name": "idx_relationship_relatedPersonId_type",
+          "columns": [
+            {
+              "expression": "relatedPersonId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_relationship_sourceRelationshipId": {
+          "name": "idx_relationship_sourceRelationshipId",
+          "columns": [
+            {
+              "expression": "sourceRelationshipId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_relationship_isAutoGenerated": {
+          "name": "idx_relationship_isAutoGenerated",
+          "columns": [
+            {
+              "expression": "isAutoGenerated",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "Relationship_personId_relatedPersonId_type_unique": {
+          "name": "Relationship_personId_relatedPersonId_type_unique",
+          "nullsNotDistinct": false,
+          "columns": ["type", "relatedPersonId", "personId"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.CalendarToken": {
@@ -1016,31 +1091,14 @@
         }
       },
       "indexes": {
-        "idx_calendarToken_expiresAt": {
-          "name": "idx_calendarToken_expiresAt",
+        "idx_calendarToken_userId": {
+          "name": "idx_calendarToken_userId",
           "columns": [
             {
-              "expression": "expiresAt",
+              "expression": "userId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamp_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_calendarToken_isActive": {
-          "name": "idx_calendarToken_isActive",
-          "columns": [
-            {
-              "expression": "isActive",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "bool_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1053,10 +1111,9 @@
           "columns": [
             {
               "expression": "token",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1064,15 +1121,29 @@
           "method": "btree",
           "with": {}
         },
-        "idx_calendarToken_userId": {
-          "name": "idx_calendarToken_userId",
+        "idx_calendarToken_expiresAt": {
+          "name": "idx_calendarToken_expiresAt",
           "columns": [
             {
-              "expression": "userId",
+              "expression": "expiresAt",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_calendarToken_isActive": {
+          "name": "idx_calendarToken_isActive",
+          "columns": [
+            {
+              "expression": "isActive",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1085,17 +1156,15 @@
           "columns": [
             {
               "expression": "userId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             },
             {
               "expression": "isActive",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1108,13 +1177,13 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "CalendarToken_token_unique": {
-          "columns": ["token"],
+          "name": "CalendarToken_token_unique",
           "nullsNotDistinct": false,
-          "name": "CalendarToken_token_unique"
+          "columns": ["token"]
         }
       },
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.OAuthState": {
@@ -1166,15 +1235,14 @@
         }
       },
       "indexes": {
-        "idx_oAuthState_expiresAt": {
-          "name": "idx_oAuthState_expiresAt",
+        "idx_oAuthState_state": {
+          "name": "idx_oAuthState_state",
           "columns": [
             {
-              "expression": "expiresAt",
+              "expression": "state",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamp_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1182,15 +1250,14 @@
           "method": "btree",
           "with": {}
         },
-        "idx_oAuthState_state": {
-          "name": "idx_oAuthState_state",
+        "idx_oAuthState_expiresAt": {
+          "name": "idx_oAuthState_expiresAt",
           "columns": [
             {
-              "expression": "state",
+              "expression": "expiresAt",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1203,13 +1270,13 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "OAuthState_state_unique": {
-          "columns": ["state"],
+          "name": "OAuthState_state_unique",
           "nullsNotDistinct": false,
-          "name": "OAuthState_state_unique"
+          "columns": ["state"]
         }
       },
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.EventMedia": {
@@ -1242,31 +1309,14 @@
         }
       },
       "indexes": {
-        "idx_eventMedia_eventType": {
-          "name": "idx_eventMedia_eventType",
-          "columns": [
-            {
-              "expression": "eventType",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "idx_eventMedia_mediaId": {
           "name": "idx_eventMedia_mediaId",
           "columns": [
             {
               "expression": "mediaId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1279,10 +1329,24 @@
           "columns": [
             {
               "expression": "personId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_eventMedia_eventType": {
+          "name": "idx_eventMedia_eventType",
+          "columns": [
+            {
+              "expression": "eventType",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1295,13 +1359,13 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "EventMedia_mediaId_personId_eventType_unique": {
-          "columns": ["personId", "mediaId", "eventType"],
+          "name": "EventMedia_mediaId_personId_eventType_unique",
           "nullsNotDistinct": false,
-          "name": "EventMedia_mediaId_personId_eventType_unique"
+          "columns": ["personId", "mediaId", "eventType"]
         }
       },
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.EventParticipant": {
@@ -1346,10 +1410,9 @@
           "columns": [
             {
               "expression": "eventId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1362,10 +1425,9 @@
           "columns": [
             {
               "expression": "personId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1378,13 +1440,13 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "EventParticipant_eventId_personId_unique": {
-          "columns": ["personId", "eventId"],
+          "name": "EventParticipant_eventId_personId_unique",
           "nullsNotDistinct": false,
-          "name": "EventParticipant_eventId_personId_unique"
+          "columns": ["personId", "eventId"]
         }
       },
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.EventSource": {
@@ -1429,15 +1491,14 @@
         }
       },
       "indexes": {
-        "idx_eventSource_eventType": {
-          "name": "idx_eventSource_eventType",
+        "idx_eventSource_sourceId": {
+          "name": "idx_eventSource_sourceId",
           "columns": [
             {
-              "expression": "eventType",
+              "expression": "sourceId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1450,10 +1511,9 @@
           "columns": [
             {
               "expression": "personId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1461,15 +1521,14 @@
           "method": "btree",
           "with": {}
         },
-        "idx_eventSource_sourceId": {
-          "name": "idx_eventSource_sourceId",
+        "idx_eventSource_eventType": {
+          "name": "idx_eventSource_eventType",
           "columns": [
             {
-              "expression": "sourceId",
+              "expression": "eventType",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1482,13 +1541,13 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "EventSource_sourceId_personId_eventType_unique": {
-          "columns": ["sourceId", "personId", "eventType"],
+          "name": "EventSource_sourceId_personId_eventType_unique",
           "nullsNotDistinct": false,
-          "name": "EventSource_sourceId_personId_eventType_unique"
+          "columns": ["sourceId", "personId", "eventType"]
         }
       },
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.Event": {
@@ -1553,47 +1612,14 @@
         }
       },
       "indexes": {
-        "idx_event_date": {
-          "name": "idx_event_date",
-          "columns": [
-            {
-              "expression": "date",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "date_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "idx_event_personId": {
           "name": "idx_event_personId",
           "columns": [
             {
               "expression": "personId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_event_placeId": {
-          "name": "idx_event_placeId",
-          "columns": [
-            {
-              "expression": "placeId",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1606,10 +1632,39 @@
           "columns": [
             {
               "expression": "type",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "enum_ops",
-              "isExpression": false
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_event_date": {
+          "name": "idx_event_date",
+          "columns": [
+            {
+              "expression": "date",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_event_placeId": {
+          "name": "idx_event_placeId",
+          "columns": [
+            {
+              "expression": "placeId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1621,8 +1676,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.PlacePersonLink": {
@@ -1680,10 +1735,9 @@
           "columns": [
             {
               "expression": "personId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1696,10 +1750,9 @@
           "columns": [
             {
               "expression": "placeId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1712,13 +1765,13 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "PlacePersonLink_personId_placeId_type_unique": {
-          "columns": ["type", "placeId", "personId"],
+          "name": "PlacePersonLink_personId_placeId_type_unique",
           "nullsNotDistinct": false,
-          "name": "PlacePersonLink_personId_placeId_type_unique"
+          "columns": ["type", "placeId", "personId"]
         }
       },
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.Place": {
@@ -1789,54 +1842,14 @@
         }
       },
       "indexes": {
-        "idx_place_latitude_longitude": {
-          "name": "idx_place_latitude_longitude",
-          "columns": [
-            {
-              "expression": "latitude",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "float8_ops",
-              "isExpression": false
-            },
-            {
-              "expression": "longitude",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "float8_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "idx_place_name": {
           "name": "idx_place_name",
           "columns": [
             {
               "expression": "name",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_place_parentId": {
-          "name": "idx_place_parentId",
-          "columns": [
-            {
-              "expression": "parentId",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1849,10 +1862,45 @@
           "columns": [
             {
               "expression": "placeType",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "enum_ops",
-              "isExpression": false
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_place_parentId": {
+          "name": "idx_place_parentId",
+          "columns": [
+            {
+              "expression": "parentId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_place_latitude_longitude": {
+          "name": "idx_place_latitude_longitude",
+          "columns": [
+            {
+              "expression": "latitude",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "longitude",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -1864,8 +1912,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.MediaObject": {
@@ -1989,10 +2037,9 @@
           "columns": [
             {
               "expression": "filePath",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2005,10 +2052,9 @@
           "columns": [
             {
               "expression": "uploadedAt",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamp_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2020,8 +2066,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.PersonMedia": {
@@ -2080,15 +2126,14 @@
         }
       },
       "indexes": {
-        "idx_personMedia_isPrimary": {
-          "name": "idx_personMedia_isPrimary",
+        "idx_personMedia_personId": {
+          "name": "idx_personMedia_personId",
           "columns": [
             {
-              "expression": "isPrimary",
+              "expression": "personId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "bool_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2101,10 +2146,9 @@
           "columns": [
             {
               "expression": "mediaId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2112,15 +2156,14 @@
           "method": "btree",
           "with": {}
         },
-        "idx_personMedia_personId": {
-          "name": "idx_personMedia_personId",
+        "idx_personMedia_isPrimary": {
+          "name": "idx_personMedia_isPrimary",
           "columns": [
             {
-              "expression": "personId",
+              "expression": "isPrimary",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2133,13 +2176,13 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "PersonMedia_personId_mediaId_unique": {
-          "columns": ["personId", "mediaId"],
+          "name": "PersonMedia_personId_mediaId_unique",
           "nullsNotDistinct": false,
-          "name": "PersonMedia_personId_mediaId_unique"
+          "columns": ["personId", "mediaId"]
         }
       },
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.BackupSettings": {
@@ -2315,8 +2358,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.Backup": {
@@ -2415,15 +2458,20 @@
         }
       },
       "indexes": {
-        "idx_backup_createdAt": {
-          "name": "idx_backup_createdAt",
+        "idx_backup_type_createdAt": {
+          "name": "idx_backup_type_createdAt",
           "columns": [
             {
-              "expression": "createdAt",
+              "expression": "type",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamp_ops",
-              "isExpression": false
+              "nulls": "last"
+            },
+            {
+              "expression": "createdAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2436,10 +2484,9 @@
           "columns": [
             {
               "expression": "status",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "enum_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2447,22 +2494,14 @@
           "method": "btree",
           "with": {}
         },
-        "idx_backup_type_createdAt": {
-          "name": "idx_backup_type_createdAt",
+        "idx_backup_createdAt": {
+          "name": "idx_backup_createdAt",
           "columns": [
             {
-              "expression": "type",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "enum_ops",
-              "isExpression": false
-            },
-            {
               "expression": "createdAt",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamp_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2474,8 +2513,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.AuditLog": {
@@ -2546,15 +2585,14 @@
         }
       },
       "indexes": {
-        "idx_auditLog_createdAt": {
-          "name": "idx_auditLog_createdAt",
+        "idx_auditLog_userId": {
+          "name": "idx_auditLog_userId",
           "columns": [
             {
-              "expression": "createdAt",
+              "expression": "userId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamp_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2567,17 +2605,15 @@
           "columns": [
             {
               "expression": "entityType",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             },
             {
               "expression": "entityId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2585,15 +2621,14 @@
           "method": "btree",
           "with": {}
         },
-        "idx_auditLog_userId": {
-          "name": "idx_auditLog_userId",
+        "idx_auditLog_createdAt": {
+          "name": "idx_auditLog_createdAt",
           "columns": [
             {
-              "expression": "userId",
+              "expression": "createdAt",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2605,8 +2640,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.EmailLog": {
@@ -2677,31 +2712,14 @@
         }
       },
       "indexes": {
-        "idx_emailLog_emailType": {
-          "name": "idx_emailLog_emailType",
-          "columns": [
-            {
-              "expression": "emailType",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
         "idx_emailLog_recipientEmail": {
           "name": "idx_emailLog_recipientEmail",
           "columns": [
             {
               "expression": "recipientEmail",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2709,15 +2727,14 @@
           "method": "btree",
           "with": {}
         },
-        "idx_emailLog_sentAt": {
-          "name": "idx_emailLog_sentAt",
+        "idx_emailLog_emailType": {
+          "name": "idx_emailLog_emailType",
           "columns": [
             {
-              "expression": "sentAt",
+              "expression": "emailType",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "timestamp_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2730,10 +2747,24 @@
           "columns": [
             {
               "expression": "status",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_emailLog_sentAt": {
+          "name": "idx_emailLog_sentAt",
+          "columns": [
+            {
+              "expression": "sentAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2745,8 +2776,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.FamilySettings": {
@@ -2837,8 +2868,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.Invite": {
@@ -2917,10 +2948,9 @@
           "columns": [
             {
               "expression": "email",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2933,10 +2963,9 @@
           "columns": [
             {
               "expression": "invitedById",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2949,10 +2978,9 @@
           "columns": [
             {
               "expression": "status",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "enum_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -2965,13 +2993,13 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
         "Invite_token_unique": {
-          "columns": ["token"],
+          "name": "Invite_token_unique",
           "nullsNotDistinct": false,
-          "name": "Invite_token_unique"
+          "columns": ["token"]
         }
       },
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.ResearchNote": {
@@ -3053,31 +3081,14 @@
         }
       },
       "indexes": {
-        "idx_researchNote_createdById": {
-          "name": "idx_researchNote_createdById",
+        "idx_researchNote_sourceId": {
+          "name": "idx_researchNote_sourceId",
           "columns": [
             {
-              "expression": "createdById",
+              "expression": "sourceId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "idx_researchNote_eventType": {
-          "name": "idx_researchNote_eventType",
-          "columns": [
-            {
-              "expression": "eventType",
-              "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3090,10 +3101,9 @@
           "columns": [
             {
               "expression": "personId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3101,15 +3111,29 @@
           "method": "btree",
           "with": {}
         },
-        "idx_researchNote_sourceId": {
-          "name": "idx_researchNote_sourceId",
+        "idx_researchNote_eventType": {
+          "name": "idx_researchNote_eventType",
           "columns": [
             {
-              "expression": "sourceId",
+              "expression": "eventType",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_researchNote_createdById": {
+          "name": "idx_researchNote_createdById",
+          "columns": [
+            {
+              "expression": "createdById",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3121,8 +3145,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.Source": {
@@ -3234,15 +3258,14 @@
         }
       },
       "indexes": {
-        "idx_source_doi": {
-          "name": "idx_source_doi",
+        "idx_source_title": {
+          "name": "idx_source_title",
           "columns": [
             {
-              "expression": "doi",
+              "expression": "title",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3255,10 +3278,9 @@
           "columns": [
             {
               "expression": "sourceType",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3266,15 +3288,14 @@
           "method": "btree",
           "with": {}
         },
-        "idx_source_title": {
-          "name": "idx_source_title",
+        "idx_source_doi": {
+          "name": "idx_source_doi",
           "columns": [
             {
-              "expression": "title",
+              "expression": "doi",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3286,8 +3307,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.Suggestion": {
@@ -3371,10 +3392,9 @@
           "columns": [
             {
               "expression": "status",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "enum_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3387,10 +3407,9 @@
           "columns": [
             {
               "expression": "submittedById",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3403,10 +3422,9 @@
           "columns": [
             {
               "expression": "targetPersonId",
+              "isExpression": false,
               "asc": true,
-              "nulls": "last",
-              "opclass": "text_ops",
-              "isExpression": false
+              "nulls": "last"
             }
           ],
           "isUnique": false,
@@ -3418,14 +3436,280 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {},
       "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.DeviceToken": {
+      "name": "DeviceToken",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token": {
+          "name": "token",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "platform": {
+          "name": "platform",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "deviceId": {
+          "name": "deviceId",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "isActive": {
+          "name": "isActive",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_deviceToken_userId": {
+          "name": "idx_deviceToken_userId",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_deviceToken_isActive": {
+          "name": "idx_deviceToken_isActive",
+          "columns": [
+            {
+              "expression": "isActive",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_deviceToken_userId_isActive": {
+          "name": "idx_deviceToken_userId_isActive",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "isActive",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_deviceToken_deviceId": {
+          "name": "idx_deviceToken_deviceId",
+          "columns": [
+            {
+              "expression": "deviceId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.Notification": {
+      "name": "Notification",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "body": {
+          "name": "body",
+          "type": "varchar(1024)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data": {
+          "name": "data",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "readAt": {
+          "name": "readAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sentAt": {
+          "name": "sentAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "idx_notification_userId": {
+          "name": "idx_notification_userId",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_notification_type": {
+          "name": "idx_notification_type",
+          "columns": [
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_notification_createdAt": {
+          "name": "idx_notification_createdAt",
+          "columns": [
+            {
+              "expression": "createdAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_notification_userId_readAt": {
+          "name": "idx_notification_userId_readAt",
+          "columns": [
+            {
+              "expression": "userId",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "readAt",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
       "isRLSEnabled": false
     }
   },
   "enums": {
     "public.AuditAction": {
       "name": "AuditAction",
+      "schema": "public",
       "values": [
         "CREATE",
         "UPDATE",
@@ -3434,21 +3718,21 @@
         "LOGOUT",
         "APPROVE",
         "REJECT"
-      ],
-      "schema": "public"
+      ]
     },
     "public.BackupStatus": {
       "name": "BackupStatus",
-      "values": ["PENDING", "IN_PROGRESS", "COMPLETED", "FAILED", "DELETED"],
-      "schema": "public"
+      "schema": "public",
+      "values": ["PENDING", "IN_PROGRESS", "COMPLETED", "FAILED", "DELETED"]
     },
     "public.BackupType": {
       "name": "BackupType",
-      "values": ["DAILY", "WEEKLY", "MONTHLY", "MANUAL"],
-      "schema": "public"
+      "schema": "public",
+      "values": ["DAILY", "WEEKLY", "MONTHLY", "MANUAL"]
     },
     "public.EventType": {
       "name": "EventType",
+      "schema": "public",
       "values": [
         "BIRTH",
         "DEATH",
@@ -3465,21 +3749,21 @@
         "NATURALIZATION",
         "RESIDENCE",
         "CUSTOM"
-      ],
-      "schema": "public"
+      ]
     },
     "public.Gender": {
       "name": "Gender",
-      "values": ["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"],
-      "schema": "public"
+      "schema": "public",
+      "values": ["MALE", "FEMALE", "OTHER", "PREFER_NOT_TO_SAY"]
     },
     "public.InviteStatus": {
       "name": "InviteStatus",
-      "values": ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"],
-      "schema": "public"
+      "schema": "public",
+      "values": ["PENDING", "ACCEPTED", "EXPIRED", "REVOKED"]
     },
     "public.PersonPlaceType": {
       "name": "PersonPlaceType",
+      "schema": "public",
       "values": [
         "BIRTH",
         "MARRIAGE",
@@ -3488,11 +3772,11 @@
         "WORKED",
         "STUDIED",
         "OTHER"
-      ],
-      "schema": "public"
+      ]
     },
     "public.PlaceType": {
       "name": "PlaceType",
+      "schema": "public",
       "values": [
         "COUNTRY",
         "STATE",
@@ -3506,21 +3790,21 @@
         "PROVINCE",
         "TERRITORY",
         "OTHER"
-      ],
-      "schema": "public"
+      ]
     },
     "public.PrivacyLevel": {
       "name": "PrivacyLevel",
-      "values": ["PUBLIC", "MEMBERS_ONLY", "ADMIN_ONLY"],
-      "schema": "public"
+      "schema": "public",
+      "values": ["PUBLIC", "MEMBERS_ONLY", "ADMIN_ONLY"]
     },
     "public.ProfileClaimStatus": {
       "name": "ProfileClaimStatus",
-      "values": ["PENDING", "CLAIMED", "SKIPPED", "NA"],
-      "schema": "public"
+      "schema": "public",
+      "values": ["PENDING", "CLAIMED", "SKIPPED", "NA"]
     },
     "public.RelationshipType": {
       "name": "RelationshipType",
+      "schema": "public",
       "values": [
         "PARENT",
         "CHILD",
@@ -3532,28 +3816,27 @@
         "STEP_PARENT",
         "STEP_CHILD",
         "STEP_SIBLING"
-      ],
-      "schema": "public"
+      ]
     },
     "public.StorageProvider": {
       "name": "StorageProvider",
-      "values": ["LOCAL", "S3", "R2", "B2"],
-      "schema": "public"
+      "schema": "public",
+      "values": ["LOCAL", "S3", "R2", "B2"]
     },
     "public.SuggestionStatus": {
       "name": "SuggestionStatus",
-      "values": ["PENDING", "APPROVED", "REJECTED"],
-      "schema": "public"
+      "schema": "public",
+      "values": ["PENDING", "APPROVED", "REJECTED"]
     },
     "public.SuggestionType": {
       "name": "SuggestionType",
-      "values": ["CREATE", "UPDATE", "DELETE", "ADD_RELATIONSHIP"],
-      "schema": "public"
+      "schema": "public",
+      "values": ["CREATE", "UPDATE", "DELETE", "ADD_RELATIONSHIP"]
     },
     "public.UserRole": {
       "name": "UserRole",
-      "values": ["ADMIN", "MEMBER", "VIEWER"],
-      "schema": "public"
+      "schema": "public",
+      "values": ["ADMIN", "MEMBER", "VIEWER"]
     }
   },
   "schemas": {},
@@ -3562,21 +3845,8 @@
   "policies": {},
   "views": {},
   "_meta": {
+    "columns": {},
     "schemas": {},
-    "tables": {},
-    "columns": {}
-  },
-  "internal": {
-    "tables": {
-      "CalendarToken": {
-        "columns": {
-          "scopes": {
-            "isArray": true,
-            "dimensions": 1,
-            "rawType": "text"
-          }
-        }
-      }
-    }
+    "tables": {}
   }
 }

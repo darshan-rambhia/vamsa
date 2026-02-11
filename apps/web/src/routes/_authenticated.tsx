@@ -5,9 +5,8 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie } from "@tanstack/react-start/server";
-// Note: betterAuthGetSessionWithUserFromCookie is dynamically imported inside checkAuthInline
-// to prevent server-only modules (i18next-fs-backend) from leaking into the client bundle
+// Note: Server-only modules are dynamically imported inside checkAuthInline
+// to prevent them from leaking into the client bundle (react-dom/server, i18next-fs-backend)
 import { Button, Nav, NavLink } from "@vamsa/ui";
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { signOut } from "~/lib/auth-client";
@@ -15,6 +14,7 @@ import { LanguageSwitcher } from "~/components/layout/language-switcher";
 import { OIDCProfileClaimModal } from "~/components/auth/oidc-profile-claim-modal";
 import { RouteError } from "~/components/error";
 import { CommandPalette } from "~/components/search/command-palette";
+import { CommandPaletteTrigger } from "~/components/search/command-palette-trigger";
 
 const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 
@@ -23,9 +23,10 @@ const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 // Uses dynamic import to prevent server-only modules from leaking into client bundle
 const checkAuthInline = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    // Dynamic import to keep server-only modules (i18next-fs-backend) out of client bundle
+    // Dynamic imports to keep server-only modules out of client bundle
     const { betterAuthGetSessionWithUserFromCookie } =
       await import("@vamsa/lib/server/business/auth-better-api");
+    const { getCookie } = await import("@tanstack/react-start/server");
 
     const cookie = getCookie(BETTER_AUTH_COOKIE_NAME);
     const user = await betterAuthGetSessionWithUserFromCookie(
@@ -219,6 +220,7 @@ function AuthenticatedLayout() {
         }
         actions={
           <div className="flex items-center gap-3">
+            <CommandPaletteTrigger />
             <LanguageSwitcher />
             <Button
               variant="ghost"
@@ -300,7 +302,7 @@ function AuthenticatedLayout() {
       <OIDCProfileClaimModal open={showProfileClaimModal} />
 
       {/* Command Palette - Global Search */}
-      <CommandPalette />
+      <CommandPalette isAdmin={user?.role === "ADMIN"} />
     </div>
   );
 }

@@ -35,12 +35,6 @@ describe("sanitizeQuery", () => {
   });
 });
 
-/**
- * Note: The phrase detection logic (lines 138, 188-194 in search.ts) is unreachable
- * because sanitizeQuery() removes quotes before phrase regex matching. The phrase
- * support mentioned in JSDoc is not actually functional due to this design issue.
- * This would require refactoring to extract/sanitize phrases before removing quotes.
- */
 describe("buildTsQuery", () => {
   it("builds simple term query with prefix", () => {
     expect(buildTsQuery("john")).toBe("john:*");
@@ -74,14 +68,16 @@ describe("buildTsQuery", () => {
     expect(buildTsQuery("joh*")).toBe("joh:*");
   });
 
-  it("handles quoted phrase - quotes removed during sanitization", () => {
-    // Quotes are removed by sanitizeQuery, so phrase syntax is not preserved
-    // This means '"john doe"' becomes 'john doe' and is treated as two terms
+  it("handles quoted phrase as proximity search", () => {
+    // Phrases are extracted from raw query before sanitization strips quotes
     const result = buildTsQuery('"john doe"');
-    expect(result).toContain("john:*");
-    expect(result).toContain("doe:*");
-    // Two separate terms connected with &
-    expect(result).toBe("john:* & doe:*");
+    expect(result).toBe("(john <-> doe)");
+  });
+
+  it("handles phrase mixed with regular terms", () => {
+    const result = buildTsQuery('"john doe" london');
+    expect(result).toContain("london:*");
+    expect(result).toContain("(john <-> doe)");
   });
 
   it("handles complex query with OR and NOT", () => {

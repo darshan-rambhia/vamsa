@@ -86,6 +86,10 @@ export interface SearchResults<T> {
   total: number;
   /** Query execution time in milliseconds */
   queryTime: number;
+  /** Natural language explanation of the results (for NLP queries) */
+  explanation?: string;
+  /** The classified intent type (e.g., "ANCESTOR_QUERY", "PERSON_SEARCH") */
+  intentType?: string;
 }
 
 /**
@@ -126,26 +130,25 @@ export function buildTsQuery(
   query: string,
   _config: SearchConfig = {}
 ): string {
-  const sanitized = sanitizeQuery(query);
-  if (!sanitized) return "";
-
-  const tokens: Array<string> = [];
-  let remaining = sanitized;
-
-  // Extract quoted phrases first
+  // Extract quoted phrases from raw query BEFORE sanitization strips quotes
   const phraseRegex = /"([^"]+)"/g;
   let match: RegExpExecArray | null;
   const phrases: Array<string> = [];
 
-  while ((match = phraseRegex.exec(remaining)) !== null) {
+  while ((match = phraseRegex.exec(query)) !== null) {
     phrases.push(match[1]);
   }
 
-  // Remove phrases from remaining text
-  remaining = remaining.replace(phraseRegex, " ").trim();
+  // Remove phrases from query, then sanitize the remainder
+  const withoutPhrases = query.replace(phraseRegex, " ").trim();
+  const sanitized = sanitizeQuery(withoutPhrases);
+
+  if (!sanitized && phrases.length === 0) return "";
+
+  const tokens: Array<string> = [];
 
   // Parse remaining tokens
-  const words = remaining.split(/\s+/).filter(Boolean);
+  const words = sanitized.split(/\s+/).filter(Boolean);
 
   for (let i = 0; i < words.length; i++) {
     const word = words[i].toLowerCase();
@@ -249,7 +252,10 @@ export function buildPersonSearchQuery(
         setweight(to_tsvector($1::regconfig, COALESCE(p."firstName", '')), 'A') ||
         setweight(to_tsvector($1::regconfig, COALESCE(p."lastName", '')), 'A') ||
         setweight(to_tsvector($1::regconfig, COALESCE(p."maidenName", '')), 'B') ||
-        setweight(to_tsvector($1::regconfig, COALESCE(p.bio, '')), 'C'),
+        setweight(to_tsvector($1::regconfig, COALESCE(p.bio, '')), 'C') ||
+        setweight(to_tsvector($1::regconfig, COALESCE(p."birthPlace", '')), 'D') ||
+        setweight(to_tsvector($1::regconfig, COALESCE(p."nativePlace", '')), 'D') ||
+        setweight(to_tsvector($1::regconfig, COALESCE(p.profession, '')), 'D'),
         query.query
       ) AS rank
       ${highlightSnippets}
@@ -258,7 +264,10 @@ export function buildPersonSearchQuery(
       setweight(to_tsvector($1::regconfig, COALESCE(p."firstName", '')), 'A') ||
       setweight(to_tsvector($1::regconfig, COALESCE(p."lastName", '')), 'A') ||
       setweight(to_tsvector($1::regconfig, COALESCE(p."maidenName", '')), 'B') ||
-      setweight(to_tsvector($1::regconfig, COALESCE(p.bio, '')), 'C')
+      setweight(to_tsvector($1::regconfig, COALESCE(p.bio, '')), 'C') ||
+      setweight(to_tsvector($1::regconfig, COALESCE(p."birthPlace", '')), 'D') ||
+      setweight(to_tsvector($1::regconfig, COALESCE(p."nativePlace", '')), 'D') ||
+      setweight(to_tsvector($1::regconfig, COALESCE(p.profession, '')), 'D')
     ) @@ query.query
     ORDER BY rank DESC
     LIMIT $3 OFFSET $4
@@ -293,7 +302,10 @@ export function buildPersonSearchCountQuery(
       setweight(to_tsvector($1::regconfig, COALESCE(p."firstName", '')), 'A') ||
       setweight(to_tsvector($1::regconfig, COALESCE(p."lastName", '')), 'A') ||
       setweight(to_tsvector($1::regconfig, COALESCE(p."maidenName", '')), 'B') ||
-      setweight(to_tsvector($1::regconfig, COALESCE(p.bio, '')), 'C')
+      setweight(to_tsvector($1::regconfig, COALESCE(p.bio, '')), 'C') ||
+      setweight(to_tsvector($1::regconfig, COALESCE(p."birthPlace", '')), 'D') ||
+      setweight(to_tsvector($1::regconfig, COALESCE(p."nativePlace", '')), 'D') ||
+      setweight(to_tsvector($1::regconfig, COALESCE(p.profession, '')), 'D')
     ) @@ to_tsquery($1::regconfig, $2)
   `;
 
@@ -329,13 +341,17 @@ export function buildFuzzyPersonSearchQuery(
       GREATEST(
         similarity(p."firstName", $1),
         similarity(p."lastName", $1),
-        similarity(COALESCE(p."maidenName", ''), $1)
+        similarity(COALESCE(p."maidenName", ''), $1),
+        similarity(COALESCE(p."birthPlace", ''), $1),
+        similarity(COALESCE(p.profession, ''), $1)
       ) AS similarity_score
     FROM "Person" p
     WHERE
       similarity(p."firstName", $1) > $2 OR
       similarity(p."lastName", $1) > $2 OR
-      similarity(COALESCE(p."maidenName", ''), $1) > $2
+      similarity(COALESCE(p."maidenName", ''), $1) > $2 OR
+      similarity(COALESCE(p."birthPlace", ''), $1) > $2 OR
+      similarity(COALESCE(p.profession, ''), $1) > $2
     ORDER BY similarity_score DESC
     LIMIT $3 OFFSET $4
   `;
@@ -386,7 +402,10 @@ export function buildCombinedSearchQuery(
           setweight(to_tsvector($1::regconfig, COALESCE(p."firstName", '')), 'A') ||
           setweight(to_tsvector($1::regconfig, COALESCE(p."lastName", '')), 'A') ||
           setweight(to_tsvector($1::regconfig, COALESCE(p."maidenName", '')), 'B') ||
-          setweight(to_tsvector($1::regconfig, COALESCE(p.bio, '')), 'C'),
+          setweight(to_tsvector($1::regconfig, COALESCE(p.bio, '')), 'C') ||
+          setweight(to_tsvector($1::regconfig, COALESCE(p."birthPlace", '')), 'D') ||
+          setweight(to_tsvector($1::regconfig, COALESCE(p."nativePlace", '')), 'D') ||
+          setweight(to_tsvector($1::regconfig, COALESCE(p.profession, '')), 'D'),
           to_tsquery($1::regconfig, $2)
         ) * 2 AS score  -- Weight FTS results higher
       FROM "Person" p
@@ -394,7 +413,10 @@ export function buildCombinedSearchQuery(
         setweight(to_tsvector($1::regconfig, COALESCE(p."firstName", '')), 'A') ||
         setweight(to_tsvector($1::regconfig, COALESCE(p."lastName", '')), 'A') ||
         setweight(to_tsvector($1::regconfig, COALESCE(p."maidenName", '')), 'B') ||
-        setweight(to_tsvector($1::regconfig, COALESCE(p.bio, '')), 'C')
+        setweight(to_tsvector($1::regconfig, COALESCE(p.bio, '')), 'C') ||
+        setweight(to_tsvector($1::regconfig, COALESCE(p."birthPlace", '')), 'D') ||
+        setweight(to_tsvector($1::regconfig, COALESCE(p."nativePlace", '')), 'D') ||
+        setweight(to_tsvector($1::regconfig, COALESCE(p.profession, '')), 'D')
       ) @@ to_tsquery($1::regconfig, $2)
     ),
     fuzzy_results AS (
@@ -403,13 +425,17 @@ export function buildCombinedSearchQuery(
         GREATEST(
           similarity(p."firstName", $3),
           similarity(p."lastName", $3),
-          similarity(COALESCE(p."maidenName", ''), $3)
+          similarity(COALESCE(p."maidenName", ''), $3),
+          similarity(COALESCE(p."birthPlace", ''), $3),
+          similarity(COALESCE(p.profession, ''), $3)
         ) AS score
       FROM "Person" p
       WHERE
         similarity(p."firstName", $3) > $4 OR
         similarity(p."lastName", $3) > $4 OR
-        similarity(COALESCE(p."maidenName", ''), $3) > $4
+        similarity(COALESCE(p."maidenName", ''), $3) > $4 OR
+        similarity(COALESCE(p."birthPlace", ''), $3) > $4 OR
+        similarity(COALESCE(p.profession, ''), $3) > $4
     ),
     combined AS (
       SELECT id, MAX(score) as score
@@ -475,7 +501,10 @@ export const CREATE_PERSON_SEARCH_INDEX_SQL = `
       setweight(to_tsvector('english', COALESCE("firstName", '')), 'A') ||
       setweight(to_tsvector('english', COALESCE("lastName", '')), 'A') ||
       setweight(to_tsvector('english', COALESCE("maidenName", '')), 'B') ||
-      setweight(to_tsvector('english', COALESCE(bio, '')), 'C')
+      setweight(to_tsvector('english', COALESCE(bio, '')), 'C') ||
+      setweight(to_tsvector('english', COALESCE("birthPlace", '')), 'D') ||
+      setweight(to_tsvector('english', COALESCE("nativePlace", '')), 'D') ||
+      setweight(to_tsvector('english', COALESCE(profession, '')), 'D')
     )
   );
 `;
@@ -487,4 +516,6 @@ export const CREATE_PERSON_TRGM_INDEX_SQL = `
   CREATE INDEX IF NOT EXISTS person_trgm_firstname_idx ON "Person" USING gin("firstName" gin_trgm_ops);
   CREATE INDEX IF NOT EXISTS person_trgm_lastname_idx ON "Person" USING gin("lastName" gin_trgm_ops);
   CREATE INDEX IF NOT EXISTS person_trgm_maidenname_idx ON "Person" USING gin("maidenName" gin_trgm_ops);
+  CREATE INDEX IF NOT EXISTS person_trgm_birthplace_idx ON "Person" USING gin("birthPlace" gin_trgm_ops);
+  CREATE INDEX IF NOT EXISTS person_trgm_profession_idx ON "Person" USING gin(profession gin_trgm_ops);
 `;

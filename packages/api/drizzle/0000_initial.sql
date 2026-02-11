@@ -77,6 +77,7 @@ CREATE TABLE "Person" (
 	"employer" text,
 	"socialLinks" jsonb,
 	"isLiving" boolean DEFAULT true NOT NULL,
+	"deletedAt" timestamp,
 	"createdAt" timestamp DEFAULT now() NOT NULL,
 	"updatedAt" timestamp NOT NULL,
 	"createdById" text
@@ -391,6 +392,39 @@ CREATE TABLE "Suggestion" (
 	"reviewedAt" timestamp
 );
 --> statement-breakpoint
+CREATE TABLE "DashboardPreferences" (
+	"id" text PRIMARY KEY NOT NULL,
+	"userId" text NOT NULL,
+	"layout" jsonb DEFAULT '{"widgets":[]}'::jsonb NOT NULL,
+	"widgets" jsonb DEFAULT '[]'::jsonb NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp NOT NULL,
+	CONSTRAINT "DashboardPreferences_userId_unique" UNIQUE("userId")
+);
+--> statement-breakpoint
+CREATE TABLE "DeviceToken" (
+	"id" text PRIMARY KEY NOT NULL,
+	"userId" text NOT NULL,
+	"token" varchar(512) NOT NULL,
+	"platform" varchar(20) NOT NULL,
+	"deviceId" varchar(255),
+	"isActive" boolean DEFAULT true NOT NULL,
+	"createdAt" timestamp DEFAULT now() NOT NULL,
+	"updatedAt" timestamp NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "Notification" (
+	"id" text PRIMARY KEY NOT NULL,
+	"userId" text NOT NULL,
+	"type" varchar(50) NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"body" varchar(1024) NOT NULL,
+	"data" jsonb,
+	"readAt" timestamp,
+	"sentAt" timestamp,
+	"createdAt" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 CREATE INDEX "idx_account_userId" ON "Account" USING btree ("userId" text_ops);--> statement-breakpoint
 CREATE INDEX "idx_session_expiresAt" ON "Session" USING btree ("expiresAt" timestamp_ops);--> statement-breakpoint
 CREATE INDEX "idx_session_userId" ON "Session" USING btree ("userId" text_ops);--> statement-breakpoint
@@ -403,6 +437,7 @@ CREATE INDEX "idx_relationship_sourceRelationshipId" ON "Relationship" USING btr
 CREATE INDEX "idx_person_createdById" ON "Person" USING btree ("createdById" text_ops);--> statement-breakpoint
 CREATE INDEX "idx_person_dateOfBirth" ON "Person" USING btree ("dateOfBirth" date_ops);--> statement-breakpoint
 CREATE INDEX "idx_person_isLiving" ON "Person" USING btree ("isLiving" bool_ops);--> statement-breakpoint
+CREATE INDEX "idx_person_deletedAt" ON "Person" USING btree ("deletedAt" timestamp_ops);--> statement-breakpoint
 CREATE INDEX "idx_person_lastName_firstName" ON "Person" USING btree ("lastName" text_ops,"firstName" text_ops);--> statement-breakpoint
 CREATE INDEX "idx_user_email" ON "User" USING btree ("email" text_ops);--> statement-breakpoint
 CREATE INDEX "idx_user_oidcProvider" ON "User" USING btree ("oidcProvider" text_ops);--> statement-breakpoint
@@ -460,4 +495,30 @@ CREATE INDEX "idx_source_sourceType" ON "Source" USING btree ("sourceType" text_
 CREATE INDEX "idx_source_title" ON "Source" USING btree ("title" text_ops);--> statement-breakpoint
 CREATE INDEX "idx_suggestion_status" ON "Suggestion" USING btree ("status" enum_ops);--> statement-breakpoint
 CREATE INDEX "idx_suggestion_submittedById" ON "Suggestion" USING btree ("submittedById" text_ops);--> statement-breakpoint
-CREATE INDEX "idx_suggestion_targetPersonId" ON "Suggestion" USING btree ("targetPersonId" text_ops);
+CREATE INDEX "idx_suggestion_targetPersonId" ON "Suggestion" USING btree ("targetPersonId" text_ops);--> statement-breakpoint
+CREATE INDEX "idx_dashboardPreferences_userId" ON "DashboardPreferences" USING btree ("userId");--> statement-breakpoint
+CREATE INDEX "idx_deviceToken_userId" ON "DeviceToken" USING btree ("userId");--> statement-breakpoint
+CREATE INDEX "idx_deviceToken_isActive" ON "DeviceToken" USING btree ("isActive");--> statement-breakpoint
+CREATE INDEX "idx_deviceToken_userId_isActive" ON "DeviceToken" USING btree ("userId","isActive");--> statement-breakpoint
+CREATE INDEX "idx_deviceToken_deviceId" ON "DeviceToken" USING btree ("deviceId");--> statement-breakpoint
+CREATE INDEX "idx_notification_userId" ON "Notification" USING btree ("userId");--> statement-breakpoint
+CREATE INDEX "idx_notification_type" ON "Notification" USING btree ("type");--> statement-breakpoint
+CREATE INDEX "idx_notification_createdAt" ON "Notification" USING btree ("createdAt");--> statement-breakpoint
+CREATE INDEX "idx_notification_userId_readAt" ON "Notification" USING btree ("userId","readAt");--> statement-breakpoint
+CREATE EXTENSION IF NOT EXISTS pg_trgm;--> statement-breakpoint
+CREATE INDEX person_fts_idx ON "Person" USING gin(
+  (
+    setweight(to_tsvector('english', COALESCE("firstName", '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE("lastName", '')), 'A') ||
+    setweight(to_tsvector('english', COALESCE("maidenName", '')), 'B') ||
+    setweight(to_tsvector('english', COALESCE(bio, '')), 'C') ||
+    setweight(to_tsvector('english', COALESCE("birthPlace", '')), 'D') ||
+    setweight(to_tsvector('english', COALESCE("nativePlace", '')), 'D') ||
+    setweight(to_tsvector('english', COALESCE(profession, '')), 'D')
+  )
+);--> statement-breakpoint
+CREATE INDEX person_trgm_firstname_idx ON "Person" USING gin("firstName" gin_trgm_ops);--> statement-breakpoint
+CREATE INDEX person_trgm_lastname_idx ON "Person" USING gin("lastName" gin_trgm_ops);--> statement-breakpoint
+CREATE INDEX person_trgm_maidenname_idx ON "Person" USING gin("maidenName" gin_trgm_ops);--> statement-breakpoint
+CREATE INDEX person_trgm_birthplace_idx ON "Person" USING gin("birthPlace" gin_trgm_ops);--> statement-breakpoint
+CREATE INDEX person_trgm_profession_idx ON "Person" USING gin(profession gin_trgm_ops);

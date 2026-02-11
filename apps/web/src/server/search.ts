@@ -144,14 +144,107 @@ async function buildRelationshipMaps(
 
 /**
  * Determine if a query is likely a natural language relationship query
- * vs a simple person name search
+ * vs a simple person name search.
+ *
+ * Only routes to NLP when the classifier detects a specific intent
+ * (ancestor, descendant, cousin, path, common ancestor) with decent confidence.
+ * Single-word and simple name searches stay on the FTS path.
  */
-function isNLPQuery(query: string): boolean {
+function isNLPQuery(query: string): {
+  isNLP: boolean;
+  intent: string;
+  confidence: number;
+} {
   const classification = classifyIntent(query);
-  // Consider relationship queries if intent is not PERSON_SEARCH or confidence is high
-  return (
-    classification.intent !== "PERSON_SEARCH" || classification.confidence > 0.6
-  );
+  const isNLP =
+    classification.intent !== "PERSON_SEARCH" &&
+    classification.confidence > 0.5;
+  return {
+    isNLP,
+    intent: classification.intent,
+    confidence: classification.confidence,
+  };
+}
+
+/**
+ * Person data as stored in the relationship people map at runtime.
+ * buildRelationshipMaps() adds these fields beyond the RelationshipNode type.
+ */
+interface RuntimePersonData {
+  id: string;
+  firstName: string;
+  lastName: string;
+  gender?: "male" | "female" | "other";
+  dateOfBirth?: Date | string | null;
+  dateOfPassing?: Date | string | null;
+  isLiving: boolean;
+  photoUrl?: string | null;
+}
+
+/**
+ * Extract PersonSearchResultItem entries from NLP handler results.
+ *
+ * NLP handlers return different shapes (arrays of RelationshipNode, path objects, etc.).
+ * This walks the results, extracts person IDs, and looks them up in the people map
+ * to get the full data needed for the search result UI.
+ *
+ * Note: buildRelationshipMaps() stores RuntimePersonData in the people map,
+ * but the type is narrowed to RelationshipNode. We cast to access the extra fields.
+ */
+function extractPersonsFromNLPResults(
+  results: Array<unknown>,
+  people: Map<string, unknown>
+): Array<PersonSearchResultItem> {
+  const seen = new Set<string>();
+  const persons: Array<PersonSearchResultItem> = [];
+
+  function addPerson(item: unknown) {
+    if (!item || typeof item !== "object") return;
+
+    const obj = item as Record<string, unknown>;
+
+    // If it has an id, look it up in the people map for full data
+    if (typeof obj.id === "string" && !seen.has(obj.id)) {
+      seen.add(obj.id);
+      const raw = people.get(obj.id);
+      if (raw) {
+        // buildRelationshipMaps stores full person data beyond RelationshipNode type
+        const person = raw as RuntimePersonData;
+        persons.push({
+          id: person.id,
+          firstName: person.firstName,
+          lastName: person.lastName,
+          photoUrl: person.photoUrl ?? null,
+          dateOfBirth: person.dateOfBirth
+            ? new Date(person.dateOfBirth as string | number)
+            : null,
+          dateOfPassing: person.dateOfPassing
+            ? new Date(person.dateOfPassing as string | number)
+            : null,
+          isLiving: person.isLiving ?? true,
+        });
+      }
+    }
+
+    // Handle RelationshipPath objects with a path array
+    if (Array.isArray(obj.path)) {
+      for (const node of obj.path) {
+        addPerson(node);
+      }
+    }
+  }
+
+  for (const result of results) {
+    if (Array.isArray(result)) {
+      for (const item of result) {
+        addPerson(item);
+      }
+    } else {
+      addPerson(result);
+    }
+  }
+
+  return persons;
 }
 
 /**
@@ -186,7 +279,8 @@ export async function searchPeopleHandler(
     }
 
     // Check if this is likely a natural language relationship query
-    if (isNLPQuery(data.query)) {
+    const nlpCheck = isNLPQuery(data.query);
+    if (nlpCheck.isNLP) {
       try {
         // Build relationship maps for NLP handlers
         const relationships = await buildRelationshipMaps();
@@ -196,25 +290,33 @@ export async function searchPeopleHandler(
 
         const queryTime = Date.now() - startTime;
 
+        // Extract person results from NLP handler output
+        // people map has RuntimePersonData at runtime (wider than RelationshipNode type)
+        const personResults = extractPersonsFromNLPResults(
+          nlpResult.results,
+          relationships.people as Map<string, unknown>
+        );
+
         log.info(
           {
             query: data.query,
             intentType: nlpResult.type,
-            resultCount: nlpResult.results.length,
+            resultCount: personResults.length,
             queryTime,
             explanation: nlpResult.explanation,
           },
           "NLP search executed"
         );
 
-        // Transform NLP results to match search result format
-        // For now, return empty results with explanation
-        // Frontend will display the explanation instead of person list
         return {
-          results: [],
-          total: 0,
+          results: personResults.map((item, index) => ({
+            item,
+            rank: personResults.length - index, // preserve handler ordering
+          })),
+          total: personResults.length,
           queryTime,
-          // Store explanation in results metadata (needs schema update)
+          explanation: nlpResult.explanation,
+          intentType: nlpResult.type,
         };
       } catch (nlpError) {
         log
