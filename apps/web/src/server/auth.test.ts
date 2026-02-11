@@ -27,12 +27,12 @@ describe("Auth Schema Validation", () => {
       const result = claimProfileSchema.parse({
         email: "user@example.com",
         personId: "person-123",
-        password: "password123",
+        password: "SecurePass1!",
       });
 
       expect(result.email).toBe("user@example.com");
       expect(result.personId).toBe("person-123");
-      expect(result.password).toBe("password123");
+      expect(result.password).toBe("SecurePass1!");
     });
 
     it("rejects invalid email format", () => {
@@ -40,7 +40,7 @@ describe("Auth Schema Validation", () => {
         claimProfileSchema.parse({
           email: "not-an-email",
           personId: "person-123",
-          password: "password123",
+          password: "SecurePass1!",
         });
       }).toThrow();
     });
@@ -49,7 +49,7 @@ describe("Auth Schema Validation", () => {
       expect(() => {
         claimProfileSchema.parse({
           personId: "person-123",
-          password: "password123",
+          password: "SecurePass1!",
         });
       }).toThrow();
     });
@@ -58,7 +58,7 @@ describe("Auth Schema Validation", () => {
       expect(() => {
         claimProfileSchema.parse({
           email: "user@example.com",
-          password: "password123",
+          password: "SecurePass1!",
         });
       }).toThrow();
     });
@@ -68,7 +68,7 @@ describe("Auth Schema Validation", () => {
         claimProfileSchema.parse({
           email: "user@example.com",
           personId: "",
-          password: "password123",
+          password: "SecurePass1!",
         });
       }).toThrow();
     });
@@ -92,14 +92,14 @@ describe("Auth Schema Validation", () => {
       }).toThrow();
     });
 
-    it("accepts 8-character password as minimum", () => {
+    it("accepts password meeting complexity requirements", () => {
       const result = claimProfileSchema.parse({
         email: "user@example.com",
         personId: "person-123",
-        password: "12345678",
+        password: "SecurePass1!",
       });
 
-      expect(result.password).toBe("12345678");
+      expect(result.password).toBe("SecurePass1!");
     });
 
     it("accepts various valid email formats", () => {
@@ -114,7 +114,7 @@ describe("Auth Schema Validation", () => {
         const result = claimProfileSchema.parse({
           email,
           personId: "person-123",
-          password: "password123",
+          password: "SecurePass1!",
         });
         expect(result.email).toBe(email);
       }
@@ -125,13 +125,13 @@ describe("Auth Schema Validation", () => {
     it("validates correct password change data", () => {
       const result = changePasswordSchema.parse({
         currentPassword: "oldpassword",
-        newPassword: "newpassword123",
-        confirmPassword: "newpassword123",
+        newPassword: "NewPassword1!",
+        confirmPassword: "NewPassword1!",
       });
 
       expect(result.currentPassword).toBe("oldpassword");
-      expect(result.newPassword).toBe("newpassword123");
-      expect(result.confirmPassword).toBe("newpassword123");
+      expect(result.newPassword).toBe("NewPassword1!");
+      expect(result.confirmPassword).toBe("NewPassword1!");
     });
 
     it("rejects mismatched passwords", () => {
@@ -147,8 +147,8 @@ describe("Auth Schema Validation", () => {
     it("rejects missing currentPassword", () => {
       expect(() => {
         changePasswordSchema.parse({
-          newPassword: "newpassword123",
-          confirmPassword: "newpassword123",
+          newPassword: "NewPassword1!",
+          confirmPassword: "NewPassword1!",
         });
       }).toThrow();
     });
@@ -157,8 +157,8 @@ describe("Auth Schema Validation", () => {
       expect(() => {
         changePasswordSchema.parse({
           currentPassword: "",
-          newPassword: "newpassword123",
-          confirmPassword: "newpassword123",
+          newPassword: "NewPassword1!",
+          confirmPassword: "NewPassword1!",
         });
       }).toThrow();
     });
@@ -191,21 +191,21 @@ describe("Auth Schema Validation", () => {
       }).toThrow();
     });
 
-    it("accepts 8-character newPassword as minimum", () => {
+    it("accepts newPassword meeting complexity requirements", () => {
       const result = changePasswordSchema.parse({
         currentPassword: "oldpassword",
-        newPassword: "12345678",
-        confirmPassword: "12345678",
+        newPassword: "SecurePass1!",
+        confirmPassword: "SecurePass1!",
       });
 
-      expect(result.newPassword).toBe("12345678");
+      expect(result.newPassword).toBe("SecurePass1!");
     });
 
     it("allows any non-empty currentPassword", () => {
       const result = changePasswordSchema.parse({
         currentPassword: "a",
-        newPassword: "newpassword123",
-        confirmPassword: "newpassword123",
+        newPassword: "NewPassword1!",
+        confirmPassword: "NewPassword1!",
       });
 
       expect(result.currentPassword).toBe("a");

@@ -17,63 +17,65 @@ describe("Rate Limiter", () => {
   });
 
   describe("checkRateLimit", () => {
-    it("allows requests within the limit", () => {
+    it("allows requests within the limit", async () => {
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
-        expect(() => checkRateLimit("login", testIP)).not.toThrow();
+        await expect(checkRateLimit("login", testIP)).resolves.toBeUndefined();
       }
     });
 
-    it("throws error when limit is exceeded", () => {
+    it("throws error when limit is exceeded", async () => {
       // Use up all attempts
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
-        checkRateLimit("login", testIP);
+        await checkRateLimit("login", testIP);
       }
 
       // Next attempt should fail
-      expect(() => checkRateLimit("login", testIP)).toThrow(
+      await expect(checkRateLimit("login", testIP)).rejects.toThrow(
         /Too many requests/
       );
     });
 
-    it("uses correct limit for different actions", () => {
+    it("uses correct limit for different actions", async () => {
       // Login limit is 5
       for (let i = 0; i < 5; i++) {
-        expect(() => checkRateLimit("login", testIP)).not.toThrow();
+        await expect(checkRateLimit("login", testIP)).resolves.toBeUndefined();
       }
-      expect(() => checkRateLimit("login", testIP)).toThrow();
+      await expect(checkRateLimit("login", testIP)).rejects.toThrow();
 
       // Register limit is 3
       const registerIP = "192.168.1.2";
       for (let i = 0; i < 3; i++) {
-        expect(() => checkRateLimit("register", registerIP)).not.toThrow();
+        await expect(
+          checkRateLimit("register", registerIP)
+        ).resolves.toBeUndefined();
       }
-      expect(() => checkRateLimit("register", registerIP)).toThrow();
+      await expect(checkRateLimit("register", registerIP)).rejects.toThrow();
     });
 
-    it("tracks different IPs separately", () => {
+    it("tracks different IPs separately", async () => {
       const ip1 = "192.168.1.1";
       const ip2 = "192.168.1.2";
 
       // Use up all attempts for ip1
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
-        checkRateLimit("login", ip1);
+        await checkRateLimit("login", ip1);
       }
 
       // ip1 should be blocked
-      expect(() => checkRateLimit("login", ip1)).toThrow();
+      await expect(checkRateLimit("login", ip1)).rejects.toThrow();
 
       // ip2 should still work
-      expect(() => checkRateLimit("login", ip2)).not.toThrow();
+      await expect(checkRateLimit("login", ip2)).resolves.toBeUndefined();
     });
 
-    it("includes retry-after information in error", () => {
+    it("includes retry-after information in error", async () => {
       // Exhaust rate limit
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
-        checkRateLimit("login", testIP);
+        await checkRateLimit("login", testIP);
       }
 
       try {
-        checkRateLimit("login", testIP);
+        await checkRateLimit("login", testIP);
         expect(true).toBe(false); // Should not reach here
       } catch (error) {
         expect(error).toBeInstanceOf(Error);
@@ -87,63 +89,63 @@ describe("Rate Limiter", () => {
   });
 
   describe("getRateLimitStatus", () => {
-    it("returns full limit for new IPs", () => {
-      const status = getRateLimitStatus("login", "new-ip");
+    it("returns full limit for new IPs", async () => {
+      const status = await getRateLimitStatus("login", "new-ip");
       expect(status.remaining).toBe(RATE_LIMITS.login.limit);
     });
 
-    it("decrements remaining after requests", () => {
-      checkRateLimit("login", testIP);
-      const status = getRateLimitStatus("login", testIP);
+    it("decrements remaining after requests", async () => {
+      await checkRateLimit("login", testIP);
+      const status = await getRateLimitStatus("login", testIP);
       expect(status.remaining).toBe(RATE_LIMITS.login.limit - 1);
     });
 
-    it("returns 0 remaining when exhausted", () => {
+    it("returns 0 remaining when exhausted", async () => {
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
-        checkRateLimit("login", testIP);
+        await checkRateLimit("login", testIP);
       }
-      const status = getRateLimitStatus("login", testIP);
+      const status = await getRateLimitStatus("login", testIP);
       expect(status.remaining).toBe(0);
     });
   });
 
   describe("resetRateLimit", () => {
-    it("resets rate limit for a specific action and IP", () => {
+    it("resets rate limit for a specific action and IP", async () => {
       // Exhaust limit
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
-        checkRateLimit("login", testIP);
+        await checkRateLimit("login", testIP);
       }
 
       // Should be blocked
-      expect(() => checkRateLimit("login", testIP)).toThrow();
+      await expect(checkRateLimit("login", testIP)).rejects.toThrow();
 
       // Reset
-      resetRateLimit("login", testIP);
+      await resetRateLimit("login", testIP);
 
       // Should work again
-      expect(() => checkRateLimit("login", testIP)).not.toThrow();
+      await expect(checkRateLimit("login", testIP)).resolves.toBeUndefined();
     });
 
-    it("does not affect other actions", () => {
+    it("does not affect other actions", async () => {
       // Use some login attempts
       for (let i = 0; i < 3; i++) {
-        checkRateLimit("login", testIP);
+        await checkRateLimit("login", testIP);
       }
 
       // Use some register attempts
       for (let i = 0; i < 2; i++) {
-        checkRateLimit("register", testIP);
+        await checkRateLimit("register", testIP);
       }
 
       // Reset login only
-      resetRateLimit("login", testIP);
+      await resetRateLimit("login", testIP);
 
       // Login should be fresh
-      const loginStatus = getRateLimitStatus("login", testIP);
+      const loginStatus = await getRateLimitStatus("login", testIP);
       expect(loginStatus.remaining).toBe(RATE_LIMITS.login.limit);
 
       // Register should still have reduced count
-      const registerStatus = getRateLimitStatus("register", testIP);
+      const registerStatus = await getRateLimitStatus("register", testIP);
       expect(registerStatus.remaining).toBe(RATE_LIMITS.register.limit - 2);
     });
   });

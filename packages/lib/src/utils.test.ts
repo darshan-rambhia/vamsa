@@ -10,9 +10,9 @@ describe("generateRandomPassword", () => {
     expect(password.length).toBe(16);
   });
 
-  test("generates password with custom length", () => {
+  test("generates password with custom length (enforces 12 char minimum)", () => {
     const password = generateRandomPassword(8);
-    expect(password.length).toBe(8);
+    expect(password.length).toBe(12); // Minimum of 12 chars
   });
 
   test("generates password with long length", () => {
@@ -20,9 +20,9 @@ describe("generateRandomPassword", () => {
     expect(password.length).toBe(64);
   });
 
-  test("generates password with minimum length", () => {
+  test("generates password with minimum length (enforces 12 char minimum)", () => {
     const password = generateRandomPassword(1);
-    expect(password.length).toBe(1);
+    expect(password.length).toBe(12); // Minimum of 12 chars
   });
 
   test("generates different passwords each time", () => {
@@ -39,6 +39,21 @@ describe("generateRandomPassword", () => {
     for (const char of password) {
       expect(validChars).toContain(char);
     }
+  });
+
+  test("guarantees complexity requirements (3 of 4 character classes)", () => {
+    // Generate a password and verify it has at least 3 character classes
+    const password = generateRandomPassword(16);
+
+    const hasUpper = /[A-Z]/.test(password);
+    const hasLower = /[a-z]/.test(password);
+    const hasDigit = /[0-9]/.test(password);
+    const hasSpecial = /[!@#$%^&*]/.test(password);
+
+    const classCount = [hasUpper, hasLower, hasDigit, hasSpecial].filter(
+      Boolean
+    ).length;
+    expect(classCount).toBeGreaterThanOrEqual(3);
   });
 
   test("includes variety of character types over multiple generations", () => {

@@ -1,11 +1,12 @@
 import { z } from "@hono/zod-openapi";
+import { passwordSchema } from "./password";
 
 export const userRoleEnum = z.enum(["ADMIN", "MEMBER", "VIEWER"]);
 
 export const userCreateSchema = z.object({
   email: z.string().email("Invalid email address"),
   name: z.string().optional(),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: passwordSchema,
   personId: z.string().optional(),
   role: userRoleEnum.default("VIEWER"),
 });
@@ -31,7 +32,7 @@ export const registerSchema = z
   .object({
     email: z.string().email("Invalid email address"),
     name: z.string().min(1, "Name is required"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    password: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -45,7 +46,7 @@ export const registerSchema = z
 export const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    newPassword: passwordSchema,
     confirmPassword: z.string(),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
@@ -56,7 +57,7 @@ export const changePasswordSchema = z
 export const claimProfileSchema = z.object({
   email: z.string().email("Invalid email address"),
   personId: z.string().min(1, "Please select your profile"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: passwordSchema,
 });
 
 export type UserRole = z.infer<typeof userRoleEnum>;

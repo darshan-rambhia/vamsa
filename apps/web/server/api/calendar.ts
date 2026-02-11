@@ -5,10 +5,64 @@ import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 import ical, { ICalEventRepeatingFreq } from "ical-generator";
 import RSS from "rss";
+import type { Context } from "hono";
 
 const log = loggers.api;
 
 const calendarRouter = new OpenAPIHono();
+
+/**
+ * Validates a calendar token and updates its last used timestamp.
+ * Tokens must be active and not expired.
+ *
+ * @returns CalendarToken record if valid, or a 401 Response if invalid/missing
+ */
+async function validateCalendarToken(
+  c: Context,
+  token: string | undefined
+): Promise<
+  | {
+      id: string;
+      token: string;
+      userId: string;
+      isActive: boolean;
+      expiresAt: Date;
+      lastUsedAt: Date | null;
+    }
+  | Response
+> {
+  if (!token) {
+    log.info({}, "Calendar token validation failed: token missing");
+    return c.json(
+      { error: "Unauthorized", message: "Calendar token is required" },
+      { status: 401 }
+    );
+  }
+
+  const [calendarToken] = await drizzleDb
+    .select()
+    .from(drizzleSchema.calendarTokens)
+    .where(eq(drizzleSchema.calendarTokens.token, token))
+    .limit(1);
+
+  if (!calendarToken || !calendarToken.isActive) {
+    log.info({}, "Calendar token validation failed: token invalid or inactive");
+    return c.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (calendarToken.expiresAt < new Date()) {
+    log.info({}, "Calendar token validation failed: token expired");
+    return c.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Update last used timestamp
+  await drizzleDb
+    .update(drizzleSchema.calendarTokens)
+    .set({ lastUsedAt: new Date() })
+    .where(eq(drizzleSchema.calendarTokens.id, calendarToken.id));
+
+  return calendarToken;
+}
 
 /**
  * GET /api/v1/calendar/rss.xml
@@ -70,24 +124,10 @@ calendarRouter.openapi(rssRoute, async (c) => {
     const { token } = c.req.valid("query");
 
     // Validate token - required for RSS feed access
-    const [calendarToken] = await drizzleDb
-      .select()
-      .from(drizzleSchema.calendarTokens)
-      .where(eq(drizzleSchema.calendarTokens.token, token))
-      .limit(1);
-    if (
-      !calendarToken ||
-      !calendarToken.isActive ||
-      calendarToken.expiresAt < new Date()
-    ) {
-      return c.json({ error: "Unauthorized" }, { status: 401 });
+    const validationResult = await validateCalendarToken(c, token);
+    if (validationResult instanceof Response) {
+      return validationResult;
     }
-
-    // Update last used timestamp
-    await drizzleDb
-      .update(drizzleSchema.calendarTokens)
-      .set({ lastUsedAt: new Date() })
-      .where(eq(drizzleSchema.calendarTokens.id, calendarToken.id));
 
     const feed = new RSS({
       title: "Vamsa Family Updates",
@@ -203,8 +243,8 @@ const birthdaysRoute = createRoute({
   request: {
     query: z
       .object({
-        token: z.string().optional().openapi({
-          description: "Optional calendar token for validation",
+        token: z.string().openapi({
+          description: "Calendar token for authentication (required)",
           example: "token_123",
         }),
       })
@@ -247,19 +287,10 @@ calendarRouter.openapi(birthdaysRoute, async (c) => {
     const appUrl = process.env.APP_URL || "http://localhost:5173";
     const { token } = c.req.valid("query");
 
-    if (token) {
-      const [calendarToken] = await drizzleDb
-        .select()
-        .from(drizzleSchema.calendarTokens)
-        .where(eq(drizzleSchema.calendarTokens.token, token))
-        .limit(1);
-      if (
-        !calendarToken ||
-        !calendarToken.isActive ||
-        calendarToken.expiresAt < new Date()
-      ) {
-        return c.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    // Validate token - required for birthday calendar access
+    const validationResult = await validateCalendarToken(c, token);
+    if (validationResult instanceof Response) {
+      return validationResult;
     }
 
     const calendar = ical({
@@ -345,8 +376,8 @@ const anniversariesRoute = createRoute({
   request: {
     query: z
       .object({
-        token: z.string().optional().openapi({
-          description: "Optional calendar token for validation",
+        token: z.string().openapi({
+          description: "Calendar token for authentication (required)",
           example: "token_123",
         }),
       })
@@ -389,19 +420,10 @@ calendarRouter.openapi(anniversariesRoute, async (c) => {
     const appUrl = process.env.APP_URL || "http://localhost:5173";
     const { token } = c.req.valid("query");
 
-    if (token) {
-      const [calendarToken] = await drizzleDb
-        .select()
-        .from(drizzleSchema.calendarTokens)
-        .where(eq(drizzleSchema.calendarTokens.token, token))
-        .limit(1);
-      if (
-        !calendarToken ||
-        !calendarToken.isActive ||
-        calendarToken.expiresAt < new Date()
-      ) {
-        return c.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    // Validate token - required for anniversary calendar access
+    const validationResult = await validateCalendarToken(c, token);
+    if (validationResult instanceof Response) {
+      return validationResult;
     }
 
     const calendar = ical({
@@ -554,8 +576,8 @@ const eventsRoute = createRoute({
   request: {
     query: z
       .object({
-        token: z.string().optional().openapi({
-          description: "Optional calendar token for validation",
+        token: z.string().openapi({
+          description: "Calendar token for authentication (required)",
           example: "token_123",
         }),
       })
@@ -598,19 +620,10 @@ calendarRouter.openapi(eventsRoute, async (c) => {
     const appUrl = process.env.APP_URL || "http://localhost:5173";
     const { token } = c.req.valid("query");
 
-    if (token) {
-      const [calendarToken] = await drizzleDb
-        .select()
-        .from(drizzleSchema.calendarTokens)
-        .where(eq(drizzleSchema.calendarTokens.token, token))
-        .limit(1);
-      if (
-        !calendarToken ||
-        !calendarToken.isActive ||
-        calendarToken.expiresAt < new Date()
-      ) {
-        return c.json({ error: "Unauthorized" }, { status: 401 });
-      }
+    // Validate token - required for events calendar access
+    const validationResult = await validateCalendarToken(c, token);
+    if (validationResult instanceof Response) {
+      return validationResult;
     }
 
     const calendar = ical({

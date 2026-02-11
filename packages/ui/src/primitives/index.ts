@@ -65,3 +65,6 @@ export {
 
 // HoverCard
 export { HoverCard, HoverCardTrigger, HoverCardContent } from "./hover-card";
+
+// Password
+export { PasswordStrengthIndicator } from "./password-strength-indicator";

@@ -279,8 +279,8 @@ const createPersonRoute = createRoute({
 personsRouter.openapi(createPersonRoute, async (c) => {
   try {
     const data = c.req.valid("json");
-    // Use a system user ID for API-created persons (would be replaced with actual auth in production)
-    const userId = "system";
+    const user = c.get("user");
+    const userId = user.id;
     const result = await serverCreatePerson(data, userId);
     return c.json(result, { status: 201 });
   } catch (error) {
@@ -476,8 +476,8 @@ personsRouter.openapi(updatePersonRoute, async (c) => {
     }
 
     const data = c.req.valid("json");
-    // Use a system user ID for API updates (would be replaced with actual auth in production)
-    const userId = "system";
+    const user = c.get("user");
+    const userId = user.id;
     const result = await serverUpdatePerson(id, data, userId);
 
     if (!result) {
@@ -579,8 +579,8 @@ personsRouter.openapi(deletePersonRoute, async (c) => {
       return c.json({ error: "Person ID is required" }, { status: 400 });
     }
 
-    // Use a system user ID for API deletes (would be replaced with actual auth in production)
-    const userId = "system";
+    const user = c.get("user");
+    const userId = user.id;
     await serverDeletePerson(id, userId);
 
     return c.body(null, 204);

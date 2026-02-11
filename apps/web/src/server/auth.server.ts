@@ -63,7 +63,7 @@ export async function claimProfileHandler(input: ClaimProfileInput) {
 
   // Rate limit by IP address
   const clientIP = getClientIP();
-  checkRateLimit("claimProfile", clientIP);
+  await checkRateLimit("claimProfile", clientIP);
 
   return claimProfileData(data.email, data.personId, data.password);
 }
@@ -77,7 +77,7 @@ export async function changePasswordHandler(input: ChangePasswordInput) {
 
   // Rate limit by IP address
   const clientIP = getClientIP();
-  checkRateLimit("passwordReset", clientIP);
+  await checkRateLimit("passwordReset", clientIP);
 
   try {
     const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);

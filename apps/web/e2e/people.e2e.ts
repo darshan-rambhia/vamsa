@@ -67,6 +67,10 @@ test.describe("People Management", () => {
       await peopleList.goto();
       await peopleList.waitForLoad();
 
+      // Wait for content to stabilize after initial load
+      // Promise.race in waitForLoad can resolve before content renders
+      await page.waitForTimeout(500);
+
       // Either show people or empty state
       const personCount = await peopleList.getPersonCount();
       if (personCount === 0) {
@@ -74,7 +78,7 @@ test.describe("People Management", () => {
         const emptyState = page
           .locator('text="No people"')
           .or(page.locator('text="Add"'));
-        await expect(emptyState.first()).toBeVisible();
+        await expect(emptyState.first()).toBeVisible({ timeout: 5000 });
       }
     });
 

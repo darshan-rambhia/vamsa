@@ -317,6 +317,10 @@ export const test = base.extend<TestFixtures>({
 
       // Wait for redirect to login page
       await page.waitForURL("/login");
+
+      // Clear HTTP-only session cookies to ensure server-side session is fully invalidated
+      // This prevents stale session cookies from allowing access to protected routes
+      await page.context().clearCookies();
     };
 
     await use(logoutFn);

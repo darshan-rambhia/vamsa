@@ -79,14 +79,13 @@ test.describe("Feature: Admin Operations", () => {
       });
 
       await bdd.when("page displays user list with details", async () => {
-        // Wait for user cards to load or empty state
-        const userCards = page.locator("[data-testid^=user-card-]");
-        const noUsersMessage = page.locator("text=No users found");
-
-        await Promise.race([
-          userCards.first().waitFor({ state: "visible", timeout: 5000 }),
-          noUsersMessage.waitFor({ state: "visible", timeout: 5000 }),
-        ]).catch(() => {});
+        // Wait for either user cards or empty state to appear
+        await expect(
+          page
+            .locator("[data-testid^=user-card-]")
+            .first()
+            .or(page.locator("text=No users found"))
+        ).toBeVisible({ timeout: 10000 });
       });
 
       await bdd.then("user information is properly displayed", async () => {

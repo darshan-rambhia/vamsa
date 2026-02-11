@@ -11,6 +11,7 @@ import {
   Input,
   ThemeToggle,
 } from "@vamsa/ui";
+import { PasswordStrengthIndicator } from "@vamsa/ui/primitives";
 import { signUp } from "~/lib/auth-client";
 
 export const Route = createFileRoute("/register")({
@@ -44,7 +45,7 @@ function RegisterComponent() {
         setIsLoading(false);
         return;
       }
-      navigate({ to: "/login", search: { registered: true } });
+      navigate({ to: "/login", search: { verify: true } });
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Registration failed";
@@ -140,18 +141,22 @@ function RegisterComponent() {
                 />
               </FormField>
 
-              <FormField label="Password" required>
-                <Input
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  data-testid="register-password-input"
-                />
-              </FormField>
+              <div className="space-y-2">
+                <FormField label="Password" required>
+                  <Input
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    minLength={12}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    data-testid="register-password-input"
+                  />
+                </FormField>
+                <PasswordStrengthIndicator password={password} />
+              </div>
 
               <FormField
                 label="Confirm Password"

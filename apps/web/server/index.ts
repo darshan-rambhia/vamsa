@@ -22,9 +22,17 @@ import { loggers } from "@vamsa/lib/logger";
 import { initializeServerI18n } from "@vamsa/lib/server";
 import { auth } from "@vamsa/lib/server/business";
 import { rateLimitMiddleware } from "../src/server/middleware/hono-rate-limiter";
+import { initializeRateLimitStore } from "../src/server/middleware/rate-limiter";
+import {
+  closeRedisClient,
+  getRedisClient,
+} from "../src/server/middleware/redis-client";
+import { RedisRateLimitStore } from "../src/server/middleware/rate-limit-store";
 import { etagMiddleware, getETagMetrics } from "./middleware/etag";
 import { telemetryMiddleware } from "./middleware/telemetry";
 import { serveMedia } from "./middleware/media-server";
+import { mediaAuthMiddleware } from "./middleware/media-auth";
+import { metricsAuthMiddleware } from "./middleware/metrics-auth";
 import { getTelemetryConfig, startTelemetry, stopTelemetry } from "./telemetry";
 
 await startTelemetry();
@@ -80,6 +88,17 @@ function validateSecurityCredentials() {
         break;
       }
     }
+  }
+
+  // Check METRICS_BEARER_TOKEN
+  const metricsToken = process.env.METRICS_BEARER_TOKEN;
+  if (!metricsToken) {
+    const msg = "METRICS_BEARER_TOKEN is not set";
+    if (IS_PRODUCTION) warnings.push(msg);
+    else warnings.push(msg);
+  } else if (metricsToken.length < 32) {
+    const msg = `METRICS_BEARER_TOKEN is too short (${metricsToken.length} chars, recommended 32+)`;
+    warnings.push(msg);
   }
 
   // Log warnings
@@ -258,7 +277,7 @@ app.use(
   })
 );
 
-// Health check endpoint for Docker/K8s
+// Health check endpoint for Docker/K8s (public, no authentication required)
 app.get("/health", (c) => {
   return c.json({
     status: "healthy",
@@ -268,7 +287,13 @@ app.get("/health", (c) => {
   });
 });
 
+// Protect detailed health endpoints with bearer token authentication
+// These expose internal metrics and should only be accessible to authorized monitoring systems
+app.use("/health/cache", metricsAuthMiddleware());
+app.use("/health/telemetry", metricsAuthMiddleware());
+
 // Cache metrics endpoint for monitoring
+// Protected: requires METRICS_BEARER_TOKEN environment variable
 app.get("/health/cache", (c) => {
   const metrics = getETagMetrics();
   return c.json({
@@ -278,6 +303,7 @@ app.get("/health/cache", (c) => {
 });
 
 // Telemetry status endpoint for monitoring
+// Protected: requires METRICS_BEARER_TOKEN environment variable
 app.get("/health/telemetry", (c) => {
   const telemetryConfig = getTelemetryConfig();
   return c.json({
@@ -334,6 +360,8 @@ app.route("/api", apiRouter);
 
 // Media serving endpoint for image files
 // Serves images with appropriate caching headers and Content-Type
+// Requires authentication via session token
+app.use("/media/*", mediaAuthMiddleware);
 app.get("/media/*", serveMedia);
 
 // Static file serving for assets (CSS, JS, images)
@@ -464,6 +492,14 @@ async function startServer() {
     // Don't exit, continue with default English
   }
 
+  // Initialize rate limit store
+  const redis = await getRedisClient();
+  if (redis) {
+    initializeRateLimitStore(new RedisRateLimitStore(redis));
+  } else {
+    log.info({}, "Rate limit store: memory (REDIS_URL not set)");
+  }
+
   // Setup routes with dynamic import
   await setupRoutes();
 
@@ -497,6 +533,7 @@ const server = await startServer();
 process.on("SIGINT", async () => {
   log.info({}, "Received SIGINT, shutting down server...");
   server.stop();
+  await closeRedisClient();
   await stopTelemetry();
   process.exit(0);
 });
@@ -504,6 +541,7 @@ process.on("SIGINT", async () => {
 process.on("SIGTERM", async () => {
   log.info({}, "Received SIGTERM, shutting down server...");
   server.stop();
+  await closeRedisClient();
   await stopTelemetry();
   process.exit(0);
 });

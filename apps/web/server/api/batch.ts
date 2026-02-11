@@ -151,13 +151,22 @@ const requestCounts = new Map<string, { count: number; resetTime: number }>();
 const getRateLimitKey = (
   c: Parameters<Parameters<typeof batchRouter.openapi>[1]>[0]
 ): string => {
-  // Use session user ID if available, otherwise use IP address
-  const userId = c.req.header("x-user-id");
+  // Use authenticated user ID from context for rate limiting
+  try {
+    const user = c.get("user");
+    if (user && user.id) {
+      return user.id;
+    }
+  } catch {
+    // User context not available
+  }
+
+  // Fallback to IP address if user is not available
   const ip =
     c.req.header("cf-connecting-ip") ||
     c.req.header("x-forwarded-for") ||
     "unknown";
-  return userId || ip;
+  return ip;
 };
 
 const checkRateLimit = (key: string): boolean => {
@@ -306,8 +315,9 @@ batchRouter.openapi(batchRoute, async (c) => {
       error?: string;
     }> = [];
 
-    // System user ID for API operations
-    const userId = "system";
+    // Get authenticated user ID
+    const user = c.get("user");
+    const userId = user.id;
 
     if (transaction) {
       // Transactional mode: all-or-nothing

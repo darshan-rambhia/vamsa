@@ -68,7 +68,8 @@ export const auth = betterAuth({
   // Email and password authentication
   emailAndPassword: {
     enabled: true,
-    requireEmailVerification: false, // Disable email verification for E2E tests
+    minPasswordLength: 12,
+    requireEmailVerification: process.env.NODE_ENV !== "test",
     // Cross-runtime password hashing (works in both Node.js/Vite and Bun)
     password: {
       hash: hashPassword,
@@ -82,6 +83,38 @@ export const auth = betterAuth({
   session: {
     expiresIn: 60 * 60 * 24 * 30, // 30 days in seconds
     updateAge: 60 * 60 * 24, // Update session every 24 hours
+  },
+
+  // Email verification configuration
+  emailVerification: {
+    sendOnSignUp: true,
+    autoSignInAfterVerification: true,
+    sendVerificationEmail: async ({ user, url }) => {
+      const { emailService, createEmailVerificationTemplate } =
+        await import("@vamsa/api");
+
+      const template = createEmailVerificationTemplate(
+        user.name || "Family Member",
+        url
+      );
+
+      // Log verification URL in development for easy testing
+      if (process.env.NODE_ENV === "development") {
+        const { loggers } = await import("@vamsa/lib/logger");
+        loggers.api.info(
+          { url, email: user.email },
+          "Email verification URL (dev mode)"
+        );
+      }
+
+      // Fire-and-forget to prevent timing attacks
+      void emailService.sendEmail(
+        user.email,
+        template,
+        "email_verification",
+        user.id
+      );
+    },
   },
 
   // Account linking - allows users to link OAuth accounts to existing email/password accounts

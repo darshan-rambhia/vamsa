@@ -1,3 +1,10 @@
+// Password schemas
+export {
+  passwordSchema,
+  getPasswordStrength,
+  type PasswordStrength,
+} from "./password";
+
 // Person schemas
 export {
   genderEnum,

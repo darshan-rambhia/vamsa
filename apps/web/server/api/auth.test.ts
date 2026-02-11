@@ -47,7 +47,7 @@ describe("Authentication API Routes", () => {
       const res = await authRouter.request("/login", {
         method: "POST",
         body: JSON.stringify({
-          password: "password123",
+          password: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -76,7 +76,7 @@ describe("Authentication API Routes", () => {
         method: "POST",
         body: JSON.stringify({
           email: "not-an-email",
-          password: "password123",
+          password: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -132,7 +132,7 @@ describe("Authentication API Routes", () => {
         method: "POST",
         body: JSON.stringify({
           email: "user+tag@example.co.uk",
-          password: "password123",
+          password: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -148,7 +148,7 @@ describe("Authentication API Routes", () => {
         method: "POST",
         body: JSON.stringify({
           email: "user@test.com",
-          password: "password123",
+          password: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -166,8 +166,8 @@ describe("Authentication API Routes", () => {
         method: "POST",
         body: JSON.stringify({
           name: "John Doe",
-          password: "password123",
-          confirmPassword: "password123",
+          password: "SecurePass1!",
+          confirmPassword: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -182,8 +182,8 @@ describe("Authentication API Routes", () => {
         method: "POST",
         body: JSON.stringify({
           email: "user@test.com",
-          password: "password123",
-          confirmPassword: "password123",
+          password: "SecurePass1!",
+          confirmPassword: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -215,8 +215,8 @@ describe("Authentication API Routes", () => {
         body: JSON.stringify({
           email: "not-an-email",
           name: "John Doe",
-          password: "password123",
-          confirmPassword: "password123",
+          password: "SecurePass1!",
+          confirmPassword: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -254,8 +254,8 @@ describe("Authentication API Routes", () => {
         body: JSON.stringify({
           email: "existing@test.com",
           name: "John Doe",
-          password: "password123",
-          confirmPassword: "password123",
+          password: "SecurePass1!",
+          confirmPassword: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -296,8 +296,8 @@ describe("Authentication API Routes", () => {
         body: JSON.stringify({
           email: "user+tag@example.co.uk",
           name: "John Doe",
-          password: "password123",
-          confirmPassword: "password123",
+          password: "SecurePass1!",
+          confirmPassword: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -319,8 +319,8 @@ describe("Authentication API Routes", () => {
         body: JSON.stringify({
           email: "user@test.com",
           name: "João Silva",
-          password: "password123",
-          confirmPassword: "password123",
+          password: "SecurePass1!",
+          confirmPassword: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -342,8 +342,8 @@ describe("Authentication API Routes", () => {
         body: JSON.stringify({
           email: "user@test.com",
           name: "O'Brien-Smith",
-          password: "password123",
-          confirmPassword: "password123",
+          password: "SecurePass1!",
+          confirmPassword: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -360,8 +360,8 @@ describe("Authentication API Routes", () => {
         body: JSON.stringify({
           email: "user@test.com",
           name: "John Doe",
-          password: "password123",
-          confirmPassword: "password123",
+          password: "SecurePass1!",
+          confirmPassword: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",
@@ -469,7 +469,7 @@ describe("Authentication API Routes", () => {
         method: "POST",
         body: JSON.stringify({
           email: "user@test.com",
-          password: "password123",
+          password: "SecurePass1!",
         }),
       });
 
@@ -553,7 +553,7 @@ describe("Authentication API Routes", () => {
         method: "POST",
         body: JSON.stringify({
           email: longEmail,
-          password: "password123",
+          password: "SecurePass1!",
         }),
         headers: {
           "Content-Type": "application/json",

@@ -311,6 +311,171 @@ Vamsa Family Tree
   };
 }
 
+export function createEmailVerificationTemplate(
+  userName: string,
+  verificationUrl: string
+): EmailTemplate {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Source Sans 3', sans-serif; color: #333; line-height: 1.6; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #2d5016; color: #f5f1e8; padding: 20px; border-radius: 8px 8px 0 0; }
+          .content { background-color: #f9f8f5; padding: 20px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; padding: 12px 24px; background-color: #2d5016; color: #f5f1e8; text-decoration: none; border-radius: 4px; margin-top: 16px; }
+          .footer { margin-top: 20px; font-size: 12px; color: #999; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>Verify Your Email Address</h2>
+          </div>
+          <div class="content">
+            <p>Hello ${userName},</p>
+
+            <p>Thank you for creating a Vamsa account. Please verify your email address by clicking the button below:</p>
+
+            <a href="${verificationUrl}" class="button">Verify Email Address</a>
+
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">
+              If the button doesn't work, copy and paste this link into your browser:<br>
+              <a href="${verificationUrl}" style="color: #2d5016;">${verificationUrl}</a>
+            </p>
+
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">
+              If you didn't create an account with Vamsa, you can safely ignore this email.
+            </p>
+
+            <p style="margin-top: 20px;">Best regards,<br>Vamsa Family Tree</p>
+          </div>
+          <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const text = `
+Verify Your Email Address
+
+Hello ${userName},
+
+Thank you for creating a Vamsa account. Please verify your email address by visiting:
+
+${verificationUrl}
+
+If you didn't create an account with Vamsa, you can safely ignore this email.
+
+Best regards,
+Vamsa Family Tree
+  `;
+
+  return {
+    subject: "Verify your email address - Vamsa",
+    html,
+    text: text.trim(),
+  };
+}
+
+export function createAccountLockedEmail(
+  userName: string,
+  lockedUntilDate: Date,
+  failedAttempts: number
+): EmailTemplate {
+  const lockedUntilStr = lockedUntilDate.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "UTC",
+  });
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Source Sans 3', sans-serif; color: #333; line-height: 1.6; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #c62e2e; color: #f5f1e8; padding: 20px; border-radius: 8px 8px 0 0; }
+          .content { background-color: #f9f8f5; padding: 20px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; padding: 12px 24px; background-color: #2d5016; color: #f5f1e8; text-decoration: none; border-radius: 4px; margin-top: 16px; }
+          .footer { margin-top: 20px; font-size: 12px; color: #999; }
+          .alert-box { margin: 20px 0; padding: 16px; background-color: #ffebee; border-left: 4px solid #c62e2e; border-radius: 4px; }
+          .info-box { margin: 16px 0; padding: 12px; background-color: #f0f0f0; border-radius: 4px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>Security Alert: Your Account Has Been Locked</h2>
+          </div>
+          <div class="content">
+            <p>Hello ${userName},</p>
+
+            <div class="alert-box">
+              <p><strong>Your Vamsa account has been temporarily locked</strong> due to multiple failed login attempts.</p>
+              <p>This is a security measure to protect your account from unauthorized access.</p>
+            </div>
+
+            <div class="info-box">
+              <p><strong>Lockout Details:</strong></p>
+              <ul style="margin: 8px 0; padding-left: 20px;">
+                <li>Failed login attempts: ${failedAttempts}</li>
+                <li>Your account will be unlocked on: ${lockedUntilStr} (UTC)</li>
+              </ul>
+            </div>
+
+            <p style="margin-top: 20px;">If you made these login attempts and are having trouble remembering your password, you can reset it when your account is unlocked.</p>
+
+            <p style="margin-top: 16px; font-size: 14px; color: #666;">
+              <strong>If you did not make these login attempts:</strong><br>
+              Your account may have been compromised. Once your account is unlocked, please change your password immediately or contact our support team for assistance.
+            </p>
+
+            <p style="margin-top: 20px;">Best regards,<br>Vamsa Family Tree</p>
+          </div>
+          <div class="footer">
+            <p>This is a security notification. Please do not reply to this email.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const text = `
+Security Alert: Your Account Has Been Locked
+
+Hello ${userName},
+
+Your Vamsa account has been temporarily locked due to multiple failed login attempts.
+This is a security measure to protect your account from unauthorized access.
+
+Lockout Details:
+- Failed login attempts: ${failedAttempts}
+- Your account will be unlocked on: ${lockedUntilStr} (UTC)
+
+If you made these login attempts and are having trouble remembering your password, you can reset it when your account is unlocked.
+
+If you did not make these login attempts:
+Your account may have been compromised. Once your account is unlocked, please change your password immediately or contact our support team for assistance.
+
+Best regards,
+Vamsa Family Tree
+  `;
+
+  return {
+    subject: "Security Alert: Your Vamsa account has been locked",
+    html,
+    text: text.trim(),
+  };
+}
+
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
     "&": "&amp;",

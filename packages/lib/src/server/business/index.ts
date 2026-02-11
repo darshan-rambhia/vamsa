@@ -23,6 +23,7 @@
 // ============================================================================
 // Authentication & Authorization (Better Auth)
 // ============================================================================
+export * from "./account-lockout";
 export * from "./auth";
 export * from "./auth-better";
 export * from "./auth-better-api";

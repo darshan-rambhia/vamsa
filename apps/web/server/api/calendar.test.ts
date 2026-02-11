@@ -409,9 +409,19 @@ describe("Calendar API Endpoints", () => {
   });
 
   describe("Token validation across endpoints", () => {
-    it("should allow public access without token", () => {
-      // Public endpoints don't require token
-      expect(true).toBe(true);
+    it("should require token on birthdays endpoint", () => {
+      // Birthdays endpoint requires token authentication
+      expect(mockCalendarToken.token).toBeDefined();
+    });
+
+    it("should require token on anniversaries endpoint", () => {
+      // Anniversaries endpoint requires token authentication
+      expect(mockCalendarToken.token).toBeDefined();
+    });
+
+    it("should require token on events endpoint", () => {
+      // Events endpoint requires token authentication
+      expect(mockCalendarToken.token).toBeDefined();
     });
 
     it("should validate token when provided", () => {

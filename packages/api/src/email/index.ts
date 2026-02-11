@@ -6,5 +6,7 @@ export {
   createSuggestionUpdatedEmail,
   createNewMemberEmail,
   createBirthdayReminderEmail,
+  createEmailVerificationTemplate,
+  createAccountLockedEmail,
 } from "./templates";
 export type { EmailTemplate } from "./templates";

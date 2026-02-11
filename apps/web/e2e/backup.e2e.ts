@@ -10,7 +10,14 @@
  * - GEDCOM: Export as .ged and .zip formats
  * - GEDCOM: Import from GEDCOM files
  */
-import { TEST_USERS, bdd, expect, gotoWithRetry, test } from "./fixtures";
+import {
+  TEST_USERS,
+  bdd,
+  expect,
+  gotoWithRetry,
+  test,
+  waitForHydration,
+} from "./fixtures";
 
 test.describe("Feature: Backup & Export", () => {
   test.describe("Export Page Access", () => {
@@ -256,22 +263,21 @@ test.describe("Feature: Backup & Export", () => {
         if (!isChecked) {
           await auditCheckbox.check();
         }
+        // Wait for the days input to appear and stabilize after checkbox toggle
+        const daysInput = page.getByLabel(/number of days|days to include/i);
+        await expect(daysInput).toBeVisible({ timeout: 5000 });
       });
 
       await bdd.when("user changes the audit log days to 180", async () => {
         const daysInput = page.getByLabel(/number of days|days to include/i);
-        if (await daysInput.isVisible().catch(() => false)) {
-          await daysInput.fill("180");
-        }
+        // Triple-click to select all text (platform-agnostic), then type new value
+        await daysInput.click({ clickCount: 3 });
+        await daysInput.pressSequentially("180", { delay: 50 });
       });
 
       await bdd.then("days input should show 180", async () => {
         const daysInput = page.getByLabel(/number of days|days to include/i);
-        const daysVisible = await daysInput.isVisible().catch(() => false);
-        if (daysVisible) {
-          const daysValue = await daysInput.inputValue();
-          expect(daysValue).toBe("180");
-        }
+        await expect(daysInput).toHaveValue("180");
       });
     });
   });
@@ -794,6 +800,8 @@ test.describe("Feature: Backup & Export", () => {
 
       await bdd.when("user navigates to backup page", async () => {
         await gotoWithRetry(page, "/admin/backup");
+        // Wait for React hydration so tab event handlers are attached
+        await waitForHydration(page);
       });
 
       await bdd.then("user can switch between tabs", async () => {
@@ -805,8 +813,11 @@ test.describe("Feature: Backup & Export", () => {
           .isVisible()
           .catch(() => false);
 
-        // Check GEDCOM tab
-        const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+        // Check GEDCOM tab (use exact match to avoid matching "GEDCOM (.ged)" tab)
+        const gedcomTab = page.getByRole("tab", {
+          name: "GEDCOM",
+          exact: true,
+        });
         const gedcomVisible = await gedcomTab.isVisible().catch(() => false);
 
         // At least one tab should be visible
@@ -814,11 +825,15 @@ test.describe("Feature: Backup & Export", () => {
 
         // If both visible, try switching
         if (systemVisible && gedcomVisible) {
+          // Click GEDCOM tab
           await gedcomTab.click();
-          // Wait for tab content transition
-          await page.waitForTimeout(500);
 
-          // Verify we're on GEDCOM tab content - look for GEDCOM headings
+          // Wait for the GEDCOM tab to become selected
+          await expect(gedcomTab).toHaveAttribute("data-state", "active", {
+            timeout: 5000,
+          });
+
+          // Wait for GEDCOM tab content to render
           const importGedcomHeading = page.getByRole("heading", {
             name: /import gedcom/i,
           });
@@ -826,11 +841,14 @@ test.describe("Feature: Backup & Export", () => {
             name: /export gedcom/i,
           });
 
+          // Use waitFor with a reasonable timeout to allow content to render
           const hasImport = await importGedcomHeading
-            .isVisible()
+            .waitFor({ state: "visible", timeout: 5000 })
+            .then(() => true)
             .catch(() => false);
           const hasExport = await exportGedcomHeading
-            .isVisible()
+            .waitFor({ state: "visible", timeout: 5000 })
+            .then(() => true)
             .catch(() => false);
 
           // Either import or export GEDCOM heading should be visible

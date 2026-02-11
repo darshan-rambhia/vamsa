@@ -23,6 +23,7 @@ const {
   mockUpdateRelationship,
   mockDeleteRelationship,
   mockTransaction,
+  mockBetterAuthGetSessionWithUser,
 } = vi.hoisted(() => ({
   mockCreatePerson: vi.fn(async () => ({ id: "person_001" })),
   mockUpdatePerson: vi.fn(async () => ({ id: "person_001" })),
@@ -31,6 +32,16 @@ const {
   mockUpdateRelationship: vi.fn(async () => ({ id: "rel_001" })),
   mockDeleteRelationship: vi.fn(async () => undefined),
   mockTransaction: vi.fn(async (callback) => callback(null)),
+  mockBetterAuthGetSessionWithUser: vi.fn(async () => ({
+    id: "test-user-123",
+    email: "test@example.com",
+    name: "Test User",
+    role: "ADMIN",
+    personId: "person_123",
+    mustChangePassword: false,
+    profileClaimStatus: "CLAIMED",
+    oidcProvider: null,
+  })),
 }));
 
 vi.mock("@vamsa/lib/server/business", () => ({
@@ -42,6 +53,10 @@ vi.mock("@vamsa/lib/server/business", () => ({
   deleteRelationshipData: mockDeleteRelationship,
 }));
 
+vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
+  betterAuthGetSessionWithUser: mockBetterAuthGetSessionWithUser,
+}));
+
 vi.mock("../db", () => ({
   db: {
     transaction: mockTransaction,
@@ -49,7 +64,14 @@ vi.mock("../db", () => ({
 }));
 
 // Import after mocks
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { requireApiAuth } from "../middleware/require-api-auth";
 import batchRouter from "./batch";
+
+// Create a test router with auth middleware applied
+const testRouter = new OpenAPIHono();
+testRouter.use("/", requireApiAuth("MEMBER"));
+testRouter.route("/", batchRouter);
 
 describe("Batch Operations API Routes", () => {
   beforeEach(() => {
@@ -60,6 +82,7 @@ describe("Batch Operations API Routes", () => {
     mockUpdateRelationship.mockClear();
     mockDeleteRelationship.mockClear();
     mockTransaction.mockClear();
+    mockBetterAuthGetSessionWithUser.mockClear();
 
     mockCreatePerson.mockImplementation(async () => ({ id: "person_001" }));
     mockUpdatePerson.mockImplementation(async () => ({ id: "person_001" }));
@@ -70,11 +93,90 @@ describe("Batch Operations API Routes", () => {
     mockTransaction.mockImplementation(async (callback: any) => {
       return callback(null);
     });
+    mockBetterAuthGetSessionWithUser.mockImplementation(async () => ({
+      id: "test-user-123",
+      email: "test@example.com",
+      name: "Test User",
+      role: "ADMIN",
+      personId: "person_123",
+      mustChangePassword: false,
+      profileClaimStatus: "CLAIMED",
+      oidcProvider: null,
+    }));
+  });
+
+  describe("POST /batch - Authentication", () => {
+    it("should return 401 when no session is provided", async () => {
+      mockBetterAuthGetSessionWithUser.mockResolvedValueOnce(null as any);
+
+      const res = await testRouter.request("/", {
+        method: "POST",
+        body: JSON.stringify({
+          operations: [
+            {
+              type: "create",
+              entity: "person",
+              data: {
+                firstName: "John",
+                lastName: "Doe",
+                isLiving: true,
+              },
+            },
+          ],
+          transaction: true,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      expect(res.status).toBe(401);
+      const body = await res.json();
+      expect(body.error).toBe("Unauthorized");
+    });
+
+    it("should return 403 when user has insufficient role (VIEWER)", async () => {
+      mockBetterAuthGetSessionWithUser.mockResolvedValueOnce({
+        id: "test-user-456",
+        email: "viewer@example.com",
+        name: "Viewer User",
+        role: "VIEWER",
+        personId: "person_456",
+        mustChangePassword: false,
+        profileClaimStatus: "CLAIMED",
+        oidcProvider: null,
+      });
+
+      const res = await testRouter.request("/", {
+        method: "POST",
+        body: JSON.stringify({
+          operations: [
+            {
+              type: "create",
+              entity: "person",
+              data: {
+                firstName: "John",
+                lastName: "Doe",
+                isLiving: true,
+              },
+            },
+          ],
+          transaction: true,
+        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(body.error).toBe("Forbidden");
+    });
   });
 
   describe("POST /batch - Batch Operations", () => {
     it("should return 400 when operations array is empty", async () => {
-      const res = await batchRouter.request("/", {
+      const res = await testRouter.request("/", {
         method: "POST",
         body: JSON.stringify({
           operations: [],
@@ -99,7 +201,7 @@ describe("Batch Operations API Routes", () => {
         },
       });
 
-      const res = await batchRouter.request("/", {
+      const res = await testRouter.request("/", {
         method: "POST",
         body: JSON.stringify({
           operations,
@@ -114,7 +216,7 @@ describe("Batch Operations API Routes", () => {
     });
 
     it("should create multiple persons in transaction mode", async () => {
-      const res = await batchRouter.request("/", {
+      const res = await testRouter.request("/", {
         method: "POST",
         body: JSON.stringify({
           operations: [
@@ -154,7 +256,7 @@ describe("Batch Operations API Routes", () => {
     });
 
     it("should update persons", async () => {
-      const res = await batchRouter.request("/", {
+      const res = await testRouter.request("/", {
         method: "POST",
         body: JSON.stringify({
           operations: [
@@ -182,7 +284,7 @@ describe("Batch Operations API Routes", () => {
     });
 
     it("should delete persons", async () => {
-      const res = await batchRouter.request("/", {
+      const res = await testRouter.request("/", {
         method: "POST",
         body: JSON.stringify({
           operations: [
@@ -206,7 +308,7 @@ describe("Batch Operations API Routes", () => {
     });
 
     it("should create relationships", async () => {
-      const res = await batchRouter.request("/", {
+      const res = await testRouter.request("/", {
         method: "POST",
         body: JSON.stringify({
           operations: [
@@ -235,7 +337,7 @@ describe("Batch Operations API Routes", () => {
     });
 
     it("should handle mixed operations", async () => {
-      const res = await batchRouter.request("/", {
+      const res = await testRouter.request("/", {
         method: "POST",
         body: JSON.stringify({
           operations: [
@@ -276,7 +378,7 @@ describe("Batch Operations API Routes", () => {
     });
 
     it("should return 400 for missing required person id field", async () => {
-      const res = await batchRouter.request("/", {
+      const res = await testRouter.request("/", {
         method: "POST",
         body: JSON.stringify({
           operations: [
@@ -300,7 +402,7 @@ describe("Batch Operations API Routes", () => {
     });
 
     it("should default transaction to true", async () => {
-      const res = await batchRouter.request("/", {
+      const res = await testRouter.request("/", {
         method: "POST",
         body: JSON.stringify({
           operations: [
@@ -337,7 +439,7 @@ describe("Batch Operations API Routes", () => {
         }
       });
 
-      const res = await batchRouter.request("/", {
+      const res = await testRouter.request("/", {
         method: "POST",
         body: JSON.stringify({
           operations: [
@@ -377,7 +479,7 @@ describe("Batch Operations API Routes", () => {
     });
 
     it("should include operation index in results", async () => {
-      const res = await batchRouter.request("/", {
+      const res = await testRouter.request("/", {
         method: "POST",
         body: JSON.stringify({
           operations: [

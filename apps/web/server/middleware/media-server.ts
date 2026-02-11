@@ -162,8 +162,6 @@ export async function serveMedia(c: Context): Promise<Response> {
       "Content-Disposition": "inline",
       // Vary header for cache (in case of Accept-Encoding)
       Vary: "Accept-Encoding",
-      // Cross-origin resource sharing
-      "Access-Control-Allow-Origin": "*",
     };
 
     // Handle range request

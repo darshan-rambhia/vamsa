@@ -196,17 +196,17 @@ describe("userCreateSchema", () => {
   });
 
   describe("Password validation", () => {
-    it("should accept password with exactly 8 characters", () => {
+    it("should accept password meeting complexity requirements (12+ chars, 3 classes)", () => {
       const user = {
         email: "john@example.com",
-        password: "12345678",
+        password: "SecurePass1!",
       };
 
       const result = userCreateSchema.safeParse(user);
       expect(result.success).toBe(true);
     });
 
-    it("should accept password longer than 8 characters", () => {
+    it("should accept password longer than 12 characters", () => {
       const user = {
         email: "john@example.com",
         password: "VeryLongSecurePassword123456789!@#",
@@ -216,10 +216,20 @@ describe("userCreateSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    it("should reject password shorter than 8 characters", () => {
+    it("should reject password shorter than 12 characters", () => {
       const user = {
         email: "john@example.com",
         password: "1234567",
+      };
+
+      const result = userCreateSchema.safeParse(user);
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject password with only 2 character classes", () => {
+      const user = {
+        email: "john@example.com",
+        password: "abcdefghijkl1", // lowercase + digit only
       };
 
       const result = userCreateSchema.safeParse(user);
@@ -279,7 +289,7 @@ describe("userCreateSchema", () => {
       // In practice, role has a default so the schema accepts input without it
       const user: UserCreateInput = {
         email: "test@example.com",
-        password: "password123",
+        password: "ValidPass123",
         role: "VIEWER",
       };
 
@@ -529,12 +539,12 @@ describe("registerSchema", () => {
       expect(result.success).toBe(true);
     });
 
-    it("should validate with minimum password length (8 chars)", () => {
+    it("should validate with minimum password length (12 chars, 3 classes)", () => {
       const registration = {
         email: "user@example.com",
         name: "Test User",
-        password: "12345678",
-        confirmPassword: "12345678",
+        password: "SecurePass1!",
+        confirmPassword: "SecurePass1!",
       };
 
       const result = registerSchema.safeParse(registration);
@@ -643,12 +653,24 @@ describe("registerSchema", () => {
   });
 
   describe("Password validation", () => {
-    it("should reject password shorter than 8 characters", () => {
+    it("should reject password shorter than 12 characters", () => {
       const registration = {
         email: "user@example.com",
         name: "Test User",
         password: "1234567",
         confirmPassword: "1234567",
+      };
+
+      const result = registerSchema.safeParse(registration);
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject password with only 2 character classes", () => {
+      const registration = {
+        email: "user@example.com",
+        name: "Test User",
+        password: "abcdefghijkl1", // lowercase + digit only
+        confirmPassword: "abcdefghijkl1",
       };
 
       const result = registerSchema.safeParse(registration);
@@ -739,8 +761,8 @@ describe("registerSchema", () => {
       const registration: RegisterInput = {
         email: "user@example.com",
         name: "Test",
-        password: "password123",
-        confirmPassword: "password123",
+        password: "ValidPass123",
+        confirmPassword: "ValidPass123",
       };
 
       expect(registration.email).toBe("user@example.com");
@@ -753,19 +775,19 @@ describe("changePasswordSchema", () => {
     it("should validate complete password change", () => {
       const passwordChange: ChangePasswordInput = {
         currentPassword: "OldPassword123",
-        newPassword: "NewPassword456",
-        confirmPassword: "NewPassword456",
+        newPassword: "NewPassword456!",
+        confirmPassword: "NewPassword456!",
       };
 
       const result = changePasswordSchema.safeParse(passwordChange);
       expect(result.success).toBe(true);
     });
 
-    it("should validate with minimum password length (8 chars)", () => {
+    it("should validate with minimum password length (12 chars, 3 classes)", () => {
       const passwordChange = {
         currentPassword: "SomePassword",
-        newPassword: "12345678",
-        confirmPassword: "12345678",
+        newPassword: "NewPass456!x",
+        confirmPassword: "NewPass456!x",
       };
 
       const result = changePasswordSchema.safeParse(passwordChange);
@@ -808,7 +830,7 @@ describe("changePasswordSchema", () => {
   });
 
   describe("New password validation", () => {
-    it("should reject new password shorter than 8 characters", () => {
+    it("should reject new password shorter than 12 characters", () => {
       const passwordChange = {
         currentPassword: "CurrentPassword",
         newPassword: "1234567",
@@ -819,10 +841,21 @@ describe("changePasswordSchema", () => {
       expect(result.success).toBe(false);
     });
 
+    it("should reject new password with only 2 character classes", () => {
+      const passwordChange = {
+        currentPassword: "CurrentPassword",
+        newPassword: "abcdefghijkl1", // lowercase + digit only
+        confirmPassword: "abcdefghijkl1",
+      };
+
+      const result = changePasswordSchema.safeParse(passwordChange);
+      expect(result.success).toBe(false);
+    });
+
     it("should reject missing new password", () => {
       const passwordChange = {
         currentPassword: "CurrentPassword",
-        confirmPassword: "NewPassword456",
+        confirmPassword: "NewPassword456!",
       };
 
       const result = changePasswordSchema.safeParse(passwordChange);
@@ -885,8 +918,8 @@ describe("changePasswordSchema", () => {
     it("should infer correct password change input type", () => {
       const passwordChange: ChangePasswordInput = {
         currentPassword: "current",
-        newPassword: "newpassword",
-        confirmPassword: "newpassword",
+        newPassword: "NewPassword1!",
+        confirmPassword: "NewPassword1!",
       };
 
       expect(passwordChange.currentPassword).toBe("current");
@@ -900,18 +933,18 @@ describe("claimProfileSchema", () => {
       const claim: ClaimProfileInput = {
         email: "user@example.com",
         personId: "person-123",
-        password: "ClaimPassword123",
+        password: "ClaimPassword123!",
       };
 
       const result = claimProfileSchema.safeParse(claim);
       expect(result.success).toBe(true);
     });
 
-    it("should validate with minimum password length (8 chars)", () => {
+    it("should validate with minimum password length (12 chars, 3 classes)", () => {
       const claim = {
         email: "user@example.com",
         personId: "person-456",
-        password: "12345678",
+        password: "ClaimPass1!x",
       };
 
       const result = claimProfileSchema.safeParse(claim);
@@ -925,7 +958,7 @@ describe("claimProfileSchema", () => {
         const claim = {
           email: "user@example.com",
           personId,
-          password: "ValidPassword123",
+          password: "ValidPassword123!",
         };
 
         const result = claimProfileSchema.safeParse(claim);
@@ -1014,11 +1047,22 @@ describe("claimProfileSchema", () => {
   });
 
   describe("Password validation", () => {
-    it("should reject password shorter than 8 characters", () => {
+    it("should reject password shorter than 12 characters", () => {
       const claim = {
         email: "user@example.com",
         personId: "person-123",
         password: "1234567",
+      };
+
+      const result = claimProfileSchema.safeParse(claim);
+      expect(result.success).toBe(false);
+    });
+
+    it("should reject password with only 2 character classes", () => {
+      const claim = {
+        email: "user@example.com",
+        personId: "person-123",
+        password: "abcdefghijkl1", // lowercase + digit only
       };
 
       const result = claimProfileSchema.safeParse(claim);
@@ -1063,7 +1107,7 @@ describe("claimProfileSchema", () => {
       const claim: ClaimProfileInput = {
         email: "user@example.com",
         personId: "person-123",
-        password: "password123",
+        password: "ValidPass123",
       };
 
       expect(claim.personId).toBe("person-123");

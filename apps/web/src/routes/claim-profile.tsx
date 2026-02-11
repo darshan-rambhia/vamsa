@@ -16,6 +16,7 @@ import {
   SelectValue,
   ThemeToggle,
 } from "@vamsa/ui";
+import { PasswordStrengthIndicator } from "@vamsa/ui/primitives";
 import { claimProfile, getUnclaimedProfiles } from "~/server/auth.functions";
 
 export const Route = createFileRoute("/claim-profile")({
@@ -193,13 +194,14 @@ function ClaimProfileComponent() {
                   type="password"
                   autoComplete="new-password"
                   required
-                  minLength={8}
+                  minLength={12}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password (min 8 characters)"
+                  placeholder="Enter your password (min 12 characters)"
                   disabled={isLoading || profiles.length === 0}
                   data-testid="claim-profile-password-input"
                 />
+                <PasswordStrengthIndicator password={password} />
               </div>
             </div>
 

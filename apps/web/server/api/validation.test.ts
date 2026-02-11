@@ -9,8 +9,26 @@
  * 4. Error responses follow a consistent format
  */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import apiV1 from "./index";
+
+// Mock authentication to provide authenticated user for protected endpoints
+const { mockBetterAuthGetSessionWithUser } = vi.hoisted(() => ({
+  mockBetterAuthGetSessionWithUser: vi.fn(async () => ({
+    id: "test-user-123",
+    email: "test@example.com",
+    name: "Test User",
+    role: "ADMIN",
+    personId: "person_123",
+    mustChangePassword: false,
+    profileClaimStatus: "CLAIMED",
+    oidcProvider: null,
+  })),
+}));
+
+vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
+  betterAuthGetSessionWithUser: mockBetterAuthGetSessionWithUser,
+}));
 
 describe("Authentication Endpoint Validation", () => {
   describe("Login validation", () => {

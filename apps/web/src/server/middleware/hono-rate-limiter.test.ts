@@ -6,13 +6,13 @@ import { rateLimitMiddleware } from "./hono-rate-limiter";
 describe("Hono Rate Limiter Middleware", () => {
   let app: Hono;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     app = new Hono();
 
     // Reset rate limits before each test
-    resetRateLimit("login", "127.0.0.1");
-    resetRateLimit("register", "127.0.0.1");
-    resetRateLimit("passwordReset", "127.0.0.1");
+    await resetRateLimit("login", "127.0.0.1");
+    await resetRateLimit("register", "127.0.0.1");
+    await resetRateLimit("passwordReset", "127.0.0.1");
 
     // Setup test route with rate limiting
     app.post("/login", rateLimitMiddleware("login"), (c) => {
@@ -87,7 +87,7 @@ describe("Hono Rate Limiter Middleware", () => {
 
     it("handles X-Forwarded-For with multiple IPs", async () => {
       const ip = "203.0.113.1";
-      resetRateLimit("login", ip);
+      await resetRateLimit("login", ip);
 
       const req = new Request("http://localhost/login", {
         method: "POST",
@@ -119,7 +119,7 @@ describe("Hono Rate Limiter Middleware", () => {
         return c.json({ success: true });
       });
 
-      resetRateLimit("login", ip);
+      await resetRateLimit("login", ip);
 
       // Make requests with X-Real-IP
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
@@ -150,7 +150,7 @@ describe("Hono Rate Limiter Middleware", () => {
         return c.json({ success: true });
       });
 
-      resetRateLimit("login", ip);
+      await resetRateLimit("login", ip);
 
       // Make requests with CF-Connecting-IP
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
@@ -255,8 +255,8 @@ describe("Hono Rate Limiter Middleware", () => {
         headers: { "x-forwarded-for": "10.0.0.1" },
       });
 
-      resetRateLimit("login", "10.0.0.1");
-      resetRateLimit("register", "10.0.0.1");
+      await resetRateLimit("login", "10.0.0.1");
+      await resetRateLimit("register", "10.0.0.1");
 
       // Exhaust login attempts (5)
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
@@ -290,8 +290,8 @@ describe("Hono Rate Limiter Middleware", () => {
         headers: { "x-forwarded-for": "10.1.0.2" },
       });
 
-      resetRateLimit("login", "10.1.0.1");
-      resetRateLimit("login", "10.1.0.2");
+      await resetRateLimit("login", "10.1.0.1");
+      await resetRateLimit("login", "10.1.0.2");
 
       // Exhaust IP1
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
@@ -316,7 +316,7 @@ describe("Hono Rate Limiter Middleware", () => {
         headers: { "x-forwarded-for": "127.0.0.2" },
       });
 
-      resetRateLimit("login", "127.0.0.2");
+      await resetRateLimit("login", "127.0.0.2");
 
       // Use up all attempts
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {

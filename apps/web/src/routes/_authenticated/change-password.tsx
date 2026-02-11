@@ -11,6 +11,7 @@ import {
   Label,
   ThemeToggle,
 } from "@vamsa/ui";
+import { PasswordStrengthIndicator } from "@vamsa/ui/primitives";
 import { changePassword } from "~/server/auth.functions";
 
 export const Route = createFileRoute("/_authenticated/change-password")({
@@ -146,12 +147,13 @@ function ChangePasswordComponent() {
                   type="password"
                   autoComplete="new-password"
                   required
-                  minLength={8}
+                  minLength={12}
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Enter your new password (min 8 characters)"
+                  placeholder="Enter your new password (min 12 characters)"
                   data-testid="change-password-new-input"
                 />
+                <PasswordStrengthIndicator password={newPassword} />
               </div>
 
               <div className="space-y-2">

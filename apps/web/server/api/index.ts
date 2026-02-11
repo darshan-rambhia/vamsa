@@ -1,6 +1,7 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import { loggers } from "@vamsa/lib/logger";
+import { requireApiAuth } from "../middleware/require-api-auth";
 import authRouter from "./auth";
 import personsRouter from "./persons";
 import relationshipsRouter from "./relationships";
@@ -73,15 +74,17 @@ apiV1.doc("/openapi.json", {
     },
     {
       name: "Persons",
-      description: "Family tree person management",
+      description: "Family tree person management (requires authentication)",
     },
     {
       name: "Relationships",
-      description: "Relationship management between persons",
+      description:
+        "Relationship management between persons (requires authentication)",
     },
     {
       name: "Batch",
-      description: "Batch operations for bulk create, update, and delete",
+      description:
+        "Batch operations for bulk create, update, and delete (requires MEMBER role)",
     },
     {
       name: "Calendar",
@@ -89,7 +92,7 @@ apiV1.doc("/openapi.json", {
     },
     {
       name: "Metrics",
-      description: "Monitoring and performance metrics",
+      description: "Monitoring and performance metrics (requires ADMIN role)",
     },
   ],
 });
@@ -118,6 +121,30 @@ apiV1.get("/", (c) => {
     { status: 200 }
   );
 });
+
+// ============================================
+// Authentication Middleware
+// ============================================
+
+/**
+ * Require authentication for protected resource routes
+ * Middleware is applied BEFORE route mounting in Hono
+ *
+ * Public routes (no auth required):
+ * - /auth/* - Authentication endpoints (login, register, logout)
+ * - /calendar/* - Calendar feeds (use token-based auth)
+ * - /docs, /openapi.json, / - Documentation and root
+ *
+ * Protected routes:
+ * - /persons/* - Requires VIEWER role (default)
+ * - /relationships/* - Requires VIEWER role (default)
+ * - /batch/* - Requires MEMBER role
+ * - /metrics/* - Requires ADMIN role
+ */
+apiV1.use("/persons/*", requireApiAuth("VIEWER"));
+apiV1.use("/relationships/*", requireApiAuth("VIEWER"));
+apiV1.use("/batch/*", requireApiAuth("MEMBER"));
+apiV1.use("/metrics/*", requireApiAuth("ADMIN"));
 
 // ============================================
 // Resource Routes

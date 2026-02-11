@@ -148,7 +148,7 @@ async function withContext<T>(
 // =============================================================================
 
 describe("Auth Handlers", () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     // Clear all mock call history
     vi.clearAllMocks();
 
@@ -173,7 +173,7 @@ describe("Auth Handlers", () => {
     });
 
     // Reset rate limits to ensure clean state for each test
-    resetRateLimit("claimProfile", "127.0.0.1");
+    await resetRateLimit("claimProfile", "127.0.0.1");
   });
 
   afterEach(() => {
@@ -195,7 +195,7 @@ describe("Auth Handlers", () => {
     const validClaimData = {
       email: "john@example.com",
       personId: "person-1",
-      password: "password123",
+      password: "SecurePass1!",
     };
 
     it("claims profile with valid data", async () => {
@@ -208,7 +208,7 @@ describe("Auth Handlers", () => {
       expect(mockClaimProfileData).toHaveBeenCalledWith(
         "john@example.com",
         "person-1",
-        "password123"
+        "SecurePass1!"
       );
     });
 
@@ -219,7 +219,7 @@ describe("Auth Handlers", () => {
           claimProfileHandler({
             email: "not-an-email",
             personId: "person-1",
-            password: "password123",
+            password: "SecurePass1!",
           })
         )
       ).rejects.toThrow();
@@ -229,8 +229,8 @@ describe("Auth Handlers", () => {
   describe("changePasswordHandler", () => {
     const validPasswordData = {
       currentPassword: "oldpassword123",
-      newPassword: "newpassword456",
-      confirmPassword: "newpassword456",
+      newPassword: "NewPassword1!",
+      confirmPassword: "NewPassword1!",
     };
 
     it("changes password for authenticated user", async () => {

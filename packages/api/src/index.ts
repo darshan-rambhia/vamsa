@@ -46,5 +46,7 @@ export {
   createSuggestionUpdatedEmail,
   createNewMemberEmail,
   createBirthdayReminderEmail,
+  createEmailVerificationTemplate,
+  createAccountLockedEmail,
 } from "./email";
 export type { NotificationPreferences, EmailTemplate } from "./email";

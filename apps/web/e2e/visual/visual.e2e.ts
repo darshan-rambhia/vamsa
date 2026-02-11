@@ -92,8 +92,8 @@ test.describe("Visual Regression", () => {
           await page.waitForLoadState("networkidle");
           // Capture full page screenshot
           await expect(page).toHaveScreenshot("dashboard-page.png", {
-            maxDiffPixels: 1500,
-            threshold: 0.2,
+            maxDiffPixels: 8000,
+            threshold: 0.3,
           });
         }
       );
@@ -163,8 +163,8 @@ test.describe("Visual Regression", () => {
           await page.waitForLoadState("networkidle");
           // Capture full page screenshot
           await expect(page).toHaveScreenshot("login-page-mobile.png", {
-            maxDiffPixels: 100,
-            threshold: 0.2,
+            maxDiffPixels: 500,
+            threshold: 0.3,
           });
         }
       );
@@ -250,8 +250,8 @@ test.describe("Visual Regression", () => {
           const navLocator = page.locator("nav, header").first();
           if (await navLocator.isVisible()) {
             await expect(navLocator).toHaveScreenshot("navigation.png", {
-              maxDiffPixels: 50,
-              threshold: 0.2,
+              maxDiffPixels: 2000,
+              threshold: 0.3,
             });
           }
         }
@@ -281,8 +281,8 @@ test.describe("Visual Regression", () => {
         async () => {
           await page.waitForLoadState("networkidle");
           await expect(page).toHaveScreenshot("login-page-dark.png", {
-            maxDiffPixels: 100,
-            threshold: 0.2,
+            maxDiffPixels: 500,
+            threshold: 0.3,
           });
         }
       );

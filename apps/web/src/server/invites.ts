@@ -13,6 +13,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { passwordSchema } from "@vamsa/schemas";
 import {
   acceptInviteData,
   createInviteData,
@@ -41,7 +42,7 @@ const createInviteSchema = z.object({
 const acceptInviteSchema = z.object({
   token: z.string(),
   name: z.string().min(1, "Name is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: passwordSchema,
 });
 
 const inviteIdSchema = z.object({

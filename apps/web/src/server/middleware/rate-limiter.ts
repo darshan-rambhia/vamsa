@@ -1,8 +1,8 @@
 /**
  * Rate limiter for server functions
  *
- * Uses an in-memory store for rate limiting. For production with multiple
- * server instances, consider using Redis or another distributed store.
+ * Uses a pluggable store for rate limiting (memory by default, Redis for distributed).
+ * In production with multiple server instances, use Redis for persistent rate limiting.
  *
  * Usage:
  * ```typescript
@@ -17,16 +17,13 @@
  */
 
 import { loggers } from "@vamsa/lib/logger";
+import { MemoryRateLimitStore } from "./rate-limit-store";
+import type { RateLimitStore } from "./rate-limit-store";
 
 const log = loggers.api;
 
 // Skip rate limiting in E2E tests to avoid flaky tests due to parallel workers
 const SKIP_RATE_LIMITING = process.env.E2E_TESTING === "true";
-
-interface RateLimitEntry {
-  count: number;
-  resetAt: number;
-}
 
 interface RateLimitOptions {
   /** Maximum number of requests allowed in the window */
@@ -35,24 +32,24 @@ interface RateLimitOptions {
   windowMs: number;
 }
 
-// In-memory store for rate limiting
-// Key format: "{action}:{identifier}"
-const rateLimitStore = new Map<string, RateLimitEntry>();
+// Default to memory store, can be replaced at startup
+let store: RateLimitStore = new MemoryRateLimitStore();
 
-// Cleanup old entries periodically (every 5 minutes)
-const CLEANUP_INTERVAL = 5 * 60 * 1000;
-
-function cleanupExpiredEntries() {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitStore.entries()) {
-    if (entry.resetAt < now) {
-      rateLimitStore.delete(key);
-    }
-  }
+/**
+ * Initialize the rate limit store. Called at server startup.
+ */
+export function initializeRateLimitStore(newStore: RateLimitStore): void {
+  store = newStore;
+  log.info(
+    { store: newStore.constructor.name },
+    "Rate limit store initialized"
+  );
 }
 
-// Start cleanup interval
-setInterval(cleanupExpiredEntries, CLEANUP_INTERVAL);
+/** Get the current store (for testing) */
+export function getRateLimitStore(): RateLimitStore {
+  return store;
+}
 
 /**
  * Rate limit configurations for different actions
@@ -70,17 +67,18 @@ export type RateLimitAction = keyof typeof RATE_LIMITS;
 
 /**
  * Check rate limit for an action
+ * Now async to support Redis store.
  *
  * @param action - The action being rate limited (e.g., "login", "register")
  * @param identifier - Unique identifier (IP address, user ID, etc.)
  * @param options - Optional custom rate limit options (overrides defaults)
  * @throws Error if rate limit exceeded with 429 status info
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   action: RateLimitAction,
   identifier: string,
   options?: Partial<RateLimitOptions>
-): void {
+): Promise<void> {
   // Skip rate limiting in E2E tests
   if (SKIP_RATE_LIMITING) {
     return;
@@ -88,40 +86,16 @@ export function checkRateLimit(
 
   const config = { ...RATE_LIMITS[action], ...options };
   const key = `${action}:${identifier}`;
-  const now = Date.now();
 
-  let entry = rateLimitStore.get(key);
+  const result = await store.increment(key, config.windowMs);
 
-  // Reset if window has passed
-  if (entry && entry.resetAt < now) {
-    entry = undefined;
-    rateLimitStore.delete(key);
-  }
-
-  if (!entry) {
-    // First request in window
-    rateLimitStore.set(key, {
-      count: 1,
-      resetAt: now + config.windowMs,
-    });
-    log.info(
-      { action, identifier, count: 1, limit: config.limit },
-      "Rate limit check passed"
-    );
-    return;
-  }
-
-  // Increment counter
-  entry.count++;
-  rateLimitStore.set(key, entry);
-
-  if (entry.count > config.limit) {
-    const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
+  if (result.count > config.limit) {
+    const retryAfter = Math.ceil((result.resetAt - Date.now()) / 1000);
     log.warn(
       {
         action,
         identifier,
-        count: entry.count,
+        count: result.count,
         limit: config.limit,
         retryAfterSeconds: retryAfter,
       },
@@ -140,7 +114,7 @@ export function checkRateLimit(
   }
 
   log.info(
-    { action, identifier, count: entry.count, limit: config.limit },
+    { action, identifier, count: result.count, limit: config.limit },
     "Rate limit check passed"
   );
 }
@@ -152,21 +126,16 @@ export function checkRateLimit(
  * @param identifier - Unique identifier
  * @returns Object with remaining attempts and reset time
  */
-export function getRateLimitStatus(
+export async function getRateLimitStatus(
   action: RateLimitAction,
   identifier: string
-): { remaining: number; resetAt: number } {
+): Promise<{ remaining: number; resetAt: number }> {
   const config = RATE_LIMITS[action];
   const key = `${action}:${identifier}`;
-  const now = Date.now();
+  const entry = await store.get(key);
 
-  const entry = rateLimitStore.get(key);
-
-  if (!entry || entry.resetAt < now) {
-    return {
-      remaining: config.limit,
-      resetAt: now + config.windowMs,
-    };
+  if (!entry) {
+    return { remaining: config.limit, resetAt: Date.now() + config.windowMs };
   }
 
   return {
@@ -181,12 +150,12 @@ export function getRateLimitStatus(
  * @param action - The action to reset
  * @param identifier - Unique identifier
  */
-export function resetRateLimit(
+export async function resetRateLimit(
   action: RateLimitAction,
   identifier: string
-): void {
+): Promise<void> {
   const key = `${action}:${identifier}`;
-  rateLimitStore.delete(key);
+  await store.reset(key);
   log.info({ action, identifier }, "Rate limit reset");
 }
 

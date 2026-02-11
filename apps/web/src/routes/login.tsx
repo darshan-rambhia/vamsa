@@ -24,6 +24,7 @@ const searchSchema = z.object({
   registered: z.boolean().optional(),
   claimed: z.boolean().optional(),
   invited: z.boolean().optional(),
+  verify: z.boolean().optional(),
 });
 
 export const Route = createFileRoute("/login")({
@@ -33,7 +34,9 @@ export const Route = createFileRoute("/login")({
 
 function LoginComponent() {
   const navigate = useNavigate();
-  const { registered, claimed, invited } = useSearch({ from: "/login" });
+  const { registered, claimed, invited, verify } = useSearch({
+    from: "/login",
+  });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -136,6 +139,19 @@ function LoginComponent() {
               >
                 <div className="mb-1 font-semibold">Invite accepted!</div>
                 <div>Please sign in with your new credentials.</div>
+              </div>
+            )}
+
+            {verify && (
+              <div
+                className="rounded-lg border-2 border-amber-500/30 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-950/30 dark:text-amber-200"
+                data-testid="login-verify-email"
+              >
+                <div className="mb-1 font-semibold">Check your email</div>
+                <div>
+                  We sent a verification link to your email address. Please
+                  verify your email before signing in.
+                </div>
               </div>
             )}
 

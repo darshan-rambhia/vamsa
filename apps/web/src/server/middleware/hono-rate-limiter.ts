@@ -84,10 +84,10 @@ export function rateLimitMiddleware(action: RateLimitAction) {
 
     try {
       // Check rate limit - will throw if exceeded
-      checkRateLimit(action, clientIP);
+      await checkRateLimit(action, clientIP);
 
       // Get current rate limit status
-      const status = getRateLimitStatus(action, clientIP);
+      const status = await getRateLimitStatus(action, clientIP);
 
       // Add rate limit headers to response
       c.header("X-RateLimit-Limit", String(status.remaining + 1));
@@ -103,7 +103,7 @@ export function rateLimitMiddleware(action: RateLimitAction) {
       ) {
         const retryAfter = (error as Error & { retryAfter?: number })
           .retryAfter;
-        const status = getRateLimitStatus(action, clientIP);
+        const status = await getRateLimitStatus(action, clientIP);
 
         log.warn(
           { action, clientIP, error: error.message },

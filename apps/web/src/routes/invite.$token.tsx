@@ -11,6 +11,7 @@ import {
   Label,
   ThemeToggle,
 } from "@vamsa/ui";
+import { PasswordStrengthIndicator } from "@vamsa/ui/primitives";
 import { acceptInvite, getInviteByToken } from "~/server/invites";
 
 export const Route = createFileRoute("/invite/$token")({
@@ -41,8 +42,8 @@ function InviteAcceptPage() {
       return;
     }
 
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+    if (password.length < 12) {
+      setError("Password must be at least 12 characters");
       return;
     }
 
@@ -189,12 +190,13 @@ function InviteAcceptPage() {
                   type="password"
                   autoComplete="new-password"
                   required
-                  minLength={8}
+                  minLength={12}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 8 characters"
+                  placeholder="At least 12 characters"
                   data-testid="invite-password-input"
                 />
+                <PasswordStrengthIndicator password={password} />
               </div>
 
               <div className="space-y-2">

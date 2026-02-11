@@ -4,6 +4,7 @@
 import { describe, expect, test } from "vitest";
 import {
   createBirthdayReminderEmail,
+  createEmailVerificationTemplate,
   createNewMemberEmail,
   createSuggestionCreatedEmail,
   createSuggestionUpdatedEmail,
@@ -952,6 +953,131 @@ describe("Email Templates", () => {
     });
   });
 
+  describe("createEmailVerificationTemplate", () => {
+    test("returns correct subject", () => {
+      const template = createEmailVerificationTemplate(
+        "John",
+        "https://vamsa.app/verify?token=abc"
+      );
+      expect(template.subject).toBe("Verify your email address - Vamsa");
+    });
+
+    test("includes user name in html", () => {
+      const template = createEmailVerificationTemplate(
+        "John Doe",
+        "https://example.com/verify"
+      );
+      expect(template.html).toContain("John Doe");
+    });
+
+    test("includes verification URL in html", () => {
+      const url = "https://vamsa.app/api/auth/verify-email?token=abc123";
+      const template = createEmailVerificationTemplate("Jane", url);
+      expect(template.html).toContain(url);
+    });
+
+    test("includes verification URL in text", () => {
+      const url = "https://vamsa.app/api/auth/verify-email?token=abc123";
+      const template = createEmailVerificationTemplate("Jane", url);
+      expect(template.text).toContain(url);
+    });
+
+    test("includes user name in text", () => {
+      const template = createEmailVerificationTemplate(
+        "John",
+        "https://example.com/verify"
+      );
+      expect(template.text).toContain("John");
+    });
+
+    test("returns object with subject, html, and text properties", () => {
+      const template = createEmailVerificationTemplate(
+        "Alice",
+        "https://example.com/verify"
+      );
+      expect(template).toBeDefined();
+      expect(template.subject).toBeDefined();
+      expect(template.html).toBeDefined();
+      expect(template.text).toBeDefined();
+    });
+
+    test("html is valid HTML structure", () => {
+      const template = createEmailVerificationTemplate(
+        "John",
+        "https://example.com/verify"
+      );
+      expect(template.html).toContain("<!DOCTYPE html>");
+      expect(template.html).toContain("<html>");
+      expect(template.html).toContain("</html>");
+      expect(template.html).toContain("<head>");
+      expect(template.html).toContain("</head>");
+      expect(template.html).toContain("<body>");
+      expect(template.html).toContain("</body>");
+    });
+
+    test("html includes styling", () => {
+      const template = createEmailVerificationTemplate(
+        "John",
+        "https://example.com/verify"
+      );
+      expect(template.html).toContain("<style>");
+      expect(template.html).toContain("font-family:");
+    });
+
+    test("includes Vamsa branding", () => {
+      const template = createEmailVerificationTemplate(
+        "John",
+        "https://example.com/verify"
+      );
+      expect(template.html).toContain("Vamsa");
+      expect(template.text).toContain("Vamsa");
+    });
+
+    test("includes footer disclaimer", () => {
+      const template = createEmailVerificationTemplate(
+        "John",
+        "https://example.com/verify"
+      );
+      expect(template.html).toContain("automated message");
+      expect(template.html).toContain("do not reply");
+    });
+
+    test("handles special characters in names", () => {
+      const template = createEmailVerificationTemplate(
+        "José García",
+        "https://example.com/verify"
+      );
+      expect(template.html).toContain("José García");
+      expect(template.text).toContain("José García");
+    });
+
+    test("text version removes HTML tags for readability", () => {
+      const template = createEmailVerificationTemplate(
+        "John",
+        "https://example.com/verify"
+      );
+      expect(template.text).not.toContain("<");
+      expect(template.text).not.toContain(">");
+      expect(template.text).not.toContain("html");
+      expect(template.text).not.toContain("body");
+    });
+
+    test("includes button link in html", () => {
+      const url = "https://vamsa.app/api/auth/verify-email?token=abc123";
+      const template = createEmailVerificationTemplate("John", url);
+      expect(template.html).toContain('class="button"');
+      expect(template.html).toContain(`href="${url}"`);
+    });
+
+    test("handles long verification URLs", () => {
+      const longUrl =
+        "https://vamsa.app/api/auth/verify-email?token=" + "a".repeat(200);
+      const template = createEmailVerificationTemplate("John", longUrl);
+      expect(template.html).toContain(longUrl);
+      expect(template.text).toContain(longUrl);
+    });
+  });
+
   describe("Common email features", () => {
     test("all emails include footer disclaimer", () => {
       const email1 = createSuggestionCreatedEmail(
@@ -1006,6 +1132,12 @@ describe("Email Templates", () => {
         "https://example.com/tree"
       );
       expect(email4.html).toContain("Vamsa");
+
+      const email5 = createEmailVerificationTemplate(
+        "John",
+        "https://example.com/verify"
+      );
+      expect(email5.html).toContain("Vamsa");
     });
 
     test("text version removes HTML tags for readability", () => {

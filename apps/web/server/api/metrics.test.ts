@@ -4,12 +4,30 @@
  * These tests use the real API without mocking shared modules
  * to avoid mock leaking issues between test files.
  */
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   SLOW_QUERY_LOG_THRESHOLD_MS,
   clearSlowQueries,
 } from "../metrics/slow-query-logger";
 import apiV1 from "./index";
+
+// Mock authentication to provide admin user
+const { mockBetterAuthGetSessionWithUser } = vi.hoisted(() => ({
+  mockBetterAuthGetSessionWithUser: vi.fn(async () => ({
+    id: "test-user-admin",
+    email: "admin@example.com",
+    name: "Admin User",
+    role: "ADMIN",
+    personId: "person_admin",
+    mustChangePassword: false,
+    profileClaimStatus: "CLAIMED",
+    oidcProvider: null,
+  })),
+}));
+
+vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
+  betterAuthGetSessionWithUser: mockBetterAuthGetSessionWithUser,
+}));
 
 // Note: LOG_LEVEL=error is used in test command to silence logger warnings
 
