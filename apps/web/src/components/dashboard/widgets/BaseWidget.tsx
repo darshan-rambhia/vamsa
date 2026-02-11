@@ -50,10 +50,12 @@ export function BaseWidget({
       <Card
         className={cn(
           "flex h-full flex-col",
+          // Glassmorphism & Premium Feel - More Opaque
+          "border-white/20 bg-white/60 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-black/40",
           // Subtle focus indicator for keyboard navigation
           "focus-within:ring-ring focus-within:ring-2 focus-within:ring-offset-2",
           // Subtle hover effect with scale and shadow
-          "transition-transform hover:scale-[1.01] hover:shadow-md",
+          "hover:border-primary/20 transition-all duration-300 hover:shadow-lg",
           // Disable animations if user prefers reduced motion
           "motion-reduce:transform-none motion-reduce:transition-none",
           className
@@ -139,7 +141,7 @@ export function BaseWidget({
               aria-live="assertive"
             >
               <div className="flex items-start gap-3">
-                <AlertCircle className="text-destructive mt-0.5 h-5 w-5 flex-shrink-0" />
+                <AlertCircle className="text-destructive mt-0.5 h-5 w-5 shrink-0" />
                 <div className="min-w-0">
                   <h4 className="text-destructive text-sm font-medium">
                     Error Loading Widget

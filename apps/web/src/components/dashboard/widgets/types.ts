@@ -29,6 +29,8 @@ export interface WidgetProps {
   onConfigChange: (config: Partial<WidgetConfig>) => void;
   /** Callback to remove this widget from dashboard */
   onRemove: () => void;
+  /** Additional CSS classes (e.g. for drag handles) */
+  className?: string;
 }
 
 /**

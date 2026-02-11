@@ -1,7 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { TrendingUp, UserCheck, UserMinus, Users } from "lucide-react";
 import { getPeopleStatistics } from "../../../server/statistics";
 import { AnimatedNumber } from "../../ui/animated-number";
 import { BaseWidget } from "./BaseWidget";
@@ -16,126 +15,6 @@ interface PeopleStatsWidgetSettings {
 }
 
 /**
- * Stat card component for displaying individual statistics
- */
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  iconColor,
-}: {
-  label: string;
-  value: number;
-  icon: React.ElementType;
-  iconColor: string;
-}) {
-  return (
-    <div className="border-border bg-muted/30 hover:bg-muted/50 flex items-start gap-3 rounded-lg border-2 p-4 transition-colors">
-      <div className={`rounded-md p-2 ${iconColor}`}>
-        <Icon className="h-4 w-4" aria-hidden="true" />
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-muted-foreground text-sm font-medium">{label}</p>
-        <p className="font-display mt-1 text-2xl font-semibold tabular-nums">
-          <AnimatedNumber value={value} />
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/**
- * Simple horizontal bar chart for gender distribution
- */
-function GenderDistributionChart({
-  male,
-  female,
-  unknown,
-  total,
-}: {
-  male: number;
-  female: number;
-  unknown: number;
-  total: number;
-}) {
-  if (total === 0) {
-    return (
-      <div className="text-muted-foreground text-center text-sm">
-        No data to display
-      </div>
-    );
-  }
-
-  const malePercent = (male / total) * 100;
-  const femalePercent = (female / total) * 100;
-  const unknownPercent = (unknown / total) * 100;
-
-  return (
-    <div className="space-y-3">
-      <h4 className="text-sm font-medium">Gender Distribution</h4>
-      <div
-        className="border-border flex h-8 w-full overflow-hidden rounded-md border-2"
-        role="img"
-        aria-label={`Gender distribution: ${male} male, ${female} female, ${unknown} unknown`}
-      >
-        {malePercent > 0 && (
-          <div
-            className="bg-chart-1 flex items-center justify-center text-xs font-medium text-white transition-all"
-            style={{ width: `${malePercent}%` }}
-            title={`Male: ${male} (${malePercent.toFixed(1)}%)`}
-          >
-            {malePercent > 10 && <span>{male}</span>}
-          </div>
-        )}
-        {femalePercent > 0 && (
-          <div
-            className="bg-chart-3 flex items-center justify-center text-xs font-medium text-white transition-all"
-            style={{ width: `${femalePercent}%` }}
-            title={`Female: ${female} (${femalePercent.toFixed(1)}%)`}
-          >
-            {femalePercent > 10 && <span>{female}</span>}
-          </div>
-        )}
-        {unknownPercent > 0 && (
-          <div
-            className="bg-muted-foreground flex items-center justify-center text-xs font-medium text-white transition-all"
-            style={{ width: `${unknownPercent}%` }}
-            title={`Unknown: ${unknown} (${unknownPercent.toFixed(1)}%)`}
-          >
-            {unknownPercent > 10 && <span>{unknown}</span>}
-          </div>
-        )}
-      </div>
-      <div className="flex flex-wrap gap-3 text-xs">
-        <div className="flex items-center gap-1.5">
-          <div className="bg-chart-1 h-3 w-3 rounded-sm" aria-hidden="true" />
-          <span className="text-muted-foreground">
-            Male: {male} ({malePercent.toFixed(1)}%)
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="bg-chart-3 h-3 w-3 rounded-sm" aria-hidden="true" />
-          <span className="text-muted-foreground">
-            Female: {female} ({femalePercent.toFixed(1)}%)
-          </span>
-        </div>
-        {unknown > 0 && (
-          <div className="flex items-center gap-1.5">
-            <div
-              className="bg-muted-foreground h-3 w-3 rounded-sm"
-              aria-hidden="true"
-            />
-            <span className="text-muted-foreground">
-              Unknown: {unknown} ({unknownPercent.toFixed(1)}%)
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/**
  * People Statistics Widget
  *
  * Displays family tree statistics including:
@@ -144,7 +23,11 @@ function GenderDistributionChart({
  * - Recent additions (last 7/30 days)
  * - Gender distribution (optional chart)
  */
-export function PeopleStatisticsWidget({ config, onRemove }: WidgetProps) {
+export function PeopleStatisticsWidget({
+  config,
+  onRemove,
+  className,
+}: WidgetProps) {
   const rawSettings = config.settings as PeopleStatsWidgetSettings | undefined;
   const settings: PeopleStatsWidgetSettings = {
     showChart: rawSettings?.showChart ?? true,
@@ -170,49 +53,74 @@ export function PeopleStatisticsWidget({ config, onRemove }: WidgetProps) {
       error={error as Error}
       onRemove={onRemove}
       onRefresh={() => refetch()}
+      className={className}
     >
       {stats && (
-        <div className="space-y-4">
-          {/* Main Statistics Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            <StatCard
-              label="Total People"
-              value={stats.total}
-              icon={Users}
-              iconColor="bg-primary/10 text-primary"
-            />
-            <StatCard
-              label="Living"
-              value={stats.living}
-              icon={UserCheck}
-              iconColor="bg-chart-1/10 text-chart-1"
-            />
-            <StatCard
-              label="Deceased"
-              value={stats.deceased}
-              icon={UserMinus}
-              iconColor="bg-muted-foreground/10 text-muted-foreground"
-            />
-            <StatCard
-              label={`Recent (${settings.recentDays}d)`}
-              value={
-                settings.recentDays === 7
+        <div className="flex h-full flex-col gap-6 p-2">
+          {/* Hero Stat */}
+          <div className="flex flex-1 flex-col justify-center space-y-2">
+            <span className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
+              Total Family Members
+            </span>
+            <div className="font-display text-primary text-7xl font-light tabular-nums">
+              <AnimatedNumber value={stats.total} />
+            </div>
+            <div className="text-muted-foreground flex items-center gap-2 text-sm">
+              <span className="bg-primary/10 text-primary inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium">
+                +
+                {settings.recentDays === 7
                   ? stats.recentAdditions.last7Days
-                  : stats.recentAdditions.last30Days
-              }
-              icon={TrendingUp}
-              iconColor="bg-chart-2/10 text-chart-2"
-            />
+                  : stats.recentAdditions.last30Days}{" "}
+                this week
+              </span>
+              <span>growing legacy</span>
+            </div>
           </div>
 
-          {/* Gender Distribution Chart */}
+          {/* Breakdown Stats */}
+          <div className="border-border/50 grid grid-cols-3 gap-4 border-t pt-4">
+            <div className="space-y-1">
+              <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
+                Living
+              </span>
+              <div className="font-display text-2xl tabular-nums">
+                {stats.living}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
+                Deceased
+              </span>
+              <div className="font-display text-2xl tabular-nums">
+                {stats.deceased}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
+                Recent
+              </span>
+              <div className="font-display text-2xl tabular-nums">
+                {settings.recentDays === 7
+                  ? stats.recentAdditions.last7Days
+                  : stats.recentAdditions.last30Days}
+              </div>
+            </div>
+          </div>
+
+          {/* Gender Distribution Bar (Decorative) */}
           {settings.showChart && (
-            <div className="border-border bg-muted/30 rounded-lg border-2 p-4">
-              <GenderDistributionChart
-                male={stats.male}
-                female={stats.female}
-                unknown={stats.unknown}
-                total={stats.total}
+            <div className="bg-secondary/10 flex h-1.5 w-full overflow-hidden rounded-full">
+              <div
+                className="bg-primary h-full transition-all duration-500"
+                style={{
+                  width: `${(stats.male / stats.total) * 100}%`,
+                }}
+              />
+              <div
+                className="bg-secondary h-full transition-all duration-500"
+                style={{
+                  width: `${(stats.female / stats.total) * 100}%`,
+                }}
               />
             </div>
           )}

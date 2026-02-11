@@ -146,7 +146,11 @@ function getEntityLink(
  * />
  * ```
  */
-export function RecentActivityWidget({ config, onRemove }: WidgetProps) {
+export function RecentActivityWidget({
+  config,
+  onRemove,
+  className,
+}: WidgetProps) {
   const settings: RecentActivityWidgetSettings = {
     ...DEFAULT_SETTINGS,
     ...(config.settings as Partial<RecentActivityWidgetSettings>),
@@ -197,7 +201,7 @@ export function RecentActivityWidget({ config, onRemove }: WidgetProps) {
       error={error ? error : null}
       onRemove={onRemove}
       onRefresh={handleRefresh}
-      className="flex flex-col"
+      className={cn("flex flex-col", className)}
     >
       <div className="space-y-1">
         {activities && activities.length === 0 && (
@@ -232,7 +236,7 @@ export function RecentActivityWidget({ config, onRemove }: WidgetProps) {
               >
                 {/* Activity Icon */}
                 <div
-                  className={cn("mt-0.5 flex-shrink-0", iconColor)}
+                  className={cn("mt-0.5 shrink-0", iconColor)}
                   aria-hidden="true"
                 >
                   <Icon className="h-4 w-4" />

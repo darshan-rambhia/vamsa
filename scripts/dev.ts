@@ -15,7 +15,7 @@ async function main() {
 
   // Start postgres container
   logger.info("Starting PostgreSQL...");
-  await $`docker-compose -f ${DOCKER_COMPOSE_FILE} --profile ${DOCKER_PROFILE} up -d`.quiet();
+  await $`docker compose -f ${DOCKER_COMPOSE_FILE} --profile ${DOCKER_PROFILE} up -d`.quiet();
 
   // Wait for postgres to be ready
   logger.info("Waiting for PostgreSQL to be ready...");
@@ -26,7 +26,7 @@ async function main() {
   while (!ready && attempts < maxAttempts) {
     try {
       const result =
-        await $`docker-compose -f ${DOCKER_COMPOSE_FILE} --profile ${DOCKER_PROFILE} exec -T db pg_isready -U vamsa`
+        await $`docker compose -f ${DOCKER_COMPOSE_FILE} --profile ${DOCKER_PROFILE} exec -T db pg_isready -U vamsa`
           .quiet()
           .nothrow();
       if (result.exitCode === 0) {

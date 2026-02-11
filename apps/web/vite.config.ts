@@ -17,9 +17,11 @@ import type { Plugin } from "vite";
  * Only stubs modules that are purely server-side and have no client purpose:
  * - i18next-fs-backend: Filesystem backend for i18n (server-only)
  * - pg/pg-pool/pgpass/pg-native: PostgreSQL drivers (server-only)
+ * - drizzle-orm/node-postgres: Drizzle pg driver (imports pg which uses Buffer)
+ * - react-dom/server: SSR renderer leaked via TanStack Start import chain
  *
  * Does NOT stub:
- * - drizzle-orm: Schema definitions may be needed for types
+ * - drizzle-orm (base): Schema definitions may be needed for types
  * - archiver/arctic/bcryptjs/node-cron/sharp: May cause build issues if stubbed
  */
 function serverOnlyStubPlugin(): Plugin {
@@ -64,6 +66,41 @@ function serverOnlyStubPlugin(): Plugin {
     // pgpass and pg-native are optional and rarely used directly
     pgpass: `export default {};`,
     "pg-native": `export default {};`,
+    // drizzle-orm/node-postgres imports pg which uses Buffer (Node.js only)
+    // Must also be in optimizeDeps.exclude to prevent esbuild pre-bundling
+    "drizzle-orm/node-postgres": `
+      export function drizzle() { return {}; }
+      export default { drizzle };
+    `,
+    // Node.js built-in modules that leak to client via TanStack Router SSR code.
+    // In dev mode, Vite wraps these in a proxy that throws "externalized for browser
+    // compatibility". We stub them with browser-native equivalents or no-ops.
+    "node:stream/web": `
+      export const ReadableStream = globalThis.ReadableStream;
+      export const WritableStream = globalThis.WritableStream;
+      export const TransformStream = globalThis.TransformStream;
+      export default { ReadableStream, WritableStream, TransformStream };
+    `,
+    "node:stream": `
+      export class Readable { on() { return this; } pipe() { return this; } destroy() {} }
+      export class Writable { on() { return this; } write() {} end() {} destroy() {} }
+      export class Transform extends Readable { push() {} }
+      export class PassThrough extends Transform {}
+      export default { Readable, Writable, Transform, PassThrough };
+    `,
+    "node:async_hooks": `
+      export class AsyncLocalStorage { getStore() { return undefined; } run(store, fn) { return fn(); } }
+      export default { AsyncLocalStorage };
+    `,
+    // react-dom/server leaks to client via TanStack Start's incomplete tree-shaking
+    // of server function files that import middleware with getCookie
+    "react-dom/server": `
+      const noop = () => { throw new Error("react-dom/server should not be called on the client"); };
+      export default { renderToString: noop, renderToReadableStream: noop, renderToPipeableStream: noop };
+      export const renderToString = noop;
+      export const renderToReadableStream = noop;
+      export const renderToPipeableStream = noop;
+    `,
   };
 
   const serverOnlyModules = Object.keys(moduleStubs);
@@ -116,7 +153,15 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    exclude: ["react-native"],
+    exclude: [
+      "react-native",
+      // Prevent esbuild from pre-bundling server-only pg modules.
+      // Without this, esbuild inlines pg/postgres-bytea (which use Buffer)
+      // into a single client-side file, bypassing our stub plugin.
+      "drizzle-orm/node-postgres",
+      "pg",
+      "pg-pool",
+    ],
   },
   ssr: {
     external: [
@@ -148,15 +193,31 @@ export default defineConfig({
         "react-native",
         // sharp is a native image processing library that must not be bundled
         "sharp",
-        // Node.js built-ins used by TanStack Start/Router SSR code
-        // Must be external to prevent client bundle from trying to include them
-        "node:stream",
-        "node:stream/web",
-        "node:async_hooks",
+        // Note: node:stream, node:stream/web, node:async_hooks are NOT externalized here.
+        // They are handled by serverOnlyStubPlugin() which provides browser-compatible stubs.
       ],
     },
   },
   plugins: [
+    // Stub server-only TanStack Start virtual modules for client environment.
+    // The TanStack Start plugin registers these only for server (env.config.consumer === 'server'),
+    // but vite:import-analysis still statically resolves the import() in client code.
+    {
+      name: "tanstack-start-virtual-module-stub",
+      enforce: "pre",
+      resolveId(id, _importer, options) {
+        if (!options.ssr && id === "tanstack-start-injected-head-scripts:v") {
+          return `\0client-stub:${id}`;
+        }
+        return null;
+      },
+      load(id) {
+        if (id === "\0client-stub:tanstack-start-injected-head-scripts:v") {
+          return "export const injectedHeadScripts = '';";
+        }
+        return null;
+      },
+    },
     // Stub server-only modules for client builds to prevent browser errors
     serverOnlyStubPlugin(),
     // Add API routes in dev mode for dev/prod parity

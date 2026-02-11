@@ -18,6 +18,7 @@ import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
+  Clock,
 } from "lucide-react";
 import { Button, cn } from "@vamsa/ui";
 import { useQuery } from "@tanstack/react-query";
@@ -165,6 +166,7 @@ export function CalendarWidget({
   config,
   onConfigChange,
   onRemove,
+  className,
 }: WidgetProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showSettings, setShowSettings] = useState(false);
@@ -275,8 +277,9 @@ export function CalendarWidget({
       onSettings={() => setShowSettings(!showSettings)}
       onRemove={onRemove}
       onRefresh={() => refetch()}
+      className={className}
     >
-      <div className="flex h-full flex-col gap-4">
+      <div className="flex h-full flex-col gap-4 p-1">
         {/* Settings Panel */}
         {showSettings && (
           <div className="border-border rounded-lg border p-4">
@@ -355,9 +358,9 @@ export function CalendarWidget({
         )}
 
         {/* Mini Calendar */}
-        <div className="flex-shrink-0">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-medium">
+        <div className="shrink-0 border-b pb-4">
+          <div className="mb-3 flex items-center justify-between px-1">
+            <h3 className="font-display text-lg font-medium">
               {format(currentMonth, "MMMM yyyy")}
             </h3>
             <div className="flex items-center gap-1">
@@ -366,7 +369,7 @@ export function CalendarWidget({
                 size="icon"
                 onClick={handlePreviousMonth}
                 aria-label="Previous month"
-                className="h-7 w-7"
+                className="hover:bg-primary/10 hover:text-primary h-7 w-7 rounded-full"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -374,7 +377,7 @@ export function CalendarWidget({
                 variant="ghost"
                 size="sm"
                 onClick={handleToday}
-                className="h-7 px-2 text-xs"
+                className="hover:bg-primary/10 hover:text-primary h-7 rounded-full px-3 text-xs"
               >
                 Today
               </Button>
@@ -383,7 +386,7 @@ export function CalendarWidget({
                 size="icon"
                 onClick={handleNextMonth}
                 aria-label="Next month"
-                className="h-7 w-7"
+                className="hover:bg-primary/10 hover:text-primary h-7 w-7 rounded-full"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -396,7 +399,7 @@ export function CalendarWidget({
             {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
               <div
                 key={day}
-                className="text-muted-foreground text-center text-xs font-medium"
+                className="text-muted-foreground text-center text-[10px] font-medium tracking-wider uppercase"
               >
                 {day}
               </div>
@@ -413,12 +416,15 @@ export function CalendarWidget({
                 <div
                   key={day.toISOString()}
                   className={cn(
-                    "relative aspect-square rounded-md p-1 text-center text-sm",
+                    "hover:bg-primary/5 relative aspect-square cursor-pointer rounded-full p-1 text-center text-sm transition-all",
                     isCurrentMonth
                       ? "text-foreground"
-                      : "text-muted-foreground/40",
-                    isTodayDate && "bg-primary/10 font-semibold",
-                    dayEvents.length > 0 && "hover:bg-accent/20 cursor-pointer"
+                      : "text-muted-foreground/30",
+                    isTodayDate &&
+                      "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground font-semibold",
+                    !isTodayDate &&
+                      dayEvents.length > 0 &&
+                      "text-primary font-medium"
                   )}
                   title={
                     dayEvents.length > 0
@@ -431,8 +437,11 @@ export function CalendarWidget({
                       : undefined
                   }
                 >
-                  <span className="relative z-10">{format(day, "d")}</span>
-                  {getEventDot(day)}
+                  <span className="relative z-10 flex h-full w-full items-center justify-center">
+                    {format(day, "d")}
+                  </span>
+                  {/* Dots below name */}
+                  {!isTodayDate && getEventDot(day)}
                 </div>
               );
             })}
@@ -440,50 +449,42 @@ export function CalendarWidget({
         </div>
 
         {/* Upcoming Events List */}
-        <div className="flex-1 overflow-auto">
-          <h3 className="mb-2 text-sm font-medium">Upcoming Events</h3>
+        <div className="flex-1 overflow-auto px-1">
+          <h4 className="font-display text-muted-foreground mb-3 text-sm font-medium tracking-wider uppercase">
+            Coming Up
+          </h4>
           {nextEvents.length === 0 ? (
             <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center">
               <CalendarIcon className="h-8 w-8 opacity-20" />
               <p className="text-sm">No upcoming events</p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {nextEvents.map((event) => {
+            <div className="space-y-3">
+              {nextEvents.slice(0, 3).map((event) => {
                 const eventDate = parseISO(event.upcomingDate);
-                const daysUntil = Math.ceil(
-                  (eventDate.getTime() - new Date().getTime()) /
-                    (1000 * 60 * 60 * 24)
-                );
-
                 return (
                   <div
                     key={event.id}
-                    className="border-border hover:bg-accent/5 rounded-lg border p-3 transition-colors"
+                    className="group bg-secondary/5 hover:bg-secondary/10 hover:border-secondary/20 flex items-center gap-3 rounded-xl border border-transparent p-3 transition-all"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">
-                          {event.personName}
-                        </p>
-                        <p className="text-muted-foreground text-xs">
-                          {getEventTypeLabel(event.type)}
-                          {event.yearsAgo !== undefined &&
-                            event.yearsAgo > 0 &&
-                            ` (${event.yearsAgo} ${event.type === "BIRTH" ? "years old" : "years ago"})`}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs font-medium">
-                          {format(eventDate, "MMM d")}
-                        </p>
-                        <p className="text-muted-foreground text-xs">
-                          {daysUntil === 0
-                            ? "Today"
-                            : daysUntil === 1
-                              ? "Tomorrow"
-                              : `in ${daysUntil}d`}
-                        </p>
+                    <div className="bg-background border-border/50 flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-lg border shadow-sm">
+                      <span className="text-primary text-[10px] leading-none font-bold uppercase">
+                        {format(eventDate, "MMM")}
+                      </span>
+                      <span className="font-display text-base leading-none font-medium">
+                        {format(eventDate, "d")}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="group-hover:text-primary truncate text-sm font-medium transition-colors">
+                        {event.personName}
+                      </p>
+                      <div className="text-muted-foreground flex items-center gap-2 text-xs">
+                        <Clock className="h-3 w-3" />
+                        <span>{format(eventDate, "h:mm a")}</span>
+                        <span className="text-accent-foreground/50">•</span>
+                        <span>{getEventTypeLabel(event.type)}</span>
                       </div>
                     </div>
                   </div>

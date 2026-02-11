@@ -1,15 +1,16 @@
 "use client";
 
 import { useCallback, useMemo } from "react";
-import GridLayout from "react-grid-layout";
+import { Responsive, WidthProvider } from "react-grid-layout/legacy";
 import { cn } from "@vamsa/ui";
-import { BaseWidget } from "./widgets/BaseWidget";
 import { getWidget } from "./widget-registry";
 import type { Layout } from "react-grid-layout";
 import type { WidgetConfig } from "./widgets/types";
 
 // Import react-grid-layout CSS
 import "react-grid-layout/css/styles.css";
+
+const ResponsiveGridLayout = WidthProvider(Responsive);
 
 // Layout is a readonly array of LayoutItems
 type LayoutItem = Layout extends ReadonlyArray<infer T> ? T : never;
@@ -34,7 +35,7 @@ interface DashboardGridProps {
  * Uses react-grid-layout for drag-and-drop reordering and resizing.
  *
  * Features:
- * - Responsive breakpoints (desktop: 12 cols, tablet: 6 cols, mobile: 2 cols)
+ * - Responsive breakpoints (desktop: 4 cols, tablet: 2 cols, mobile: 1 col)
  * - Drag-and-drop widget reordering
  * - Resize handles with min/max constraints
  * - Collision detection and snap to grid
@@ -70,10 +71,10 @@ export function DashboardGrid({
           y: widget.position.y,
           w: widget.size.w,
           h: widget.size.h,
-          minW: definition?.minSize?.w,
-          minH: definition?.minSize?.h,
-          maxW: definition?.maxSize?.w,
-          maxH: definition?.maxSize?.h,
+          minW: definition?.minSize?.w ?? 2,
+          minH: definition?.minSize?.h ?? 2,
+          maxW: definition?.maxSize?.w ?? 4,
+          maxH: definition?.maxSize?.h ?? 4,
         };
       }),
     [widgets]
@@ -86,8 +87,8 @@ export function DashboardGrid({
       const newLayoutArray = [...newLayout];
 
       // Only trigger callback if layout actually changed
-      const hasChanged = newLayoutArray.some((item, idx) => {
-        const oldItem = layout[idx];
+      const hasChanged = newLayoutArray.some((item, _idx) => {
+        const oldItem = layout.find((l) => l.i === item.i);
         return (
           oldItem &&
           (item.x !== oldItem.x ||
@@ -104,38 +105,29 @@ export function DashboardGrid({
     [layout, onLayoutChange]
   );
 
-  // Type assertion to work around incomplete GridLayout types
-  const GridLayoutComponent = GridLayout as React.ComponentType<{
-    className?: string;
-    layout: Array<LayoutItem>;
-    rowHeight?: number;
-    width?: number;
-    isDraggable?: boolean;
-    isResizable?: boolean;
-    compactType?: "vertical" | "horizontal" | null;
-    preventCollision?: boolean;
-    useCSSTransforms?: boolean;
-    onLayoutChange?: (layout: Layout) => void;
-    draggableHandle?: string;
-    resizeHandles?: Array<string>;
-    children?: React.ReactNode;
-  }>;
-
   return (
     <div className={cn("dashboard-grid", className)}>
-      <GridLayoutComponent
+      <ResponsiveGridLayout
         className="layout"
-        layout={layout}
-        rowHeight={80}
-        width={1200}
+        layouts={{
+          lg: layout,
+          md: layout,
+          sm: layout,
+          xs: layout,
+          xxs: layout,
+        }}
+        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+        cols={{ lg: 4, md: 4, sm: 2, xs: 1, xxs: 1 }}
+        rowHeight={100}
         isDraggable={isEditable}
         isResizable={isEditable}
         compactType="vertical"
         preventCollision={false}
         useCSSTransforms={true}
-        onLayoutChange={handleLayoutChange}
+        onLayoutChange={(layout: Layout) => handleLayoutChange(layout)}
         draggableHandle=".widget-drag-handle"
         resizeHandles={["se"]}
+        margin={[16, 16]}
       >
         {widgets.map((widget) => {
           const definition = getWidget(widget.type);
@@ -149,34 +141,25 @@ export function DashboardGrid({
 
           return (
             <div key={widget.id} className="dashboard-grid-item">
-              <BaseWidget
+              <WidgetComponent
                 config={widget}
+                onConfigChange={(partial) =>
+                  onWidgetSettingsChange(widget.id, {
+                    ...widget,
+                    ...partial,
+                  })
+                }
                 onRemove={() => onWidgetRemove(widget.id)}
-                onSettings={() => {
-                  // Settings callback - could open a modal/drawer
-                  onWidgetSettingsChange?.(widget.id, widget);
-                }}
                 className={cn(
-                  "h-full",
+                  "h-full w-full",
                   // Add drag handle styling to the card header
                   isEditable && "widget-drag-handle cursor-move"
                 )}
-              >
-                <WidgetComponent
-                  config={widget}
-                  onConfigChange={(partial) =>
-                    onWidgetSettingsChange(widget.id, {
-                      ...widget,
-                      ...partial,
-                    })
-                  }
-                  onRemove={() => onWidgetRemove(widget.id)}
-                />
-              </BaseWidget>
+              />
             </div>
           );
         })}
-      </GridLayoutComponent>
+      </ResponsiveGridLayout>
     </div>
   );
 }

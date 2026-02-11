@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ExternalLink, Loader2, Search, User } from "lucide-react";
-import { Button, Input, cn } from "@vamsa/ui";
+import { Loader2, Search, X } from "lucide-react";
+import { Button, Input } from "@vamsa/ui";
 import { searchPeople } from "../../../server/search";
 import { BaseWidget } from "./BaseWidget";
 import type { WidgetProps } from "./types";
@@ -44,7 +44,11 @@ interface QuickSearchSettings {
  * />
  * ```
  */
-export function QuickSearchWidget({ config, onRemove }: WidgetProps) {
+export function QuickSearchWidget({
+  config,
+  onRemove,
+  className,
+}: WidgetProps) {
   const settings = config.settings as QuickSearchSettings | undefined;
   const maxResults = settings?.maxResults ?? 5;
 
@@ -63,7 +67,7 @@ export function QuickSearchWidget({ config, onRemove }: WidgetProps) {
       isLiving: boolean;
     }>
   >([]);
-  const [error, setError] = useState<Error | null>(null);
+  const [_error, setError] = useState<Error | null>(null);
 
   // Debounce search query (300ms)
   useEffect(() => {
@@ -142,103 +146,61 @@ export function QuickSearchWidget({ config, onRemove }: WidgetProps) {
   const showNoResults = debouncedQuery && !isSearching && results.length === 0;
 
   return (
-    <BaseWidget config={config} onRemove={onRemove}>
-      <div className="flex h-full flex-col gap-4">
-        {/* Search Input */}
-        <div className="relative">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+    <BaseWidget config={config} onRemove={onRemove} className={className}>
+      <div className="flex h-full flex-col justify-center p-6">
+        <div className="relative w-full">
+          <Search className="text-muted-foreground peer-focus:text-primary absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform transition-colors duration-200" />
           <Input
             type="text"
-            placeholder="Search your family tree..."
+            placeholder="Search family..."
             value={query}
             onChange={handleInputChange}
-            className="pr-9 pl-9"
+            className="peer border-border/50 bg-background/50 focus:border-primary/50 focus:bg-background focus:ring-primary/10 h-14 w-full rounded-2xl border-2 pr-10 pl-12 text-lg shadow-sm transition-all duration-300 focus:ring-4"
             aria-label="Search family tree"
-            aria-describedby={
-              showResults
-                ? "search-results-status"
-                : showNoResults
-                  ? "no-results-message"
-                  : undefined
-            }
           />
-          {isSearching && (
-            <Loader2
-              className="text-muted-foreground absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin"
-              aria-label="Searching"
-            />
+          {query && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-1/2 right-2 h-8 w-8 -translate-y-1/2 rounded-full opacity-50 hover:bg-transparent hover:opacity-100"
+              onClick={() => {
+                setQuery("");
+                setDebouncedQuery("");
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           )}
         </div>
 
-        {/* Results */}
-        <div className="flex-1 overflow-auto">
-          {/* Loading State */}
+        {/* Results / Prompt */}
+        <div className="mt-4 flex-1">
+          {!query && !isSearching && (
+            <div className="flex flex-col items-center justify-center p-4 text-center">
+              <p className="text-muted-foreground text-xs font-medium">
+                Try searching for names like{" "}
+                <span className="text-foreground">&quot;Grandpa&quot;</span> or
+                dates.
+              </p>
+            </div>
+          )}
+
           {isSearching && (
-            <div
-              className="flex items-center justify-center py-8"
-              role="status"
-              aria-live="polite"
-            >
-              <span className="text-muted-foreground text-sm">
-                Searching...
-              </span>
+            <div className="flex justify-center p-4">
+              <Loader2 className="text-primary h-5 w-5 animate-spin" />
             </div>
           )}
 
-          {/* Error State */}
-          {error && (
-            <div
-              className="border-destructive/20 bg-destructive/5 rounded-lg border p-4"
-              role="alert"
-              aria-live="assertive"
-            >
-              <p className="text-destructive text-sm">{error.message}</p>
-            </div>
-          )}
-
-          {/* No Results */}
-          {showNoResults && (
-            <div
-              id="no-results-message"
-              className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center"
-              role="status"
-              aria-live="polite"
-            >
-              <User className="h-8 w-8 opacity-50" aria-hidden="true" />
-              <p className="text-sm">No people found</p>
-              <p className="text-xs">Try a different search term</p>
-            </div>
-          )}
-
-          {/* Results List */}
           {showResults && (
-            <div
-              id="search-results-status"
-              className="sr-only"
-              role="status"
-              aria-live="polite"
-            >
-              Found {results.length} result{results.length !== 1 ? "s" : ""}
-            </div>
-          )}
-          {showResults && (
-            <div className="space-y-2" role="list" aria-label="Search results">
-              {results.map((person) => (
+            <div className="custom-scrollbar max-h-[160px] space-y-2 overflow-y-auto pr-1">
+              {results.slice(0, 3).map((person) => (
                 <Link
                   key={person.id}
                   to="/people/$personId"
                   params={{ personId: person.id }}
-                  className={cn(
-                    "hover:bg-accent focus-visible:bg-accent flex items-start gap-3 rounded-lg p-3 transition-colors",
-                    "focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-                  )}
-                  role="listitem"
+                  className="group bg-secondary/5 hover:bg-secondary/10 hover:border-secondary/20 flex items-center gap-3 rounded-xl border border-transparent p-2 transition-all hover:shadow-sm"
                 >
-                  {/* Avatar placeholder */}
-                  <div
-                    className="bg-muted flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
-                    aria-hidden="true"
-                  >
+                  <div className="bg-background border-border/50 flex h-10 w-10 shrink-0 items-center justify-center rounded-full border shadow-sm">
                     {person.photoUrl ? (
                       <img
                         src={person.photoUrl}
@@ -246,42 +208,37 @@ export function QuickSearchWidget({ config, onRemove }: WidgetProps) {
                         className="h-full w-full rounded-full object-cover"
                       />
                     ) : (
-                      <User className="text-muted-foreground h-5 w-5" />
+                      <span className="font-display text-primary text-sm font-bold">
+                        {person.firstName[0]}
+                      </span>
                     )}
                   </div>
-
-                  {/* Person info */}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">
+                    <p className="font-display text-foreground group-hover:text-primary truncate text-sm font-medium transition-colors">
                       {formatPersonName(person)}
                     </p>
                     <p className="text-muted-foreground truncate text-xs">
+                      {person.isLiving ? "Living" : "Deceased"} •{" "}
                       {formatPersonDates(person)}
                     </p>
                   </div>
                 </Link>
               ))}
-
-              {/* See All Results Link */}
-              {debouncedQuery && (
-                <div className="border-border mt-4 border-t pt-4">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full justify-between"
-                    asChild
-                  >
-                    <Link
-                      to="/people"
-                      className="flex items-center justify-between"
-                    >
-                      <span>See all results</span>
-                      <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                    </Link>
-                  </Button>
-                </div>
-              )}
+              <div className="pt-2">
+                <Link
+                  to="/people"
+                  className="text-primary block text-center text-xs font-medium hover:underline"
+                >
+                  View all results
+                </Link>
+              </div>
             </div>
+          )}
+
+          {showNoResults && (
+            <p className="text-destructive mt-4 text-center text-sm">
+              No results found.
+            </p>
           )}
         </div>
       </div>
