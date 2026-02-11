@@ -77,21 +77,93 @@ const loggerOptions: LoggerOptions = {
   level: process.env.LOG_LEVEL || (isDevelopment ? "debug" : "info"),
   redact: {
     paths: [
+      // Auth credentials
       "password",
       "passwordHash",
+      "currentPassword",
+      "newPassword",
+      "confirmPassword",
       "token",
       "accessToken",
       "refreshToken",
+      "sessionToken",
+      "csrfToken",
       "apiKey",
       "secret",
       "authorization",
       "credentials",
+      "cookie",
+      "cookies",
+      "creditCard",
+      "ssn",
+      "socialSecurityNumber",
+      // Single-depth nested
       "*.password",
       "*.passwordHash",
+      "*.currentPassword",
+      "*.newPassword",
+      "*.confirmPassword",
       "*.token",
+      "*.accessToken",
+      "*.refreshToken",
+      "*.sessionToken",
+      "*.csrfToken",
       "*.secret",
+      "*.cookie",
+      "*.cookies",
+      "*.authorization",
+      "*.apiKey",
+      "*.credentials",
+      // Double-depth nested
+      "*.*.password",
+      "*.*.token",
+      "*.*.secret",
+      "*.*.cookie",
+      "*.*.authorization",
+      // Specific known patterns
+      "body.password",
+      "body.currentPassword",
+      "body.newPassword",
+      "body.confirmPassword",
+      "headers.cookie",
+      "headers.authorization",
+      "headers.Cookie",
+      "headers.Authorization",
+      "bodyText",
+      "responseBody",
+      // PII redaction when LOG_REDACT_PII=true
+      ...(process.env.LOG_REDACT_PII === "true"
+        ? [
+            "email",
+            "*.email",
+            "*.*.email",
+            "firstName",
+            "*.firstName",
+            "lastName",
+            "*.lastName",
+            "name",
+            "*.name",
+            "ipAddress",
+            "ip",
+            "*.ipAddress",
+            "*.ip",
+          ]
+        : []),
     ],
     remove: true,
+  },
+  serializers: {
+    err: pino.stdSerializers.err,
+    headers: (headers: Record<string, string> | undefined) => {
+      if (!headers) return headers;
+      const safe = { ...headers };
+      delete safe.cookie;
+      delete safe.Cookie;
+      delete safe.authorization;
+      delete safe.Authorization;
+      if (safe["set-cookie"]) safe["set-cookie"] = "[REDACTED]";
+      return safe;
+    },
   },
   timestamp: isDevelopment ? false : pino.stdTimeFunctions.isoTime,
 };

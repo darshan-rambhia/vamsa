@@ -40,6 +40,8 @@ export {
   registerSchema,
   changePasswordSchema,
   claimProfileSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
   type UserRole,
   type UserCreateInput,
   type UserUpdateInput,
@@ -47,6 +49,8 @@ export {
   type RegisterInput,
   type ChangePasswordInput,
   type ClaimProfileInput,
+  type ForgotPasswordInput,
+  type ResetPasswordInput,
 } from "./user";
 
 // Suggestion schemas

@@ -17,12 +17,16 @@ import { logger as honoLogger } from "hono/logger";
 import { cors } from "hono/cors";
 import { csrf } from "hono/csrf";
 import { compress } from "hono/compress";
-import { secureHeaders } from "hono/secure-headers";
+import { NONCE, secureHeaders } from "hono/secure-headers";
 import { loggers } from "@vamsa/lib/logger";
 import { initializeServerI18n } from "@vamsa/lib/server";
 import { auth } from "@vamsa/lib/server/business";
 import { rateLimitMiddleware } from "../src/server/middleware/hono-rate-limiter";
 import { initializeRateLimitStore } from "../src/server/middleware/rate-limiter";
+import {
+  initTrustedProxies,
+  trustedProxyMiddleware,
+} from "../src/server/middleware/trusted-proxy";
 import {
   closeRedisClient,
   getRedisClient,
@@ -34,6 +38,7 @@ import { serveMedia } from "./middleware/media-server";
 import { mediaAuthMiddleware } from "./middleware/media-auth";
 import { metricsAuthMiddleware } from "./middleware/metrics-auth";
 import { getTelemetryConfig, startTelemetry, stopTelemetry } from "./telemetry";
+import { botGuardMiddleware } from "./middleware/bot-guard";
 
 await startTelemetry();
 
@@ -126,6 +131,9 @@ function validateSecurityCredentials() {
 // Validate credentials before starting
 validateSecurityCredentials();
 
+// Initialize trusted proxy configuration
+initTrustedProxies();
+
 const app = new Hono();
 
 // Configuration from environment
@@ -141,6 +149,10 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production";
 if (!IS_PRODUCTION) {
   app.use("*", honoLogger());
 }
+
+// Bot detection and blocking for AI scrapers
+// Prevents data scraping by known AI training bots
+app.use("*", botGuardMiddleware);
 
 // Gzip/Brotli compression for responses
 // Reduces bandwidth usage significantly for text-based responses
@@ -212,14 +224,15 @@ app.use(
     referrerPolicy: "strict-origin-when-cross-origin",
 
     // Content Security Policy
-    // Using a permissive policy to support TanStack Start's SSR/hydration
+    // Uses nonce-based CSP for inline scripts instead of unsafe-inline
+    // Per-request nonce is generated and applied to all inline scripts
     // Only apply in production to avoid blocking hot reload in development
     ...(IS_PRODUCTION && {
       contentSecurityPolicy: {
         // Default: only allow same-origin resources
         defaultSrc: ["'self'"],
-        // Scripts: self + inline (needed for hydration) + eval (needed for development)
-        scriptSrc: ["'self'", "'unsafe-inline'"],
+        // Scripts: self + per-request nonce (no unsafe-inline)
+        scriptSrc: ["'self'", NONCE],
         // Styles: self + inline (needed for Tailwind) + Google Fonts
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
         // Fonts: self + Google Fonts
@@ -255,9 +268,20 @@ app.use(
   })
 );
 
+// X-Robots-Tag header to prevent indexing
+// Explicitly tells all crawlers not to index, archive, or snippet any content
+app.use("*", async (c, next) => {
+  await next();
+  c.header("X-Robots-Tag", "noindex, nofollow, noarchive, nosnippet");
+});
+
 // OpenTelemetry HTTP metrics middleware
 // Collects request duration, counts, and active connections
 app.use("*", telemetryMiddleware);
+
+// Resolve client IP from trusted proxies (before rate limiting)
+// Validates proxy headers come from trusted sources to prevent IP spoofing
+app.use("*", trustedProxyMiddleware());
 
 // ETag caching for API responses
 // This should be applied after security headers but before route handlers
@@ -278,19 +302,101 @@ app.use(
 );
 
 // Health check endpoint for Docker/K8s (public, no authentication required)
+// Returns minimal info only — no version or uptime (information disclosure risk)
 app.get("/health", (c) => {
   return c.json({
     status: "healthy",
     timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    version: process.env.APP_VERSION || "1.0.0",
+  });
+});
+
+// robots.txt endpoint
+// Explicitly denies all bots, including search engines and AI scrapers
+// Vamsa is a private family genealogy app - no public content should be indexed
+app.get("/robots.txt", (c) => {
+  const robotsTxt = `User-agent: *
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: Claude-Web-Crawler
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: Meta-ExternalAgent
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: YouBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+`;
+  return c.text(robotsTxt, 200, {
+    "Content-Type": "text/plain",
+    "Cache-Control": "public, max-age=86400",
   });
 });
 
 // Protect detailed health endpoints with bearer token authentication
 // These expose internal metrics and should only be accessible to authorized monitoring systems
+app.use("/health/detail", metricsAuthMiddleware());
 app.use("/health/cache", metricsAuthMiddleware());
 app.use("/health/telemetry", metricsAuthMiddleware());
+
+// Detailed health endpoint for authorized monitoring systems
+// Protected: requires METRICS_BEARER_TOKEN environment variable
+app.get("/health/detail", (c) => {
+  return c.json({
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    version: process.env.APP_VERSION || "1.0.0",
+    runtime: `bun ${Bun.version}`,
+    environment: process.env.NODE_ENV || "development",
+    node: process.version,
+    memory: process.memoryUsage(),
+  });
+});
 
 // Cache metrics endpoint for monitoring
 // Protected: requires METRICS_BEARER_TOKEN environment variable
@@ -318,9 +424,6 @@ const { default: apiV1 } = await import("./api/index.js");
 
 const apiRouter = new Hono();
 
-// API version endpoint
-apiRouter.get("/version", (c) => c.json({ version: "1.0.0", runtime: "bun" }));
-
 // Mount v1 API under /api/v1
 apiRouter.route("/v1", apiV1);
 
@@ -331,7 +434,9 @@ apiRouter.get("/", (c) =>
     versions: {
       v1: "/api/v1",
     },
-    docs: "/api/v1/docs",
+    ...(IS_PRODUCTION && process.env.ENABLE_API_DOCS !== "true"
+      ? {}
+      : { docs: "/api/v1/docs" }),
   })
 );
 
@@ -451,8 +556,20 @@ async function setupRoutes() {
   // All other routes go to TanStack Start (SSR, server functions, etc.)
   app.all("*", async (c) => {
     try {
+      // Extract nonce from Hono context (set by secureHeaders middleware)
+      const nonce = c.get("secureHeadersNonce");
+
+      // Create a new request with the nonce passed via a custom header
+      // TanStack Start's fetch handler will see this and can use it for rendering
+      const headers = new Headers(c.req.raw.headers);
+      if (nonce) {
+        headers.set("x-csp-nonce", nonce);
+      }
+
+      const modifiedRequest = new Request(c.req.raw, { headers });
+
       // Call TanStack Start's fetch handler
-      const response = await tanstackFetch(c.req.raw);
+      const response = await tanstackFetch(modifiedRequest);
       return response;
     } catch (error) {
       log.withErr(error).msg("TanStack Start error");

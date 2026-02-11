@@ -8,5 +8,6 @@ export {
   createBirthdayReminderEmail,
   createEmailVerificationTemplate,
   createAccountLockedEmail,
+  createPasswordResetEmail,
 } from "./templates";
 export type { EmailTemplate } from "./templates";

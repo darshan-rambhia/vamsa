@@ -13,6 +13,9 @@ describe("Hono Rate Limiter Middleware", () => {
     await resetRateLimit("login", "127.0.0.1");
     await resetRateLimit("register", "127.0.0.1");
     await resetRateLimit("passwordReset", "127.0.0.1");
+    await resetRateLimit("login", "unknown");
+    await resetRateLimit("register", "unknown");
+    await resetRateLimit("passwordReset", "unknown");
 
     // Setup test route with rate limiting
     app.post("/login", rateLimitMiddleware("login"), (c) => {
@@ -33,7 +36,7 @@ describe("Hono Rate Limiter Middleware", () => {
       const req = new Request("http://localhost/login", {
         method: "POST",
         headers: {
-          "x-forwarded-for": "192.168.1.1",
+          "x-vamsa-client-ip": "192.168.1.1",
         },
       });
 
@@ -48,7 +51,7 @@ describe("Hono Rate Limiter Middleware", () => {
       const req = new Request("http://localhost/login", {
         method: "POST",
         headers: {
-          "x-forwarded-for": "192.168.1.100",
+          "x-vamsa-client-ip": "192.168.1.100",
         },
       });
 
@@ -65,34 +68,34 @@ describe("Hono Rate Limiter Middleware", () => {
   });
 
   describe("Client IP extraction", () => {
-    it("extracts IP from X-Forwarded-For header", async () => {
+    it("extracts IP from x-vamsa-client-ip header", async () => {
       const ip = "203.0.113.1";
       let capturedIP: string | undefined;
 
       const testApp = new Hono();
       testApp.post("/test", rateLimitMiddleware("login"), (c) => {
-        capturedIP = c.req.header("x-forwarded-for");
+        capturedIP = c.req.header("x-vamsa-client-ip");
         return c.json({ success: true });
       });
 
       await testApp.request(
         new Request("http://localhost/test", {
           method: "POST",
-          headers: { "x-forwarded-for": ip },
+          headers: { "x-vamsa-client-ip": ip },
         })
       );
 
       expect(capturedIP).toBe(ip);
     });
 
-    it("handles X-Forwarded-For with multiple IPs", async () => {
+    it("rate limits by resolved client IP", async () => {
       const ip = "203.0.113.1";
       await resetRateLimit("login", ip);
 
       const req = new Request("http://localhost/login", {
         method: "POST",
         headers: {
-          "x-forwarded-for": `${ip}, 203.0.113.2, 203.0.113.3`,
+          "x-vamsa-client-ip": ip,
         },
       });
 
@@ -111,7 +114,7 @@ describe("Hono Rate Limiter Middleware", () => {
       expect(res.status).toBe(429);
     });
 
-    it("extracts IP from X-Real-IP header", async () => {
+    it("rate limits per resolved IP from trusted proxy", async () => {
       const ip = "203.0.113.50";
 
       const testApp = new Hono();
@@ -121,12 +124,12 @@ describe("Hono Rate Limiter Middleware", () => {
 
       await resetRateLimit("login", ip);
 
-      // Make requests with X-Real-IP
+      // Make requests with resolved client IP
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
         const res = await testApp.request(
           new Request("http://localhost/test", {
             method: "POST",
-            headers: { "x-real-ip": ip },
+            headers: { "x-vamsa-client-ip": ip },
           })
         );
         expect(res.status).toBe(200);
@@ -136,41 +139,27 @@ describe("Hono Rate Limiter Middleware", () => {
       const res = await testApp.request(
         new Request("http://localhost/test", {
           method: "POST",
-          headers: { "x-real-ip": ip },
+          headers: { "x-vamsa-client-ip": ip },
         })
       );
       expect(res.status).toBe(429);
     });
 
-    it("extracts IP from CF-Connecting-IP header", async () => {
-      const ip = "203.0.113.75";
-
+    it("falls back to unknown when no resolved IP header", async () => {
       const testApp = new Hono();
       testApp.post("/test", rateLimitMiddleware("login"), (c) => {
         return c.json({ success: true });
       });
 
-      await resetRateLimit("login", ip);
+      await resetRateLimit("login", "unknown");
 
-      // Make requests with CF-Connecting-IP
-      for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
-        const res = await testApp.request(
-          new Request("http://localhost/test", {
-            method: "POST",
-            headers: { "cf-connecting-ip": ip },
-          })
-        );
-        expect(res.status).toBe(200);
-      }
-
-      // Next should be rate limited
+      // Request without x-vamsa-client-ip should use "unknown"
       const res = await testApp.request(
         new Request("http://localhost/test", {
           method: "POST",
-          headers: { "cf-connecting-ip": ip },
         })
       );
-      expect(res.status).toBe(429);
+      expect(res.status).toBe(200);
     });
   });
 
@@ -178,7 +167,7 @@ describe("Hono Rate Limiter Middleware", () => {
     it("allows requests within limit", async () => {
       const req = new Request("http://localhost/login", {
         method: "POST",
-        headers: { "x-forwarded-for": "127.0.0.1" },
+        headers: { "x-vamsa-client-ip": "127.0.0.1" },
       });
 
       for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
@@ -190,7 +179,7 @@ describe("Hono Rate Limiter Middleware", () => {
     it("returns 429 when limit exceeded", async () => {
       const req = new Request("http://localhost/login", {
         method: "POST",
-        headers: { "x-forwarded-for": "127.0.0.1" },
+        headers: { "x-vamsa-client-ip": "127.0.0.1" },
       });
 
       // Use up all attempts
@@ -206,7 +195,7 @@ describe("Hono Rate Limiter Middleware", () => {
     it("includes Retry-After header in 429 response", async () => {
       const req = new Request("http://localhost/login", {
         method: "POST",
-        headers: { "x-forwarded-for": "127.0.0.1" },
+        headers: { "x-vamsa-client-ip": "127.0.0.1" },
       });
 
       // Use up all attempts
@@ -225,7 +214,7 @@ describe("Hono Rate Limiter Middleware", () => {
     it("includes error details in 429 response body", async () => {
       const req = new Request("http://localhost/login", {
         method: "POST",
-        headers: { "x-forwarded-for": "127.0.0.1" },
+        headers: { "x-vamsa-client-ip": "127.0.0.1" },
       });
 
       // Use up all attempts
@@ -247,12 +236,12 @@ describe("Hono Rate Limiter Middleware", () => {
     it("applies different limits to different actions", async () => {
       const loginReq = new Request("http://localhost/login", {
         method: "POST",
-        headers: { "x-forwarded-for": "10.0.0.1" },
+        headers: { "x-vamsa-client-ip": "10.0.0.1" },
       });
 
       const registerReq = new Request("http://localhost/register", {
         method: "POST",
-        headers: { "x-forwarded-for": "10.0.0.1" },
+        headers: { "x-vamsa-client-ip": "10.0.0.1" },
       });
 
       await resetRateLimit("login", "10.0.0.1");
@@ -282,12 +271,12 @@ describe("Hono Rate Limiter Middleware", () => {
     it("tracks different IPs separately", async () => {
       const req1 = new Request("http://localhost/login", {
         method: "POST",
-        headers: { "x-forwarded-for": "10.1.0.1" },
+        headers: { "x-vamsa-client-ip": "10.1.0.1" },
       });
 
       const req2 = new Request("http://localhost/login", {
         method: "POST",
-        headers: { "x-forwarded-for": "10.1.0.2" },
+        headers: { "x-vamsa-client-ip": "10.1.0.2" },
       });
 
       await resetRateLimit("login", "10.1.0.1");
@@ -313,7 +302,7 @@ describe("Hono Rate Limiter Middleware", () => {
     it("includes all required headers in 429 response", async () => {
       const req = new Request("http://localhost/login", {
         method: "POST",
-        headers: { "x-forwarded-for": "127.0.0.2" },
+        headers: { "x-vamsa-client-ip": "127.0.0.2" },
       });
 
       await resetRateLimit("login", "127.0.0.2");

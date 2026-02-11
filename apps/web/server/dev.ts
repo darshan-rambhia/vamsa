@@ -85,11 +85,6 @@ export function vamsaDevApiPlugin(): Plugin {
 
       const apiRouter = new Hono();
 
-      // API version endpoint
-      apiRouter.get("/version", (c) =>
-        c.json({ version: "1.0.0", runtime: "bun", mode: "development" })
-      );
-
       // Mount v1 API under /api/v1
       apiRouter.route("/v1", apiV1);
 
@@ -177,7 +172,7 @@ export function vamsaDevApiPlugin(): Plugin {
             }
 
             log.info(
-              { url, method: req.method, bodyText },
+              { url, method: req.method, hasBody: !!bodyText },
               "Better Auth request"
             );
 
@@ -207,7 +202,7 @@ export function vamsaDevApiPlugin(): Plugin {
             log.info(
               {
                 status: response.status,
-                responseBody: responseBody.substring(0, 500),
+                contentLength: responseBody.length,
               },
               "Better Auth response"
             );

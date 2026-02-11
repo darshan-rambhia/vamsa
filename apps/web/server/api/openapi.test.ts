@@ -36,7 +36,7 @@ describe("Auto-Generated OpenAPI Specification", () => {
 
     expect(spec.info).toBeDefined();
     expect(spec.info.title).toBe("Vamsa API");
-    expect(spec.info.version).toBe("1.0.0");
+    expect(spec.info.version).toBe("1");
     expect(spec.info.description).toContain("genealogy");
   });
 
@@ -646,7 +646,7 @@ describe("API Root Endpoint", () => {
 
     const json = await res.json();
     expect(json.name).toBe("Vamsa API");
-    expect(json.version).toBe("1.0.0");
+    expect(json.version).toBeUndefined();
     expect(json.docs).toBe("/api/v1/docs");
     expect(json.openapi).toBe("/api/v1/openapi.json");
   });
