@@ -19,7 +19,8 @@
     "./server/*": "./src/server/*.ts",
     "./server/i18n": "./src/server/i18n/index.ts",
     "./server/business": "./src/server/business/index.ts",
-    "./server/business/*": "./src/server/business/*.ts"
+    "./server/business/*": "./src/server/business/*.ts",
+    "./ai": "./src/ai/index.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

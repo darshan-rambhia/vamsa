@@ -24,6 +24,7 @@ import { EventsTab } from "~/components/person/events-tab";
 import { PlacesTab } from "~/components/person/places-tab";
 import { SourcesManagementTab } from "~/components/person/sources-management-tab";
 import { MediaTab } from "~/components/media/media-tab";
+import { StoryGenerator } from "~/components/ai/story-generator";
 
 export const Route = createFileRoute("/_authenticated/people/$personId")({
   component: PersonDetailComponent,
@@ -185,6 +186,12 @@ function PersonDetailComponent() {
           </div>
         </CardContent>
       </Card>
+
+      {/* AI Story Generator — only visible when AI is available */}
+      <StoryGenerator
+        personId={personId}
+        personName={`${person.firstName} ${person.lastName}`}
+      />
 
       {/* Tabbed content */}
       <Tabs defaultValue="overview" className="w-full">

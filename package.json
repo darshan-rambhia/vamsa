@@ -18,6 +18,8 @@
     "build": "bun run --filter '*' build",
     "build:web": "bun run --filter @vamsa/web build",
     "preview": "bun run --filter @vamsa/web preview",
+    "dev:ai": "bun run --filter @vamsa/ai dev",
+    "build:ai": "bun run --filter @vamsa/ai build",
     "// === Code Quality ===": "",
     "check": "bun scripts/check-all.ts",
     "lint": "eslint .",
