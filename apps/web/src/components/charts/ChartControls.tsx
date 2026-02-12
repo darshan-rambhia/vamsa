@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Card,
@@ -72,6 +73,7 @@ export function ChartControls({
   onToggleMiniMap,
   activeContextLabel,
 }: ChartControlsProps) {
+  const { t } = useTranslation(["charts", "common"]);
   const [isExportOpen, setIsExportOpen] = useState(false);
 
   const handlePrint = () => {
@@ -99,23 +101,43 @@ export function ChartControls({
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
             {!hideChartTypeSelector && (
               <div className="space-y-2">
-                <Label htmlFor="chart-type">Chart Type</Label>
+                <Label htmlFor="chart-type">{t("charts:chartType")}</Label>
                 <Select value={chartType} onValueChange={onChartTypeChange}>
                   <SelectTrigger id="chart-type" className="w-45">
-                    <SelectValue placeholder="Select chart type" />
+                    <SelectValue placeholder={t("charts:selectChartType")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="tree">Interactive Tree</SelectItem>
-                    <SelectItem value="ancestor">Ancestor Chart</SelectItem>
-                    <SelectItem value="descendant">Descendant Chart</SelectItem>
-                    <SelectItem value="hourglass">Hourglass Chart</SelectItem>
-                    <SelectItem value="fan">Fan Chart</SelectItem>
-                    <SelectItem value="timeline">Timeline Chart</SelectItem>
-                    <SelectItem value="matrix">Relationship Matrix</SelectItem>
-                    <SelectItem value="bowtie">Bowtie Chart</SelectItem>
-                    <SelectItem value="compact">Compact Tree</SelectItem>
-                    <SelectItem value="statistics">Statistics</SelectItem>
-                    <SelectItem value="list">List View (Accessible)</SelectItem>
+                    <SelectItem value="tree">
+                      {t("charts:interactiveTree")}
+                    </SelectItem>
+                    <SelectItem value="ancestor">
+                      {t("charts:ancestorChart")}
+                    </SelectItem>
+                    <SelectItem value="descendant">
+                      {t("charts:descendantChart")}
+                    </SelectItem>
+                    <SelectItem value="hourglass">
+                      {t("charts:hourglassChart")}
+                    </SelectItem>
+                    <SelectItem value="fan">{t("charts:fanChart")}</SelectItem>
+                    <SelectItem value="timeline">
+                      {t("charts:timelineChart")}
+                    </SelectItem>
+                    <SelectItem value="matrix">
+                      {t("charts:relationshipMatrix")}
+                    </SelectItem>
+                    <SelectItem value="bowtie">
+                      {t("charts:bowtieChart")}
+                    </SelectItem>
+                    <SelectItem value="compact">
+                      {t("charts:compactTree")}
+                    </SelectItem>
+                    <SelectItem value="statistics">
+                      {t("charts:statistics")}
+                    </SelectItem>
+                    <SelectItem value="list">
+                      {t("charts:listViewAccessible")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -134,7 +156,7 @@ export function ChartControls({
               chartType
             ) && (
               <GenerationSlider
-                label="Ancestor Generations"
+                label={t("charts:ancestorGenerations")}
                 value={ancestorGenerations}
                 min={1}
                 max={10}
@@ -149,7 +171,7 @@ export function ChartControls({
               chartType
             ) && (
               <GenerationSlider
-                label="Descendant Generations"
+                label={t("charts:descendantGenerations")}
                 value={descendantGenerations}
                 min={1}
                 max={10}
@@ -162,7 +184,7 @@ export function ChartControls({
             {/* Timeline: Sort dropdown */}
             {chartType === "timeline" && (
               <div className="space-y-2">
-                <Label htmlFor="sort-by">Sort By</Label>
+                <Label htmlFor="sort-by">{t("charts:sortBy")}</Label>
                 <Select
                   value={sortBy}
                   onValueChange={(value) =>
@@ -170,12 +192,16 @@ export function ChartControls({
                   }
                 >
                   <SelectTrigger id="sort-by" className="w-40">
-                    <SelectValue placeholder="Sort by" />
+                    <SelectValue placeholder={t("charts:sortBy")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="birth">Birth Year</SelectItem>
-                    <SelectItem value="death">Death Year</SelectItem>
-                    <SelectItem value="name">Name</SelectItem>
+                    <SelectItem value="birth">
+                      {t("charts:birthYear")}
+                    </SelectItem>
+                    <SelectItem value="death">
+                      {t("charts:deathYear")}
+                    </SelectItem>
+                    <SelectItem value="name">{t("common:name")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -184,7 +210,7 @@ export function ChartControls({
             {/* Matrix: Max people slider */}
             {chartType === "matrix" && (
               <GenerationSlider
-                label="Max People"
+                label={t("charts:maxPeople")}
                 value={maxPeople}
                 min={5}
                 max={50}
@@ -198,7 +224,7 @@ export function ChartControls({
             {chartType === "statistics" && (
               <div className="flex items-center">
                 <span className="text-muted-foreground text-sm">
-                  Statistical analysis of all family members
+                  {t("charts:statisticalAnalysis")}
                 </span>
               </div>
             )}
@@ -216,8 +242,8 @@ export function ChartControls({
                 variant={showMiniMap ? "default" : "outline"}
                 size="sm"
                 onClick={onToggleMiniMap}
-                title="Toggle mini-map"
-                aria-label="Toggle mini-map"
+                title={t("charts:toggleMiniMap")}
+                aria-label={t("charts:toggleMiniMap")}
               >
                 <svg
                   className="h-4 w-4 sm:mr-1.5"
@@ -232,14 +258,14 @@ export function ChartControls({
                     d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z"
                   />
                 </svg>
-                <span className="hidden sm:inline">Mini-map</span>
+                <span className="hidden sm:inline">{t("charts:miniMap")}</span>
               </Button>
             )}
             <Button
               variant="outline"
               size="sm"
               onClick={onResetView}
-              title="Reset zoom and recenter"
+              title={t("charts:resetZoomRecenter")}
             >
               <svg
                 className="h-4 w-4 sm:mr-1.5"
@@ -254,7 +280,7 @@ export function ChartControls({
                   d="M4.5 9.75A7.5 7.5 0 0112 2.25c4.142 0 7.5 3.358 7.5 7.5m0 0H18m1.5 0V6.75M19.5 14.25A7.5 7.5 0 0112 21.75 7.5 7.5 0 014.5 14.25m0 0H6m-1.5 0v3"
                 />
               </svg>
-              <span className="hidden sm:inline">Reset view</span>
+              <span className="hidden sm:inline">{t("charts:resetView")}</span>
             </Button>
 
             <div className="relative">
@@ -262,7 +288,7 @@ export function ChartControls({
                 variant="outline"
                 size="sm"
                 onClick={toggleExportMenu}
-                title="Export or share chart"
+                title={t("charts:exportOrShare")}
               >
                 <svg
                   className="h-4 w-4 sm:mr-1.5"
@@ -277,7 +303,9 @@ export function ChartControls({
                     d="M4.5 12.75l6 6 9-13.5"
                   />
                 </svg>
-                <span className="hidden sm:inline">Export / Share</span>
+                <span className="hidden sm:inline">
+                  {t("charts:exportShare")}
+                </span>
               </Button>
 
               {isExportOpen && (
@@ -287,25 +315,25 @@ export function ChartControls({
                       className="hover:bg-muted px-3 py-2 text-left"
                       onClick={() => handleExportClick(onExportPDF)}
                     >
-                      Export PDF
+                      {t("charts:exportPdf")}
                     </button>
                     <button
                       className="hover:bg-muted px-3 py-2 text-left"
                       onClick={() => handleExportClick(onExportPNG)}
                     >
-                      Export PNG (2x)
+                      {t("charts:exportPng2x")}
                     </button>
                     <button
                       className="hover:bg-muted px-3 py-2 text-left"
                       onClick={() => handleExportClick(onExportSVG)}
                     >
-                      Export SVG
+                      {t("charts:exportSvg")}
                     </button>
                     <button
                       className="hover:bg-muted px-3 py-2 text-left"
                       onClick={() => handleExportClick(handlePrint)}
                     >
-                      Print
+                      {t("charts:print")}
                     </button>
                   </div>
                 </div>

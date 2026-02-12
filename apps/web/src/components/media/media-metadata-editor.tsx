@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Input, Label } from "@vamsa/ui/primitives";
 
 interface MediaMetadataEditorProps {
@@ -28,6 +29,7 @@ export function MediaMetadataEditor({
   onClose,
   isSaving,
 }: MediaMetadataEditorProps) {
+  const { t } = useTranslation(["people", "common"]);
   const [formData, setFormData] = useState({
     title: media.title || "",
     description: media.description || "",
@@ -53,7 +55,7 @@ export function MediaMetadataEditor({
         type="button"
         className="bg-background/80 absolute inset-0 backdrop-blur-sm"
         onClick={onClose}
-        aria-label="Close modal"
+        aria-label={t("people:closeModal")}
       />
 
       {/* Modal */}
@@ -61,7 +63,7 @@ export function MediaMetadataEditor({
         {/* Header */}
         <div className="border-border flex items-center justify-between border-b px-6 py-4">
           <h2 className="font-display text-foreground text-2xl">
-            Edit Photo Details
+            {t("people:editPhotoDetails")}
           </h2>
           <Button
             variant="ghost"
@@ -90,7 +92,7 @@ export function MediaMetadataEditor({
           <div className="max-h-[60vh] space-y-6 overflow-y-auto px-6 py-6">
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="title">{t("people:title")}</Label>
               <Input
                 id="title"
                 type="text"
@@ -98,14 +100,14 @@ export function MediaMetadataEditor({
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
-                placeholder="Give this photo a title..."
+                placeholder={t("people:givePhotoTitle")}
                 disabled={isSaving}
               />
             </div>
 
             {/* Caption */}
             <div className="space-y-2">
-              <Label htmlFor="caption">Caption</Label>
+              <Label htmlFor="caption">{t("people:caption")}</Label>
               <Input
                 id="caption"
                 type="text"
@@ -113,21 +115,21 @@ export function MediaMetadataEditor({
                 onChange={(e) =>
                   setFormData({ ...formData, caption: e.target.value })
                 }
-                placeholder="Add a caption for this photo..."
+                placeholder={t("people:addCaption")}
                 disabled={isSaving}
               />
             </div>
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">{t("common:description")}</Label>
               <textarea
                 id="description"
                 value={formData.description}
                 onChange={(e) =>
                   setFormData({ ...formData, description: e.target.value })
                 }
-                placeholder="Describe the photo, what's happening, who's in it..."
+                placeholder={t("people:describePhoto")}
                 rows={4}
                 disabled={isSaving}
                 className="border-input bg-background focus-visible:border-primary focus-visible:ring-primary/20 hover:border-primary/50 placeholder:text-muted-foreground disabled:bg-muted flex w-full rounded-md border-2 px-4 py-2 text-base transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
@@ -136,7 +138,7 @@ export function MediaMetadataEditor({
 
             {/* Source */}
             <div className="space-y-2">
-              <Label htmlFor="source">Source</Label>
+              <Label htmlFor="source">{t("people:source")}</Label>
               <Input
                 id="source"
                 type="text"
@@ -144,7 +146,7 @@ export function MediaMetadataEditor({
                 onChange={(e) =>
                   setFormData({ ...formData, source: e.target.value })
                 }
-                placeholder="Where did this photo come from?"
+                placeholder={t("people:whereDidPhotoFrom")}
                 disabled={isSaving}
               />
             </div>
@@ -158,7 +160,7 @@ export function MediaMetadataEditor({
               onClick={onClose}
               disabled={isSaving}
             >
-              Cancel
+              {t("common:cancel")}
             </Button>
             <Button type="submit" disabled={isSaving}>
               {isSaving ? (
@@ -176,10 +178,10 @@ export function MediaMetadataEditor({
                       d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                     />
                   </svg>
-                  Saving...
+                  {t("people:saving")}
                 </>
               ) : (
-                "Save Changes"
+                t("people:saveChanges")
               )}
             </Button>
           </div>
@@ -205,7 +207,7 @@ export function MediaMetadataEditor({
                 </svg>
               </div>
               <p className="text-foreground font-display text-xl font-medium">
-                Changes saved!
+                {t("people:changesSaved")}
               </p>
             </div>
           </div>

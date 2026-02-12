@@ -1,5 +1,6 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Card,
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/register")({
 });
 
 function RegisterComponent() {
+  const { t } = useTranslation(["auth", "common"]);
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -33,7 +35,7 @@ function RegisterComponent() {
     setIsLoading(true);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("common:passwordsDoNotMatch"));
       setIsLoading(false);
       return;
     }
@@ -93,7 +95,7 @@ function RegisterComponent() {
           <div>
             <CardTitle className="text-3xl">Vamsa</CardTitle>
             <CardDescription className="mt-2 text-base">
-              Create an account to explore your family history.
+              {t("createAccountMessage")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -109,13 +111,13 @@ function RegisterComponent() {
                 className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border-2 px-4 py-3 text-sm"
                 data-testid="register-error"
               >
-                <div className="mb-1 font-semibold">Error:</div>
+                <div className="mb-1 font-semibold">{t("common:error")}:</div>
                 <div>{error}</div>
               </div>
             )}
 
             <div className="space-y-4">
-              <FormField label="Name" required>
+              <FormField label={t("common:name")} required>
                 <Input
                   name="name"
                   type="text"
@@ -128,7 +130,7 @@ function RegisterComponent() {
                 />
               </FormField>
 
-              <FormField label="Email address" required>
+              <FormField label={t("common:email")} required>
                 <Input
                   name="email"
                   type="email"
@@ -142,7 +144,7 @@ function RegisterComponent() {
               </FormField>
 
               <div className="space-y-2">
-                <FormField label="Password" required>
+                <FormField label={t("common:password")} required>
                   <Input
                     name="password"
                     type="password"
@@ -159,9 +161,9 @@ function RegisterComponent() {
               </div>
 
               <FormField
-                label="Confirm Password"
+                label={t("common:confirmPassword")}
                 error={
-                  error && error === "Passwords do not match"
+                  error && error === t("common:passwordsDoNotMatch")
                     ? error
                     : undefined
                 }
@@ -187,13 +189,13 @@ function RegisterComponent() {
               className="w-full"
               data-testid="register-submit-button"
             >
-              {isLoading ? "Creating account..." : "Create Account"}
+              {isLoading ? t("creatingAccount") : t("createAccount")}
             </Button>
 
             <p className="text-muted-foreground text-center text-sm">
-              Already have an account?{" "}
+              {t("alreadyHaveAccount")}{" "}
               <Link to="/login" className="text-primary hover:underline">
-                Sign in
+                {t("signIn")}
               </Link>
             </p>
           </form>

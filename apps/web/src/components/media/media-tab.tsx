@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@vamsa/ui/primitives";
@@ -18,6 +19,7 @@ import {
 } from "~/server/media";
 
 export function MediaTab() {
+  const { t } = useTranslation(["people", "common"]);
   const { personId } = useParams({ from: "/_authenticated/people/$personId" });
   const queryClient = useQueryClient();
 
@@ -167,21 +169,25 @@ export function MediaTab() {
         {/* Statistics */}
         <Card>
           <CardHeader>
-            <CardTitle>Photos & Documents</CardTitle>
+            <CardTitle>{t("people:photosAndDocuments")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-6 text-sm">
               <div>
-                <span className="text-muted-foreground">Total Photos:</span>
+                <span className="text-muted-foreground">
+                  {t("people:totalPhotos")}:
+                </span>
                 <span className="text-foreground ml-2 font-medium">
                   {media.length}
                 </span>
               </div>
               {primaryPhoto && (
                 <div>
-                  <span className="text-muted-foreground">Primary Photo:</span>
+                  <span className="text-muted-foreground">
+                    {t("people:primaryPhoto")}:
+                  </span>
                   <span className="text-foreground ml-2 font-medium">
-                    {primaryPhoto.title || "Untitled"}
+                    {primaryPhoto.title || t("people:untitled")}
                   </span>
                 </div>
               )}
@@ -192,7 +198,7 @@ export function MediaTab() {
         {/* Upload section */}
         <Card>
           <CardHeader>
-            <CardTitle>Upload New Photo</CardTitle>
+            <CardTitle>{t("people:uploadNewPhoto")}</CardTitle>
           </CardHeader>
           <CardContent>
             <MediaUploader
@@ -206,7 +212,7 @@ export function MediaTab() {
         {/* Gallery section */}
         <Card>
           <CardHeader>
-            <CardTitle>Photo Gallery</CardTitle>
+            <CardTitle>{t("people:photoGallery")}</CardTitle>
           </CardHeader>
           <CardContent>
             <MediaGallery

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   FormField,
@@ -36,6 +37,7 @@ export function SourceForm({
   onSuccess,
   onCancel,
 }: SourceFormProps) {
+  const { t } = useTranslation(["people", "common"]);
   const queryClient = useQueryClient();
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -123,23 +125,27 @@ export function SourceForm({
     <div className="relative">
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Title */}
-        <FormField label="Title" error={errors.title?.message} required>
+        <FormField
+          label={t("people:title")}
+          error={errors.title?.message}
+          required
+        >
           <Input
             type="text"
             {...register("title")}
-            placeholder="Source title..."
+            placeholder={t("people:sourceTitle")}
             disabled={isLoading}
           />
         </FormField>
 
         {/* Author */}
         <div className="space-y-2">
-          <Label htmlFor="author">Author</Label>
+          <Label htmlFor="author">{t("people:author")}</Label>
           <Input
             id="author"
             type="text"
             {...register("author")}
-            placeholder="Author name..."
+            placeholder={t("people:authorName")}
             disabled={isLoading}
           />
           {errors.author && (
@@ -149,7 +155,7 @@ export function SourceForm({
 
         {/* Source Type */}
         <div className="space-y-2">
-          <Label htmlFor="sourceType">Source Type</Label>
+          <Label htmlFor="sourceType">{t("people:sourceType")}</Label>
           <Select
             value={sourceType || ""}
             onValueChange={(value) =>
@@ -158,30 +164,34 @@ export function SourceForm({
             disabled={isLoading}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select source type..." />
+              <SelectValue placeholder={t("people:selectSourceType")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="BOOK">Book</SelectItem>
-              <SelectItem value="ARTICLE">Article</SelectItem>
-              <SelectItem value="WEBSITE">Website</SelectItem>
-              <SelectItem value="ARCHIVE">Archive</SelectItem>
-              <SelectItem value="LETTER">Letter</SelectItem>
-              <SelectItem value="FAMILY_RECORD">Family Record</SelectItem>
-              <SelectItem value="CENSUS">Census</SelectItem>
-              <SelectItem value="VITAL_RECORD">Vital Record</SelectItem>
-              <SelectItem value="OTHER">Other</SelectItem>
+              <SelectItem value="BOOK">{t("people:book")}</SelectItem>
+              <SelectItem value="ARTICLE">{t("people:article")}</SelectItem>
+              <SelectItem value="WEBSITE">{t("people:website")}</SelectItem>
+              <SelectItem value="ARCHIVE">{t("people:archive")}</SelectItem>
+              <SelectItem value="LETTER">{t("people:letter")}</SelectItem>
+              <SelectItem value="FAMILY_RECORD">
+                {t("people:familyRecord")}
+              </SelectItem>
+              <SelectItem value="CENSUS">{t("people:census")}</SelectItem>
+              <SelectItem value="VITAL_RECORD">
+                {t("people:vitalRecord")}
+              </SelectItem>
+              <SelectItem value="OTHER">{t("common:other")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {/* Publication Date */}
         <div className="space-y-2">
-          <Label htmlFor="publicationDate">Publication Date</Label>
+          <Label htmlFor="publicationDate">{t("people:publicationDate")}</Label>
           <Input
             id="publicationDate"
             type="text"
             {...register("publicationDate")}
-            placeholder="e.g., 1995, June 2010, 15 March 1892..."
+            placeholder={t("people:publicationDatePlaceholder")}
             disabled={isLoading}
           />
           {errors.publicationDate && (
@@ -194,12 +204,12 @@ export function SourceForm({
         {/* Conditional fields based on source type */}
         {sourceType === "BOOK" && (
           <div className="space-y-2">
-            <Label htmlFor="isbn">ISBN</Label>
+            <Label htmlFor="isbn">{t("people:isbn")}</Label>
             <Input
               id="isbn"
               type="text"
               {...register("isbn")}
-              placeholder="10 or 13 digit ISBN..."
+              placeholder={t("people:isbnPlaceholder")}
               disabled={isLoading}
             />
             {errors.isbn && (
@@ -211,12 +221,12 @@ export function SourceForm({
         {(sourceType === "ARTICLE" || sourceType === "WEBSITE") && (
           <>
             <div className="space-y-2">
-              <Label htmlFor="url">URL</Label>
+              <Label htmlFor="url">{t("people:url")}</Label>
               <Input
                 id="url"
                 type="text"
                 {...register("url")}
-                placeholder="https://..."
+                placeholder={t("people:urlPlaceholder")}
                 disabled={isLoading}
               />
               {errors.url && (
@@ -224,12 +234,12 @@ export function SourceForm({
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="doi">DOI</Label>
+              <Label htmlFor="doi">{t("people:doi")}</Label>
               <Input
                 id="doi"
                 type="text"
                 {...register("doi")}
-                placeholder="e.g., 10.1234/example"
+                placeholder={t("people:doiPlaceholder")}
                 disabled={isLoading}
               />
               {errors.doi && (
@@ -241,12 +251,12 @@ export function SourceForm({
 
         {(sourceType === "ARCHIVE" || sourceType === "BOOK") && (
           <div className="space-y-2">
-            <Label htmlFor="callNumber">Call Number</Label>
+            <Label htmlFor="callNumber">{t("people:callNumber")}</Label>
             <Input
               id="callNumber"
               type="text"
               {...register("callNumber")}
-              placeholder="Library or archive call number..."
+              placeholder={t("people:callNumberPlaceholder")}
               disabled={isLoading}
             />
           </div>
@@ -254,23 +264,23 @@ export function SourceForm({
 
         {/* Repository */}
         <div className="space-y-2">
-          <Label htmlFor="repository">Repository</Label>
+          <Label htmlFor="repository">{t("people:repository")}</Label>
           <Input
             id="repository"
             type="text"
             {...register("repository")}
-            placeholder="Where is this source located or housed..."
+            placeholder={t("people:repositoryPlaceholder")}
             disabled={isLoading}
           />
         </div>
 
         {/* Description */}
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">{t("people:description")}</Label>
           <textarea
             id="description"
             {...register("description")}
-            placeholder="Describe the source content..."
+            placeholder={t("people:describeSourceContent")}
             rows={4}
             disabled={isLoading}
             className="border-input bg-background focus-visible:border-primary focus-visible:ring-primary/20 hover:border-primary/50 placeholder:text-muted-foreground disabled:bg-muted flex w-full rounded-md border-2 px-4 py-2 text-base transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
@@ -279,7 +289,7 @@ export function SourceForm({
 
         {/* Citation Format */}
         <div className="space-y-2">
-          <Label htmlFor="citationFormat">Citation Format</Label>
+          <Label htmlFor="citationFormat">{t("people:citationFormat")}</Label>
           <Select
             value={watch("citationFormat") || ""}
             onValueChange={(value) =>
@@ -288,19 +298,19 @@ export function SourceForm({
             disabled={isLoading}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select citation format..." />
+              <SelectValue placeholder={t("people:selectCitationFormat")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="MLA">MLA</SelectItem>
-              <SelectItem value="APA">APA</SelectItem>
-              <SelectItem value="CHICAGO">Chicago</SelectItem>
+              <SelectItem value="MLA">{t("people:mla")}</SelectItem>
+              <SelectItem value="APA">{t("people:apa")}</SelectItem>
+              <SelectItem value="CHICAGO">{t("people:chicago")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {/* Confidence */}
         <div className="space-y-2">
-          <Label htmlFor="confidence">Confidence Level</Label>
+          <Label htmlFor="confidence">{t("people:confidenceLevel")}</Label>
           <Select
             value={watch("confidence") || ""}
             onValueChange={(value) =>
@@ -309,19 +319,19 @@ export function SourceForm({
             disabled={isLoading}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select confidence level..." />
+              <SelectValue placeholder={t("people:selectCitationFormat")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="HIGH">High</SelectItem>
-              <SelectItem value="MEDIUM">Medium</SelectItem>
-              <SelectItem value="LOW">Low</SelectItem>
+              <SelectItem value="HIGH">{t("people:high")}</SelectItem>
+              <SelectItem value="MEDIUM">{t("people:medium")}</SelectItem>
+              <SelectItem value="LOW">{t("people:low")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         {/* Access Date */}
         <div className="space-y-2">
-          <Label htmlFor="accessDate">Access Date</Label>
+          <Label htmlFor="accessDate">{t("people:accessDate")}</Label>
           <Input
             id="accessDate"
             type="date"
@@ -332,11 +342,11 @@ export function SourceForm({
 
         {/* Research Notes */}
         <div className="space-y-2">
-          <Label htmlFor="notes">Research Notes</Label>
+          <Label htmlFor="notes">{t("people:researchNote")}</Label>
           <textarea
             id="notes"
             {...register("notes")}
-            placeholder="Your research notes about this source..."
+            placeholder={t("people:yourResearchNotes")}
             rows={4}
             disabled={isLoading}
             className="border-input bg-background focus-visible:border-primary focus-visible:ring-primary/20 hover:border-primary/50 placeholder:text-muted-foreground disabled:bg-muted flex w-full rounded-md border-2 px-4 py-2 text-base transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
@@ -359,7 +369,7 @@ export function SourceForm({
               onClick={onCancel}
               disabled={isLoading}
             >
-              Cancel
+              {t("common:cancel")}
             </Button>
           )}
           <Button type="submit" disabled={isLoading}>
@@ -378,12 +388,12 @@ export function SourceForm({
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
-                Saving...
+                {t("common:saving")}
               </>
             ) : isEditing ? (
-              "Update Source"
+              t("people:updateSource")
             ) : (
-              "Create Source"
+              t("people:createSource")
             )}
           </Button>
         </div>
@@ -409,7 +419,9 @@ export function SourceForm({
               </svg>
             </div>
             <p className="text-foreground font-display text-xl font-medium">
-              {isEditing ? "Source updated!" : "Source created!"}
+              {isEditing
+                ? t("people:sourceUpdated")
+                : t("people:sourceCreated")}
             </p>
           </div>
         </div>

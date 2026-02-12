@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge, Button } from "@vamsa/ui/primitives";
 import { ResponsiveImage } from "../ui/responsive-image";
 
@@ -42,6 +43,7 @@ export function MediaViewerModal({
   onEdit,
   onDelete,
 }: MediaViewerModalProps) {
+  const { t } = useTranslation(["people", "common"]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const currentIndex = allMediaIds.indexOf(media.id);
@@ -85,7 +87,7 @@ export function MediaViewerModal({
         type="button"
         className="bg-background/95 absolute inset-0 backdrop-blur-sm"
         onClick={onClose}
-        aria-label="Close viewer"
+        aria-label={t("people:closeViewer")}
       />
 
       {/* Modal */}
@@ -94,7 +96,7 @@ export function MediaViewerModal({
         <div className="border-border flex shrink-0 items-center justify-between border-b px-6 py-4">
           <div className="flex items-center gap-3">
             <h2 className="font-display text-foreground text-xl">
-              {media.title || "Photo"}
+              {media.title || t("people:photo")}
             </h2>
             <Badge variant="muted">{media.format}</Badge>
           </div>
@@ -114,7 +116,7 @@ export function MediaViewerModal({
                     d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                   />
                 </svg>
-                Edit
+                {t("common:edit")}
               </Button>
             )}
             {onDelete && (
@@ -136,7 +138,7 @@ export function MediaViewerModal({
                     d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                   />
                 </svg>
-                Delete
+                {t("common:delete")}
               </Button>
             )}
             <Button variant="ghost" size="sm" onClick={onClose}>
@@ -163,7 +165,7 @@ export function MediaViewerModal({
           <div className="bg-muted/20 relative flex flex-1 items-center justify-center p-8">
             <ResponsiveImage
               mediaId={media.id}
-              alt={media.title || "Photo"}
+              alt={media.title || t("people:photo")}
               webpPath={media.webpPath}
               thumb400Path={media.thumb400Path}
               thumb800Path={media.thumb800Path}
@@ -223,7 +225,7 @@ export function MediaViewerModal({
             {media.description && (
               <div>
                 <span className="text-muted-foreground mb-2 block text-sm font-medium">
-                  Description
+                  {t("common:description")}
                 </span>
                 <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
                   {media.description}
@@ -235,7 +237,7 @@ export function MediaViewerModal({
             {media.source && (
               <div>
                 <span className="text-muted-foreground mb-2 block text-sm font-medium">
-                  Source
+                  {t("people:source")}
                 </span>
                 <p className="text-foreground text-sm">{media.source}</p>
               </div>
@@ -244,31 +246,37 @@ export function MediaViewerModal({
             {/* File info */}
             <div>
               <span className="text-muted-foreground mb-3 block text-sm font-medium">
-                File Information
+                {t("people:fileInformation")}
               </span>
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Format</dt>
+                  <dt className="text-muted-foreground">
+                    {t("people:format")}
+                  </dt>
                   <dd className="text-foreground font-medium">
                     {media.format}
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Size</dt>
+                  <dt className="text-muted-foreground">{t("people:size")}</dt>
                   <dd className="text-foreground font-medium">
                     {formatFileSize(media.fileSize)}
                   </dd>
                 </div>
                 {media.width && media.height && (
                   <div className="flex justify-between">
-                    <dt className="text-muted-foreground">Dimensions</dt>
+                    <dt className="text-muted-foreground">
+                      {t("people:dimensions")}
+                    </dt>
                     <dd className="text-foreground font-medium">
                       {media.width} × {media.height}
                     </dd>
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Uploaded</dt>
+                  <dt className="text-muted-foreground">
+                    {t("people:uploaded")}
+                  </dt>
                   <dd className="text-foreground font-medium">
                     {formatDate(media.uploadedAt)}
                   </dd>
@@ -280,7 +288,7 @@ export function MediaViewerModal({
             {relatedEvents && relatedEvents.length > 0 && (
               <div>
                 <span className="text-muted-foreground mb-3 block text-sm font-medium">
-                  Related Events
+                  {t("people:relatedEvents")}
                 </span>
                 <div className="space-y-2">
                   {relatedEvents.map((event) => (
@@ -307,15 +315,14 @@ export function MediaViewerModal({
             type="button"
             className="bg-background/80 absolute inset-0 backdrop-blur-sm"
             onClick={() => setShowDeleteConfirm(false)}
-            aria-label="Close delete confirmation"
+            aria-label={t("people:closeDeleteConfirmation")}
           />
           <div className="bg-card border-border relative z-10 mx-4 w-full max-w-md rounded-lg border-2 p-6 shadow-xl">
             <h3 className="font-display text-foreground mb-4 text-xl">
-              Delete Photo?
+              {t("people:deletePhoto")}?
             </h3>
             <p className="text-muted-foreground mb-6 text-sm">
-              This action cannot be undone. The photo will be permanently
-              removed from the system.
+              {t("people:deletePhotoConfirmation")}
             </p>
             <div className="flex gap-3">
               <Button
@@ -326,14 +333,14 @@ export function MediaViewerModal({
                 }}
                 className="flex-1"
               >
-                Delete
+                {t("common:delete")}
               </Button>
               <Button
                 variant="outline"
                 onClick={() => setShowDeleteConfirm(false)}
                 className="flex-1"
               >
-                Cancel
+                {t("common:cancel")}
               </Button>
             </div>
           </div>

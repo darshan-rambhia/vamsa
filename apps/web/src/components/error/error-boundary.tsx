@@ -1,7 +1,9 @@
 import { Component } from "react";
+import { withTranslation } from "react-i18next";
 import { ErrorCard } from "./error-card";
 import type { ReactNode } from "react";
 import type { ErrorCardProps } from "./error-card";
+import type { WithTranslation } from "react-i18next";
 
 interface ErrorBoundaryProps {
   /** Children to render */
@@ -46,11 +48,11 @@ interface ErrorBoundaryState {
  * </ErrorBoundary>
  * ```
  */
-export class ErrorBoundary extends Component<
-  ErrorBoundaryProps,
+class ErrorBoundaryBase extends Component<
+  ErrorBoundaryProps & WithTranslation,
   ErrorBoundaryState
 > {
-  constructor(props: ErrorBoundaryProps) {
+  constructor(props: ErrorBoundaryProps & WithTranslation) {
     super(props);
     this.state = { hasError: false, error: null };
   }
@@ -75,7 +77,7 @@ export class ErrorBoundary extends Component<
 
   render() {
     if (this.state.hasError && this.state.error) {
-      const { fallback, errorCardProps } = this.props;
+      const { fallback, errorCardProps, t } = this.props;
       const error = this.state.error;
 
       // Render prop fallback
@@ -91,8 +93,8 @@ export class ErrorBoundary extends Component<
       // Default ErrorCard fallback
       return (
         <ErrorCard
-          title="This section encountered an error"
-          message="Something went wrong loading this content. Try refreshing or come back later."
+          title={t("common:sectionError")}
+          message={t("common:sectionErrorMessage")}
           error={error}
           onRetry={this.reset}
           variant="compact"
@@ -104,6 +106,9 @@ export class ErrorBoundary extends Component<
     return this.props.children;
   }
 }
+
+// Wrap with translation HOC
+export const ErrorBoundary = withTranslation()(ErrorBoundaryBase);
 
 /**
  * Higher-order component version of ErrorBoundary

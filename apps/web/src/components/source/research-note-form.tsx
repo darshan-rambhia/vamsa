@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   Badge,
   Button,
@@ -41,6 +42,7 @@ export function ResearchNoteForm({
   onSuccess,
   onCancel,
 }: ResearchNoteFormProps) {
+  const { t } = useTranslation(["people", "common"]);
   const queryClient = useQueryClient();
   const [showSuccess, setShowSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -163,7 +165,7 @@ export function ResearchNoteForm({
         {/* Source Selection */}
         <div className="space-y-2">
           <Label htmlFor="sourceId">
-            Source <span className="text-destructive">*</span>
+            {t("people:source")} <span className="text-destructive">*</span>
           </Label>
           <Select
             value={selectedSourceId}
@@ -171,7 +173,7 @@ export function ResearchNoteForm({
             disabled={isLoading || Boolean(initialSourceId)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select a source..." />
+              <SelectValue placeholder={t("people:selectSource")} />
             </SelectTrigger>
             <SelectContent>
               {sourcesData?.items?.map((source) => (
@@ -191,7 +193,7 @@ export function ResearchNoteForm({
         {/* Event Type */}
         <div className="space-y-2">
           <Label htmlFor="eventType">
-            Event Type <span className="text-destructive">*</span>
+            {t("people:eventType")} <span className="text-destructive">*</span>
           </Label>
           <Select
             value={watch("eventType")}
@@ -199,16 +201,18 @@ export function ResearchNoteForm({
             disabled={isLoading}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select event type..." />
+              <SelectValue placeholder={t("people:selectEventType")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="BIRTH">Birth</SelectItem>
-              <SelectItem value="DEATH">Death</SelectItem>
-              <SelectItem value="MARRIAGE">Marriage</SelectItem>
-              <SelectItem value="DIVORCE">Divorce</SelectItem>
-              <SelectItem value="BURIAL">Burial</SelectItem>
-              <SelectItem value="GRADUATION">Graduation</SelectItem>
-              <SelectItem value="CUSTOM">Custom</SelectItem>
+              <SelectItem value="BIRTH">{t("people:birth")}</SelectItem>
+              <SelectItem value="DEATH">{t("people:death")}</SelectItem>
+              <SelectItem value="MARRIAGE">{t("people:marriage")}</SelectItem>
+              <SelectItem value="DIVORCE">{t("people:divorce")}</SelectItem>
+              <SelectItem value="BURIAL">{t("people:burial")}</SelectItem>
+              <SelectItem value="GRADUATION">
+                {t("people:graduation")}
+              </SelectItem>
+              <SelectItem value="CUSTOM">{t("people:customEvent")}</SelectItem>
             </SelectContent>
           </Select>
           {errors.eventType && (
@@ -221,12 +225,12 @@ export function ResearchNoteForm({
         {/* Findings (Rich text) */}
         <div className="space-y-2">
           <Label htmlFor="findings">
-            Findings <span className="text-destructive">*</span>
+            {t("people:findings")} <span className="text-destructive">*</span>
           </Label>
           <textarea
             id="findings"
             {...register("findings")}
-            placeholder="What did you discover from this source? Include key facts, dates, names, and observations..."
+            placeholder={t("people:whatDidYouDiscover")}
             rows={6}
             disabled={isLoading}
             className="border-input bg-background focus-visible:border-primary focus-visible:ring-primary/20 hover:border-primary/50 placeholder:text-muted-foreground disabled:bg-muted flex w-full rounded-md border-2 px-4 py-2 text-base transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
@@ -240,11 +244,11 @@ export function ResearchNoteForm({
 
         {/* Methodology */}
         <div className="space-y-2">
-          <Label htmlFor="methodology">Methodology</Label>
+          <Label htmlFor="methodology">{t("people:methodology")}</Label>
           <textarea
             id="methodology"
             {...register("methodology")}
-            placeholder="Describe your research methodology, how you verified information, and what steps you took..."
+            placeholder={t("people:describeMethodology")}
             rows={4}
             disabled={isLoading}
             className="border-input bg-background focus-visible:border-primary focus-visible:ring-primary/20 hover:border-primary/50 placeholder:text-muted-foreground disabled:bg-muted flex w-full rounded-md border-2 px-4 py-2 text-base transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
@@ -253,11 +257,11 @@ export function ResearchNoteForm({
 
         {/* Limitations */}
         <div className="space-y-2">
-          <Label htmlFor="limitations">Limitations</Label>
+          <Label htmlFor="limitations">{t("people:limitations")}</Label>
           <textarea
             id="limitations"
             {...register("limitations")}
-            placeholder="Note any limitations, missing information, conflicting data, or areas requiring further research..."
+            placeholder={t("people:noteLimitations")}
             rows={4}
             disabled={isLoading}
             className="border-input bg-background focus-visible:border-primary focus-visible:ring-primary/20 hover:border-primary/50 placeholder:text-muted-foreground disabled:bg-muted flex w-full rounded-md border-2 px-4 py-2 text-base transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
@@ -266,7 +270,7 @@ export function ResearchNoteForm({
 
         {/* Related Sources */}
         <div className="space-y-2">
-          <Label htmlFor="relatedSources">Related Sources</Label>
+          <Label htmlFor="relatedSources">{t("people:relatedSources")}</Label>
           <div className="flex gap-2">
             <Select
               value={relatedSourcesInput}
@@ -274,7 +278,7 @@ export function ResearchNoteForm({
               disabled={isLoading}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select related sources..." />
+                <SelectValue placeholder={t("people:selectRelatedSources")} />
               </SelectTrigger>
               <SelectContent>
                 {sourcesData?.items
@@ -296,7 +300,7 @@ export function ResearchNoteForm({
               onClick={handleAddRelatedSource}
               disabled={!relatedSourcesInput || isLoading}
             >
-              Add
+              {t("common:add")}
             </Button>
           </div>
           {selectedRelatedSources.length > 0 && (
@@ -332,7 +336,9 @@ export function ResearchNoteForm({
 
         {/* Conclusion Reliability */}
         <div className="space-y-2">
-          <Label htmlFor="conclusionReliability">Conclusion Reliability</Label>
+          <Label htmlFor="conclusionReliability">
+            {t("people:conclusionReliability")}
+          </Label>
           <Select
             value={watch("conclusionReliability") || ""}
             onValueChange={(value) =>
@@ -341,24 +347,28 @@ export function ResearchNoteForm({
             disabled={isLoading}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select reliability level..." />
+              <SelectValue placeholder={t("people:selectReliabilityLevel")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="CONCLUSIVE">Conclusive</SelectItem>
-              <SelectItem value="PROBABLE">Probable</SelectItem>
-              <SelectItem value="POSSIBLE">Possible</SelectItem>
-              <SelectItem value="SPECULATIVE">Speculative</SelectItem>
+              <SelectItem value="CONCLUSIVE">
+                {t("people:conclusive")}
+              </SelectItem>
+              <SelectItem value="PROBABLE">{t("people:probable")}</SelectItem>
+              <SelectItem value="POSSIBLE">{t("people:possible")}</SelectItem>
+              <SelectItem value="SPECULATIVE">
+                {t("people:speculative")}
+              </SelectItem>
             </SelectContent>
           </Select>
           <div className="text-muted-foreground mt-1 text-xs">
             {watch("conclusionReliability") === "CONCLUSIVE" &&
-              "Evidence is definitive and well-documented"}
+              t("people:evidenceDefinitive")}
             {watch("conclusionReliability") === "PROBABLE" &&
-              "Strong evidence with minor gaps"}
+              t("people:strongEvidence")}
             {watch("conclusionReliability") === "POSSIBLE" &&
-              "Reasonable evidence but requires verification"}
+              t("people:reasonableEvidence")}
             {watch("conclusionReliability") === "SPECULATIVE" &&
-              "Hypothesis based on limited evidence"}
+              t("people:hypothesisBasedOnLimited")}
           </div>
         </div>
 
@@ -378,7 +388,7 @@ export function ResearchNoteForm({
               onClick={onCancel}
               disabled={isLoading}
             >
-              Cancel
+              {t("common:cancel")}
             </Button>
           )}
           <Button type="submit" disabled={isLoading}>
@@ -397,12 +407,12 @@ export function ResearchNoteForm({
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
-                Saving...
+                {t("common:saving")}
               </>
             ) : isEditing ? (
-              "Update Research Note"
+              t("people:updateResearchNote")
             ) : (
-              "Create Research Note"
+              t("people:createResearchNote")
             )}
           </Button>
         </div>
@@ -428,7 +438,9 @@ export function ResearchNoteForm({
               </svg>
             </div>
             <p className="text-foreground font-display text-xl font-medium">
-              {isEditing ? "Research note updated!" : "Research note created!"}
+              {isEditing
+                ? t("people:researchNoteUpdated")
+                : t("people:researchNoteCreated")}
             </p>
           </div>
         </div>

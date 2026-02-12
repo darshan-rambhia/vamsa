@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -74,33 +75,37 @@ type CalendarUrl = {
   url: string;
 };
 
-const getCalendarUrls = (token: string): Array<CalendarUrl> => {
+const getCalendarUrls = (
+  token: string,
+  t: (key: string) => string
+): Array<CalendarUrl> => {
   const appUrl = getAppUrl();
   return [
     {
-      label: "Birthdays",
-      description: "Subscribe to family birthdays",
+      label: t("birthdayCalendar"),
+      description: t("subscribeToBirthdays"),
       url: `${appUrl}/api/v1/calendar/birthdays.ics?token=${token}`,
     },
     {
-      label: "Anniversaries",
-      description: "Subscribe to family anniversaries",
+      label: t("anniversaryCalendar"),
+      description: t("subscribeToAnniversaries"),
       url: `${appUrl}/api/v1/calendar/anniversaries.ics?token=${token}`,
     },
     {
-      label: "All Events",
-      description: "Subscribe to all family events",
+      label: t("eventsCalendar"),
+      description: t("subscribeToAllEvents"),
       url: `${appUrl}/api/v1/calendar/events.ics?token=${token}`,
     },
     {
-      label: "RSS Feed",
-      description: "Subscribe to updates via RSS reader",
+      label: t("rssFeed"),
+      description: t("subscribeToRss"),
       url: `${appUrl}/api/v1/calendar/rss.xml?token=${token}`,
     },
   ];
 };
 
 function CalendarTokensPage() {
+  const { t } = useTranslation(["common"]);
   const queryClient = useQueryClient();
   const [editingToken, setEditingToken] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
@@ -223,10 +228,10 @@ function CalendarTokensPage() {
 
   const formatPolicy = (policy: string): string => {
     const labels: Record<string, string> = {
-      on_password_change: "Rotate on password change",
-      annual: "Annual rotation",
-      manual: "Manual only",
-      never: "No rotation",
+      on_password_change: t("rotateOnPasswordChange"),
+      annual: t("rotateAnnually"),
+      manual: t("manualRotationOnly"),
+      never: t("neverRotate"),
     };
     return labels[policy] || policy;
   };
@@ -238,8 +243,8 @@ function CalendarTokensPage() {
   return (
     <Container>
       <PageHeader
-        title="Calendar Access Tokens"
-        description="Manage tokens used to subscribe to your family calendar in Apple Calendar, Google Calendar, Outlook, and other calendar apps"
+        title={t("calendarAccessTokens")}
+        description={t("manageCalendarTokens")}
       />
 
       <div className="max-w-4xl">
@@ -247,21 +252,19 @@ function CalendarTokensPage() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Your Tokens</CardTitle>
-                <CardDescription>
-                  Create and manage calendar subscription tokens
-                </CardDescription>
+                <CardTitle>{t("yourTokens")}</CardTitle>
+                <CardDescription>{t("createAndManageTokens")}</CardDescription>
               </div>
               <Dialog
                 open={showCreateDialog}
                 onOpenChange={setShowCreateDialog}
               >
                 <DialogTrigger asChild>
-                  <Button>Create New Token</Button>
+                  <Button>{t("createNewToken")}</Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Create Calendar Token</DialogTitle>
+                    <DialogTitle>{t("createCalendarToken")}</DialogTitle>
                   </DialogHeader>
                   <CreateTokenForm
                     onSuccess={() => {
@@ -309,10 +312,8 @@ function CalendarTokensPage() {
               </div>
             ) : !tokens || tokens.length === 0 ? (
               <div className="text-muted-foreground py-12 text-center">
-                <p className="mb-4">No calendar tokens yet</p>
-                <p className="text-sm">
-                  Create a token to subscribe to your family calendar
-                </p>
+                <p className="mb-4">{t("noCalendarTokens")}</p>
+                <p className="text-sm">{t("createTokenToSubscribe")}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -320,25 +321,25 @@ function CalendarTokensPage() {
                   <thead>
                     <tr className="border-border border-b text-left">
                       <th className="text-muted-foreground pr-4 pb-3 text-sm font-medium">
-                        Name
+                        {t("name")}
                       </th>
                       <th className="text-muted-foreground pr-4 pb-3 text-sm font-medium">
-                        Created
+                        {t("created")}
                       </th>
                       <th className="text-muted-foreground pr-4 pb-3 text-sm font-medium">
-                        Last Used
+                        {t("lastUsed")}
                       </th>
                       <th className="text-muted-foreground pr-4 pb-3 text-sm font-medium">
-                        Expires
+                        {t("expires")}
                       </th>
                       <th className="text-muted-foreground pr-4 pb-3 text-sm font-medium">
-                        Policy
+                        {t("policy")}
                       </th>
                       <th className="text-muted-foreground pr-4 pb-3 text-sm font-medium">
-                        Status
+                        {t("status")}
                       </th>
                       <th className="text-muted-foreground pb-3 text-sm font-medium">
-                        Actions
+                        {t("actions")}
                       </th>
                     </tr>
                   </thead>
@@ -362,7 +363,7 @@ function CalendarTokensPage() {
                                   setEditingToken(null);
                                 }
                               }}
-                              placeholder="Token name"
+                              placeholder={t("tokenNameInputPlaceholder")}
                               className="max-w-xs"
                               data-testid={`token-name-input-${token.id}`}
                             />
@@ -376,7 +377,7 @@ function CalendarTokensPage() {
                             >
                               {token.name || (
                                 <em className="text-muted-foreground">
-                                  Unnamed token
+                                  {t("unnamedToken")}
                                 </em>
                               )}
                             </button>
@@ -392,7 +393,7 @@ function CalendarTokensPage() {
                             )
                           ) : (
                             <span className="text-muted-foreground/60">
-                              Never
+                              {t("never")}
                             </span>
                           )}
                         </td>
@@ -410,12 +411,12 @@ function CalendarTokensPage() {
                               variant="secondary"
                               className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                             >
-                              Active
+                              {t("active")}
                             </Badge>
                           ) : !token.isActive ? (
-                            <Badge variant="destructive">Revoked</Badge>
+                            <Badge variant="destructive">{t("revoked")}</Badge>
                           ) : (
-                            <Badge variant="outline">Expired</Badge>
+                            <Badge variant="outline">{t("expired")}</Badge>
                           )}
                         </td>
                         <td className="py-3">
@@ -468,26 +469,16 @@ function CalendarTokensPage() {
         {/* Info Card */}
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle className="text-base">About Calendar Tokens</CardTitle>
+            <CardTitle className="text-base">
+              {t("aboutCalendarTokens")}
+            </CardTitle>
           </CardHeader>
           <CardContent className="text-muted-foreground space-y-2 text-sm">
-            <p>
-              Calendar tokens allow you to subscribe to your family calendar in
-              any calendar application that supports iCalendar (.ics) feeds.
-            </p>
+            <p>{t("calendarTokensAllowSubscribe")}</p>
             <ul className="ml-6 list-disc space-y-1">
-              <li>
-                <strong>Rotation policies</strong> help keep your calendar
-                secure by automatically creating new tokens
-              </li>
-              <li>
-                When a token is rotated, the old token remains valid for 30 days
-                to allow time for updating your calendar subscriptions
-              </li>
-              <li>
-                Revoking a token immediately disables it and calendar
-                subscriptions will stop working
-              </li>
+              <li>{t("rotationPoliciesHelp")}</li>
+              <li>{t("whenTokenRotated")}</li>
+              <li>{t("revokingTokenDisables")}</li>
             </ul>
           </CardContent>
         </Card>
@@ -502,24 +493,21 @@ function CalendarTokensPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Revoke Calendar Token</AlertDialogTitle>
+            <AlertDialogTitle>{t("revokeCalendarToken")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to revoke{" "}
-              <strong>{revokeDialogToken?.name || "this token"}</strong>?
-              Calendar subscriptions using this token will stop working
-              immediately. You can delete the token after revoking it.
+              {t("confirmRevokeToken")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={revokeMutation.isPending}>
-              Cancel
+              {t("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={confirmRevoke}
               disabled={revokeMutation.isPending}
             >
-              {revokeMutation.isPending ? "Revoking..." : "Revoke Token"}
+              {revokeMutation.isPending ? t("revoking") : t("revokeToken")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -534,24 +522,23 @@ function CalendarTokensPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Calendar Token</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteCalendarToken")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to permanently delete{" "}
-              <strong>{deleteDialogToken?.name || "this token"}</strong>? This
-              action cannot be undone and the token will be removed from your
-              records.
+              {t("confirmDeleteToken")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteMutation.isPending}>
-              Cancel
+              {t("cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={confirmDelete}
               disabled={deleteMutation.isPending}
             >
-              {deleteMutation.isPending ? "Deleting..." : "Delete Permanently"}
+              {deleteMutation.isPending
+                ? t("deleting")
+                : t("deletePermanently")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -605,10 +592,10 @@ function CalendarTokensPage() {
             {rotatedToken && (
               <div className="space-y-3">
                 <h4 className="text-sm font-medium">
-                  Updated Calendar Subscription URLs
+                  {t("updatedCalendarUrls")}
                 </h4>
                 <div className="space-y-2">
-                  {getCalendarUrls(rotatedToken.token).map((item) => (
+                  {getCalendarUrls(rotatedToken.token, t).map((item) => (
                     <div
                       key={item.label}
                       className="bg-muted/50 rounded-lg border p-3"
@@ -646,7 +633,7 @@ function CalendarTokensPage() {
                                   d="M5 13l4 4L19 7"
                                 />
                               </svg>
-                              Copied!
+                              {t("copied")}
                             </>
                           ) : (
                             <>
@@ -663,7 +650,7 @@ function CalendarTokensPage() {
                                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                                 />
                               </svg>
-                              Copy URL
+                              {t("copyUrl")}
                             </>
                           )}
                         </Button>
@@ -687,7 +674,7 @@ function CalendarTokensPage() {
                 }}
                 data-testid="rotated-token-done"
               >
-                Done
+                {t("done")}
               </Button>
             </div>
           </div>

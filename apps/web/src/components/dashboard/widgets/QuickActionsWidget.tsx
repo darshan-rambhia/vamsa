@@ -2,6 +2,7 @@
 
 import { Link } from "@tanstack/react-router";
 import { Search, Settings, Share2, UserPlus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@vamsa/ui";
 import { BaseWidget } from "./BaseWidget";
 import type { WidgetProps } from "./types";
@@ -16,6 +17,8 @@ export function QuickActionsWidget({
   onRemove,
   className,
 }: WidgetProps) {
+  const { t } = useTranslation(["dashboard", "common"]);
+
   return (
     <BaseWidget config={config} onRemove={onRemove} className={className}>
       <div className="grid h-full grid-cols-2 gap-3 p-1">
@@ -29,7 +32,7 @@ export function QuickActionsWidget({
               <UserPlus className="h-5 w-5" />
             </div>
             <span className="font-display text-base font-medium">
-              Add Person
+              {t("dashboard:addPerson")}
             </span>
           </Link>
         </Button>
@@ -44,7 +47,7 @@ export function QuickActionsWidget({
               <Share2 className="h-5 w-5" />
             </div>
             <span className="font-display text-base font-medium">
-              Visualize
+              {t("dashboard:visualize")}
             </span>
           </Link>
         </Button>
@@ -57,7 +60,7 @@ export function QuickActionsWidget({
           <Link to="/people">
             <Search className="text-muted-foreground mb-1 h-5 w-5" />
             <span className="text-muted-foreground text-sm font-medium">
-              Full Search
+              {t("dashboard:fullSearch")}
             </span>
           </Link>
         </Button>
@@ -70,7 +73,7 @@ export function QuickActionsWidget({
           <Link to="/settings/profile">
             <Settings className="text-muted-foreground mb-1 h-5 w-5" />
             <span className="text-muted-foreground text-sm font-medium">
-              Settings
+              {t("dashboard:settings")}
             </span>
           </Link>
         </Button>

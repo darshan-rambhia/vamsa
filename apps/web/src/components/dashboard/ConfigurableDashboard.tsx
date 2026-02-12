@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Settings2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@vamsa/ui";
 import {
   getDashboardPreferences,
@@ -29,6 +30,7 @@ function generateWidgetId(): string {
  * - Edit mode toggle
  */
 export function ConfigurableDashboard() {
+  const { t } = useTranslation(["dashboard", "common"]);
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -151,15 +153,17 @@ export function ConfigurableDashboard() {
 
   // Handle reset to defaults
   const handleReset = useCallback(() => {
-    if (confirm("Reset dashboard to default widgets? This cannot be undone.")) {
+    if (confirm(t("dashboard:resetDefaultConfirm"))) {
       resetMutation.mutate({});
     }
-  }, [resetMutation]);
+  }, [resetMutation, t]);
 
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
-        <div className="text-muted-foreground">Loading dashboard...</div>
+        <div className="text-muted-foreground">
+          {t("dashboard:loadingDashboard")}
+        </div>
       </div>
     );
   }
@@ -175,7 +179,7 @@ export function ConfigurableDashboard() {
             onClick={() => setIsEditing(!isEditing)}
           >
             <Settings2 className="mr-2 h-4 w-4" />
-            {isEditing ? "Done Editing" : "Customize"}
+            {isEditing ? t("dashboard:doneEditing") : t("dashboard:customize")}
           </Button>
           {isEditing && (
             <>
@@ -185,16 +189,18 @@ export function ConfigurableDashboard() {
                 onClick={() => setShowAddModal(true)}
               >
                 <Plus className="mr-2 h-4 w-4" />
-                Add Widget
+                {t("dashboard:addWidget")}
               </Button>
               <Button variant="ghost" size="sm" onClick={handleReset}>
-                Reset to Default
+                {t("dashboard:resetToDefault")}
               </Button>
             </>
           )}
         </div>
         {saveMutation.isPending && (
-          <span className="text-muted-foreground text-sm">Saving...</span>
+          <span className="text-muted-foreground text-sm">
+            {t("dashboard:saving")}
+          </span>
         )}
       </div>
 
@@ -202,11 +208,11 @@ export function ConfigurableDashboard() {
       {widgets.length === 0 ? (
         <div className="border-border flex h-64 flex-col items-center justify-center rounded-lg border-2 border-dashed">
           <p className="text-muted-foreground mb-4">
-            No widgets on your dashboard
+            {t("dashboard:noWidgetsDashboard")}
           </p>
           <Button onClick={() => setShowAddModal(true)}>
             <Plus className="mr-2 h-4 w-4" />
-            Add Your First Widget
+            {t("dashboard:addYourFirstWidget")}
           </Button>
         </div>
       ) : (

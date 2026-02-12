@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Card, CardContent, Container, PageHeader } from "@vamsa/ui";
 import type { MapMarker } from "~/components/maps/interactive-map";
 import { InteractiveMap } from "~/components/maps/interactive-map";
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/_authenticated/maps/")({
 });
 
 function MapsComponent() {
+  const { t } = useTranslation(["common"]);
   const [mapStyle, setMapStyle] = useState<"streets" | "satellite" | "terrain">(
     "streets"
   );
@@ -128,8 +130,8 @@ function MapsComponent() {
   return (
     <Container className="space-y-6">
       <PageHeader
-        title="Family Maps"
-        description="Explore your family history through interactive maps"
+        title={t("familyMaps")}
+        description={t("familyMapsDescription")}
         actions={
           <Button
             variant={useTimelineFilter ? "default" : "outline"}
@@ -148,7 +150,7 @@ function MapsComponent() {
                 d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            {useTimelineFilter ? "Timeline Active" : "Enable Timeline"}
+            {useTimelineFilter ? t("timelineActive") : t("enableTimeline")}
           </Button>
         }
       />
@@ -157,7 +159,9 @@ function MapsComponent() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardContent className="p-4">
-            <p className="text-muted-foreground text-sm">Total Locations</p>
+            <p className="text-muted-foreground text-sm">
+              {t("totalLocations")}
+            </p>
             <p className="text-foreground text-2xl font-semibold">
               {isLoading ? "-" : markers.length}
             </p>
@@ -165,7 +169,7 @@ function MapsComponent() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-muted-foreground text-sm">Total People</p>
+            <p className="text-muted-foreground text-sm">{t("totalPeople")}</p>
             <p className="text-foreground text-2xl font-semibold">
               {isLoading ? "-" : familyData?.familySize || 0}
             </p>
@@ -173,7 +177,7 @@ function MapsComponent() {
         </Card>
         <Card>
           <CardContent className="p-4">
-            <p className="text-muted-foreground text-sm">Year Range</p>
+            <p className="text-muted-foreground text-sm">{t("yearRange")}</p>
             <p className="text-foreground text-2xl font-semibold">
               {yearRange.min} - {yearRange.max}
             </p>
@@ -191,7 +195,7 @@ function MapsComponent() {
                 <div className="flex h-full w-full items-center justify-center">
                   <div className="space-y-4 text-center">
                     <div className="bg-primary/10 mx-auto h-12 w-12 animate-pulse rounded-full" />
-                    <p className="text-muted-foreground">Loading map...</p>
+                    <p className="text-muted-foreground">{t("loadingMap")}</p>
                   </div>
                 </div>
               ) : markers.length === 0 ? (
@@ -214,11 +218,10 @@ function MapsComponent() {
                     </div>
                     <div>
                       <p className="text-foreground font-medium">
-                        No Locations Found
+                        {t("noLocationsFound")}
                       </p>
                       <p className="text-muted-foreground text-sm">
-                        Add geographic information to places to see them on the
-                        map
+                        {t("noLocationsMessage")}
                       </p>
                     </div>
                   </div>
@@ -247,7 +250,7 @@ function MapsComponent() {
           {/* Legend */}
           <Card>
             <CardContent className="space-y-3 p-4">
-              <h3 className="text-sm font-medium">Marker Colors</h3>
+              <h3 className="text-sm font-medium">{t("markerColors")}</h3>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
                   <div
@@ -255,7 +258,7 @@ function MapsComponent() {
                     style={{ backgroundColor: "hsl(142, 71%, 45%)" }}
                   />
                   <span className="text-muted-foreground text-xs">
-                    Birth Events
+                    {t("birthEvents")}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -264,7 +267,7 @@ function MapsComponent() {
                     style={{ backgroundColor: "hsl(0, 84%, 60%)" }}
                   />
                   <span className="text-muted-foreground text-xs">
-                    Death Events
+                    {t("deathEvents")}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -273,13 +276,13 @@ function MapsComponent() {
                     style={{ backgroundColor: "hsl(280, 100%, 70%)" }}
                   />
                   <span className="text-muted-foreground text-xs">
-                    Marriage Events
+                    {t("marriageEvents")}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="bg-primary h-4 w-4 rounded-full" />
                   <span className="text-muted-foreground text-xs">
-                    Other Locations
+                    {t("otherLocations")}
                   </span>
                 </div>
               </div>

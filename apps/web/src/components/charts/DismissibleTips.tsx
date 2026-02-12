@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@vamsa/ui";
 
 const STORAGE_KEY = "vamsa-chart-tips-dismissed";
@@ -14,6 +15,7 @@ interface DismissibleTipsProps {
  * Remembers dismissal state in localStorage.
  */
 export function DismissibleTips({ className }: DismissibleTipsProps) {
+  const { t } = useTranslation(["charts"]);
   const [isDismissed, setIsDismissed] = useState(true); // Start hidden to avoid flash
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -61,7 +63,7 @@ export function DismissibleTips({ className }: DismissibleTipsProps) {
             d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z"
           />
         </svg>
-        Show tips
+        {t("charts:showTips")}
       </Button>
     );
   }
@@ -85,9 +87,10 @@ export function DismissibleTips({ className }: DismissibleTipsProps) {
           />
         </svg>
         <p className="text-muted-foreground text-sm">
-          <span className="text-foreground font-medium">Tip:</span> Drag to pan,
-          scroll to zoom, click a node for details. Use controls to adjust
-          generations.
+          <span className="text-foreground font-medium">
+            {t("charts:tipLabel")}
+          </span>{" "}
+          {t("charts:tipMessage")}
         </p>
       </div>
       <Button
@@ -95,7 +98,7 @@ export function DismissibleTips({ className }: DismissibleTipsProps) {
         size="icon"
         className="h-6 w-6 shrink-0"
         onClick={handleDismiss}
-        title="Dismiss tips"
+        title={t("charts:dismissTips")}
       >
         <svg
           className="h-4 w-4"

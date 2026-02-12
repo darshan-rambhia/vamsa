@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Badge } from "@vamsa/ui/primitives";
 import { formatDate } from "@vamsa/lib";
 import type { EventType } from "@vamsa/schemas";
@@ -23,6 +24,8 @@ interface EventTimelineProps {
 }
 
 export function EventTimeline({ events, onEventClick }: EventTimelineProps) {
+  const { t } = useTranslation(["people", "common"]);
+
   if (events.length === 0) {
     return null;
   }
@@ -33,7 +36,7 @@ export function EventTimeline({ events, onEventClick }: EventTimelineProps) {
       <div className="bg-border absolute top-0 left-3 h-full w-0.5 sm:left-5" />
 
       {events.map((event) => {
-        const eventTypeConfig = getEventTypeConfig(event.type);
+        const eventTypeConfig = getEventTypeConfig(event.type, t);
 
         const content = (
           <>
@@ -107,8 +110,8 @@ export function EventTimeline({ events, onEventClick }: EventTimelineProps) {
                     <span className="text-muted-foreground text-sm">
                       {event.participants.length}{" "}
                       {event.participants.length === 1
-                        ? "participant"
-                        : "participants"}
+                        ? t("people:participant")
+                        : t("people:participants_plural")}
                     </span>
                   </div>
                 )}
@@ -124,7 +127,7 @@ export function EventTimeline({ events, onEventClick }: EventTimelineProps) {
               type="button"
               className="group focus-visible:ring-ring relative w-full cursor-pointer rounded-lg text-left focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
               onClick={() => onEventClick(event.id)}
-              aria-label={`View ${eventTypeConfig.label.toLowerCase()} event${event.date ? ` on ${formatDate(new Date(event.date))}` : ""}`}
+              aria-label={`${t("common:view")} ${eventTypeConfig.label.toLowerCase()} ${t("people:event_label")}${event.date ? ` on ${formatDate(new Date(event.date))}` : ""}`}
             >
               {content}
             </button>
@@ -141,7 +144,10 @@ export function EventTimeline({ events, onEventClick }: EventTimelineProps) {
   );
 }
 
-function getEventTypeConfig(type: EventType): {
+function getEventTypeConfig(
+  type: EventType,
+  t: (key: string) => string
+): {
   label: string;
   badgeClass: string;
   dotClass: string;
@@ -149,55 +155,55 @@ function getEventTypeConfig(type: EventType): {
   switch (type) {
     case "BIRTH":
       return {
-        label: "Birth",
+        label: t("people:birth"),
         badgeClass:
           "border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400",
         dotClass: "bg-green-500",
       };
     case "DEATH":
       return {
-        label: "Death",
+        label: t("people:death"),
         badgeClass:
           "border-gray-500/50 bg-gray-500/10 text-gray-700 dark:text-gray-400",
         dotClass: "bg-gray-500",
       };
     case "MARRIAGE":
       return {
-        label: "Marriage",
+        label: t("people:marriage"),
         badgeClass:
           "border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-400",
         dotClass: "bg-blue-500",
       };
     case "DIVORCE":
       return {
-        label: "Divorce",
+        label: t("people:divorce"),
         badgeClass:
           "border-orange-500/50 bg-orange-500/10 text-orange-700 dark:text-orange-400",
         dotClass: "bg-orange-500",
       };
     case "BURIAL":
       return {
-        label: "Burial",
+        label: t("people:burial"),
         badgeClass:
           "border-gray-500/50 bg-gray-500/10 text-gray-700 dark:text-gray-400",
         dotClass: "bg-gray-500",
       };
     case "GRADUATION":
       return {
-        label: "Graduation",
+        label: t("people:graduation"),
         badgeClass:
           "border-purple-500/50 bg-purple-500/10 text-purple-700 dark:text-purple-400",
         dotClass: "bg-purple-500",
       };
     case "CUSTOM":
       return {
-        label: "Event",
+        label: t("people:customEvent"),
         badgeClass: "border-border bg-muted text-foreground",
         dotClass: "bg-muted-foreground",
       };
     default:
       return {
-        label: "Event",
+        label: t("people:customEvent"),
         badgeClass: "border-border bg-muted text-foreground",
         dotClass: "bg-muted-foreground",
       };

@@ -1,5 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Card,
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/forgot-password")({
 });
 
 function ForgotPasswordComponent() {
+  const { t } = useTranslation(["auth", "common"]);
   const [email, setEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -44,7 +46,7 @@ function ForgotPasswordComponent() {
 
       if (!response.ok || data.error) {
         // Only show errors for unexpected issues, not for user enumeration
-        setError("An unexpected error occurred. Please try again.");
+        setError(t("resetPasswordUnexpectedError"));
         setIsLoading(false);
         return;
       }
@@ -53,7 +55,7 @@ function ForgotPasswordComponent() {
       setSuccess(true);
       setIsLoading(false);
     } catch (_err) {
-      setError("An unexpected error occurred. Please try again.");
+      setError(t("resetPasswordUnexpectedError"));
       setIsLoading(false);
     }
   };
@@ -95,10 +97,9 @@ function ForgotPasswordComponent() {
           </div>
 
           <div>
-            <CardTitle className="text-3xl">Reset Password</CardTitle>
+            <CardTitle className="text-3xl">{t("resetPassword")}</CardTitle>
             <CardDescription className="mt-2 text-base">
-              Enter your email address and we&apos;ll send you a password reset
-              link.
+              {t("resetPasswordDescription")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -114,11 +115,8 @@ function ForgotPasswordComponent() {
                 className="border-primary/30 bg-primary/10 text-primary rounded-lg border-2 px-4 py-3 text-sm"
                 data-testid="forgot-password-success"
               >
-                <div className="mb-1 font-semibold">Check your email</div>
-                <div>
-                  If an account with that email exists, we have sent a password
-                  reset link. Please check your inbox.
-                </div>
+                <div className="mb-1 font-semibold">{t("checkYourEmail")}</div>
+                <div>{t("resetPasswordCheckEmail")}</div>
               </div>
             )}
 
@@ -127,14 +125,14 @@ function ForgotPasswordComponent() {
                 className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border-2 px-4 py-3 text-sm"
                 data-testid="forgot-password-error"
               >
-                <div className="mb-1 font-semibold">Error:</div>
+                <div className="mb-1 font-semibold">{t("common:error")}:</div>
                 <div>{error}</div>
               </div>
             )}
 
             {!success && (
               <>
-                <FormField label="Email address" required>
+                <FormField label={t("common:email")} required>
                   <Input
                     name="email"
                     type="email"
@@ -154,20 +152,20 @@ function ForgotPasswordComponent() {
                   className="w-full"
                   data-testid="forgot-password-submit-button"
                 >
-                  {isLoading ? "Sending..." : "Send Reset Link"}
+                  {isLoading ? t("sending") : t("sendResetLink")}
                 </Button>
               </>
             )}
 
             <div className="text-center text-sm">
               <span className="text-muted-foreground">
-                Remember your password?{" "}
+                {t("rememberPassword")}{" "}
               </span>
               <Link
                 to="/login"
                 className="text-primary font-medium hover:underline"
               >
-                Sign in
+                {t("signIn")}
               </Link>
             </div>
           </form>

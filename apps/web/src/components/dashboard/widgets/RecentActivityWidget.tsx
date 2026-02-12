@@ -15,6 +15,7 @@ import {
   XCircle,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { cn } from "@vamsa/ui";
 import { getRecentActivity } from "../../../server/dashboard";
 import { BaseWidget } from "./BaseWidget";
@@ -151,6 +152,7 @@ export function RecentActivityWidget({
   onRemove,
   className,
 }: WidgetProps) {
+  const { t } = useTranslation(["dashboard", "common"]);
   const settings: RecentActivityWidgetSettings = {
     ...DEFAULT_SETTINGS,
     ...(config.settings as Partial<RecentActivityWidgetSettings>),
@@ -209,7 +211,7 @@ export function RecentActivityWidget({
             className="text-muted-foreground flex items-center justify-center py-8 text-sm"
             role="status"
           >
-            No recent activity
+            {t("dashboard:noActivity")}
           </div>
         )}
 

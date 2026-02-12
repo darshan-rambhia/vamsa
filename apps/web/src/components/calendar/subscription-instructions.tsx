@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   Card,
   CardContent,
@@ -11,13 +12,12 @@ import {
 } from "@vamsa/ui";
 
 export function SubscriptionInstructions() {
+  const { t } = useTranslation(["common"]);
   return (
     <Card>
       <CardHeader>
-        <CardTitle>How to Subscribe</CardTitle>
-        <CardDescription>
-          Step-by-step guides for popular calendar applications
-        </CardDescription>
+        <CardTitle>{t("howToSubscribe")}</CardTitle>
+        <CardDescription>{t("stepByStepGuides")}</CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="google" className="w-full">
@@ -36,7 +36,7 @@ export function SubscriptionInstructions() {
                   d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
                 />
               </svg>
-              Google Calendar
+              {t("googleCalendar")}
             </TabsTrigger>
             <TabsTrigger value="apple">
               <svg
@@ -52,7 +52,7 @@ export function SubscriptionInstructions() {
                   d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3"
                 />
               </svg>
-              Apple Calendar
+              {t("appleCalendar")}
             </TabsTrigger>
             <TabsTrigger value="outlook">
               <svg
@@ -68,14 +68,14 @@ export function SubscriptionInstructions() {
                   d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
                 />
               </svg>
-              Outlook
+              {t("outlook")}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="google" className="space-y-4">
             <div className="space-y-3">
               <h4 className="text-foreground font-medium">
-                Subscribing to a calendar in Google Calendar
+                {t("subscribingInGoogleCalendar")}
               </h4>
               <ol className="text-muted-foreground space-y-3 pl-6 text-sm">
                 <li className="list-decimal">
@@ -120,7 +120,7 @@ export function SubscriptionInstructions() {
           <TabsContent value="apple" className="space-y-4">
             <div className="space-y-3">
               <h4 className="text-foreground font-medium">
-                Subscribing to a calendar in Apple Calendar
+                {t("subscribingInAppleCalendar")}
               </h4>
               <ol className="text-muted-foreground space-y-3 pl-6 text-sm">
                 <li className="list-decimal">
@@ -164,13 +164,13 @@ export function SubscriptionInstructions() {
           <TabsContent value="outlook" className="space-y-4">
             <div className="space-y-3">
               <h4 className="text-foreground font-medium">
-                Subscribing to a calendar in Outlook
+                {t("subscribingInOutlook")}
               </h4>
 
               <div className="space-y-4">
                 <div>
                   <h5 className="text-foreground mb-2 text-sm font-medium">
-                    Outlook.com (Web)
+                    {t("outlookWeb")}
                   </h5>
                   <ol className="text-muted-foreground space-y-3 pl-6 text-sm">
                     <li className="list-decimal">
@@ -206,7 +206,7 @@ export function SubscriptionInstructions() {
 
                 <div>
                   <h5 className="text-foreground mb-2 text-sm font-medium">
-                    Outlook Desktop (Windows/Mac)
+                    {t("outlookDesktop")}
                   </h5>
                   <ol className="text-muted-foreground space-y-3 pl-6 text-sm">
                     <li className="list-decimal">
@@ -242,10 +242,9 @@ export function SubscriptionInstructions() {
 
         {/* RSS Feed Instructions */}
         <div className="border-border mt-8 space-y-3 border-t pt-6">
-          <h4 className="text-foreground font-medium">RSS Feed Readers</h4>
+          <h4 className="text-foreground font-medium">{t("rssFeedReaders")}</h4>
           <p className="text-muted-foreground text-sm">
-            To subscribe to the RSS feed of family updates, copy the RSS URL and
-            add it to your favorite RSS reader:
+            {t("rssFeedDescription")}
           </p>
           <ul className="text-muted-foreground space-y-2 pl-6 text-sm">
             <li className="list-disc">

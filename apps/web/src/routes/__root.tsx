@@ -1,8 +1,8 @@
 /// <reference types="vite/client" />
-import { useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import { createServerFn } from "@tanstack/react-start";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { I18nextProvider } from "react-i18next";
+import { I18nextProvider, useTranslation } from "react-i18next";
 import {
   AlertTriangle,
   ChevronDown,
@@ -48,6 +48,7 @@ const getCspNonceServerFn = createServerFn({ method: "GET" }).handler(
  * 404 Not Found page - themed to match the app
  */
 function NotFound() {
+  const { t } = useTranslation("common");
   return (
     <div className="bg-background min-h-screen">
       {/* Minimal header */}
@@ -81,15 +82,14 @@ function NotFound() {
         <div className="text-center">
           {/* Decorative 404 */}
           <p className="font-display text-primary/20 text-[120px] leading-none font-bold sm:text-[180px]">
-            404
+            {t("pageNotFoundCode")}
           </p>
 
           <h1 className="font-display -mt-8 text-2xl font-semibold sm:text-3xl">
-            Page not found
+            {t("pageNotFound")}
           </h1>
           <p className="text-muted-foreground mt-3 max-w-md text-base">
-            The page you&apos;re looking for doesn&apos;t exist or may have been
-            moved. Check the URL or navigate back home.
+            {t("pageNotFoundMessage")}
           </p>
 
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
@@ -98,14 +98,14 @@ function NotFound() {
               className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-medium transition-colors"
             >
               <Home className="h-4 w-4" />
-              Go to Homepage
+              {t("goToHomepage")}
             </Link>
             <Link
               to="/people"
               className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex items-center justify-center gap-2 rounded-md border px-5 py-2.5 text-sm font-medium transition-colors"
             >
               <Search className="h-4 w-4" />
-              Search People
+              {t("searchPeople")}
             </Link>
           </div>
         </div>
@@ -119,12 +119,13 @@ function NotFound() {
  * This is the last resort error page when errors bubble up to the root.
  */
 function RootErrorComponent({ error, reset }: ErrorComponentProps) {
+  const { t } = useTranslation("common");
   const [showDetails, setShowDetails] = useState(false);
   const router = useRouter();
   const isDev = import.meta.env.DEV;
 
   const errorMessage =
-    error instanceof Error ? error.message : "An unexpected error occurred";
+    error instanceof Error ? error.message : t("unexpectedError");
   const errorStack = error instanceof Error ? error.stack : undefined;
 
   const handleRetry = () => {
@@ -171,11 +172,10 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
               </div>
 
               <h1 className="font-display text-2xl font-semibold">
-                Something went wrong
+                {t("somethingWentWrong")}
               </h1>
               <p className="text-muted-foreground mt-2 max-w-sm">
-                We encountered an unexpected error. Please try again or return
-                to the home page.
+                {t("unexpectedError")}
               </p>
 
               <div className="mt-6 flex gap-3">
@@ -184,14 +184,14 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
                   className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors"
                 >
                   <RefreshCw className="h-4 w-4" />
-                  Try Again
+                  {t("tryAgain")}
                 </button>
                 <Link
                   to="/"
                   className="border-input bg-background hover:bg-accent hover:text-accent-foreground inline-flex items-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors"
                 >
                   <Home className="h-4 w-4" />
-                  Go Home
+                  {t("goHome")}
                 </Link>
               </div>
             </div>
@@ -207,7 +207,9 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
                   ) : (
                     <ChevronDown className="h-4 w-4" />
                   )}
-                  {showDetails ? "Hide" : "Show"} technical details
+                  {showDetails
+                    ? t("hideTechnicalDetails")
+                    : t("showTechnicalDetails")}
                 </button>
 
                 {showDetails && (
@@ -235,7 +237,7 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
               rel="noopener noreferrer"
               className="text-primary hover:underline"
             >
-              report an issue
+              {t("reportAnIssue")}
             </a>
             .
           </p>
@@ -311,6 +313,11 @@ function RootComponent() {
 
   useLayoutEffect(() => {
     document.documentElement.dataset.hydrated = "true";
+  }, []);
+
+  // Initialize Web Vitals collection (client-side only, non-blocking)
+  useEffect(() => {
+    import("~/lib/web-vitals").then(({ initWebVitals }) => initWebVitals());
   }, []);
 
   return (

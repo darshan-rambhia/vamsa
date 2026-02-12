@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Button, Input, Label } from "@vamsa/ui";
 import { createCalendarToken } from "~/server/calendar-tokens";
 
@@ -25,27 +26,28 @@ type CalendarUrl = {
 const rotationPolicies = [
   {
     value: "on_password_change",
-    label: "Rotate when I change my password",
-    description: "Token automatically rotates after password changes",
+    labelKey: "rotateOnPasswordChange",
+    descKey: "rotateOnPasswordChangeDesc",
   },
   {
     value: "annual",
-    label: "Rotate automatically every year",
-    description: "Token expires and rotates after 365 days",
+    labelKey: "rotateAnnually",
+    descKey: "rotateAnnuallyDesc",
   },
   {
     value: "manual",
-    label: "Manual rotation only",
-    description: "I will manually rotate the token when needed",
+    labelKey: "manualRotationOnly",
+    descKey: "manualRotationOnlyDesc",
   },
   {
     value: "never",
-    label: "Never rotate",
-    description: "Token remains valid until manually revoked",
+    labelKey: "neverRotate",
+    descKey: "neverRotateDesc",
   },
 ];
 
 export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
+  const { t } = useTranslation(["common"]);
   const [name, setName] = useState("");
   const [policy, setPolicy] = useState("annual");
   const [error, setError] = useState<string | null>(null);
@@ -74,23 +76,23 @@ export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
     const appUrl = getAppUrl();
     return [
       {
-        label: "Birthdays",
-        description: "Subscribe to family birthdays",
+        label: t("birthdayCalendar"),
+        description: t("subscribeToBirthdays"),
         url: `${appUrl}/api/v1/calendar/birthdays.ics?token=${token}`,
       },
       {
-        label: "Anniversaries",
-        description: "Subscribe to family anniversaries",
+        label: t("anniversaryCalendar"),
+        description: t("subscribeToAnniversaries"),
         url: `${appUrl}/api/v1/calendar/anniversaries.ics?token=${token}`,
       },
       {
-        label: "All Events",
-        description: "Subscribe to all family events",
+        label: t("eventsCalendar"),
+        description: t("subscribeToAllEvents"),
         url: `${appUrl}/api/v1/calendar/events.ics?token=${token}`,
       },
       {
-        label: "RSS Feed",
-        description: "Subscribe to updates via RSS reader",
+        label: t("rssFeed"),
+        description: t("subscribeToRss"),
         url: `${appUrl}/api/v1/calendar/rss.xml?token=${token}`,
       },
     ];
@@ -151,10 +153,10 @@ export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
             </svg>
             <div className="flex-1">
               <h4 className="font-display text-sm font-medium text-green-900 dark:text-green-100">
-                Token Created Successfully
+                {t("tokenCreatedSuccessfully")}
               </h4>
               <p className="mt-1 text-sm text-green-800 dark:text-green-200">
-                Update your calendar subscriptions with the new URLs below.
+                {t("updateCalendarSubscriptions")}
               </p>
             </div>
           </div>
@@ -162,7 +164,9 @@ export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
 
         {/* Calendar URLs */}
         <div className="space-y-3">
-          <h4 className="text-sm font-medium">Calendar Subscription URLs</h4>
+          <h4 className="text-sm font-medium">
+            {t("calendarSubscriptionUrls")}
+          </h4>
           <div className="space-y-2">
             {calendarUrls.map((item) => (
               <div
@@ -198,7 +202,7 @@ export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
                             d="M5 13l4 4L19 7"
                           />
                         </svg>
-                        Copied!
+                        {t("copied")}
                       </>
                     ) : (
                       <>
@@ -215,7 +219,7 @@ export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
                             d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                           />
                         </svg>
-                        Copy URL
+                        {t("copyUrl")}
                       </>
                     )}
                   </Button>
@@ -231,7 +235,7 @@ export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
         {/* Done Button */}
         <div className="flex justify-end pt-2">
           <Button type="button" onClick={handleDone} data-testid="token-done">
-            Done
+            {t("done")}
           </Button>
         </div>
       </div>
@@ -251,26 +255,22 @@ export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
 
       {/* Token Name */}
       <div className="space-y-2">
-        <Label htmlFor="token-name">
-          Token Name <span className="text-muted-foreground">(optional)</span>
-        </Label>
+        <Label htmlFor="token-name">{t("tokenNameOptional")}</Label>
         <Input
           id="token-name"
           type="text"
-          placeholder="e.g., iPhone Calendar, Work Outlook"
+          placeholder={t("tokenNamePlaceholder")}
           value={name}
           onChange={(e) => setName(e.target.value)}
           disabled={createMutation.isPending}
           data-testid="token-name-input"
         />
-        <p className="text-muted-foreground text-xs">
-          Give your token a friendly name to help identify it later
-        </p>
+        <p className="text-muted-foreground text-xs">{t("giveTokenName")}</p>
       </div>
 
       {/* Rotation Policy */}
       <div className="space-y-3">
-        <div className="text-sm font-medium">Rotation Policy</div>
+        <div className="text-sm font-medium">{t("rotationPolicy")}</div>
         <div className="space-y-2">
           {rotationPolicies.map((option) => (
             <label
@@ -292,9 +292,9 @@ export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
                 data-testid={`policy-${option.value}`}
               />
               <div className="flex-1">
-                <div className="text-sm font-medium">{option.label}</div>
+                <div className="text-sm font-medium">{t(option.labelKey)}</div>
                 <div className="text-muted-foreground mt-0.5 text-xs">
-                  {option.description}
+                  {t(option.descKey)}
                 </div>
               </div>
             </label>
@@ -310,7 +310,7 @@ export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
           onClick={() => onSuccess()}
           disabled={createMutation.isPending}
         >
-          Cancel
+          {t("cancel")}
         </Button>
         <Button
           type="submit"
@@ -338,10 +338,10 @@ export function CreateTokenForm({ onSuccess }: CreateTokenFormProps) {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              Creating...
+              {t("creating")}
             </>
           ) : (
-            "Create Token"
+            t("createToken")
           )}
         </Button>
       </div>

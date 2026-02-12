@@ -13,6 +13,7 @@ import {
   Label,
   Textarea,
 } from "@vamsa/ui";
+import { useTranslation } from "react-i18next";
 import { updateFamilySettings } from "~/server/settings";
 
 interface SettingsFormData {
@@ -37,6 +38,7 @@ interface SettingsFormProps {
 }
 
 export function SettingsForm({ settings }: SettingsFormProps) {
+  const { t } = useTranslation(["admin", "common"]);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +99,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
           className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border-2 px-4 py-3 text-sm"
           data-testid="settings-error"
         >
-          <div className="mb-1 font-semibold">Error:</div>
+          <div className="mb-1 font-semibold">{t("common:error")}:</div>
           <div>{error}</div>
         </div>
       )}
@@ -107,24 +109,22 @@ export function SettingsForm({ settings }: SettingsFormProps) {
           className="rounded-lg border-2 border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:text-green-400"
           data-testid="settings-success"
         >
-          <div className="font-semibold">Settings saved successfully</div>
+          <div className="font-semibold">{t("admin:settingsSaved")}</div>
         </div>
       )}
 
       <Card>
         <CardHeader>
-          <CardTitle>General</CardTitle>
-          <CardDescription>
-            Basic information about your family tree
-          </CardDescription>
+          <CardTitle>{t("admin:settingsTitle")}</CardTitle>
+          <CardDescription>{t("admin:settingsDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="familyName">Family Name</Label>
+            <Label htmlFor="familyName">{t("admin:settingsFamilyName")}</Label>
             <Input
               id="familyName"
               {...register("familyName", {
-                required: "Family name is required",
+                required: t("common:required"),
               })}
               data-testid="settings-family-name-input"
             />
@@ -135,12 +135,12 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">{t("common:description")}</Label>
             <Textarea
               id="description"
               {...register("description")}
               className="min-h-[100px]"
-              placeholder="A brief description of your family tree..."
+              placeholder={t("admin:settingsDescription")}
               data-testid="settings-description-input"
             />
           </div>
@@ -149,10 +149,8 @@ export function SettingsForm({ settings }: SettingsFormProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Registration and Permissions</CardTitle>
-          <CardDescription>
-            Control how users can join and contribute to your family tree
-          </CardDescription>
+          <CardTitle>{t("admin:settingsPrivacy")}</CardTitle>
+          <CardDescription>{t("admin:settingsPrivacy")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center space-x-3">
@@ -173,10 +171,10 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                 htmlFor="allowSelfRegistration"
                 className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                Allow self-registration
+                {t("admin:settingsAllowSelfRegistration")}
               </Label>
               <p className="text-muted-foreground text-sm">
-                Allow anyone to create an account on the registration page
+                {t("admin:settingsAllowSelfRegistration")}
               </p>
             </div>
           </div>
@@ -199,11 +197,10 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                 htmlFor="requireApprovalForEdits"
                 className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
               >
-                Require approval for edits
+                {t("admin:settingsRequireApproval")}
               </Label>
               <p className="text-muted-foreground text-sm">
-                Non-admin users will submit suggestions instead of making direct
-                edits
+                {t("admin:settingsRequireApproval")}
               </p>
             </div>
           </div>
@@ -212,14 +209,14 @@ export function SettingsForm({ settings }: SettingsFormProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Integrations</CardTitle>
-          <CardDescription>
-            Configure external monitoring and observability tools
-          </CardDescription>
+          <CardTitle>{t("admin:metricsTitle")}</CardTitle>
+          <CardDescription>{t("admin:metricsDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="metricsDashboardUrl">Metrics Dashboard URL</Label>
+            <Label htmlFor="metricsDashboardUrl">
+              {t("admin:metricsTitle")}
+            </Label>
             <Input
               id="metricsDashboardUrl"
               type="url"
@@ -227,14 +224,13 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                 validate: (value) =>
                   !value ||
                   /^https?:\/\/.+/.test(value) ||
-                  "Please enter a valid URL",
+                  t("common:invalidEmail"),
               })}
               placeholder="https://grafana.example.com"
               data-testid="settings-metrics-dashboard-url-input"
             />
             <p className="text-muted-foreground text-sm">
-              Custom Grafana, Datadog, or other metrics dashboard URL. Leave
-              empty to use the default.
+              {t("admin:metricsDescription")}
             </p>
             {errors.metricsDashboardUrl && (
               <p className="text-destructive text-sm">
@@ -243,7 +239,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="metricsApiUrl">Metrics API URL</Label>
+            <Label htmlFor="metricsApiUrl">{t("admin:metricsTitle")}</Label>
             <Input
               id="metricsApiUrl"
               type="url"
@@ -251,14 +247,13 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                 validate: (value) =>
                   !value ||
                   /^https?:\/\/.+/.test(value) ||
-                  "Please enter a valid URL",
+                  t("common:invalidEmail"),
               })}
               placeholder="https://prometheus.example.com"
               data-testid="settings-metrics-api-url-input"
             />
             <p className="text-muted-foreground text-sm">
-              Custom Prometheus or metrics API endpoint URL. Leave empty to use
-              the default.
+              {t("admin:metricsDescription")}
             </p>
             {errors.metricsApiUrl && (
               <p className="text-destructive text-sm">
@@ -274,7 +269,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         disabled={isLoading}
         data-testid="settings-submit-button"
       >
-        {isLoading ? "Saving..." : "Save Settings"}
+        {isLoading ? t("common:loading") : t("admin:settingsSave")}
       </Button>
     </form>
   );

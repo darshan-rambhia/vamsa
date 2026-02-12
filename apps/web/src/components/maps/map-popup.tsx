@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { Badge, Card, CardContent, CardHeader, CardTitle } from "@vamsa/ui";
 import type { MapMarker } from "./interactive-map";
 
@@ -12,6 +13,7 @@ interface MapPopupProps {
 }
 
 export function MapPopup({ marker, position, onClose }: MapPopupProps) {
+  const { t } = useTranslation(["common"]);
   const popupRef = useRef<HTMLDivElement>(null);
 
   // Close popup when clicking outside
@@ -62,7 +64,7 @@ export function MapPopup({ marker, position, onClose }: MapPopupProps) {
             <button
               onClick={onClose}
               className="text-muted-foreground hover:text-foreground rounded-sm p-1 transition-colors"
-              aria-label="Close"
+              aria-label={t("close")}
             >
               <svg
                 className="h-4 w-4"
@@ -99,13 +101,13 @@ export function MapPopup({ marker, position, onClose }: MapPopupProps) {
 
           <div className="grid grid-cols-2 gap-3 border-t pt-3">
             <div>
-              <p className="text-muted-foreground text-xs">People</p>
+              <p className="text-muted-foreground text-xs">{t("people")}</p>
               <p className="text-foreground text-lg font-semibold">
                 {marker.personCount}
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs">Events</p>
+              <p className="text-muted-foreground text-xs">{t("events")}</p>
               <p className="text-foreground text-lg font-semibold">
                 {marker.eventCount}
               </p>
@@ -114,10 +116,10 @@ export function MapPopup({ marker, position, onClose }: MapPopupProps) {
 
           {(marker.timeRange.earliest || marker.timeRange.latest) && (
             <div className="border-t pt-3">
-              <p className="text-muted-foreground text-xs">Time Range</p>
+              <p className="text-muted-foreground text-xs">{t("timeRange")}</p>
               <p className="text-foreground text-sm font-medium">
                 {marker.timeRange.earliest || "?"} -{" "}
-                {marker.timeRange.latest || "Present"}
+                {marker.timeRange.latest || t("present")}
               </p>
             </div>
           )}
@@ -128,7 +130,7 @@ export function MapPopup({ marker, position, onClose }: MapPopupProps) {
               search={{ place: marker.id }}
               className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm font-medium transition-colors"
             >
-              View people at this location
+              {t("viewPeopleAtThisLocation")}
               <svg
                 className="h-4 w-4"
                 fill="none"

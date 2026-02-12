@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Badge, Button, Card, CardContent } from "@vamsa/ui/primitives";
 import { getPlace, getPlaceChildren, getPlaceHierarchy } from "~/server/places";
 
@@ -14,6 +15,7 @@ export function PlaceBrowser({
   initialPlaceId,
   onPlaceSelect,
 }: PlaceBrowserProps) {
+  const { t } = useTranslation(["people", "common"]);
   const [currentPlaceId, setCurrentPlaceId] = useState<string | null>(
     initialPlaceId || null
   );
@@ -73,10 +75,10 @@ export function PlaceBrowser({
             </svg>
           </div>
           <h3 className="font-display text-foreground mb-2 text-xl">
-            No Place Selected
+            {t("people:noPlaceSelected")}
           </h3>
           <p className="text-muted-foreground">
-            Select a place to browse its hierarchy
+            {t("people:selectPlaceMessage")}
           </p>
         </CardContent>
       </Card>
@@ -101,10 +103,10 @@ export function PlaceBrowser({
       <Card>
         <CardContent className="py-12 text-center">
           <h3 className="font-display text-foreground mb-2 text-xl">
-            Place Not Found
+            {t("people:placeNotFound")}
           </h3>
           <p className="text-muted-foreground">
-            This place may have been removed
+            {t("people:placeNotFoundMessage")}
           </p>
         </CardContent>
       </Card>
@@ -173,14 +175,16 @@ export function PlaceBrowser({
 
           <div className="flex flex-wrap gap-4 text-sm">
             <div className="text-muted-foreground">
-              <span className="font-medium">{place.childCount}</span> child
-              places
+              <span className="font-medium">{place.childCount}</span>{" "}
+              {t("people:childPlaces_stats")}
             </div>
             <div className="text-muted-foreground">
-              <span className="font-medium">{place.personCount}</span> people
+              <span className="font-medium">{place.personCount}</span>{" "}
+              {t("people:people_stats")}
             </div>
             <div className="text-muted-foreground">
-              <span className="font-medium">{place.eventCount}</span> events
+              <span className="font-medium">{place.eventCount}</span>{" "}
+              {t("people:events_stats")}
             </div>
           </div>
 
@@ -205,7 +209,7 @@ export function PlaceBrowser({
                     d="M15 19l-7-7 7-7"
                   />
                 </svg>
-                Go to parent place
+                {t("people:goToParentPlace")}
               </Button>
             </div>
           )}
@@ -215,7 +219,7 @@ export function PlaceBrowser({
         {place.childCount > 0 && children.length > 0 && (
           <div>
             <h4 className="font-display text-foreground mb-3 text-sm font-medium">
-              Child Places
+              {t("people:childPlaces_stats")}
             </h4>
             <div className="space-y-2">
               {children.map(

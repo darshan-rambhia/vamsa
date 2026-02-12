@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Badge,
   Button,
@@ -41,13 +42,13 @@ interface ActivityFilterPanelProps {
   isLoading?: boolean;
 }
 
-// Predefined date range presets
-const datePresets = [
-  { label: "Last 7 days", days: 7 },
-  { label: "Last 30 days", days: 30 },
-  { label: "Last 90 days", days: 90 },
-  { label: "This year", days: 365 },
-  { label: "All time", days: 0 },
+// Predefined date range presets - keys for translation
+const datePresetKeys = [
+  { key: "last7Days", days: 7 },
+  { key: "last30Days", days: 30 },
+  { key: "last90Days", days: 90 },
+  { key: "thisYear", days: 365 },
+  { key: "allTime", days: 0 },
 ];
 
 export function ActivityFilterPanel({
@@ -58,6 +59,7 @@ export function ActivityFilterPanel({
   userOptions,
   isLoading = false,
 }: ActivityFilterPanelProps) {
+  const { t } = useTranslation(["common"]);
   const [isExpanded, setIsExpanded] = useState(false);
   const [selectedDatePreset, setSelectedDatePreset] = useState<number | null>(
     7
@@ -143,7 +145,7 @@ export function ActivityFilterPanel({
             </svg>
             <Input
               type="text"
-              placeholder="Search activity..."
+              placeholder={t("searchActivity")}
               value={filters.searchQuery}
               onChange={(e) =>
                 onFiltersChange({ ...filters, searchQuery: e.target.value })
@@ -172,7 +174,7 @@ export function ActivityFilterPanel({
                 d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 01-.659 1.591l-5.432 5.432a2.25 2.25 0 00-.659 1.591v2.927a2.25 2.25 0 01-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 00-.659-1.591L3.659 7.409A2.25 2.25 0 013 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0112 3z"
               />
             </svg>
-            Filters
+            {t("filters")}
             {activeFilterCount > 0 && (
               <Badge variant="secondary" className="ml-2">
                 {activeFilterCount}
@@ -188,7 +190,7 @@ export function ActivityFilterPanel({
               onClick={clearFilters}
               className="shrink-0"
             >
-              Clear all
+              {t("clearAll")}
             </Button>
           )}
         </div>
@@ -198,9 +200,9 @@ export function ActivityFilterPanel({
           <div className="mt-4 space-y-4 border-t pt-4">
             {/* Date Range Presets */}
             <div className="space-y-2">
-              <span className="text-sm font-medium">Date Range</span>
+              <span className="text-sm font-medium">{t("dateRange")}</span>
               <div className="flex flex-wrap gap-2">
-                {datePresets.map((preset) => (
+                {datePresetKeys.map((preset) => (
                   <Button
                     key={preset.days}
                     variant={
@@ -209,7 +211,7 @@ export function ActivityFilterPanel({
                     size="sm"
                     onClick={() => handleDatePreset(preset.days)}
                   >
-                    {preset.label}
+                    {t(preset.key)}
                   </Button>
                 ))}
               </div>
@@ -218,7 +220,7 @@ export function ActivityFilterPanel({
             {/* Action Types */}
             {actionTypeOptions.length > 0 && (
               <div className="space-y-2">
-                <span className="text-sm font-medium">Action Type</span>
+                <span className="text-sm font-medium">{t("actionType")}</span>
                 <div className="flex flex-wrap gap-3">
                   {actionTypeOptions.map((option) => (
                     <label
@@ -244,7 +246,7 @@ export function ActivityFilterPanel({
             {/* Entity Types */}
             {entityTypeOptions.length > 0 && (
               <div className="space-y-2">
-                <span className="text-sm font-medium">Entity Type</span>
+                <span className="text-sm font-medium">{t("entityType")}</span>
                 <div className="flex flex-wrap gap-3">
                   {entityTypeOptions.map((option) => (
                     <label
@@ -270,7 +272,7 @@ export function ActivityFilterPanel({
             {/* User Filter */}
             {userOptions.length > 0 && (
               <div className="space-y-2">
-                <Label htmlFor="user-filter">User</Label>
+                <Label htmlFor="user-filter">{t("user")}</Label>
                 <Select
                   value={filters.userId ?? "all"}
                   onValueChange={(value) =>
@@ -281,10 +283,10 @@ export function ActivityFilterPanel({
                   }
                 >
                   <SelectTrigger id="user-filter" className="w-50">
-                    <SelectValue placeholder="All users" />
+                    <SelectValue placeholder={t("allUsers")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">All users</SelectItem>
+                    <SelectItem value="all">{t("allUsers")}</SelectItem>
                     {userOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
@@ -297,7 +299,7 @@ export function ActivityFilterPanel({
 
             {isLoading && (
               <div className="text-muted-foreground text-sm">
-                Loading filter options...
+                {t("loadingFilterOptions")}
               </div>
             )}
           </div>

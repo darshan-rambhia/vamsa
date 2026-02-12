@@ -2,11 +2,13 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Button, Checkbox, Input, Label } from "@vamsa/ui/primitives";
 import type { ExportBackupResult } from "~/server/backup";
 import { exportBackup } from "~/server/backup";
 
 export function BackupExport() {
+  const { t } = useTranslation(["admin", "common"]);
   const [includePhotos, setIncludePhotos] = useState(true);
   const [includeAuditLogs, setIncludeAuditLogs] = useState(true);
   const [auditLogDays, setAuditLogDays] = useState(90);
@@ -59,9 +61,7 @@ export function BackupExport() {
   return (
     <div className="space-y-4">
       <p className="text-muted-foreground text-sm">
-        Download a complete backup of your family tree data. This includes all
-        people, relationships, users, suggestions, and settings in a compressed
-        ZIP file.
+        {t("admin:backupExportDescription")}
       </p>
 
       <div className="space-y-3">
@@ -72,7 +72,7 @@ export function BackupExport() {
             onCheckedChange={(checked) => setIncludePhotos(checked === true)}
           />
           <Label htmlFor="include-photos" className="text-sm font-normal">
-            Include photos and documents
+            {t("admin:backupIncludePhotos")}
           </Label>
         </div>
 
@@ -83,14 +83,14 @@ export function BackupExport() {
             onCheckedChange={(checked) => setIncludeAuditLogs(checked === true)}
           />
           <Label htmlFor="include-audit-logs" className="text-sm font-normal">
-            Include audit logs
+            {t("admin:backupIncludeAuditLogs")}
           </Label>
         </div>
 
         {includeAuditLogs && (
           <div className="ml-6 space-y-2">
             <Label htmlFor="audit-log-days" className="text-sm">
-              Number of days to include (1-365)
+              {t("admin:backupAuditLogDays")}
             </Label>
             <Input
               id="audit-log-days"
@@ -107,8 +107,7 @@ export function BackupExport() {
               className="w-32"
             />
             <p className="text-muted-foreground text-xs">
-              Default is 90 days. Longer periods will create larger backup
-              files.
+              {t("admin:backupAuditLogDaysHelp")}
             </p>
           </div>
         )}
@@ -130,7 +129,7 @@ export function BackupExport() {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            Exporting...
+            {t("admin:backupExporting")}
           </>
         ) : (
           <>
@@ -147,7 +146,7 @@ export function BackupExport() {
                 d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
               />
             </svg>
-            Download Backup
+            {t("admin:backupDownloadBackup")}
           </>
         )}
       </Button>
@@ -160,8 +159,7 @@ export function BackupExport() {
 
       {success && (
         <div className="rounded-md bg-green-50 p-3 text-sm text-green-900 dark:bg-green-950 dark:text-green-100">
-          Backup exported successfully! Your download should start
-          automatically.
+          {t("admin:backupExportSuccess")}
         </div>
       )}
     </div>

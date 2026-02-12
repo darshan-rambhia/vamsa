@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { MediaCard } from "./media-card";
 
 interface MediaItem {
@@ -33,6 +34,8 @@ export function MediaGallery({
   onEdit,
   onDelete,
 }: MediaGalleryProps) {
+  const { t } = useTranslation(["people", "common"]);
+
   if (isLoading) {
     return (
       <div className="py-12 text-center">
@@ -62,9 +65,11 @@ export function MediaGallery({
             />
           </svg>
         </div>
-        <h3 className="font-display text-foreground mb-2 text-xl">No Photos</h3>
+        <h3 className="font-display text-foreground mb-2 text-xl">
+          {t("people:noPhotos")}
+        </h3>
         <p className="text-muted-foreground">
-          Upload photos to start building the gallery
+          {t("people:uploadPhotosMessage")}
         </p>
       </div>
     );

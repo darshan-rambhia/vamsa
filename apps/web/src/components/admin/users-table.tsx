@@ -15,6 +15,7 @@ import {
   CardContent,
 } from "@vamsa/ui/primitives";
 import { formatDate } from "@vamsa/lib";
+import { useTranslation } from "react-i18next";
 import { LinkPersonDialog } from "./link-person-dialog";
 import { deleteUser, toggleUserActive, updateUserRole } from "~/server/users";
 
@@ -41,6 +42,7 @@ export function UsersTable({
   currentUserId,
   onUserUpdated,
 }: UsersTableProps) {
+  const { t } = useTranslation(["admin", "common"]);
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
@@ -166,7 +168,7 @@ export function UsersTable({
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <p className="text-muted-foreground">No users found</p>
+          <p className="text-muted-foreground">{t("admin:usersNoUsers")}</p>
         </CardContent>
       </Card>
     );
@@ -198,17 +200,20 @@ export function UsersTable({
                   {user.name || user.email}
                   {!user.isActive && (
                     <span className="text-muted-foreground ml-2 text-sm">
-                      (Inactive)
+                      ({t("common:disabled")})
                     </span>
                   )}
                   {user.id === currentUserId && (
-                    <span className="text-primary ml-2 text-sm">(You)</span>
+                    <span className="text-primary ml-2 text-sm">
+                      ({t("common:yes")})
+                    </span>
                   )}
                 </p>
                 <p className="text-muted-foreground text-sm">{user.email}</p>
                 {user.person && (
                   <p className="text-muted-foreground text-sm">
-                    Linked to: {user.person.firstName} {user.person.lastName}
+                    {t("admin:linkPersonTitle")}: {user.person.firstName}{" "}
+                    {user.person.lastName}
                   </p>
                 )}
               </div>
@@ -223,8 +228,8 @@ export function UsersTable({
                 </div>
                 <p className="text-muted-foreground mt-1 text-xs">
                   {user.lastLoginAt
-                    ? `Last login: ${formatDate(user.lastLoginAt)}`
-                    : "Never logged in"}
+                    ? `${t("admin:usersLastLogin")}: ${formatDate(user.lastLoginAt)}`
+                    : t("admin:usersLastLogin")}
                 </p>
               </div>
               <div className="relative">
@@ -255,7 +260,7 @@ export function UsersTable({
                   <div className="bg-popover border-border absolute top-full right-0 z-50 mt-1 w-48 rounded-md border shadow-lg">
                     <div className="p-1">
                       <p className="text-muted-foreground px-2 py-1.5 text-xs font-medium">
-                        Change Role
+                        {t("admin:usersChangeRole")}
                       </p>
                       <button
                         className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm disabled:opacity-50"
@@ -264,7 +269,7 @@ export function UsersTable({
                         data-testid={`make-admin-${user.id}`}
                       >
                         {getRoleIcon("ADMIN")}
-                        Make Admin
+                        {t("admin:roleAdmin")}
                       </button>
                       <button
                         className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm disabled:opacity-50"
@@ -277,7 +282,7 @@ export function UsersTable({
                         data-testid={`make-member-${user.id}`}
                       >
                         {getRoleIcon("MEMBER")}
-                        Make Member
+                        {t("admin:roleMember")}
                       </button>
                       <button
                         className="hover:bg-accent flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm disabled:opacity-50"
@@ -290,7 +295,7 @@ export function UsersTable({
                         data-testid={`make-viewer-${user.id}`}
                       >
                         {getRoleIcon("VIEWER")}
-                        Make Viewer
+                        {t("admin:roleViewer")}
                       </button>
                       <div className="border-border my-1 border-t" />
                       <button
@@ -322,7 +327,7 @@ export function UsersTable({
                                 d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
                               />
                             </svg>
-                            Deactivate
+                            {t("admin:usersDisableAccount")}
                           </>
                         ) : (
                           <>
@@ -339,7 +344,7 @@ export function UsersTable({
                                 d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                               />
                             </svg>
-                            Activate
+                            {t("admin:usersEnableAccount")}
                           </>
                         )}
                       </button>
@@ -366,7 +371,9 @@ export function UsersTable({
                             d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"
                           />
                         </svg>
-                        {user.person ? "Change Link" : "Link to Person"}
+                        {user.person
+                          ? t("admin:linkPersonTitle")
+                          : t("admin:linkPersonTitle")}
                       </button>
                       {user.id !== currentUserId && (
                         <>
@@ -393,7 +400,7 @@ export function UsersTable({
                                 d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
                               />
                             </svg>
-                            Delete User
+                            {t("admin:usersDeleteUser")}
                           </button>
                         </>
                       )}
@@ -429,18 +436,14 @@ export function UsersTable({
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete User</AlertDialogTitle>
+            <AlertDialogTitle>{t("admin:usersDeleteUser")}</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete{" "}
-              <strong>
-                {deleteDialogUser?.name || deleteDialogUser?.email}
-              </strong>
-              ? This action cannot be undone.
+              {t("admin:usersDeleteConfirm")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={loading === deleteDialogUser?.id}>
-              Cancel
+              {t("common:cancel")}
             </AlertDialogCancel>
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
@@ -449,7 +452,9 @@ export function UsersTable({
               }
               disabled={loading === deleteDialogUser?.id}
             >
-              {loading === deleteDialogUser?.id ? "Deleting..." : "Delete"}
+              {loading === deleteDialogUser?.id
+                ? t("common:loading")
+                : t("common:delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

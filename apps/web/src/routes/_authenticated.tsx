@@ -5,6 +5,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { useTranslation } from "react-i18next";
 // Note: Server-only modules are dynamically imported inside checkAuthInline
 // to prevent them from leaking into the client bundle (react-dom/server, i18next-fs-backend)
 import { Button, Nav, NavLink } from "@vamsa/ui";
@@ -88,17 +89,19 @@ function AuthenticatedErrorComponent(props: ErrorComponentProps) {
  * Hidden by default, becomes visible on focus.
  */
 function SkipToMainContent() {
+  const { t } = useTranslation("navigation");
   return (
     <a
       href="#main-content"
       className="focus:bg-primary focus:text-primary-foreground focus:ring-primary sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:rounded-md focus:px-4 focus:py-2 focus:ring-2 focus:ring-offset-2 focus:outline-none"
     >
-      Skip to main content
+      {t("skipToMainContent")}
     </a>
   );
 }
 
 function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
+  const { t } = useTranslation("navigation");
   const handleSignOut = async () => {
     await signOut();
     window.location.href = "/login";
@@ -127,7 +130,7 @@ function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
               </svg>
             </div>
             <span className="font-display text-xl font-medium tracking-tight">
-              Vamsa
+              {t("vamsa")}
             </span>
           </a>
         }
@@ -140,31 +143,31 @@ function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
               onClick={handleSignOut}
               data-testid="signout-button"
             >
-              Sign out
+              {t("signOut")}
             </Button>
           </div>
         }
       >
         <NavLink href="/dashboard" data-testid="nav-dashboard">
-          Dashboard
+          {t("dashboard")}
         </NavLink>
         <NavLink href="/people" data-testid="nav-people">
-          People
+          {t("people")}
         </NavLink>
         <NavLink href="/visualize" data-testid="nav-visualize">
-          Visualizations
+          {t("visualizations")}
         </NavLink>
         <NavLink href="/maps" data-testid="nav-maps">
-          Maps
+          {t("maps")}
         </NavLink>
         <NavLink href="/activity" data-testid="nav-activity">
-          Activity
+          {t("activity")}
         </NavLink>
         <NavLink href="/subscribe" data-testid="nav-subscribe">
-          Subscribe
+          {t("subscribe")}
         </NavLink>
         <NavLink href="/admin" data-testid="nav-admin">
-          Admin
+          {t("admin")}
         </NavLink>
       </Nav>
 
@@ -180,6 +183,7 @@ function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
 }
 
 function AuthenticatedLayout() {
+  const { t } = useTranslation("navigation");
   const location = useLocation();
   const pathname = location.pathname;
   const { user } = Route.useRouteContext();
@@ -217,7 +221,7 @@ function AuthenticatedLayout() {
                 </svg>
               </div>
               <span className="font-display text-xl font-medium tracking-tight">
-                Vamsa
+                {t("vamsa")}
               </span>
             </a>
           }
@@ -231,7 +235,7 @@ function AuthenticatedLayout() {
                 onClick={handleSignOut}
                 data-testid="signout-button"
               >
-                Sign out
+                {t("signOut")}
               </Button>
             </div>
           }
@@ -241,14 +245,14 @@ function AuthenticatedLayout() {
             active={pathname === "/dashboard"}
             data-testid="nav-dashboard"
           >
-            Dashboard
+            {t("dashboard")}
           </NavLink>
           <NavLink
             href="/people"
             active={pathname.startsWith("/people")}
             data-testid="nav-people"
           >
-            People
+            {t("people")}
           </NavLink>
           <NavLink
             href="/visualize"
@@ -259,28 +263,28 @@ function AuthenticatedLayout() {
             }
             data-testid="nav-visualize"
           >
-            Visualizations
+            {t("visualizations")}
           </NavLink>
           <NavLink
             href="/maps"
             active={pathname.startsWith("/maps")}
             data-testid="nav-maps"
           >
-            Maps
+            {t("maps")}
           </NavLink>
           <NavLink
             href="/activity"
             active={pathname === "/activity"}
             data-testid="nav-activity"
           >
-            Activity
+            {t("activity")}
           </NavLink>
           <NavLink
             href="/subscribe"
             active={pathname === "/subscribe"}
             data-testid="nav-subscribe"
           >
-            Subscribe
+            {t("subscribe")}
           </NavLink>
           {user?.role === "ADMIN" && (
             <NavLink
@@ -288,7 +292,7 @@ function AuthenticatedLayout() {
               active={pathname.startsWith("/admin")}
               data-testid="nav-admin"
             >
-              Admin
+              {t("admin")}
             </NavLink>
           )}
         </Nav>

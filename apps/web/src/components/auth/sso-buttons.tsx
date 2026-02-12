@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@vamsa/ui";
 import { getAvailableProviders } from "~/server/auth.functions";
@@ -70,6 +71,7 @@ interface SSOButtonsProps {
 }
 
 export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
+  const { t } = useTranslation("auth");
   const [loading, setLoading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,7 +92,9 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
       });
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to initiate Google login"
+        err instanceof Error
+          ? err.message
+          : t("failedSsoLogin", { provider: "Google" })
       );
       setLoading(null);
     }
@@ -108,7 +112,7 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
       setError(
         err instanceof Error
           ? err.message
-          : "Failed to initiate Microsoft login"
+          : t("failedSsoLogin", { provider: "Microsoft" })
       );
       setLoading(null);
     }
@@ -124,7 +128,9 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
       });
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to initiate GitHub login"
+        err instanceof Error
+          ? err.message
+          : t("failedSsoLogin", { provider: "GitHub" })
       );
       setLoading(null);
     }
@@ -140,7 +146,9 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
       });
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to initiate SSO login"
+        err instanceof Error
+          ? err.message
+          : t("failedSsoLogin", { provider: "SSO" })
       );
       setLoading(null);
     }
@@ -170,7 +178,7 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
         </div>
         <div className="relative flex justify-center text-xs uppercase">
           <span className="bg-background text-muted-foreground px-2">
-            Or continue with
+            {t("orContinueWith")}
           </span>
         </div>
       </div>
@@ -215,7 +223,7 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
             ) : (
               <GoogleIcon className="mr-2 h-4 w-4" />
             )}
-            Google
+            {t("ssoGoogle")}
           </Button>
         )}
 
@@ -250,7 +258,7 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
             ) : (
               <MicrosoftIcon className="mr-2 h-4 w-4" />
             )}
-            Microsoft
+            {t("ssoMicrosoft")}
           </Button>
         )}
 
@@ -285,7 +293,7 @@ export function SSOButtons({ redirectTo, disabled = false }: SSOButtonsProps) {
             ) : (
               <GitHubIcon className="mr-2 h-4 w-4" />
             )}
-            GitHub
+            {t("ssoGithub")}
           </Button>
         )}
 

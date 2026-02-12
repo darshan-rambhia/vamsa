@@ -5,6 +5,7 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import {
   Button,
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/login")({
 });
 
 function LoginComponent() {
+  const { t } = useTranslation(["auth", "common"]);
   const navigate = useNavigate();
   const { registered, claimed, invited, verify, reset } = useSearch({
     from: "/login",
@@ -102,7 +104,7 @@ function LoginComponent() {
           <div>
             <CardTitle className="text-3xl">Vamsa</CardTitle>
             <CardDescription className="mt-2 text-base">
-              Welcome back. Sign in to explore your family history.
+              {t("welcomeBack")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -118,8 +120,8 @@ function LoginComponent() {
                 className="border-primary/30 bg-primary/10 text-primary rounded-lg border-2 px-4 py-3 text-sm"
                 data-testid="login-success"
               >
-                <div className="mb-1 font-semibold">Account created!</div>
-                <div>Please sign in with your new credentials.</div>
+                <div className="mb-1 font-semibold">{t("accountCreated")}</div>
+                <div>{t("signInWithNewCredentials")}</div>
               </div>
             )}
 
@@ -128,8 +130,8 @@ function LoginComponent() {
                 className="border-primary/30 bg-primary/10 text-primary rounded-lg border-2 px-4 py-3 text-sm"
                 data-testid="login-claimed-success"
               >
-                <div className="mb-1 font-semibold">Profile claimed!</div>
-                <div>Please sign in with your new credentials.</div>
+                <div className="mb-1 font-semibold">{t("profileClaimed")}</div>
+                <div>{t("signInWithNewCredentials")}</div>
               </div>
             )}
 
@@ -138,8 +140,8 @@ function LoginComponent() {
                 className="border-primary/30 bg-primary/10 text-primary rounded-lg border-2 px-4 py-3 text-sm"
                 data-testid="login-invited-success"
               >
-                <div className="mb-1 font-semibold">Invite accepted!</div>
-                <div>Please sign in with your new credentials.</div>
+                <div className="mb-1 font-semibold">{t("inviteAccepted")}</div>
+                <div>{t("signInWithNewCredentials")}</div>
               </div>
             )}
 
@@ -148,11 +150,8 @@ function LoginComponent() {
                 className="rounded-lg border-2 border-amber-500/30 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-950/30 dark:text-amber-200"
                 data-testid="login-verify-email"
               >
-                <div className="mb-1 font-semibold">Check your email</div>
-                <div>
-                  We sent a verification link to your email address. Please
-                  verify your email before signing in.
-                </div>
+                <div className="mb-1 font-semibold">{t("checkYourEmail")}</div>
+                <div>{t("emailVerificationSent")}</div>
               </div>
             )}
 
@@ -162,9 +161,9 @@ function LoginComponent() {
                 data-testid="login-reset-success"
               >
                 <div className="mb-1 font-semibold">
-                  Password reset successful!
+                  {t("passwordResetSuccess")}
                 </div>
-                <div>Please sign in with your new password.</div>
+                <div>{t("signInWithNewPassword")}</div>
               </div>
             )}
 
@@ -173,7 +172,7 @@ function LoginComponent() {
                 className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border-2 px-4 py-3 text-sm"
                 data-testid="login-error"
               >
-                <div className="mb-1 font-semibold">Error:</div>
+                <div className="mb-1 font-semibold">{t("common:error")}:</div>
                 <div>{error}</div>
               </div>
             )}
@@ -190,7 +189,7 @@ function LoginComponent() {
             )}
 
             <div className="space-y-4">
-              <FormField label="Email address" required>
+              <FormField label={t("common:email")} required>
                 <Input
                   name="email"
                   type="email"
@@ -204,7 +203,7 @@ function LoginComponent() {
               </FormField>
 
               <div className="space-y-2">
-                <FormField label="Password" required>
+                <FormField label={t("common:password")} required>
                   <Input
                     name="password"
                     type="password"
@@ -221,7 +220,7 @@ function LoginComponent() {
                     to="/forgot-password"
                     className="text-primary text-sm hover:underline"
                   >
-                    Forgot password?
+                    {t("forgotPassword")}
                   </Link>
                 </div>
               </div>
@@ -234,7 +233,7 @@ function LoginComponent() {
               className="w-full"
               data-testid="login-submit-button"
             >
-              {isLoading ? "Signing in..." : "Sign in"}
+              {isLoading ? t("signingIn") : t("signIn")}
             </Button>
 
             {/* SSO Buttons */}
@@ -242,13 +241,13 @@ function LoginComponent() {
 
             <div className="text-center text-sm">
               <span className="text-muted-foreground">
-                Don&apos;t have an account?{" "}
+                {t("dontHaveAccount")}{" "}
               </span>
               <Link
                 to="/register"
                 className="text-primary font-medium hover:underline"
               >
-                Create one
+                {t("createOne")}
               </Link>
             </div>
           </form>
