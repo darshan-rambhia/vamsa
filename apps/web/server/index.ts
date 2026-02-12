@@ -441,6 +441,31 @@ apiRouter.get("/", (c) =>
 );
 
 // ============================================
+// Web Vitals Ingestion Endpoint
+// ============================================
+
+// Receives batched Web Vitals metrics from the client SDK (web-vitals.ts)
+// and records them as OpenTelemetry histograms for Grafana dashboards.
+// This endpoint is intentionally unauthenticated — it only accepts
+// pre-defined metric names and numeric values, so there is no data risk.
+app.post("/api/v1/vitals", async (c) => {
+  try {
+    const body = await c.req.json();
+
+    if (!body?.metrics || !Array.isArray(body.metrics)) {
+      return c.json({ error: "Invalid payload" }, 400);
+    }
+
+    const { recordWebVitals } = await import("./metrics");
+    recordWebVitals(body.metrics, body.url || "/");
+
+    return c.json({ ok: true }, 202);
+  } catch {
+    return c.json({ error: "Bad request" }, 400);
+  }
+});
+
+// ============================================
 // Better Auth Handler
 // ============================================
 

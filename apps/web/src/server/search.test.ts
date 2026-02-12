@@ -12,7 +12,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { asAdmin, asUnauthenticated, asViewer } from "@test/server-fn-context";
 import { initializeServerI18n } from "@vamsa/lib/server";
-import { searchPeopleHandler } from "./search";
+import { searchPeopleHandler } from "./search-handler";
 
 beforeEach(async () => {
   await initializeServerI18n();

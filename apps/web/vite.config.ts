@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 import tsConfigPaths from "vite-tsconfig-paths";
 import viteReact from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { visualizer } from "rollup-plugin-visualizer";
 import { config } from "dotenv";
 import { vamsaDevApiPlugin } from "./server/dev";
 import type { Plugin } from "vite";
@@ -249,5 +250,16 @@ export default defineConfig({
       },
     }),
     viteReact(),
+    // Bundle analysis — only active when ANALYZE=true
+    ...(process.env.ANALYZE === "true"
+      ? [
+          visualizer({
+            filename: "stats.html",
+            open: true,
+            gzipSize: true,
+            brotliSize: true,
+          }),
+        ]
+      : []),
   ],
 });

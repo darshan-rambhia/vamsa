@@ -216,6 +216,80 @@ export function recordAuthEvent(
 }
 
 // ============================================
+// Web Vitals Metrics (Real User Monitoring)
+// ============================================
+
+/**
+ * Web Vitals histograms for Core Web Vitals
+ *
+ * Captured from real users via the web-vitals SDK and reported
+ * to this server endpoint. These feed Grafana dashboards.
+ */
+export const webVitalsLCP = meter.createHistogram("web_vitals_lcp_ms", {
+  description: "Largest Contentful Paint in milliseconds",
+  unit: "ms",
+});
+
+export const webVitalsCLS = meter.createHistogram("web_vitals_cls", {
+  description: "Cumulative Layout Shift score",
+});
+
+export const webVitalsINP = meter.createHistogram("web_vitals_inp_ms", {
+  description: "Interaction to Next Paint in milliseconds",
+  unit: "ms",
+});
+
+export const webVitalsFCP = meter.createHistogram("web_vitals_fcp_ms", {
+  description: "First Contentful Paint in milliseconds",
+  unit: "ms",
+});
+
+export const webVitalsTTFB = meter.createHistogram("web_vitals_ttfb_ms", {
+  description: "Time to First Byte in milliseconds",
+  unit: "ms",
+});
+
+/** Valid Web Vital metric names */
+const WEB_VITAL_HISTOGRAMS: Record<
+  string,
+  ReturnType<typeof meter.createHistogram>
+> = {
+  LCP: webVitalsLCP,
+  CLS: webVitalsCLS,
+  INP: webVitalsINP,
+  FCP: webVitalsFCP,
+  TTFB: webVitalsTTFB,
+};
+
+/**
+ * Record a batch of Web Vitals metrics from the client
+ *
+ * @param metrics - Array of metric objects from the web-vitals SDK
+ * @param url - Page URL where the metrics were collected
+ */
+export function recordWebVitals(
+  webVitals: Array<{
+    name: string;
+    value: number;
+    rating: string;
+    id: string;
+    navigationType: string;
+  }>,
+  url: string
+): void {
+  for (const vital of webVitals) {
+    const histogram = WEB_VITAL_HISTOGRAMS[vital.name];
+    if (histogram) {
+      histogram.record(vital.value, {
+        rating: vital.rating,
+        navigation_type: vital.navigationType,
+        url,
+      });
+    }
+  }
+}
+
+// ============================================
 // Internal Utilities
 // ============================================
 
