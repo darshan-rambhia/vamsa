@@ -1,0 +1,52 @@
+name: Lighthouse CI
+
+# Disabled: TanStack Start is a fully SSR app (no static HTML output).
+# Lighthouse needs a running server with a database to audit pages.
+# TODO: Re-enable with a Docker Compose setup similar to the E2E workflow
+#       as part of the performance optimization epic (vamsa-a7vo).
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Performance Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build production app
+        run: bun run build
+        env:
+          NODE_ENV: production
+
+      - name: Run Lighthouse CI
+        run: bunx @lhci/cli autorun
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload Lighthouse results
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: lighthouse-results
+          path: .lighthouseci/
+          retention-days: 14

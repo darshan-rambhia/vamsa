@@ -11,6 +11,9 @@ import batchRouter from "./batch";
 
 const log = loggers.api;
 
+const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const ENABLE_DOCS = process.env.ENABLE_API_DOCS === "true" || !IS_PRODUCTION;
+
 /**
  * Main API router for Vamsa
  *
@@ -27,75 +30,81 @@ const log = loggers.api;
 const apiV1 = new OpenAPIHono();
 
 // ============================================
-// Documentation Routes
+// Documentation Routes (disabled in production by default)
 // ============================================
 
-/**
- * GET /api/v1/docs
- * Swagger UI for interactive API exploration
- */
-apiV1.get(
-  "/docs",
-  swaggerUI({
-    url: "/api/v1/openapi.json",
-    title: "Vamsa API Documentation",
-  })
-);
+if (ENABLE_DOCS) {
+  log.info({}, "API documentation enabled at /api/v1/docs");
 
-/**
- * GET /api/v1/openapi.json
- * OpenAPI 3.0 specification auto-generated from routes
- */
-apiV1.doc("/openapi.json", {
-  openapi: "3.0.0",
-  info: {
-    title: "Vamsa API",
-    version: "1.0.0",
-    description: "Family genealogy application REST API",
-    contact: {
-      name: "Vamsa",
-      url: "https://vamsa.app",
+  /**
+   * GET /api/v1/docs
+   * Swagger UI for interactive API exploration
+   */
+  apiV1.get(
+    "/docs",
+    swaggerUI({
+      url: "/api/v1/openapi.json",
+      title: "Vamsa API Documentation",
+    })
+  );
+
+  /**
+   * GET /api/v1/openapi.json
+   * OpenAPI 3.0 specification auto-generated from routes
+   */
+  apiV1.doc("/openapi.json", {
+    openapi: "3.0.0",
+    info: {
+      title: "Vamsa API",
+      version: "1",
+      description: "Family genealogy application REST API",
+      contact: {
+        name: "Vamsa",
+        url: "https://vamsa.app",
+      },
     },
-  },
-  servers: [
-    {
-      url: "http://localhost:3000/api/v1",
-      description: "Development server",
-    },
-    {
-      url: "https://vamsa.app/api/v1",
-      description: "Production server",
-    },
-  ],
-  tags: [
-    {
-      name: "Authentication",
-      description: "User authentication endpoints",
-    },
-    {
-      name: "Persons",
-      description: "Family tree person management (requires authentication)",
-    },
-    {
-      name: "Relationships",
-      description:
-        "Relationship management between persons (requires authentication)",
-    },
-    {
-      name: "Batch",
-      description:
-        "Batch operations for bulk create, update, and delete (requires MEMBER role)",
-    },
-    {
-      name: "Calendar",
-      description: "Calendar feeds (RSS, iCal formats)",
-    },
-    {
-      name: "Metrics",
-      description: "Monitoring and performance metrics (requires ADMIN role)",
-    },
-  ],
-});
+    servers: [
+      {
+        url: "http://localhost:3000/api/v1",
+        description: "Development server",
+      },
+      {
+        url: "https://vamsa.app/api/v1",
+        description: "Production server",
+      },
+    ],
+    tags: [
+      {
+        name: "Authentication",
+        description: "User authentication endpoints",
+      },
+      {
+        name: "Persons",
+        description: "Family tree person management (requires authentication)",
+      },
+      {
+        name: "Relationships",
+        description:
+          "Relationship management between persons (requires authentication)",
+      },
+      {
+        name: "Batch",
+        description:
+          "Batch operations for bulk create, update, and delete (requires MEMBER role)",
+      },
+      {
+        name: "Calendar",
+        description: "Calendar feeds (RSS, iCal formats)",
+      },
+      {
+        name: "Metrics",
+        description: "Monitoring and performance metrics (requires ADMIN role)",
+      },
+    ],
+  });
+} else {
+  log.info({}, "API documentation disabled (production mode)");
+}
 
 /**
  * GET /api/v1/
@@ -105,10 +114,10 @@ apiV1.get("/", (c) => {
   return c.json(
     {
       name: "Vamsa API",
-      version: "1.0.0",
       description: "Family genealogy application API",
-      docs: "/api/v1/docs",
-      openapi: "/api/v1/openapi.json",
+      ...(ENABLE_DOCS
+        ? { docs: "/api/v1/docs", openapi: "/api/v1/openapi.json" }
+        : {}),
       endpoints: {
         auth: "/api/v1/auth",
         persons: "/api/v1/persons",
@@ -181,7 +190,7 @@ apiV1.notFound((c) => {
     {
       error: "Not Found",
       message: `No endpoint found at ${c.req.path}`,
-      documentation: "/api/v1/docs",
+      ...(ENABLE_DOCS ? { documentation: "/api/v1/docs" } : {}),
     },
     { status: 404 }
   );

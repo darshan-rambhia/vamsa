@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@vamsa/ui/primitives";
+import { AISuggestions } from "../ai/suggestions";
 
 interface PersonData {
+  id: string;
   firstName: string;
   lastName: string;
   maidenName: string | null;
@@ -96,8 +98,29 @@ export function OverviewTab({ person }: OverviewTabProps) {
           </CardContent>
         </Card>
       )}
+
+      {/* AI Suggestions for missing fields */}
+      <AISuggestions
+        personId={person.id}
+        personName={`${person.firstName} ${person.lastName}`}
+        filledFields={getFilledFields(person)}
+      />
     </div>
   );
+}
+
+/** Returns a list of person field names that already have values */
+function getFilledFields(person: PersonData): Array<string> {
+  const fields: Array<string> = [];
+  if (person.dateOfBirth) fields.push("dateOfBirth");
+  if (person.dateOfPassing) fields.push("dateOfPassing");
+  if (person.birthPlace) fields.push("birthPlace");
+  if (person.nativePlace) fields.push("nativePlace");
+  if (person.profession) fields.push("profession");
+  if (person.employer) fields.push("employer");
+  if (person.gender) fields.push("gender");
+  if (person.bio) fields.push("bio");
+  return fields;
 }
 
 function DetailRow({

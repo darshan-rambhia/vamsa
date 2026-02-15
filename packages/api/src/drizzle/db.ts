@@ -11,6 +11,7 @@
  * additional performance gains.
  */
 
+import * as fs from "node:fs";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 import * as schema from "./schema";
@@ -18,6 +19,63 @@ import type { PoolConfig } from "pg";
 
 // Re-export schema for consumers
 export * from "./schema";
+
+/**
+ * PostgreSQL SSL modes for database connections
+ */
+export type DbSslMode = "disable" | "require" | "verify-ca" | "verify-full";
+
+/**
+ * Get SSL configuration based on environment variables
+ *
+ * Supports four modes:
+ * - "disable": No SSL (typically for Docker same-host connections)
+ * - "require": SSL required, but no certificate validation (rejectUnauthorized: false)
+ * - "verify-ca": SSL required, validate against CA certificate
+ * - "verify-full": SSL + hostname validation (most secure)
+ *
+ * For backward compatibility:
+ * - If NODE_ENV=production and DB_SSL_MODE is unset, defaults to { rejectUnauthorized: false }
+ * - If NODE_ENV!=production and DB_SSL_MODE is unset, defaults to undefined (no SSL)
+ *
+ * @returns SSL configuration object or undefined for no SSL
+ * @throws Error if verify-ca/verify-full mode but DB_SSL_CA_CERT is missing or invalid
+ */
+export function getSslConfig() {
+  const sslMode = process.env.DB_SSL_MODE as DbSslMode | undefined;
+
+  if (sslMode === "disable") {
+    return undefined;
+  }
+
+  if (sslMode === "require") {
+    return { rejectUnauthorized: false };
+  }
+
+  if (sslMode === "verify-ca" || sslMode === "verify-full") {
+    const caPath = process.env.DB_SSL_CA_CERT;
+    if (!caPath) {
+      throw new Error(
+        `DB_SSL_MODE=${sslMode} requires DB_SSL_CA_CERT environment variable to be set`
+      );
+    }
+
+    let ca: string;
+    try {
+      ca = fs.readFileSync(caPath, "utf-8");
+    } catch (err) {
+      throw new Error(`Failed to read CA certificate from ${caPath}: ${err}`);
+    }
+
+    return { rejectUnauthorized: true, ca };
+  }
+
+  // Default: backward compatible behavior
+  if (process.env.NODE_ENV === "production") {
+    return { rejectUnauthorized: false };
+  }
+  return undefined;
+}
 
 /**
  * Database configuration from environment
@@ -47,11 +105,7 @@ const getPoolConfig = (): PoolConfig => {
     max: poolSize,
     idleTimeoutMillis: idleTimeout,
     connectionTimeoutMillis: connectionTimeout,
-    // Allow SSL in production, disable for local dev
-    ssl:
-      process.env.NODE_ENV === "production"
-        ? { rejectUnauthorized: false }
-        : undefined,
+    ssl: getSslConfig(),
   };
 };
 

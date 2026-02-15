@@ -159,6 +159,22 @@ export class EmailService {
   ): boolean {
     return preferences[notificationType];
   }
+
+  /**
+   * Send a password reset email
+   */
+  async sendPasswordResetEmail(
+    email: string,
+    resetUrl: string,
+    userId: string = "system"
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    const { createPasswordResetEmail } = await import("./templates");
+    const template = createPasswordResetEmail(resetUrl);
+
+    return this.sendEmail(email, template, "password_reset", userId, {
+      resetUrl,
+    });
+  }
 }
 
 export const emailService = new EmailService();

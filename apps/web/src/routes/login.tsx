@@ -25,6 +25,7 @@ const searchSchema = z.object({
   claimed: z.boolean().optional(),
   invited: z.boolean().optional(),
   verify: z.boolean().optional(),
+  reset: z.boolean().optional(),
 });
 
 export const Route = createFileRoute("/login")({
@@ -34,7 +35,7 @@ export const Route = createFileRoute("/login")({
 
 function LoginComponent() {
   const navigate = useNavigate();
-  const { registered, claimed, invited, verify } = useSearch({
+  const { registered, claimed, invited, verify, reset } = useSearch({
     from: "/login",
   });
   const [email, setEmail] = useState("");
@@ -155,6 +156,18 @@ function LoginComponent() {
               </div>
             )}
 
+            {reset && (
+              <div
+                className="border-primary/30 bg-primary/10 text-primary rounded-lg border-2 px-4 py-3 text-sm"
+                data-testid="login-reset-success"
+              >
+                <div className="mb-1 font-semibold">
+                  Password reset successful!
+                </div>
+                <div>Please sign in with your new password.</div>
+              </div>
+            )}
+
             {error && (
               <div
                 className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border-2 px-4 py-3 text-sm"
@@ -190,18 +203,28 @@ function LoginComponent() {
                 />
               </FormField>
 
-              <FormField label="Password" required>
-                <Input
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  data-testid="login-password-input"
-                />
-              </FormField>
+              <div className="space-y-2">
+                <FormField label="Password" required>
+                  <Input
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    data-testid="login-password-input"
+                  />
+                </FormField>
+                <div className="text-right">
+                  <Link
+                    to="/forgot-password"
+                    className="text-primary text-sm hover:underline"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              </div>
             </div>
 
             <Button

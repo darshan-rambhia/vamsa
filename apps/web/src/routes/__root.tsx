@@ -1,13 +1,6 @@
 /// <reference types="vite/client" />
 import { useLayoutEffect, useState } from "react";
-import {
-  HeadContent,
-  Link,
-  Outlet,
-  Scripts,
-  createRootRoute,
-  useRouter,
-} from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider } from "react-i18next";
 import {
@@ -18,10 +11,19 @@ import {
   RefreshCw,
   Search,
 } from "lucide-react";
+import {
+  HeadContent,
+  Link,
+  Outlet,
+  Scripts,
+  createRootRoute,
+  useRouter,
+} from "@tanstack/react-router";
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import i18n from "~/i18n/config";
 import appCss from "~/styles.css?url";
 import printCss from "~/styles/print.css?url";
+import i18n from "~/i18n/config";
+import { getCspNonce } from "~/server/csp-nonce";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,6 +33,16 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+/**
+ * Server function to get the CSP nonce for the current request
+ * Called during SSR to inject the nonce into inline scripts
+ */
+const getCspNonceServerFn = createServerFn({ method: "GET" }).handler(
+  async () => {
+    return { nonce: getCspNonce() };
+  }
+);
 
 /**
  * 404 Not Found page - themed to match the app
@@ -236,6 +248,11 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
 export const Route = createRootRoute({
   notFoundComponent: NotFound,
   errorComponent: RootErrorComponent,
+  loader: async () => {
+    // Load the CSP nonce during SSR
+    const { nonce } = await getCspNonceServerFn();
+    return { nonce };
+  },
   head: () => ({
     meta: [
       {
@@ -251,6 +268,10 @@ export const Route = createRootRoute({
       {
         name: "description",
         content: "Preserve and explore your family history",
+      },
+      {
+        name: "robots",
+        content: "noindex, nofollow",
       },
     ],
     links: [
@@ -285,12 +306,15 @@ export const Route = createRootRoute({
 });
 
 function RootComponent() {
+  // Access the nonce from the route loader data
+  const { nonce } = Route.useLoaderData();
+
   useLayoutEffect(() => {
     document.documentElement.dataset.hydrated = "true";
   }, []);
 
   return (
-    <RootDocument>
+    <RootDocument nonce={nonce}>
       <Outlet />
     </RootDocument>
   );
@@ -299,7 +323,13 @@ function RootComponent() {
 // Static dark mode initialization script - safe hardcoded string, no XSS risk
 const DARK_MODE_SCRIPT = `(function(){var s=localStorage.getItem('theme');var p=window.matchMedia('(prefers-color-scheme:dark)').matches;if(s==='dark'||(!s&&p)){document.documentElement.classList.add('dark')}})()`;
 
-function RootDocument({ children }: { children: React.ReactNode }) {
+function RootDocument({
+  children,
+  nonce,
+}: {
+  children: React.ReactNode;
+  nonce?: string;
+}) {
   // Get current language from i18n (defaults to 'en')
   const currentLang = i18n.language || "en";
   // Determine text direction (ltr for English and Hindi, rtl for future languages like Arabic)
@@ -309,8 +339,12 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     <html lang={currentLang} dir={dir} suppressHydrationWarning>
       <head>
         <HeadContent />
-        {/* Prevent dark mode flash - static script with hardcoded content, no user input */}
-        <script dangerouslySetInnerHTML={{ __html: DARK_MODE_SCRIPT }} />
+        {/* Prevent dark mode flash - inline script with CSP nonce for security */}
+        {/* Content is a hardcoded static string, no XSS risk */}
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: DARK_MODE_SCRIPT }}
+        />
       </head>
       <body className="font-body antialiased">
         {/* Skip to main content link for keyboard navigation */}

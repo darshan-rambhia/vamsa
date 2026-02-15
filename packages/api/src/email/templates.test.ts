@@ -6,6 +6,7 @@ import {
   createBirthdayReminderEmail,
   createEmailVerificationTemplate,
   createNewMemberEmail,
+  createPasswordResetEmail,
   createSuggestionCreatedEmail,
   createSuggestionUpdatedEmail,
 } from "./templates";
@@ -1078,6 +1079,155 @@ describe("Email Templates", () => {
     });
   });
 
+  describe("createPasswordResetEmail", () => {
+    test("returns object with subject, html, and text properties", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email).toBeDefined();
+      expect(email.subject).toBeDefined();
+      expect(email.html).toBeDefined();
+      expect(email.text).toBeDefined();
+    });
+
+    test("generates correct subject", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email.subject).toBe("Reset your Vamsa password");
+    });
+
+    test("includes reset URL in html", () => {
+      const url = "https://vamsa.app/reset-password?token=abc123";
+      const email = createPasswordResetEmail(url);
+
+      expect(email.html).toContain(url);
+    });
+
+    test("includes reset URL in text", () => {
+      const url = "https://vamsa.app/reset-password?token=abc123";
+      const email = createPasswordResetEmail(url);
+
+      expect(email.text).toContain(url);
+    });
+
+    test("includes header text", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email.html).toContain("Reset Your Password");
+    });
+
+    test("includes expiry warning", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email.html).toContain("expires in 1 hour");
+      expect(email.text).toContain("expires in 1 hour");
+    });
+
+    test("includes security note about ignoring email", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email.html).toContain("did not request this");
+      expect(email.text).toContain("did not request this");
+    });
+
+    test("includes button with reset URL", () => {
+      const url = "https://vamsa.app/reset-password?token=abc123";
+      const email = createPasswordResetEmail(url);
+
+      expect(email.html).toContain('class="button"');
+      expect(email.html).toContain(`href="${url}"`);
+    });
+
+    test("includes password protection advice", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email.html).toContain("Never share your password");
+      expect(email.html).toContain("unique password");
+      expect(email.text).toContain("Never share your password");
+      expect(email.text).toContain("unique password");
+    });
+
+    test("html is valid HTML structure", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email.html).toContain("<!DOCTYPE html>");
+      expect(email.html).toContain("<html>");
+      expect(email.html).toContain("</html>");
+      expect(email.html).toContain("<head>");
+      expect(email.html).toContain("</head>");
+      expect(email.html).toContain("<body>");
+      expect(email.html).toContain("</body>");
+    });
+
+    test("html includes styling", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email.html).toContain("<style>");
+      expect(email.html).toContain("font-family:");
+    });
+
+    test("includes Vamsa branding", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email.html).toContain("Vamsa");
+      expect(email.text).toContain("Vamsa");
+    });
+
+    test("includes footer disclaimer", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email.html).toContain("security notification");
+      expect(email.html).toContain("do not reply");
+    });
+
+    test("handles long reset URLs", () => {
+      const longUrl =
+        "https://vamsa.app/reset-password?token=" + "a".repeat(200);
+      const email = createPasswordResetEmail(longUrl);
+
+      expect(email.html).toContain(longUrl);
+      expect(email.text).toContain(longUrl);
+    });
+
+    test("includes warning box styling", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email.html).toContain("warning-box");
+    });
+
+    test("text version removes HTML tags for readability", () => {
+      const email = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+
+      expect(email.text).not.toContain("<");
+      expect(email.text).not.toContain(">");
+      expect(email.text).not.toContain("html");
+      expect(email.text).not.toContain("body");
+    });
+  });
+
   describe("Common email features", () => {
     test("all emails include footer disclaimer", () => {
       const email1 = createSuggestionCreatedEmail(
@@ -1138,6 +1288,11 @@ describe("Email Templates", () => {
         "https://example.com/verify"
       );
       expect(email5.html).toContain("Vamsa");
+
+      const email6 = createPasswordResetEmail(
+        "https://vamsa.app/reset-password?token=abc123"
+      );
+      expect(email6.html).toContain("Vamsa");
     });
 
     test("text version removes HTML tags for readability", () => {

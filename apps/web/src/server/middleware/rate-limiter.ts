@@ -161,7 +161,11 @@ export async function resetRateLimit(
 
 /**
  * Get client IP address from request headers
- * Works with proxies (X-Forwarded-For, X-Real-IP) and direct connections
+ *
+ * IP resolution is now handled by the trusted-proxy middleware which:
+ * 1. Validates that proxy headers come from trusted sources
+ * 2. Sets x-vamsa-client-ip header with the resolved IP
+ * 3. Prevents IP spoofing attacks
  *
  * @returns IP address string or "unknown" if not determinable
  */
@@ -170,31 +174,11 @@ export function getClientIP(): string {
   // We need to import getHeaders from @tanstack/react-start/server
   // This will be called within the server function context
   try {
-    // Dynamic import to avoid issues if called outside server context
-
     const { getHeaders } = require("@tanstack/react-start/server");
     const headers = getHeaders();
 
-    // Check various proxy headers
-    const xForwardedFor = headers?.["x-forwarded-for"];
-    if (xForwardedFor) {
-      // X-Forwarded-For can contain multiple IPs, take the first one
-      const ips = xForwardedFor.split(",").map((ip: string) => ip.trim());
-      return ips[0] || "unknown";
-    }
-
-    const xRealIp = headers?.["x-real-ip"];
-    if (xRealIp) {
-      return xRealIp;
-    }
-
-    // Cloudflare header
-    const cfConnectingIp = headers?.["cf-connecting-ip"];
-    if (cfConnectingIp) {
-      return cfConnectingIp;
-    }
-
-    return "unknown";
+    // Get the resolved client IP from the middleware
+    return headers?.["x-vamsa-client-ip"] ?? "unknown";
   } catch {
     return "unknown";
   }

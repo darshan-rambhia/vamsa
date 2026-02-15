@@ -476,6 +476,90 @@ Vamsa Family Tree
   };
 }
 
+export function createPasswordResetEmail(resetUrl: string): EmailTemplate {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <style>
+          body { font-family: 'Source Sans 3', sans-serif; color: #333; line-height: 1.6; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: #2d5016; color: #f5f1e8; padding: 20px; border-radius: 8px 8px 0 0; }
+          .content { background-color: #f9f8f5; padding: 20px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; padding: 12px 24px; background-color: #2d5016; color: #f5f1e8; text-decoration: none; border-radius: 4px; margin-top: 16px; }
+          .footer { margin-top: 20px; font-size: 12px; color: #999; }
+          .warning-box { margin: 20px 0; padding: 12px; background-color: #fff8e1; border-left: 4px solid #fbc02d; border-radius: 4px; }
+          .security-note { margin: 16px 0; padding: 12px; background-color: #f0f0f0; border-radius: 4px; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2>Reset Your Password</h2>
+          </div>
+          <div class="content">
+            <p>Hello,</p>
+
+            <p>We received a request to reset the password for your Vamsa account. Click the button below to reset your password:</p>
+
+            <a href="${resetUrl}" class="button">Reset Password</a>
+
+            <div class="warning-box">
+              <strong>Security Notice:</strong> This link expires in 1 hour. If you did not request this, you can safely ignore this email.
+            </div>
+
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">
+              If the button doesn't work, copy and paste this link into your browser:<br>
+              <a href="${resetUrl}" style="color: #2d5016; word-break: break-all;">${resetUrl}</a>
+            </p>
+
+            <div class="security-note">
+              <p><strong>Protecting Your Account:</strong></p>
+              <ul style="margin: 8px 0; padding-left: 20px;">
+                <li>Never share your password with anyone</li>
+                <li>Use a unique password for your Vamsa account</li>
+                <li>This link is for your use only</li>
+              </ul>
+            </div>
+
+            <p style="margin-top: 20px;">Best regards,<br>Vamsa Family Tree</p>
+          </div>
+          <div class="footer">
+            <p>This is a security notification. Please do not reply to this email.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const text = `
+Reset Your Password
+
+Hello,
+
+We received a request to reset the password for your Vamsa account. Visit the link below to reset your password:
+
+${resetUrl}
+
+SECURITY NOTICE:
+This link expires in 1 hour. If you did not request this, you can safely ignore this email.
+
+Protecting Your Account:
+- Never share your password with anyone
+- Use a unique password for your Vamsa account
+- This link is for your use only
+
+Best regards,
+Vamsa Family Tree
+  `;
+
+  return {
+    subject: "Reset your Vamsa password",
+    html,
+    text: text.trim(),
+  };
+}
+
 function escapeHtml(text: string): string {
   const map: Record<string, string> = {
     "&": "&amp;",

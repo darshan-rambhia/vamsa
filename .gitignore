@@ -24,6 +24,12 @@ apps/web/e2e/.auth/*.json
 # Visual regression - actual vs expected diffs
 apps/web/e2e/visual/**/*-diff.png
 
+# Bundle analysis
+stats.html
+
+# Lighthouse CI
+.lighthouseci
+
 # Misc
 .DS_Store
 *.pem

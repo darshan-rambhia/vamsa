@@ -21,48 +21,23 @@ import type { RateLimitAction } from "./rate-limiter";
 const log = loggers.api;
 
 /**
- * Extract client IP from request headers
- * Checks multiple proxy headers in order of preference
+ * Extract client IP from the x-vamsa-client-ip header
+ *
+ * This header is set by the trusted-proxy middleware which validates
+ * that proxy headers come from trusted sources, preventing IP spoofing.
  */
 function extractClientIP(
   headers: Record<string, string | Array<string> | undefined>
 ): string {
-  // Check X-Forwarded-For header (most common with proxies)
-  const xForwardedFor = headers["x-forwarded-for"];
-  if (xForwardedFor) {
-    const forwardedStr = Array.isArray(xForwardedFor)
-      ? xForwardedFor[0]
-      : xForwardedFor;
-    if (forwardedStr) {
-      // X-Forwarded-For can contain multiple IPs, take the first one
-      const ips = forwardedStr.split(",").map((ip) => ip.trim());
-      if (ips[0]) {
-        return ips[0];
-      }
+  const clientIP = headers["x-vamsa-client-ip"];
+  if (clientIP) {
+    const ipStr = Array.isArray(clientIP) ? clientIP[0] : clientIP;
+    if (ipStr) {
+      return ipStr;
     }
   }
 
-  // Check X-Real-IP header (common with nginx)
-  const xRealIp = headers["x-real-ip"];
-  if (xRealIp) {
-    const realIpStr = Array.isArray(xRealIp) ? xRealIp[0] : xRealIp;
-    if (realIpStr) {
-      return realIpStr;
-    }
-  }
-
-  // Check Cloudflare header
-  const cfConnectingIp = headers["cf-connecting-ip"];
-  if (cfConnectingIp) {
-    const cfIpStr = Array.isArray(cfConnectingIp)
-      ? cfConnectingIp[0]
-      : cfConnectingIp;
-    if (cfIpStr) {
-      return cfIpStr;
-    }
-  }
-
-  // Fallback to unknown
+  // Fallback to unknown if header not set
   return "unknown";
 }
 

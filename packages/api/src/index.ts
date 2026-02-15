@@ -48,5 +48,6 @@ export {
   createBirthdayReminderEmail,
   createEmailVerificationTemplate,
   createAccountLockedEmail,
+  createPasswordResetEmail,
 } from "./email";
 export type { NotificationPreferences, EmailTemplate } from "./email";

@@ -117,6 +117,39 @@ export const auth = betterAuth({
     },
   },
 
+  // Password reset configuration
+  forgetPassword: {
+    sendResetPassword: async ({
+      user,
+      url,
+    }: {
+      user: { id: string; email: string; name?: string };
+      url: string;
+    }) => {
+      const { emailService, createPasswordResetEmail } =
+        await import("@vamsa/api");
+
+      const template = createPasswordResetEmail(url);
+
+      // Log reset URL in development for easy testing
+      if (process.env.NODE_ENV === "development") {
+        const { loggers } = await import("@vamsa/lib/logger");
+        loggers.api.info(
+          { url, email: user.email },
+          "Password reset URL (dev mode)"
+        );
+      }
+
+      // Fire-and-forget to prevent timing attacks
+      void emailService.sendEmail(
+        user.email,
+        template,
+        "password_reset",
+        user.id
+      );
+    },
+  },
+
   // Account linking - allows users to link OAuth accounts to existing email/password accounts
   // Only trust providers that are actually configured
   account: {

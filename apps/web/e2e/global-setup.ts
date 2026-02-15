@@ -33,6 +33,13 @@ async function authenticateUser(
   // Wait for the page to fully load
   await page.waitForLoadState("domcontentloaded", { timeout: 10000 });
 
+  // Wait for React hydration to complete before interacting with the form.
+  // RootComponent sets data-hydrated="true" in useLayoutEffect after hydration.
+  await page.waitForFunction(
+    () => document.documentElement.dataset.hydrated === "true",
+    { timeout: 15000 }
+  );
+
   // Wait for login form to be visible
   await page
     .getByTestId("login-form")
