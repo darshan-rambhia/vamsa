@@ -21,6 +21,7 @@ WORKDIR /app
 
 # Copy package files for dependency installation
 COPY package.json bun.lock bunfig.toml ./
+COPY apps/ai/package.json ./apps/ai/
 COPY apps/web/package.json ./apps/web/
 COPY packages/api/package.json ./packages/api/
 COPY packages/client/package.json ./packages/client/
@@ -59,6 +60,7 @@ ENV NODE_TLS_REJECT_UNAUTHORIZED=${SKIP_SSL_VERIFY:+0}
 WORKDIR /app
 
 COPY package.json bun.lock bunfig.toml ./
+COPY apps/ai/package.json ./apps/ai/
 COPY apps/web/package.json ./apps/web/
 COPY packages/api/package.json ./packages/api/
 COPY packages/client/package.json ./packages/client/
