@@ -164,17 +164,15 @@ app.use(
   cors({
     origin: IS_PRODUCTION
       ? (origin) => {
-          // In production, only allow specific origins
+          // In production, only allow exact origin matches
           const allowedOrigins = [
             process.env.APP_URL || "https://vamsa.app",
             // Add your mobile app schemes here when ready
             // 'vamsa://*',
             // 'exp://*', // Expo development
           ];
-          const allowed = allowedOrigins.find((allowed) =>
-            origin.startsWith(allowed)
-          );
-          // Return the matched origin or null to reject
+          // Exact match prevents prefix bypass (e.g. "https://vamsa.app.evil.com")
+          const allowed = allowedOrigins.find((allowed) => origin === allowed);
           return allowed || null;
         }
       : "*", // Allow all origins in development
@@ -190,12 +188,13 @@ app.use(
   csrf({
     origin: IS_PRODUCTION
       ? (origin) => {
-          // In production, validate against allowed origins
+          // In production, validate against exact allowed origins
           const allowedOrigins = [
             process.env.APP_URL || "https://vamsa.app",
             // Add mobile app schemes when ready
           ];
-          return allowedOrigins.some((allowed) => origin.startsWith(allowed));
+          // Exact match prevents prefix bypass (e.g. "https://vamsa.app.evil.com")
+          return allowedOrigins.some((allowed) => origin === allowed);
         }
       : "*", // Allow all in development
   })
@@ -456,8 +455,28 @@ app.post("/api/v1/vitals", async (c) => {
       return c.json({ error: "Invalid payload" }, 400);
     }
 
+    // Validate and sanitize metrics before recording
+    const VALID_METRIC_NAMES = new Set(["LCP", "CLS", "INP", "FCP", "TTFB"]);
+    const validMetrics = body.metrics.filter(
+      (m: unknown) =>
+        m != null &&
+        typeof m === "object" &&
+        "name" in m &&
+        "value" in m &&
+        typeof (m as Record<string, unknown>).name === "string" &&
+        typeof (m as Record<string, unknown>).value === "number" &&
+        VALID_METRIC_NAMES.has((m as Record<string, string>).name)
+    );
+
+    if (validMetrics.length === 0) {
+      return c.json({ error: "No valid metrics" }, 400);
+    }
+
     const { recordWebVitals } = await import("./metrics");
-    recordWebVitals(body.metrics, body.url || "/");
+    recordWebVitals(
+      validMetrics,
+      typeof body.url === "string" ? body.url : "/"
+    );
 
     return c.json({ ok: true }, 202);
   } catch {

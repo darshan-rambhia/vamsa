@@ -17,6 +17,7 @@ import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { createPaginationMeta } from "@vamsa/schemas";
 import { and, asc, count, desc, eq, isNull, like, ne, or } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
+import { escapeLike } from "../db";
 import type { UserRole, UserUpdateInput } from "@vamsa/schemas";
 import type { SQL } from "drizzle-orm";
 
@@ -89,8 +90,8 @@ export async function getUsersData(
   if (search) {
     conditions.push(
       or(
-        like(drizzleSchema.users.email, `%${search}%`),
-        like(drizzleSchema.users.name, `%${search}%`)
+        like(drizzleSchema.users.email, `%${escapeLike(search)}%`),
+        like(drizzleSchema.users.name, `%${escapeLike(search)}%`)
       )
     );
   }
@@ -384,8 +385,8 @@ export async function searchAvailablePersonsData(
   if (search) {
     conditions.push(
       or(
-        like(drizzleSchema.persons.firstName, `%${search}%`),
-        like(drizzleSchema.persons.lastName, `%${search}%`)
+        like(drizzleSchema.persons.firstName, `%${escapeLike(search)}%`),
+        like(drizzleSchema.persons.lastName, `%${escapeLike(search)}%`)
       )
     );
   }

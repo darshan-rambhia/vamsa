@@ -1,6 +1,7 @@
 // Drizzle imports - now the default ORM
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { and, asc, count, eq, ilike } from "drizzle-orm";
+import { escapeLike } from "../db";
 
 /** Type for the database instance (for DI) */
 export type PlacesDb = typeof drizzleDb;
@@ -193,7 +194,7 @@ export async function searchPlacesData(
   >
 > {
   const places = await db.query.places.findMany({
-    where: ilike(drizzleSchema.places.name, `%${query}%`),
+    where: ilike(drizzleSchema.places.name, `%${escapeLike(query)}%`),
     with: {
       parent: true,
     },
