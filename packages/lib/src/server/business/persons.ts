@@ -4,6 +4,7 @@ import { createPaginationMeta } from "@vamsa/schemas";
 import { loggers } from "@vamsa/lib/logger";
 import { t } from "../i18n";
 import { recordSearchMetrics } from "../metrics";
+import { escapeLike } from "../db";
 import type { SQL } from "drizzle-orm";
 import type {
   Address,
@@ -71,8 +72,8 @@ export function buildPersonWhereClause(search?: string, isLiving?: boolean) {
   if (search) {
     conditions.push(
       or(
-        ilike(drizzleSchema.persons.firstName, `%${search}%`),
-        ilike(drizzleSchema.persons.lastName, `%${search}%`)
+        ilike(drizzleSchema.persons.firstName, `%${escapeLike(search)}%`),
+        ilike(drizzleSchema.persons.lastName, `%${escapeLike(search)}%`)
       )!
     );
   }
@@ -608,8 +609,8 @@ export async function searchPersonsData(
   const conditions: Array<SQL<unknown>> = [
     isNull(drizzleSchema.persons.deletedAt),
     or(
-      ilike(drizzleSchema.persons.firstName, `%${query}%`),
-      ilike(drizzleSchema.persons.lastName, `%${query}%`)
+      ilike(drizzleSchema.persons.firstName, `%${escapeLike(query)}%`),
+      ilike(drizzleSchema.persons.lastName, `%${escapeLike(query)}%`)
     )!,
   ];
 

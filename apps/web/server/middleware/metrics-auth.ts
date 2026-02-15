@@ -1,3 +1,4 @@
+import { createHash, timingSafeEqual } from "node:crypto";
 import { loggers } from "@vamsa/lib/logger";
 import type { Context, Next } from "hono";
 
@@ -79,7 +80,7 @@ export function metricsAuthMiddleware() {
     const providedToken = authHeader.slice(7);
 
     // Timing-safe comparison to prevent timing attacks
-    if (!timingSafeEqual(providedToken, token)) {
+    if (!safeTokenCompare(providedToken, token)) {
       log.warn({ path: c.req.path }, "Metrics auth failed: invalid token");
       return c.json({ error: "Forbidden" }, 403, {
         "Cache-Control": "no-store",
@@ -92,32 +93,18 @@ export function metricsAuthMiddleware() {
 }
 
 /**
- * Timing-safe string comparison to prevent timing attacks
+ * Timing-safe token comparison using Node.js crypto.timingSafeEqual
  *
- * Compares two strings using constant-time comparison,
- * so attackers cannot infer correct characters from response time.
+ * Hashes both inputs with SHA-256 before comparing, which:
+ * 1. Normalizes to equal length (no length leak)
+ * 2. Uses the battle-tested crypto.timingSafeEqual under the hood
  *
- * @param a - First string to compare
- * @param b - Second string to compare
- * @returns true if strings are equal, false otherwise
+ * @param provided - The token provided in the request
+ * @param expected - The expected token from environment
+ * @returns true if tokens are equal, false otherwise
  */
-function timingSafeEqual(a: string, b: string): boolean {
-  // If lengths differ, strings are not equal
-  // We still do comparison to maintain constant time
-  if (a.length !== b.length) return false;
-
-  // Convert strings to bytes for comparison
-  const encoder = new TextEncoder();
-  const bufA = encoder.encode(a);
-  const bufB = encoder.encode(b);
-
-  // XOR comparison: accumulate differences
-  // Each different byte sets a bit in result
-  let result = 0;
-  for (let i = 0; i < bufA.length; i++) {
-    result |= bufA[i] ^ bufB[i];
-  }
-
-  // Return true only if result is 0 (no differences)
-  return result === 0;
+function safeTokenCompare(provided: string, expected: string): boolean {
+  const hashA = createHash("sha256").update(provided).digest();
+  const hashB = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(hashA, hashB);
 }

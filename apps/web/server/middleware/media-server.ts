@@ -164,6 +164,12 @@ export async function serveMedia(c: Context): Promise<Response> {
       Vary: "Accept-Encoding",
     };
 
+    // SVG files can contain embedded scripts - sandbox them
+    if (mimeType === "image/svg+xml") {
+      headers["Content-Security-Policy"] =
+        "default-src 'none'; style-src 'unsafe-inline'; sandbox";
+    }
+
     // Handle range request
     if (range) {
       const { start, end } = range;

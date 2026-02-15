@@ -545,6 +545,13 @@ export async function uploadMediaLogic(
 ) {
   const uploadStart = Date.now();
 
+  // Validate upload size before decoding (20MB limit)
+  // base64 expands ~4/3x, so 20MB file ≈ 27MB base64 string
+  const MAX_UPLOAD_BASE64_LENGTH = 27 * 1024 * 1024; // ~20MB decoded
+  if (base64Data.length > MAX_UPLOAD_BASE64_LENGTH) {
+    throw new Error("File too large: maximum upload size is 20MB");
+  }
+
   // Verify person exists
   const person = await db
     .select()
