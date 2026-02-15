@@ -27,28 +27,6 @@ import { MediaTab } from "~/components/media/media-tab";
 import { StoryGenerator } from "~/components/ai/story-generator";
 
 export const Route = createFileRoute("/_authenticated/people/$personId")({
-  loader: async ({ params, context }) => {
-    const { queryClient } = context;
-    // Prefetch all data in parallel during route transition
-    await Promise.all([
-      queryClient.ensureQueryData({
-        queryKey: ["person", params.personId],
-        queryFn: () => getPerson({ data: { id: params.personId } }),
-      }),
-      queryClient.ensureQueryData({
-        queryKey: ["personEvents", params.personId],
-        queryFn: () => getPersonEvents({ data: { personId: params.personId } }),
-      }),
-      queryClient.ensureQueryData({
-        queryKey: ["personPlaces", params.personId],
-        queryFn: () => getPersonPlaces({ data: { personId: params.personId } }),
-      }),
-      queryClient.ensureQueryData({
-        queryKey: ["personMedia", params.personId],
-        queryFn: () => getPersonMedia({ data: { personId: params.personId } }),
-      }),
-    ]);
-  },
   component: PersonDetailComponent,
 });
 

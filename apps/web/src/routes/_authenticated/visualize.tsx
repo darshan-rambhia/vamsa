@@ -108,14 +108,6 @@ interface VisualizeSearchParams {
 }
 
 export const Route = createFileRoute("/_authenticated/visualize")({
-  loader: async ({ context }) => {
-    const { queryClient } = context;
-    // Prefetch persons list during route transition for faster chart rendering
-    await queryClient.ensureQueryData({
-      queryKey: ["persons"],
-      queryFn: () => listPersons({ data: {} }),
-    });
-  },
   component: VisualizeComponent,
   validateSearch: (search: Record<string, unknown>): VisualizeSearchParams => ({
     type: (search.type as VisualizationType) || "tree",

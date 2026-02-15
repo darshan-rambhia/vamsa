@@ -7,13 +7,6 @@ import { OnboardingDashboard } from "~/components/onboarding";
 import { ConfigurableDashboard } from "~/components/dashboard/ConfigurableDashboard";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
-  loader: async ({ context }) => {
-    const { queryClient } = context;
-    await queryClient.ensureQueryData({
-      queryKey: ["dashboard-stats"],
-      queryFn: () => getDashboardStats(),
-    });
-  },
   component: DashboardComponent,
 });
 
