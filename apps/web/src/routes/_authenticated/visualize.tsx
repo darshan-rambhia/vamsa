@@ -4,7 +4,7 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useId, useState } from "react";
+import { Suspense, lazy, useCallback, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Button,
@@ -31,22 +31,66 @@ import {
   getTimelineChart,
   getTreeChart,
 } from "~/server/charts";
-import { AncestorChart } from "~/components/charts/AncestorChart";
-import { DescendantChart } from "~/components/charts/DescendantChart";
-import { HourglassChart } from "~/components/charts/HourglassChart";
-import { FanChart } from "~/components/charts/FanChart";
-import { TimelineChart } from "~/components/charts/TimelineChart";
-import { RelationshipMatrix } from "~/components/charts/RelationshipMatrix";
-import { BowtieChart } from "~/components/charts/BowtieChart";
-import { CompactTree } from "~/components/charts/CompactTree";
-import { StatisticsCharts } from "~/components/charts/StatisticsCharts";
-import { TreeChart } from "~/components/charts/TreeChart";
-import { TreeListView } from "~/components/charts/TreeListView";
-import { exportToPDF, exportToPNG, exportToSVG } from "~/lib/chart-export";
+import { ChartSkeleton } from "~/components/charts/ChartSkeleton";
 import { ChartContainer } from "~/components/charts/ChartContainer";
 import { PersonSelector } from "~/components/charts/PersonSelector";
 import { FloatingInfoPanel } from "~/components/charts/FloatingInfoPanel";
 import { GenerationSlider } from "~/components/charts/GenerationSlider";
+
+// Lazy-load chart components — each becomes its own Vite chunk
+const AncestorChart = lazy(() =>
+  import("~/components/charts/AncestorChart").then((m) => ({
+    default: m.AncestorChart,
+  }))
+);
+const DescendantChart = lazy(() =>
+  import("~/components/charts/DescendantChart").then((m) => ({
+    default: m.DescendantChart,
+  }))
+);
+const HourglassChart = lazy(() =>
+  import("~/components/charts/HourglassChart").then((m) => ({
+    default: m.HourglassChart,
+  }))
+);
+const FanChart = lazy(() =>
+  import("~/components/charts/FanChart").then((m) => ({ default: m.FanChart }))
+);
+const TimelineChart = lazy(() =>
+  import("~/components/charts/TimelineChart").then((m) => ({
+    default: m.TimelineChart,
+  }))
+);
+const RelationshipMatrix = lazy(() =>
+  import("~/components/charts/RelationshipMatrix").then((m) => ({
+    default: m.RelationshipMatrix,
+  }))
+);
+const BowtieChart = lazy(() =>
+  import("~/components/charts/BowtieChart").then((m) => ({
+    default: m.BowtieChart,
+  }))
+);
+const CompactTree = lazy(() =>
+  import("~/components/charts/CompactTree").then((m) => ({
+    default: m.CompactTree,
+  }))
+);
+const StatisticsCharts = lazy(() =>
+  import("~/components/charts/StatisticsCharts").then((m) => ({
+    default: m.StatisticsCharts,
+  }))
+);
+const TreeChart = lazy(() =>
+  import("~/components/charts/TreeChart").then((m) => ({
+    default: m.TreeChart,
+  }))
+);
+const TreeListView = lazy(() =>
+  import("~/components/charts/TreeListView").then((m) => ({
+    default: m.TreeListView,
+  }))
+);
 
 // ChartType now includes "tree", so we use it directly
 export type VisualizationType = ChartType;
@@ -64,6 +108,14 @@ interface VisualizeSearchParams {
 }
 
 export const Route = createFileRoute("/_authenticated/visualize")({
+  loader: async ({ context }) => {
+    const { queryClient } = context;
+    // Prefetch persons list during route transition for faster chart rendering
+    await queryClient.ensureQueryData({
+      queryKey: ["persons"],
+      queryFn: () => listPersons({ data: {} }),
+    });
+  },
   component: VisualizeComponent,
   validateSearch: (search: Record<string, unknown>): VisualizeSearchParams => ({
     type: (search.type as VisualizationType) || "tree",
@@ -250,6 +302,7 @@ function VisualizeComponent() {
     if (!svg) return;
 
     try {
+      const { exportToPDF } = await import("~/lib/chart-export");
       const bbox = (svg as SVGGraphicsElement).getBBox();
       const isWideChart = bbox.width > bbox.height * 1.2;
 
@@ -266,11 +319,12 @@ function VisualizeComponent() {
     setIsExportOpen(false);
   };
 
-  const handleExportPNG = () => {
+  const handleExportPNG = async () => {
     const svg = document.querySelector(".chart-container svg[data-chart-svg]");
     if (!svg) return;
 
     try {
+      const { exportToPNG } = await import("~/lib/chart-export");
       const filename = `vamsa-${visualizationType}-chart-${new Date().toISOString().split("T")[0]}.png`;
       exportToPNG(svg as SVGElement, filename, 2);
     } catch (error) {
@@ -280,11 +334,12 @@ function VisualizeComponent() {
     setIsExportOpen(false);
   };
 
-  const handleExportSVG = () => {
+  const handleExportSVG = async () => {
     const svg = document.querySelector(".chart-container svg[data-chart-svg]");
     if (!svg) return;
 
     try {
+      const { exportToSVG } = await import("~/lib/chart-export");
       const filename = `vamsa-${visualizationType}-chart-${new Date().toISOString().split("T")[0]}.svg`;
       exportToSVG(svg as SVGElement, filename);
     } catch (error) {
@@ -794,86 +849,88 @@ function ChartVisualization({
       {/* Floating Info Panel - bottom right */}
       <FloatingInfoPanel chartType={chartType} metadata={chartData?.metadata} />
 
-      {/* Chart content */}
-      {chartType === "tree" && "nodes" in chartData && selectedPersonId && (
-        <TreeChart
-          nodes={chartData.nodes}
-          edges={chartData.edges}
-          rootPersonId={selectedPersonId}
-          onNodeClick={handleNodeClick}
-          resetSignal={resetToken}
-        />
-      )}
-      {chartType === "list" && "nodes" in chartData && selectedPersonId && (
-        <TreeListView
-          nodes={chartData.nodes}
-          edges={chartData.edges}
-          rootPersonId={selectedPersonId}
-          onNodeClick={handleNodeClick}
-        />
-      )}
-      {chartType === "ancestor" && "nodes" in chartData && (
-        <AncestorChart
-          nodes={chartData.nodes}
-          edges={chartData.edges}
-          onNodeClick={handleNodeClick}
-        />
-      )}
-      {chartType === "descendant" && "nodes" in chartData && (
-        <DescendantChart
-          nodes={chartData.nodes}
-          edges={chartData.edges}
-          onNodeClick={handleNodeClick}
-        />
-      )}
-      {chartType === "hourglass" &&
-        "nodes" in chartData &&
-        selectedPersonId && (
-          <HourglassChart
+      {/* Chart content — lazy-loaded with Suspense */}
+      <Suspense fallback={<ChartSkeleton />}>
+        {chartType === "tree" && "nodes" in chartData && selectedPersonId && (
+          <TreeChart
+            nodes={chartData.nodes}
+            edges={chartData.edges}
+            rootPersonId={selectedPersonId}
+            onNodeClick={handleNodeClick}
+            resetSignal={resetToken}
+          />
+        )}
+        {chartType === "list" && "nodes" in chartData && selectedPersonId && (
+          <TreeListView
             nodes={chartData.nodes}
             edges={chartData.edges}
             rootPersonId={selectedPersonId}
             onNodeClick={handleNodeClick}
           />
         )}
-      {chartType === "fan" && "nodes" in chartData && (
-        <FanChart
-          nodes={chartData.nodes}
-          edges={chartData.edges}
-          onNodeClick={handleNodeClick}
-        />
-      )}
-      {chartType === "timeline" && "entries" in chartData && (
-        <TimelineChart
-          entries={chartData.entries}
-          minYear={chartData.metadata.minYear}
-          maxYear={chartData.metadata.maxYear}
-          onNodeClick={handleNodeClick}
-          resetSignal={resetToken}
-        />
-      )}
-      {chartType === "matrix" && "people" in chartData && (
-        <RelationshipMatrix
-          people={chartData.people}
-          matrix={chartData.matrix}
-          onNodeClick={handleNodeClick}
-          resetSignal={resetToken}
-        />
-      )}
-      {chartType === "bowtie" && "nodes" in chartData && selectedPersonId && (
-        <BowtieChart
-          nodes={chartData.nodes as Array<BowtieNode>}
-          edges={chartData.edges}
-          rootPersonId={selectedPersonId}
-          onNodeClick={handleNodeClick}
-        />
-      )}
-      {chartType === "compact" && "flatList" in chartData && (
-        <CompactTree data={chartData} onNodeClick={handleNodeClick} />
-      )}
-      {chartType === "statistics" && "ageDistribution" in chartData && (
-        <StatisticsCharts data={chartData} />
-      )}
+        {chartType === "ancestor" && "nodes" in chartData && (
+          <AncestorChart
+            nodes={chartData.nodes}
+            edges={chartData.edges}
+            onNodeClick={handleNodeClick}
+          />
+        )}
+        {chartType === "descendant" && "nodes" in chartData && (
+          <DescendantChart
+            nodes={chartData.nodes}
+            edges={chartData.edges}
+            onNodeClick={handleNodeClick}
+          />
+        )}
+        {chartType === "hourglass" &&
+          "nodes" in chartData &&
+          selectedPersonId && (
+            <HourglassChart
+              nodes={chartData.nodes}
+              edges={chartData.edges}
+              rootPersonId={selectedPersonId}
+              onNodeClick={handleNodeClick}
+            />
+          )}
+        {chartType === "fan" && "nodes" in chartData && (
+          <FanChart
+            nodes={chartData.nodes}
+            edges={chartData.edges}
+            onNodeClick={handleNodeClick}
+          />
+        )}
+        {chartType === "timeline" && "entries" in chartData && (
+          <TimelineChart
+            entries={chartData.entries}
+            minYear={chartData.metadata.minYear}
+            maxYear={chartData.metadata.maxYear}
+            onNodeClick={handleNodeClick}
+            resetSignal={resetToken}
+          />
+        )}
+        {chartType === "matrix" && "people" in chartData && (
+          <RelationshipMatrix
+            people={chartData.people}
+            matrix={chartData.matrix}
+            onNodeClick={handleNodeClick}
+            resetSignal={resetToken}
+          />
+        )}
+        {chartType === "bowtie" && "nodes" in chartData && selectedPersonId && (
+          <BowtieChart
+            nodes={chartData.nodes as Array<BowtieNode>}
+            edges={chartData.edges}
+            rootPersonId={selectedPersonId}
+            onNodeClick={handleNodeClick}
+          />
+        )}
+        {chartType === "compact" && "flatList" in chartData && (
+          <CompactTree data={chartData} onNodeClick={handleNodeClick} />
+        )}
+        {chartType === "statistics" && "ageDistribution" in chartData && (
+          <StatisticsCharts data={chartData} />
+        )}
+      </Suspense>
     </ChartContainer>
   );
 }

@@ -27,6 +27,28 @@ import { MediaTab } from "~/components/media/media-tab";
 import { StoryGenerator } from "~/components/ai/story-generator";
 
 export const Route = createFileRoute("/_authenticated/people/$personId")({
+  loader: async ({ params, context }) => {
+    const { queryClient } = context;
+    // Prefetch all data in parallel during route transition
+    await Promise.all([
+      queryClient.ensureQueryData({
+        queryKey: ["person", params.personId],
+        queryFn: () => getPerson({ data: { id: params.personId } }),
+      }),
+      queryClient.ensureQueryData({
+        queryKey: ["personEvents", params.personId],
+        queryFn: () => getPersonEvents({ data: { personId: params.personId } }),
+      }),
+      queryClient.ensureQueryData({
+        queryKey: ["personPlaces", params.personId],
+        queryFn: () => getPersonPlaces({ data: { personId: params.personId } }),
+      }),
+      queryClient.ensureQueryData({
+        queryKey: ["personMedia", params.personId],
+        queryFn: () => getPersonMedia({ data: { personId: params.personId } }),
+      }),
+    ]);
+  },
   component: PersonDetailComponent,
 });
 
@@ -38,22 +60,20 @@ function PersonDetailComponent() {
     queryFn: () => getPerson({ data: { id: personId } }),
   });
 
+  // All queries use personId from URL params — no waterfall needed
   const { data: events = [], isLoading: isLoadingEvents } = useQuery({
     queryKey: ["personEvents", personId],
     queryFn: () => getPersonEvents({ data: { personId } }),
-    enabled: !!person,
   });
 
   const { data: places = [], isLoading: isLoadingPlaces } = useQuery({
     queryKey: ["personPlaces", personId],
     queryFn: () => getPersonPlaces({ data: { personId } }),
-    enabled: !!person,
   });
 
   const { data: mediaData, isLoading: isLoadingMedia } = useQuery({
     queryKey: ["personMedia", personId],
     queryFn: () => getPersonMedia({ data: { personId } }),
-    enabled: !!person,
   });
 
   if (isLoading) {

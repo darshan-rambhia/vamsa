@@ -16,6 +16,8 @@ import type { ChartEdge, ChartNode } from "~/server/charts";
 import {
   useChartLoadingState,
   usePerformanceMonitor,
+  useVisibleEdges,
+  useVisibleNodes,
 } from "~/lib/chart-performance";
 
 interface TreeChartProps {
@@ -188,6 +190,20 @@ function TreeChartComponent({
     return positions;
   }, [nodes, edges]);
 
+  // Virtual rendering: only render visible nodes for large datasets
+  const visibleNodes = useVisibleNodes(
+    nodes,
+    nodePositions,
+    viewport.viewportBounds
+  );
+  const visibleNodeIds = useMemo(
+    () => new Set(visibleNodes.map((n) => n.id)),
+    [visibleNodes]
+  );
+  const visibleEdges = useVisibleEdges(edges, visibleNodeIds);
+  const isVirtualized =
+    nodes.length >= 500 && visibleNodes.length < nodes.length;
+
   // Fit content to viewport when layout changes
   useEffect(() => {
     if (nodePositions.size > 0) {
@@ -302,7 +318,7 @@ function TreeChartComponent({
               transform={`translate(${viewport.transform.x}, ${viewport.transform.y}) scale(${viewport.transform.scale})`}
             >
               {/* Render edges first (behind nodes) */}
-              {edges.map((edge, i) => {
+              {visibleEdges.map((edge, i) => {
                 const source = nodePositions.get(edge.source);
                 const target = nodePositions.get(edge.target);
 
@@ -335,7 +351,7 @@ function TreeChartComponent({
               })}
 
               {/* Render nodes */}
-              {nodes.map((node) => {
+              {visibleNodes.map((node) => {
                 const pos = nodePositions.get(node.id);
                 if (!pos) return null;
 
@@ -377,6 +393,13 @@ function TreeChartComponent({
                   : undefined
               }
             />
+          )}
+
+          {/* Node count indicator for virtualized rendering */}
+          {isVirtualized && (
+            <div className="text-muted-foreground absolute bottom-2 left-2 rounded bg-black/5 px-2 py-1 text-xs backdrop-blur-sm">
+              Rendering {visibleNodes.length} of {nodes.length} nodes
+            </div>
           )}
 
           {/* Zoom controls */}

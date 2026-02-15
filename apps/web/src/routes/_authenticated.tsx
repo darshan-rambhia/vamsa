@@ -47,9 +47,18 @@ const checkAuthInline = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: async ({ location }) => {
-    const result = await checkAuthInline();
+  beforeLoad: async ({ location, context }) => {
+    // Cache auth session in React Query to avoid server round-trip on every navigation
+    const { queryClient } = context;
+    const result = await queryClient.ensureQueryData({
+      queryKey: ["auth", "session"],
+      queryFn: () => checkAuthInline(),
+      staleTime: 1000 * 60 * 5, // 5 minutes — revalidates after this
+    });
+
     if (!result.valid) {
+      // Clear stale cache on auth failure
+      queryClient.removeQueries({ queryKey: ["auth", "session"] });
       throw redirect({ to: "/login" });
     }
 
