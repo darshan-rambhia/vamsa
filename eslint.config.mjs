@@ -58,6 +58,8 @@ export default defineConfig(
       "**/drizzle/schema.ts", // Drizzle schema (has own tsconfig)
       "**/tests/integration/**", // Integration tests (excluded from main tsconfig)
       "**/tests/setup/**", // Test setup files
+      "**/tests/load/**", // k6 load test scripts (plain JS, not in tsconfig)
+      "lighthouserc.js", // Lighthouse CI config (plain JS, not in tsconfig)
     ],
   },
 
