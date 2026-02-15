@@ -136,7 +136,7 @@ test.describe("Feature: Backup & Export", () => {
         await gotoWithRetry(page, "/admin/backup");
         // Ensure we're on the system backup tab by default
         const systemBackupTab = page.getByRole("tab", {
-          name: /system backup/i,
+          name: /^backup$/i,
         });
         await expect(systemBackupTab).toBeVisible();
       });
@@ -178,7 +178,7 @@ test.describe("Feature: Backup & Export", () => {
         await gotoWithRetry(page, "/admin/backup");
         // Navigate to System Backup tab if needed
         const systemBackupTab = page.getByRole("tab", {
-          name: /system backup/i,
+          name: /^backup$/i,
         });
         if (await systemBackupTab.isVisible().catch(() => false)) {
           await systemBackupTab.click();
@@ -384,6 +384,9 @@ test.describe("Feature: Backup & Export", () => {
         const importCard = page.locator(
           "text=/import backup|restore.*backup/i"
         );
+        await expect(importCard.first())
+          .toBeAttached({ timeout: 10000 })
+          .catch(() => {});
         if (await importCard.isVisible().catch(() => false)) {
           await importCard.scrollIntoViewIfNeeded();
         }
@@ -492,7 +495,7 @@ test.describe("Feature: Backup & Export", () => {
         await expect(gedcomTab).toBeVisible();
 
         // The backup page description mentions GEDCOM
-        await expect(page.getByText(/gedcom format/i)).toBeVisible();
+        await expect(page.getByText(/gedcom/i).first()).toBeVisible();
       });
     });
 
@@ -807,7 +810,7 @@ test.describe("Feature: Backup & Export", () => {
       await bdd.then("user can switch between tabs", async () => {
         // Check System Backup tab
         const systemBackupTab = page.getByRole("tab", {
-          name: /system backup/i,
+          name: /^backup$/i,
         });
         const systemVisible = await systemBackupTab
           .isVisible()

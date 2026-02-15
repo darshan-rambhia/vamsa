@@ -71,7 +71,7 @@ describe("ProfileCard Component", () => {
 
       const button = getByRole("button");
       expect(button).toBeDefined();
-      expect(button.textContent).toContain("Claim Profile");
+      expect(button.textContent).toContain("Claim Your Profile");
     });
   });
 
@@ -86,7 +86,7 @@ describe("ProfileCard Component", () => {
       );
 
       // When highlighted, the button should use default (primary) variant
-      const button = getByText("Claim Profile");
+      const button = getByText("Claim Your Profile");
       expect(button.className).not.toContain("border");
     });
 
@@ -100,7 +100,7 @@ describe("ProfileCard Component", () => {
       );
 
       // When highlighted=false, the button should use outline variant (has border)
-      const button = getByText("Claim Profile");
+      const button = getByText("Claim Your Profile");
       expect(button.className).toContain("border");
     });
 

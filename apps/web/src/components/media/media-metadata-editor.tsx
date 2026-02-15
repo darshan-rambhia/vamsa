@@ -92,7 +92,7 @@ export function MediaMetadataEditor({
           <div className="max-h-[60vh] space-y-6 overflow-y-auto px-6 py-6">
             {/* Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">{t("people:title")}</Label>
+              <Label htmlFor="title">{t("people:mediaTitle")}</Label>
               <Input
                 id="title"
                 type="text"

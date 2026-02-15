@@ -126,7 +126,7 @@ export function SourceForm({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Title */}
         <FormField
-          label={t("people:title")}
+          label={t("people:mediaTitle")}
           error={errors.title?.message}
           required
         >

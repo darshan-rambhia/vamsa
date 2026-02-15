@@ -5,7 +5,8 @@
  *
  * Key behaviors:
  * 1. Initializes i18n for translation tests
- *    - i18n is initialized once at setup
+ *    - Client-side i18n (react-i18next) is initialized via the app's config
+ *    - Server-side i18n is initialized for server function tests
  *    - Tests should NOT mock ./i18n to avoid breaking other tests
  *
  * 2. Logger is NOT mocked globally
@@ -17,6 +18,9 @@ import path from "node:path";
 import { cleanup } from "@testing-library/react";
 import { afterEach } from "vitest";
 import { initializeServerI18n, setLocalesPath } from "@vamsa/lib/server";
+
+// Initialize client-side i18n (react-i18next) so useTranslation() works in component tests
+import "../../src/i18n/config";
 
 // Clean up DOM between tests to prevent "Found multiple elements" errors
 afterEach(() => {
@@ -33,5 +37,5 @@ setLocalesPath(
   )
 );
 
-// Initialize i18n once at setup
+// Initialize server-side i18n once at setup
 await initializeServerI18n();
