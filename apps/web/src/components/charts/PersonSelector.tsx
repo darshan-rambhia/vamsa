@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Input, Label, cn } from "@vamsa/ui";
 
 interface Person {
@@ -39,6 +40,7 @@ export function PersonSelector({
   placeholder = "Search people...",
   className,
 }: PersonSelectorProps) {
+  const { t } = useTranslation(["charts", "common"]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
@@ -170,7 +172,9 @@ export function PersonSelector({
       <div className={cn("space-y-1", className)}>
         {label && <Label className="text-xs">{label}</Label>}
         <div className="bg-muted flex h-9 w-50 items-center justify-center rounded-md border">
-          <span className="text-muted-foreground text-sm">Loading...</span>
+          <span className="text-muted-foreground text-sm">
+            {t("common:loading")}
+          </span>
         </div>
       </div>
     );
@@ -238,7 +242,7 @@ export function PersonSelector({
                 d="M19.5 8.25l-7.5 7.5-7.5-7.5"
               />
             </svg>
-            <span className="sr-only">Open dropdown</span>
+            <span className="sr-only">{t("charts:openDropdown")}</span>
           </Button>
         )}
       </div>
@@ -248,11 +252,11 @@ export function PersonSelector({
         <ul
           ref={listRef}
           className="bg-popover border-border absolute z-50 mt-1 max-h-75 w-50 overflow-auto rounded-md border shadow-lg"
-          aria-label="People"
+          aria-label={t("charts:people")}
         >
           {filteredPersons.length === 0 ? (
             <li className="text-muted-foreground px-3 py-2 text-sm">
-              No people found
+              {t("charts:noPeopleFound")}
             </li>
           ) : (
             filteredPersons.map((person, index) => (
@@ -277,7 +281,11 @@ export function PersonSelector({
                       "h-2 w-2 shrink-0 rounded-full",
                       person.isLiving ? "bg-primary" : "bg-muted-foreground"
                     )}
-                    title={person.isLiving ? "Living" : "Deceased"}
+                    title={
+                      person.isLiving
+                        ? t("charts:living")
+                        : t("charts:deceased")
+                    }
                   />
                   <span className="truncate">{getDisplayName(person)}</span>
                   {person.id === selectedPersonId && (

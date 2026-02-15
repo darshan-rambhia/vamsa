@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@vamsa/ui/primitives";
 
 interface MediaUploaderProps {
@@ -25,6 +26,7 @@ export function MediaUploader({
   progress = 0,
   error,
 }: MediaUploaderProps) {
+  const { t } = useTranslation(["people", "common"]);
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -33,10 +35,10 @@ export function MediaUploader({
 
   const validateFile = (file: File): string | null => {
     if (!ACCEPTED_FORMATS.includes(file.type)) {
-      return "Please upload a valid image file (JPEG, PNG, GIF, WebP, or TIFF)";
+      return t("people:validImageFile");
     }
     if (file.size > MAX_FILE_SIZE) {
-      return "File size must be less than 10MB";
+      return t("people:maxFileSize");
     }
     return null;
   };
@@ -148,10 +150,10 @@ export function MediaUploader({
               />
             </svg>
             <p className="text-foreground mb-2 text-base font-medium">
-              Drop your photo here or click to browse
+              {t("people:dropPhotoHere")}
             </p>
             <p className="text-muted-foreground text-sm">
-              JPEG, PNG, GIF, WebP, or TIFF (max 10MB)
+              {t("people:photoFormats")}
             </p>
           </button>
         )}
@@ -163,7 +165,7 @@ export function MediaUploader({
               <div className="border-border h-32 w-32 shrink-0 overflow-hidden rounded-lg border-2">
                 <img
                   src={preview}
-                  alt="Preview"
+                  alt={t("people:photoPreview")}
                   className="h-full w-full object-cover"
                 />
               </div>
@@ -178,10 +180,10 @@ export function MediaUploader({
                 </p>
                 <div className="flex flex-wrap gap-2">
                   <Button onClick={handleUploadClick} size="sm">
-                    Upload Photo
+                    {t("people:uploadPhoto")}
                   </Button>
                   <Button onClick={handleClear} variant="outline" size="sm">
-                    Clear
+                    {t("people:clearSelection")}
                   </Button>
                 </div>
               </div>
@@ -208,7 +210,9 @@ export function MediaUploader({
                 </svg>
               </div>
             </div>
-            <p className="text-foreground mb-2 font-medium">Uploading...</p>
+            <p className="text-foreground mb-2 font-medium">
+              {t("people:uploadingPhoto")}
+            </p>
             {progress > 0 && (
               <div className="bg-muted mx-auto h-2 max-w-xs overflow-hidden rounded-full">
                 <div
@@ -248,7 +252,7 @@ export function MediaUploader({
       {/* Success message placeholder */}
       {!error && !validationError && !isUploading && !selectedFile && (
         <div className="text-muted-foreground text-center text-sm">
-          Select a photo to get started
+          {t("people:selectPhotoToStart")}
         </div>
       )}
     </div>

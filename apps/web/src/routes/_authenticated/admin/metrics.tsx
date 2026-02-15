@@ -1,5 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Badge,
   Button,
@@ -44,6 +45,7 @@ export const Route = createFileRoute("/_authenticated/admin/metrics")({
 });
 
 function MetricsPage() {
+  const { t } = useTranslation(["admin", "common"]);
   const router = useRouter();
   const { currentUser, prometheusStatus, settings } = Route.useLoaderData();
 
@@ -71,9 +73,11 @@ function MetricsPage() {
       <Container>
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-destructive font-medium">Access Denied</p>
+            <p className="text-destructive font-medium">
+              {t("admin:metricsAccessDenied")}
+            </p>
             <p className="text-muted-foreground mt-2 text-sm">
-              You need admin privileges to view this page.
+              {t("admin:metricsAccessDeniedMessage")}
             </p>
           </CardContent>
         </Card>
@@ -85,8 +89,8 @@ function MetricsPage() {
     <Container>
       <div className="mb-6 flex items-center justify-between">
         <PageHeader
-          title="System Metrics"
-          description="Real-time application performance monitoring"
+          title={t("admin:metricsTitle")}
+          description={t("admin:metricsRealTimeMonitoring")}
         />
         {prometheusStatus.available && (
           <div className="flex items-center gap-2">
@@ -101,20 +105,22 @@ function MetricsPage() {
               className="text-xs"
             >
               {metrics?.status === "healthy"
-                ? "LIVE"
+                ? t("admin:metricsStatusLive")
                 : metrics?.status === "degraded"
-                  ? "DEGRADED"
-                  : "OFFLINE"}
+                  ? t("admin:metricsStatusDegraded")
+                  : t("admin:metricsStatusOffline")}
             </Badge>
             {dataUpdatedAt && (
               <span className="text-muted-foreground text-xs">
-                Updated {new Date(dataUpdatedAt).toLocaleTimeString()}
+                {t("admin:metricsUpdatedAt", {
+                  time: new Date(dataUpdatedAt).toLocaleTimeString(),
+                })}
               </span>
             )}
             <button
               onClick={() => refetch()}
               className="hover:bg-muted rounded p-1"
-              title="Refresh metrics"
+              title={t("admin:metricsRefresh")}
             >
               <RefreshCw
                 className={cn("h-4 w-4", isLoading && "animate-spin")}
@@ -138,9 +144,9 @@ function MetricsPage() {
             <div className="flex items-center gap-3">
               <AlertCircle className="text-destructive h-5 w-5" />
               <div>
-                <p className="font-medium">Failed to Load Metrics</p>
+                <p className="font-medium">{t("admin:metricsFailedToLoad")}</p>
                 <p className="text-muted-foreground text-sm">
-                  {error instanceof Error ? error.message : "Unknown error"}
+                  {error instanceof Error ? error.message : t("common:error")}
                 </p>
               </div>
             </div>
@@ -153,10 +159,11 @@ function MetricsPage() {
         <Card className="border-amber-500/30 bg-amber-500/5">
           <CardContent className="py-12 text-center">
             <AlertCircle className="mx-auto mb-4 h-12 w-12 text-amber-500" />
-            <p className="text-lg font-medium">Metrics Not Available</p>
+            <p className="text-lg font-medium">
+              {t("admin:metricsNotAvailableTitle")}
+            </p>
             <p className="text-muted-foreground mx-auto mt-2 max-w-md text-sm">
-              Configure your Prometheus/metrics API URL above, or start the
-              observability stack with:
+              {t("admin:metricsNotAvailableMessage")}
             </p>
             <code className="bg-muted mt-4 inline-block rounded px-3 py-2 text-sm">
               docker compose -f docker/docker-compose.observability.yml up -d
@@ -170,30 +177,30 @@ function MetricsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Activity className="text-primary h-5 w-5" />
-                <CardTitle>HTTP Performance</CardTitle>
+                <CardTitle>{t("admin:metricsHttpPerformance")}</CardTitle>
               </div>
               <CardDescription>
-                Request rate, latency, and errors
+                {t("admin:metricsHttpDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                 <MetricCard
-                  label="Request Rate"
+                  label={t("admin:metricsRequestRate")}
                   value={formatRate(metrics?.http.requestRate)}
                   unit="req/s"
                   loading={isLoading}
                   trend={getTrend(metrics?.http.requestRate, 10, "high")}
                 />
                 <MetricCard
-                  label="Error Rate"
+                  label={t("admin:metricsErrorRate")}
                   value={formatRate(metrics?.http.errorRate)}
                   unit="err/s"
                   loading={isLoading}
                   trend={getTrend(metrics?.http.errorRate, 0.5, "warning", 0.1)}
                 />
                 <MetricCard
-                  label="P95 Latency"
+                  label={t("admin:metricsP95Latency")}
                   value={formatMs(metrics?.http.p95Latency)}
                   unit="ms"
                   loading={isLoading}
@@ -205,7 +212,7 @@ function MetricsPage() {
                   )}
                 />
                 <MetricCard
-                  label="Active Connections"
+                  label={t("admin:metricsActiveConnections")}
                   value={formatNumber(metrics?.http.activeConnections)}
                   unit=""
                   loading={isLoading}
@@ -220,23 +227,23 @@ function MetricsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Database className="text-primary h-5 w-5" />
-                <CardTitle>Database Performance</CardTitle>
+                <CardTitle>{t("admin:metricsDatabasePerformance")}</CardTitle>
               </div>
               <CardDescription>
-                Query performance and slow query detection
+                {t("admin:metricsDatabaseDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
                 <MetricCard
-                  label="Query Rate"
+                  label={t("admin:metricsQueryRate")}
                   value={formatRate(metrics?.database.queryRate)}
                   unit="q/s"
                   loading={isLoading}
                   trend="normal"
                 />
                 <MetricCard
-                  label="Slow Queries"
+                  label={t("admin:metricsSlowQueries")}
                   value={formatNumber(metrics?.database.slowQueryCount)}
                   unit=""
                   loading={isLoading}
@@ -248,7 +255,7 @@ function MetricsPage() {
                   )}
                 />
                 <MetricCard
-                  label="P95 Query Time"
+                  label={t("admin:metricsP95QueryTime")}
                   value={formatMs(metrics?.database.p95QueryTime)}
                   unit="ms"
                   loading={isLoading}
@@ -268,21 +275,23 @@ function MetricsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Users className="text-primary h-5 w-5" />
-                <CardTitle>User Activity</CardTitle>
+                <CardTitle>{t("admin:metricsUserActivity")}</CardTitle>
               </div>
-              <CardDescription>Active users and feature usage</CardDescription>
+              <CardDescription>
+                {t("admin:metricsUserActivityDescription")}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <MetricCard
-                  label="Active Users"
+                  label={t("admin:metricsActiveUsers")}
                   value={formatNumber(metrics?.application.activeUsers)}
                   unit=""
                   loading={isLoading}
                   trend="normal"
                 />
                 <MetricCard
-                  label="Search Queries"
+                  label={t("admin:metricsSearchQueries")}
                   value={formatRate(metrics?.application.searchQueries)}
                   unit="/s"
                   loading={isLoading}
@@ -294,7 +303,7 @@ function MetricsPage() {
                 Object.keys(metrics.application.chartViews).length > 0 && (
                   <div>
                     <h4 className="mb-3 text-sm font-medium">
-                      Chart Views (5m rate)
+                      {t("admin:metricsChartViews")}
                     </h4>
                     <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
                       {Object.entries(metrics.application.chartViews).map(
@@ -323,11 +332,12 @@ function MetricsPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <TrendingUp className="text-primary h-5 w-5" />
-                    <h3 className="font-medium">Advanced Monitoring</h3>
+                    <h3 className="font-medium">
+                      {t("admin:metricsAdvancedMonitoring")}
+                    </h3>
                   </div>
                   <p className="text-muted-foreground mt-1 text-sm">
-                    View detailed dashboards, historical data, and alerts in
-                    Grafana
+                    {t("admin:metricsAdvancedDescription")}
                   </p>
                 </div>
                 <a
@@ -337,7 +347,7 @@ function MetricsPage() {
                   className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 transition-colors"
                 >
                   <ExternalLink className="h-4 w-4" />
-                  Open Grafana
+                  {t("admin:metricsOpenGrafana")}
                 </a>
               </div>
             </CardContent>
@@ -346,31 +356,31 @@ function MetricsPage() {
           {/* Available Dashboards */}
           <Card>
             <CardHeader>
-              <CardTitle>Available Dashboards</CardTitle>
+              <CardTitle>{t("admin:metricsAvailableDashboards")}</CardTitle>
               <CardDescription>
-                Pre-configured Grafana dashboards for monitoring
+                {t("admin:metricsAvailableDashboardsDescription")}
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <DashboardLink
-                  name="Application Overview"
-                  description="Request rates, latency percentiles, error tracking"
+                  name={t("admin:metricsAppOverview")}
+                  description={t("admin:metricsAppOverviewDescription")}
                   href={`${prometheusStatus.grafanaUrl}/d/vamsa-app-overview`}
                 />
                 <DashboardLink
-                  name="Database Performance"
-                  description="Query duration, slow queries, database metrics"
+                  name={t("admin:metricsDatabasePerfDashboard")}
+                  description={t("admin:metricsDatabasePerfDescription")}
                   href={`${prometheusStatus.grafanaUrl}/d/vamsa-db-perf`}
                 />
                 <DashboardLink
-                  name="Feature Performance"
-                  description="Charts, search, relationships, GEDCOM, media"
+                  name={t("admin:metricsFeaturePerfDashboard")}
+                  description={t("admin:metricsFeaturePerfDescription")}
                   href={`${prometheusStatus.grafanaUrl}/d/vamsa-feature-perf`}
                 />
                 <DashboardLink
-                  name="User Activity"
-                  description="Active users, sessions, feature adoption"
+                  name={t("admin:metricsUserActivityDashboard")}
+                  description={t("admin:metricsUserActivityDashDescription")}
                   href={`${prometheusStatus.grafanaUrl}/d/vamsa-user-activity`}
                 />
               </div>
@@ -402,6 +412,7 @@ function MetricsConfigCard({
   currentUrl,
   onSaved,
 }: MetricsConfigCardProps) {
+  const { t } = useTranslation(["admin", "common"]);
   const [isExpanded, setIsExpanded] = useState(!prometheusAvailable);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -446,16 +457,16 @@ function MetricsConfigCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Settings className="text-primary h-5 w-5" />
-            <CardTitle>Metrics Configuration</CardTitle>
+            <CardTitle>{t("admin:metricsConfigTitle")}</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             {prometheusAvailable ? (
               <Badge variant="default" className="text-xs">
-                Connected
+                {t("admin:metricsConnected")}
               </Badge>
             ) : (
               <Badge variant="secondary" className="text-xs">
-                Not Connected
+                {t("admin:metricsNotConnected")}
               </Badge>
             )}
             <span className="text-muted-foreground text-sm">
@@ -465,8 +476,8 @@ function MetricsConfigCard({
         </div>
         <CardDescription>
           {prometheusAvailable
-            ? `Connected to ${currentUrl}`
-            : "Configure your Prometheus and Grafana URLs to enable metrics"}
+            ? t("admin:metricsConnectedTo", { url: currentUrl })
+            : t("admin:metricsConfigureUrls")}
         </CardDescription>
       </CardHeader>
 
@@ -480,12 +491,14 @@ function MetricsConfigCard({
 
           {success && (
             <div className="rounded-lg border-2 border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:text-green-400">
-              Settings saved! Refresh to see updated connection status.
+              {t("admin:metricsSettingsSaved")}
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="metricsApiUrl">Metrics API URL (Prometheus)</Label>
+            <Label htmlFor="metricsApiUrl">
+              {t("admin:metricsApiUrlLabel")}
+            </Label>
             <Input
               id="metricsApiUrl"
               type="url"
@@ -494,14 +507,13 @@ function MetricsConfigCard({
               placeholder="http://localhost:9090"
             />
             <p className="text-muted-foreground text-xs">
-              URL of your Prometheus server. Leave empty to use the default
-              (localhost:9090).
+              {t("admin:metricsApiUrlHelp")}
             </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="metricsDashboardUrl">
-              Metrics Dashboard URL (Grafana)
+              {t("admin:metricsDashboardUrlLabel")}
             </Label>
             <Input
               id="metricsDashboardUrl"
@@ -511,16 +523,17 @@ function MetricsConfigCard({
               placeholder="http://localhost:3001"
             />
             <p className="text-muted-foreground text-xs">
-              URL of your Grafana dashboard. Leave empty to use the default
-              (localhost:3001).
+              {t("admin:metricsDashboardUrlHelp")}
             </p>
           </div>
 
           {!prometheusAvailable && (
             <div className="bg-muted/50 rounded-lg p-4">
-              <p className="mb-2 text-sm font-medium">Quick Start</p>
+              <p className="mb-2 text-sm font-medium">
+                {t("admin:metricsQuickStart")}
+              </p>
               <p className="text-muted-foreground mb-2 text-sm">
-                Start the observability stack locally:
+                {t("admin:metricsQuickStartMessage")}
               </p>
               <code className="bg-background block rounded px-3 py-2 text-sm">
                 docker compose -f docker/docker-compose.observability.yml up -d
@@ -529,7 +542,9 @@ function MetricsConfigCard({
           )}
 
           <Button onClick={handleSave} disabled={isLoading}>
-            {isLoading ? "Saving..." : "Save Configuration"}
+            {isLoading
+              ? t("admin:metricsSaving")
+              : t("admin:metricsSaveConfig")}
           </Button>
         </CardContent>
       )}

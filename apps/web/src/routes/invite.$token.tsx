@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Card,
@@ -23,6 +24,7 @@ export const Route = createFileRoute("/invite/$token")({
 });
 
 function InviteAcceptPage() {
+  const { t } = useTranslation(["auth", "common"]);
   const { token } = Route.useParams();
   const loaderData = Route.useLoaderData();
   const navigate = useNavigate();
@@ -38,12 +40,12 @@ function InviteAcceptPage() {
     setError(null);
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("common:passwordsDoNotMatch"));
       return;
     }
 
     if (password.length < 12) {
-      setError("Password must be at least 12 characters");
+      setError(t("atLeastNCharacters", { count: 12 }));
       return;
     }
 
@@ -85,12 +87,12 @@ function InviteAcceptPage() {
                 />
               </svg>
             </div>
-            <h2 className="mb-2 text-xl font-semibold">Invalid Invite</h2>
+            <h2 className="mb-2 text-xl font-semibold">{t("invalidInvite")}</h2>
             <p className="text-muted-foreground mb-6">
-              {loaderData.error || "This invite link is not valid."}
+              {loaderData.error || t("invalidInviteMessage")}
             </p>
             <Button onClick={() => navigate({ to: "/login" })}>
-              Go to Login
+              {t("goToLogin")}
             </Button>
           </CardContent>
         </Card>
@@ -131,18 +133,13 @@ function InviteAcceptPage() {
           </div>
 
           <div>
-            <CardTitle className="text-3xl">Join Vamsa</CardTitle>
+            <CardTitle className="text-3xl">{t("joinVamsa")}</CardTitle>
             <CardDescription className="mt-2 text-base">
-              You have been invited to join the family tree
-              {invite.person && (
-                <>
-                  {" "}
-                  as{" "}
-                  <span className="font-medium">
-                    {invite.person.firstName} {invite.person.lastName}
-                  </span>
-                </>
-              )}
+              {invite.person
+                ? t("invitedToJoin", {
+                    name: `${invite.person.firstName} ${invite.person.lastName}`,
+                  })
+                : t("invitedToJoin", { name: "" }).replace(" as ", "")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -163,14 +160,16 @@ function InviteAcceptPage() {
             )}
 
             <div className="rounded-lg border-2 border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:text-green-400">
-              <p className="font-medium">Invite Details</p>
-              <p className="mt-1">Email: {invite.email}</p>
+              <p className="font-medium">{t("inviteDetails")}</p>
+              <p className="mt-1">
+                {t("common:email")}: {invite.email}
+              </p>
               <p>Role: {invite.role}</p>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Your Name</Label>
+                <Label htmlFor="name">{t("yourName")}</Label>
                 <Input
                   id="name"
                   type="text"
@@ -184,7 +183,7 @@ function InviteAcceptPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Create Password</Label>
+                <Label htmlFor="password">{t("createPassword")}</Label>
                 <Input
                   id="password"
                   type="password"
@@ -193,14 +192,16 @@ function InviteAcceptPage() {
                   minLength={12}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 12 characters"
+                  placeholder={t("atLeastNCharacters", { count: 12 })}
                   data-testid="invite-password-input"
                 />
                 <PasswordStrengthIndicator password={password} />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Label htmlFor="confirmPassword">
+                  {t("common:confirmPassword")}
+                </Label>
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -221,7 +222,7 @@ function InviteAcceptPage() {
               className="w-full"
               data-testid="invite-accept-submit"
             >
-              {isLoading ? "Creating account..." : "Accept Invite"}
+              {isLoading ? t("creatingAccountInvite") : t("acceptInvite")}
             </Button>
           </form>
         </CardContent>

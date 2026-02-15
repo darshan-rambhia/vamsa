@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   Badge,
   Button,
@@ -19,6 +20,7 @@ interface CitationGeneratorProps {
 }
 
 export function CitationGenerator({ sourceId }: CitationGeneratorProps) {
+  const { t } = useTranslation(["people", "common"]);
   const [format, setFormat] = useState<"MLA" | "APA" | "CHICAGO">("MLA");
   const [copied, setCopied] = useState(false);
 
@@ -52,7 +54,7 @@ export function CitationGenerator({ sourceId }: CitationGeneratorProps) {
     <div className="space-y-4">
       {/* Format selector */}
       <div className="space-y-2">
-        <Label htmlFor="citationFormat">Citation Format</Label>
+        <Label htmlFor="citationFormat">{t("people:citationFormat")}</Label>
         <Select
           value={format}
           onValueChange={(value) =>
@@ -64,13 +66,13 @@ export function CitationGenerator({ sourceId }: CitationGeneratorProps) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="MLA">
-              MLA (Modern Language Association)
+              {t("people:mla")} (Modern Language Association)
             </SelectItem>
             <SelectItem value="APA">
-              APA (American Psychological Association)
+              {t("people:apa")} (American Psychological Association)
             </SelectItem>
             <SelectItem value="CHICAGO">
-              Chicago (Chicago Manual of Style)
+              {t("people:chicago")} (Chicago Manual of Style)
             </SelectItem>
           </SelectContent>
         </Select>
@@ -79,7 +81,7 @@ export function CitationGenerator({ sourceId }: CitationGeneratorProps) {
       {/* Fields used indicator */}
       <div>
         <h4 className="text-muted-foreground mb-2 text-sm font-medium">
-          Fields Used in Citation
+          {t("people:fieldsUsedInCitation")}
         </h4>
         <div className="flex flex-wrap gap-2">
           {formatFields[format]?.map((field) => (
@@ -92,7 +94,7 @@ export function CitationGenerator({ sourceId }: CitationGeneratorProps) {
 
       {/* Generated citation */}
       <div className="space-y-2">
-        <p className="text-sm font-medium">Generated Citation</p>
+        <p className="text-sm font-medium">{t("people:generatedCitation")}</p>
         <div className="bg-muted border-border relative rounded-md border-2 p-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-4">
@@ -140,7 +142,7 @@ export function CitationGenerator({ sourceId }: CitationGeneratorProps) {
                   d="M5 13l4 4L19 7"
                 />
               </svg>
-              Copied!
+              {t("common:copied")}
             </>
           ) : (
             <>
@@ -157,7 +159,7 @@ export function CitationGenerator({ sourceId }: CitationGeneratorProps) {
                   d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
                 />
               </svg>
-              Copy to Clipboard
+              {t("people:copyToClipboard")}
             </>
           )}
         </Button>
@@ -165,11 +167,7 @@ export function CitationGenerator({ sourceId }: CitationGeneratorProps) {
 
       {/* Preview explanation */}
       <div className="bg-muted/50 text-muted-foreground rounded-md p-4 text-sm">
-        <p>
-          <strong>Note:</strong> This citation is automatically generated based
-          on the source information. Please verify it matches your style guide
-          requirements before using in your research.
-        </p>
+        <p>{t("people:citationNote")}</p>
       </div>
     </div>
   );

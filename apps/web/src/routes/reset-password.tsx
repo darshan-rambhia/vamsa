@@ -5,6 +5,7 @@ import {
   useSearch,
 } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import {
   Button,
@@ -30,6 +31,7 @@ export const Route = createFileRoute("/reset-password")({
 });
 
 function ResetPasswordComponent() {
+  const { t } = useTranslation(["auth", "common"]);
   const navigate = useNavigate();
   const { token } = useSearch({ from: "/reset-password" });
   const [newPassword, setNewPassword] = useState("");
@@ -45,21 +47,19 @@ function ResetPasswordComponent() {
 
     // Client-side validation
     if (newPassword.length < 8) {
-      setError("Password must be at least 8 characters long");
+      setError(t("passwordMinLength"));
       setIsLoading(false);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("common:passwordsDoNotMatch"));
       setIsLoading(false);
       return;
     }
 
     if (!token) {
-      setError(
-        "Invalid or missing reset token. Please request a new password reset link."
-      );
+      setError(t("invalidResetToken"));
       setIsLoading(false);
       return;
     }
@@ -74,9 +74,7 @@ function ResetPasswordComponent() {
         const errorMessage = result.error.message || "Password reset failed";
         // Provide clearer error messages for common cases
         if (errorMessage.includes("token")) {
-          setError(
-            "Invalid or expired reset token. Please request a new password reset link."
-          );
+          setError(t("expiredResetToken"));
         } else {
           setError(errorMessage);
         }
@@ -136,9 +134,9 @@ function ResetPasswordComponent() {
           </div>
 
           <div>
-            <CardTitle className="text-3xl">Create New Password</CardTitle>
+            <CardTitle className="text-3xl">{t("createNewPassword")}</CardTitle>
             <CardDescription className="mt-2 text-base">
-              Enter a new password for your account.
+              {t("createNewPasswordDescription")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -155,11 +153,9 @@ function ResetPasswordComponent() {
                 data-testid="reset-password-success"
               >
                 <div className="mb-1 font-semibold">
-                  Password reset successful!
+                  {t("passwordResetSuccess")}
                 </div>
-                <div>
-                  Your password has been updated. Redirecting to login...
-                </div>
+                <div>{t("passwordUpdated")}</div>
               </div>
             )}
 
@@ -168,7 +164,7 @@ function ResetPasswordComponent() {
                 className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border-2 px-4 py-3 text-sm"
                 data-testid="reset-password-error"
               >
-                <div className="mb-1 font-semibold">Error:</div>
+                <div className="mb-1 font-semibold">{t("common:error")}:</div>
                 <div>{error}</div>
               </div>
             )}
@@ -177,7 +173,7 @@ function ResetPasswordComponent() {
               <>
                 <div className="space-y-4">
                   <div className="space-y-2">
-                    <FormField label="New Password" required>
+                    <FormField label={t("newPassword")} required>
                       <Input
                         name="newPassword"
                         type="password"
@@ -193,7 +189,7 @@ function ResetPasswordComponent() {
                     <PasswordStrengthIndicator password={newPassword} />
                   </div>
 
-                  <FormField label="Confirm New Password" required>
+                  <FormField label={t("common:confirmPassword")} required>
                     <Input
                       name="confirmPassword"
                       type="password"
@@ -214,7 +210,7 @@ function ResetPasswordComponent() {
                   className="w-full"
                   data-testid="reset-password-submit-button"
                 >
-                  {isLoading ? "Resetting password..." : "Reset Password"}
+                  {isLoading ? t("resettingPassword") : t("resetPassword")}
                 </Button>
               </>
             )}
@@ -225,7 +221,7 @@ function ResetPasswordComponent() {
                   to="/login"
                   className="text-primary font-medium hover:underline"
                 >
-                  Go to login
+                  {t("goToLogin")}
                 </Link>
               </div>
             )}

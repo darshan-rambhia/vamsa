@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Card, CardContent } from "@vamsa/ui";
 
 interface TimelineSliderProps {
@@ -18,6 +19,7 @@ export function TimelineSlider({
   initialStartYear,
   initialEndYear,
 }: TimelineSliderProps) {
+  const { t } = useTranslation(["common"]);
   const [startYear, setStartYear] = useState(initialStartYear || minYear);
   const [endYear, setEndYear] = useState(initialEndYear || maxYear);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -59,7 +61,7 @@ export function TimelineSlider({
     <Card className="w-full">
       <CardContent className="space-y-4 p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-medium">Timeline Filter</h3>
+          <h3 className="text-sm font-medium">{t("timelineFilter")}</h3>
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
@@ -98,7 +100,7 @@ export function TimelineSlider({
               )}
             </Button>
             <Button variant="ghost" size="sm" onClick={handleReset}>
-              Reset
+              {t("reset")}
             </Button>
           </div>
         </div>
@@ -110,7 +112,7 @@ export function TimelineSlider({
                 htmlFor="start-year"
                 className="text-muted-foreground text-xs"
               >
-                Start Year
+                {t("startYear")}
               </label>
               <span className="text-foreground text-sm font-semibold">
                 {startYear}
@@ -134,7 +136,7 @@ export function TimelineSlider({
                 htmlFor="end-year"
                 className="text-muted-foreground text-xs"
               >
-                End Year
+                {t("endYear")}
               </label>
               <span className="text-foreground text-sm font-semibold">
                 {endYear}
@@ -155,9 +157,10 @@ export function TimelineSlider({
 
         <div className="bg-secondary/50 rounded-md p-3">
           <p className="text-muted-foreground text-center text-xs">
-            Showing events from{" "}
+            {t("showingEventsFrom")}{" "}
             <span className="text-foreground font-semibold">{startYear}</span>{" "}
-            to <span className="text-foreground font-semibold">{endYear}</span>
+            {t("to")}{" "}
+            <span className="text-foreground font-semibold">{endYear}</span>
           </p>
         </div>
       </CardContent>

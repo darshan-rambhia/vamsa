@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Card,
@@ -19,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/change-password")({
 });
 
 function ChangePasswordComponent() {
+  const { t } = useTranslation(["auth", "common"]);
   const navigate = useNavigate();
   const { user } = Route.useRouteContext();
   const [currentPassword, setCurrentPassword] = useState("");
@@ -83,11 +85,11 @@ function ChangePasswordComponent() {
           </div>
 
           <div>
-            <CardTitle className="text-3xl">Change Password</CardTitle>
+            <CardTitle className="text-3xl">{t("changePassword")}</CardTitle>
             <CardDescription className="mt-2 text-base">
               {user?.mustChangePassword
-                ? "You must change your password before continuing"
-                : "Update your account password"}
+                ? t("changePasswordRequired")
+                : t("updateYourPassword")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -104,12 +106,9 @@ function ChangePasswordComponent() {
                 data-testid="change-password-must-change-alert"
               >
                 <div className="mb-1 font-semibold">
-                  Password change required
+                  {t("passwordChangeRequiredTitle")}
                 </div>
-                <div>
-                  For security reasons, you must change your password before you
-                  can continue using the application.
-                </div>
+                <div>{t("passwordChangeRequiredMessage")}</div>
               </div>
             )}
 
@@ -118,14 +117,14 @@ function ChangePasswordComponent() {
                 className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border-2 px-4 py-3 text-sm"
                 data-testid="change-password-error"
               >
-                <div className="mb-1 font-semibold">Error:</div>
+                <div className="mb-1 font-semibold">{t("common:error")}:</div>
                 <div>{error}</div>
               </div>
             )}
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">Current Password</Label>
+                <Label htmlFor="currentPassword">{t("currentPassword")}</Label>
                 <Input
                   id="currentPassword"
                   name="currentPassword"
@@ -140,7 +139,7 @@ function ChangePasswordComponent() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="newPassword">New Password</Label>
+                <Label htmlFor="newPassword">{t("newPassword")}</Label>
                 <Input
                   id="newPassword"
                   name="newPassword"
@@ -157,7 +156,9 @@ function ChangePasswordComponent() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Label htmlFor="confirmPassword">
+                  {t("common:confirmPassword")}
+                </Label>
                 <Input
                   id="confirmPassword"
                   name="confirmPassword"
@@ -179,7 +180,7 @@ function ChangePasswordComponent() {
               className="w-full"
               data-testid="change-password-submit-button"
             >
-              {isLoading ? "Changing password..." : "Change Password"}
+              {isLoading ? t("changingPassword") : t("changePassword")}
             </Button>
           </form>
         </CardContent>

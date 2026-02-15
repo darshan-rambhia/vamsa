@@ -1,5 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Card, CardContent, Container, PageHeader } from "@vamsa/ui";
+import { useTranslation } from "react-i18next";
 import { getUsers } from "~/server/users";
 import { getCurrentUser } from "~/server/auth.functions";
 import { UsersTable } from "~/components/admin/users-table";
@@ -18,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/admin/users")({
 });
 
 function UsersPage() {
+  const { t } = useTranslation(["admin", "common"]);
   const { users, currentUser } = Route.useLoaderData();
   const router = useRouter();
 
@@ -27,9 +29,9 @@ function UsersPage() {
       <Container>
         <Card>
           <CardContent className="py-12 text-center">
-            <p className="text-destructive font-medium">Access Denied</p>
+            <p className="text-destructive font-medium">{t("common:error")}</p>
             <p className="text-muted-foreground mt-2 text-sm">
-              You need admin privileges to view this page.
+              {t("common:serverError")}
             </p>
           </CardContent>
         </Card>
@@ -40,8 +42,8 @@ function UsersPage() {
   return (
     <Container>
       <PageHeader
-        title="User Management"
-        description="Manage user accounts and permissions"
+        title={t("admin:usersTitle")}
+        description={t("admin:usersTitle")}
       />
       <UsersTable
         users={users}

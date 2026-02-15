@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { Card, CardContent } from "@vamsa/ui";
 import type { ChartType } from "./ChartControls";
 
@@ -100,20 +101,25 @@ interface ChartLegendProps {
  * Node legend items - Living/Deceased person indicators
  */
 function NodeLegend() {
+  const { t } = useTranslation(["charts"]);
   return (
     <>
       <div className="flex items-center gap-3">
         <div className="bg-primary/10 border-primary h-12 w-12 rounded-lg border-2" />
         <div>
-          <p className="text-sm font-medium">Living Person</p>
-          <p className="text-muted-foreground text-xs">Green border</p>
+          <p className="text-sm font-medium">{t("charts:livingPerson")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("charts:greenBorder")}
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-3">
         <div className="bg-muted border-border h-12 w-12 rounded-lg border-2" />
         <div>
-          <p className="text-sm font-medium">Deceased Person</p>
-          <p className="text-muted-foreground text-xs">Gray background</p>
+          <p className="text-sm font-medium">{t("charts:deceasedPerson")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("charts:grayBackground")}
+          </p>
         </div>
       </div>
     </>
@@ -124,20 +130,25 @@ function NodeLegend() {
  * Edge legend items - Parent-Child/Spouse line indicators
  */
 function EdgeLegend() {
+  const { t } = useTranslation(["charts"]);
   return (
     <>
       <div className="flex items-center gap-3">
         <div className="border-border h-12 w-12 rounded-lg border-2" />
         <div>
-          <p className="text-sm font-medium">Parent-Child</p>
-          <p className="text-muted-foreground text-xs">Solid line</p>
+          <p className="text-sm font-medium">{t("charts:parentChild")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("charts:solidLine")}
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-3">
         <div className="border-primary h-12 w-12 rounded-lg border-2 border-dashed" />
         <div>
-          <p className="text-sm font-medium">Spouse</p>
-          <p className="text-muted-foreground text-xs">Dashed line</p>
+          <p className="text-sm font-medium">{t("charts:spouse")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("charts:dashedLine")}
+          </p>
         </div>
       </div>
     </>
@@ -148,20 +159,25 @@ function EdgeLegend() {
  * Timeline-specific legend items
  */
 function TimelineLegend() {
+  const { t } = useTranslation(["charts"]);
   return (
     <>
       <div className="flex items-center gap-3">
         <div className="bg-primary/60 border-primary h-6 w-16 rounded border" />
         <div>
-          <p className="text-sm font-medium">Living Person</p>
-          <p className="text-muted-foreground text-xs">Extends to present</p>
+          <p className="text-sm font-medium">{t("charts:livingPerson")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("charts:extendToPresent")}
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-3">
         <div className="bg-muted border-border h-6 w-16 rounded border" />
         <div>
-          <p className="text-sm font-medium">Deceased Person</p>
-          <p className="text-muted-foreground text-xs">Birth to death</p>
+          <p className="text-sm font-medium">{t("charts:deceasedPerson")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("charts:birthToDeath")}
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -169,8 +185,10 @@ function TimelineLegend() {
           <div className="bg-primary h-2 w-2 rounded-full" />
         </div>
         <div>
-          <p className="text-sm font-medium">Birth Date</p>
-          <p className="text-muted-foreground text-xs">Green marker</p>
+          <p className="text-sm font-medium">{t("charts:birthDate")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("charts:greenMarker")}
+          </p>
         </div>
       </div>
       <div className="flex items-center gap-3">
@@ -178,8 +196,10 @@ function TimelineLegend() {
           <div className="bg-muted-foreground h-2 w-2 rounded-full" />
         </div>
         <div>
-          <p className="text-sm font-medium">Death Date</p>
-          <p className="text-muted-foreground text-xs">Gray marker</p>
+          <p className="text-sm font-medium">{t("charts:deathDate")}</p>
+          <p className="text-muted-foreground text-xs">
+            {t("charts:grayMarker")}
+          </p>
         </div>
       </div>
     </>
@@ -190,23 +210,24 @@ function TimelineLegend() {
  * Bowtie-specific legend additions (paternal/maternal indicators)
  */
 function BowtieLegend() {
+  const { t } = useTranslation(["charts"]);
   return (
     <>
       <div className="flex items-center gap-3">
         <div className="bg-chart-1/30 border-chart-1 h-12 w-12 rounded-lg border-2" />
         <div>
-          <p className="text-sm font-medium">Paternal Side</p>
+          <p className="text-sm font-medium">{t("charts:paternalSide")}</p>
           <p className="text-muted-foreground text-xs">
-            Father&apos;s ancestors
+            {t("charts:paternalAncestors")}
           </p>
         </div>
       </div>
       <div className="flex items-center gap-3">
         <div className="bg-chart-3/30 border-chart-3 h-12 w-12 rounded-lg border-2" />
         <div>
-          <p className="text-sm font-medium">Maternal Side</p>
+          <p className="text-sm font-medium">{t("charts:maternalSide")}</p>
           <p className="text-muted-foreground text-xs">
-            Mother&apos;s ancestors
+            {t("charts:maternalAncestors")}
           </p>
         </div>
       </div>
@@ -219,6 +240,7 @@ function BowtieLegend() {
  * based on the chart type configuration.
  */
 export function ChartLegend({ chartType }: ChartLegendProps) {
+  const { t } = useTranslation(["charts"]);
   const config = legendConfigs[chartType];
 
   // Don't render if no legend items are configured
@@ -235,7 +257,9 @@ export function ChartLegend({ chartType }: ChartLegendProps) {
   return (
     <Card>
       <CardContent className="p-6">
-        <h3 className="font-display mb-4 text-lg font-medium">Legend</h3>
+        <h3 className="font-display mb-4 text-lg font-medium">
+          {t("charts:legend")}
+        </h3>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {config.showNodeLegend && <NodeLegend />}
           {config.showEdgeLegend && <EdgeLegend />}

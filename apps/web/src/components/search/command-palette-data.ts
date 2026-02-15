@@ -20,6 +20,7 @@ import {
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { TFunction } from "i18next";
 
 export interface NavigationItem {
   id: string;
@@ -32,200 +33,202 @@ export interface NavigationItem {
 }
 
 /**
- * Static navigation items for the command palette.
- * Filtered client-side by matching query against label + keywords.
+ * Get navigation items with translated labels.
+ * Accepts a translation function to localize labels and keywords.
  */
-export const NAVIGATION_ITEMS: Array<NavigationItem> = [
-  // Navigation
-  {
-    id: "nav-dashboard",
-    label: "Dashboard",
-    href: "/dashboard",
-    icon: LayoutDashboard,
-    category: "navigation",
-    keywords: ["home", "overview", "start"],
-  },
-  {
-    id: "nav-people",
-    label: "People",
-    href: "/people",
-    icon: Users,
-    category: "navigation",
-    keywords: ["persons", "family", "members", "list"],
-  },
-  {
-    id: "nav-activity",
-    label: "Activity",
-    href: "/activity",
-    icon: Rss,
-    category: "navigation",
-    keywords: ["log", "feed", "recent", "changes", "history"],
-  },
-  {
-    id: "nav-maps",
-    label: "Maps",
-    href: "/maps",
-    icon: Map,
-    category: "navigation",
-    keywords: ["geography", "locations", "places", "migration"],
-  },
-  {
-    id: "nav-subscribe",
-    label: "Subscribe",
-    href: "/subscribe",
-    icon: Sparkles,
-    category: "navigation",
-    keywords: ["premium", "plan", "billing", "upgrade"],
-  },
-  {
-    id: "nav-settings",
-    label: "Settings",
-    href: "/settings/profile",
-    icon: Settings,
-    category: "navigation",
-    keywords: ["profile", "preferences", "account"],
-  },
+function getNavigationItems(t: TFunction): Array<NavigationItem> {
+  return [
+    // Navigation
+    {
+      id: "nav-dashboard",
+      label: t("navDashboard"),
+      href: "/dashboard",
+      icon: LayoutDashboard,
+      category: "navigation",
+      keywords: ["home", "overview", "start"],
+    },
+    {
+      id: "nav-people",
+      label: t("navPeople"),
+      href: "/people",
+      icon: Users,
+      category: "navigation",
+      keywords: ["persons", "family", "members", "list"],
+    },
+    {
+      id: "nav-activity",
+      label: t("navActivity"),
+      href: "/activity",
+      icon: Rss,
+      category: "navigation",
+      keywords: ["log", "feed", "recent", "changes", "history"],
+    },
+    {
+      id: "nav-maps",
+      label: t("navMaps"),
+      href: "/maps",
+      icon: Map,
+      category: "navigation",
+      keywords: ["geography", "locations", "places", "migration"],
+    },
+    {
+      id: "nav-subscribe",
+      label: t("navSubscribe"),
+      href: "/subscribe",
+      icon: Sparkles,
+      category: "navigation",
+      keywords: ["premium", "plan", "billing", "upgrade"],
+    },
+    {
+      id: "nav-settings",
+      label: t("navSettings"),
+      href: "/settings/profile",
+      icon: Settings,
+      category: "navigation",
+      keywords: ["profile", "preferences", "account"],
+    },
 
-  // Charts
-  {
-    id: "chart-tree",
-    label: "Interactive Tree",
-    href: "/visualize?type=tree",
-    icon: TreePine,
-    category: "charts",
-    keywords: ["visualize", "family tree", "graph", "interactive"],
-  },
-  {
-    id: "chart-ancestor",
-    label: "Ancestor Chart",
-    href: "/visualize?type=ancestor",
-    icon: GitFork,
-    category: "charts",
-    keywords: ["pedigree", "ancestors", "lineage", "parents"],
-  },
-  {
-    id: "chart-descendant",
-    label: "Descendant Chart",
-    href: "/visualize?type=descendant",
-    icon: Network,
-    category: "charts",
-    keywords: ["descendants", "offspring", "children", "progeny"],
-  },
-  {
-    id: "chart-hourglass",
-    label: "Hourglass Chart",
-    href: "/visualize?type=hourglass",
-    icon: Timer,
-    category: "charts",
-    keywords: ["both", "ancestors", "descendants", "bidirectional"],
-  },
-  {
-    id: "chart-fan",
-    label: "Fan Chart",
-    href: "/visualize?type=fan",
-    icon: Compass,
-    category: "charts",
-    keywords: ["circular", "radial", "wheel", "pedigree"],
-  },
-  {
-    id: "chart-timeline",
-    label: "Timeline",
-    href: "/visualize?type=timeline",
-    icon: BarChart3,
-    category: "charts",
-    keywords: ["chronological", "dates", "birth", "death", "events"],
-  },
-  {
-    id: "chart-bowtie",
-    label: "Bowtie Chart",
-    href: "/visualize?type=bowtie",
-    icon: Globe,
-    category: "charts",
-    keywords: ["couple", "both families", "marriage", "dual"],
-  },
-  {
-    id: "chart-compact",
-    label: "Compact Tree",
-    href: "/visualize?type=compact",
-    icon: Binary,
-    category: "charts",
-    keywords: ["dense", "small", "minimal", "overview"],
-  },
-  {
-    id: "chart-statistics",
-    label: "Statistics",
-    href: "/visualize?type=statistics",
-    icon: BarChart3,
-    category: "charts",
-    keywords: ["demographics", "analytics", "data", "numbers", "stats"],
-  },
+    // Charts
+    {
+      id: "chart-tree",
+      label: t("navInteractiveTree"),
+      href: "/visualize?type=tree",
+      icon: TreePine,
+      category: "charts",
+      keywords: ["visualize", "family tree", "graph", "interactive"],
+    },
+    {
+      id: "chart-ancestor",
+      label: t("navAncestorChart"),
+      href: "/visualize?type=ancestor",
+      icon: GitFork,
+      category: "charts",
+      keywords: ["pedigree", "ancestors", "lineage", "parents"],
+    },
+    {
+      id: "chart-descendant",
+      label: t("navDescendantChart"),
+      href: "/visualize?type=descendant",
+      icon: Network,
+      category: "charts",
+      keywords: ["descendants", "offspring", "children", "progeny"],
+    },
+    {
+      id: "chart-hourglass",
+      label: t("navHourglassChart"),
+      href: "/visualize?type=hourglass",
+      icon: Timer,
+      category: "charts",
+      keywords: ["both", "ancestors", "descendants", "bidirectional"],
+    },
+    {
+      id: "chart-fan",
+      label: t("navFanChart"),
+      href: "/visualize?type=fan",
+      icon: Compass,
+      category: "charts",
+      keywords: ["circular", "radial", "wheel", "pedigree"],
+    },
+    {
+      id: "chart-timeline",
+      label: t("navTimeline"),
+      href: "/visualize?type=timeline",
+      icon: BarChart3,
+      category: "charts",
+      keywords: ["chronological", "dates", "birth", "death", "events"],
+    },
+    {
+      id: "chart-bowtie",
+      label: t("navBowtieChart"),
+      href: "/visualize?type=bowtie",
+      icon: Globe,
+      category: "charts",
+      keywords: ["couple", "both families", "marriage", "dual"],
+    },
+    {
+      id: "chart-compact",
+      label: t("navCompactTree"),
+      href: "/visualize?type=compact",
+      icon: Binary,
+      category: "charts",
+      keywords: ["dense", "small", "minimal", "overview"],
+    },
+    {
+      id: "chart-statistics",
+      label: t("navStatistics"),
+      href: "/visualize?type=statistics",
+      icon: BarChart3,
+      category: "charts",
+      keywords: ["demographics", "analytics", "data", "numbers", "stats"],
+    },
 
-  // Actions
-  {
-    id: "action-add-person",
-    label: "Add Person",
-    href: "/people/new",
-    icon: UserPlus,
-    category: "actions",
-    keywords: ["create", "new", "add", "person", "member"],
-  },
+    // Actions
+    {
+      id: "action-add-person",
+      label: t("navAddPerson"),
+      href: "/people/new",
+      icon: UserPlus,
+      category: "actions",
+      keywords: ["create", "new", "add", "person", "member"],
+    },
 
-  // Admin
-  {
-    id: "admin-users",
-    label: "Manage Users",
-    href: "/admin/users",
-    icon: Users,
-    category: "admin",
-    keywords: ["users", "accounts", "roles", "permissions"],
-    adminOnly: true,
-  },
-  {
-    id: "admin-backup",
-    label: "Backup and GEDCOM",
-    href: "/admin/backup",
-    icon: Database,
-    category: "admin",
-    keywords: ["backup", "export", "import", "gedcom", "restore", "data"],
-    adminOnly: true,
-  },
-  {
-    id: "admin-invites",
-    label: "Invites",
-    href: "/admin/invites",
-    icon: Key,
-    category: "admin",
-    keywords: ["invite", "invitation", "link", "share"],
-    adminOnly: true,
-  },
-  {
-    id: "admin-settings",
-    label: "Admin Settings",
-    href: "/admin/settings",
-    icon: Shield,
-    category: "admin",
-    keywords: ["system", "configuration", "admin", "site"],
-    adminOnly: true,
-  },
-  {
-    id: "admin-sources",
-    label: "Sources",
-    href: "/admin/sources",
-    icon: BookOpen,
-    category: "admin",
-    keywords: ["source", "citation", "reference", "document"],
-    adminOnly: true,
-  },
-  {
-    id: "admin-metrics",
-    label: "Metrics",
-    href: "/admin/metrics",
-    icon: BarChart3,
-    category: "admin",
-    keywords: ["metrics", "monitoring", "performance", "health"],
-    adminOnly: true,
-  },
-];
+    // Admin
+    {
+      id: "admin-users",
+      label: t("navManageUsers"),
+      href: "/admin/users",
+      icon: Users,
+      category: "admin",
+      keywords: ["users", "accounts", "roles", "permissions"],
+      adminOnly: true,
+    },
+    {
+      id: "admin-backup",
+      label: t("navBackupGedcom"),
+      href: "/admin/backup",
+      icon: Database,
+      category: "admin",
+      keywords: ["backup", "export", "import", "gedcom", "restore", "data"],
+      adminOnly: true,
+    },
+    {
+      id: "admin-invites",
+      label: t("navInvites"),
+      href: "/admin/invites",
+      icon: Key,
+      category: "admin",
+      keywords: ["invite", "invitation", "link", "share"],
+      adminOnly: true,
+    },
+    {
+      id: "admin-settings",
+      label: t("navAdminSettings"),
+      href: "/admin/settings",
+      icon: Shield,
+      category: "admin",
+      keywords: ["system", "configuration", "admin", "site"],
+      adminOnly: true,
+    },
+    {
+      id: "admin-sources",
+      label: t("navSources"),
+      href: "/admin/sources",
+      icon: BookOpen,
+      category: "admin",
+      keywords: ["source", "citation", "reference", "document"],
+      adminOnly: true,
+    },
+    {
+      id: "admin-metrics",
+      label: t("navMetrics"),
+      href: "/admin/metrics",
+      icon: BarChart3,
+      category: "admin",
+      keywords: ["metrics", "monitoring", "performance", "health"],
+      adminOnly: true,
+    },
+  ];
+}
 
 /**
  * Filter navigation items by query string.
@@ -233,11 +236,13 @@ export const NAVIGATION_ITEMS: Array<NavigationItem> = [
  */
 export function filterNavigationItems(
   query: string,
-  isAdmin: boolean
+  isAdmin: boolean,
+  t: TFunction
 ): Array<NavigationItem> {
   const lower = query.toLowerCase().trim();
+  const items = getNavigationItems(t);
 
-  return NAVIGATION_ITEMS.filter((item) => {
+  return items.filter((item) => {
     // Filter admin items for non-admins
     if (item.adminOnly && !isAdmin) return false;
 
@@ -256,9 +261,10 @@ export function filterNavigationItems(
  */
 export function getGroupedNavigationItems(
   query: string,
-  isAdmin: boolean
+  isAdmin: boolean,
+  t: TFunction
 ): Record<string, Array<NavigationItem>> {
-  const filtered = filterNavigationItems(query, isAdmin);
+  const filtered = filterNavigationItems(query, isAdmin, t);
 
   const groups: Record<string, Array<NavigationItem>> = {};
   for (const item of filtered) {
@@ -270,10 +276,15 @@ export function getGroupedNavigationItems(
   return groups;
 }
 
-/** Human-readable category labels */
-export const CATEGORY_LABELS: Record<string, string> = {
-  actions: "Quick Actions",
-  navigation: "Navigation",
-  charts: "Charts",
-  admin: "Admin",
-};
+/**
+ * Get human-readable category label with translation support.
+ */
+export function getCategoryLabel(category: string, t: TFunction): string {
+  const labels: Record<string, string> = {
+    actions: t("groupQuickActions"),
+    navigation: t("groupNavigation"),
+    charts: t("groupCharts"),
+    admin: t("groupAdmin"),
+  };
+  return labels[category] || category;
+}

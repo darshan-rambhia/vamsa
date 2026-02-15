@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Input } from "@vamsa/ui/primitives";
 import { searchPlaces } from "~/server/places";
 
@@ -15,10 +16,8 @@ interface PlaceSearchProps {
   placeholder?: string;
 }
 
-export function PlaceSearch({
-  onSelect,
-  placeholder = "Search for a place...",
-}: PlaceSearchProps) {
+export function PlaceSearch({ onSelect, placeholder }: PlaceSearchProps) {
+  const { t } = useTranslation(["people", "common"]);
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
 
@@ -68,7 +67,7 @@ export function PlaceSearch({
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder={placeholder}
+          placeholder={placeholder || t("people:searchForPlace")}
           className="pr-10"
         />
         {isLoading && (
@@ -165,7 +164,7 @@ export function PlaceSearch({
               </svg>
             </div>
             <p className="text-muted-foreground text-sm">
-              No places found matching &ldquo;{query}&rdquo;
+              {t("people:noPlacesMatching")} &ldquo;{query}&rdquo;
             </p>
           </div>
         </div>

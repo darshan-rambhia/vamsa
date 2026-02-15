@@ -6,6 +6,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { Badge, Container, PageHeader, cn } from "@vamsa/ui";
+import { useTranslation } from "react-i18next";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   beforeLoad: ({ location, context }) => {
@@ -27,27 +28,28 @@ export const Route = createFileRoute("/_authenticated/admin")({
 
 interface AdminNavItem {
   href: string;
-  label: string;
+  labelKey: string;
   badge?: string;
 }
 
-const adminNavItems: Array<AdminNavItem> = [
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/invites", label: "Invites" },
-  { href: "/admin/suggestions", label: "Suggestions" },
-  { href: "/admin/settings", label: "Settings" },
-  { href: "/admin/backup", label: "Backup" },
-  { href: "/admin/metrics", label: "Metrics", badge: "BETA" },
-];
-
 function AdminLayout() {
+  const { t } = useTranslation(["admin", "common"]);
   const location = useLocation();
+
+  const adminNavItems: Array<AdminNavItem> = [
+    { href: "/admin/users", labelKey: "users" },
+    { href: "/admin/invites", labelKey: "invites" },
+    { href: "/admin/suggestions", labelKey: "suggestions" },
+    { href: "/admin/settings", labelKey: "settings" },
+    { href: "/admin/backup", labelKey: "backup" },
+    { href: "/admin/metrics", labelKey: "metrics", badge: "BETA" },
+  ];
 
   return (
     <Container>
       <PageHeader
-        title="Administration"
-        description="Manage users, review suggestions, and configure system settings"
+        title={t("admin:title")}
+        description={t("admin:description")}
       />
 
       {/* Admin navigation tabs */}
@@ -66,7 +68,7 @@ function AdminLayout() {
                   : "text-muted-foreground hover:text-foreground hover:border-border border-transparent"
               )}
             >
-              {item.label}
+              {t(`admin:${item.labelKey}`)}
               {item.badge && (
                 <Badge variant="outline" className="px-1.5 py-0 text-[10px]">
                   {item.badge}

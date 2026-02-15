@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import * as LucideIcons from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Dialog,
@@ -34,6 +35,7 @@ export function AddWidgetModal({
   onAddWidget,
   existingWidgetTypes = [],
 }: AddWidgetModalProps) {
+  const { t } = useTranslation(["dashboard", "common"]);
   const widgets = getAllWidgets();
   const [selectedWidget, setSelectedWidget] = useState<string | null>(null);
 
@@ -56,10 +58,8 @@ export function AddWidgetModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Widget</DialogTitle>
-          <DialogDescription>
-            Choose a widget to add to your dashboard
-          </DialogDescription>
+          <DialogTitle>{t("dashboard:addWidgetModalTitle")}</DialogTitle>
+          <DialogDescription>{t("dashboard:chooseWidget")}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-3 py-4">
@@ -99,7 +99,7 @@ export function AddWidgetModal({
                   </p>
                   {isExisting && (
                     <p className="text-muted-foreground mt-1 text-xs">
-                      Already on dashboard
+                      {t("dashboard:alreadyOnDashboard")}
                     </p>
                   )}
                 </div>
@@ -110,10 +110,10 @@ export function AddWidgetModal({
 
         <div className="flex justify-end gap-3">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("common:cancel")}
           </Button>
           <Button onClick={handleAddWidget} disabled={!selectedWidget}>
-            Add Widget
+            {t("dashboard:addWidget")}
           </Button>
         </div>
       </DialogContent>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import {
   Badge,
   Button,
@@ -49,6 +50,7 @@ export function ResearchNoteModal({
   onDelete,
   relatedSourcesData = [],
 }: ResearchNoteModalProps) {
+  const { t } = useTranslation(["people", "common"]);
   if (!note) return null;
 
   const getSourceTitle = (sourceId: string) => {
@@ -62,7 +64,7 @@ export function ResearchNoteModal({
           <div className="flex items-start justify-between gap-4 pr-8">
             <div className="flex-1">
               <DialogTitle className="font-display mb-2 text-2xl">
-                Research Note
+                {t("people:researchNote")}
               </DialogTitle>
               <div className="space-y-1">
                 <p className="text-foreground text-lg font-medium">
@@ -70,7 +72,7 @@ export function ResearchNoteModal({
                 </p>
                 {note.source.author && (
                   <p className="text-muted-foreground text-sm">
-                    by {note.source.author}
+                    {t("people:by")} {note.source.author}
                   </p>
                 )}
               </div>
@@ -95,7 +97,7 @@ export function ResearchNoteModal({
           {/* Findings */}
           <div>
             <h4 className="text-muted-foreground mb-2 text-sm font-medium">
-              Findings
+              {t("people:findings")}
             </h4>
             <div className="bg-muted/30 text-foreground rounded-md p-4 leading-relaxed">
               <p className="whitespace-pre-wrap">{note.findings}</p>
@@ -106,7 +108,7 @@ export function ResearchNoteModal({
           {note.methodology && (
             <div>
               <h4 className="text-muted-foreground mb-2 text-sm font-medium">
-                Methodology
+                {t("people:methodology")}
               </h4>
               <div className="bg-muted/30 text-foreground rounded-md p-4 leading-relaxed">
                 <p className="whitespace-pre-wrap">{note.methodology}</p>
@@ -118,7 +120,7 @@ export function ResearchNoteModal({
           {note.limitations && (
             <div>
               <h4 className="text-muted-foreground mb-2 text-sm font-medium">
-                Limitations
+                {t("people:limitations")}
               </h4>
               <div className="bg-muted/30 text-foreground rounded-md p-4 leading-relaxed">
                 <p className="whitespace-pre-wrap">{note.limitations}</p>
@@ -130,7 +132,7 @@ export function ResearchNoteModal({
           {note.relatedSources.length > 0 && (
             <div>
               <h4 className="text-muted-foreground mb-2 text-sm font-medium">
-                Related Sources
+                {t("people:relatedSources")}
               </h4>
               <div className="space-y-2">
                 {note.relatedSources.map((sourceId) => (
@@ -171,7 +173,10 @@ export function ResearchNoteModal({
                   onClick={() => {
                     if (
                       window.confirm(
-                        "Are you sure you want to delete this research note?"
+                        t("people:deleteEventConfirmation").replace(
+                          "this event",
+                          "this research note"
+                        )
                       )
                     ) {
                       onDelete(note.id);
@@ -193,7 +198,7 @@ export function ResearchNoteModal({
                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                     />
                   </svg>
-                  Delete
+                  {t("common:delete")}
                 </Button>
               )}
               {onEdit && (
@@ -211,7 +216,7 @@ export function ResearchNoteModal({
                       d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                     />
                   </svg>
-                  Edit
+                  {t("common:edit")}
                 </Button>
               )}
             </div>

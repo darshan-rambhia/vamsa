@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,6 +40,7 @@ interface InvitesTableProps {
 }
 
 export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
+  const { t } = useTranslation(["admin", "common"]);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -103,24 +105,24 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
   const getStatusBadge = (status: Invite["status"]) => {
     switch (status) {
       case "PENDING":
-        return <Badge variant="outline">Pending</Badge>;
+        return <Badge variant="outline">{t("admin:invitesPending")}</Badge>;
       case "ACCEPTED":
-        return <Badge variant="secondary">Accepted</Badge>;
+        return <Badge variant="secondary">{t("admin:invitesAccepted")}</Badge>;
       case "EXPIRED":
-        return <Badge variant="secondary">Expired</Badge>;
+        return <Badge variant="secondary">{t("admin:invitesExpired")}</Badge>;
       case "REVOKED":
-        return <Badge variant="destructive">Revoked</Badge>;
+        return <Badge variant="destructive">{t("admin:invitesRevoked")}</Badge>;
     }
   };
 
   const getRoleBadge = (role: Invite["role"]) => {
     switch (role) {
       case "ADMIN":
-        return <Badge>Admin</Badge>;
+        return <Badge>{t("admin:roleAdmin")}</Badge>;
       case "MEMBER":
-        return <Badge variant="secondary">Member</Badge>;
+        return <Badge variant="secondary">{t("admin:roleMember")}</Badge>;
       case "VIEWER":
-        return <Badge variant="outline">Viewer</Badge>;
+        return <Badge variant="outline">{t("admin:roleViewer")}</Badge>;
     }
   };
 
@@ -153,9 +155,11 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
               d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"
             />
           </svg>
-          <p className="text-muted-foreground font-medium">No invites yet</p>
+          <p className="text-muted-foreground font-medium">
+            {t("admin:invitesNoInvites")}
+          </p>
           <p className="text-muted-foreground mt-1 text-sm">
-            Send invites to family members to join your tree
+            {t("admin:invitesNoInvitesMessage")}
           </p>
         </CardContent>
       </Card>
@@ -165,9 +169,9 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Invites</CardTitle>
+        <CardTitle>{t("admin:invites")}</CardTitle>
         <CardDescription>
-          {invites.length} invite{invites.length !== 1 ? "s" : ""} sent
+          {t("admin:invitesSentCount", { count: invites.length })}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -185,22 +189,22 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
             <thead>
               <tr className="border-border border-b">
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">
-                  Email
+                  {t("common:email")}
                 </th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">
-                  Role
+                  {t("common:role")}
                 </th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">
-                  Person
+                  {t("admin:invitesPerson")}
                 </th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">
-                  Status
+                  {t("common:status")}
                 </th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">
-                  Expires
+                  {t("common:expires")}
                 </th>
                 <th className="text-muted-foreground px-4 py-3 text-left font-medium">
-                  Actions
+                  {t("common:actions")}
                 </th>
               </tr>
             </thead>
@@ -248,7 +252,9 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
                             disabled={actionLoading === invite.id}
                             data-testid={`copy-invite-${invite.id}`}
                           >
-                            {copiedId === invite.id ? "Copied!" : "Copy Link"}
+                            {copiedId === invite.id
+                              ? t("admin:invitesCopied")
+                              : t("admin:invitesCopyLink")}
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
@@ -258,26 +264,28 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
                                 disabled={actionLoading === invite.id}
                                 data-testid={`revoke-invite-${invite.id}`}
                               >
-                                Revoke
+                                {t("common:revoke")}
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
                                 <AlertDialogTitle>
-                                  Revoke Invite
+                                  {t("admin:invitesRevokeInviteTitle")}
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to revoke this invite
-                                  for <strong>{invite.email}</strong>? The
-                                  invite link will no longer work.
+                                  {t("admin:invitesRevokeInviteConfirm", {
+                                    email: invite.email,
+                                  })}
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel>
+                                  {t("common:cancel")}
+                                </AlertDialogCancel>
                                 <AlertDialogAction
                                   onClick={() => handleRevoke(invite.id)}
                                 >
-                                  Revoke
+                                  {t("common:revoke")}
                                 </AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
@@ -295,8 +303,8 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
                             data-testid={`resend-invite-${invite.id}`}
                           >
                             {actionLoading === invite.id
-                              ? "Resending..."
-                              : "Resend"}
+                              ? t("admin:invitesResending")
+                              : t("admin:invitesResend")}
                           </Button>
                           {invite.status === "REVOKED" && (
                             <AlertDialog>
@@ -307,28 +315,29 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
                                   disabled={actionLoading === invite.id}
                                   data-testid={`delete-invite-${invite.id}`}
                                 >
-                                  Delete
+                                  {t("common:delete")}
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>
-                                    Delete Invite
+                                    {t("admin:invitesDeleteInvite")}
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Are you sure you want to permanently delete
-                                    this invite for{" "}
-                                    <strong>{invite.email}</strong>? This action
-                                    cannot be undone.
+                                    {t("admin:invitesDeleteInviteConfirm", {
+                                      email: invite.email,
+                                    })}
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogCancel>
+                                    {t("common:cancel")}
+                                  </AlertDialogCancel>
                                   <AlertDialogAction
                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                     onClick={() => handleDelete(invite.id)}
                                   >
-                                    Delete Permanently
+                                    {t("admin:invitesDeletePermanently")}
                                   </AlertDialogAction>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
@@ -338,7 +347,7 @@ export function InvitesTable({ invites, onInviteUpdated }: InvitesTableProps) {
                       )}
                       {invite.status === "ACCEPTED" && (
                         <span className="text-muted-foreground text-xs">
-                          Accepted{" "}
+                          {t("admin:invitesAcceptedOn")}{" "}
                           {invite.acceptedAt && formatDate(invite.acceptedAt)}
                         </span>
                       )}

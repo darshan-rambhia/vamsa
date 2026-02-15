@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Card, CardContent } from "@vamsa/ui";
 import { Users } from "lucide-react";
 import { SetupWizard } from "./SetupWizard";
 
 export function OnboardingDashboard() {
+  const { t } = useTranslation(["dashboard", "common"]);
   const [showWizard, setShowWizard] = useState(false);
 
   if (showWizard) {
@@ -22,11 +24,10 @@ export function OnboardingDashboard() {
 
           <div className="space-y-2">
             <h2 className="font-display text-2xl font-medium">
-              Welcome to Your Family Tree
+              {t("dashboard:onboardingWelcome")}
             </h2>
             <p className="text-muted-foreground">
-              Start building your family history by adding yourself and your
-              family members.
+              {t("dashboard:onboardingWelcomeDesc")}
             </p>
           </div>
 
@@ -35,7 +36,7 @@ export function OnboardingDashboard() {
             className="w-full"
             onClick={() => setShowWizard(true)}
           >
-            Start My Tree
+            {t("dashboard:startMyTree")}
           </Button>
         </CardContent>
       </Card>

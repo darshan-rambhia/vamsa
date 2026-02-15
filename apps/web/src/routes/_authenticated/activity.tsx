@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Avatar,
   Badge,
@@ -31,6 +32,7 @@ const defaultFilters: ActivityFilters = {
 };
 
 function ActivityComponent() {
+  const { t } = useTranslation(["common"]);
   const [filters, setFilters] = useState<ActivityFilters>(defaultFilters);
 
   // Fetch filter options
@@ -70,10 +72,7 @@ function ActivityComponent() {
 
   return (
     <Container className="space-y-6">
-      <PageHeader
-        title="Activity"
-        description="Recent changes to your family tree"
-      />
+      <PageHeader title={t("activity")} description={t("recentChanges")} />
 
       {/* Filter Panel */}
       <ActivityFilterPanel
@@ -89,12 +88,14 @@ function ActivityComponent() {
       {!isLoading && activity && (
         <div className="text-muted-foreground flex items-center gap-2 text-sm">
           <span>
-            {activity.length} {activity.length === 1 ? "result" : "results"}
+            {activity.length}{" "}
+            {activity.length === 1 ? t("result") : t("results")}
           </span>
           {activeFilterCount > 0 && (
             <Badge variant="secondary" className="text-xs">
               {activeFilterCount}{" "}
-              {activeFilterCount === 1 ? "filter" : "filters"} active
+              {activeFilterCount === 1 ? t("filter") : t("filters")}{" "}
+              {t("active")}
             </Badge>
           )}
         </div>
@@ -132,11 +133,10 @@ function ActivityComponent() {
                 </svg>
               </div>
               <h3 className="font-display text-foreground mb-2 text-lg">
-                No activity yet
+                {t("noActivityYet")}
               </h3>
               <p className="text-muted-foreground mx-auto max-w-sm">
-                Activity will appear here as changes are made to your family
-                tree.
+                {t("activityWillAppear")}
               </p>
             </div>
           ) : (
@@ -175,6 +175,7 @@ interface ActivityItemProps {
 }
 
 function ActivityItem({ item, isFirst }: ActivityItemProps) {
+  const { t } = useTranslation(["common"]);
   const actionColors = {
     CREATE: "bg-primary/10 text-primary",
     UPDATE: "bg-secondary text-secondary-foreground",
@@ -263,7 +264,7 @@ function ActivityItem({ item, isFirst }: ActivityItemProps) {
             </>
           )}
           <time dateTime={new Date(item.timestamp).toISOString()}>
-            {formatRelativeTime(item.timestamp)}
+            {formatRelativeTime(item.timestamp, t)}
           </time>
         </div>
       </div>
@@ -271,7 +272,7 @@ function ActivityItem({ item, isFirst }: ActivityItemProps) {
       {/* Action indicator for first item */}
       {isFirst && (
         <span className="bg-primary/10 text-primary inline-flex items-center rounded-full px-2 py-1 text-xs font-medium">
-          Latest
+          {t("latest")}
         </span>
       )}
     </div>
@@ -292,7 +293,10 @@ function ActivityItem({ item, isFirst }: ActivityItemProps) {
   return <div className="-mx-2 p-2">{content}</div>;
 }
 
-function formatRelativeTime(timestamp: number): string {
+function formatRelativeTime(
+  timestamp: number,
+  t: (key: string) => string
+): string {
   const now = Date.now();
   const diff = now - timestamp;
 
@@ -300,7 +304,7 @@ function formatRelativeTime(timestamp: number): string {
   const hours = Math.floor(diff / 3600000);
   const days = Math.floor(diff / 86400000);
 
-  if (minutes < 1) return "just now";
+  if (minutes < 1) return t("justNow");
   if (minutes < 60) return `${minutes}m ago`;
   if (hours < 24) return `${hours}h ago`;
   if (days < 7) return `${days}d ago`;

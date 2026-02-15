@@ -2,11 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
 import { Command } from "cmdk";
 import { Loader2, Search, Sparkles, User, X } from "lucide-react";
 import { cn } from "@vamsa/ui";
 import { searchPeople } from "../../server/search";
-import { CATEGORY_LABELS, filterNavigationItems } from "./command-palette-data";
+import {
+  filterNavigationItems,
+  getCategoryLabel,
+} from "./command-palette-data";
 import type { NavigationItem } from "./command-palette-data";
 
 interface CommandPaletteProps {
@@ -30,6 +34,7 @@ interface CommandPaletteProps {
  * - ESC to close
  */
 export function CommandPalette({ isAdmin = false }: CommandPaletteProps) {
+  const { t } = useTranslation("navigation");
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [isSearching, setIsSearching] = useState(false);
@@ -113,19 +118,19 @@ export function CommandPalette({ isAdmin = false }: CommandPaletteProps) {
       } catch (err) {
         console.error("Search failed:", err);
         setResults([]);
-        setError("Search is temporarily unavailable. Please try again later.");
+        setError(t("searchUnavailable"));
       } finally {
         setIsSearching(false);
       }
     }, 300);
 
     return () => clearTimeout(timeout);
-  }, [query]);
+  }, [query, t]);
 
   // Client-side filtered navigation items
   const navItems = useMemo(
-    () => filterNavigationItems(query, isAdmin),
-    [query, isAdmin]
+    () => filterNavigationItems(query, isAdmin, t),
+    [query, isAdmin, t]
   );
 
   // Group nav items by category
@@ -227,31 +232,31 @@ export function CommandPalette({ isAdmin = false }: CommandPaletteProps) {
           open && "animate-in fade-in-0 zoom-in-95 slide-in-from-top-[48%]",
           !open && "animate-out fade-out-0 zoom-out-95 slide-out-to-top-[48%]"
         )}
-        label="Global search"
+        label={t("searchLabel")}
       >
         {/* Search Input */}
         <div className="border-border flex items-center gap-3 border-b px-4">
           {isNLPQuery ? (
             <Sparkles
               className="text-primary h-5 w-5 flex-shrink-0"
-              aria-label="AI search"
+              aria-label={t("searchAiLabel")}
             />
           ) : (
             <Search
               className="text-muted-foreground h-5 w-5 flex-shrink-0"
-              aria-label="Search"
+              aria-label={t("searchLabel")}
             />
           )}
           <Command.Input
             value={query}
             onValueChange={setQuery}
-            placeholder="Search people, pages, or ask your tree..."
+            placeholder={t("searchPlaceholder")}
             className="placeholder:text-muted-foreground flex h-14 w-full bg-transparent text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
           {isSearching && (
             <Loader2
               className="text-muted-foreground h-5 w-5 flex-shrink-0 animate-spin"
-              aria-label="Searching"
+              aria-label={t("searching")}
             />
           )}
           <button
@@ -284,7 +289,7 @@ export function CommandPalette({ isAdmin = false }: CommandPaletteProps) {
           {/* People Results */}
           {hasServerResults && (
             <Command.Group
-              heading="People"
+              heading={t("groupPeople")}
               className="text-muted-foreground mb-2 px-3 py-2 text-xs font-medium"
             >
               {results.map((person) => (
@@ -341,7 +346,7 @@ export function CommandPalette({ isAdmin = false }: CommandPaletteProps) {
               return (
                 <Command.Group
                   key={category}
-                  heading={CATEGORY_LABELS[category] || category}
+                  heading={getCategoryLabel(category, t)}
                   className="text-muted-foreground mb-2 px-3 py-2 text-xs font-medium"
                 >
                   {items.map((item) => {
@@ -377,9 +382,9 @@ export function CommandPalette({ isAdmin = false }: CommandPaletteProps) {
           {showEmptyState && (
             <Command.Empty className="text-muted-foreground px-4 py-8 text-center text-sm">
               <Search className="mx-auto mb-2 h-8 w-8 opacity-50" />
-              <p>No results found</p>
+              <p>{t("noResults")}</p>
               <p className="text-muted-foreground/70 mt-1 text-xs">
-                Try a different search term or browse pages above
+                {t("noResultsHint")}
               </p>
             </Command.Empty>
           )}
@@ -392,26 +397,32 @@ export function CommandPalette({ isAdmin = false }: CommandPaletteProps) {
               <kbd className="bg-muted pointer-events-none rounded border px-1.5 py-0.5 font-mono text-[10px] font-medium">
                 ↑↓
               </kbd>
-              <span className="text-muted-foreground">Navigate</span>
+              <span className="text-muted-foreground">
+                {t("keyboardNavigate")}
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <kbd className="bg-muted pointer-events-none rounded border px-1.5 py-0.5 font-mono text-[10px] font-medium">
                 ↵
               </kbd>
-              <span className="text-muted-foreground">Select</span>
+              <span className="text-muted-foreground">
+                {t("keyboardSelect")}
+              </span>
             </div>
             <div className="flex items-center gap-1.5">
               <kbd className="bg-muted pointer-events-none rounded border px-1.5 py-0.5 font-mono text-[10px] font-medium">
                 ESC
               </kbd>
-              <span className="text-muted-foreground">Close</span>
+              <span className="text-muted-foreground">
+                {t("keyboardClose")}
+              </span>
             </div>
           </div>
           {isNLPQuery && (
             <div className="flex items-center gap-1.5">
               <Sparkles className="text-primary h-3 w-3" />
               <span className="text-muted-foreground text-[10px]">
-                AI-powered search
+                {t("aiPoweredSearch")}
               </span>
             </div>
           )}

@@ -1,5 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { Card, CardContent } from "@vamsa/ui";
+import { useTranslation } from "react-i18next";
 import { getInvites } from "~/server/invites";
 import { getCurrentUser } from "~/server/auth.functions";
 import { InvitesTable } from "~/components/admin/invites-table";
@@ -17,6 +18,7 @@ export const Route = createFileRoute("/_authenticated/admin/invites")({
 });
 
 function InvitesPage() {
+  const { t } = useTranslation(["admin", "common"]);
   const { invites, currentUser } = Route.useLoaderData();
   const router = useRouter();
 
@@ -25,9 +27,9 @@ function InvitesPage() {
     return (
       <Card>
         <CardContent className="py-12 text-center">
-          <p className="text-destructive font-medium">Access Denied</p>
+          <p className="text-destructive font-medium">{t("common:error")}</p>
           <p className="text-muted-foreground mt-2 text-sm">
-            You need admin privileges to view this page.
+            {t("common:serverError")}
           </p>
         </CardContent>
       </Card>
@@ -38,9 +40,9 @@ function InvitesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold">Invite Management</h2>
+          <h2 className="text-lg font-semibold">{t("admin:invitesTitle")}</h2>
           <p className="text-muted-foreground text-sm">
-            Invite family members to join and manage the family tree
+            {t("admin:invitesCreateDescription")}
           </p>
         </div>
         <CreateInviteDialog onInviteCreated={() => router.invalidate()} />

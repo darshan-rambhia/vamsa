@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Card } from "@vamsa/ui";
 import type { ChartEdge, ChartNode } from "~/server/charts";
 
@@ -24,6 +25,7 @@ export function TreeListView({
   rootPersonId,
   onNodeClick,
 }: TreeListViewProps) {
+  const { t } = useTranslation(["charts"]);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
   const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -181,9 +183,7 @@ export function TreeListView({
   if (!treeData) {
     return (
       <div className="flex h-full items-center justify-center p-8">
-        <p className="text-muted-foreground">
-          No tree data available. Please select a person.
-        </p>
+        <p className="text-muted-foreground">{t("charts:noTreeData")}</p>
       </div>
     );
   }
@@ -192,7 +192,7 @@ export function TreeListView({
     <div
       className="h-full overflow-auto p-4"
       role="tree"
-      aria-label="Family tree list view"
+      aria-label={t("charts:familyTreeListView")}
     >
       <TreeNode
         item={treeData}
@@ -230,6 +230,7 @@ function TreeNode({
   itemRefs,
   focusedNodeId,
 }: TreeNodeProps) {
+  const { t } = useTranslation(["charts"]);
   const { node, children, spouseId, level } = item;
   const hasChildren = children.length > 0;
   const isExpanded = expandedNodes.has(node.id);
@@ -249,7 +250,7 @@ function TreeNode({
   };
 
   const formatDate = (date: string | null) => {
-    if (!date) return "Unknown";
+    if (!date) return t("charts:unknown");
     return new Date(date).getFullYear().toString();
   };
 
@@ -267,7 +268,7 @@ function TreeNode({
         aria-level={level + 1}
         aria-expanded={hasChildren ? isExpanded : undefined}
         aria-selected={focusedNodeId === node.id}
-        aria-label={`${node.firstName} ${node.lastName}, ${node.isLiving ? "Living" : `Deceased ${formatDate(node.dateOfPassing)}`}, born ${formatDate(node.dateOfBirth)}`}
+        aria-label={`${node.firstName} ${node.lastName}, ${node.isLiving ? t("charts:living") : `${t("charts:deceased")} ${formatDate(node.dateOfPassing)}`}, ${t("charts:born")} ${formatDate(node.dateOfBirth)}`}
         tabIndex={focusedNodeId === node.id ? 0 : -1}
         className="focus-visible:ring-ring focus-visible:ring-2 focus-visible:outline-none"
         style={{ marginLeft: `${level * 2}rem` }}
@@ -329,15 +330,17 @@ function TreeNode({
                 <div className="text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm">
                   {node.dateOfBirth && (
                     <span className="font-mono">
-                      Born: {formatDate(node.dateOfBirth)}
+                      {t("charts:born")}: {formatDate(node.dateOfBirth)}
                     </span>
                   )}
                   {node.isLiving ? (
-                    <span className="text-primary font-medium">Living</span>
+                    <span className="text-primary font-medium">
+                      {t("charts:living")}
+                    </span>
                   ) : (
                     node.dateOfPassing && (
                       <span className="font-mono">
-                        Died: {formatDate(node.dateOfPassing)}
+                        {t("charts:died")}: {formatDate(node.dateOfPassing)}
                       </span>
                     )
                   )}
@@ -349,7 +352,7 @@ function TreeNode({
                 {/* Spouse info if applicable */}
                 {spouseNode && (
                   <div className="text-muted-foreground mt-2 text-sm">
-                    <span className="mr-1">Spouse:</span>
+                    <span className="mr-1">{t("charts:spouse")}:</span>
                     <span className="font-medium">
                       {spouseNode.firstName} {spouseNode.lastName}
                     </span>
@@ -360,7 +363,7 @@ function TreeNode({
                 {node.generation !== undefined && (
                   <div className="mt-2">
                     <span className="bg-primary/10 text-primary inline-flex items-center rounded-md px-2 py-1 font-mono text-xs font-medium">
-                      Generation {node.generation}
+                      {t("charts:generation")} {node.generation}
                     </span>
                   </div>
                 )}

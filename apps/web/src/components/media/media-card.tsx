@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@vamsa/ui/primitives";
 import { ResponsiveImage } from "../ui/responsive-image";
 
@@ -30,6 +31,7 @@ export function MediaCard({
   onEdit,
   onDelete,
 }: MediaCardProps) {
+  const { t } = useTranslation(["people", "common"]);
   const [showMenu, setShowMenu] = useState(false);
 
   return (
@@ -39,12 +41,12 @@ export function MediaCard({
         type="button"
         className="bg-muted h-full w-full cursor-pointer overflow-hidden"
         onClick={onView}
-        aria-label={`View ${media.title || "photo"}`}
+        aria-label={`${t("people:viewPhoto")} ${media.title || t("people:photo")}`}
       >
         {media.thumbnailPath || media.filePath ? (
           <ResponsiveImage
             mediaId={media.mediaId}
-            alt={media.title || "Photo"}
+            alt={media.title || t("people:photo")}
             webpPath={media.webpPath}
             thumb400Path={media.thumb400Path}
             thumb800Path={media.thumb800Path}
@@ -85,7 +87,7 @@ export function MediaCard({
       {media.isPrimary && (
         <div className="absolute top-2 left-2">
           <Badge className="bg-primary/90 text-primary-foreground border-0">
-            Primary
+            {t("people:primary")}
           </Badge>
         </div>
       )}
@@ -133,7 +135,7 @@ export function MediaCard({
                       setShowMenu(false);
                     }
                   }}
-                  aria-label="Close menu"
+                  aria-label={t("people:closeModal")}
                 />
                 <div className="border-border bg-card absolute top-10 right-0 z-20 min-w-40 rounded-lg border-2 shadow-lg">
                   {onSetPrimary && !media.isPrimary && (
@@ -158,7 +160,7 @@ export function MediaCard({
                           d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
                         />
                       </svg>
-                      Set as Primary
+                      {t("people:setPrimary")}
                     </button>
                   )}
                   {onEdit && (
@@ -183,7 +185,7 @@ export function MediaCard({
                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                         />
                       </svg>
-                      Edit Details
+                      {t("people:editDetails")}
                     </button>
                   )}
                   {onDelete && (
@@ -208,7 +210,7 @@ export function MediaCard({
                           d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                         />
                       </svg>
-                      Delete
+                      {t("common:delete")}
                     </button>
                   )}
                 </div>

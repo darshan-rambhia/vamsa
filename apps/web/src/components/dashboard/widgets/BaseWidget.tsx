@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertCircle, Loader2, RefreshCw, Settings, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Card,
@@ -39,12 +40,14 @@ export function BaseWidget({
   onRefresh,
   className,
 }: BaseWidgetProps) {
+  const { t } = useTranslation(["dashboard", "common"]);
+
   return (
     <ErrorBoundary
       errorCardProps={{
         variant: "compact",
-        title: "Widget error",
-        message: "This widget encountered an error",
+        title: t("dashboard:widgetError"),
+        message: t("dashboard:widgetErrorMessage"),
       }}
     >
       <Card
@@ -127,9 +130,11 @@ export function BaseWidget({
             >
               <Loader2
                 className="text-muted-foreground h-6 w-6 animate-spin"
-                aria-label="Loading"
+                aria-label={t("common:loading")}
               />
-              <span className="sr-only">Loading {config.title}...</span>
+              <span className="sr-only">
+                {t("common:loading")} {config.title}...
+              </span>
             </div>
           )}
 
@@ -144,10 +149,10 @@ export function BaseWidget({
                 <AlertCircle className="text-destructive mt-0.5 h-5 w-5 shrink-0" />
                 <div className="min-w-0">
                   <h4 className="text-destructive text-sm font-medium">
-                    Error Loading Widget
+                    {t("dashboard:errorLoadingWidget")}
                   </h4>
                   <p className="text-muted-foreground mt-1 text-sm">
-                    {error.message || "Something went wrong"}
+                    {error.message || t("dashboard:somethingWentWrong")}
                   </p>
                   {onRefresh && (
                     <Button
@@ -157,7 +162,7 @@ export function BaseWidget({
                       className="mt-3"
                     >
                       <RefreshCw className="mr-2 h-4 w-4" />
-                      Retry
+                      {t("common:retry")}
                     </Button>
                   )}
                 </div>

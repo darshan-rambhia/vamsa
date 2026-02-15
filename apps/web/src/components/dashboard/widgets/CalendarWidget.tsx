@@ -20,6 +20,7 @@ import {
   ChevronRight,
   Clock,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button, cn } from "@vamsa/ui";
 import { useQuery } from "@tanstack/react-query";
 import { createServerFn } from "@tanstack/react-start";
@@ -168,6 +169,7 @@ export function CalendarWidget({
   onRemove,
   className,
 }: WidgetProps) {
+  const { t } = useTranslation(["dashboard", "common"]);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [showSettings, setShowSettings] = useState(false);
 
@@ -259,11 +261,11 @@ export function CalendarWidget({
   const getEventTypeLabel = (type: string) => {
     switch (type) {
       case "BIRTH":
-        return "Birthday";
+        return t("dashboard:birthday");
       case "MARRIAGE":
-        return "Anniversary";
+        return t("dashboard:anniversary");
       case "DEATH":
-        return "Memorial";
+        return t("dashboard:memorial");
       default:
         return type;
     }
@@ -283,7 +285,9 @@ export function CalendarWidget({
         {/* Settings Panel */}
         {showSettings && (
           <div className="border-border rounded-lg border p-4">
-            <h3 className="mb-3 text-sm font-medium">Calendar Settings</h3>
+            <h3 className="mb-3 text-sm font-medium">
+              {t("dashboard:calendarSettings")}
+            </h3>
             <div className="space-y-2">
               <label className="flex items-center gap-2">
                 <input
@@ -299,7 +303,7 @@ export function CalendarWidget({
                   }
                   className="border-border rounded"
                 />
-                <span className="text-sm">Show Birthdays</span>
+                <span className="text-sm">{t("dashboard:showBirthdays")}</span>
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -315,7 +319,9 @@ export function CalendarWidget({
                   }
                   className="border-border rounded"
                 />
-                <span className="text-sm">Show Anniversaries</span>
+                <span className="text-sm">
+                  {t("dashboard:showAnniversaries")}
+                </span>
               </label>
               <label className="flex items-center gap-2">
                 <input
@@ -331,11 +337,13 @@ export function CalendarWidget({
                   }
                   className="border-border rounded"
                 />
-                <span className="text-sm">Show Memorial Dates</span>
+                <span className="text-sm">
+                  {t("dashboard:showMemorialDates")}
+                </span>
               </label>
               <div className="mt-3">
                 <label className="text-sm">
-                  Look ahead (months):
+                  {t("dashboard:lookAheadMonths")}
                   <input
                     type="number"
                     min="1"
@@ -368,7 +376,7 @@ export function CalendarWidget({
                 variant="ghost"
                 size="icon"
                 onClick={handlePreviousMonth}
-                aria-label="Previous month"
+                aria-label={t("dashboard:previousMonth")}
                 className="hover:bg-primary/10 hover:text-primary h-7 w-7 rounded-full"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -379,13 +387,13 @@ export function CalendarWidget({
                 onClick={handleToday}
                 className="hover:bg-primary/10 hover:text-primary h-7 rounded-full px-3 text-xs"
               >
-                Today
+                {t("dashboard:today")}
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleNextMonth}
-                aria-label="Next month"
+                aria-label={t("dashboard:nextMonth")}
                 className="hover:bg-primary/10 hover:text-primary h-7 w-7 rounded-full"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -451,12 +459,12 @@ export function CalendarWidget({
         {/* Upcoming Events List */}
         <div className="flex-1 overflow-auto px-1">
           <h4 className="font-display text-muted-foreground mb-3 text-sm font-medium tracking-wider uppercase">
-            Coming Up
+            {t("dashboard:comingUp")}
           </h4>
           {nextEvents.length === 0 ? (
             <div className="text-muted-foreground flex flex-col items-center justify-center gap-2 py-8 text-center">
               <CalendarIcon className="h-8 w-8 opacity-20" />
-              <p className="text-sm">No upcoming events</p>
+              <p className="text-sm">{t("dashboard:calendarNoEvents")}</p>
             </div>
           ) : (
             <div className="space-y-3">

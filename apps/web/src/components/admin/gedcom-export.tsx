@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Checkbox,
@@ -14,6 +15,7 @@ import {
 import { exportGedZip, exportGedcom } from "~/server/gedcom";
 
 export function GedcomExport() {
+  const { t } = useTranslation(["admin", "common"]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [includeMedia, setIncludeMedia] = useState(true);
@@ -85,14 +87,17 @@ export function GedcomExport() {
     <div className="space-y-4">
       <Tabs defaultValue="gedcom" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="gedcom">GEDCOM (.ged)</TabsTrigger>
-          <TabsTrigger value="gedzip">Full Backup (.zip)</TabsTrigger>
+          <TabsTrigger value="gedcom">
+            {t("admin:gedcomExportTitle")}
+          </TabsTrigger>
+          <TabsTrigger value="gedzip">
+            {t("admin:gedcomFullBackupTitle")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="gedcom" className="space-y-4 pt-4">
           <p className="text-muted-foreground text-sm">
-            Export your family tree data as a GEDCOM 5.5.1 file for use in other
-            genealogy software like Ancestry, FamilySearch, or Gramps.
+            {t("admin:gedcomExportDescription")}
           </p>
 
           <Button
@@ -115,7 +120,7 @@ export function GedcomExport() {
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
-                Exporting...
+                {t("admin:backupExporting")}
               </>
             ) : (
               <>
@@ -132,7 +137,7 @@ export function GedcomExport() {
                     d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"
                   />
                 </svg>
-                Export to GEDCOM
+                {t("admin:gedcomExportButton")}
               </>
             )}
           </Button>
@@ -140,8 +145,7 @@ export function GedcomExport() {
 
         <TabsContent value="gedzip" className="space-y-4 pt-4">
           <p className="text-muted-foreground text-sm">
-            Create a complete backup of your family tree including the GEDCOM
-            file, all photos and documents, and a manifest for easy restoration.
+            {t("admin:gedcomFullBackupDescription")}
           </p>
 
           <div className="flex items-center space-x-2">
@@ -151,7 +155,7 @@ export function GedcomExport() {
               onCheckedChange={(checked) => setIncludeMedia(checked === true)}
             />
             <Label htmlFor="include-media" className="text-sm font-normal">
-              Include photos and documents
+              {t("admin:backupIncludePhotos")}
             </Label>
           </div>
 
@@ -175,7 +179,7 @@ export function GedcomExport() {
                     d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                   />
                 </svg>
-                Creating backup...
+                {t("admin:gedcomCreatingBackup")}
               </>
             ) : (
               <>
@@ -192,7 +196,7 @@ export function GedcomExport() {
                     d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m6 4.125l2.25 2.25m0 0l2.25-2.25M12 13.875V3.375m0 0L9.75 5.625M12 3.375l2.25 2.25"
                   />
                 </svg>
-                Download Full Backup
+                {t("admin:gedcomDownloadFullBackup")}
               </>
             )}
           </Button>
@@ -207,7 +211,7 @@ export function GedcomExport() {
 
       {success && (
         <div className="rounded-md bg-green-50 p-3 text-sm text-green-900 dark:bg-green-950 dark:text-green-100">
-          Export successful! Your download should start automatically.
+          {t("admin:gedcomExportSuccessMessage")}
         </div>
       )}
     </div>

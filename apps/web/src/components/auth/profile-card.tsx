@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { Button, Card, cn } from "@vamsa/ui";
 import { formatDate } from "@vamsa/lib";
 
@@ -22,6 +23,7 @@ export function ProfileCard({
   highlighted = false,
   disabled = false,
 }: ProfileCardProps) {
+  const { t } = useTranslation("auth");
   return (
     <Card
       className={cn(
@@ -51,7 +53,7 @@ export function ProfileCard({
           size="sm"
           variant={highlighted ? "default" : "outline"}
         >
-          Claim Profile
+          {t("claimProfile")}
         </Button>
       </div>
     </Card>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, cn } from "@vamsa/ui";
 import type { ChartType } from "./ChartControls";
 import type { ChartMetadata } from "./ChartStatsPanel";
@@ -21,6 +22,7 @@ export function FloatingInfoPanel({
   metadata,
   className,
 }: FloatingInfoPanelProps) {
+  const { t } = useTranslation(["charts"]);
   const [isExpanded, setIsExpanded] = useState(false);
 
   const toggleExpanded = useCallback(() => {
@@ -69,7 +71,7 @@ export function FloatingInfoPanel({
               d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          Info
+          {t("charts:info")}
         </Button>
       )}
 
@@ -78,13 +80,13 @@ export function FloatingInfoPanel({
         <div className="bg-card/95 flex max-w-xs flex-col gap-3 rounded-lg border p-3 shadow-lg backdrop-blur-sm">
           {/* Header with collapse button */}
           <div className="flex items-center justify-between gap-4">
-            <span className="text-sm font-medium">Chart Info</span>
+            <span className="text-sm font-medium">{t("charts:chartInfo")}</span>
             <Button
               variant="ghost"
               size="icon"
               className="h-6 w-6"
               onClick={toggleExpanded}
-              title="Collapse info"
+              title={t("common:close")}
             >
               <svg
                 className="h-4 w-4"
@@ -106,16 +108,20 @@ export function FloatingInfoPanel({
           {hasStats && (
             <div className="border-b pb-2">
               <p className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wider uppercase">
-                Statistics
+                {t("charts:statistics")}
               </p>
               <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">People:</span>
+                  <span className="text-muted-foreground">
+                    {t("charts:people")}:
+                  </span>
                   <span className="font-medium">{metadata.totalPeople}</span>
                 </div>
                 {metadata.totalGenerations !== undefined && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Generations:</span>
+                    <span className="text-muted-foreground">
+                      {t("charts:generations")}:
+                    </span>
                     <span className="font-medium">
                       {metadata.totalGenerations}
                     </span>
@@ -124,7 +130,9 @@ export function FloatingInfoPanel({
                 {metadata.minYear !== undefined &&
                   metadata.maxYear !== undefined && (
                     <div className="col-span-2 flex justify-between">
-                      <span className="text-muted-foreground">Years:</span>
+                      <span className="text-muted-foreground">
+                        {t("charts:years")}:
+                      </span>
                       <span className="font-medium">
                         {metadata.minYear} - {metadata.maxYear}
                       </span>
@@ -132,7 +140,9 @@ export function FloatingInfoPanel({
                   )}
                 {metadata.totalRelationships !== undefined && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Relations:</span>
+                    <span className="text-muted-foreground">
+                      {t("charts:relations")}:
+                    </span>
                     <span className="font-medium">
                       {metadata.totalRelationships}
                     </span>
@@ -142,13 +152,17 @@ export function FloatingInfoPanel({
                   metadata.paternalCount !== undefined && (
                     <>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Paternal:</span>
+                        <span className="text-muted-foreground">
+                          {t("charts:paternal")}:
+                        </span>
                         <span className="font-medium">
                           {metadata.paternalCount}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-muted-foreground">Maternal:</span>
+                        <span className="text-muted-foreground">
+                          {t("charts:maternal")}:
+                        </span>
                         <span className="font-medium">
                           {metadata.maternalCount ?? 0}
                         </span>
@@ -163,7 +177,7 @@ export function FloatingInfoPanel({
           {showLegend && (
             <div>
               <p className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wider uppercase">
-                Legend
+                {t("charts:legend")}
               </p>
               <div className="grid gap-1.5 text-xs">
                 {/* Bowtie-specific: Paternal/Maternal is primary, skip Living/Deceased */}
@@ -179,7 +193,7 @@ export function FloatingInfoPanel({
                         }}
                       />
                       <span className="text-foreground font-medium">
-                        Paternal
+                        {t("charts:paternal")}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -192,16 +206,20 @@ export function FloatingInfoPanel({
                         }}
                       />
                       <span className="text-foreground font-medium">
-                        Maternal
+                        {t("charts:maternal")}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="bg-primary h-2.5 w-2.5 rounded-full" />
-                      <span className="text-muted-foreground">Living</span>
+                      <span className="text-muted-foreground">
+                        {t("charts:living")}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="bg-muted-foreground h-2.5 w-2.5 rounded-full" />
-                      <span className="text-muted-foreground">Deceased</span>
+                      <span className="text-muted-foreground">
+                        {t("charts:deceased")}
+                      </span>
                     </div>
                   </>
                 ) : chartType === "timeline" ? (
@@ -209,19 +227,27 @@ export function FloatingInfoPanel({
                   <>
                     <div className="flex items-center gap-2">
                       <div className="bg-primary/60 border-primary h-3 w-8 rounded border" />
-                      <span className="text-muted-foreground">Living</span>
+                      <span className="text-muted-foreground">
+                        {t("charts:living")}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="bg-muted border-border h-3 w-8 rounded border" />
-                      <span className="text-muted-foreground">Deceased</span>
+                      <span className="text-muted-foreground">
+                        {t("charts:deceased")}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="bg-primary h-2.5 w-2.5 rounded-full" />
-                      <span className="text-muted-foreground">Birth</span>
+                      <span className="text-muted-foreground">
+                        {t("charts:birth")}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="bg-muted-foreground h-2.5 w-2.5 rounded-full" />
-                      <span className="text-muted-foreground">Death</span>
+                      <span className="text-muted-foreground">
+                        {t("charts:death")}
+                      </span>
                     </div>
                   </>
                 ) : (
@@ -229,21 +255,27 @@ export function FloatingInfoPanel({
                   <>
                     <div className="flex items-center gap-2">
                       <div className="bg-primary/15 border-primary h-4 w-4 rounded border-2" />
-                      <span className="text-muted-foreground">Living</span>
+                      <span className="text-muted-foreground">
+                        {t("charts:living")}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="bg-muted border-muted-foreground/50 h-4 w-4 rounded border-2" />
-                      <span className="text-muted-foreground">Deceased</span>
+                      <span className="text-muted-foreground">
+                        {t("charts:deceased")}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="border-border h-0.5 w-4 border-t-2" />
                       <span className="text-muted-foreground">
-                        Parent-Child
+                        {t("charts:parentChild")}
                       </span>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="border-primary h-0.5 w-4 border-t-2 border-dashed" />
-                      <span className="text-muted-foreground">Spouse</span>
+                      <span className="text-muted-foreground">
+                        {t("charts:spouse")}
+                      </span>
                     </div>
                   </>
                 )}

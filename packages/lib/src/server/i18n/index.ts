@@ -64,7 +64,16 @@ export async function initializeServerI18n(): Promise<I18nInstance> {
   await serverI18n.use(Backend).init({
     lng: "en",
     fallbackLng: "en",
-    ns: ["common", "auth", "people", "errors"],
+    ns: [
+      "common",
+      "auth",
+      "people",
+      "errors",
+      "navigation",
+      "dashboard",
+      "charts",
+      "admin",
+    ],
     defaultNS: "common",
     backend: {
       loadPath: localesPath,

@@ -327,7 +327,7 @@ describe("ChartControls Component", () => {
       const exportButton = getByRole("button", { name: /export|share/i });
       fireEvent.click(exportButton);
 
-      const pdfOption = getByText("Export PDF");
+      const pdfOption = getByText("Export as PDF");
       expect(pdfOption).toBeDefined();
     });
 
@@ -339,7 +339,7 @@ describe("ChartControls Component", () => {
       fireEvent.click(exportButton);
       fireEvent.click(exportButton);
 
-      expect(queryByText("Export PDF")).toBeNull();
+      expect(queryByText("Export as PDF")).toBeNull();
     });
   });
 
@@ -353,7 +353,7 @@ describe("ChartControls Component", () => {
       const exportButton = getByRole("button", { name: /export|share/i });
       fireEvent.click(exportButton);
 
-      const pdfOption = getByText("Export PDF");
+      const pdfOption = getByText("Export as PDF");
       fireEvent.click(pdfOption);
 
       expect(onExportPDF).toHaveBeenCalled();
@@ -383,7 +383,7 @@ describe("ChartControls Component", () => {
       const exportButton = getByRole("button", { name: /export|share/i });
       fireEvent.click(exportButton);
 
-      const svgOption = getByText("Export SVG");
+      const svgOption = getByText("Export as SVG");
       fireEvent.click(svgOption);
 
       expect(onExportSVG).toHaveBeenCalled();

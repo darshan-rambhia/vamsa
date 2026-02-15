@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Badge,
@@ -48,6 +49,7 @@ export function SuggestionsList({
   suggestions,
   onRefresh,
 }: SuggestionsListProps) {
+  const { t } = useTranslation(["admin", "common"]);
   const queryClient = useQueryClient();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [reviewDialog, setReviewDialog] = useState<{
@@ -153,7 +155,7 @@ export function SuggestionsList({
           </div>
           {suggestion.targetPerson && (
             <span className="text-muted-foreground text-sm">
-              Target: {suggestion.targetPerson.firstName}{" "}
+              {t("admin:suggestionsTarget")} {suggestion.targetPerson.firstName}{" "}
               {suggestion.targetPerson.lastName}
             </span>
           )}
@@ -161,36 +163,42 @@ export function SuggestionsList({
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="text-sm">
-          <span className="text-muted-foreground">Submitted by: </span>
+          <span className="text-muted-foreground">
+            {t("admin:suggestionsSubmittedBy")}{" "}
+          </span>
           <span>
             {suggestion.submittedBy.name || suggestion.submittedBy.email}
           </span>
           <span className="text-muted-foreground ml-2">
-            on {formatDate(suggestion.submittedAt)}
+            {t("admin:suggestionsOn")} {formatDate(suggestion.submittedAt)}
           </span>
         </div>
 
         {suggestion.reason && (
           <div className="text-sm">
-            <span className="text-muted-foreground">Reason: </span>
+            <span className="text-muted-foreground">
+              {t("admin:suggestionsReason")}{" "}
+            </span>
             <span>{suggestion.reason}</span>
           </div>
         )}
 
         {suggestion.reviewedBy && (
           <div className="border-t pt-2 text-sm">
-            <span className="text-muted-foreground">Reviewed by: </span>
+            <span className="text-muted-foreground">
+              {t("admin:suggestionsReviewedBy")}{" "}
+            </span>
             <span>
               {suggestion.reviewedBy.name || suggestion.reviewedBy.email}
             </span>
             {suggestion.reviewedAt && (
               <span className="text-muted-foreground ml-2">
-                on {formatDate(suggestion.reviewedAt)}
+                {t("admin:suggestionsOn")} {formatDate(suggestion.reviewedAt)}
               </span>
             )}
             {suggestion.reviewNote && (
               <p className="text-muted-foreground mt-1 italic">
-                Note: {suggestion.reviewNote}
+                {t("admin:suggestionsReviewNote")} {suggestion.reviewNote}
               </p>
             )}
           </div>
@@ -203,8 +211,8 @@ export function SuggestionsList({
             onClick={() => toggleExpand(suggestion.id)}
           >
             {expandedIds.has(suggestion.id)
-              ? "Hide suggested data"
-              : "View suggested data"}
+              ? t("admin:suggestionsHideSuggestedData")
+              : t("admin:suggestionsViewSuggestedData")}
           </button>
           {expandedIds.has(suggestion.id) && (
             <pre className="bg-muted mt-2 max-h-60 overflow-auto rounded-md p-3 text-xs">
@@ -222,7 +230,7 @@ export function SuggestionsList({
                 setReviewDialog({ suggestion, action: "APPROVED" })
               }
             >
-              Approve
+              {t("admin:suggestionsApprove")}
             </Button>
             <Button
               size="sm"
@@ -231,7 +239,7 @@ export function SuggestionsList({
                 setReviewDialog({ suggestion, action: "REJECTED" })
               }
             >
-              Reject
+              {t("admin:suggestionsReject")}
             </Button>
           </div>
         )}
@@ -244,13 +252,19 @@ export function SuggestionsList({
       <Tabs defaultValue="pending" className="w-full">
         <TabsList>
           <TabsTrigger value="pending">
-            Pending ({pendingSuggestions.length})
+            {t("admin:suggestionsPendingCount", {
+              count: pendingSuggestions.length,
+            })}
           </TabsTrigger>
           <TabsTrigger value="approved">
-            Approved ({approvedSuggestions.length})
+            {t("admin:suggestionsApprovedCount", {
+              count: approvedSuggestions.length,
+            })}
           </TabsTrigger>
           <TabsTrigger value="rejected">
-            Rejected ({rejectedSuggestions.length})
+            {t("admin:suggestionsRejectedCount", {
+              count: rejectedSuggestions.length,
+            })}
           </TabsTrigger>
         </TabsList>
 
@@ -258,7 +272,9 @@ export function SuggestionsList({
           {pendingSuggestions.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground">No pending suggestions</p>
+                <p className="text-muted-foreground">
+                  {t("admin:suggestionsNoPending")}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -270,7 +286,9 @@ export function SuggestionsList({
           {approvedSuggestions.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground">No approved suggestions</p>
+                <p className="text-muted-foreground">
+                  {t("admin:suggestionsNoApproved")}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -282,7 +300,9 @@ export function SuggestionsList({
           {rejectedSuggestions.length === 0 ? (
             <Card>
               <CardContent className="py-8 text-center">
-                <p className="text-muted-foreground">No rejected suggestions</p>
+                <p className="text-muted-foreground">
+                  {t("admin:suggestionsNoRejected")}
+                </p>
               </CardContent>
             </Card>
           ) : (
@@ -305,13 +325,13 @@ export function SuggestionsList({
           <DialogHeader>
             <DialogTitle>
               {reviewDialog?.action === "APPROVED"
-                ? "Approve Suggestion"
-                : "Reject Suggestion"}
+                ? t("admin:suggestionsApproveSuggestion")
+                : t("admin:suggestionsRejectSuggestion")}
             </DialogTitle>
             <DialogDescription>
               {reviewDialog?.action === "APPROVED"
-                ? "This will apply the suggested changes."
-                : "This will reject the suggestion without making changes."}
+                ? t("admin:suggestionsApproveMessage")
+                : t("admin:suggestionsRejectMessage")}
             </DialogDescription>
           </DialogHeader>
 
@@ -322,12 +342,14 @@ export function SuggestionsList({
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="review-note">Review Note (optional)</Label>
+            <Label htmlFor="review-note">
+              {t("admin:suggestionsReviewNoteLabel")}
+            </Label>
             <Textarea
               id="review-note"
               value={reviewNote}
               onChange={(e) => setReviewNote(e.target.value)}
-              placeholder="Add a note about your decision..."
+              placeholder={t("admin:suggestionsReviewNotePlaceholder")}
               rows={3}
             />
           </div>
@@ -338,7 +360,7 @@ export function SuggestionsList({
               onClick={() => setReviewDialog(null)}
               disabled={reviewMutation.isPending}
             >
-              Cancel
+              {t("common:cancel")}
             </Button>
             <Button
               onClick={handleReview}
@@ -350,10 +372,10 @@ export function SuggestionsList({
               }
             >
               {reviewMutation.isPending
-                ? "Processing..."
+                ? t("admin:suggestionsProcessing")
                 : reviewDialog?.action === "APPROVED"
-                  ? "Approve"
-                  : "Reject"}
+                  ? t("admin:suggestionsApprove")
+                  : t("admin:suggestionsReject")}
             </Button>
           </DialogFooter>
         </DialogContent>

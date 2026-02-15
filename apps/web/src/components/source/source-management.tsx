@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   Badge,
   Button,
@@ -25,6 +26,7 @@ import { deleteSource, getSource, listSources } from "~/server/sources";
 type SortOption = "title" | "date" | "type";
 
 export function SourceManagement() {
+  const { t } = useTranslation(["people", "common"]);
   const queryClient = useQueryClient();
   const [filterType, setFilterType] = useState<string | undefined>(undefined);
   const [sortBy, setSortBy] = useState<SortOption>("date");
@@ -98,10 +100,10 @@ export function SourceManagement() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="font-display text-foreground text-2xl">
-            Source Management
+            {t("people:sourceManagement")}
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">
-            Manage all source citations and documentation
+            {t("people:manageSourcesDescription")}
           </p>
         </div>
         <Button onClick={() => setShowCreateModal(true)}>
@@ -118,7 +120,7 @@ export function SourceManagement() {
               d="M12 4v16m8-8H4"
             />
           </svg>
-          Add New Source
+          {t("people:addNewSource")}
         </Button>
       </div>
 
@@ -134,19 +136,23 @@ export function SourceManagement() {
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Filter by type..." />
+                  <SelectValue placeholder={t("people:filterByType")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="BOOK">Book</SelectItem>
-                  <SelectItem value="ARTICLE">Article</SelectItem>
-                  <SelectItem value="WEBSITE">Website</SelectItem>
-                  <SelectItem value="ARCHIVE">Archive</SelectItem>
-                  <SelectItem value="LETTER">Letter</SelectItem>
-                  <SelectItem value="FAMILY_RECORD">Family Record</SelectItem>
-                  <SelectItem value="CENSUS">Census</SelectItem>
-                  <SelectItem value="VITAL_RECORD">Vital Record</SelectItem>
-                  <SelectItem value="OTHER">Other</SelectItem>
+                  <SelectItem value="all">{t("people:allTypes")}</SelectItem>
+                  <SelectItem value="BOOK">{t("people:book")}</SelectItem>
+                  <SelectItem value="ARTICLE">{t("people:article")}</SelectItem>
+                  <SelectItem value="WEBSITE">{t("people:website")}</SelectItem>
+                  <SelectItem value="ARCHIVE">{t("people:archive")}</SelectItem>
+                  <SelectItem value="LETTER">{t("people:letter")}</SelectItem>
+                  <SelectItem value="FAMILY_RECORD">
+                    {t("people:familyRecord")}
+                  </SelectItem>
+                  <SelectItem value="CENSUS">{t("people:census")}</SelectItem>
+                  <SelectItem value="VITAL_RECORD">
+                    {t("people:vitalRecord")}
+                  </SelectItem>
+                  <SelectItem value="OTHER">{t("common:other")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -156,12 +162,14 @@ export function SourceManagement() {
                 onValueChange={(value) => setSortBy(value as SortOption)}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sort by..." />
+                  <SelectValue placeholder={t("people:sortBy")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="date">Newest First</SelectItem>
-                  <SelectItem value="title">Title (A-Z)</SelectItem>
-                  <SelectItem value="type">Type</SelectItem>
+                  <SelectItem value="date">
+                    {t("people:newestFirst")}
+                  </SelectItem>
+                  <SelectItem value="title">{t("people:titleAZ")}</SelectItem>
+                  <SelectItem value="type">{t("common:type")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -198,14 +206,16 @@ export function SourceManagement() {
               </svg>
             </div>
             <h3 className="font-display text-foreground mb-2 text-xl">
-              No Sources Found
+              {t("people:noSourcesFound")}
             </h3>
             <p className="text-muted-foreground mb-4">
               {filterType
-                ? "No sources match the selected filter."
-                : "Start by adding your first source."}
+                ? t("people:noSourcesMatchFilter")
+                : t("people:startByAddingSource")}
             </p>
-            <Button onClick={() => setShowCreateModal(true)}>Add Source</Button>
+            <Button onClick={() => setShowCreateModal(true)}>
+              {t("people:addSource")}
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -228,23 +238,28 @@ export function SourceManagement() {
                         <Badge variant="outline">
                           {source.confidence.charAt(0) +
                             source.confidence.slice(1).toLowerCase()}{" "}
-                          Confidence
+                          {t("people:confidenceLabel")}
                         </Badge>
                       )}
                     </div>
                     {source.author && (
                       <p className="text-muted-foreground mb-1 text-sm">
-                        by {source.author}
+                        {t("people:by")} {source.author}
                       </p>
                     )}
                     {source.publicationDate && (
                       <p className="text-muted-foreground font-mono text-xs">
-                        Published: {source.publicationDate}
+                        {t("people:publicationDate")}: {source.publicationDate}
                       </p>
                     )}
                     <div className="text-muted-foreground mt-2 flex gap-4 text-xs">
-                      <span>{source.eventCount} events</span>
-                      <span>{source.researchNoteCount} research notes</span>
+                      <span>
+                        {source.eventCount} {t("people:eventsCount")}
+                      </span>
+                      <span>
+                        {source.researchNoteCount}{" "}
+                        {t("people:researchNotesCount")}
+                      </span>
                     </div>
                   </div>
                   <div className="flex flex-col gap-2">
@@ -253,21 +268,21 @@ export function SourceManagement() {
                       size="sm"
                       onClick={() => handleView(source.id)}
                     >
-                      View
+                      {t("people:view")}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleShowCitation(source.id)}
                     >
-                      Citation
+                      {t("people:citation")}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEdit(source.id)}
                     >
-                      Edit
+                      {t("common:edit")}
                     </Button>
                     <Button
                       variant="outline"
@@ -275,7 +290,7 @@ export function SourceManagement() {
                       onClick={() => handleDelete(source.id, source.title)}
                       className="text-destructive hover:text-destructive"
                     >
-                      Delete
+                      {t("common:delete")}
                     </Button>
                   </div>
                 </div>
@@ -290,7 +305,7 @@ export function SourceManagement() {
         <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display text-2xl">
-              Create New Source
+              {t("people:createNewSource")}
             </DialogTitle>
           </DialogHeader>
           <SourceForm
@@ -308,7 +323,7 @@ export function SourceManagement() {
         <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="font-display text-2xl">
-              Edit Source
+              {t("people:editSource")}
             </DialogTitle>
           </DialogHeader>
           {editingSource && (
@@ -371,7 +386,7 @@ export function SourceManagement() {
               {viewingSource.author && (
                 <div>
                   <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-                    Author
+                    {t("people:author")}
                   </h4>
                   <p className="text-foreground">{viewingSource.author}</p>
                 </div>
@@ -379,7 +394,7 @@ export function SourceManagement() {
               {viewingSource.publicationDate && (
                 <div>
                   <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-                    Publication Date
+                    {t("people:publicationDate")}
                   </h4>
                   <p className="text-foreground">
                     {viewingSource.publicationDate}
@@ -389,7 +404,7 @@ export function SourceManagement() {
               {viewingSource.description && (
                 <div>
                   <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-                    Description
+                    {t("people:description")}
                   </h4>
                   <p className="text-foreground whitespace-pre-wrap">
                     {viewingSource.description}
@@ -399,7 +414,7 @@ export function SourceManagement() {
               {viewingSource.repository && (
                 <div>
                   <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-                    Repository
+                    {t("people:repository")}
                   </h4>
                   <p className="text-foreground">{viewingSource.repository}</p>
                 </div>
@@ -407,7 +422,7 @@ export function SourceManagement() {
               {viewingSource.url && (
                 <div>
                   <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-                    URL
+                    {t("people:url")}
                   </h4>
                   <a
                     href={viewingSource.url}
@@ -421,11 +436,12 @@ export function SourceManagement() {
               )}
               <div>
                 <h4 className="text-muted-foreground mb-1 text-sm font-medium">
-                  Usage
+                  {t("people:usage")}
                 </h4>
                 <p className="text-foreground">
-                  {viewingSource.eventCount} events,{" "}
-                  {viewingSource.researchNoteCount} research notes
+                  {viewingSource.eventCount} {t("people:eventsCount")},{" "}
+                  {viewingSource.researchNoteCount}{" "}
+                  {t("people:researchNotesCount")}
                 </p>
               </div>
             </div>
@@ -444,7 +460,7 @@ export function SourceManagement() {
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle className="font-display text-2xl">
-              Generate Citation
+              {t("people:generatedCitation")}
             </DialogTitle>
           </DialogHeader>
           {citationSourceId && (

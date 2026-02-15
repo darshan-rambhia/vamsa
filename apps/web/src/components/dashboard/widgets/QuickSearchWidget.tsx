@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Loader2, Search, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button, Input } from "@vamsa/ui";
 import { searchPeople } from "../../../server/search";
 import { BaseWidget } from "./BaseWidget";
@@ -49,6 +50,7 @@ export function QuickSearchWidget({
   onRemove,
   className,
 }: WidgetProps) {
+  const { t } = useTranslation(["dashboard", "common"]);
   const settings = config.settings as QuickSearchSettings | undefined;
   const maxResults = settings?.maxResults ?? 5;
 
@@ -142,6 +144,11 @@ export function QuickSearchWidget({
     return `${birth} - ${death}`;
   };
 
+  // Format person status
+  const formatPersonStatus = (person: (typeof results)[0]) => {
+    return person.isLiving ? t("dashboard:living") : t("dashboard:deceased");
+  };
+
   const showResults = debouncedQuery && !isSearching && results.length > 0;
   const showNoResults = debouncedQuery && !isSearching && results.length === 0;
 
@@ -152,11 +159,11 @@ export function QuickSearchWidget({
           <Search className="text-muted-foreground peer-focus:text-primary absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 transform transition-colors duration-200" />
           <Input
             type="text"
-            placeholder="Search family..."
+            placeholder={t("dashboard:searchFamily")}
             value={query}
             onChange={handleInputChange}
             className="peer border-border/50 bg-background/50 focus:border-primary/50 focus:bg-background focus:ring-primary/10 h-14 w-full rounded-2xl border-2 pr-10 pl-12 text-lg shadow-sm transition-all duration-300 focus:ring-4"
-            aria-label="Search family tree"
+            aria-label={t("dashboard:searchFamily")}
           />
           {query && (
             <Button
@@ -178,9 +185,9 @@ export function QuickSearchWidget({
           {!query && !isSearching && (
             <div className="flex flex-col items-center justify-center p-4 text-center">
               <p className="text-muted-foreground text-xs font-medium">
-                Try searching for names like{" "}
-                <span className="text-foreground">&quot;Grandpa&quot;</span> or
-                dates.
+                {t("dashboard:trySearching")}{" "}
+                <span className="text-foreground">&quot;Grandpa&quot;</span>{" "}
+                {t("dashboard:orDates")}
               </p>
             </div>
           )}
@@ -218,8 +225,7 @@ export function QuickSearchWidget({
                       {formatPersonName(person)}
                     </p>
                     <p className="text-muted-foreground truncate text-xs">
-                      {person.isLiving ? "Living" : "Deceased"} •{" "}
-                      {formatPersonDates(person)}
+                      {formatPersonStatus(person)} • {formatPersonDates(person)}
                     </p>
                   </div>
                 </Link>
@@ -229,7 +235,7 @@ export function QuickSearchWidget({
                   to="/people"
                   className="text-primary block text-center text-xs font-medium hover:underline"
                 >
-                  View all results
+                  {t("dashboard:viewAllResults")}
                 </Link>
               </div>
             </div>
@@ -237,7 +243,7 @@ export function QuickSearchWidget({
 
           {showNoResults && (
             <p className="text-destructive mt-4 text-center text-sm">
-              No results found.
+              {t("dashboard:noResultsFound")}
             </p>
           )}
         </div>

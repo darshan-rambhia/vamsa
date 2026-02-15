@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Dialog,
@@ -33,6 +34,7 @@ interface CreateInviteDialogProps {
 export function CreateInviteDialog({
   onInviteCreated,
 }: Readonly<CreateInviteDialogProps>) {
+  const { t } = useTranslation(["admin", "common"]);
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,32 +140,34 @@ export function CreateInviteDialog({
               d="M12 4.5v15m7.5-7.5h-15"
             />
           </svg>
-          Send Invite
+          {t("admin:invitesSendInviteButton")}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {success ? "Invite Created" : "Send Invite"}
+            {success
+              ? t("admin:invitesCreatedSuccessTitle")
+              : t("admin:invitesSendInviteButton")}
           </DialogTitle>
           <DialogDescription>
             {success
-              ? "Share the invite link with the recipient"
-              : "Invite a family member to join your family tree"}
+              ? t("admin:invitesShareLink")
+              : t("admin:invitesInviteFamily")}
           </DialogDescription>
         </DialogHeader>
 
         {success ? (
           <div className="space-y-4">
             <div className="rounded-lg border-2 border-green-500/30 bg-green-500/10 px-4 py-3 text-sm text-green-700 dark:text-green-400">
-              <p className="font-medium">Invite sent successfully</p>
+              <p className="font-medium">{t("common:success")}</p>
               <p className="mt-1">
-                An invite has been created for {success.email}
+                {t("admin:invitesSuccessMessage", { email: success.email })}
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="invite-link">Invite Link</Label>
+              <Label htmlFor="invite-link">{t("admin:invitesLink")}</Label>
               <div className="bg-muted flex items-center gap-2 overflow-hidden rounded-md p-2">
                 <code
                   id="invite-link"
@@ -178,17 +182,17 @@ export function CreateInviteDialog({
                   onClick={copyInviteLink}
                   data-testid="copy-new-invite-link"
                 >
-                  Copy
+                  {t("common:copyUrl")}
                 </Button>
               </div>
               <p className="text-muted-foreground text-xs">
-                This link expires in 7 days
+                {t("admin:invitesExpiresIn7Days")}
               </p>
             </div>
 
             <DialogFooter>
               <Button onClick={handleClose} data-testid="close-invite-dialog">
-                Done
+                {t("common:done")}
               </Button>
             </DialogFooter>
           </div>
@@ -204,18 +208,18 @@ export function CreateInviteDialog({
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email Address</Label>
+              <Label htmlFor="email">{t("admin:invitesEmail")}</Label>
               <Input
                 id="email"
                 type="email"
                 {...register("email", {
-                  required: "Email is required",
+                  required: t("admin:invitesEmailRequired"),
                   pattern: {
                     value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                    message: "Invalid email address",
+                    message: t("admin:invitesInvalidEmail"),
                   },
                 })}
-                placeholder="family@example.com"
+                placeholder={t("admin:invitesEmailPlaceholder")}
                 data-testid="invite-email-input"
               />
               {errors.email && (
@@ -226,21 +230,25 @@ export function CreateInviteDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role">{t("common:role")}</Label>
               <Controller
                 name="role"
                 control={control}
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger data-testid="invite-role-select">
-                      <SelectValue placeholder="Select role" />
+                      <SelectValue placeholder={t("admin:invitesSelectRole")} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="VIEWER">
-                        Viewer - Can only view
+                        {t("admin:invitesViewerDescription")}
                       </SelectItem>
-                      <SelectItem value="MEMBER">Member - Can edit</SelectItem>
-                      <SelectItem value="ADMIN">Admin - Full access</SelectItem>
+                      <SelectItem value="MEMBER">
+                        {t("admin:invitesMemberDescription")}
+                      </SelectItem>
+                      <SelectItem value="ADMIN">
+                        {t("admin:invitesAdminDescription")}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -248,16 +256,20 @@ export function CreateInviteDialog({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="personSearch">Link to Person (Optional)</Label>
+              <Label htmlFor="personSearch">
+                {t("admin:invitesLinkToExisting")}
+              </Label>
               <Input
                 id="personSearch"
                 type="text"
-                placeholder="Search by name..."
+                placeholder={t("admin:invitesSearchByName")}
                 onChange={(e) => searchPersons(e.target.value)}
                 data-testid="invite-person-search"
               />
               {searchLoading && (
-                <p className="text-muted-foreground text-sm">Searching...</p>
+                <p className="text-muted-foreground text-sm">
+                  {t("admin:invitesSearching")}
+                </p>
               )}
               {persons.length > 0 && (
                 <Controller
@@ -271,10 +283,14 @@ export function CreateInviteDialog({
                       }
                     >
                       <SelectTrigger data-testid="invite-person-select">
-                        <SelectValue placeholder="Select person to link" />
+                        <SelectValue
+                          placeholder={t("admin:invitesSelectPersonToLink")}
+                        />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="none">No link</SelectItem>
+                        <SelectItem value="none">
+                          {t("admin:invitesNoLink")}
+                        </SelectItem>
                         {persons.map((person) => (
                           <SelectItem key={person.id} value={person.id}>
                             {person.firstName} {person.lastName}
@@ -286,7 +302,7 @@ export function CreateInviteDialog({
                 />
               )}
               <p className="text-muted-foreground text-xs">
-                Optionally link this invite to an existing person in the tree
+                {t("admin:invitesLinkOptional")}
               </p>
             </div>
 

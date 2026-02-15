@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { getPeopleStatistics } from "../../../server/statistics";
 import { AnimatedNumber } from "../../ui/animated-number";
 import { BaseWidget } from "./BaseWidget";
@@ -28,6 +29,7 @@ export function PeopleStatisticsWidget({
   onRemove,
   className,
 }: WidgetProps) {
+  const { t } = useTranslation(["dashboard", "common"]);
   const rawSettings = config.settings as PeopleStatsWidgetSettings | undefined;
   const settings: PeopleStatsWidgetSettings = {
     showChart: rawSettings?.showChart ?? true,
@@ -60,7 +62,7 @@ export function PeopleStatisticsWidget({
           {/* Hero Stat */}
           <div className="flex flex-1 flex-col justify-center space-y-2">
             <span className="text-muted-foreground text-sm font-medium tracking-wider uppercase">
-              Total Family Members
+              {t("dashboard:totalFamilyMembers")}
             </span>
             <div className="font-display text-primary text-7xl font-light tabular-nums">
               <AnimatedNumber value={stats.total} />
@@ -71,9 +73,9 @@ export function PeopleStatisticsWidget({
                 {settings.recentDays === 7
                   ? stats.recentAdditions.last7Days
                   : stats.recentAdditions.last30Days}{" "}
-                this week
+                {t("dashboard:thisWeek")}
               </span>
-              <span>growing legacy</span>
+              <span>{t("dashboard:growingLegacy")}</span>
             </div>
           </div>
 
@@ -81,7 +83,7 @@ export function PeopleStatisticsWidget({
           <div className="border-border/50 grid grid-cols-3 gap-4 border-t pt-4">
             <div className="space-y-1">
               <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
-                Living
+                {t("dashboard:living")}
               </span>
               <div className="font-display text-2xl tabular-nums">
                 {stats.living}
@@ -89,7 +91,7 @@ export function PeopleStatisticsWidget({
             </div>
             <div className="space-y-1">
               <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
-                Deceased
+                {t("dashboard:deceased")}
               </span>
               <div className="font-display text-2xl tabular-nums">
                 {stats.deceased}
@@ -97,7 +99,7 @@ export function PeopleStatisticsWidget({
             </div>
             <div className="space-y-1">
               <span className="text-muted-foreground text-[10px] font-medium tracking-wider uppercase">
-                Recent
+                {t("dashboard:recent")}
               </span>
               <div className="font-display text-2xl tabular-nums">
                 {settings.recentDays === 7

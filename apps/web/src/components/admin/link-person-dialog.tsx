@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Button,
@@ -35,6 +36,7 @@ export function LinkPersonDialog({
   currentPerson,
   onSuccess,
 }: LinkPersonDialogProps) {
+  const { t } = useTranslation(["admin", "common"]);
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
   const [selectedPersonId, setSelectedPersonId] = useState<string | null>(
@@ -76,9 +78,9 @@ export function LinkPersonDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Link User to Person</DialogTitle>
+          <DialogTitle>{t("admin:linkPersonDialogTitle")}</DialogTitle>
           <DialogDescription>
-            Link {userName} to a person in the family tree
+            {t("admin:linkPersonDialogDescription", { userName })}
           </DialogDescription>
         </DialogHeader>
 
@@ -92,7 +94,7 @@ export function LinkPersonDialog({
           {currentPerson && (
             <div className="rounded-lg border p-3">
               <p className="text-muted-foreground text-sm">
-                Currently linked to:
+                {t("admin:linkPersonCurrentlyLinked")}
               </p>
               <p className="font-medium">
                 {currentPerson.firstName} {currentPerson.lastName}
@@ -104,17 +106,19 @@ export function LinkPersonDialog({
                 onClick={handleUnlink}
                 disabled={linkMutation.isPending}
               >
-                Unlink
+                {t("admin:linkPersonUnlink")}
               </Button>
             </div>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="person-search">Search for a person</Label>
+            <Label htmlFor="person-search">
+              {t("admin:linkPersonSearchLabel")}
+            </Label>
             <Input
               id="person-search"
               type="text"
-              placeholder="Type to search..."
+              placeholder={t("admin:linkPersonSearchPlaceholder")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -123,7 +127,7 @@ export function LinkPersonDialog({
           <div className="max-h-60 space-y-1 overflow-auto rounded-md border p-2">
             {isLoading ? (
               <p className="text-muted-foreground py-4 text-center text-sm">
-                Loading...
+                {t("common:loading")}
               </p>
             ) : persons && persons.length > 0 ? (
               persons.map((person) => (
@@ -159,8 +163,8 @@ export function LinkPersonDialog({
             ) : (
               <p className="text-muted-foreground py-4 text-center text-sm">
                 {search
-                  ? "No matching persons found"
-                  : "All persons are already linked"}
+                  ? t("admin:linkPersonNoMatching")
+                  : t("admin:linkPersonAllLinked")}
               </p>
             )}
           </div>
@@ -171,7 +175,7 @@ export function LinkPersonDialog({
               onClick={() => onOpenChange(false)}
               disabled={linkMutation.isPending}
             >
-              Cancel
+              {t("common:cancel")}
             </Button>
             <Button
               onClick={handleSave}
@@ -179,7 +183,9 @@ export function LinkPersonDialog({
                 linkMutation.isPending || selectedPersonId === currentPerson?.id
               }
             >
-              {linkMutation.isPending ? "Saving..." : "Link Person"}
+              {linkMutation.isPending
+                ? t("admin:linkPersonSaving")
+                : t("admin:linkPersonLinkButton")}
             </Button>
           </div>
         </div>

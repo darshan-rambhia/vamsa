@@ -1,5 +1,6 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Card,
@@ -30,6 +31,7 @@ type UnclaimedProfile = {
 };
 
 function ClaimProfileComponent() {
+  const { t } = useTranslation(["auth", "common"]);
   const navigate = useNavigate();
   const [profiles, setProfiles] = useState<Array<UnclaimedProfile>>([]);
   const [isLoadingProfiles, setIsLoadingProfiles] = useState(true);
@@ -45,14 +47,14 @@ function ClaimProfileComponent() {
         const result = await getUnclaimedProfiles();
         setProfiles(result);
       } catch (_err) {
-        setError("Failed to load available profiles");
+        setError(t("failedToLoadProfiles"));
       } finally {
         setIsLoadingProfiles(false);
       }
     };
 
     loadProfiles();
-  }, []);
+  }, [t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,7 +110,7 @@ function ClaimProfileComponent() {
           <div>
             <CardTitle className="text-3xl">Vamsa</CardTitle>
             <CardDescription className="mt-2 text-base">
-              Claim your existing profile to connect with your family.
+              {t("claimProfileDescription")}
             </CardDescription>
           </div>
         </CardHeader>
@@ -124,27 +126,24 @@ function ClaimProfileComponent() {
                 className="border-destructive/30 bg-destructive/10 text-destructive rounded-lg border-2 px-4 py-3 text-sm"
                 data-testid="claim-profile-error"
               >
-                <div className="mb-1 font-semibold">Error:</div>
+                <div className="mb-1 font-semibold">{t("common:error")}:</div>
                 <div>{error}</div>
               </div>
             )}
 
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="profile">Select Your Profile</Label>
+                <Label htmlFor="profile">{t("selectYourProfile")}</Label>
                 {isLoadingProfiles ? (
                   <div className="text-muted-foreground flex h-10 items-center justify-center text-sm">
-                    Loading profiles...
+                    {t("loadingProfiles")}
                   </div>
                 ) : profiles.length === 0 ? (
                   <div className="text-muted-foreground rounded-md border border-dashed px-4 py-6 text-center text-sm">
                     <p className="mb-2 font-semibold">
-                      No unclaimed profiles available
+                      {t("noUnclaimedProfiles")}
                     </p>
-                    <p>
-                      All existing profiles have been claimed. Please contact
-                      your family administrator.
-                    </p>
+                    <p>{t("allProfilesClaimed")}</p>
                   </div>
                 ) : (
                   <Select
@@ -157,7 +156,7 @@ function ClaimProfileComponent() {
                       id="profile"
                       data-testid="claim-profile-select"
                     >
-                      <SelectValue placeholder="Choose your profile" />
+                      <SelectValue placeholder={t("chooseYourProfile")} />
                     </SelectTrigger>
                     <SelectContent>
                       {profiles.map((profile) => (
@@ -171,7 +170,7 @@ function ClaimProfileComponent() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
+                <Label htmlFor="email">{t("common:email")}</Label>
                 <Input
                   id="email"
                   name="email"
@@ -187,7 +186,7 @@ function ClaimProfileComponent() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <Label htmlFor="password">{t("common:password")}</Label>
                 <Input
                   id="password"
                   name="password"
@@ -212,18 +211,18 @@ function ClaimProfileComponent() {
               className="w-full"
               data-testid="claim-profile-submit-button"
             >
-              {isLoading ? "Claiming profile..." : "Claim Profile"}
+              {isLoading ? t("claimingProfile") : t("claimProfile")}
             </Button>
 
             <div className="text-center text-sm">
               <span className="text-muted-foreground">
-                Already have an account?{" "}
+                {t("alreadyHaveAccount")}{" "}
               </span>
               <Link
                 to="/login"
                 className="text-primary font-medium hover:underline"
               >
-                Sign in
+                {t("signIn")}
               </Link>
             </div>
           </form>

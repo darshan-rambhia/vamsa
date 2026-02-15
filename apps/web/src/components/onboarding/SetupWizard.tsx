@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@vamsa/ui";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { PersonForm } from "../person/person-form";
@@ -15,6 +16,7 @@ interface SetupWizardProps {
 type WizardStep = "me" | "parents" | "complete";
 
 export function SetupWizard({ onComplete }: SetupWizardProps) {
+  const { t } = useTranslation(["dashboard", "common"]);
   const [currentStep, setCurrentStep] = useState<WizardStep>("me");
   const [myPersonId, setMyPersonId] = useState<string | null>(null);
   const [fatherAdded, setFatherAdded] = useState(false);
@@ -82,21 +84,21 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
       <div className="flex items-center justify-center gap-2">
         <StepIndicator
           number={1}
-          label="About Me"
+          label={t("dashboard:stepAboutMe")}
           active={currentStep === "me"}
           complete={currentStep === "parents" || currentStep === "complete"}
         />
         <div className="bg-border h-0.5 w-12" />
         <StepIndicator
           number={2}
-          label="Parents"
+          label={t("dashboard:stepParents")}
           active={currentStep === "parents"}
           complete={currentStep === "complete"}
         />
         <div className="bg-border h-0.5 w-12" />
         <StepIndicator
           number={3}
-          label="Done"
+          label={t("dashboard:stepDone")}
           active={currentStep === "complete"}
           complete={false}
         />
@@ -107,11 +109,10 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
         <Card>
           <CardHeader>
             <CardTitle className="font-display">
-              Tell us about yourself
+              {t("dashboard:tellUsAboutYourself")}
             </CardTitle>
             <p className="text-muted-foreground text-sm">
-              Create your profile to anchor your family tree. This will be
-              linked to your account.
+              {t("dashboard:createYourProfile")}
             </p>
           </CardHeader>
           <CardContent>
@@ -127,15 +128,14 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="font-display">
-                    Add Your Parents
+                    {t("dashboard:addYourParents")}
                   </CardTitle>
                   <p className="text-muted-foreground mt-1 text-sm">
-                    Optional: Add your father and mother to start building your
-                    tree.
+                    {t("dashboard:addParentsOptional")}
                   </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={handleSkipParents}>
-                  Skip for Now
+                  {t("dashboard:skipForNow")}
                 </Button>
               </div>
             </CardHeader>
@@ -144,7 +144,9 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
           {!fatherAdded && (
             <Card>
               <CardHeader>
-                <CardTitle className="font-display text-lg">Father</CardTitle>
+                <CardTitle className="font-display text-lg">
+                  {t("dashboard:father")}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <PersonForm
@@ -157,7 +159,9 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
           {fatherAdded && !motherAdded && (
             <Card>
               <CardHeader>
-                <CardTitle className="font-display text-lg">Mother</CardTitle>
+                <CardTitle className="font-display text-lg">
+                  {t("dashboard:mother")}
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <PersonForm
@@ -173,14 +177,14 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="text-primary h-6 w-6" />
                   <div>
-                    <p className="font-medium">Parents Added!</p>
+                    <p className="font-medium">{t("dashboard:parentsAdded")}</p>
                     <p className="text-muted-foreground text-sm">
-                      You can add more family members later.
+                      {t("dashboard:addMoreFamilyLater")}
                     </p>
                   </div>
                 </div>
                 <Button onClick={() => setCurrentStep("complete")}>
-                  Continue
+                  {t("dashboard:continue")}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </CardContent>
@@ -198,16 +202,15 @@ export function SetupWizard({ onComplete }: SetupWizardProps) {
 
             <div className="space-y-2">
               <h2 className="font-display text-2xl font-medium">
-                You&apos;re All Set!
+                {t("dashboard:youreAllSet")}
               </h2>
               <p className="text-muted-foreground">
-                Your family tree has been created. You can now explore your
-                dashboard and add more family members.
+                {t("dashboard:familyTreeCreated")}
               </p>
             </div>
 
             <Button size="lg" onClick={handleFinish}>
-              Go to Dashboard
+              {t("dashboard:goToDashboard")}
             </Button>
           </CardContent>
         </Card>

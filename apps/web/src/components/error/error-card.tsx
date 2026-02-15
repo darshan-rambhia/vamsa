@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, ChevronDown, ChevronUp, RefreshCw } from "lucide-react";
 import { Button, Card, CardContent, cn } from "@vamsa/ui";
 
@@ -26,8 +27,8 @@ export interface ErrorCardProps {
  * Used for component-level and section-level errors.
  */
 export function ErrorCard({
-  title = "Something went wrong",
-  message = "An unexpected error occurred. Please try again.",
+  title,
+  message,
   error,
   onRetry,
   showRetry = true,
@@ -35,8 +36,13 @@ export function ErrorCard({
   variant = "default",
   className,
 }: ErrorCardProps) {
+  const { t } = useTranslation("common");
   const [showDetails, setShowDetails] = useState(false);
   const isDev = import.meta.env.DEV;
+
+  // Use provided values or fallback to translations
+  const displayTitle = title ?? t("defaultErrorTitle");
+  const displayMessage = message ?? t("defaultErrorMessage");
 
   const errorMessage =
     error instanceof Error ? error.message : String(error || "");
@@ -52,7 +58,7 @@ export function ErrorCard({
       >
         <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
         <p className="flex-1 text-sm text-amber-700 dark:text-amber-300">
-          {message}
+          {displayMessage}
         </p>
         {showRetry && onRetry && (
           <Button
@@ -62,7 +68,7 @@ export function ErrorCard({
             className="shrink-0"
           >
             <RefreshCw className="mr-1 h-3 w-3" />
-            Retry
+            {t("retry")}
           </Button>
         )}
       </div>
@@ -78,14 +84,16 @@ export function ErrorCard({
               <AlertTriangle className="text-destructive h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <h3 className="text-foreground font-medium">{title}</h3>
-              <p className="text-muted-foreground mt-1 text-sm">{message}</p>
+              <h3 className="text-foreground font-medium">{displayTitle}</h3>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {displayMessage}
+              </p>
               {(showRetry && onRetry) || actions ? (
                 <div className="mt-3 flex items-center gap-2">
                   {showRetry && onRetry && (
                     <Button variant="outline" size="sm" onClick={onRetry}>
                       <RefreshCw className="mr-1.5 h-3 w-3" />
-                      Try Again
+                      {t("tryAgain")}
                     </Button>
                   )}
                   {actions}
@@ -105,7 +113,7 @@ export function ErrorCard({
                 ) : (
                   <ChevronDown className="h-3 w-3" />
                 )}
-                Technical details
+                {t("technicalDetails")}
               </button>
               {showDetails && (
                 <div className="bg-muted/50 mt-2 overflow-auto rounded p-3">
@@ -133,15 +141,17 @@ export function ErrorCard({
         <div className="bg-destructive/10 mb-4 flex h-14 w-14 items-center justify-center rounded-full">
           <AlertTriangle className="text-destructive h-7 w-7" />
         </div>
-        <h2 className="font-display text-xl font-semibold">{title}</h2>
-        <p className="text-muted-foreground mt-2 max-w-md text-sm">{message}</p>
+        <h2 className="font-display text-xl font-semibold">{displayTitle}</h2>
+        <p className="text-muted-foreground mt-2 max-w-md text-sm">
+          {displayMessage}
+        </p>
 
         {(showRetry && onRetry) || actions ? (
           <div className="mt-6 flex items-center gap-3">
             {showRetry && onRetry && (
               <Button onClick={onRetry}>
                 <RefreshCw className="mr-2 h-4 w-4" />
-                Try Again
+                {t("tryAgain")}
               </Button>
             )}
             {actions}
@@ -159,7 +169,7 @@ export function ErrorCard({
               ) : (
                 <ChevronDown className="h-3 w-3" />
               )}
-              Technical details
+              {t("technicalDetails")}
             </button>
             {showDetails && (
               <div className="bg-muted/50 mt-2 overflow-auto rounded-lg border p-4">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge, Button, Card, CardContent } from "@vamsa/ui/primitives";
 
 interface ResearchNote {
@@ -41,6 +42,7 @@ export function ResearchNotesList({
   onDeleteNote,
   isLoading,
 }: ResearchNotesListProps) {
+  const { t } = useTranslation(["people", "common"]);
   const [expandedEventTypes, setExpandedEventTypes] = useState<Set<string>>(
     new Set(Object.keys(notes))
   );
@@ -93,11 +95,10 @@ export function ResearchNotesList({
             </svg>
           </div>
           <h3 className="font-display text-foreground mb-2 text-xl">
-            No Research Notes
+            {t("people:noResearchNotes")}
           </h3>
           <p className="text-muted-foreground">
-            Research notes help track your findings and analysis from various
-            sources.
+            {t("people:noResearchNotesMessage")}
           </p>
         </CardContent>
       </Card>
@@ -174,6 +175,7 @@ function ResearchNoteCard({
   onEdit,
   onDelete,
 }: ResearchNoteCardProps) {
+  const { t } = useTranslation(["people", "common"]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   const handleDelete = () => {
@@ -200,7 +202,7 @@ function ResearchNoteCard({
           </h4>
           {note.source.author && (
             <p className="text-muted-foreground text-sm">
-              by {note.source.author}
+              {t("people:by")} {note.source.author}
             </p>
           )}
         </div>
@@ -222,7 +224,7 @@ function ResearchNoteCard({
 
       <div className="flex items-center justify-between gap-2">
         <Button variant="ghost" size="sm" onClick={onView}>
-          View Details
+          {t("people:viewDetails")}
         </Button>
         <div className="flex gap-2">
           <Button variant="ghost" size="sm" onClick={onEdit}>
@@ -265,7 +267,7 @@ function ResearchNoteCard({
 
       {showDeleteConfirm && (
         <div className="bg-destructive/10 text-destructive mt-3 rounded-md px-3 py-2 text-sm">
-          Click delete again to confirm
+          {t("people:clickDeleteAgainToConfirm")}
         </div>
       )}
     </div>

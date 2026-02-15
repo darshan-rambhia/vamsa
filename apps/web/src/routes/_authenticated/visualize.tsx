@@ -5,6 +5,7 @@ import {
 } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useId, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Label,
@@ -90,6 +91,7 @@ export const Route = createFileRoute("/_authenticated/visualize")({
 });
 
 function VisualizeComponent() {
+  const { t } = useTranslation(["charts", "common"]);
   const navigate = useNavigate();
   const search = useSearch({ from: "/_authenticated/visualize" });
   const [resetToken, setResetToken] = useState(0);
@@ -228,17 +230,17 @@ function VisualizeComponent() {
   const showMaxPeople = visualizationType === "matrix";
 
   const chartTypeLabels: Record<ChartType, string> = {
-    tree: "Interactive Tree",
-    ancestor: "Ancestor Chart",
-    descendant: "Descendant Chart",
-    hourglass: "Hourglass Chart",
-    fan: "Fan Chart",
-    timeline: "Timeline Chart",
-    matrix: "Relationship Matrix",
-    bowtie: "Bowtie Chart",
-    compact: "Compact Tree",
-    statistics: "Statistics",
-    list: "List View (Accessible)",
+    tree: t("charts:interactiveTree"),
+    ancestor: t("charts:ancestorChart"),
+    descendant: t("charts:descendantChart"),
+    hourglass: t("charts:hourglassChart"),
+    fan: t("charts:fanChart"),
+    timeline: t("charts:timelineChart"),
+    matrix: t("charts:relationshipMatrix"),
+    bowtie: t("charts:bowtieChart"),
+    compact: t("charts:compactTree"),
+    statistics: t("charts:statistics"),
+    list: t("charts:listViewAccessible"),
   };
 
   const getChartTitle = () => chartTypeLabels[visualizationType];
@@ -299,7 +301,7 @@ function VisualizeComponent() {
         {/* Chart Type Selector */}
         <div className="shrink-0 space-y-1">
           <Label className="space-y-1 text-xs" htmlFor={chartTypeId}>
-            <span className="block">Chart Type</span>
+            <span className="block">{t("charts:chartType")}</span>
             <Select
               value={visualizationType}
               onValueChange={(value) =>
@@ -328,8 +330,8 @@ function VisualizeComponent() {
               selectedPersonId={selectedPersonId}
               onPersonChange={handlePersonChange}
               isLoading={isLoadingPersons}
-              label="Center On"
-              placeholder="Select person..."
+              label={t("charts:centerOn")}
+              placeholder={t("charts:selectPerson")}
             />
           </div>
         )}
@@ -338,7 +340,7 @@ function VisualizeComponent() {
         {showAncestorSlider && (
           <div className="shrink-0">
             <GenerationSlider
-              label="Ancestors"
+              label={t("charts:ancestors")}
               value={ancestorGenerations}
               min={1}
               max={10}
@@ -354,7 +356,7 @@ function VisualizeComponent() {
         {showDescendantSlider && (
           <div className="shrink-0">
             <GenerationSlider
-              label="Descendants"
+              label={t("charts:descendants")}
               value={descendantGenerations}
               min={1}
               max={10}
@@ -370,7 +372,7 @@ function VisualizeComponent() {
         {showSortBy && (
           <div className="shrink-0 space-y-1">
             <Label className="space-y-1 text-xs" htmlFor={sortById}>
-              <span className="block">Sort By</span>
+              <span className="block">{t("charts:sortBy")}</span>
               <Select
                 value={sortBy}
                 onValueChange={(value) =>
@@ -381,9 +383,9 @@ function VisualizeComponent() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="birth">Birth Year</SelectItem>
-                  <SelectItem value="death">Death Year</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
+                  <SelectItem value="birth">{t("charts:birthYear")}</SelectItem>
+                  <SelectItem value="death">{t("charts:deathYear")}</SelectItem>
+                  <SelectItem value="name">{t("common:name")}</SelectItem>
                 </SelectContent>
               </Select>
             </Label>
@@ -394,7 +396,7 @@ function VisualizeComponent() {
         {showMaxPeople && (
           <div className="shrink-0">
             <GenerationSlider
-              label="Max People"
+              label={t("charts:maxPeople")}
               value={maxPeople}
               min={5}
               max={50}
@@ -415,7 +417,7 @@ function VisualizeComponent() {
             variant="outline"
             size="sm"
             onClick={() => setResetToken((v) => v + 1)}
-            title="Reset zoom and recenter"
+            title={t("charts:resetZoomRecenter")}
           >
             <svg
               className="mr-1.5 h-4 w-4"
@@ -430,7 +432,7 @@ function VisualizeComponent() {
                 d="M4.5 9.75A7.5 7.5 0 0112 2.25c4.142 0 7.5 3.358 7.5 7.5m0 0H18m1.5 0V6.75M19.5 14.25A7.5 7.5 0 0112 21.75 7.5 7.5 0 014.5 14.25m0 0H6m-1.5 0v3"
               />
             </svg>
-            Reset
+            {t("common:reset")}
           </Button>
 
           <div className="relative">
@@ -438,7 +440,7 @@ function VisualizeComponent() {
               variant="outline"
               size="sm"
               onClick={() => setIsExportOpen(!isExportOpen)}
-              title="Export chart"
+              title={t("charts:exportOrShare")}
             >
               <svg
                 className="mr-1.5 h-4 w-4"
@@ -453,7 +455,7 @@ function VisualizeComponent() {
                   d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"
                 />
               </svg>
-              Export
+              {t("charts:export")}
             </Button>
 
             {isExportOpen && (
@@ -463,19 +465,19 @@ function VisualizeComponent() {
                     className="hover:bg-muted px-3 py-2 text-left"
                     onClick={() => void handleExportPDF()}
                   >
-                    Export PDF
+                    {t("charts:exportPdf")}
                   </button>
                   <button
                     className="hover:bg-muted px-3 py-2 text-left"
                     onClick={handleExportPNG}
                   >
-                    Export PNG (2x)
+                    {t("charts:exportPng2x")}
                   </button>
                   <button
                     className="hover:bg-muted px-3 py-2 text-left"
                     onClick={handleExportSVG}
                   >
-                    Export SVG
+                    {t("charts:exportSvg")}
                   </button>
                 </div>
               </div>
@@ -509,6 +511,7 @@ function ChartVisualization({
   search,
   resetToken,
 }: ChartVisualizationProps) {
+  const { t } = useTranslation(["charts", "common"]);
   const navigate = useNavigate();
   const generations = search.generations || 3;
   const ancestorGenerations = search.ancestorGenerations || 2;
@@ -643,10 +646,10 @@ function ChartVisualization({
               </svg>
             </div>
             <h3 className="font-display text-lg font-medium">
-              Select a Person
+              {t("charts:selectPerson2")}
             </h3>
             <p className="text-muted-foreground mt-2">
-              Choose a person from the dropdown above to generate a chart
+              {t("charts:choosePerson")}
             </p>
           </div>
         </div>
@@ -661,7 +664,9 @@ function ChartVisualization({
         <div className="flex h-full items-center justify-center">
           <div className="text-center">
             <div className="bg-primary/20 mx-auto mb-4 h-12 w-12 animate-pulse rounded-full" />
-            <p className="text-muted-foreground">Generating chart...</p>
+            <p className="text-muted-foreground">
+              {t("charts:generatingChart")}
+            </p>
           </div>
         </div>
       </ChartContainer>
@@ -690,19 +695,19 @@ function ChartVisualization({
               </svg>
             </div>
             <h3 className="font-display text-lg font-medium">
-              Error Loading Chart
+              {t("charts:errorLoadingChart")}
             </h3>
             <p className="text-muted-foreground mt-2">
               {error instanceof Error
                 ? error.message
-                : "An unknown error occurred"}
+                : t("common:unexpectedError")}
             </p>
             <div className="mt-4 flex justify-center">
               <button
                 onClick={() => void refetch()}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium"
               >
-                Retry
+                {t("common:retry")}
               </button>
             </div>
           </div>
@@ -754,26 +759,28 @@ function ChartVisualization({
               </svg>
             </div>
             <h3 className="font-display text-lg font-medium">
-              No Data Available
+              {t("charts:noDataAvailable")}
             </h3>
             <p className="text-muted-foreground mt-2">
               {chartType === "timeline"
-                ? "No people with date information to display"
+                ? t("charts:noPeopleWithDates")
                 : chartType === "matrix"
-                  ? "No people found for the relationship matrix"
+                  ? t("charts:noPeopleForMatrix")
                   : chartType === "statistics"
-                    ? "No family members to generate statistics"
+                    ? t("charts:noFamilyStats")
                     : chartType === "compact"
-                      ? "No descendants found for this person"
-                      : `This person has no ${
-                          chartType === "ancestor"
-                            ? "ancestors"
-                            : chartType === "descendant"
-                              ? "descendants"
-                              : chartType === "bowtie"
-                                ? "parental lineage"
-                                : "family members"
-                        } to display`}
+                      ? t("charts:noDescendants")
+                      : t("charts:noChartData", {
+                          defaultValue: `This person has no ${
+                            chartType === "ancestor"
+                              ? t("charts:noAncestors")
+                              : chartType === "descendant"
+                                ? t("charts:noDescendants2")
+                                : chartType === "bowtie"
+                                  ? t("charts:noParentalLineage")
+                                  : t("charts:noFamilyMembers")
+                          } to display`,
+                        })}
             </p>
           </div>
         </div>

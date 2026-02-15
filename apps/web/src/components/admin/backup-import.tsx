@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Button, Input, Label } from "@vamsa/ui/primitives";
 import { ImportPreview as ImportPreviewComponent } from "./import-preview";
 import type { ImportPreview, ValidationResult } from "~/server/restore";
@@ -10,6 +11,7 @@ import { previewImport, validateBackup } from "~/server/restore";
 type ImportStep = "upload" | "validation" | "preview";
 
 export function BackupImport() {
+  const { t } = useTranslation(["admin", "common"]);
   const [step, setStep] = useState<ImportStep>("upload");
   const [backupFile, setBackupFile] = useState<File | null>(null);
   const [importPreview, setImportPreview] = useState<ImportPreview | null>(
@@ -60,7 +62,7 @@ export function BackupImport() {
     const file = e.target.files?.[0];
     if (file) {
       if (!file.name.endsWith(".zip")) {
-        setError("Please select a .zip file");
+        setError(t("admin:backupSelectZipFile"));
         return;
       }
       setBackupFile(file);
@@ -71,7 +73,7 @@ export function BackupImport() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!backupFile) {
-      setError("Please select a file");
+      setError(t("admin:backupSelectFile"));
       return;
     }
     setStep("validation");
@@ -116,7 +118,7 @@ export function BackupImport() {
               />
             </svg>
             <p className="text-muted-foreground mt-4 text-sm">
-              Validating backup file...
+              {t("admin:backupValidatingBackup")}
             </p>
           </div>
         </div>
@@ -128,7 +130,7 @@ export function BackupImport() {
         )}
 
         <Button variant="outline" onClick={handleReset}>
-          Cancel
+          {t("common:cancel")}
         </Button>
       </div>
     );
@@ -138,7 +140,7 @@ export function BackupImport() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="backup-file">Backup File (.zip)</Label>
+        <Label htmlFor="backup-file">{t("admin:backupBackupFile")}</Label>
         <Input
           id="backup-file"
           type="file"
@@ -166,20 +168,17 @@ export function BackupImport() {
           </svg>
           <div className="ml-3">
             <h3 className="text-sm font-medium text-amber-800 dark:text-amber-200">
-              Important: Create a backup first
+              {t("admin:backupImportantTitle")}
             </h3>
             <p className="mt-1 text-sm text-amber-700 dark:text-amber-300">
-              Importing will add or update data in your database. It is strongly
-              recommended to create a backup of your current data before
-              proceeding with the import.
+              {t("admin:backupImportantMessage")}
             </p>
           </div>
         </div>
       </div>
 
       <p className="text-muted-foreground text-sm">
-        Upload a backup ZIP file to restore your family tree data. The file will
-        be validated before import to ensure data integrity.
+        {t("admin:backupImportInstructions")}
       </p>
 
       <Button
@@ -201,7 +200,7 @@ export function BackupImport() {
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            Validating...
+            {t("admin:backupValidating")}
           </>
         ) : (
           <>
@@ -218,7 +217,7 @@ export function BackupImport() {
                 d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"
               />
             </svg>
-            Validate Backup
+            {t("admin:backupValidateBackup")}
           </>
         )}
       </Button>

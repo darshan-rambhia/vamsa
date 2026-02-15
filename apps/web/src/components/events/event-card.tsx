@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { Badge, Card, CardContent } from "@vamsa/ui/primitives";
 import { formatDate } from "@vamsa/lib";
 import type { EventType } from "@vamsa/schemas";
@@ -22,7 +23,8 @@ interface EventCardProps {
 }
 
 export function EventCard({ event, onClick }: EventCardProps) {
-  const eventTypeConfig = getEventTypeConfig(event.type);
+  const { t } = useTranslation(["people", "common"]);
+  const eventTypeConfig = getEventTypeConfig(event.type, t);
 
   return (
     <Card
@@ -67,8 +69,8 @@ export function EventCard({ event, onClick }: EventCardProps) {
                 <span className="text-muted-foreground text-sm">
                   {event.participants.length}{" "}
                   {event.participants.length === 1
-                    ? "participant"
-                    : "participants"}
+                    ? t("people:participant")
+                    : t("people:participants_plural")}
                 </span>
               </div>
             )}
@@ -93,55 +95,58 @@ export function EventCard({ event, onClick }: EventCardProps) {
   );
 }
 
-function getEventTypeConfig(type: EventType): {
+function getEventTypeConfig(
+  type: EventType,
+  t: (key: string) => string
+): {
   label: string;
   badgeClass: string;
 } {
   switch (type) {
     case "BIRTH":
       return {
-        label: "Birth",
+        label: t("people:birth"),
         badgeClass:
           "border-green-500/50 bg-green-500/10 text-green-700 dark:text-green-400",
       };
     case "DEATH":
       return {
-        label: "Death",
+        label: t("people:death"),
         badgeClass:
           "border-gray-500/50 bg-gray-500/10 text-gray-700 dark:text-gray-400",
       };
     case "MARRIAGE":
       return {
-        label: "Marriage",
+        label: t("people:marriage"),
         badgeClass:
           "border-blue-500/50 bg-blue-500/10 text-blue-700 dark:text-blue-400",
       };
     case "DIVORCE":
       return {
-        label: "Divorce",
+        label: t("people:divorce"),
         badgeClass:
           "border-orange-500/50 bg-orange-500/10 text-orange-700 dark:text-orange-400",
       };
     case "BURIAL":
       return {
-        label: "Burial",
+        label: t("people:burial"),
         badgeClass:
           "border-gray-500/50 bg-gray-500/10 text-gray-700 dark:text-gray-400",
       };
     case "GRADUATION":
       return {
-        label: "Graduation",
+        label: t("people:graduation"),
         badgeClass:
           "border-purple-500/50 bg-purple-500/10 text-purple-700 dark:text-purple-400",
       };
     case "CUSTOM":
       return {
-        label: "Event",
+        label: t("people:customEvent"),
         badgeClass: "border-border bg-muted text-foreground",
       };
     default:
       return {
-        label: "Event",
+        label: t("people:customEvent"),
         badgeClass: "border-border bg-muted text-foreground",
       };
   }

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import {
   Button,
   Card,
@@ -27,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/settings/profile")({
 });
 
 function ProfileSettingsPage() {
+  const { t } = useTranslation(["common"]);
   const { user } = Route.useRouteContext();
   const [showClaimModal, setShowClaimModal] = useState(false);
 
@@ -44,36 +46,34 @@ function ProfileSettingsPage() {
     <>
       <Container>
         <PageHeader
-          title="Profile Settings"
-          description="Manage your profile and account settings"
+          title={t("profileSettings")}
+          description={t("manageProfileSettings")}
         />
 
         <div className="max-w-3xl space-y-6">
           {/* Account Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Account Information</CardTitle>
-              <CardDescription>
-                Your account details and authentication method
-              </CardDescription>
+              <CardTitle>{t("accountInformation")}</CardTitle>
+              <CardDescription>{t("accountDetails")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <dt className="text-muted-foreground text-sm font-medium">
-                  Email
+                  {t("email")}
                 </dt>
                 <dd className="mt-1 text-sm">{user?.email}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground text-sm font-medium">
-                  Name
+                  {t("name")}
                 </dt>
                 <dd className="mt-1 text-sm">{user?.name}</dd>
               </div>
               {isOIDCUser && (
                 <div>
                   <dt className="text-muted-foreground text-sm font-medium">
-                    Sign-in Method
+                    {t("signInMethod")}
                   </dt>
                   <dd className="mt-1 text-sm capitalize">
                     {claimStatus?.oidcProvider} (SSO)
@@ -82,7 +82,7 @@ function ProfileSettingsPage() {
               )}
               <div>
                 <dt className="text-muted-foreground text-sm font-medium">
-                  Role
+                  {t("role")}
                 </dt>
                 <dd className="mt-1 text-sm capitalize">
                   {user?.role?.toLowerCase()}
@@ -95,10 +95,8 @@ function ProfileSettingsPage() {
           {isOIDCUser && (
             <Card>
               <CardHeader>
-                <CardTitle>Family Tree Profile</CardTitle>
-                <CardDescription>
-                  Link your account to your person record in the family tree
-                </CardDescription>
+                <CardTitle>{t("familyTreeProfile")}</CardTitle>
+                <CardDescription>{t("linkAccountDescription")}</CardDescription>
               </CardHeader>
               <CardContent>
                 {hasClaimedProfile ? (
@@ -120,10 +118,10 @@ function ProfileSettingsPage() {
                         </svg>
                         <div className="flex-1">
                           <h4 className="font-display text-sm font-medium">
-                            Profile Linked
+                            {t("profileLinked")}
                           </h4>
                           <p className="text-muted-foreground mt-1 text-sm">
-                            Your account is linked to{" "}
+                            {t("yourAccountLinkedTo")}{" "}
                             <span className="text-foreground font-medium">
                               {claimStatus?.person?.firstName}{" "}
                               {claimStatus?.person?.lastName}
@@ -136,7 +134,7 @@ function ProfileSettingsPage() {
                           )}
                           {claimStatus?.profileClaimedAt && (
                             <p className="text-muted-foreground mt-2 text-xs">
-                              Claimed on{" "}
+                              {t("claimedOn")}{" "}
                               {new Date(
                                 claimStatus.profileClaimedAt
                               ).toLocaleDateString("en-US", {
@@ -153,12 +151,10 @@ function ProfileSettingsPage() {
                 ) : (
                   <div className="space-y-4">
                     <p className="text-muted-foreground text-sm">
-                      You haven&apos;t linked your account to a person profile
-                      yet. Linking your profile allows you to edit your
-                      information and contribute to the family history.
+                      {t("haventLinkedProfile")}
                     </p>
                     <Button onClick={() => setShowClaimModal(true)}>
-                      Claim Your Profile
+                      {t("claimYourProfile")}
                     </Button>
                   </div>
                 )}

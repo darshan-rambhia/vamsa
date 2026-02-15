@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useRouter } from "@tanstack/react-router";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -28,6 +29,7 @@ export function OIDCProfileClaimModal({
   open,
   onOpenChange,
 }: OIDCProfileClaimModalProps) {
+  const { t } = useTranslation(["auth", "common"]);
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -98,11 +100,10 @@ export function OIDCProfileClaimModal({
       <DialogContent className="flex max-h-[80vh] max-w-2xl flex-col">
         <DialogHeader>
           <DialogTitle className="font-display text-2xl">
-            Welcome to Vamsa!
+            {t("welcomeToVamsa")}
           </DialogTitle>
           <DialogDescription className="text-base">
-            Are you in this family tree? Claiming your profile lets you edit
-            your information and contribute to the family history.
+            {t("areYouInThisFamilyTree")}
           </DialogDescription>
         </DialogHeader>
 
@@ -117,7 +118,7 @@ export function OIDCProfileClaimModal({
           {profiles?.suggested && profiles.suggested.length > 0 && (
             <div className="space-y-3">
               <h3 className="font-display text-lg font-semibold">
-                Suggested Matches
+                {t("suggestedMatches")}
               </h3>
               <div className="space-y-2">
                 {profiles.suggested.map((person) => (
@@ -142,11 +143,11 @@ export function OIDCProfileClaimModal({
           <div className="space-y-3">
             <div className="flex items-center justify-between gap-4">
               <h3 className="font-display text-lg font-semibold">
-                All Living Profiles
+                {t("allLivingProfiles")}
               </h3>
               <Input
                 type="search"
-                placeholder="Search by name or email..."
+                placeholder={t("searchByNameOrEmail")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="max-w-xs"
@@ -178,9 +179,7 @@ export function OIDCProfileClaimModal({
               </div>
             ) : filteredProfiles.length === 0 ? (
               <div className="text-muted-foreground py-8 text-center text-sm">
-                {searchQuery
-                  ? "No profiles match your search."
-                  : "No profiles available to claim."}
+                {searchQuery ? t("noProfilesMatch") : t("noProfilesAvailable")}
               </div>
             ) : (
               <div className="max-h-80 space-y-2 overflow-y-auto pr-2">
@@ -231,10 +230,10 @@ export function OIDCProfileClaimModal({
                 />
               </svg>
             ) : null}
-            Skip for now
+            {t("skipForNow")}
           </Button>
           <p className="text-muted-foreground text-sm">
-            You can claim your profile later in Settings
+            {t("claimProfileLaterInSettings")}
           </p>
         </div>
       </DialogContent>
