@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 export interface Transform {
   x: number;
@@ -26,6 +26,13 @@ export interface ChartViewportOptions {
   minHeight?: number;
   /** Reset signal - increment to reset view */
   resetSignal?: number;
+}
+
+export interface ViewportBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 export interface ChartViewportResult {
@@ -58,6 +65,8 @@ export interface ChartViewportResult {
   fitContent: (bounds: ContentBounds) => void;
   /** Current scale for display (e.g., "100%") */
   scalePercent: number;
+  /** Get current viewport bounds in tree/content coordinates */
+  viewportBounds: ViewportBounds | null;
 }
 
 const DEFAULT_MARGIN = { top: 40, right: 40, bottom: 40, left: 40 };
@@ -302,6 +311,25 @@ export function useChartViewport(
     [transform, dimensions]
   );
 
+  // Compute viewport bounds in tree/content coordinates
+  // This converts screen-space viewport to the coordinate system used by nodes
+  const viewportBounds = useMemo((): ViewportBounds | null => {
+    if (!hasInitialDimensions || transform.scale === 0) return null;
+    return {
+      x: -transform.x / transform.scale,
+      y: -transform.y / transform.scale,
+      width: dimensions.width / transform.scale,
+      height: dimensions.height / transform.scale,
+    };
+  }, [
+    hasInitialDimensions,
+    transform.x,
+    transform.y,
+    transform.scale,
+    dimensions.width,
+    dimensions.height,
+  ]);
+
   return {
     containerRef,
     dimensions,
@@ -324,6 +352,7 @@ export function useChartViewport(
     },
     fitContent,
     scalePercent: Math.round(transform.scale * 100),
+    viewportBounds,
   };
 }
 

@@ -170,6 +170,22 @@ export function useVisibleNodes(
 }
 
 /**
+ * Virtual rendering helper - returns only edges where both endpoints are visible
+ */
+export function useVisibleEdges(
+  edges: Array<ChartEdge>,
+  visibleNodeIds: Set<string>
+): Array<ChartEdge> {
+  return useMemo(() => {
+    if (visibleNodeIds.size === 0) return edges;
+    return edges.filter(
+      (edge) =>
+        visibleNodeIds.has(edge.source) && visibleNodeIds.has(edge.target)
+    );
+  }, [edges, visibleNodeIds]);
+}
+
+/**
  * Loading state manager for large datasets
  */
 export function useChartLoadingState(nodeCount: number) {

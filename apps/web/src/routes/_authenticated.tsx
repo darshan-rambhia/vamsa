@@ -49,6 +49,7 @@ const checkAuthInline = createServerFn({ method: "GET" }).handler(async () => {
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
     const result = await checkAuthInline();
+
     if (!result.valid) {
       throw redirect({ to: "/login" });
     }

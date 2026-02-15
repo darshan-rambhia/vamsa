@@ -38,22 +38,20 @@ function PersonDetailComponent() {
     queryFn: () => getPerson({ data: { id: personId } }),
   });
 
+  // All queries use personId from URL params — no waterfall needed
   const { data: events = [], isLoading: isLoadingEvents } = useQuery({
     queryKey: ["personEvents", personId],
     queryFn: () => getPersonEvents({ data: { personId } }),
-    enabled: !!person,
   });
 
   const { data: places = [], isLoading: isLoadingPlaces } = useQuery({
     queryKey: ["personPlaces", personId],
     queryFn: () => getPersonPlaces({ data: { personId } }),
-    enabled: !!person,
   });
 
   const { data: mediaData, isLoading: isLoadingMedia } = useQuery({
     queryKey: ["personMedia", personId],
     queryFn: () => getPersonMedia({ data: { personId } }),
-    enabled: !!person,
   });
 
   if (isLoading) {

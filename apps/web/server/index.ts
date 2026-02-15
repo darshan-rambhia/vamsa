@@ -293,8 +293,22 @@ app.use(
     algorithm: "md5",
     // Don't apply to very small responses
     minSize: 512,
-    // Cache control for API responses
-    cacheControl: "private, must-revalidate, max-age=0",
+    // Default: volatile data (auth, real-time) — always revalidate
+    cacheControl: "private, max-age=0, must-revalidate",
+    // Route-specific cache durations to reduce unnecessary round-trips
+    routeCacheConfig: [
+      // Volatile: auth endpoints — always revalidate
+      { pattern: /^\/api\/auth\//, maxAge: 0 },
+      // Stable: person profiles, family data, settings (5 min cache)
+      { pattern: /^\/api\/v1\/persons\//, maxAge: 300 },
+      { pattern: /^\/api\/v1\/families\//, maxAge: 300 },
+      { pattern: /^\/api\/v1\/settings/, maxAge: 300 },
+      { pattern: /^\/api\/v1\/media\//, maxAge: 300 },
+      // Semi-stable: search, dashboard, charts (2 min cache)
+      { pattern: /^\/api\/v1\/search/, maxAge: 120 },
+      { pattern: /^\/api\/v1\/dashboard/, maxAge: 120 },
+      { pattern: /^\/api\/v1\/charts\//, maxAge: 120 },
+    ],
     // Collect metrics in production
     collectMetrics: IS_PRODUCTION,
   })
