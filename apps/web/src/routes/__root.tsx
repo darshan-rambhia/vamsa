@@ -1,7 +1,6 @@
 /// <reference types="vite/client" />
 import { useEffect, useLayoutEffect, useState } from "react";
 import { createServerFn } from "@tanstack/react-start";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { I18nextProvider, useTranslation } from "react-i18next";
 import {
   AlertTriangle,
@@ -16,23 +15,16 @@ import {
   Link,
   Outlet,
   Scripts,
-  createRootRoute,
+  createRootRouteWithContext,
   useRouter,
 } from "@tanstack/react-router";
+import { QueryClientProvider } from "@tanstack/react-query";
 import type { ErrorComponentProps } from "@tanstack/react-router";
+import type { QueryClient } from "@tanstack/react-query";
 import appCss from "~/styles.css?url";
 import printCss from "~/styles/print.css?url";
 import i18n from "~/i18n/config";
 import { getCspNonce } from "~/server/csp-nonce";
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      gcTime: 1000 * 60 * 30, // 30 minutes
-    },
-  },
-});
 
 /**
  * Server function to get the CSP nonce for the current request
@@ -247,7 +239,9 @@ function RootErrorComponent({ error, reset }: ErrorComponentProps) {
   );
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+}>()({
   notFoundComponent: NotFound,
   errorComponent: RootErrorComponent,
   loader: async () => {
@@ -310,6 +304,7 @@ export const Route = createRootRoute({
 function RootComponent() {
   // Access the nonce from the route loader data
   const { nonce } = Route.useLoaderData();
+  const { queryClient } = Route.useRouteContext();
 
   useLayoutEffect(() => {
     document.documentElement.dataset.hydrated = "true";
@@ -321,7 +316,7 @@ function RootComponent() {
   }, []);
 
   return (
-    <RootDocument nonce={nonce}>
+    <RootDocument nonce={nonce} queryClient={queryClient}>
       <Outlet />
     </RootDocument>
   );
@@ -333,9 +328,11 @@ const DARK_MODE_SCRIPT = `(function(){var s=localStorage.getItem('theme');var p=
 function RootDocument({
   children,
   nonce,
+  queryClient,
 }: {
   children: React.ReactNode;
   nonce?: string;
+  queryClient: QueryClient;
 }) {
   // Get current language from i18n (defaults to 'en')
   const currentLang = i18n.language || "en";
