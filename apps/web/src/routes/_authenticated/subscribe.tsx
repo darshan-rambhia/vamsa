@@ -22,9 +22,11 @@ import {
   revokeCalendarToken,
 } from "~/server/calendar";
 import { SubscriptionInstructions } from "~/components/calendar/subscription-instructions";
+import { CompactRouteError } from "~/components/error";
 
 export const Route = createFileRoute("/_authenticated/subscribe")({
   component: SubscribeComponent,
+  errorComponent: CompactRouteError,
 });
 
 function SubscribeComponent() {

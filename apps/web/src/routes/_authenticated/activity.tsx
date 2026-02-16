@@ -16,9 +16,11 @@ import {
   getRecentActivity,
 } from "~/server/dashboard";
 import { ActivityFilterPanel } from "~/components/activity/ActivityFilterPanel";
+import { CompactRouteError } from "~/components/error";
 
 export const Route = createFileRoute("/_authenticated/activity")({
   component: ActivityComponent,
+  errorComponent: CompactRouteError,
 });
 
 // Default filters: last 7 days

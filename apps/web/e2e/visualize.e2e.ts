@@ -94,13 +94,21 @@ test.describe("Visualization Page", () => {
   });
 
   test.describe("Person Selection", () => {
-    test("user can open person selector dropdown", async ({ page }) => {
-      const personSelect = page.getByLabel(/center on/i);
-      await personSelect.click();
+    test("user can interact with person selector", async ({ page }) => {
+      const personInput = page.locator("#person-selector");
+      await expect(personInput).toBeVisible({ timeout: 10000 });
 
-      // Wait for dropdown to open with people options
-      const selectContent = page.locator("[role='listbox'], [role='option']");
-      await expect(selectContent.first()).toBeVisible({ timeout: 5000 });
+      // Wait for React hydration — the Chart Type selector shows text only after React state initializes
+      await expect(page.getByLabel(/chart type/i)).toContainText(/tree/i, {
+        timeout: 10000,
+      });
+
+      // Click the input to focus it and open the dropdown
+      await personInput.click();
+
+      // The dropdown should open (onFocus sets isOpen=true)
+      const listbox = page.locator("[role='listbox']");
+      await expect(listbox).toBeVisible({ timeout: 5000 });
     });
   });
 

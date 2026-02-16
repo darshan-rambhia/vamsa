@@ -32,8 +32,6 @@ const BUDGETS: Record<string, number> = {
   vendor: 300,
   // Index/entry chunks
   index: 1200,
-  // HTML2Canvas and PDF libs are large
-  html2canvas: 250,
   // Default fallback for unknown chunks
   default: 400,
 };
@@ -44,16 +42,12 @@ const BUDGETS: Record<string, number> = {
  * - main-abc123.js -> main
  * - dashboard-def456.js -> dashboard
  * - vendor-ghi789.js -> vendor
- * - html2canvas.esm-DXEQVQnt.js -> html2canvas
  */
 function extractChunkName(filename: string): string {
   // Remove extension
   const withoutExt = filename.replace(/\.(js|css)$/, "");
 
-  // Handle special cases like html2canvas.esm
-  if (withoutExt.includes("html2canvas")) {
-    return "html2canvas";
-  }
+  // Handle special cases
   if (withoutExt.includes("svg2pdf")) {
     return "svg2pdf";
   }

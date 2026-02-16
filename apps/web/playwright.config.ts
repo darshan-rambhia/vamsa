@@ -166,7 +166,7 @@ export default defineConfig({
     // Visual regression tests
     {
       name: "visual",
-      testMatch: "**/visual/**/*.spec.ts",
+      testMatch: "**/visual/**/*.e2e.ts",
       use: {
         ...devices["Desktop Chrome"],
         // Disable HSTS/security features that redirect HTTP to HTTPS in Docker
@@ -184,7 +184,7 @@ export default defineConfig({
     // Performance tests
     {
       name: "performance",
-      testMatch: "**/performance/**/*.spec.ts",
+      testMatch: "**/performance/**/*.e2e.ts",
       use: {
         ...devices["Desktop Chrome"],
         // Disable HSTS/security features that redirect HTTP to HTTPS in Docker
