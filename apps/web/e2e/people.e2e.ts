@@ -2,7 +2,7 @@
  * People Management E2E Tests
  * Tests CRUD operations for family members with data persistence verification
  */
-import { expect, test } from "./fixtures";
+import { expect, test, waitForHydration } from "./fixtures";
 import { bdd } from "./fixtures/bdd-helpers";
 import {
   Navigation,
@@ -515,6 +515,103 @@ test.describe("People - Data Integrity", () => {
       // Name heading should still be visible and populated
       expect(nameText).toBeTruthy();
       expect(nameText?.length).toBeGreaterThan(0);
+    });
+  });
+});
+
+test.describe("People - Edit Lifecycle", () => {
+  test("should edit a person and verify all changes persist", async ({
+    page,
+    waitForConvexSync,
+  }) => {
+    test.slow();
+
+    const originalFirst = `EditOrig_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const updatedFirst = `EditUpd_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const lastName = "Lifecycle";
+    let personId: string | null = null;
+
+    await bdd.given("a person exists in the system", async () => {
+      await gotoWithRetry(page, "/people/new");
+      await waitForHydration(page);
+      const form = new PersonFormPage(page);
+      await form.fillBasicInfo({ firstName: originalFirst, lastName });
+      await form.submit();
+      await page.waitForURL((url) => !url.pathname.includes("/new"), {
+        timeout: 15000,
+      });
+      await waitForConvexSync();
+
+      const match = page.url().match(/\/people\/([^/]+)/);
+      personId = match?.[1] ?? null;
+      expect(personId).toBeTruthy();
+    });
+
+    await bdd.when("user clicks Edit and modifies the first name", async () => {
+      await gotoWithRetry(page, `/people/${personId}`);
+      const detailPage = new PersonDetailPage(page);
+      await detailPage.nameHeading.waitFor({
+        state: "visible",
+        timeout: 10000,
+      });
+
+      const editButton = page
+        .locator('button:has-text("Edit Profile"), a:has-text("Edit Profile")')
+        .first();
+      await expect(editButton).toBeVisible({ timeout: 5000 });
+      await editButton.click();
+      await page.waitForURL(/\/people\/[^/]+\/edit/, { timeout: 15000 });
+
+      const form = new PersonFormPage(page);
+      await form.firstNameInput.waitFor({ state: "visible", timeout: 5000 });
+      await form.firstNameInput.clear();
+      await form.firstNameInput.fill(updatedFirst);
+
+      await form.submit();
+      await page.waitForTimeout(1000);
+      await waitForConvexSync();
+    });
+
+    await bdd.then("updated name appears on the detail page", async () => {
+      await gotoWithRetry(page, `/people/${personId}`);
+      const heading = page.locator("h1").first();
+      await heading.waitFor({ state: "visible", timeout: 10000 });
+      const headingText = await heading.textContent();
+      expect(headingText).toContain(updatedFirst);
+      expect(headingText).not.toContain(originalFirst);
+    });
+
+    await bdd.and("updated name persists after reload", async () => {
+      await page.reload();
+      await page.waitForTimeout(1000);
+
+      const heading = page.locator("h1").first();
+      await heading.waitFor({ state: "visible", timeout: 10000 });
+      const headingText = await heading.textContent();
+      expect(headingText).toContain(updatedFirst);
+    });
+
+    await bdd.and("updated name appears in the people list", async () => {
+      const nav = new Navigation(page);
+      try {
+        await nav.goToPeople();
+      } catch {
+        await gotoWithRetry(page, "/people");
+      }
+
+      const peopleList = new PeopleListPage(page);
+      await peopleList.waitForLoad();
+
+      if (await peopleList.searchInput.isVisible().catch(() => false)) {
+        await peopleList.search(updatedFirst);
+        await page.waitForTimeout(500);
+      }
+
+      const personLink = page.locator(`a:has-text("${updatedFirst}")`);
+      const isVisible = await personLink
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
+      expect(isVisible).toBeTruthy();
     });
   });
 });

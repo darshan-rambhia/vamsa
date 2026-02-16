@@ -10,7 +10,8 @@
  * relationships which can't be reliably set up in parallel E2E tests.
  */
 
-import { expect, test, waitForHydration } from "./fixtures";
+import { bdd, expect, test, waitForHydration } from "./fixtures";
+import { PersonFormPage, gotoWithRetry } from "./fixtures/page-objects";
 
 // Helper to fill input with error throwing on failure
 // Uses "poke and verify" pattern - type a character, verify React responds, then continue
@@ -262,6 +263,166 @@ test.describe("Add Relationship", () => {
     const searchInputAfter = page.getByTestId("add-relationship-search-input");
     const value = await searchInputAfter.inputValue();
     expect(value).toBe("");
+  });
+});
+
+test.describe("Delete Relationship", () => {
+  test("should create a relationship and then delete it", async ({
+    page,
+    waitForConvexSync,
+  }) => {
+    test.slow();
+
+    const parentName = `Parent_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const childName = `Child_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const lastName = "DelRelTest";
+    let parentId: string | null = null;
+
+    await bdd.given("two persons exist", async () => {
+      // Create parent
+      await gotoWithRetry(page, "/people/new");
+      await waitForHydration(page);
+      const form = new PersonFormPage(page);
+      await form.fillBasicInfo({ firstName: parentName, lastName });
+      await form.submit();
+      await page.waitForURL((url) => !url.pathname.includes("/new"), {
+        timeout: 15000,
+      });
+      await waitForConvexSync();
+
+      const match = page.url().match(/\/people\/([^/]+)/);
+      parentId = match?.[1] ?? null;
+      expect(parentId).toBeTruthy();
+
+      // Create child
+      await gotoWithRetry(page, "/people/new");
+      await waitForHydration(page);
+      const form2 = new PersonFormPage(page);
+      await form2.fillBasicInfo({ firstName: childName, lastName });
+      await form2.submit();
+      await page.waitForURL((url) => !url.pathname.includes("/new"), {
+        timeout: 15000,
+      });
+      await waitForConvexSync();
+    });
+
+    await bdd.when("user adds a child relationship to the parent", async () => {
+      await gotoWithRetry(page, `/people/${parentId}`);
+      await page
+        .locator("h1")
+        .first()
+        .waitFor({ state: "visible", timeout: 10000 });
+
+      // Switch to Relationships tab
+      const relTab = page
+        .locator('[role="tab"]')
+        .filter({ hasText: "Relationships" });
+      await relTab.waitFor({ state: "visible", timeout: 5000 });
+      await relTab.click();
+      await page.waitForTimeout(300);
+
+      // Open add relationship dialog
+      const addButton = page.getByTestId("add-relationship-button");
+      await expect(addButton).toBeVisible({ timeout: 5000 });
+      await addButton.click();
+
+      const dialog = page.getByTestId("add-relationship-dialog");
+      await expect(dialog).toBeVisible({ timeout: 5000 });
+
+      // Select "Child" type
+      const typeSelect = page.getByTestId("add-relationship-type-select");
+      await typeSelect.click();
+      await page.waitForTimeout(300);
+      const childOption = page.locator(`text="Child"`);
+      if (await childOption.isVisible().catch(() => false)) {
+        await childOption.click();
+        await page.waitForTimeout(300);
+      }
+
+      // Search for the child person
+      const searchInput = page.getByTestId("add-relationship-search-input");
+      await searchInput.fill(childName);
+      await page.waitForTimeout(500);
+
+      // Click first search result
+      const firstResult = page
+        .locator("[data-testid^='add-relationship-search-result-']")
+        .first();
+      const hasResult = await firstResult
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
+
+      if (hasResult) {
+        await firstResult.click();
+        await page.waitForTimeout(300);
+
+        const saveButton = page.getByTestId("add-relationship-save");
+        await saveButton.click();
+        await page.waitForTimeout(1000);
+        await waitForConvexSync();
+      }
+    });
+
+    await bdd.then(
+      "relationship appears on the person detail page",
+      async () => {
+        await gotoWithRetry(page, `/people/${parentId}`);
+        await page
+          .locator("h1")
+          .first()
+          .waitFor({ state: "visible", timeout: 10000 });
+
+        const relTab = page
+          .locator('[role="tab"]')
+          .filter({ hasText: "Relationships" });
+        await relTab.click();
+        await page.waitForTimeout(500);
+
+        const childLink = page.locator(`text="${childName}"`);
+        const childVisible = await childLink
+          .isVisible({ timeout: 5000 })
+          .catch(() => false);
+        expect(childVisible).toBeTruthy();
+      }
+    );
+
+    await bdd.and("user deletes the relationship", async () => {
+      const deleteButton = page.getByTestId("delete-relationship-button");
+      const hasDelete = await deleteButton
+        .first()
+        .isVisible({ timeout: 3000 })
+        .catch(() => false);
+
+      if (hasDelete) {
+        await deleteButton.first().click();
+        await page.waitForTimeout(300);
+
+        const confirmDialog = page.getByTestId("delete-relationship-dialog");
+        await expect(confirmDialog).toBeVisible({ timeout: 5000 });
+
+        const confirmButton = page.getByTestId("delete-relationship-confirm");
+        await confirmButton.click();
+        await page.waitForTimeout(1000);
+        await waitForConvexSync();
+      }
+    });
+
+    await bdd.and("relationship no longer appears after deletion", async () => {
+      await page.reload();
+      await page.waitForTimeout(1000);
+
+      const relTab = page
+        .locator('[role="tab"]')
+        .filter({ hasText: "Relationships" });
+      await relTab.click();
+      await page.waitForTimeout(500);
+
+      const childLink = page.locator(`text="${childName}"`);
+      const stillVisible = await childLink
+        .isVisible({ timeout: 2000 })
+        .catch(() => false);
+      expect(stillVisible).toBeFalsy();
+    });
   });
 });
 

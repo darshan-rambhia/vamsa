@@ -461,6 +461,152 @@ test.describe.serial("Person Form - Edit", () => {
   });
 });
 
+test.describe("Person Form - All Fields", () => {
+  test("should create a person filling every form field", async ({
+    page,
+    waitForConvexSync,
+  }) => {
+    test.slow();
+
+    const firstName = `FullForm_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const lastName = "AllFields";
+
+    await bdd.given("user navigates to create person form", async () => {
+      await gotoWithRetry(page, "/people/new");
+      await waitForHydration(page);
+      const form = page.getByTestId("person-form");
+      await expect(form).toBeVisible({ timeout: 10000 });
+    });
+
+    await bdd.when("user fills all fields on the Basic Info tab", async () => {
+      // Basic info fields
+      const firstNameInput = page.getByTestId("person-form-firstName");
+      await firstNameInput.waitFor({ state: "visible", timeout: 5000 });
+      await firstNameInput.click();
+      await firstNameInput.fill(firstName);
+
+      const lastNameInput = page.getByTestId("person-form-lastName");
+      await lastNameInput.click();
+      await lastNameInput.fill(lastName);
+
+      // Maiden name
+      const maidenNameInput = page.getByTestId("person-form-maidenName");
+      if (await maidenNameInput.isVisible().catch(() => false)) {
+        await maidenNameInput.click();
+        await maidenNameInput.fill("TestMaiden");
+      }
+
+      // Gender select
+      const genderSelect = page.getByTestId("person-form-gender");
+      if (await genderSelect.isVisible().catch(() => false)) {
+        await genderSelect.click();
+        await page.waitForTimeout(200);
+        const maleOption = page
+          .locator('[role="option"]')
+          .filter({ hasText: "Male" });
+        if (await maleOption.isVisible().catch(() => false)) {
+          await maleOption.click();
+          await page.waitForTimeout(200);
+        }
+      }
+
+      // Date of birth
+      const dobInput = page.getByTestId("person-form-dateOfBirth");
+      if (await dobInput.isVisible().catch(() => false)) {
+        await dobInput.click();
+        await dobInput.fill("1990-06-15");
+      }
+
+      // Is living toggle
+      const isLivingToggle = page.getByTestId("person-form-isLiving");
+      if (await isLivingToggle.isVisible().catch(() => false)) {
+        await expect(isLivingToggle).toBeVisible();
+      }
+
+      // Birth place
+      const birthPlaceInput = page.getByTestId("person-form-birthPlace");
+      if (await birthPlaceInput.isVisible().catch(() => false)) {
+        await birthPlaceInput.click();
+        await birthPlaceInput.fill("Mumbai, India");
+      }
+
+      // Native place
+      const nativePlaceInput = page.getByTestId("person-form-nativePlace");
+      if (await nativePlaceInput.isVisible().catch(() => false)) {
+        await nativePlaceInput.click();
+        await nativePlaceInput.fill("Pune, India");
+      }
+
+      // Bio
+      const bioInput = page.getByTestId("person-form-bio");
+      if (await bioInput.isVisible().catch(() => false)) {
+        await bioInput.click();
+        await bioInput.fill("A test biography for comprehensive form testing.");
+      }
+
+      // Contact fields (may be on a different tab)
+      const emailInput = page.getByTestId("person-form-email");
+      if (await emailInput.isVisible().catch(() => false)) {
+        await emailInput.click();
+        await emailInput.fill("testperson@example.com");
+      }
+
+      const phoneInput = page.getByTestId("person-form-phone");
+      if (await phoneInput.isVisible().catch(() => false)) {
+        await phoneInput.click();
+        await phoneInput.fill("+1-555-0123");
+      }
+
+      // Professional fields (may be on a different tab)
+      const professionInput = page.getByTestId("person-form-profession");
+      if (await professionInput.isVisible().catch(() => false)) {
+        await professionInput.click();
+        await professionInput.fill("Software Engineer");
+      }
+
+      const employerInput = page.getByTestId("person-form-employer");
+      if (await employerInput.isVisible().catch(() => false)) {
+        await employerInput.click();
+        await employerInput.fill("Acme Corp");
+      }
+    });
+
+    await bdd.and("user submits the form", async () => {
+      const submitButton = page.getByTestId("person-form-submit");
+      await submitButton.click();
+
+      await page.waitForURL((url) => !url.pathname.includes("/new"), {
+        timeout: 15000,
+      });
+      await waitForConvexSync();
+    });
+
+    await bdd.then(
+      "person is created and detail page shows the data",
+      async () => {
+        await expect(page).toHaveURL(/\/people\/[^/]+$/);
+
+        const heading = page.locator("h1").first();
+        await heading.waitFor({ state: "visible", timeout: 10000 });
+        const headingText = await heading.textContent();
+        expect(headingText).toContain(firstName);
+        expect(headingText).toContain(lastName);
+      }
+    );
+
+    await bdd.and("data persists after page reload", async () => {
+      const currentUrl = page.url();
+      await page.reload();
+      await page.waitForURL(currentUrl, { timeout: 10000 });
+
+      const heading = page.locator("h1").first();
+      await heading.waitFor({ state: "visible", timeout: 10000 });
+      const headingText = await heading.textContent();
+      expect(headingText).toContain(firstName);
+    });
+  });
+});
+
 test.describe("Person Form - Accessibility", () => {
   test("form inputs are keyboard navigable", async ({ page }) => {
     await gotoWithRetry(page, "/people/new");

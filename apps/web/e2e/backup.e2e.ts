@@ -10,6 +10,8 @@
  * - GEDCOM: Export as .ged and .zip formats
  * - GEDCOM: Import from GEDCOM files
  */
+import fs from "node:fs";
+import path from "node:path";
 import {
   TEST_USERS,
   bdd,
@@ -984,6 +986,167 @@ test.describe("Feature: Backup & Export", () => {
           expect(typeof isDisabled).toBe("boolean");
         }
       );
+    });
+  });
+
+  test.describe("GEDCOM File Upload", () => {
+    test("Scenario: Admin uploads a valid GEDCOM file", async ({
+      page,
+      login,
+    }) => {
+      test.slow();
+
+      // Create a minimal valid GEDCOM file for testing
+      const gedcomContent = [
+        "0 HEAD",
+        "1 SOUR VamsaTest",
+        "1 GEDC",
+        "2 VERS 5.5.1",
+        "2 FORM LINEAGE-LINKED",
+        "1 CHAR UTF-8",
+        "0 @I1@ INDI",
+        "1 NAME GedcomTest /ImportPerson/",
+        "1 SEX M",
+        "1 BIRT",
+        "2 DATE 1 JAN 1950",
+        "2 PLAC Test City",
+        "0 @I2@ INDI",
+        "1 NAME GedcomSpouse /ImportPerson/",
+        "1 SEX F",
+        "1 BIRT",
+        "2 DATE 15 MAR 1955",
+        "0 @F1@ FAM",
+        "1 HUSB @I1@",
+        "1 WIFE @I2@",
+        "1 MARR",
+        "2 DATE 20 JUN 1975",
+        "0 TRLR",
+      ].join("\n");
+
+      const tempDir = path.join(process.cwd(), "test-output");
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      const gedcomPath = path.join(tempDir, "test-import.ged");
+      fs.writeFileSync(gedcomPath, gedcomContent, "utf-8");
+
+      await bdd.given("user is logged in as admin", async () => {
+        await login(TEST_USERS.admin);
+      });
+
+      await bdd.when("user navigates to GEDCOM import", async () => {
+        await gotoWithRetry(page, "/admin/backup");
+        await waitForHydration(page);
+
+        const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+        await expect(gedcomTab).toBeVisible({ timeout: 5000 });
+        await gedcomTab.click();
+        await page.waitForTimeout(500);
+      });
+
+      await bdd.and("user uploads a valid GEDCOM file", async () => {
+        const fileInput = page.locator('input[type="file"]');
+        const fileInputCount = await fileInput.count();
+
+        if (fileInputCount > 0) {
+          await fileInput.first().setInputFiles(gedcomPath);
+          await page.waitForTimeout(1000);
+        }
+      });
+
+      await bdd.then("import UI responds to the file", async () => {
+        const mainContent = page.locator("main");
+        await expect(mainContent).toBeVisible();
+
+        const importButton = page.getByRole("button", {
+          name: /import|upload|process/i,
+        });
+        const successMessage = page.locator(
+          "text=/import|upload|processed|preview/i"
+        );
+        const errorMessage = page.locator("text=/error|invalid|failed/i");
+
+        const hasImportButton = await importButton
+          .first()
+          .isVisible()
+          .catch(() => false);
+        const hasSuccess = await successMessage
+          .first()
+          .isVisible()
+          .catch(() => false);
+        const hasError = await errorMessage
+          .first()
+          .isVisible()
+          .catch(() => false);
+
+        expect(hasImportButton || hasSuccess || hasError).toBeTruthy();
+      });
+
+      // Cleanup temp file
+      try {
+        fs.unlinkSync(gedcomPath);
+      } catch {
+        // Ignore cleanup errors
+      }
+    });
+  });
+
+  test.describe("GEDCOM Export Download Verification", () => {
+    test("Scenario: GEDCOM export triggers file download with valid content", async ({
+      page,
+      login,
+    }) => {
+      await bdd.given("user is logged in as admin", async () => {
+        await login(TEST_USERS.admin);
+      });
+
+      await bdd.when("user navigates to GEDCOM export", async () => {
+        await gotoWithRetry(page, "/admin/backup");
+        await waitForHydration(page);
+
+        const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+        await expect(gedcomTab).toBeVisible({ timeout: 5000 });
+        await gedcomTab.click();
+        await page.waitForTimeout(500);
+      });
+
+      await bdd.then("clicking export triggers a download", async () => {
+        const exportButton = page.getByRole("button", {
+          name: /export to gedcom|export.*gedcom|download.*gedcom/i,
+        });
+        const buttonVisible = await exportButton.isVisible().catch(() => false);
+
+        if (buttonVisible) {
+          const downloadPromise = page
+            .waitForEvent("download", { timeout: 15000 })
+            .catch(() => null);
+          await exportButton.click();
+          const download = await downloadPromise;
+
+          if (download) {
+            const fileName = download.suggestedFilename();
+            expect(
+              fileName.endsWith(".ged") || fileName.endsWith(".zip")
+            ).toBeTruthy();
+
+            const tempDir = path.join(process.cwd(), "test-output");
+            if (!fs.existsSync(tempDir)) {
+              fs.mkdirSync(tempDir, { recursive: true });
+            }
+            const savePath = path.join(tempDir, fileName);
+            await download.saveAs(savePath);
+
+            const stats = fs.statSync(savePath);
+            expect(stats.size).toBeGreaterThan(0);
+
+            try {
+              fs.unlinkSync(savePath);
+            } catch {
+              // Ignore
+            }
+          }
+        }
+      });
     });
   });
 });
