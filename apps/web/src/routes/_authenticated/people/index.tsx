@@ -10,9 +10,11 @@ import {
   PageHeader,
 } from "@vamsa/ui";
 import { listPersons } from "~/server/persons.functions";
+import { CompactRouteError } from "~/components/error";
 
 export const Route = createFileRoute("/_authenticated/people/")({
   component: PeopleListComponent,
+  errorComponent: CompactRouteError,
 });
 
 function PeopleListComponent() {

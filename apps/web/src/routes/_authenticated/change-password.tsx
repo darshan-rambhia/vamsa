@@ -14,9 +14,11 @@ import {
 } from "@vamsa/ui";
 import { PasswordStrengthIndicator } from "@vamsa/ui/primitives";
 import { changePassword } from "~/server/auth.functions";
+import { CompactRouteError } from "~/components/error";
 
 export const Route = createFileRoute("/_authenticated/change-password")({
   component: ChangePasswordComponent,
+  errorComponent: CompactRouteError,
 });
 
 function ChangePasswordComponent() {
