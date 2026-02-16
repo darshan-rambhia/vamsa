@@ -251,6 +251,7 @@ export function PersonSelector({
       {isOpen && (
         <ul
           ref={listRef}
+          role="listbox"
           className="bg-popover border-border absolute z-50 mt-1 max-h-75 w-50 overflow-auto rounded-md border shadow-lg"
           aria-label={t("charts:people")}
         >

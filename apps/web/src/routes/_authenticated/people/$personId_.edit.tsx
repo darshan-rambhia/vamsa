@@ -3,9 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, Container, PageHeader } from "@vamsa/ui";
 import { getPerson } from "~/server/persons.functions";
 import { PersonForm } from "~/components/person";
+import { CompactRouteError } from "~/components/error";
 
 export const Route = createFileRoute("/_authenticated/people/$personId_/edit")({
   component: EditPersonComponent,
+  errorComponent: CompactRouteError,
 });
 
 function EditPersonComponent() {

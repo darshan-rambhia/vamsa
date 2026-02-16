@@ -143,12 +143,13 @@ export function useValidEdges(
 /**
  * Virtual rendering helper - returns only visible nodes
  * For future optimization when dealing with very large datasets
+ * Generic to preserve the input node type (ChartNode or extensions like BowtieNode)
  */
-export function useVisibleNodes(
-  nodes: Array<ChartNode>,
+export function useVisibleNodes<T extends ChartNode>(
+  nodes: Array<T>,
   nodePositions: Map<string, Position>,
   viewport: { x: number; y: number; width: number; height: number } | null
-): Array<ChartNode> {
+): Array<T> {
   return useMemo(() => {
     // If no viewport provided, return all nodes
     if (!viewport) return nodes;

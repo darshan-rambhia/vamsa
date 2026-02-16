@@ -25,6 +25,7 @@ import { PlacesTab } from "~/components/person/places-tab";
 import { SourcesManagementTab } from "~/components/person/sources-management-tab";
 import { MediaTab } from "~/components/media/media-tab";
 import { StoryGenerator } from "~/components/ai/story-generator";
+import { CompactRouteError } from "~/components/error";
 
 export const Route = createFileRoute("/_authenticated/people/$personId")({
   loader: async ({ params, context }) => {
@@ -46,6 +47,7 @@ export const Route = createFileRoute("/_authenticated/people/$personId")({
     // Media loads client-side via useQuery with its own loading state.
   },
   component: PersonDetailComponent,
+  errorComponent: CompactRouteError,
 });
 
 function PersonDetailComponent() {

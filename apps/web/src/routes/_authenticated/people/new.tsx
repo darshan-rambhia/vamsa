@@ -1,9 +1,11 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Card, CardContent, Container, PageHeader } from "@vamsa/ui";
 import { PersonForm } from "~/components/person";
+import { CompactRouteError } from "~/components/error";
 
 export const Route = createFileRoute("/_authenticated/people/new")({
   component: NewPersonComponent,
+  errorComponent: CompactRouteError,
 });
 
 function NewPersonComponent() {

@@ -5,6 +5,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 // Note: Server-only modules are dynamically imported inside checkAuthInline
 // to prevent them from leaking into the client bundle (react-dom/server, i18next-fs-backend)
@@ -47,8 +48,12 @@ const checkAuthInline = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: async ({ location }) => {
-    const result = await checkAuthInline();
+  beforeLoad: async ({ location, context }) => {
+    const result = await context.queryClient.ensureQueryData({
+      queryKey: ["auth", "session"],
+      queryFn: () => checkAuthInline(),
+      staleTime: 1000 * 60 * 5, // 5 minutes — matches existing React Query default
+    });
 
     if (!result.valid) {
       throw redirect({ to: "/login" });
@@ -103,7 +108,10 @@ function SkipToMainContent() {
 
 function AuthenticatedLayoutShell({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation("navigation");
+  const queryClient = useQueryClient();
+
   const handleSignOut = async () => {
+    queryClient.removeQueries({ queryKey: ["auth", "session"] });
     await signOut();
     window.location.href = "/login";
   };
@@ -188,8 +196,10 @@ function AuthenticatedLayout() {
   const location = useLocation();
   const pathname = location.pathname;
   const { user } = Route.useRouteContext();
+  const queryClient = useQueryClient();
 
   const handleSignOut = async () => {
+    queryClient.removeQueries({ queryKey: ["auth", "session"] });
     await signOut();
     window.location.href = "/login";
   };
