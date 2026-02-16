@@ -93,13 +93,13 @@
   },
   "dependencies": {
     "@hono/swagger-ui": "0.5.3",
-    "@hono/zod-openapi": "1.2.1",
+    "@hono/zod-openapi": "1.2.2",
     "cmdk": "1.1.1",
     "date-fns": "4.1.0",
     "drizzle-orm": "0.45.1",
     "html2canvas": "1.4.1",
     "ical-generator": "10.0.0",
-    "maplibre-gl": "5.17.0",
+    "maplibre-gl": "5.18.0",
     "rss": "1.2.2"
   },
   "devDependencies": {
