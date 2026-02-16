@@ -100,6 +100,20 @@ async function main() {
     filteredArgs.push("--project=chromium");
   }
 
+  // Auto-update visual snapshots when running locally (not in CI)
+  // Visual tests compare pixel-by-pixel; local runs should regenerate baselines
+  // rather than failing on font rendering or OS-level differences
+  const isVisualProject = filteredArgs.some(
+    (arg) => arg === "--project=visual" || arg === "-p=visual"
+  );
+  const hasUpdateFlag = filteredArgs.some((arg) =>
+    arg.startsWith("--update-snapshots")
+  );
+  if (!isCI && isVisualProject && !hasUpdateFlag) {
+    filteredArgs.push("--update-snapshots");
+    log.info({}, "📸 Auto-updating visual snapshots (local mode)\n");
+  }
+
   log.info({}, "🚀 Starting E2E test runner...\n");
   if (useBunRuntime) {
     log.info({}, "⚡ Running Playwright with Bun runtime (experimental)");
