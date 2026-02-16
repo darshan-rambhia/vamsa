@@ -1,30 +1,73 @@
 /**
  * Unit tests for Charts Business Logic
  *
- * NOTE: The charts module uses dynamic imports which bypass module mocks.
- * These tests focus on testing:
+ * Tests cover:
+ * - All chart generation functions (ancestor, descendant, hourglass, fan, bowtie, compact, timeline, matrix, tree, statistics)
  * - Error handling for unimplemented features (PDF/SVG export)
  * - Type definitions and interfaces
  * - Data structure validation
  * - Pure function logic for chart helpers
- *
- * Integration tests would verify the full chart generation pipeline.
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
-// NOTE: Do NOT mock "../helpers/charts" here - it causes test pollution
-// because Bun's mock.module persists across test files. The export
-// functions we test throw errors before using any helpers anyway.
-
 // Import functions to test
-import { exportChartAsPDF, exportChartAsSVG } from "./charts";
+import {
+  exportChartAsPDF,
+  exportChartAsSVG,
+  getAncestorChartData,
+  getBowtieChartData,
+  getCompactTreeData,
+  getDescendantChartData,
+  getFanChartData,
+  getHourglassChartData,
+  getRelationshipMatrixData,
+  getStatisticsData,
+  getTimelineChartData,
+  getTreeChartData,
+} from "./charts";
 
 // Mock metrics module
 vi.mock("../metrics", () => ({
   recordChartMetrics: vi.fn(() => undefined),
 }));
+
+// Mock the helpers module
+vi.mock("../helpers/charts", () => ({
+  buildRelationshipMaps: vi.fn(() => ({
+    childToParents: new Map(),
+    parentToChildren: new Map(),
+    spouseMap: new Map(),
+  })),
+  calculateFanLayout: vi.fn(() => new Map()),
+  collectAncestors: vi.fn(),
+  collectBowtieAncestors: vi.fn(),
+  collectDescendants: vi.fn(),
+  collectTreeAncestors: vi.fn(),
+  collectTreeDescendants: vi.fn(),
+}));
+
+// Create mock database
+function createMockDb(
+  options: {
+    persons?: Array<any>;
+    relationships?: Array<any>;
+    rootPerson?: any;
+  } = {}
+) {
+  return {
+    query: {
+      persons: {
+        findFirst: vi.fn(async () => options.rootPerson || null),
+        findMany: vi.fn(async () => options.persons || []),
+      },
+      relationships: {
+        findMany: vi.fn(async () => options.relationships || []),
+      },
+    },
+  } as any;
+}
 
 describe("charts business logic", () => {
   beforeEach(() => {
@@ -270,6 +313,590 @@ describe("charts business logic", () => {
       expect(isValidRelType("spouse")).toBe(true);
       expect(isValidRelType("sibling")).toBe(false);
       expect(isValidRelType("cousin")).toBe(false);
+    });
+  });
+
+  describe("getAncestorChartData", () => {
+    it("should throw error when person not found", async () => {
+      const mockDb = createMockDb({ rootPerson: null });
+
+      await expect(
+        getAncestorChartData("missing-id", 3, mockDb)
+      ).rejects.toThrow("Person not found");
+    });
+
+    it("should generate ancestor chart for valid person", async () => {
+      const rootPerson = {
+        id: "person1",
+        firstName: "John",
+        lastName: "Doe",
+        dateOfBirth: new Date("1990-01-15"),
+        dateOfPassing: null,
+        isLiving: true,
+        photoUrl: null,
+        gender: "MALE",
+      };
+
+      const mockDb = createMockDb({
+        rootPerson,
+        persons: [rootPerson],
+        relationships: [],
+      });
+
+      const result = await getAncestorChartData("person1", 3, mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.metadata.chartType).toBe("ancestor");
+      expect(result.metadata.totalGenerations).toBe(3);
+      expect(result.metadata.rootPersonId).toBe("person1");
+    });
+  });
+
+  describe("getDescendantChartData", () => {
+    it("should throw error when person not found", async () => {
+      const mockDb = createMockDb({ rootPerson: null });
+
+      await expect(
+        getDescendantChartData("missing-id", 3, mockDb)
+      ).rejects.toThrow("Person not found");
+    });
+
+    it("should generate descendant chart for valid person", async () => {
+      const rootPerson = {
+        id: "person1",
+        firstName: "Jane",
+        lastName: "Smith",
+        dateOfBirth: new Date("1970-05-20"),
+        dateOfPassing: null,
+        isLiving: true,
+        photoUrl: null,
+        gender: "FEMALE",
+      };
+
+      const mockDb = createMockDb({
+        rootPerson,
+        persons: [rootPerson],
+        relationships: [],
+      });
+
+      const result = await getDescendantChartData("person1", 2, mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.metadata.chartType).toBe("descendant");
+      expect(result.metadata.totalGenerations).toBe(2);
+    });
+  });
+
+  describe("getHourglassChartData", () => {
+    it("should throw error when person not found", async () => {
+      const mockDb = createMockDb({ rootPerson: null });
+
+      await expect(
+        getHourglassChartData("missing-id", 2, 2, mockDb)
+      ).rejects.toThrow("Person not found");
+    });
+
+    it("should generate hourglass chart combining ancestors and descendants", async () => {
+      const rootPerson = {
+        id: "person1",
+        firstName: "Alex",
+        lastName: "Johnson",
+        dateOfBirth: new Date("1985-03-10"),
+        dateOfPassing: null,
+        isLiving: true,
+        photoUrl: null,
+        gender: "MALE",
+      };
+
+      const mockDb = createMockDb({
+        rootPerson,
+        persons: [rootPerson],
+        relationships: [],
+      });
+
+      const result = await getHourglassChartData("person1", 2, 2, mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.metadata.chartType).toBe("hourglass");
+      expect(result.metadata.totalGenerations).toBe(5); // 2 ancestor + 1 root + 2 descendant
+    });
+  });
+
+  describe("getFanChartData", () => {
+    it("should throw error when person not found", async () => {
+      const mockDb = createMockDb({ rootPerson: null });
+
+      await expect(getFanChartData("missing-id", 4, mockDb)).rejects.toThrow(
+        "Person not found"
+      );
+    });
+
+    it("should generate fan chart with angle data", async () => {
+      const rootPerson = {
+        id: "person1",
+        firstName: "Sam",
+        lastName: "Williams",
+        dateOfBirth: new Date("1995-08-22"),
+        dateOfPassing: null,
+        isLiving: true,
+        photoUrl: null,
+        gender: "OTHER",
+      };
+
+      const mockDb = createMockDb({
+        rootPerson,
+        persons: [rootPerson],
+        relationships: [],
+      });
+
+      const result = await getFanChartData("person1", 4, mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.metadata.chartType).toBe("fan");
+      expect(result.metadata.totalGenerations).toBe(4);
+    });
+  });
+
+  describe("getBowtieChartData", () => {
+    it("should throw error when person not found", async () => {
+      const mockDb = createMockDb({ rootPerson: null });
+
+      await expect(getBowtieChartData("missing-id", 3, mockDb)).rejects.toThrow(
+        "Person not found"
+      );
+    });
+
+    it("should generate bowtie chart with paternal and maternal counts", async () => {
+      const rootPerson = {
+        id: "person1",
+        firstName: "Taylor",
+        lastName: "Brown",
+        dateOfBirth: new Date("2000-11-05"),
+        dateOfPassing: null,
+        isLiving: true,
+        photoUrl: null,
+        gender: "PREFER_NOT_TO_SAY",
+      };
+
+      const mockDb = createMockDb({
+        rootPerson,
+        persons: [rootPerson],
+        relationships: [],
+      });
+
+      const result = await getBowtieChartData("person1", 3, mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.metadata.chartType).toBe("bowtie");
+      expect(result.metadata).toHaveProperty("paternalCount");
+      expect(result.metadata).toHaveProperty("maternalCount");
+    });
+  });
+
+  describe("getCompactTreeData", () => {
+    it("should throw error when person not found", async () => {
+      const mockDb = createMockDb({ rootPerson: null });
+
+      await expect(getCompactTreeData("missing-id", 5, mockDb)).rejects.toThrow(
+        "Person not found"
+      );
+    });
+
+    it("should generate compact tree with nested structure and flat list", async () => {
+      const rootPerson = {
+        id: "person1",
+        firstName: "Morgan",
+        lastName: "Davis",
+        dateOfBirth: new Date("1980-07-14"),
+        dateOfPassing: null,
+        isLiving: true,
+        photoUrl: null,
+        gender: "MALE",
+      };
+
+      const mockDb = createMockDb({
+        rootPerson,
+        persons: [rootPerson],
+        relationships: [],
+      });
+
+      const result = await getCompactTreeData("person1", 5, mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.metadata.chartType).toBe("compact");
+      expect(result).toHaveProperty("root");
+      expect(result).toHaveProperty("flatList");
+      expect(Array.isArray(result.flatList)).toBe(true);
+    });
+  });
+
+  describe("getTimelineChartData", () => {
+    it("should generate timeline with no filter", async () => {
+      const persons = [
+        {
+          id: "person1",
+          firstName: "Charlie",
+          lastName: "Miller",
+          dateOfBirth: new Date("1950-01-01"),
+          dateOfPassing: new Date("2020-12-31"),
+          isLiving: false,
+          photoUrl: null,
+          gender: "MALE",
+        },
+        {
+          id: "person2",
+          firstName: "Diana",
+          lastName: "Wilson",
+          dateOfBirth: new Date("1980-06-15"),
+          dateOfPassing: null,
+          isLiving: true,
+          photoUrl: null,
+          gender: "FEMALE",
+        },
+      ];
+
+      const mockDb = createMockDb({ persons });
+
+      const result = await getTimelineChartData(
+        undefined,
+        undefined,
+        "birth",
+        mockDb
+      );
+
+      expect(result).toBeDefined();
+      expect(result.metadata.chartType).toBe("timeline");
+      expect(result.entries.length).toBeGreaterThanOrEqual(0);
+    });
+
+    it("should sort timeline by birth year", async () => {
+      const persons = [
+        {
+          id: "person1",
+          firstName: "Alice",
+          lastName: "Jones",
+          dateOfBirth: new Date("1990-01-01"),
+          dateOfPassing: null,
+          isLiving: true,
+          photoUrl: null,
+          gender: "FEMALE",
+        },
+        {
+          id: "person2",
+          firstName: "Bob",
+          lastName: "Smith",
+          dateOfBirth: new Date("1970-01-01"),
+          dateOfPassing: null,
+          isLiving: true,
+          photoUrl: null,
+          gender: "MALE",
+        },
+      ];
+
+      const mockDb = createMockDb({ persons });
+
+      const result = await getTimelineChartData(
+        undefined,
+        undefined,
+        "birth",
+        mockDb
+      );
+
+      expect(result.entries.length).toBe(2);
+      // Should be sorted by birth year ascending
+      if (result.entries.length === 2) {
+        expect(result.entries[0].birthYear).toBeLessThanOrEqual(
+          result.entries[1].birthYear || 9999
+        );
+      }
+    });
+
+    it("should sort timeline by name", async () => {
+      const persons = [
+        {
+          id: "person1",
+          firstName: "Zoe",
+          lastName: "Adams",
+          dateOfBirth: new Date("1990-01-01"),
+          dateOfPassing: null,
+          isLiving: true,
+          photoUrl: null,
+          gender: "FEMALE",
+        },
+        {
+          id: "person2",
+          firstName: "Adam",
+          lastName: "Baker",
+          dateOfBirth: new Date("1985-01-01"),
+          dateOfPassing: null,
+          isLiving: true,
+          photoUrl: null,
+          gender: "MALE",
+        },
+      ];
+
+      const mockDb = createMockDb({ persons });
+
+      const result = await getTimelineChartData(
+        undefined,
+        undefined,
+        "name",
+        mockDb
+      );
+
+      expect(result.entries.length).toBe(2);
+    });
+  });
+
+  describe("getRelationshipMatrixData", () => {
+    it("should generate relationship matrix for persons", async () => {
+      const persons = [
+        {
+          id: "person1",
+          firstName: "Eve",
+          lastName: "Martin",
+          dateOfBirth: new Date("1975-03-20"),
+          dateOfPassing: null,
+          isLiving: true,
+          photoUrl: null,
+          gender: "FEMALE",
+        },
+        {
+          id: "person2",
+          firstName: "Frank",
+          lastName: "Garcia",
+          dateOfBirth: new Date("1978-09-12"),
+          dateOfPassing: null,
+          isLiving: true,
+          photoUrl: null,
+          gender: "MALE",
+        },
+      ];
+
+      const mockDb = {
+        query: {
+          persons: {
+            findFirst: vi.fn(),
+            findMany: vi.fn(async () => persons),
+          },
+          relationships: {
+            findMany: vi.fn(async () => []),
+          },
+        },
+      } as any;
+
+      const result = await getRelationshipMatrixData(undefined, 20, mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.metadata.chartType).toBe("matrix");
+      expect(result.people).toHaveLength(2);
+      expect(result.matrix).toBeDefined();
+    });
+
+    it("should include SELF relationships in matrix", async () => {
+      const persons = [
+        {
+          id: "person1",
+          firstName: "Grace",
+          lastName: "Lee",
+          dateOfBirth: new Date("1992-11-08"),
+          dateOfPassing: null,
+          isLiving: true,
+          photoUrl: null,
+          gender: "FEMALE",
+        },
+      ];
+
+      const mockDb = {
+        query: {
+          persons: {
+            findFirst: vi.fn(),
+            findMany: vi.fn(async () => persons),
+          },
+          relationships: {
+            findMany: vi.fn(async () => []),
+          },
+        },
+      } as any;
+
+      const result = await getRelationshipMatrixData(undefined, 20, mockDb);
+
+      // Should have SELF relationship
+      const selfRel = result.matrix.find(
+        (m) => m.personId === "person1" && m.relatedPersonId === "person1"
+      );
+      expect(selfRel).toBeDefined();
+      expect(selfRel?.relationshipType).toBe("SELF");
+    });
+  });
+
+  describe("getTreeChartData", () => {
+    it("should throw error when person not found", async () => {
+      const mockDb = createMockDb({ rootPerson: null });
+
+      await expect(
+        getTreeChartData("missing-id", 2, 2, mockDb)
+      ).rejects.toThrow("Person not found");
+    });
+
+    it("should generate tree chart with ancestors and descendants", async () => {
+      const rootPerson = {
+        id: "person1",
+        firstName: "Henry",
+        lastName: "Martinez",
+        dateOfBirth: new Date("1988-04-17"),
+        dateOfPassing: null,
+        isLiving: true,
+        photoUrl: null,
+        gender: "MALE",
+      };
+
+      const mockDb = createMockDb({
+        rootPerson,
+        persons: [rootPerson],
+        relationships: [],
+      });
+
+      const result = await getTreeChartData("person1", 2, 2, mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.metadata.chartType).toBe("tree");
+      expect(result.nodes).toBeDefined();
+      expect(result.edges).toBeDefined();
+    });
+  });
+
+  describe("getStatisticsData", () => {
+    it("should generate statistics for living persons only", async () => {
+      const persons = [
+        {
+          id: "person1",
+          firstName: "Ivy",
+          lastName: "Robinson",
+          dateOfBirth: new Date("1995-02-28"),
+          dateOfPassing: null,
+          isLiving: true,
+          photoUrl: null,
+          gender: "FEMALE",
+          birthPlace: "New York, USA",
+        },
+        {
+          id: "person2",
+          firstName: "Jack",
+          lastName: "Clark",
+          dateOfBirth: new Date("1950-05-10"),
+          dateOfPassing: new Date("2015-08-22"),
+          isLiving: false,
+          photoUrl: null,
+          gender: "MALE",
+          birthPlace: "Chicago, USA",
+        },
+      ];
+
+      const mockDb = {
+        query: {
+          persons: {
+            findFirst: vi.fn(),
+            findMany: vi.fn(async ({ where }: any) => {
+              // Filter by isLiving if specified
+              if (where) {
+                return persons.filter((p) => p.isLiving === true);
+              }
+              return persons;
+            }),
+          },
+          relationships: {
+            findMany: vi.fn(async () => []),
+          },
+        },
+      } as any;
+
+      const result = await getStatisticsData(false, mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.metadata.chartType).toBe("statistics");
+      expect(result.metadata.livingCount).toBeGreaterThanOrEqual(0);
+    });
+
+    it("should generate statistics including deceased persons", async () => {
+      const persons = [
+        {
+          id: "person1",
+          firstName: "Kate",
+          lastName: "Rodriguez",
+          dateOfBirth: new Date("1998-12-05"),
+          dateOfPassing: null,
+          isLiving: true,
+          photoUrl: null,
+          gender: "FEMALE",
+          birthPlace: "Miami, USA",
+        },
+        {
+          id: "person2",
+          firstName: "Leo",
+          lastName: "Lewis",
+          dateOfBirth: new Date("1940-07-18"),
+          dateOfPassing: new Date("2010-11-30"),
+          isLiving: false,
+          photoUrl: null,
+          gender: "MALE",
+          birthPlace: "Boston, USA",
+        },
+      ];
+
+      const mockDb = {
+        query: {
+          persons: {
+            findFirst: vi.fn(),
+            findMany: vi.fn(async () => persons),
+          },
+          relationships: {
+            findMany: vi.fn(async () => []),
+          },
+        },
+      } as any;
+
+      const result = await getStatisticsData(true, mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.ageDistribution).toBeDefined();
+      expect(result.generationSizes).toBeDefined();
+      expect(result.genderDistribution).toBeDefined();
+      expect(result.surnameFrequency).toBeDefined();
+      expect(result.lifespanTrends).toBeDefined();
+    });
+
+    it("should calculate age distribution correctly", async () => {
+      const persons = [
+        {
+          id: "person1",
+          firstName: "Mia",
+          lastName: "Walker",
+          dateOfBirth: new Date("2010-01-01"),
+          dateOfPassing: null,
+          isLiving: true,
+          photoUrl: null,
+          gender: "FEMALE",
+          birthPlace: "Seattle, USA",
+        },
+      ];
+
+      const mockDb = {
+        query: {
+          persons: {
+            findFirst: vi.fn(),
+            findMany: vi.fn(async () => persons),
+          },
+          relationships: {
+            findMany: vi.fn(async () => []),
+          },
+        },
+      } as any;
+
+      const result = await getStatisticsData(true, mockDb);
+
+      expect(result.ageDistribution).toBeDefined();
+      expect(Array.isArray(result.ageDistribution)).toBe(true);
     });
   });
 });

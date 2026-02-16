@@ -23,7 +23,10 @@ import { initializeServerI18n } from "@vamsa/lib/server";
 import { auth } from "@vamsa/lib/server/business";
 import { closeDrizzleDb, drizzleDb, getDrizzlePoolStats } from "@vamsa/api";
 import { sql } from "drizzle-orm";
-import { rateLimitMiddleware } from "../src/server/middleware/hono-rate-limiter";
+import {
+  perUserApiRateLimitMiddleware,
+  rateLimitMiddleware,
+} from "../src/server/middleware/hono-rate-limiter";
 import { initializeRateLimitStore } from "../src/server/middleware/rate-limiter";
 import {
   initTrustedProxies,
@@ -41,6 +44,7 @@ import { mediaAuthMiddleware } from "./middleware/media-auth";
 import { metricsAuthMiddleware } from "./middleware/metrics-auth";
 import { getTelemetryConfig, startTelemetry, stopTelemetry } from "./telemetry";
 import { botGuardMiddleware } from "./middleware/bot-guard";
+import { requestIdMiddleware } from "./middleware/request-id";
 
 await startTelemetry();
 
@@ -283,6 +287,10 @@ app.use("*", telemetryMiddleware);
 // Resolve client IP from trusted proxies (before rate limiting)
 // Validates proxy headers come from trusted sources to prevent IP spoofing
 app.use("*", trustedProxyMiddleware());
+
+// Request ID generation and propagation for distributed tracing
+// Generates UUID or reuses X-Request-Id header from upstream
+app.use("*", requestIdMiddleware());
 
 // ETag caching for API responses
 // This should be applied after security headers but before route handlers
@@ -551,6 +559,12 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
   return auth.handler(c.req.raw);
 });
 
+// Per-user API rate limiting for /api/v1/* routes
+// Uses user ID for authenticated requests, IP for anonymous requests
+// Allows authenticated users to have higher rate limits
+// Configurable via RATE_LIMIT_API_MAX and RATE_LIMIT_API_WINDOW env vars
+app.use("/api/v1/*", perUserApiRateLimitMiddleware());
+
 app.route("/api", apiRouter);
 
 // Media serving endpoint for image files
@@ -662,11 +676,13 @@ async function setupRoutes() {
       const response = await tanstackFetch(modifiedRequest);
       return response;
     } catch (error) {
-      log.withErr(error).msg("TanStack Start error");
+      const requestId = c.get("requestId");
+      log.withErr(error).ctx({ requestId }).msg("TanStack Start error");
       return c.json(
         {
           error: "Internal Server Error",
           message: IS_PRODUCTION ? "Something went wrong" : String(error),
+          ...(requestId && { requestId }),
         },
         500
       );
@@ -719,9 +735,12 @@ async function startServer() {
     // Bun-specific optimizations
     development: !IS_PRODUCTION,
 
-    // Error handler
+    // Error handler for unhandled fetch errors
     error(error: Error) {
-      log.withErr(error).msg("Bun server error");
+      log
+        .withErr(error)
+        .ctx({ context: "bun-server-error" })
+        .msg("Unhandled server error");
       return new Response("Internal Server Error", { status: 500 });
     },
   });

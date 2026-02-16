@@ -589,17 +589,84 @@ All error responses follow a consistent format:
 
 ## Rate Limiting
 
-The API implements rate limiting on authentication endpoints:
+The API implements comprehensive rate limiting to protect against abuse and ensure fair usage.
 
-- **Login**: 5 failed attempts per IP address, 15-minute lockout
-- **Register**: Reasonable limits to prevent abuse
-- **Claim Profile**: Rate limited per IP address
+### Rate Limited Endpoints
 
-Rate limit headers (when applicable):
+| Endpoint | Default Limit | Default Window | Notes |
+|----------|---------------|----------------|-------|
+| `POST /api/auth/sign-in/*` | 5 attempts | 60 seconds | Per IP address |
+| `POST /api/auth/sign-up/*` | 3 attempts | 1 hour | Per IP address |
+| `POST /api/auth/forget-password/*` | 3 attempts | 1 hour | Per IP address |
+| `GET /api/v1/*` (search) | 30 requests | 60 seconds | Per user/IP |
+| `GET /api/v1/*` (general) | 100 requests | 60 seconds | Per user/IP |
+| All `/api/v1/*` routes | 100 requests | 60 seconds | Per authenticated user or IP |
 
-- `X-RateLimit-Limit`: Total requests allowed
-- `X-RateLimit-Remaining`: Remaining requests
-- `X-RateLimit-Reset`: Time when limit resets (Unix timestamp)
+### Per-User vs. Per-IP Rate Limiting
+
+The `/api/v1/*` routes use smart rate limiting:
+
+- **Authenticated requests**: Rate limited by user ID, allowing authenticated users higher quotas
+- **Unauthenticated requests**: Rate limited by IP address
+
+This provides better protection against distributed attacks while allowing legitimate users more generous limits.
+
+### Rate Limit Headers
+
+All rate-limited responses include these headers:
+
+- `X-RateLimit-Limit`: Total requests allowed in the window
+- `X-RateLimit-Remaining`: Remaining requests in the current window
+- `X-RateLimit-Reset`: Unix timestamp when the limit resets
+
+### Rate Limit Exceeded Response
+
+When a client exceeds the rate limit, the API returns:
+
+```
+HTTP/1.1 429 Too Many Requests
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 0
+X-RateLimit-Reset: 1673625600
+Retry-After: 45
+```
+
+```json
+{
+  "error": "Too Many Requests",
+  "message": "Too many requests. Please try again in 45 seconds.",
+  "retryAfter": 45
+}
+```
+
+### Customizing Rate Limits
+
+All rate limits are configurable via environment variables:
+
+**Pattern**: `RATE_LIMIT_{ACTION}_{MAX|WINDOW}`
+
+Example configuration in `.env`:
+
+```bash
+# Login: 10 attempts per 2 minutes
+RATE_LIMIT_LOGIN_MAX=10
+RATE_LIMIT_LOGIN_WINDOW=120
+
+# API: 200 requests per minute for authenticated users
+RATE_LIMIT_API_MAX=200
+RATE_LIMIT_API_WINDOW=60
+```
+
+Available rate limit variables:
+
+- `RATE_LIMIT_LOGIN_MAX` / `RATE_LIMIT_LOGIN_WINDOW`
+- `RATE_LIMIT_REGISTER_MAX` / `RATE_LIMIT_REGISTER_WINDOW`
+- `RATE_LIMIT_CLAIM_PROFILE_MAX` / `RATE_LIMIT_CLAIM_PROFILE_WINDOW`
+- `RATE_LIMIT_PASSWORD_RESET_MAX` / `RATE_LIMIT_PASSWORD_RESET_WINDOW`
+- `RATE_LIMIT_SEARCH_MAX` / `RATE_LIMIT_SEARCH_WINDOW`
+- `RATE_LIMIT_API_MAX` / `RATE_LIMIT_API_WINDOW`
+
+See `.env.example` for default values and detailed documentation.
 
 ## Best Practices
 
@@ -684,6 +751,69 @@ For API support and questions:
 - Authentication endpoints
 - Swagger/OpenAPI documentation
 
+## Troubleshooting
+
+### Common Errors
+
+#### 401 Unauthorized on all requests
+
+**Cause**: Session cookie is missing or expired.
+
+**Fix**: Re-authenticate via `POST /auth/login`. For mobile clients, ensure the session token is stored and included in subsequent requests. Sessions expire after 30 days of inactivity.
+
+#### 403 Forbidden after successful login
+
+**Cause**: The authenticated user does not have the required role for the endpoint. Vamsa uses role-based access control (VIEWER, MEMBER, ADMIN).
+
+**Fix**: Contact an administrator to upgrade your role. New accounts default to VIEWER.
+
+#### 429 Too Many Requests
+
+**Cause**: Rate limit exceeded on authentication endpoints.
+
+**Fix**: Wait for the period indicated in the `X-RateLimit-Reset` header. Login allows 5 attempts per minute; registration allows 3 per hour. If you are behind a shared IP (VPN, office NAT), contact your administrator to adjust rate limits or allowlist your IP.
+
+#### 400 Bad Request with validation errors
+
+**Cause**: Request body or query parameters failed Zod schema validation.
+
+**Fix**: Check the `details` field in the error response for specific field-level errors. Common issues:
+- Missing required fields (`firstName`, `lastName` for persons)
+- Invalid date formats (use `YYYY-MM-DD`)
+- `limit` outside allowed range (1-100)
+- Invalid `sortBy` or `sortOrder` values
+
+#### 500 Internal Server Error
+
+**Cause**: Unhandled server error. The response includes a `requestId` field in non-production environments.
+
+**Fix**: If you have server access, search logs for the `requestId`:
+
+```bash
+# systemd
+journalctl -u vamsa | grep "request-id-here"
+
+# Docker
+docker logs vamsa-app | grep "request-id-here"
+```
+
+Common causes:
+- Database connection pool exhausted (check `GET /health` for pool stats)
+- Migration not applied after an upgrade (`bun run db:migrate`)
+- Missing environment variable (check server startup logs)
+
+#### CORS errors in browser console
+
+**Cause**: The browser's origin does not match the `APP_URL` environment variable.
+
+**Fix**: Ensure `APP_URL` in your `.env` exactly matches the origin you are accessing the app from (including protocol and port). In production, CORS uses exact origin matching -- prefix matches like `https://vamsa.app.evil.com` are rejected.
+
+#### Empty response from `/api/v1/docs`
+
+**Cause**: API documentation is disabled in production by default.
+
+**Fix**: Set `ENABLE_API_DOCS=true` in your `.env` file and restart the server. In development, docs are always available.
+
 ---
 
-Last Updated: January 13, 2026
+Last Updated: February 16, 2026
