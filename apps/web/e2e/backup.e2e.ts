@@ -989,164 +989,501 @@ test.describe("Feature: Backup & Export", () => {
     });
   });
 
-  test.describe("GEDCOM File Upload", () => {
-    test("Scenario: Admin uploads a valid GEDCOM file", async ({
+  test.describe("GEDCOM Round-Trip", () => {
+    const tempDir = path.join(process.cwd(), "test-output", "gedcom-roundtrip");
+
+    // Ensure temp directory exists before tests
+    test.beforeAll(() => {
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+    });
+
+    // Cleanup temp directory after tests
+    test.afterAll(() => {
+      try {
+        if (fs.existsSync(tempDir)) {
+          for (const file of fs.readdirSync(tempDir)) {
+            fs.unlinkSync(path.join(tempDir, file));
+          }
+        }
+      } catch {
+        // Ignore cleanup errors
+      }
+    });
+
+    /**
+     * Helper: Import a GEDCOM file through the UI and wait for completion.
+     * Returns true if import succeeded.
+     */
+    async function importGedcomFile(
+      page: any,
+      filePath: string
+    ): Promise<boolean> {
+      await gotoWithRetry(page, "/admin/backup");
+      await waitForHydration(page);
+
+      // Switch to GEDCOM tab
+      const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+      await expect(gedcomTab).toBeVisible({ timeout: 5000 });
+      await gedcomTab.click();
+
+      // Wait for Import GEDCOM heading to confirm tab content loaded
+      const importHeading = page.getByRole("heading", {
+        name: /import gedcom/i,
+      });
+      await expect(importHeading).toBeVisible({ timeout: 5000 });
+
+      // Upload the file
+      const fileInput = page.locator('input[type="file"][accept=".ged"]');
+      await expect(fileInput).toBeAttached({ timeout: 5000 });
+      await fileInput.setInputFiles(filePath);
+
+      // Click validate button
+      const validateButton = page.getByRole("button", {
+        name: /validate/i,
+      });
+      await expect(validateButton).toBeEnabled({ timeout: 5000 });
+      await validateButton.click();
+
+      // Wait for preview to appear (shows people/families count)
+      const previewTitle = page.locator("text=Import Preview");
+      await expect(previewTitle).toBeVisible({ timeout: 15000 });
+
+      // Verify it's ready to import (green status card)
+      const readyText = page.locator("text=Ready to Import");
+      const isReady = await readyText
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
+
+      if (!isReady) {
+        // Check if validation failed
+        const failedText = page.locator("text=Validation Failed");
+        const hasFailed = await failedText.isVisible().catch(() => false);
+        if (hasFailed) return false;
+      }
+
+      // Click "Confirm and Import"
+      const confirmButton = page.getByRole("button", {
+        name: /confirm and import/i,
+      });
+      await expect(confirmButton).toBeVisible({ timeout: 5000 });
+      await confirmButton.click();
+
+      // Wait for "Import Successful!" message
+      const successText = page.locator("text=Import Successful!");
+      await expect(successText).toBeVisible({ timeout: 15000 });
+
+      // Wait for redirect to /people
+      await page.waitForURL(/\/people/, { timeout: 10000 });
+
+      return true;
+    }
+
+    /**
+     * Helper: Export GEDCOM through the UI and return the file content.
+     */
+    async function exportGedcomFile(page: any): Promise<string> {
+      await gotoWithRetry(page, "/admin/backup");
+      await waitForHydration(page);
+
+      // Switch to GEDCOM tab
+      const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+      await expect(gedcomTab).toBeVisible({ timeout: 5000 });
+      await gedcomTab.click();
+
+      // Find and click export button
+      const exportButton = page.getByRole("button", {
+        name: /export to gedcom/i,
+      });
+      await expect(exportButton).toBeVisible({ timeout: 5000 });
+
+      // Listen for download, then click
+      const downloadPromise = page.waitForEvent("download", { timeout: 30000 });
+      await exportButton.click();
+      const download = await downloadPromise;
+
+      // Save and read the downloaded file
+      const fileName = download.suggestedFilename();
+      expect(fileName.endsWith(".ged")).toBe(true);
+
+      const savePath = path.join(tempDir, `export-${Date.now()}.ged`);
+      await download.saveAs(savePath);
+
+      const content = fs.readFileSync(savePath, "utf-8");
+      expect(content.length).toBeGreaterThan(0);
+
+      return content;
+    }
+
+    /**
+     * Helper: Write GEDCOM content to a temp file and return the path.
+     */
+    function writeTempGedcom(content: string, name: string): string {
+      const filePath = path.join(tempDir, `${name}-${Date.now()}.ged`);
+      fs.writeFileSync(filePath, content, "utf-8");
+      return filePath;
+    }
+
+    test("Scenario: Multi-generation family data survives import-export round-trip", async ({
       page,
       login,
     }) => {
       test.slow();
 
-      // Create a minimal valid GEDCOM file for testing
+      // Use unique names to avoid collision with parallel tests or seed data
+      const uid = Date.now().toString(36);
       const gedcomContent = [
         "0 HEAD",
-        "1 SOUR VamsaTest",
+        "1 SOUR RoundTripTest",
+        "1 GEDC",
+        "2 VERS 5.5.1",
+        "2 FORM LINEAGE-LINKED",
+        "1 CHAR UTF-8",
+        `0 @I1@ INDI`,
+        `1 NAME Grandpa_${uid} /RTFamily/`,
+        "1 SEX M",
+        "1 BIRT",
+        "2 DATE 10 MAR 1940",
+        "2 PLAC Chicago, Illinois, USA",
+        "1 FAMS @F1@",
+        `0 @I2@ INDI`,
+        `1 NAME Grandma_${uid} /RTFamily/`,
+        "1 SEX F",
+        "1 BIRT",
+        "2 DATE 15 JUN 1942",
+        "2 PLAC Chicago, Illinois, USA",
+        "1 FAMS @F1@",
+        `0 @I3@ INDI`,
+        `1 NAME Parent_${uid} /RTFamily/`,
+        "1 SEX M",
+        "1 BIRT",
+        "2 DATE 5 SEP 1965",
+        "2 PLAC Chicago, Illinois, USA",
+        "1 FAMC @F1@",
+        "1 FAMS @F2@",
+        `0 @I4@ INDI`,
+        `1 NAME Spouse_${uid} /RTMiller/`,
+        "1 SEX F",
+        "1 BIRT",
+        "2 DATE 20 DEC 1967",
+        "2 PLAC Detroit, Michigan, USA",
+        "1 FAMS @F2@",
+        `0 @I5@ INDI`,
+        `1 NAME Child_${uid} /RTFamily/`,
+        "1 SEX F",
+        "1 BIRT",
+        "2 DATE 12 APR 1995",
+        "2 PLAC New York, New York, USA",
+        "1 FAMC @F2@",
+        "0 @F1@ FAM",
+        "1 HUSB @I1@",
+        "1 WIFE @I2@",
+        "1 CHIL @I3@",
+        "1 MARR",
+        "2 DATE 20 JUN 1963",
+        "2 PLAC Chicago, Illinois, USA",
+        "0 @F2@ FAM",
+        "1 HUSB @I3@",
+        "1 WIFE @I4@",
+        "1 CHIL @I5@",
+        "1 MARR",
+        "2 DATE 15 AUG 1993",
+        "2 PLAC New York, New York, USA",
+        "0 TRLR",
+      ].join("\n");
+
+      let exportedContent = "";
+
+      await bdd.given("user is logged in as admin", async () => {
+        await login(TEST_USERS.admin);
+      });
+
+      await bdd.when(
+        "user imports a multi-generation GEDCOM file",
+        async () => {
+          const filePath = writeTempGedcom(
+            gedcomContent,
+            "multi-gen-roundtrip"
+          );
+          const success = await importGedcomFile(page, filePath);
+          expect(success).toBe(true);
+        }
+      );
+
+      await bdd.and("user exports the data as GEDCOM", async () => {
+        exportedContent = await exportGedcomFile(page);
+      });
+
+      await bdd.then(
+        "exported GEDCOM contains all imported people with correct data",
+        async () => {
+          // Verify all names survived (GEDCOM format: "FirstName /LastName/")
+          expect(exportedContent).toContain(`Grandpa_${uid}`);
+          expect(exportedContent).toContain(`Grandma_${uid}`);
+          expect(exportedContent).toContain(`Parent_${uid}`);
+          expect(exportedContent).toContain(`Spouse_${uid}`);
+          expect(exportedContent).toContain(`Child_${uid}`);
+          expect(exportedContent).toContain("/RTFamily/");
+          expect(exportedContent).toContain("/RTMiller/");
+
+          // Verify sex data
+          expect(exportedContent).toContain("1 SEX M");
+          expect(exportedContent).toContain("1 SEX F");
+
+          // Verify birth dates survived (format: "D MON YYYY")
+          expect(exportedContent).toContain("10 MAR 1940");
+          expect(exportedContent).toContain("15 JUN 1942");
+          expect(exportedContent).toContain("5 SEP 1965");
+          expect(exportedContent).toContain("20 DEC 1967");
+          expect(exportedContent).toContain("12 APR 1995");
+
+          // Verify birth places survived
+          expect(exportedContent).toContain("Chicago, Illinois, USA");
+          expect(exportedContent).toContain("Detroit, Michigan, USA");
+          expect(exportedContent).toContain("New York, New York, USA");
+
+          // Verify marriage dates survived
+          expect(exportedContent).toContain("20 JUN 1963");
+          expect(exportedContent).toContain("15 AUG 1993");
+
+          // Verify family structure exists (HUSB/WIFE/CHIL references)
+          expect(exportedContent).toContain("1 HUSB");
+          expect(exportedContent).toContain("1 WIFE");
+          expect(exportedContent).toContain("1 CHIL");
+
+          // Verify GEDCOM structure markers
+          expect(exportedContent).toContain("0 HEAD");
+          expect(exportedContent).toContain("0 TRLR");
+          expect(exportedContent).toMatch(/0 @\w+@ INDI/);
+          expect(exportedContent).toMatch(/0 @\w+@ FAM/);
+        }
+      );
+    });
+
+    test("Scenario: Remarriage and divorce data survives import-export round-trip", async ({
+      page,
+      login,
+    }) => {
+      test.slow();
+
+      const uid = Date.now().toString(36);
+      const gedcomContent = [
+        "0 HEAD",
+        "1 SOUR RoundTripTest",
         "1 GEDC",
         "2 VERS 5.5.1",
         "2 FORM LINEAGE-LINKED",
         "1 CHAR UTF-8",
         "0 @I1@ INDI",
-        "1 NAME GedcomTest /ImportPerson/",
+        `1 NAME DivorcedHusband_${uid} /RTDivorce/`,
         "1 SEX M",
         "1 BIRT",
-        "2 DATE 1 JAN 1950",
-        "2 PLAC Test City",
+        "2 DATE 3 FEB 1970",
+        "1 FAMS @F1@",
+        "1 FAMS @F2@",
         "0 @I2@ INDI",
-        "1 NAME GedcomSpouse /ImportPerson/",
+        `1 NAME FirstWife_${uid} /RTDivorce/`,
         "1 SEX F",
         "1 BIRT",
-        "2 DATE 15 MAR 1955",
+        "2 DATE 15 MAY 1972",
+        "1 FAMS @F1@",
+        "0 @I3@ INDI",
+        `1 NAME SecondWife_${uid} /RTRemarriage/`,
+        "1 SEX F",
+        "1 BIRT",
+        "2 DATE 22 SEP 1975",
+        "1 FAMS @F2@",
         "0 @F1@ FAM",
         "1 HUSB @I1@",
         "1 WIFE @I2@",
         "1 MARR",
-        "2 DATE 20 JUN 1975",
+        "2 DATE 10 JUN 1995",
+        "1 DIV",
+        "2 DATE 15 MAR 2005",
+        "0 @F2@ FAM",
+        "1 HUSB @I1@",
+        "1 WIFE @I3@",
+        "1 MARR",
+        "2 DATE 20 OCT 2008",
         "0 TRLR",
       ].join("\n");
 
-      const tempDir = path.join(process.cwd(), "test-output");
-      if (!fs.existsSync(tempDir)) {
-        fs.mkdirSync(tempDir, { recursive: true });
-      }
-      const gedcomPath = path.join(tempDir, "test-import.ged");
-      fs.writeFileSync(gedcomPath, gedcomContent, "utf-8");
+      let exportedContent = "";
 
       await bdd.given("user is logged in as admin", async () => {
         await login(TEST_USERS.admin);
       });
 
-      await bdd.when("user navigates to GEDCOM import", async () => {
-        await gotoWithRetry(page, "/admin/backup");
-        await waitForHydration(page);
-
-        const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
-        await expect(gedcomTab).toBeVisible({ timeout: 5000 });
-        await gedcomTab.click();
-        await page.waitForTimeout(500);
-      });
-
-      await bdd.and("user uploads a valid GEDCOM file", async () => {
-        const fileInput = page.locator('input[type="file"]');
-        const fileInputCount = await fileInput.count();
-
-        if (fileInputCount > 0) {
-          await fileInput.first().setInputFiles(gedcomPath);
-          await page.waitForTimeout(1000);
+      await bdd.when(
+        "user imports a GEDCOM file with remarriage data",
+        async () => {
+          const filePath = writeTempGedcom(
+            gedcomContent,
+            "remarriage-roundtrip"
+          );
+          const success = await importGedcomFile(page, filePath);
+          expect(success).toBe(true);
         }
+      );
+
+      await bdd.and("user exports the data as GEDCOM", async () => {
+        exportedContent = await exportGedcomFile(page);
       });
 
-      await bdd.then("import UI responds to the file", async () => {
-        const mainContent = page.locator("main");
-        await expect(mainContent).toBeVisible();
+      await bdd.then(
+        "exported GEDCOM contains divorce and remarriage data",
+        async () => {
+          // Verify all people survived
+          expect(exportedContent).toContain(`DivorcedHusband_${uid}`);
+          expect(exportedContent).toContain(`FirstWife_${uid}`);
+          expect(exportedContent).toContain(`SecondWife_${uid}`);
 
-        const importButton = page.getByRole("button", {
-          name: /import|upload|process/i,
-        });
-        const successMessage = page.locator(
-          "text=/import|upload|processed|preview/i"
-        );
-        const errorMessage = page.locator("text=/error|invalid|failed/i");
+          // Verify first marriage date
+          expect(exportedContent).toContain("10 JUN 1995");
 
-        const hasImportButton = await importButton
-          .first()
-          .isVisible()
-          .catch(() => false);
-        const hasSuccess = await successMessage
-          .first()
-          .isVisible()
-          .catch(() => false);
-        const hasError = await errorMessage
-          .first()
-          .isVisible()
-          .catch(() => false);
+          // Verify divorce date
+          expect(exportedContent).toContain("1 DIV");
+          expect(exportedContent).toContain("15 MAR 2005");
 
-        expect(hasImportButton || hasSuccess || hasError).toBeTruthy();
-      });
+          // Verify second marriage date
+          expect(exportedContent).toContain("20 OCT 2008");
 
-      // Cleanup temp file
-      try {
-        fs.unlinkSync(gedcomPath);
-      } catch {
-        // Ignore cleanup errors
-      }
+          // Verify two FAM records exist (for the two marriages)
+          const famMatches = exportedContent.match(/0 @\w+@ FAM/g) || [];
+          expect(famMatches.length).toBeGreaterThanOrEqual(2);
+        }
+      );
     });
-  });
 
-  test.describe("GEDCOM Export Download Verification", () => {
-    test("Scenario: GEDCOM export triggers file download with valid content", async ({
+    test("Scenario: Person notes survive import-export round-trip", async ({
       page,
       login,
     }) => {
+      test.slow();
+
+      const uid = Date.now().toString(36);
+      const noteText = "This individual served in the military from 1980-1985.";
+      const gedcomContent = [
+        "0 HEAD",
+        "1 SOUR RoundTripTest",
+        "1 GEDC",
+        "2 VERS 5.5.1",
+        "2 FORM LINEAGE-LINKED",
+        "1 CHAR UTF-8",
+        "0 @I1@ INDI",
+        `1 NAME NotesPerson_${uid} /RTNotes/`,
+        "1 SEX M",
+        "1 BIRT",
+        "2 DATE 25 DEC 1960",
+        "2 PLAC Boston, Massachusetts, USA",
+        `1 NOTE ${noteText}`,
+        "0 TRLR",
+      ].join("\n");
+
+      let exportedContent = "";
+
       await bdd.given("user is logged in as admin", async () => {
         await login(TEST_USERS.admin);
       });
 
-      await bdd.when("user navigates to GEDCOM export", async () => {
-        await gotoWithRetry(page, "/admin/backup");
-        await waitForHydration(page);
-
-        const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
-        await expect(gedcomTab).toBeVisible({ timeout: 5000 });
-        await gedcomTab.click();
-        await page.waitForTimeout(500);
-      });
-
-      await bdd.then("clicking export triggers a download", async () => {
-        const exportButton = page.getByRole("button", {
-          name: /export to gedcom|export.*gedcom|download.*gedcom/i,
-        });
-        const buttonVisible = await exportButton.isVisible().catch(() => false);
-
-        if (buttonVisible) {
-          const downloadPromise = page
-            .waitForEvent("download", { timeout: 15000 })
-            .catch(() => null);
-          await exportButton.click();
-          const download = await downloadPromise;
-
-          if (download) {
-            const fileName = download.suggestedFilename();
-            expect(
-              fileName.endsWith(".ged") || fileName.endsWith(".zip")
-            ).toBeTruthy();
-
-            const tempDir = path.join(process.cwd(), "test-output");
-            if (!fs.existsSync(tempDir)) {
-              fs.mkdirSync(tempDir, { recursive: true });
-            }
-            const savePath = path.join(tempDir, fileName);
-            await download.saveAs(savePath);
-
-            const stats = fs.statSync(savePath);
-            expect(stats.size).toBeGreaterThan(0);
-
-            try {
-              fs.unlinkSync(savePath);
-            } catch {
-              // Ignore
-            }
-          }
+      await bdd.when(
+        "user imports a GEDCOM file with person notes",
+        async () => {
+          const filePath = writeTempGedcom(gedcomContent, "notes-roundtrip");
+          const success = await importGedcomFile(page, filePath);
+          expect(success).toBe(true);
         }
+      );
+
+      await bdd.and("user exports the data as GEDCOM", async () => {
+        exportedContent = await exportGedcomFile(page);
       });
+
+      await bdd.then(
+        "exported GEDCOM contains the person with their notes",
+        async () => {
+          // Verify person survived
+          expect(exportedContent).toContain(`NotesPerson_${uid}`);
+          expect(exportedContent).toContain("/RTNotes/");
+
+          // Verify birth data
+          expect(exportedContent).toContain("25 DEC 1960");
+          expect(exportedContent).toContain("Boston, Massachusetts, USA");
+
+          // Verify note content survived (may be split across CONT lines)
+          // The note text should appear somewhere in the export
+          expect(exportedContent).toContain("military");
+          expect(exportedContent).toContain("1980-1985");
+        }
+      );
+    });
+
+    test("Scenario: Deceased person with death data survives import-export round-trip", async ({
+      page,
+      login,
+    }) => {
+      test.slow();
+
+      const uid = Date.now().toString(36);
+      const gedcomContent = [
+        "0 HEAD",
+        "1 SOUR RoundTripTest",
+        "1 GEDC",
+        "2 VERS 5.5.1",
+        "2 FORM LINEAGE-LINKED",
+        "1 CHAR UTF-8",
+        "0 @I1@ INDI",
+        `1 NAME DeceasedPerson_${uid} /RTDeceased/`,
+        "1 SEX M",
+        "1 BIRT",
+        "2 DATE 12 FEB 1920",
+        "2 PLAC Philadelphia, Pennsylvania, USA",
+        "1 DEAT",
+        "2 DATE 5 NOV 2010",
+        "1 OCCU Carpenter",
+        "0 TRLR",
+      ].join("\n");
+
+      let exportedContent = "";
+
+      await bdd.given("user is logged in as admin", async () => {
+        await login(TEST_USERS.admin);
+      });
+
+      await bdd.when(
+        "user imports a GEDCOM file with a deceased person",
+        async () => {
+          const filePath = writeTempGedcom(gedcomContent, "deceased-roundtrip");
+          const success = await importGedcomFile(page, filePath);
+          expect(success).toBe(true);
+        }
+      );
+
+      await bdd.and("user exports the data as GEDCOM", async () => {
+        exportedContent = await exportGedcomFile(page);
+      });
+
+      await bdd.then(
+        "exported GEDCOM contains the deceased person with death and occupation data",
+        async () => {
+          // Verify person survived
+          expect(exportedContent).toContain(`DeceasedPerson_${uid}`);
+          expect(exportedContent).toContain("/RTDeceased/");
+
+          // Verify birth data
+          expect(exportedContent).toContain("12 FEB 1920");
+          expect(exportedContent).toContain("Philadelphia, Pennsylvania, USA");
+
+          // Verify death date survived
+          expect(exportedContent).toContain("1 DEAT");
+          expect(exportedContent).toContain("5 NOV 2010");
+
+          // Verify occupation survived
+          expect(exportedContent).toContain("1 OCCU");
+          expect(exportedContent).toContain("Carpenter");
+        }
+      );
     });
   });
 });
