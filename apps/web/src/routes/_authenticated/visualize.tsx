@@ -108,6 +108,12 @@ interface VisualizeSearchParams {
 }
 
 export const Route = createFileRoute("/_authenticated/visualize")({
+  loader: async ({ context }) => {
+    await context.queryClient.prefetchQuery({
+      queryKey: ["persons"],
+      queryFn: () => listPersons({ data: {} }),
+    });
+  },
   component: VisualizeComponent,
   validateSearch: (search: Record<string, unknown>): VisualizeSearchParams => ({
     type: (search.type as VisualizationType) || "tree",
