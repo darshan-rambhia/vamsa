@@ -27,6 +27,24 @@ import { MediaTab } from "~/components/media/media-tab";
 import { StoryGenerator } from "~/components/ai/story-generator";
 
 export const Route = createFileRoute("/_authenticated/people/$personId")({
+  loader: async ({ params, context }) => {
+    await context.queryClient.prefetchQuery({
+      queryKey: ["person", params.personId],
+      queryFn: () => getPerson({ data: { id: params.personId } }),
+    });
+    await context.queryClient.prefetchQuery({
+      queryKey: ["personEvents", params.personId],
+      queryFn: () => getPersonEvents({ data: { personId: params.personId } }),
+    });
+    await context.queryClient.prefetchQuery({
+      queryKey: ["personPlaces", params.personId],
+      queryFn: () => getPersonPlaces({ data: { personId: params.personId } }),
+    });
+    // Note: personMedia is intentionally not prefetched in the loader.
+    // Including it causes blank pages during SSR — likely due to the media
+    // server function's import chain affecting the SSR streaming pipeline.
+    // Media loads client-side via useQuery with its own loading state.
+  },
   component: PersonDetailComponent,
 });
 
@@ -38,22 +56,20 @@ function PersonDetailComponent() {
     queryFn: () => getPerson({ data: { id: personId } }),
   });
 
+  // All queries use personId from URL params — no waterfall needed
   const { data: events = [], isLoading: isLoadingEvents } = useQuery({
     queryKey: ["personEvents", personId],
     queryFn: () => getPersonEvents({ data: { personId } }),
-    enabled: !!person,
   });
 
   const { data: places = [], isLoading: isLoadingPlaces } = useQuery({
     queryKey: ["personPlaces", personId],
     queryFn: () => getPersonPlaces({ data: { personId } }),
-    enabled: !!person,
   });
 
   const { data: mediaData, isLoading: isLoadingMedia } = useQuery({
     queryKey: ["personMedia", personId],
     queryFn: () => getPersonMedia({ data: { personId } }),
-    enabled: !!person,
   });
 
   if (isLoading) {

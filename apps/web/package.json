@@ -35,6 +35,7 @@
     "@tanstack/pacer": "^0.18.0",
     "@tanstack/react-query": "^5.90.17",
     "@tanstack/react-router": "^1.158.0",
+    "@tanstack/react-router-ssr-query": "1.160.0",
     "@tanstack/react-start": "^1.158.0",
     "@types/d3": "^7.4.3",
     "@types/maplibre-gl": "^1.14.0",

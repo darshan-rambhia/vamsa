@@ -1,5 +1,3 @@
-import { jsPDF } from "jspdf";
-
 export interface ExportOptions {
   title: string;
   orientation: "portrait" | "landscape";
@@ -140,8 +138,11 @@ export async function exportToPDF(
   svgElement: SVGElement,
   options: ExportOptions
 ): Promise<void> {
-  // Dynamic import to handle CommonJS module
-  const svg2pdfModule = await import("svg2pdf.js");
+  // Dynamic imports to defer heavy libraries until user clicks export
+  const [{ jsPDF }, svg2pdfModule] = await Promise.all([
+    import("jspdf"),
+    import("svg2pdf.js"),
+  ]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const svg2pdf = svg2pdfModule.svg2pdf || (svg2pdfModule as any).default;
 

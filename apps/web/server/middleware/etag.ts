@@ -17,6 +17,17 @@
 import { createHash } from "node:crypto";
 import type { Context, MiddlewareHandler, Next } from "hono";
 
+/**
+ * Route-specific cache duration configuration.
+ * Matches routes by regex pattern and applies a max-age value.
+ */
+export interface RouteCacheConfig {
+  /** Regex pattern to match against the request path */
+  pattern: RegExp;
+  /** max-age in seconds (0 = must-revalidate every time) */
+  maxAge: number;
+}
+
 export interface ETagOptions {
   /**
    * Use weak ETags (W/"...") instead of strong ETags
@@ -45,10 +56,16 @@ export interface ETagOptions {
   minSize?: number;
 
   /**
-   * Custom Cache-Control header value
+   * Default Cache-Control header value (used when no route-specific config matches)
    * Default: "private, must-revalidate"
    */
   cacheControl?: string;
+
+  /**
+   * Route-specific cache durations. First matching pattern wins.
+   * Allows stable data to be cached longer while volatile data stays fresh.
+   */
+  routeCacheConfig?: Array<RouteCacheConfig>;
 
   /**
    * Enable metrics collection for monitoring
@@ -168,8 +185,24 @@ export function etagMiddleware(options: ETagOptions = {}): MiddlewareHandler {
     skip = DEFAULT_SKIP_PATTERNS,
     minSize = 1024,
     cacheControl = "private, must-revalidate",
+    routeCacheConfig = [],
     collectMetrics = process.env.NODE_ENV === "production",
   } = options;
+
+  /**
+   * Resolve the Cache-Control header for a given path.
+   * First matching route config wins; falls back to the default.
+   */
+  function resolveCacheControl(path: string): string {
+    for (const route of routeCacheConfig) {
+      if (route.pattern.test(path)) {
+        return route.maxAge > 0
+          ? `private, max-age=${route.maxAge}, must-revalidate`
+          : "private, max-age=0, must-revalidate";
+      }
+    }
+    return cacheControl;
+  }
 
   return async (c: Context, next: Next) => {
     // Only apply to GET and HEAD requests
@@ -221,6 +254,9 @@ export function etagMiddleware(options: ETagOptions = {}): MiddlewareHandler {
     // Generate ETag from response body
     const serverETag = generateETag(body, { weak, algorithm });
 
+    // Resolve per-route Cache-Control
+    const resolvedCacheControl = resolveCacheControl(path);
+
     // Check if client already has this version
     if (etagMatches(clientETag, serverETag)) {
       if (collectMetrics) metrics.hits++;
@@ -230,7 +266,7 @@ export function etagMiddleware(options: ETagOptions = {}): MiddlewareHandler {
         status: 304,
         headers: {
           ETag: serverETag,
-          "Cache-Control": cacheControl,
+          "Cache-Control": resolvedCacheControl,
         },
       });
       return;
@@ -242,7 +278,7 @@ export function etagMiddleware(options: ETagOptions = {}): MiddlewareHandler {
     // Create new response with ETag header
     const newHeaders = new Headers(c.res.headers);
     newHeaders.set("ETag", serverETag);
-    newHeaders.set("Cache-Control", cacheControl);
+    newHeaders.set("Cache-Control", resolvedCacheControl);
 
     c.res = new Response(body, {
       status: c.res.status,
