@@ -5,6 +5,7 @@ import { Button, Container, PageHeader } from "@vamsa/ui";
 import { getDashboardStats } from "~/server/dashboard";
 import { OnboardingDashboard } from "~/components/onboarding";
 import { ConfigurableDashboard } from "~/components/dashboard/ConfigurableDashboard";
+import { CompactRouteError } from "~/components/error";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   loader: async ({ context }) => {
@@ -14,6 +15,7 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
     });
   },
   component: DashboardComponent,
+  errorComponent: CompactRouteError,
 });
 
 function DashboardComponent() {

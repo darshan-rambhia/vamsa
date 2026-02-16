@@ -36,6 +36,7 @@ import { ChartContainer } from "~/components/charts/ChartContainer";
 import { PersonSelector } from "~/components/charts/PersonSelector";
 import { FloatingInfoPanel } from "~/components/charts/FloatingInfoPanel";
 import { GenerationSlider } from "~/components/charts/GenerationSlider";
+import { CompactRouteError } from "~/components/error";
 
 // Lazy-load chart components — each becomes its own Vite chunk
 const AncestorChart = lazy(() =>
@@ -115,6 +116,7 @@ export const Route = createFileRoute("/_authenticated/visualize")({
     });
   },
   component: VisualizeComponent,
+  errorComponent: CompactRouteError,
   validateSearch: (search: Record<string, unknown>): VisualizeSearchParams => ({
     type: (search.type as VisualizationType) || "tree",
     personId: typeof search.personId === "string" ? search.personId : undefined,

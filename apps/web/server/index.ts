@@ -21,6 +21,8 @@ import { NONCE, secureHeaders } from "hono/secure-headers";
 import { loggers } from "@vamsa/lib/logger";
 import { initializeServerI18n } from "@vamsa/lib/server";
 import { auth } from "@vamsa/lib/server/business";
+import { closeDrizzleDb, drizzleDb, getDrizzlePoolStats } from "@vamsa/api";
+import { sql } from "drizzle-orm";
 import { rateLimitMiddleware } from "../src/server/middleware/hono-rate-limiter";
 import { initializeRateLimitStore } from "../src/server/middleware/rate-limiter";
 import {
@@ -316,11 +318,41 @@ app.use(
 
 // Health check endpoint for Docker/K8s (public, no authentication required)
 // Returns minimal info only — no version or uptime (information disclosure risk)
-app.get("/health", (c) => {
-  return c.json({
-    status: "healthy",
-    timestamp: new Date().toISOString(),
-  });
+app.get("/health", async (c) => {
+  try {
+    const poolStats = getDrizzlePoolStats();
+    return c.json({
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      db: { connected: true, ...poolStats },
+    });
+  } catch {
+    return c.json(
+      {
+        status: "unhealthy",
+        timestamp: new Date().toISOString(),
+        db: { connected: false },
+      },
+      503
+    );
+  }
+});
+
+// Readiness check endpoint for Kubernetes
+// Performs actual database query to verify system is fully operational
+app.get("/readyz", async (c) => {
+  try {
+    await drizzleDb.execute(sql`SELECT 1`);
+    return c.json({ status: "ready" });
+  } catch (error) {
+    return c.json(
+      {
+        status: "not_ready",
+        reason: error instanceof Error ? error.message : "DB unreachable",
+      },
+      503
+    );
+  }
 });
 
 // robots.txt endpoint
@@ -647,15 +679,16 @@ async function setupRoutes() {
 // ============================================
 
 async function startServer() {
-  log.info({}, "Starting Vamsa server...");
+  const version = process.env.APP_VERSION || "dev";
   log.info(
     {
+      version,
       runtime: Bun.version,
       environment: IS_PRODUCTION ? "production" : "development",
       host: HOST,
       port: PORT,
     },
-    "Server configuration"
+    "Vamsa server starting"
   );
 
   // Initialize i18n for server functions
@@ -708,6 +741,7 @@ const server = await startServer();
 process.on("SIGINT", async () => {
   log.info({}, "Received SIGINT, shutting down server...");
   server.stop();
+  await closeDrizzleDb();
   await closeRedisClient();
   await stopTelemetry();
   process.exit(0);
@@ -716,6 +750,7 @@ process.on("SIGINT", async () => {
 process.on("SIGTERM", async () => {
   log.info({}, "Received SIGTERM, shutting down server...");
   server.stop();
+  await closeDrizzleDb();
   await closeRedisClient();
   await stopTelemetry();
   process.exit(0);
