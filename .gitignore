@@ -9,6 +9,7 @@ out
 build
 dist
 .turbo
+.vite
 
 # Testing
 test-output
