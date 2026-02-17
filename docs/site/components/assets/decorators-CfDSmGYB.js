@@ -1,1 +1,0 @@
-import{j as o}from"./index-B-j1UC9_.js";function e({children:r}){return o.jsx("div",{className:"bg-background h-[600px] w-full rounded-lg border p-4",children:r})}function n({children:r}){return o.jsx("div",{className:"bg-background text-foreground min-h-screen p-4",children:r})}function s({children:r}){return o.jsx(n,{children:o.jsx(e,{children:r})})}export{s as S,n as T};

@@ -1,90 +1,68 @@
 # Docs Site Build Pipeline
 
-**Status:** Proposed
+**Status:** In Progress (vamsa-j5xt)
 **Created:** 2025-01-21
+**Updated:** 2026-02-16
 
 ## Context
 
-Currently, `docs/site/` contains:
-- Storybook component library (built)
-- Empty `guides/` and `api/` placeholders
+The docs/ folder has been audited and reorganized. Source documentation now lives in logical directories:
 
-Source documentation lives in:
-- `docs/guides/` - How-to guides, runbooks, API reference
+- `docs/guides/` - How-to guides, runbooks, operational docs
 - `docs/adrs/` - Architecture Decision Records
+- `docs/agentic/` - Multi-agent development architecture
 
-We want `docs/site/` to grow into a full documentation site hosted on GitHub Pages, without duplicating content between source and published locations.
+## Decisions Made
 
-## Proposal
+1. **Tool: MkDocs Material** — Lightweight, Markdown-native, beautiful default theme, great for homelab/self-hosted project docs. Keeps doc build separate from app build (Python, not Node).
 
-Set up a build pipeline that transforms source markdown into the published site:
+2. **ADRs: Published** — Transparency for contributors. All ADRs published under Architecture section.
 
-```
-docs/guides/*.md     →  (build)  →  docs/site/guides/*.html
-docs/adrs/*.md       →  (build)  →  docs/site/adrs/*.html (optional)
-```
+3. **Ladle (component playground): Preserved** — Stays at `/components/` as a separate build, linked from MkDocs nav.
 
-## Current State
+4. **GitHub Actions** — Build on push to main, deploy to GitHub Pages.
 
-```
-docs/
-├── site/              # Build output (GitHub Pages)
-│   ├── components/    # Storybook build
-│   ├── guides/        # Empty
-│   ├── api/           # Empty
-│   └── index.html
-├── adrs/              # Source: Architecture decisions
-├── guides/            # Source: How-to guides
-└── roadmap/           # In-progress proposals (this file)
-```
-
-## Desired End State
+## Current State (after audit)
 
 ```
 docs/
-├── site/              # Build output (GitHub Pages) - gitignored except components
-│   ├── components/    # Storybook build
-│   ├── guides/        # Built from docs/guides/
-│   ├── adrs/          # Built from docs/adrs/ (if we want them public)
-│   ├── api/           # Built API reference
-│   └── index.html     # Landing page
-├── adrs/              # Source: Architecture decisions
-├── guides/            # Source: How-to guides
-└── roadmap/           # In-progress proposals
+├── site/                    # Build output (GitHub Pages)
+│   ├── components/          # Ladle build (chart playground)
+│   ├── .nojekyll            # Bypass Jekyll processing
+│   └── index.html           # Placeholder (will be replaced by MkDocs)
+├── guides/                  # Source: consolidated guides
+│   ├── alerts-runbook.md
+│   ├── api.md
+│   ├── architecture.md
+│   ├── authentication.md
+│   ├── backup-restore.md    # Consolidated from 4 BACKUP*.md files
+│   ├── database-migrations.md
+│   ├── deployment.md
+│   ├── i18n.md
+│   ├── integration-testing.md
+│   └── quick-start-emails.md
+├── adrs/                    # Source: Architecture decisions (001-013)
+├── agentic/                 # Source: Multi-agent dev architecture
+└── roadmap/                 # Internal proposals (this file)
 ```
 
-## Open Questions
+## Remaining Tasks
 
-1. **Which tool to use?**
-   - [mdBook](https://rust-lang.github.io/mdBook/) - Rust, simple, good for technical docs
-   - [MkDocs](https://www.mkdocs.org/) - Python, Material theme popular
-   - [Docusaurus](https://docusaurus.io/) - React-based, feature-rich
-   - Simple script - Just copy/convert markdown to HTML
-
-2. **Should ADRs be published to the site?**
-   - Pro: Transparency, helps contributors understand decisions
-   - Con: Some ADRs may be internal-only
-
-3. **How to handle the existing Storybook?**
-   - Keep as separate build (`/components/`)
-   - Integrate into doc site navigation
-
-4. **GitHub Actions workflow?**
-   - Build on push to main
-   - Deploy to GitHub Pages
-
-## Tasks
-
-- [ ] Choose documentation tool
-- [ ] Set up basic build configuration
-- [ ] Create landing page (`index.html` or `index.md`)
-- [ ] Configure GitHub Actions for automated builds
-- [ ] Add navigation/sidebar structure
-- [ ] Integrate with existing Storybook build
-- [ ] Update `.gitignore` for build outputs
+- [x] Choose documentation tool → MkDocs Material
+- [x] Audit and clean up docs/ folder
+- [x] Consolidate scattered docs
+- [x] Fix ADR numbering
+- [x] Add .nojekyll for GitHub Pages
+- [ ] Set up mkdocs.yml configuration
+- [ ] Create MkDocs source directory structure
+- [ ] Build scripts (docs:dev, docs:build)
+- [ ] GitHub Actions workflow
+- [ ] Write user-facing documentation (17 pages)
+- [ ] Write developer/Claude Code documentation (8 pages)
+- [ ] Landing page (index.md)
+- [ ] Custom theme (earth tones)
 
 ## References
 
-- Current guides: `/docs/guides/`
-- Current ADRs: `/docs/adrs/`
-- Storybook: `/docs/site/components/`
+- Epic: vamsa-j5xt
+- Beads: vamsa-j5xt.1 (audit), .2 (MkDocs setup), .3 (user docs), .4 (Claude Code docs)
