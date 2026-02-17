@@ -65,12 +65,13 @@ test.describe("Feature: Profile Claiming", () => {
           await page.waitForTimeout(500);
 
           const claimProfilePage = new ClaimProfilePage(page);
+          // Genuine conditional guard - checking which UI state is shown
           const selectVisible = await claimProfilePage.profileSelect
-            .isVisible({ timeout: 2000 })
+            .isVisible()
             .catch(() => false);
           const emptyState = await page
             .locator("text=No unclaimed profiles available")
-            .isVisible({ timeout: 2000 })
+            .isVisible()
             .catch(() => false);
 
           expect(selectVisible || emptyState).toBeTruthy();
@@ -124,6 +125,7 @@ test.describe("Feature: Profile Claiming", () => {
       await bdd.then("form prevents submission or shows error", async () => {
         // Should stay on form page or show error
         const isOnFormPage = page.url().includes("/claim-profile");
+        // Genuine conditional guard - checking if error is shown
         const errorVisible = await page
           .getByTestId("claim-profile-error")
           .isVisible()

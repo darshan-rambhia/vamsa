@@ -366,5 +366,7 @@
   "yourResearchNotes": "Your research notes about this source...",
   "participant": "participant",
   "participants_plural": "participants",
-  "event_label": "Event"
+  "event_label": "Event",
+  "mediaLoadError": "Unable to load photos. Please try again.",
+  "mediaLoadErrorTitle": "Photo loading failed"
 }

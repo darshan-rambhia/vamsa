@@ -81,6 +81,9 @@ yarn.lock
 # Ladle cache
 apps/web/.ladle/.cache
 
+# MkDocs build output (built fresh by CI)
+docs/site/
+
 # Claude files
 !.claude
 !CLAUDE.md

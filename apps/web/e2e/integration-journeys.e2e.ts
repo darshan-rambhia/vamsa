@@ -33,7 +33,7 @@ function generateUniqueName(prefix: string) {
 test.describe("Integration Journey: Create Person → Add Relationship → View in Tree", () => {
   test("should complete full workflow from person creation to tree visualization", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     // Complex multi-step test: creates 2 persons, adds relationship, views tree - mark as slow
     test.slow();
@@ -96,7 +96,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
         personId1 = match[1];
       }
 
-      await waitForConvexSync();
+      await waitForDataSync();
       await page.waitForTimeout(500);
     });
 
@@ -123,21 +123,23 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
             timeout: 15000,
           });
 
-          // Check that the person's name heading is visible
+          // Check that the person's name heading is visible and contains expected name
           const nameHeading = page.locator("h1").first();
           await nameHeading.waitFor({ state: "visible", timeout: 10000 });
-          const headingText = await nameHeading.textContent();
 
           // Verify the name contains our expected firstName (skip if still on form)
+          const headingText = await nameHeading.textContent();
           if (headingText === "Add Person") {
             // Form submission might have failed, try to navigate directly
             await gotoWithRetry(page, `/people/${personId}`);
             await page.waitForLoadState("domcontentloaded");
-            await nameHeading.waitFor({ state: "visible", timeout: 10000 });
-            const retryHeadingText = await nameHeading.textContent();
-            expect(retryHeadingText).toContain(firstName1);
+            await expect(nameHeading).toContainText(firstName1, {
+              timeout: 10000,
+            });
           } else {
-            expect(headingText).toContain(firstName1);
+            await expect(nameHeading).toContainText(firstName1, {
+              timeout: 10000,
+            });
           }
         } else {
           // Fallback: search in the list (may fail if paginated)
@@ -188,7 +190,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
         timeout: 15000,
       });
 
-      await waitForConvexSync();
+      await waitForDataSync();
       await page.waitForTimeout(500);
     });
 
@@ -225,7 +227,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
         // Look for add relationship button
         const addRelButton = page.getByTestId("add-relationship-button");
         const hasAddRelButton = await addRelButton
-          .isVisible({ timeout: 2000 })
+          .isVisible()
           .catch(() => false);
 
         if (hasAddRelButton) {
@@ -237,9 +239,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
 
           // Select relationship type (Child)
           const typeSelect = page.getByTestId("add-relationship-type-select");
-          const hasTypeSelect = await typeSelect
-            .isVisible({ timeout: 2000 })
-            .catch(() => false);
+          const hasTypeSelect = await typeSelect.isVisible().catch(() => false);
 
           if (hasTypeSelect) {
             await typeSelect.click();
@@ -247,7 +247,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
 
             const childOption = page.locator(`text="Child"`);
             const hasChildOption = await childOption
-              .isVisible({ timeout: 2000 })
+              .isVisible()
               .catch(() => false);
 
             if (hasChildOption) {
@@ -259,7 +259,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
           // Search for the second person
           const searchInput = page.getByTestId("add-relationship-search-input");
           const hasSearchInput = await searchInput
-            .isVisible({ timeout: 2000 })
+            .isVisible()
             .catch(() => false);
 
           if (hasSearchInput) {
@@ -270,9 +270,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
             const firstResult = page
               .locator("[data-testid^='add-relationship-search-result-']")
               .first();
-            const hasResult = await firstResult
-              .isVisible({ timeout: 2000 })
-              .catch(() => false);
+            const hasResult = await firstResult.isVisible().catch(() => false);
 
             if (hasResult) {
               await firstResult.click();
@@ -281,13 +279,13 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
               // Save relationship
               const saveButton = page.getByTestId("add-relationship-save");
               const hasSaveButton = await saveButton
-                .isVisible({ timeout: 2000 })
+                .isVisible()
                 .catch(() => false);
 
               if (hasSaveButton) {
                 await saveButton.click();
                 await page.waitForTimeout(1000);
-                await waitForConvexSync();
+                await waitForDataSync();
               }
             }
           }
@@ -310,7 +308,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
           '[data-relationships], :text("Relationships")'
         );
         const hasRelationships = await relationshipSection
-          .isVisible({ timeout: 5000 })
+          .isVisible()
           .catch(() => false);
 
         // Either relationships exist or we can navigate to tree
@@ -337,11 +335,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
 
         // Tree should be loaded
         const chartTypeSelect = page.getByLabel(/chart type/i);
-        const hasChartSelect = await chartTypeSelect
-          .isVisible({ timeout: 5000 })
-          .catch(() => false);
-
-        expect(hasChartSelect).toBeTruthy();
+        await expect(chartTypeSelect).toBeVisible({ timeout: 5000 });
       }
     );
   });
@@ -350,7 +344,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
 test.describe("Integration Journey: Create Person → Add Details → Search and Find", () => {
   test("should complete workflow from person creation with details to search discovery", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     // Complex workflow: creates person with details, searches - mark as slow
     test.slow();
@@ -376,7 +370,7 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
           bio,
         });
         await form.submit();
-        await waitForConvexSync();
+        await waitForDataSync();
         await page.waitForTimeout(500);
       }
     );
@@ -390,9 +384,7 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
 
       // Wait for search input and search
       const searchInput = page.locator('input[placeholder*="Search"]');
-      const isSearchVisible = await searchInput
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
+      const isSearchVisible = await searchInput.isVisible().catch(() => false);
 
       if (isSearchVisible) {
         await searchInput.fill(firstName);
@@ -404,9 +396,7 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
       // Person should appear in results
       const personLink = page.locator(`a:has-text("${firstName}")`);
       // Try to find exact match, but also accept partial match
-      const hasLink = await personLink
-        .isVisible({ timeout: 3000 })
-        .catch(() => false);
+      const hasLink = await personLink.isVisible().catch(() => false);
 
       if (!hasLink) {
         // If exact match fails, just verify we can see person rows
@@ -463,7 +453,7 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
         const partialFirstName = firstName.substring(0, 5);
         const searchInput = page.locator('input[placeholder*="Search"]');
         const isSearchVisible = await searchInput
-          .isVisible({ timeout: 5000 })
+          .isVisible()
           .catch(() => false);
 
         if (isSearchVisible) {
@@ -475,9 +465,7 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
 
         // Person should still be found
         const personLink = page.locator(`a:has-text("${firstName}")`);
-        const isVisible = await personLink
-          .isVisible({ timeout: 5000 })
-          .catch(() => false);
+        const isVisible = await personLink.isVisible().catch(() => false);
 
         // Either found or search functionality works
         expect(typeof isVisible).toBe("boolean");
@@ -499,7 +487,7 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
         // Search with last name
         const searchInput = page.locator('input[placeholder*="Search"]');
         const isSearchVisible = await searchInput
-          .isVisible({ timeout: 5000 })
+          .isVisible()
           .catch(() => false);
 
         if (isSearchVisible) {
@@ -524,7 +512,7 @@ test.describe("Integration Journey: Create Person → Add Details → Search and
 test.describe("Integration Journey: Data Persistence Across Navigation", () => {
   test("should verify person data persists after navigation away and back", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     // This test involves person creation plus multiple navigations - mark as slow to double timeout
     test.slow();
@@ -543,7 +531,7 @@ test.describe("Integration Journey: Data Persistence Across Navigation", () => {
           lastName,
         });
         await form.submit();
-        await waitForConvexSync();
+        await waitForDataSync();
         await page.waitForTimeout(500);
 
         // Extract person ID
@@ -617,9 +605,7 @@ test.describe("Integration Journey: Data Persistence Across Navigation", () => {
       await page.waitForTimeout(500);
 
       const searchInput = page.locator('input[placeholder*="Search"]');
-      const isSearchVisible = await searchInput
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
+      const isSearchVisible = await searchInput.isVisible().catch(() => false);
 
       if (isSearchVisible) {
         await searchInput.fill(firstName);
@@ -668,9 +654,7 @@ test.describe("Integration Journey: Search and Navigation Flow", () => {
 
     await bdd.when("user searches for people matching a criteria", async () => {
       const searchInput = page.locator('input[placeholder*="Search"]');
-      const isSearchVisible = await searchInput
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
+      const isSearchVisible = await searchInput.isVisible().catch(() => false);
 
       if (isSearchVisible) {
         await searchInput.fill(searchTerm);
@@ -694,9 +678,7 @@ test.describe("Integration Journey: Search and Navigation Flow", () => {
           .locator("table tbody tr a, [data-person-card] a")
           .first();
 
-        const isVisible = await firstPersonLink
-          .isVisible({ timeout: 5000 })
-          .catch(() => false);
+        const isVisible = await firstPersonLink.isVisible().catch(() => false);
 
         if (isVisible) {
           await firstPersonLink.click();
@@ -728,7 +710,7 @@ test.describe("Integration Journey: Search and Navigation Flow", () => {
         // Should be able to search again
         const searchInput = page.locator('input[placeholder*="Search"]');
         const isSearchVisible = await searchInput
-          .isVisible({ timeout: 5000 })
+          .isVisible()
           .catch(() => false);
 
         if (isSearchVisible) {

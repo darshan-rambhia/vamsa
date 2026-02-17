@@ -260,13 +260,15 @@ export class Navigation {
     const urlPattern =
       fallbackUrl === "/visualize" ? /\/visualize/ : fallbackUrl;
 
-    // Helper to check if we're at target URL
+    // Helper to check if we're at target URL (exact pathname match to avoid
+    // e.g. /people/{id} matching /people)
     const isAtTargetUrl = () => {
-      const currentUrl = this.page.url();
-      if (fallbackUrl === "/visualize") {
-        return currentUrl.includes("/visualize");
+      try {
+        const pathname = new URL(this.page.url()).pathname;
+        return pathname === fallbackUrl;
+      } catch {
+        return false;
       }
-      return currentUrl.includes(fallbackUrl);
     };
 
     // Check if already on target URL
@@ -318,7 +320,7 @@ export class Navigation {
   private async _clickNavLinkByTestId(testId: string) {
     // First check if mobile menu button is visible (indicates we're in mobile mode)
     const isMobileMode = await this.mobileMenuButton
-      .isVisible({ timeout: 1000 })
+      .isVisible()
       .catch(() => false);
 
     if (isMobileMode) {
@@ -348,7 +350,7 @@ export class Navigation {
   async signOut() {
     // First check if mobile menu button is visible (indicates we're in mobile mode)
     const isMobileMode = await this.mobileMenuButton
-      .isVisible({ timeout: 1000 })
+      .isVisible()
       .catch(() => false);
 
     if (isMobileMode) {
@@ -423,9 +425,7 @@ export class PeopleListPage {
 
   async search(query: string) {
     // Only search if the search input is visible
-    const hasSearch = await this.searchInput
-      .isVisible({ timeout: 2000 })
-      .catch(() => false);
+    const hasSearch = await this.searchInput.isVisible().catch(() => false);
     if (hasSearch) {
       await this.searchInput.fill(query);
       // Wait for filter to apply
