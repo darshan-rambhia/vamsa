@@ -105,10 +105,10 @@ test.describe("People Management", () => {
       // If search exists, test it
       if (await peopleList.searchInput.isVisible()) {
         await peopleList.search("test");
-        await page.waitForTimeout(500); // Wait for filter
+        await page.waitForTimeout(500); // Wait for debounced search
 
-        // List should update (either filter or show no results)
-        await expect(page).toHaveURL("/people");
+        // URL should update with search param
+        await expect(page).toHaveURL(/\/people\?.*search=test/);
       }
     });
   });
