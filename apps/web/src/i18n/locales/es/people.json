@@ -193,5 +193,7 @@
   "yourResearchNotes": "Tus notas de investigación sobre esta fuente...",
   "participant": "participante",
   "participants_plural": "participantes",
-  "event_label": "Evento"
+  "event_label": "Evento",
+  "mediaLoadError": "No se pudieron cargar las fotos. Por favor, inténtalo de nuevo.",
+  "mediaLoadErrorTitle": "Error al cargar fotos"
 }

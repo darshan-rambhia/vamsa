@@ -83,7 +83,7 @@ test.describe("Person Form - Create", () => {
 
   test("CRUD: should accept valid person data and allow navigation", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     const testFirstName = `TestCreate` + Date.now();
     const testLastName = "Person";
@@ -102,18 +102,19 @@ test.describe("Person Form - Create", () => {
       });
       // Submit the form
       await form.submit();
-      await waitForConvexSync();
+      await waitForDataSync();
       await page.waitForTimeout(500);
     });
 
     await bdd.then("form submission completes successfully", async () => {
       // After submission, app may redirect or stay on form
       // Either way, we should not have an error state
+      // Check for actual error messages, excluding required-field asterisks
+      // which also use .text-destructive
       const errorMessage = page.locator(
-        "[data-error], .error, .text-destructive"
+        "[data-error], .error-message, [role='alert']"
       );
-      const hasError = await errorMessage.isVisible().catch(() => false);
-      expect(hasError).toBe(false);
+      await expect(errorMessage).not.toBeVisible();
     });
 
     await bdd.and(
@@ -145,7 +146,7 @@ test.describe("Person Form - Create", () => {
 
   test("CRUD: created person data persists after page navigation", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     const testFirstName = `TestPersist` + Date.now();
     const testLastName = "Person";
@@ -158,7 +159,7 @@ test.describe("Person Form - Create", () => {
         lastName: testLastName,
       });
       await form.submit();
-      await waitForConvexSync();
+      await waitForDataSync();
     });
 
     await bdd.when("user navigates to people list and back", async () => {
@@ -272,7 +273,7 @@ test.describe.serial("Person Form - Edit", () => {
   // Helper to ensure we have a person to edit - creates one if needed
   async function ensurePersonExists(
     page: any,
-    waitForConvexSync: () => Promise<void>
+    waitForDataSync: () => Promise<void>
   ): Promise<string | null> {
     await gotoWithRetry(page, "/people");
     await page.waitForTimeout(500);
@@ -333,7 +334,7 @@ test.describe.serial("Person Form - Edit", () => {
     await page.waitForURL((url: URL) => !url.pathname.includes("/new"), {
       timeout: 15000,
     });
-    await waitForConvexSync();
+    await waitForDataSync();
     await page.waitForTimeout(500);
 
     // Extract person ID from URL after creation
@@ -344,9 +345,9 @@ test.describe.serial("Person Form - Edit", () => {
 
   test("edit form loads with existing data", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
-    const personId = await ensurePersonExists(page, waitForConvexSync);
+    const personId = await ensurePersonExists(page, waitForDataSync);
     expect(personId).toBeTruthy();
 
     // Navigate to person detail if not already there
@@ -373,12 +374,12 @@ test.describe.serial("Person Form - Edit", () => {
 
   test("CRUD: should accept edit changes and allow save", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     let personId: string | null = null;
 
     await bdd.given("user has a person to edit", async () => {
-      personId = await ensurePersonExists(page, waitForConvexSync);
+      personId = await ensurePersonExists(page, waitForDataSync);
       expect(personId).toBeTruthy();
     });
 
@@ -411,7 +412,7 @@ test.describe.serial("Person Form - Edit", () => {
         // Save changes
         await form.submit();
         await page.waitForTimeout(1000);
-        await waitForConvexSync();
+        await waitForDataSync();
       }
     );
 
@@ -434,11 +435,8 @@ test.describe.serial("Person Form - Edit", () => {
     });
   });
 
-  test("cancel returns to person detail", async ({
-    page,
-    waitForConvexSync,
-  }) => {
-    const personId = await ensurePersonExists(page, waitForConvexSync);
+  test("cancel returns to person detail", async ({ page, waitForDataSync }) => {
+    const personId = await ensurePersonExists(page, waitForDataSync);
     expect(personId).toBeTruthy();
 
     // Navigate to person detail if not already there
@@ -464,7 +462,7 @@ test.describe.serial("Person Form - Edit", () => {
 test.describe("Person Form - All Fields", () => {
   test("should create a person filling every form field", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     test.slow();
 
@@ -496,18 +494,21 @@ test.describe("Person Form - All Fields", () => {
         await maidenNameInput.fill("TestMaiden");
       }
 
-      // Gender select
+      // Gender select — use keyboard to reliably select from Radix UI Select
       const genderSelect = page.getByTestId("person-form-gender");
       if (await genderSelect.isVisible().catch(() => false)) {
         await genderSelect.click();
-        await page.waitForTimeout(200);
-        const maleOption = page
-          .locator('[role="option"]')
-          .filter({ hasText: "Male" });
-        if (await maleOption.isVisible().catch(() => false)) {
-          await maleOption.click();
-          await page.waitForTimeout(200);
-        }
+        // Wait for listbox to appear in portal
+        const listbox = page.getByRole("listbox");
+        await listbox.waitFor({ state: "visible", timeout: 3000 });
+        // Click the option
+        const maleOption = page.getByRole("option", {
+          name: "Male",
+          exact: true,
+        });
+        await maleOption.click();
+        // Wait for dropdown to close
+        await listbox.waitFor({ state: "hidden", timeout: 3000 });
       }
 
       // Date of birth
@@ -578,7 +579,7 @@ test.describe("Person Form - All Fields", () => {
       await page.waitForURL((url) => !url.pathname.includes("/new"), {
         timeout: 15000,
       });
-      await waitForConvexSync();
+      await waitForDataSync();
     });
 
     await bdd.then(
@@ -587,10 +588,8 @@ test.describe("Person Form - All Fields", () => {
         await expect(page).toHaveURL(/\/people\/[^/]+$/);
 
         const heading = page.locator("h1").first();
-        await heading.waitFor({ state: "visible", timeout: 10000 });
-        const headingText = await heading.textContent();
-        expect(headingText).toContain(firstName);
-        expect(headingText).toContain(lastName);
+        await expect(heading).toContainText(firstName, { timeout: 10000 });
+        await expect(heading).toContainText(lastName, { timeout: 10000 });
       }
     );
 
@@ -600,9 +599,7 @@ test.describe("Person Form - All Fields", () => {
       await page.waitForURL(currentUrl, { timeout: 10000 });
 
       const heading = page.locator("h1").first();
-      await heading.waitFor({ state: "visible", timeout: 10000 });
-      const headingText = await heading.textContent();
-      expect(headingText).toContain(firstName);
+      await expect(heading).toContainText(firstName, { timeout: 10000 });
     });
   });
 });

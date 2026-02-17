@@ -354,6 +354,7 @@ test.describe("Feature: Backup & Export", () => {
         const gedcomButton = page.getByRole("button", {
           name: /export to gedcom|export.*gedcom/i,
         });
+        // Genuine conditional guard - button may not exist until tab content loads
         if (await gedcomButton.isVisible().catch(() => false)) {
           await gedcomButton.click();
         }
@@ -392,6 +393,7 @@ test.describe("Feature: Backup & Export", () => {
         const fullBackupTab = page.getByRole("tab", {
           name: /full backup|gedzip/i,
         });
+        // Genuine conditional guard - tab may not exist in all UI variations
         if (await fullBackupTab.isVisible().catch(() => false)) {
           await fullBackupTab.click();
         }
@@ -590,6 +592,7 @@ test.describe("Feature: Backup & Export", () => {
         const importHeading = page.getByRole("heading", {
           name: /import gedcom/i,
         });
+        // Genuine conditional guard - heading may need scrolling if visible
         if (await importHeading.isVisible().catch(() => false)) {
           await importHeading.scrollIntoViewIfNeeded();
         }
@@ -901,9 +904,8 @@ test.describe("Feature: Backup & Export", () => {
 
       // Verify it's ready to import (green status card)
       const readyText = page.locator("text=Ready to Import");
-      const isReady = await readyText
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
+      // Genuine conditional guard - checking validation result
+      const isReady = await readyText.isVisible().catch(() => false);
 
       if (!isReady) {
         // Check if validation failed

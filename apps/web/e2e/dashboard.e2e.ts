@@ -57,6 +57,7 @@ test.describe("Activity Feed", () => {
       '[data-empty-state], :text("No activity"), :text("no activity"), :text("No recent"), :text("empty")'
     );
 
+    // Genuine conditional guard - checking which UI state is shown
     const hasActivity = await activityList.isVisible().catch(() => false);
     const isEmpty = await emptyState
       .first()
@@ -105,6 +106,7 @@ test.describe("Navigation Flow", () => {
     const dashboardLink = page.getByTestId("nav-dashboard");
     expect(dashboardLink).toBeDefined();
 
+    // Genuine conditional guard - checking if link exists before reading attributes
     const isVisible = await dashboardLink.isVisible().catch(() => false);
     if (isVisible) {
       const classes = await dashboardLink.getAttribute("class");

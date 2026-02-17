@@ -58,8 +58,8 @@ export interface TestFixtures {
   logout: () => Promise<void>;
   /** Clear all authentication (cookies, storage) */
   clearAuth: () => Promise<void>;
-  /** Wait for Convex data to sync */
-  waitForConvexSync: () => Promise<void>;
+  /** Wait for data mutations to be reflected in the UI */
+  waitForDataSync: () => Promise<void>;
   /** Check if user is authenticated */
   isAuthenticated: () => Promise<boolean>;
   /** Get current viewport info */
@@ -360,17 +360,15 @@ export const test = base.extend<TestFixtures>({
   },
 
   /**
-   * Wait for Convex to sync data
-   * Convex is reactive so updates propagate quickly.
+   * Wait for data mutations to be reflected in the UI.
+   * Updates propagate quickly, so a small timeout suffices
    * Instead of waiting for networkidle, we wait for specific UI updates
    * or use a small timeout for state changes to render.
    */
-  waitForConvexSync: async ({ page }, use) => {
+  waitForDataSync: async ({ page }, use) => {
     const waitFn = async () => {
-      // Convex updates are near-instant
-      // Use a small timeout to allow React to process state updates
-      // In practice, this can be replaced with waiting for specific elements
-      // that indicate data has loaded (e.g., await page.getByTestId('data-loaded').isVisible())
+      // Small timeout to allow React to process state updates after mutations.
+      // Can be replaced with waiting for specific elements if needed.
       await page.waitForTimeout(100);
     };
 

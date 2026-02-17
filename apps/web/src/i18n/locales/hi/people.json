@@ -193,5 +193,7 @@
   "yourResearchNotes": "इस स्रोत के बारे में आपके अनुसंधान नोट्स...",
   "participant": "प्रतिभागी",
   "participants_plural": "प्रतिभागियों",
-  "event_label": "घटना"
+  "event_label": "घटना",
+  "mediaLoadError": "फोटो लोड करने में असमर्थ। कृपया पुनः प्रयास करें।",
+  "mediaLoadErrorTitle": "फोटो लोड नहीं हो सकी"
 }

@@ -61,7 +61,7 @@ async function fillInputWithError(
 // Helper to create a person and navigate to their Relationships tab
 async function createPersonAndGoToRelationships(
   page: any,
-  waitForConvexSync: () => Promise<void>
+  waitForDataSync: () => Promise<void>
 ): Promise<string | null> {
   // Create a new person
   await page.goto("/people/new", { waitUntil: "domcontentloaded" });
@@ -85,7 +85,7 @@ async function createPersonAndGoToRelationships(
   await page.waitForURL((url: URL) => !url.pathname.includes("/new"), {
     timeout: 15000,
   });
-  await waitForConvexSync();
+  await waitForDataSync();
 
   // Extract person ID from URL
   const currentUrl = page.url();
@@ -100,7 +100,9 @@ async function createPersonAndGoToRelationships(
     .filter({ hasText: "Relationships" });
   await relationshipsTab.waitFor({ state: "visible", timeout: 5000 });
   await relationshipsTab.click();
-  await page.waitForTimeout(300);
+  await expect(relationshipsTab).toHaveAttribute("aria-selected", "true", {
+    timeout: 5000,
+  });
 
   return personId;
 }
@@ -108,11 +110,11 @@ async function createPersonAndGoToRelationships(
 test.describe("Add Relationship", () => {
   test("user can open and close add relationship dialog", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     const personId = await createPersonAndGoToRelationships(
       page,
-      waitForConvexSync
+      waitForDataSync
     );
     expect(personId).toBeTruthy();
 
@@ -132,11 +134,11 @@ test.describe("Add Relationship", () => {
 
   test("user can see all relationship type options", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     const personId = await createPersonAndGoToRelationships(
       page,
-      waitForConvexSync
+      waitForDataSync
     );
     expect(personId).toBeTruthy();
 
@@ -150,14 +152,15 @@ test.describe("Add Relationship", () => {
     // Open relationship type selector
     const typeSelect = page.getByTestId("add-relationship-type-select");
     await typeSelect.click();
-    await page.waitForTimeout(300);
+    const listbox = page.getByRole("listbox");
+    await listbox.waitFor({ state: "visible", timeout: 3000 });
 
     // Check for relationship options
     const options = ["Parent", "Child", "Spouse", "Sibling"];
     let visibleCount = 0;
 
     for (const option of options) {
-      const optionElement = page.locator(`text="${option}"`);
+      const optionElement = page.getByRole("option", { name: option });
       if (await optionElement.isVisible().catch(() => false)) {
         visibleCount++;
       }
@@ -168,11 +171,11 @@ test.describe("Add Relationship", () => {
 
   test("spouse relationship shows marriage date fields", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     const personId = await createPersonAndGoToRelationships(
       page,
-      waitForConvexSync
+      waitForDataSync
     );
     expect(personId).toBeTruthy();
 
@@ -186,12 +189,13 @@ test.describe("Add Relationship", () => {
     // Select spouse type
     const typeSelect = page.getByTestId("add-relationship-type-select");
     await typeSelect.click();
-    await page.waitForTimeout(300);
+    const listbox = page.getByRole("listbox");
+    await listbox.waitFor({ state: "visible", timeout: 3000 });
 
-    const spouseOption = page.locator('text="Spouse"');
+    const spouseOption = page.getByRole("option", { name: "Spouse" });
     if (await spouseOption.isVisible().catch(() => false)) {
       await spouseOption.click();
-      await page.waitForTimeout(500);
+      await listbox.waitFor({ state: "hidden", timeout: 3000 });
 
       // Check for marriage date fields
       const marriageDateField = page.getByTestId(
@@ -205,11 +209,11 @@ test.describe("Add Relationship", () => {
 
   test("user can search for and select a person", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     const personId = await createPersonAndGoToRelationships(
       page,
-      waitForConvexSync
+      waitForDataSync
     );
     expect(personId).toBeTruthy();
 
@@ -231,11 +235,11 @@ test.describe("Add Relationship", () => {
 
   test("dialog state resets when reopened", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     const personId = await createPersonAndGoToRelationships(
       page,
-      waitForConvexSync
+      waitForDataSync
     );
     expect(personId).toBeTruthy();
 
@@ -269,7 +273,7 @@ test.describe("Add Relationship", () => {
 test.describe("Delete Relationship", () => {
   test("should create a relationship and then delete it", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     test.slow();
 
@@ -288,7 +292,7 @@ test.describe("Delete Relationship", () => {
       await page.waitForURL((url) => !url.pathname.includes("/new"), {
         timeout: 15000,
       });
-      await waitForConvexSync();
+      await waitForDataSync();
 
       const match = page.url().match(/\/people\/([^/]+)/);
       parentId = match?.[1] ?? null;
@@ -303,23 +307,26 @@ test.describe("Delete Relationship", () => {
       await page.waitForURL((url) => !url.pathname.includes("/new"), {
         timeout: 15000,
       });
-      await waitForConvexSync();
+      await waitForDataSync();
     });
 
     await bdd.when("user adds a child relationship to the parent", async () => {
       await gotoWithRetry(page, `/people/${parentId}`);
+      await waitForHydration(page);
       await page
         .locator("h1")
         .first()
         .waitFor({ state: "visible", timeout: 10000 });
 
-      // Switch to Relationships tab
+      // Switch to Relationships tab — click and verify it became selected
       const relTab = page
         .locator('[role="tab"]')
         .filter({ hasText: "Relationships" });
       await relTab.waitFor({ state: "visible", timeout: 5000 });
       await relTab.click();
-      await page.waitForTimeout(300);
+      await expect(relTab).toHaveAttribute("aria-selected", "true", {
+        timeout: 5000,
+      });
 
       // Open add relationship dialog
       const addButton = page.getByTestId("add-relationship-button");
@@ -329,44 +336,43 @@ test.describe("Delete Relationship", () => {
       const dialog = page.getByTestId("add-relationship-dialog");
       await expect(dialog).toBeVisible({ timeout: 5000 });
 
-      // Select "Child" type
+      // Select "Child" type from Radix Select
       const typeSelect = page.getByTestId("add-relationship-type-select");
       await typeSelect.click();
-      await page.waitForTimeout(300);
-      const childOption = page.locator(`text="Child"`);
-      if (await childOption.isVisible().catch(() => false)) {
-        await childOption.click();
-        await page.waitForTimeout(300);
-      }
+      const listbox = page.getByRole("listbox");
+      await listbox.waitFor({ state: "visible", timeout: 3000 });
+      const childOption = page.getByRole("option", { name: "Child" });
+      await childOption.click();
+      await listbox.waitFor({ state: "hidden", timeout: 3000 });
 
       // Search for the child person
       const searchInput = page.getByTestId("add-relationship-search-input");
       await searchInput.fill(childName);
-      await page.waitForTimeout(500);
 
-      // Click first search result
+      // Wait for search results to appear
       const firstResult = page
         .locator("[data-testid^='add-relationship-search-result-']")
         .first();
-      const hasResult = await firstResult
-        .isVisible({ timeout: 3000 })
-        .catch(() => false);
+      await expect(firstResult).toBeVisible({ timeout: 5000 });
+      await firstResult.click();
 
-      if (hasResult) {
-        await firstResult.click();
-        await page.waitForTimeout(300);
+      // Wait for person to be selected (selected person chip appears)
+      const selectedPerson = page.getByTestId(
+        "add-relationship-selected-person"
+      );
+      await expect(selectedPerson).toBeVisible({ timeout: 3000 });
 
-        const saveButton = page.getByTestId("add-relationship-save");
-        await saveButton.click();
-        await page.waitForTimeout(1000);
-        await waitForConvexSync();
-      }
+      // Click the submit button
+      const saveButton = page.getByTestId("add-relationship-submit");
+      await saveButton.click();
+      await waitForDataSync();
     });
 
     await bdd.then(
       "relationship appears on the person detail page",
       async () => {
         await gotoWithRetry(page, `/people/${parentId}`);
+        await waitForHydration(page);
         await page
           .locator("h1")
           .first()
@@ -376,61 +382,58 @@ test.describe("Delete Relationship", () => {
           .locator('[role="tab"]')
           .filter({ hasText: "Relationships" });
         await relTab.click();
-        await page.waitForTimeout(500);
+        await expect(relTab).toHaveAttribute("aria-selected", "true", {
+          timeout: 5000,
+        });
 
-        const childLink = page.locator(`text="${childName}"`);
-        const childVisible = await childLink
-          .isVisible({ timeout: 5000 })
-          .catch(() => false);
-        expect(childVisible).toBeTruthy();
+        const childLink = page.locator(`text=${childName}`);
+        await expect(childLink).toBeVisible({ timeout: 5000 });
       }
     );
 
     await bdd.and("user deletes the relationship", async () => {
-      const deleteButton = page.getByTestId("delete-relationship-button");
-      const hasDelete = await deleteButton
-        .first()
-        .isVisible({ timeout: 3000 })
-        .catch(() => false);
+      const deleteButton = page
+        .getByTestId("delete-relationship-button")
+        .first();
+      await expect(deleteButton).toBeVisible({ timeout: 5000 });
+      await deleteButton.click();
 
-      if (hasDelete) {
-        await deleteButton.first().click();
-        await page.waitForTimeout(300);
+      const confirmDialog = page.getByTestId("delete-relationship-dialog");
+      await expect(confirmDialog).toBeVisible({ timeout: 5000 });
 
-        const confirmDialog = page.getByTestId("delete-relationship-dialog");
-        await expect(confirmDialog).toBeVisible({ timeout: 5000 });
-
-        const confirmButton = page.getByTestId("delete-relationship-confirm");
-        await confirmButton.click();
-        await page.waitForTimeout(1000);
-        await waitForConvexSync();
-      }
+      const confirmButton = page.getByTestId("delete-relationship-confirm");
+      await confirmButton.click();
+      await expect(confirmDialog).not.toBeVisible({ timeout: 5000 });
+      await waitForDataSync();
     });
 
     await bdd.and("relationship no longer appears after deletion", async () => {
       await page.reload();
-      await page.waitForTimeout(1000);
+      await waitForHydration(page);
+      await page
+        .locator("h1")
+        .first()
+        .waitFor({ state: "visible", timeout: 10000 });
 
       const relTab = page
         .locator('[role="tab"]')
         .filter({ hasText: "Relationships" });
       await relTab.click();
-      await page.waitForTimeout(500);
+      await expect(relTab).toHaveAttribute("aria-selected", "true", {
+        timeout: 5000,
+      });
 
-      const childLink = page.locator(`text="${childName}"`);
-      const stillVisible = await childLink
-        .isVisible({ timeout: 2000 })
-        .catch(() => false);
-      expect(stillVisible).toBeFalsy();
+      const childLink = page.locator(`text=${childName}`);
+      await expect(childLink).not.toBeVisible({ timeout: 5000 });
     });
   });
 });
 
 test.describe("Accessibility", () => {
-  test("dialog closes on escape key", async ({ page, waitForConvexSync }) => {
+  test("dialog closes on escape key", async ({ page, waitForDataSync }) => {
     const personId = await createPersonAndGoToRelationships(
       page,
-      waitForConvexSync
+      waitForDataSync
     );
     expect(personId).toBeTruthy();
 
@@ -448,10 +451,10 @@ test.describe("Accessibility", () => {
     await expect(dialog).not.toBeVisible({ timeout: 5000 });
   });
 
-  test("dialog is keyboard navigable", async ({ page, waitForConvexSync }) => {
+  test("dialog is keyboard navigable", async ({ page, waitForDataSync }) => {
     const personId = await createPersonAndGoToRelationships(
       page,
-      waitForConvexSync
+      waitForDataSync
     );
     expect(personId).toBeTruthy();
 

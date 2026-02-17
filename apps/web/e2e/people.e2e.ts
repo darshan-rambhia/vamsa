@@ -16,7 +16,7 @@ import {
 // Uses existing seeded data and waits for detail page to fully load
 async function ensurePersonExists(
   page: any,
-  _waitForConvexSync: () => Promise<void>
+  _waitForDataSync: () => Promise<void>
 ): Promise<string | null> {
   // Go to people list
   await gotoWithRetry(page, "/people");
@@ -116,7 +116,7 @@ test.describe("People Management", () => {
   test.describe("Person CRUD", () => {
     test("CREATE: should create a new person via form", async ({
       page,
-      waitForConvexSync,
+      waitForDataSync,
     }) => {
       await gotoWithRetry(page, "/people");
 
@@ -137,8 +137,8 @@ test.describe("People Management", () => {
         await form.fillBasicInfo(testPerson);
         await form.submit();
 
-        // Wait for Convex to sync
-        await waitForConvexSync();
+        // Wait for data to sync
+        await waitForDataSync();
 
         // Should be on form or have submitted successfully
         await page.waitForTimeout(500);
@@ -147,7 +147,7 @@ test.describe("People Management", () => {
 
     test("CRUD: form submission with valid data completes successfully", async ({
       page,
-      waitForConvexSync,
+      waitForDataSync,
     }) => {
       await bdd.given("user navigates to create person form", async () => {
         await gotoWithRetry(page, "/people/new");
@@ -164,7 +164,7 @@ test.describe("People Management", () => {
             lastName: "Crud",
           });
           await form.submit();
-          await waitForConvexSync();
+          await waitForDataSync();
           await page.waitForTimeout(500);
         }
       );
@@ -219,12 +219,12 @@ test.describe("People Management", () => {
 
     test("UPDATE: should edit person and verify data saves", async ({
       page,
-      waitForConvexSync,
+      waitForDataSync,
     }) => {
       let personId: string | null = null;
 
       await bdd.given("user navigates to a person detail page", async () => {
-        personId = await ensurePersonExists(page, waitForConvexSync);
+        personId = await ensurePersonExists(page, waitForDataSync);
         expect(personId).toBeTruthy();
 
         // Navigate to person detail if not already there
@@ -257,7 +257,7 @@ test.describe("People Management", () => {
           // Submit
           await form.submit();
           await page.waitForTimeout(1000);
-          await waitForConvexSync();
+          await waitForDataSync();
         }
       );
 
@@ -439,7 +439,7 @@ test.describe("People - Data Integrity", () => {
 
   test("should maintain data consistency across navigation", async ({
     page,
-    waitForConvexSync: _waitForConvexSync,
+    waitForDataSync: _waitForDataSync,
   }) => {
     // This test navigates through multiple pages - mark as slow to double timeout
     test.slow();
@@ -483,12 +483,12 @@ test.describe("People - Data Integrity", () => {
 
   test("should maintain person detail data across page reload", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     let personId: string | null = null;
 
     await bdd.given("user navigates to a person detail page", async () => {
-      personId = await ensurePersonExists(page, waitForConvexSync);
+      personId = await ensurePersonExists(page, waitForDataSync);
       expect(personId).toBeTruthy();
 
       // Navigate to person detail if not already there
@@ -510,11 +510,7 @@ test.describe("People - Data Integrity", () => {
 
     await bdd.then("person data persists after reload", async () => {
       const detailPage = new PersonDetailPage(page);
-      const nameText = await detailPage.nameHeading.textContent();
-
-      // Name heading should still be visible and populated
-      expect(nameText).toBeTruthy();
-      expect(nameText?.length).toBeGreaterThan(0);
+      await expect(detailPage.nameHeading).not.toBeEmpty();
     });
   });
 });
@@ -522,7 +518,7 @@ test.describe("People - Data Integrity", () => {
 test.describe("People - Edit Lifecycle", () => {
   test("should edit a person and verify all changes persist", async ({
     page,
-    waitForConvexSync,
+    waitForDataSync,
   }) => {
     test.slow();
 
@@ -540,7 +536,7 @@ test.describe("People - Edit Lifecycle", () => {
       await page.waitForURL((url) => !url.pathname.includes("/new"), {
         timeout: 15000,
       });
-      await waitForConvexSync();
+      await waitForDataSync();
 
       const match = page.url().match(/\/people\/([^/]+)/);
       personId = match?.[1] ?? null;
@@ -568,16 +564,18 @@ test.describe("People - Edit Lifecycle", () => {
       await form.firstNameInput.fill(updatedFirst);
 
       await form.submit();
-      await page.waitForTimeout(1000);
-      await waitForConvexSync();
+      // Wait for navigation back to detail page after edit save
+      await page.waitForURL(/\/people\/[^/]+$/, { timeout: 15000 });
+      await waitForDataSync();
     });
 
     await bdd.then("updated name appears on the detail page", async () => {
+      // We're already on the detail page after submit redirect, but reload to be safe
       await gotoWithRetry(page, `/people/${personId}`);
       const heading = page.locator("h1").first();
       await heading.waitFor({ state: "visible", timeout: 10000 });
+      await expect(heading).toContainText(updatedFirst, { timeout: 10000 });
       const headingText = await heading.textContent();
-      expect(headingText).toContain(updatedFirst);
       expect(headingText).not.toContain(originalFirst);
     });
 
@@ -586,9 +584,7 @@ test.describe("People - Edit Lifecycle", () => {
       await page.waitForTimeout(1000);
 
       const heading = page.locator("h1").first();
-      await heading.waitFor({ state: "visible", timeout: 10000 });
-      const headingText = await heading.textContent();
-      expect(headingText).toContain(updatedFirst);
+      await expect(heading).toContainText(updatedFirst, { timeout: 10000 });
     });
 
     await bdd.and("updated name appears in the people list", async () => {
@@ -608,10 +604,7 @@ test.describe("People - Edit Lifecycle", () => {
       }
 
       const personLink = page.locator(`a:has-text("${updatedFirst}")`);
-      const isVisible = await personLink
-        .isVisible({ timeout: 5000 })
-        .catch(() => false);
-      expect(isVisible).toBeTruthy();
+      await expect(personLink.first()).toBeVisible({ timeout: 10000 });
     });
   });
 });
