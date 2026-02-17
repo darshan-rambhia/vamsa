@@ -579,32 +579,24 @@ test.describe("People - Edit Lifecycle", () => {
       expect(headingText).not.toContain(originalFirst);
     });
 
-    await bdd.and("updated name persists after reload", async () => {
-      await page.reload();
-      await page.waitForTimeout(1000);
+    await bdd.and("updated name appears in the people list", async () => {
+      await gotoWithRetry(page, "/people");
+      const searchInput = page.locator('input[placeholder*="Search"]');
+      await searchInput.waitFor({ state: "visible", timeout: 5000 });
+      await searchInput.fill(updatedFirst);
 
-      const heading = page.locator("h1").first();
-      await expect(heading).toContainText(updatedFirst, { timeout: 10000 });
+      // Wait for debounced search to trigger and results to load
+      const personLink = page.locator("table tbody tr a", {
+        hasText: updatedFirst,
+      });
+      await expect(personLink.first()).toBeVisible({ timeout: 10000 });
     });
 
-    await bdd.and("updated name appears in the people list", async () => {
-      const nav = new Navigation(page);
-      try {
-        await nav.goToPeople();
-      } catch {
-        await gotoWithRetry(page, "/people");
-      }
-
-      const peopleList = new PeopleListPage(page);
-      await peopleList.waitForLoad();
-
-      if (await peopleList.searchInput.isVisible().catch(() => false)) {
-        await peopleList.search(updatedFirst);
-        await page.waitForTimeout(500);
-      }
-
-      const personLink = page.locator(`a:has-text("${updatedFirst}")`);
-      await expect(personLink.first()).toBeVisible({ timeout: 10000 });
+    await bdd.and("updated name persists after reload", async () => {
+      await gotoWithRetry(page, `/people/${personId}`);
+      const heading = page.locator("h1").first();
+      await heading.waitFor({ state: "visible", timeout: 10000 });
+      await expect(heading).toContainText(updatedFirst, { timeout: 10000 });
     });
   });
 });
