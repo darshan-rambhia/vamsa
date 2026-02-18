@@ -14,12 +14,22 @@
 import path from "node:path";
 import { config } from "dotenv";
 
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
 import { eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
-import * as schema from "./schema";
+import { createSeedConnection, getDbDriver } from "./db-factory";
 import { hashPassword } from "./password";
+import type { DrizzleDB } from "./db";
+
+const driver = getDbDriver();
+
+/**
+ * Convert a Date to the appropriate format for date-only columns.
+ * SQLite uses text columns (ISO string), PG uses date columns (Date object).
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function dateVal(isoStr: string): any {
+  return driver === "sqlite" ? isoStr : new Date(isoStr);
+}
 
 // Load .env from monorepo root
 config({
@@ -34,10 +44,7 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is required");
 }
 
-const pool = new Pool({ connectionString });
-const db = drizzle(pool, { schema });
-
-type DrizzleDB = typeof db;
+const { db, schema, close } = await createSeedConnection(connectionString);
 
 /**
  * Ensures the admin user from ADMIN_EMAIL exists with the correct password.
@@ -197,7 +204,7 @@ async function main() {
       "Database already seeded - ensuring admin user is up to date"
     );
     await ensureAdminUser(db, now);
-    await pool.end();
+    await close();
     return;
   }
 
@@ -206,7 +213,7 @@ async function main() {
       { personsExist: true, usersExist: false },
       'Persons exist but no users. Run: TRUNCATE "Person", "User", "Relationship" CASCADE; then reseed.'
     );
-    await pool.end();
+    await close();
     return;
   }
 
@@ -220,8 +227,8 @@ async function main() {
       firstName: "Hari",
       lastName: "Sharma",
       gender: "MALE",
-      dateOfBirth: new Date("1905-03-15"),
-      dateOfPassing: new Date("1980-06-20"),
+      dateOfBirth: dateVal("1905-03-15"),
+      dateOfPassing: dateVal("1980-06-20"),
       birthPlace: "Jaipur, Rajasthan",
       nativePlace: "Jaipur, Rajasthan",
       profession: "Farmer",
@@ -239,8 +246,8 @@ async function main() {
       lastName: "Sharma",
       maidenName: "Verma",
       gender: "FEMALE",
-      dateOfBirth: new Date("1910-07-22"),
-      dateOfPassing: new Date("1985-11-10"),
+      dateOfBirth: dateVal("1910-07-22"),
+      dateOfPassing: dateVal("1985-11-10"),
       birthPlace: "Jodhpur, Rajasthan",
       nativePlace: "Jodhpur, Rajasthan",
       profession: "Homemaker",
@@ -256,8 +263,8 @@ async function main() {
       firstName: "Ratan",
       lastName: "Patel",
       gender: "MALE",
-      dateOfBirth: new Date("1908-01-10"),
-      dateOfPassing: new Date("1978-09-05"),
+      dateOfBirth: dateVal("1908-01-10"),
+      dateOfPassing: dateVal("1978-09-05"),
       birthPlace: "Ahmedabad, Gujarat",
       nativePlace: "Ahmedabad, Gujarat",
       profession: "Merchant",
@@ -274,8 +281,8 @@ async function main() {
       lastName: "Patel",
       maidenName: "Shah",
       gender: "FEMALE",
-      dateOfBirth: new Date("1912-04-18"),
-      dateOfPassing: new Date("1990-02-28"),
+      dateOfBirth: dateVal("1912-04-18"),
+      dateOfPassing: dateVal("1990-02-28"),
       birthPlace: "Surat, Gujarat",
       nativePlace: "Surat, Gujarat",
       profession: "Homemaker",
@@ -292,8 +299,8 @@ async function main() {
       firstName: "Rajendra",
       lastName: "Sharma",
       gender: "MALE",
-      dateOfBirth: new Date("1935-03-15"),
-      dateOfPassing: new Date("2018-11-20"),
+      dateOfBirth: dateVal("1935-03-15"),
+      dateOfPassing: dateVal("2018-11-20"),
       birthPlace: "Jaipur, Rajasthan",
       nativePlace: "Jaipur, Rajasthan",
       profession: "Professor",
@@ -312,7 +319,7 @@ async function main() {
       lastName: "Sharma",
       maidenName: "Gupta",
       gender: "FEMALE",
-      dateOfBirth: new Date("1940-07-22"),
+      dateOfBirth: dateVal("1940-07-22"),
       birthPlace: "Agra, Uttar Pradesh",
       nativePlace: "Agra, Uttar Pradesh",
       profession: "Homemaker",
@@ -329,8 +336,8 @@ async function main() {
       firstName: "Mohan",
       lastName: "Patel",
       gender: "MALE",
-      dateOfBirth: new Date("1938-01-10"),
-      dateOfPassing: new Date("2015-06-05"),
+      dateOfBirth: dateVal("1938-01-10"),
+      dateOfPassing: dateVal("2015-06-05"),
       birthPlace: "Ahmedabad, Gujarat",
       nativePlace: "Ahmedabad, Gujarat",
       profession: "Businessman",
@@ -348,7 +355,7 @@ async function main() {
       lastName: "Patel",
       maidenName: "Desai",
       gender: "FEMALE",
-      dateOfBirth: new Date("1942-09-18"),
+      dateOfBirth: dateVal("1942-09-18"),
       birthPlace: "Surat, Gujarat",
       nativePlace: "Surat, Gujarat",
       profession: "Retired Teacher",
@@ -365,7 +372,7 @@ async function main() {
       firstName: "Vikram",
       lastName: "Sharma",
       gender: "MALE",
-      dateOfBirth: new Date("1960-05-12"),
+      dateOfBirth: dateVal("1960-05-12"),
       birthPlace: "Jaipur, Rajasthan",
       nativePlace: "Jaipur, Rajasthan",
       profession: "Senior Software Architect",
@@ -386,7 +393,7 @@ async function main() {
       lastName: "Sharma",
       maidenName: "Patel",
       gender: "FEMALE",
-      dateOfBirth: new Date("1963-11-25"),
+      dateOfBirth: dateVal("1963-11-25"),
       birthPlace: "Ahmedabad, Gujarat",
       nativePlace: "Ahmedabad, Gujarat",
       profession: "Chief Medical Officer",
@@ -404,7 +411,7 @@ async function main() {
       firstName: "Ajay",
       lastName: "Sharma",
       gender: "MALE",
-      dateOfBirth: new Date("1965-02-28"),
+      dateOfBirth: dateVal("1965-02-28"),
       birthPlace: "Jaipur, Rajasthan",
       nativePlace: "Jaipur, Rajasthan",
       profession: "Architect",
@@ -422,7 +429,7 @@ async function main() {
       lastName: "Sharma",
       maidenName: "Kapoor",
       gender: "FEMALE",
-      dateOfBirth: new Date("1968-08-14"),
+      dateOfBirth: dateVal("1968-08-14"),
       birthPlace: "Delhi",
       nativePlace: "Delhi",
       profession: "Interior Designer",
@@ -438,7 +445,7 @@ async function main() {
       firstName: "Sanjay",
       lastName: "Patel",
       gender: "MALE",
-      dateOfBirth: new Date("1962-04-05"),
+      dateOfBirth: dateVal("1962-04-05"),
       birthPlace: "Ahmedabad, Gujarat",
       nativePlace: "Ahmedabad, Gujarat",
       profession: "Textile Manufacturer",
@@ -456,7 +463,7 @@ async function main() {
       lastName: "Patel",
       maidenName: "Mehta",
       gender: "FEMALE",
-      dateOfBirth: new Date("1966-12-20"),
+      dateOfBirth: dateVal("1966-12-20"),
       birthPlace: "Mumbai, Maharashtra",
       nativePlace: "Mumbai, Maharashtra",
       profession: "Fashion Designer",
@@ -473,7 +480,7 @@ async function main() {
       firstName: "Arjun",
       lastName: "Sharma",
       gender: "MALE",
-      dateOfBirth: new Date("1988-04-08"),
+      dateOfBirth: dateVal("1988-04-08"),
       birthPlace: "Bangalore, Karnataka",
       nativePlace: "Jaipur, Rajasthan",
       profession: "Product Director",
@@ -493,7 +500,7 @@ async function main() {
       lastName: "Sharma",
       maidenName: "Gupta",
       gender: "FEMALE",
-      dateOfBirth: new Date("1990-09-15"),
+      dateOfBirth: dateVal("1990-09-15"),
       birthPlace: "Delhi",
       nativePlace: "Delhi",
       profession: "UX Designer",
@@ -512,7 +519,7 @@ async function main() {
       lastName: "Verma",
       maidenName: "Sharma",
       gender: "FEMALE",
-      dateOfBirth: new Date("1991-12-03"),
+      dateOfBirth: dateVal("1991-12-03"),
       birthPlace: "Bangalore, Karnataka",
       nativePlace: "Jaipur, Rajasthan",
       profession: "Surgeon",
@@ -530,7 +537,7 @@ async function main() {
       firstName: "Rohan",
       lastName: "Verma",
       gender: "MALE",
-      dateOfBirth: new Date("1989-07-20"),
+      dateOfBirth: dateVal("1989-07-20"),
       birthPlace: "Chennai, Tamil Nadu",
       nativePlace: "Chennai, Tamil Nadu",
       profession: "Cardiologist",
@@ -547,7 +554,7 @@ async function main() {
       firstName: "Rahul",
       lastName: "Sharma",
       gender: "MALE",
-      dateOfBirth: new Date("1992-06-20"),
+      dateOfBirth: dateVal("1992-06-20"),
       birthPlace: "Jaipur, Rajasthan",
       nativePlace: "Jaipur, Rajasthan",
       profession: "Civil Engineer",
@@ -565,7 +572,7 @@ async function main() {
       lastName: "Sharma",
       maidenName: "Singh",
       gender: "FEMALE",
-      dateOfBirth: new Date("1994-10-15"),
+      dateOfBirth: dateVal("1994-10-15"),
       birthPlace: "Lucknow, Uttar Pradesh",
       nativePlace: "Lucknow, Uttar Pradesh",
       profession: "Marketing Manager",
@@ -582,7 +589,7 @@ async function main() {
       firstName: "Aditya",
       lastName: "Patel",
       gender: "MALE",
-      dateOfBirth: new Date("1990-03-12"),
+      dateOfBirth: dateVal("1990-03-12"),
       birthPlace: "Ahmedabad, Gujarat",
       nativePlace: "Ahmedabad, Gujarat",
       profession: "Investment Banker",
@@ -600,7 +607,7 @@ async function main() {
       lastName: "Patel",
       maidenName: "Reddy",
       gender: "FEMALE",
-      dateOfBirth: new Date("1992-08-25"),
+      dateOfBirth: dateVal("1992-08-25"),
       birthPlace: "Hyderabad, Telangana",
       nativePlace: "Hyderabad, Telangana",
       profession: "Data Scientist",
@@ -618,7 +625,7 @@ async function main() {
       firstName: "Aarav",
       lastName: "Sharma",
       gender: "MALE",
-      dateOfBirth: new Date("2015-01-20"),
+      dateOfBirth: dateVal("2015-01-20"),
       birthPlace: "Bangalore, Karnataka",
       nativePlace: "Jaipur, Rajasthan",
       profession: "Student",
@@ -634,7 +641,7 @@ async function main() {
       firstName: "Isha",
       lastName: "Sharma",
       gender: "FEMALE",
-      dateOfBirth: new Date("2018-05-10"),
+      dateOfBirth: dateVal("2018-05-10"),
       birthPlace: "Bangalore, Karnataka",
       nativePlace: "Jaipur, Rajasthan",
       profession: "Student",
@@ -650,7 +657,7 @@ async function main() {
       firstName: "Vihaan",
       lastName: "Verma",
       gender: "MALE",
-      dateOfBirth: new Date("2016-11-08"),
+      dateOfBirth: dateVal("2016-11-08"),
       birthPlace: "Delhi",
       nativePlace: "Chennai, Tamil Nadu",
       profession: "Student",
@@ -666,7 +673,7 @@ async function main() {
       firstName: "Sara",
       lastName: "Verma",
       gender: "FEMALE",
-      dateOfBirth: new Date("2019-03-22"),
+      dateOfBirth: dateVal("2019-03-22"),
       birthPlace: "Delhi",
       nativePlace: "Chennai, Tamil Nadu",
       profession: "Student",
@@ -682,7 +689,7 @@ async function main() {
       firstName: "Kabir",
       lastName: "Sharma",
       gender: "MALE",
-      dateOfBirth: new Date("2017-07-15"),
+      dateOfBirth: dateVal("2017-07-15"),
       birthPlace: "Jaipur, Rajasthan",
       nativePlace: "Jaipur, Rajasthan",
       profession: "Student",
@@ -698,7 +705,7 @@ async function main() {
       firstName: "Riya",
       lastName: "Sharma",
       gender: "FEMALE",
-      dateOfBirth: new Date("2020-09-30"),
+      dateOfBirth: dateVal("2020-09-30"),
       birthPlace: "Jaipur, Rajasthan",
       nativePlace: "Jaipur, Rajasthan",
       profession: "Toddler",
@@ -714,7 +721,7 @@ async function main() {
       firstName: "Aryan",
       lastName: "Patel",
       gender: "MALE",
-      dateOfBirth: new Date("2018-02-14"),
+      dateOfBirth: dateVal("2018-02-14"),
       birthPlace: "Mumbai, Maharashtra",
       nativePlace: "Ahmedabad, Gujarat",
       profession: "Student",
@@ -730,7 +737,7 @@ async function main() {
       firstName: "Mira",
       lastName: "Patel",
       gender: "FEMALE",
-      dateOfBirth: new Date("2021-06-05"),
+      dateOfBirth: dateVal("2021-06-05"),
       birthPlace: "Mumbai, Maharashtra",
       nativePlace: "Ahmedabad, Gujarat",
       profession: "Toddler",
@@ -814,12 +821,12 @@ async function main() {
   await createSpouse(
     ggGrandpaHari.id,
     ggGrandmaSavitri.id,
-    new Date("1930-05-15")
+    dateVal("1930-05-15")
   );
   await createSpouse(
     ggGrandpaRatan.id,
     ggGrandmaKusuma.id,
-    new Date("1932-03-20")
+    dateVal("1932-03-20")
   );
 
   // Generation 1 -> 2 (parent-child)
@@ -832,12 +839,12 @@ async function main() {
   await createSpouse(
     gGrandpaRajendra.id,
     gGrandmaKamla.id,
-    new Date("1958-02-20")
+    dateVal("1958-02-20")
   );
   await createSpouse(
     gGrandpaMohan.id,
     gGrandmaLakshmi.id,
-    new Date("1960-05-10")
+    dateVal("1960-05-10")
   );
 
   // Generation 2 -> 3 (parent-child)
@@ -855,9 +862,9 @@ async function main() {
   await createSiblings(grandmaPriya.id, grandpaSanjay.id);
 
   // Generation 3 spouses
-  await createSpouse(grandpaVikram.id, grandmaPriya.id, new Date("1985-12-15"));
-  await createSpouse(grandpaAjay.id, grandmaSunita.id, new Date("1990-03-22"));
-  await createSpouse(grandpaSanjay.id, grandmaRekha.id, new Date("1988-11-08"));
+  await createSpouse(grandpaVikram.id, grandmaPriya.id, dateVal("1985-12-15"));
+  await createSpouse(grandpaAjay.id, grandmaSunita.id, dateVal("1990-03-22"));
+  await createSpouse(grandpaSanjay.id, grandmaRekha.id, dateVal("1988-11-08"));
 
   // Generation 3 -> 4 (parent-child)
   await createParentChild(grandpaVikram.id, parentArjun.id);
@@ -873,10 +880,10 @@ async function main() {
   await createSiblings(parentArjun.id, parentMeera.id);
 
   // Generation 4 spouses
-  await createSpouse(parentArjun.id, parentNeha.id, new Date("2014-02-14"));
-  await createSpouse(parentMeera.id, parentRohan.id, new Date("2015-11-20"));
-  await createSpouse(parentRahul.id, parentAnanya.id, new Date("2016-05-15"));
-  await createSpouse(parentAditya.id, parentKavya.id, new Date("2017-03-10"));
+  await createSpouse(parentArjun.id, parentNeha.id, dateVal("2014-02-14"));
+  await createSpouse(parentMeera.id, parentRohan.id, dateVal("2015-11-20"));
+  await createSpouse(parentRahul.id, parentAnanya.id, dateVal("2016-05-15"));
+  await createSpouse(parentAditya.id, parentKavya.id, dateVal("2017-03-10"));
 
   // Generation 4 -> 5 (parent-child)
   await createParentChild(parentArjun.id, childAarav.id);
@@ -914,7 +921,7 @@ async function main() {
       { missingEnv: "ADMIN_EMAIL" },
       "ADMIN_EMAIL environment variable is required. Copy .env.example to .env."
     );
-    await pool.end();
+    await close();
     process.exit(1);
   }
 
@@ -1027,7 +1034,7 @@ async function main() {
     );
   }
 
-  await pool.end();
+  await close();
 }
 
 main().catch((e) => {

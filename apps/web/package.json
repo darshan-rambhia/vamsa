@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite dev --host",
     "build": "vite build",
-    "preview": "vite preview",
+    "preview": "bun --bun vite preview",
     "start": "bun run server/index.ts",
     "start:prod": "NODE_ENV=production bun run server/index.ts",
     "typecheck": "tsc --noEmit",
@@ -17,6 +17,7 @@
     "test:perf": "bun --env-file=../../.env run scripts/run-e2e.ts --project=performance --reporter=list",
     "test:visual": "bun --env-file=../../.env run scripts/run-e2e.ts --project=visual --reporter=list",
     "test:visual:update": "bun --env-file=../../.env run scripts/run-e2e.ts --project=visual --update-snapshots --reporter=list",
+    "build:binary": "bun run scripts/build-binary.ts",
     "analyze": "ANALYZE=true vite build",
     "check:bundle": "bun scripts/check-bundle-size.ts",
     "ladle": "ladle serve",

@@ -6,8 +6,10 @@ import { describe, expect, it } from "vitest";
 import {
   changePasswordSchema,
   claimProfileSchema,
+  forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resetPasswordSchema,
   userCreateSchema,
   userRoleEnum,
   userUpdateSchema,
@@ -1112,5 +1114,179 @@ describe("claimProfileSchema", () => {
 
       expect(claim.personId).toBe("person-123");
     });
+  });
+});
+
+describe("registerSchema - additional confirm password tests", () => {
+  it("confirms the error message is exactly 'Passwords do not match'", () => {
+    const registration = {
+      email: "user@example.com",
+      name: "Test User",
+      password: "ValidPassword123",
+      confirmPassword: "Different123456!",
+    };
+    const result = registerSchema.safeParse(registration);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((i) =>
+        i.path.includes("confirmPassword")
+      );
+      expect(issue).toBeDefined();
+      expect(issue!.message).toBe("Passwords do not match");
+    }
+  });
+
+  it("targets confirmPassword path in error", () => {
+    const registration = {
+      email: "user@example.com",
+      name: "Test User",
+      password: "ValidPassword123",
+      confirmPassword: "Mismatch12345!",
+    };
+    const result = registerSchema.safeParse(registration);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some((i) => i.path.includes("confirmPassword"))
+      ).toBe(true);
+    }
+  });
+});
+
+describe("changePasswordSchema - additional confirm password tests", () => {
+  it("confirms the error message is exactly 'Passwords do not match'", () => {
+    const data = {
+      currentPassword: "Current123",
+      newPassword: "NewPassword456",
+      confirmPassword: "Different789!a",
+    };
+    const result = changePasswordSchema.safeParse(data);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((i) =>
+        i.path.includes("confirmPassword")
+      );
+      expect(issue).toBeDefined();
+      expect(issue!.message).toBe("Passwords do not match");
+    }
+  });
+
+  it("targets confirmPassword path in error for changePasswordSchema", () => {
+    const data = {
+      currentPassword: "CurrentPass1",
+      newPassword: "NewPassword123",
+      confirmPassword: "WrongPassword!",
+    };
+    const result = changePasswordSchema.safeParse(data);
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some((i) => i.path.includes("confirmPassword"))
+      ).toBe(true);
+    }
+  });
+});
+
+describe("forgotPasswordSchema", () => {
+  it("accepts valid email", () => {
+    expect(
+      forgotPasswordSchema.safeParse({ email: "user@example.com" }).success
+    ).toBe(true);
+  });
+
+  it("rejects invalid email", () => {
+    expect(forgotPasswordSchema.safeParse({ email: "not-email" }).success).toBe(
+      false
+    );
+  });
+
+  it("rejects empty email", () => {
+    expect(forgotPasswordSchema.safeParse({ email: "" }).success).toBe(false);
+  });
+
+  it("rejects missing email", () => {
+    expect(forgotPasswordSchema.safeParse({}).success).toBe(false);
+  });
+
+  it("accepts various valid email formats", () => {
+    const validEmails = [
+      "test@example.com",
+      "user+tag@example.co.uk",
+      "name.last@domain.org",
+    ];
+    validEmails.forEach((email) => {
+      expect(forgotPasswordSchema.safeParse({ email }).success).toBe(true);
+    });
+  });
+});
+
+describe("resetPasswordSchema", () => {
+  it("accepts matching passwords with complexity", () => {
+    const result = resetPasswordSchema.safeParse({
+      newPassword: "NewSecure123!x",
+      confirmPassword: "NewSecure123!x",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects mismatched passwords", () => {
+    const result = resetPasswordSchema.safeParse({
+      newPassword: "NewSecure123!x",
+      confirmPassword: "Different456!x",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(
+        result.error.issues.some((i) => i.path.includes("confirmPassword"))
+      ).toBe(true);
+      expect(
+        result.error.issues.some((i) => i.message === "Passwords do not match")
+      ).toBe(true);
+    }
+  });
+
+  it("confirms error message is exactly 'Passwords do not match' for resetPasswordSchema", () => {
+    const result = resetPasswordSchema.safeParse({
+      newPassword: "NewSecure123!x",
+      confirmPassword: "Different456!x",
+    });
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const issue = result.error.issues.find((i) =>
+        i.path.includes("confirmPassword")
+      );
+      expect(issue).toBeDefined();
+      expect(issue!.message).toBe("Passwords do not match");
+    }
+  });
+
+  it("rejects weak new password", () => {
+    const result = resetPasswordSchema.safeParse({
+      newPassword: "weak",
+      confirmPassword: "weak",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects new password with only 2 character classes", () => {
+    const result = resetPasswordSchema.safeParse({
+      newPassword: "abcdefghijkl1",
+      confirmPassword: "abcdefghijkl1",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects when newPassword is missing", () => {
+    const result = resetPasswordSchema.safeParse({
+      confirmPassword: "NewSecure123!x",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects when confirmPassword is missing", () => {
+    const result = resetPasswordSchema.safeParse({
+      newPassword: "NewSecure123!x",
+    });
+    expect(result.success).toBe(false);
   });
 });

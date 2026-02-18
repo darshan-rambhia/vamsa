@@ -93,6 +93,26 @@ jobs:
             apps/*/coverage/
           retention-days: 7
 
+  schema-drift:
+    name: Schema Drift Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check PG/SQLite schema drift
+        run: bun run packages/api/scripts/check-schema-drift.ts
+
   build:
     name: Build
     runs-on: ubuntu-latest
@@ -145,7 +165,7 @@ jobs:
 
   quality-gate:
     name: Quality Gate
-    needs: [quality, unit-tests, build, docker]
+    needs: [quality, unit-tests, build, docker, schema-drift]
     runs-on: ubuntu-latest
     if: always()
 
@@ -156,11 +176,13 @@ jobs:
           TESTS_RESULT: ${{ needs.unit-tests.result }}
           BUILD_RESULT: ${{ needs.build.result }}
           DOCKER_RESULT: ${{ needs.docker.result }}
+          SCHEMA_RESULT: ${{ needs.schema-drift.result }}
         run: |
           echo "Quality: $QUALITY_RESULT"
           echo "Unit Tests: $TESTS_RESULT"
           echo "Build: $BUILD_RESULT"
           echo "Docker: $DOCKER_RESULT"
+          echo "Schema Drift: $SCHEMA_RESULT"
 
           if [[ "$QUALITY_RESULT" != "success" ]]; then
             echo "Code quality checks failed"
@@ -179,6 +201,11 @@ jobs:
 
           if [[ "$DOCKER_RESULT" != "success" ]]; then
             echo "Docker build failed"
+            exit 1
+          fi
+
+          if [[ "$SCHEMA_RESULT" != "success" ]]; then
+            echo "Schema drift check failed"
             exit 1
           fi
 

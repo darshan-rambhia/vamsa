@@ -246,6 +246,8 @@ vi.mock("@vamsa/api", () => ({
     idleCount: 0,
     waitingCount: 0,
   }),
+  // DB driver helpers
+  getDbDriver: () => "postgres",
   // Email service mocks
   emailService: { send: () => Promise.resolve({}) },
   EmailService: class {},

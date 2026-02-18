@@ -1,182 +1,79 @@
 /**
- * Drizzle ORM Schema - Enums
+ * Drizzle ORM Schema - Enums (PostgreSQL)
  *
- * All 15 database enums as pgEnum
+ * All 15 database enums as pgEnum, importing values from the shared
+ * enum-values module. The shared module is the single source of truth
+ * for enum values, used by both PG and (future) SQLite schemas.
  */
 
 import { pgEnum } from "drizzle-orm/pg-core";
+import {
+  AUDIT_ACTION_VALUES,
+  BACKUP_STATUS_VALUES,
+  BACKUP_TYPE_VALUES,
+  EVENT_TYPE_VALUES,
+  GENDER_VALUES,
+  INVITE_STATUS_VALUES,
+  PERSON_PLACE_TYPE_VALUES,
+  PLACE_TYPE_VALUES,
+  PRIVACY_LEVEL_VALUES,
+  PROFILE_CLAIM_STATUS_VALUES,
+  RELATIONSHIP_TYPE_VALUES,
+  STORAGE_PROVIDER_VALUES,
+  SUGGESTION_STATUS_VALUES,
+  SUGGESTION_TYPE_VALUES,
+  USER_ROLE_VALUES,
+} from "../schema-shared/enum-values";
 
-/**
- * Gender enum
- */
-export const genderEnum = pgEnum("Gender", [
-  "MALE",
-  "FEMALE",
-  "OTHER",
-  "PREFER_NOT_TO_SAY",
-]);
+// Re-export shared types for convenience
+export type {
+  AuditAction,
+  BackupStatus,
+  BackupType,
+  EventType,
+  Gender,
+  InviteStatus,
+  PersonPlaceType,
+  PlaceType,
+  PrivacyLevel,
+  ProfileClaimStatus,
+  RelationshipType,
+  StorageProvider,
+  SuggestionStatus,
+  SuggestionType,
+  UserRole,
+} from "../schema-shared/enum-values";
 
-/**
- * User role enum
- */
-export const userRoleEnum = pgEnum("UserRole", ["ADMIN", "MEMBER", "VIEWER"]);
-
-/**
- * Relationship type enum
- */
+export const genderEnum = pgEnum("Gender", [...GENDER_VALUES]);
+export const userRoleEnum = pgEnum("UserRole", [...USER_ROLE_VALUES]);
 export const relationshipTypeEnum = pgEnum("RelationshipType", [
-  "PARENT",
-  "CHILD",
-  "SPOUSE",
-  "SIBLING",
-  "PARENT_IN_LAW",
-  "CHILD_IN_LAW",
-  "SIBLING_IN_LAW",
-  "STEP_PARENT",
-  "STEP_CHILD",
-  "STEP_SIBLING",
+  ...RELATIONSHIP_TYPE_VALUES,
 ]);
-
-/**
- * Suggestion type enum
- */
 export const suggestionTypeEnum = pgEnum("SuggestionType", [
-  "CREATE",
-  "UPDATE",
-  "DELETE",
-  "ADD_RELATIONSHIP",
+  ...SUGGESTION_TYPE_VALUES,
 ]);
-
-/**
- * Suggestion status enum
- */
 export const suggestionStatusEnum = pgEnum("SuggestionStatus", [
-  "PENDING",
-  "APPROVED",
-  "REJECTED",
+  ...SUGGESTION_STATUS_VALUES,
 ]);
-
-/**
- * Privacy level enum
- */
 export const privacyLevelEnum = pgEnum("PrivacyLevel", [
-  "PUBLIC",
-  "MEMBERS_ONLY",
-  "ADMIN_ONLY",
+  ...PRIVACY_LEVEL_VALUES,
 ]);
-
-/**
- * Audit action enum
- */
-export const auditActionEnum = pgEnum("AuditAction", [
-  "CREATE",
-  "UPDATE",
-  "DELETE",
-  "LOGIN",
-  "LOGOUT",
-  "APPROVE",
-  "REJECT",
-]);
-
-/**
- * Invite status enum
- */
+export const auditActionEnum = pgEnum("AuditAction", [...AUDIT_ACTION_VALUES]);
 export const inviteStatusEnum = pgEnum("InviteStatus", [
-  "PENDING",
-  "ACCEPTED",
-  "EXPIRED",
-  "REVOKED",
+  ...INVITE_STATUS_VALUES,
 ]);
-
-/**
- * Profile claim status enum
- */
 export const profileClaimStatusEnum = pgEnum("ProfileClaimStatus", [
-  "PENDING",
-  "CLAIMED",
-  "SKIPPED",
-  "NA",
+  ...PROFILE_CLAIM_STATUS_VALUES,
 ]);
-
-/**
- * Event type enum
- */
-export const eventTypeEnum = pgEnum("EventType", [
-  "BIRTH",
-  "DEATH",
-  "MARRIAGE",
-  "DIVORCE",
-  "BURIAL",
-  "GRADUATION",
-  "ENGAGEMENT",
-  "DIVORCE_FILED",
-  "ADOPTION",
-  "CONFIRMATION",
-  "IMMIGRATION",
-  "EMIGRATION",
-  "NATURALIZATION",
-  "RESIDENCE",
-  "CUSTOM",
-]);
-
-/**
- * Place type enum
- */
-export const placeTypeEnum = pgEnum("PlaceType", [
-  "COUNTRY",
-  "STATE",
-  "COUNTY",
-  "CITY",
-  "TOWN",
-  "VILLAGE",
-  "PARISH",
-  "DISTRICT",
-  "REGION",
-  "PROVINCE",
-  "TERRITORY",
-  "OTHER",
-]);
-
-/**
- * Person place type enum
- */
+export const eventTypeEnum = pgEnum("EventType", [...EVENT_TYPE_VALUES]);
+export const placeTypeEnum = pgEnum("PlaceType", [...PLACE_TYPE_VALUES]);
 export const personPlaceTypeEnum = pgEnum("PersonPlaceType", [
-  "BIRTH",
-  "MARRIAGE",
-  "DEATH",
-  "LIVED",
-  "WORKED",
-  "STUDIED",
-  "OTHER",
+  ...PERSON_PLACE_TYPE_VALUES,
 ]);
-
-/**
- * Backup status enum
- */
 export const backupStatusEnum = pgEnum("BackupStatus", [
-  "PENDING",
-  "IN_PROGRESS",
-  "COMPLETED",
-  "FAILED",
-  "DELETED",
+  ...BACKUP_STATUS_VALUES,
 ]);
-
-/**
- * Backup type enum
- */
-export const backupTypeEnum = pgEnum("BackupType", [
-  "DAILY",
-  "WEEKLY",
-  "MONTHLY",
-  "MANUAL",
-]);
-
-/**
- * Storage provider enum
- */
+export const backupTypeEnum = pgEnum("BackupType", [...BACKUP_TYPE_VALUES]);
 export const storageProviderEnum = pgEnum("StorageProvider", [
-  "LOCAL",
-  "S3",
-  "R2",
-  "B2",
+  ...STORAGE_PROVIDER_VALUES,
 ]);

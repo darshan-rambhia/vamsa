@@ -1,6 +1,5 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import sharp from "sharp";
 
 export interface ImageSize {
   width: number;
@@ -34,12 +33,54 @@ export interface ProcessedImage {
 }
 
 /**
+ * Lazy-load sharp with graceful fallback.
+ *
+ * sharp is a native C++ addon that cannot be bundled into a single binary
+ * via `bun build --compile`. When running as a compiled binary without
+ * sharp installed, image processing is skipped and originals are served
+ * as-is. For typical Vamsa deployments (200-2000 persons), this is an
+ * acceptable tradeoff for zero-dependency binary distribution.
+ *
+ * Returns null when sharp is unavailable.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let sharpModule: any | null | undefined;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function getSharp(): Promise<any | null> {
+  if (sharpModule !== undefined) return sharpModule;
+  try {
+    const mod = await import("sharp");
+    sharpModule = mod.default ?? mod;
+    return sharpModule;
+  } catch {
+    sharpModule = null;
+    return null;
+  }
+}
+
+/**
+ * Check if image processing is available (sharp is installed).
+ */
+export async function isImageProcessingAvailable(): Promise<boolean> {
+  return (await getSharp()) !== null;
+}
+
+/**
  * Generate WebP version of an image
  */
 export async function generateWebP(
   buffer: Buffer,
   options: { quality?: number } = {}
 ): Promise<{ buffer: Buffer; width: number; height: number }> {
+  const sharp = await getSharp();
+  if (!sharp) {
+    throw new Error(
+      "Image processing unavailable: sharp is not installed. " +
+        "Install sharp or use Docker deployment for image optimization."
+    );
+  }
+
   const { quality = 85 } = options;
   const image = sharp(buffer);
   const metadata = await image.metadata();
@@ -67,6 +108,11 @@ export async function generateThumbnail(
   size: number = 300,
   options: { quality?: number } = {}
 ): Promise<{ buffer: Buffer; width: number; height: number }> {
+  const sharp = await getSharp();
+  if (!sharp) {
+    throw new Error("Image processing unavailable: sharp is not installed.");
+  }
+
   const { quality = 80 } = options;
   const thumbBuffer = await sharp(buffer)
     .resize(size, size, {
@@ -102,6 +148,11 @@ export async function generateResponsiveSizes(
     label: string;
   }>
 > {
+  const sharp = await getSharp();
+  if (!sharp) {
+    throw new Error("Image processing unavailable: sharp is not installed.");
+  }
+
   const { quality = 85 } = options;
   const image = sharp(buffer);
   const metadata = await image.metadata();
@@ -131,6 +182,9 @@ export async function generateResponsiveSizes(
 /**
  * Process an uploaded image file
  * Generates WebP, thumbnail, and responsive versions
+ *
+ * When sharp is unavailable (compiled binary mode), saves the original
+ * image without optimization and returns paths pointing to the original.
  */
 export async function processUploadedImage(
   buffer: Buffer,
@@ -143,6 +197,38 @@ export async function processUploadedImage(
     responsiveSizes?: Array<ImageSize>;
   } = {}
 ): Promise<ProcessedImage> {
+  const sharp = await getSharp();
+
+  // Fallback: no image processing available (compiled binary mode)
+  if (!sharp) {
+    // Save original as-is — no WebP conversion, no thumbnails
+    const originalDir = path.join(mediaDir, "original");
+    await fs.mkdir(originalDir, { recursive: true });
+    const originalPath = path.join(originalDir, mediaId);
+    await fs.writeFile(originalPath, buffer);
+
+    return {
+      original: {
+        path: `media/original/${mediaId}`,
+        width: 0,
+        height: 0,
+      },
+      webp: {
+        path: `media/original/${mediaId}`,
+        width: 0,
+        height: 0,
+        size: buffer.length,
+      },
+      thumbnail: {
+        path: `media/original/${mediaId}`,
+        width: 0,
+        height: 0,
+        size: buffer.length,
+      },
+      responsive: [],
+    };
+  }
+
   const {
     quality = 85,
     webpQuality = 85,

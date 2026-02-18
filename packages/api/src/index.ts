@@ -7,12 +7,12 @@ export {
   drizzleDb,
   closeDrizzleDb,
   getDrizzlePoolStats,
+  drizzleSchema,
+  getDbDriver,
+  type DbDriver,
   type DrizzleDB,
   type DrizzleSchema,
 } from "./client";
-
-// Re-export all Drizzle schema for query building
-export * as drizzleSchema from "./drizzle/schema";
 
 // Re-export commonly used types from Drizzle schema
 export type { backups, backupSettings } from "./drizzle/schema/backup";

@@ -14,6 +14,8 @@ import { eq } from "drizzle-orm";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { loggers } from "../../logger";
 
+import type { DrizzleDB } from "@vamsa/api";
+
 const log = loggers.api;
 
 // Lockout configuration - progressive tiers
@@ -47,7 +49,7 @@ export interface RecordAttemptResult {
  */
 export async function checkAccountLockout(
   email: string,
-  db = drizzleDb
+  db: DrizzleDB = drizzleDb
 ): Promise<LockoutStatus> {
   const user = await db.query.users.findFirst({
     where: eq(drizzleSchema.users.email, email),
@@ -94,7 +96,7 @@ export async function checkAccountLockout(
  */
 export async function recordFailedLoginAttempt(
   email: string,
-  db = drizzleDb
+  db: DrizzleDB = drizzleDb
 ): Promise<RecordAttemptResult> {
   const user = await db.query.users.findFirst({
     where: eq(drizzleSchema.users.email, email),
@@ -149,7 +151,7 @@ export async function recordFailedLoginAttempt(
  */
 export async function resetFailedLoginAttempts(
   email: string,
-  db = drizzleDb
+  db: DrizzleDB = drizzleDb
 ): Promise<void> {
   await db
     .update(drizzleSchema.users)
