@@ -10,6 +10,9 @@
  * - GEDCOM: Export as .ged and .zip formats
  * - GEDCOM: Import from GEDCOM files
  */
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
 import {
   TEST_USERS,
   bdd,
@@ -123,162 +126,209 @@ test.describe("Feature: Backup & Export", () => {
   });
 
   test.describe("System Backup Export", () => {
-    test("Scenario: Admin exports backup with default options", async ({
-      page,
-      login,
-      context: _context,
-    }) => {
-      await bdd.given("user is logged in as admin", async () => {
-        await login(TEST_USERS.admin);
-      });
+    const backupTempDir = path.join(
+      process.cwd(),
+      "test-output",
+      "backup-export"
+    );
 
-      await bdd.and("user is on the System Backup tab", async () => {
-        await gotoWithRetry(page, "/admin/backup");
-        // Ensure we're on the system backup tab by default
-        const systemBackupTab = page.getByRole("tab", {
-          name: /^backup$/i,
-        });
-        await expect(systemBackupTab).toBeVisible();
-      });
-
-      await bdd.when("user clicks the Download Backup button", async () => {
-        // Click export button - using more specific selector
-        const exportButton = page.getByRole("button", {
-          name: /download backup/i,
-        });
-        await expect(exportButton).toBeVisible();
-        await exportButton.click();
-      });
-
-      await bdd.then("backup file should be downloaded", async () => {
-        // Verify success message appears
-        const successMessage = page.locator(
-          "text=/export.*successfully|download.*automatically|backup.*created/i"
-        );
-        const hasSuccess = await successMessage
-          .isVisible({ timeout: 5000 })
-          .catch(() => false);
-
-        // Success message or page should be responsive
-        expect(
-          hasSuccess || (await page.locator("body").isVisible())
-        ).toBeTruthy();
-      });
+    test.beforeAll(() => {
+      if (!fs.existsSync(backupTempDir)) {
+        fs.mkdirSync(backupTempDir, { recursive: true });
+      }
     });
 
-    test("Scenario: Admin exports backup with photos included", async ({
+    test.afterAll(() => {
+      try {
+        if (fs.existsSync(backupTempDir)) {
+          fs.rmSync(backupTempDir, { recursive: true, force: true });
+        }
+      } catch {
+        // Ignore cleanup errors
+      }
+    });
+
+    /**
+     * Helper: Extract a ZIP file to a directory using the system unzip command.
+     * Uses execFileSync (not shell exec) to avoid command injection.
+     */
+    function extractZip(zipFilePath: string, destDir: string) {
+      execFileSync("unzip", ["-o", zipFilePath, "-d", destDir], {
+        stdio: "pipe",
+      });
+    }
+
+    test("Scenario: Export produces a valid ZIP with correct metadata and data files", async ({
       page,
       login,
     }) => {
+      test.slow();
+
+      let zipPath = "";
+      let extractDir = "";
+
       await bdd.given("user is logged in as admin", async () => {
         await login(TEST_USERS.admin);
-      });
-
-      await bdd.and("user is on the backup export form", async () => {
-        await gotoWithRetry(page, "/admin/backup");
-        // Navigate to System Backup tab if needed
-        const systemBackupTab = page.getByRole("tab", {
-          name: /^backup$/i,
-        });
-        if (await systemBackupTab.isVisible().catch(() => false)) {
-          await systemBackupTab.click();
-        }
       });
 
       await bdd.when(
-        "user configures export with photos included",
+        "user downloads a backup with default options",
         async () => {
-          // Check the photos checkbox
-          const photosCheckbox = page.getByLabel(
-            /include photos|photos and documents/i
-          );
-          const isChecked = await photosCheckbox.isChecked().catch(() => false);
-          if (!isChecked) {
-            await photosCheckbox.check();
-          }
+          await gotoWithRetry(page, "/admin/backup");
+          await waitForHydration(page);
+
+          const exportButton = page.getByRole("button", {
+            name: /download backup/i,
+          });
+          await expect(exportButton).toBeVisible({ timeout: 5000 });
+
+          const downloadPromise = page.waitForEvent("download", {
+            timeout: 30000,
+          });
+          await exportButton.click();
+          const download = await downloadPromise;
+
+          const fileName = download.suggestedFilename();
+          expect(fileName.endsWith(".zip")).toBe(true);
+          expect(fileName).toContain("vamsa-backup-");
+
+          zipPath = path.join(backupTempDir, `default-${Date.now()}.zip`);
+          await download.saveAs(zipPath);
+
+          const stats = fs.statSync(zipPath);
+          expect(stats.size).toBeGreaterThan(0);
         }
       );
 
-      await bdd.then("photos option should be enabled", async () => {
-        const photosCheckbox = page.getByLabel(
-          /include photos|photos and documents/i
-        );
-        await expect(photosCheckbox).toBeChecked();
-      });
+      await bdd.then(
+        "ZIP contains metadata.json with correct structure",
+        async () => {
+          extractDir = path.join(backupTempDir, `extract-${Date.now()}`);
+          fs.mkdirSync(extractDir, { recursive: true });
+
+          extractZip(zipPath, extractDir);
+
+          // Verify metadata.json exists and has correct structure
+          const metadataPath = path.join(extractDir, "metadata.json");
+          expect(fs.existsSync(metadataPath)).toBe(true);
+
+          const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
+          expect(metadata.version).toBe("1.0.0");
+          expect(metadata.exportedAt).toBeDefined();
+          expect(metadata.exportedBy).toBeDefined();
+          expect(metadata.exportedBy.email).toBeDefined();
+          expect(metadata.statistics).toBeDefined();
+          expect(typeof metadata.statistics.totalPeople).toBe("number");
+          expect(typeof metadata.statistics.totalRelationships).toBe("number");
+          expect(typeof metadata.statistics.totalUsers).toBe("number");
+          expect(metadata.dataFiles).toBeInstanceOf(Array);
+          expect(metadata.dataFiles).toContain("data/people.json");
+          expect(metadata.dataFiles).toContain("data/relationships.json");
+          expect(metadata.dataFiles).toContain("data/users.json");
+        }
+      );
+
+      await bdd.and(
+        "ZIP contains data files with actual database content",
+        async () => {
+          // Verify data/people.json exists and has content
+          const peoplePath = path.join(extractDir, "data", "people.json");
+          expect(fs.existsSync(peoplePath)).toBe(true);
+
+          const people = JSON.parse(fs.readFileSync(peoplePath, "utf-8"));
+          expect(people).toBeInstanceOf(Array);
+          // The E2E test database should have seed data
+          expect(people.length).toBeGreaterThan(0);
+
+          // Each person should have basic fields
+          const firstPerson = people[0];
+          expect(firstPerson.id).toBeDefined();
+          expect(firstPerson.firstName || firstPerson.lastName).toBeDefined();
+
+          // Verify data/relationships.json exists
+          const relPath = path.join(extractDir, "data", "relationships.json");
+          expect(fs.existsSync(relPath)).toBe(true);
+
+          // Verify data/users.json exists and has no passwords
+          const usersPath = path.join(extractDir, "data", "users.json");
+          expect(fs.existsSync(usersPath)).toBe(true);
+          const usersContent = fs.readFileSync(usersPath, "utf-8");
+          // Users should not contain password hashes
+          expect(usersContent).not.toContain("password");
+
+          // Verify data/settings.json exists
+          const settingsPath = path.join(extractDir, "data", "settings.json");
+          expect(fs.existsSync(settingsPath)).toBe(true);
+        }
+      );
     });
 
-    test("Scenario: Admin exports backup with audit logs", async ({
+    test("Scenario: Export with audit logs includes audit-logs.json in ZIP", async ({
       page,
       login,
     }) => {
+      test.slow();
+
+      let zipPath = "";
+      let extractDir = "";
+
       await bdd.given("user is logged in as admin", async () => {
         await login(TEST_USERS.admin);
       });
 
-      await bdd.and("user is on the backup export form", async () => {
-        await gotoWithRetry(page, "/admin/backup");
-      });
+      await bdd.when(
+        "user enables audit logs and downloads a backup",
+        async () => {
+          await gotoWithRetry(page, "/admin/backup");
+          await waitForHydration(page);
 
-      await bdd.when("user enables audit logs and sets days", async () => {
-        // Check audit logs checkbox
-        const auditCheckbox = page.getByLabel(/include audit logs/i);
-        const isChecked = await auditCheckbox.isChecked().catch(() => false);
-        if (!isChecked) {
-          await auditCheckbox.check();
+          // Ensure audit logs checkbox is checked
+          const auditCheckbox = page.getByLabel(/include audit logs/i);
+          await expect(auditCheckbox).toBeVisible({ timeout: 5000 });
+          const isChecked = await auditCheckbox.isChecked();
+          if (!isChecked) {
+            await auditCheckbox.check();
+          }
+
+          const exportButton = page.getByRole("button", {
+            name: /download backup/i,
+          });
+          await expect(exportButton).toBeVisible({ timeout: 5000 });
+
+          const downloadPromise = page.waitForEvent("download", {
+            timeout: 30000,
+          });
+          await exportButton.click();
+          const download = await downloadPromise;
+
+          zipPath = path.join(backupTempDir, `audit-${Date.now()}.zip`);
+          await download.saveAs(zipPath);
         }
+      );
 
-        // Wait for days input to appear
-        const daysInput = page.getByLabel(/number of days|days to include/i);
-        if (await daysInput.isVisible().catch(() => false)) {
-          await daysInput.fill("30");
+      await bdd.then(
+        "ZIP metadata lists audit-logs.json and the file exists",
+        async () => {
+          extractDir = path.join(backupTempDir, `extract-audit-${Date.now()}`);
+          fs.mkdirSync(extractDir, { recursive: true });
+
+          extractZip(zipPath, extractDir);
+
+          // Verify metadata references audit logs
+          const metadata = JSON.parse(
+            fs.readFileSync(path.join(extractDir, "metadata.json"), "utf-8")
+          );
+          expect(metadata.dataFiles).toContain("data/audit-logs.json");
+          expect(typeof metadata.statistics.totalAuditLogs).toBe("number");
+
+          // Verify audit-logs.json file exists
+          const auditPath = path.join(extractDir, "data", "audit-logs.json");
+          expect(fs.existsSync(auditPath)).toBe(true);
+
+          const auditLogs = JSON.parse(fs.readFileSync(auditPath, "utf-8"));
+          expect(auditLogs).toBeInstanceOf(Array);
         }
-      });
-
-      await bdd.then("audit logs should be enabled with days set", async () => {
-        const auditCheckbox = page.getByLabel(/include audit logs/i);
-        await expect(auditCheckbox).toBeChecked();
-
-        // Verify days input is visible if audit logs are checked
-        const daysInput = page.getByLabel(/number of days|days to include/i);
-        const daysVisible = await daysInput.isVisible().catch(() => false);
-        if (daysVisible) {
-          const daysValue = await daysInput.inputValue();
-          expect(daysValue).toBe("30");
-        }
-      });
-    });
-
-    test("Scenario: Admin can modify audit log days range", async ({
-      page,
-      login,
-    }) => {
-      await bdd.given("user is logged in as admin", async () => {
-        await login(TEST_USERS.admin);
-      });
-
-      await bdd.and("user has audit logs enabled on export form", async () => {
-        await gotoWithRetry(page, "/admin/backup");
-        const auditCheckbox = page.getByLabel(/include audit logs/i);
-        const isChecked = await auditCheckbox.isChecked().catch(() => false);
-        if (!isChecked) {
-          await auditCheckbox.check();
-        }
-        // Wait for the days input to appear and stabilize after checkbox toggle
-        const daysInput = page.getByLabel(/number of days|days to include/i);
-        await expect(daysInput).toBeVisible({ timeout: 5000 });
-      });
-
-      await bdd.when("user changes the audit log days to 180", async () => {
-        const daysInput = page.getByLabel(/number of days|days to include/i);
-        // Triple-click to select all text (platform-agnostic), then type new value
-        await daysInput.click({ clickCount: 3 });
-        await daysInput.pressSequentially("180", { delay: 50 });
-      });
-
-      await bdd.then("days input should show 180", async () => {
-        const daysInput = page.getByLabel(/number of days|days to include/i);
-        await expect(daysInput).toHaveValue("180");
-      });
+      );
     });
   });
 
@@ -304,6 +354,7 @@ test.describe("Feature: Backup & Export", () => {
         const gedcomButton = page.getByRole("button", {
           name: /export to gedcom|export.*gedcom/i,
         });
+        // Genuine conditional guard - button may not exist until tab content loads
         if (await gedcomButton.isVisible().catch(() => false)) {
           await gedcomButton.click();
         }
@@ -342,6 +393,7 @@ test.describe("Feature: Backup & Export", () => {
         const fullBackupTab = page.getByRole("tab", {
           name: /full backup|gedzip/i,
         });
+        // Genuine conditional guard - tab may not exist in all UI variations
         if (await fullBackupTab.isVisible().catch(() => false)) {
           await fullBackupTab.click();
         }
@@ -540,6 +592,7 @@ test.describe("Feature: Backup & Export", () => {
         const importHeading = page.getByRole("heading", {
           name: /import gedcom/i,
         });
+        // Genuine conditional guard - heading may need scrolling if visible
         if (await importHeading.isVisible().catch(() => false)) {
           await importHeading.scrollIntoViewIfNeeded();
         }
@@ -560,79 +613,6 @@ test.describe("Feature: Backup & Export", () => {
         // Description about GEDCOM import should be present
         expect(hasDescription || hasFallback).toBeTruthy();
       });
-    });
-  });
-
-  test.describe("Export Form Options", () => {
-    test("Scenario: Export form displays configuration options", async ({
-      page,
-      login,
-    }) => {
-      await bdd.given("user is logged in as admin", async () => {
-        await login(TEST_USERS.admin);
-      });
-
-      await bdd.when("user navigates to backup page", async () => {
-        await gotoWithRetry(page, "/admin/backup");
-      });
-
-      await bdd.then("form should display export options", async () => {
-        // Look for checkboxes or switches for export options
-        const photosOption = page.locator(
-          '[name="includePhotos"], [id*="photo"], label:has-text("photo")'
-        );
-        const auditLogsOption = page.locator(
-          '[name="includeAuditLogs"], [id*="audit"], label:has-text("audit")'
-        );
-
-        // At least one option should be visible
-        const photosVisible = await photosOption
-          .first()
-          .isVisible()
-          .catch(() => false);
-        const auditVisible = await auditLogsOption
-          .first()
-          .isVisible()
-          .catch(() => false);
-
-        // The form should have some configuration options
-        const formExists = await page.locator("form").isVisible();
-        expect(photosVisible || auditVisible || formExists).toBeTruthy();
-      });
-    });
-
-    test("Scenario: Export form shows audit log days input", async ({
-      page,
-      login,
-    }) => {
-      await bdd.given("user is logged in as admin", async () => {
-        await login(TEST_USERS.admin);
-      });
-
-      await bdd.when("user views the export form", async () => {
-        await gotoWithRetry(page, "/admin/backup");
-        await page
-          .locator("main")
-          .waitFor({ state: "visible", timeout: 10000 });
-      });
-
-      await bdd.then(
-        "form should show audit log days configuration",
-        async () => {
-          // Look for days input or slider
-          const daysInput = page.locator(
-            '[name="auditLogDays"], input[type="number"], [id*="days"]'
-          );
-          const hasInput = await daysInput
-            .first()
-            .isVisible()
-            .catch(() => false);
-
-          // The form should be present even if specific inputs vary
-          const formExists = await page.locator("form").isVisible();
-          expect(hasInput || formExists).toBeTruthy();
-        }
-      );
     });
   });
 
@@ -861,127 +841,498 @@ test.describe("Feature: Backup & Export", () => {
     });
   });
 
-  test.describe("Error Handling", () => {
-    test("Scenario: Page handles network errors gracefully", async ({
-      page,
-      login,
-    }) => {
-      await bdd.given("user is logged in as admin", async () => {
-        await login(TEST_USERS.admin);
-      });
+  test.describe("GEDCOM Round-Trip", () => {
+    const tempDir = path.join(process.cwd(), "test-output", "gedcom-roundtrip");
 
-      await bdd.when("user loads the backup page", async () => {
-        await gotoWithRetry(page, "/admin/backup");
-        await page
-          .locator("main")
-          .waitFor({ state: "visible", timeout: 10000 });
-      });
-
-      await bdd.then("page should display without crashing", async () => {
-        // Page should be accessible
-        const bodyVisible = await page.locator("body").isVisible();
-        expect(bodyVisible).toBeTruthy();
-
-        // Should not show a blank page or crash screen
-        const hasContent = await page
-          .locator("h1, h2, form, main")
-          .first()
-          .isVisible()
-          .catch(() => false);
-        expect(hasContent).toBeTruthy();
-      });
+    // Ensure temp directory exists before tests
+    test.beforeAll(() => {
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
     });
 
-    test("Scenario: Export error handling", async ({ page, login }) => {
-      await bdd.given("user is logged in as admin", async () => {
-        await login(TEST_USERS.admin);
-      });
-
-      await bdd.when("user attempts export", async () => {
-        await gotoWithRetry(page, "/admin/backup");
-        const exportButton = page.getByRole("button", {
-          name: /download backup|export/i,
-        });
-        if (await exportButton.isVisible().catch(() => false)) {
-          await exportButton.click();
-          // Wait briefly for potential error messages
-          await page.waitForTimeout(2000);
+    // Cleanup temp directory after tests
+    test.afterAll(() => {
+      try {
+        if (fs.existsSync(tempDir)) {
+          for (const file of fs.readdirSync(tempDir)) {
+            fs.unlinkSync(path.join(tempDir, file));
+          }
         }
-      });
-
-      await bdd.then("error should be handled gracefully", async () => {
-        // Page should still be responsive
-        const pageAccessible = await page
-          .locator("body")
-          .isVisible()
-          .catch(() => false);
-        expect(pageAccessible).toBeTruthy();
-
-        // Either success or error message, but no crash
-        const statusMessage = page.locator(
-          "text=/success|error|failed|export/i"
-        );
-        const _hasMessage = await statusMessage.isVisible().catch(() => false);
-        // Message not strictly required, but page should be intact
-        expect(pageAccessible).toBeTruthy();
-      });
+      } catch {
+        // Ignore cleanup errors
+      }
     });
-  });
 
-  test.describe("Form Validation", () => {
-    test("Scenario: Export form validates input before submission", async ({
+    /**
+     * Helper: Import a GEDCOM file through the UI and wait for completion.
+     * Returns true if import succeeded.
+     */
+    async function importGedcomFile(
+      page: any,
+      filePath: string
+    ): Promise<boolean> {
+      await gotoWithRetry(page, "/admin/backup");
+      await waitForHydration(page);
+
+      // Switch to GEDCOM tab
+      const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+      await expect(gedcomTab).toBeVisible({ timeout: 5000 });
+      await gedcomTab.click();
+
+      // Wait for Import GEDCOM heading to confirm tab content loaded
+      const importHeading = page.getByRole("heading", {
+        name: /import gedcom/i,
+      });
+      await expect(importHeading).toBeVisible({ timeout: 5000 });
+
+      // Upload the file
+      const fileInput = page.locator('input[type="file"][accept=".ged"]');
+      await expect(fileInput).toBeAttached({ timeout: 5000 });
+      await fileInput.setInputFiles(filePath);
+
+      // Click validate button
+      const validateButton = page.getByRole("button", {
+        name: /validate/i,
+      });
+      await expect(validateButton).toBeEnabled({ timeout: 5000 });
+      await validateButton.click();
+
+      // Wait for preview to appear (shows people/families count)
+      const previewTitle = page.locator("text=Import Preview");
+      await expect(previewTitle).toBeVisible({ timeout: 15000 });
+
+      // Verify it's ready to import (green status card)
+      const readyText = page.locator("text=Ready to Import");
+      // Genuine conditional guard - checking validation result
+      const isReady = await readyText.isVisible().catch(() => false);
+
+      if (!isReady) {
+        // Check if validation failed
+        const failedText = page.locator("text=Validation Failed");
+        const hasFailed = await failedText.isVisible().catch(() => false);
+        if (hasFailed) return false;
+      }
+
+      // Click "Confirm and Import"
+      const confirmButton = page.getByRole("button", {
+        name: /confirm and import/i,
+      });
+      await expect(confirmButton).toBeVisible({ timeout: 5000 });
+      await confirmButton.click();
+
+      // Wait for "Import Successful!" message
+      const successText = page.locator("text=Import Successful!");
+      await expect(successText).toBeVisible({ timeout: 15000 });
+
+      // Wait for redirect to /people
+      await page.waitForURL(/\/people/, { timeout: 10000 });
+
+      return true;
+    }
+
+    /**
+     * Helper: Export GEDCOM through the UI and return the file content.
+     */
+    async function exportGedcomFile(page: any): Promise<string> {
+      await gotoWithRetry(page, "/admin/backup");
+      await waitForHydration(page);
+
+      // Switch to GEDCOM tab
+      const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+      await expect(gedcomTab).toBeVisible({ timeout: 5000 });
+      await gedcomTab.click();
+
+      // Find and click export button
+      const exportButton = page.getByRole("button", {
+        name: /export to gedcom/i,
+      });
+      await expect(exportButton).toBeVisible({ timeout: 5000 });
+
+      // Listen for download, then click
+      const downloadPromise = page.waitForEvent("download", { timeout: 30000 });
+      await exportButton.click();
+      const download = await downloadPromise;
+
+      // Save and read the downloaded file
+      const fileName = download.suggestedFilename();
+      expect(fileName.endsWith(".ged")).toBe(true);
+
+      const savePath = path.join(tempDir, `export-${Date.now()}.ged`);
+      await download.saveAs(savePath);
+
+      const content = fs.readFileSync(savePath, "utf-8");
+      expect(content.length).toBeGreaterThan(0);
+
+      return content;
+    }
+
+    /**
+     * Helper: Write GEDCOM content to a temp file and return the path.
+     */
+    function writeTempGedcom(content: string, name: string): string {
+      const filePath = path.join(tempDir, `${name}-${Date.now()}.ged`);
+      fs.writeFileSync(filePath, content, "utf-8");
+      return filePath;
+    }
+
+    test("Scenario: Multi-generation family data survives import-export round-trip", async ({
       page,
       login,
     }) => {
+      test.slow();
+
+      // Use unique names to avoid collision with parallel tests or seed data
+      const uid = Date.now().toString(36);
+      const gedcomContent = [
+        "0 HEAD",
+        "1 SOUR RoundTripTest",
+        "1 GEDC",
+        "2 VERS 5.5.1",
+        "2 FORM LINEAGE-LINKED",
+        "1 CHAR UTF-8",
+        `0 @I1@ INDI`,
+        `1 NAME Grandpa_${uid} /RTFamily/`,
+        "1 SEX M",
+        "1 BIRT",
+        "2 DATE 10 MAR 1940",
+        "2 PLAC Chicago, Illinois, USA",
+        "1 FAMS @F1@",
+        `0 @I2@ INDI`,
+        `1 NAME Grandma_${uid} /RTFamily/`,
+        "1 SEX F",
+        "1 BIRT",
+        "2 DATE 15 JUN 1942",
+        "2 PLAC Chicago, Illinois, USA",
+        "1 FAMS @F1@",
+        `0 @I3@ INDI`,
+        `1 NAME Parent_${uid} /RTFamily/`,
+        "1 SEX M",
+        "1 BIRT",
+        "2 DATE 5 SEP 1965",
+        "2 PLAC Chicago, Illinois, USA",
+        "1 FAMC @F1@",
+        "1 FAMS @F2@",
+        `0 @I4@ INDI`,
+        `1 NAME Spouse_${uid} /RTMiller/`,
+        "1 SEX F",
+        "1 BIRT",
+        "2 DATE 20 DEC 1967",
+        "2 PLAC Detroit, Michigan, USA",
+        "1 FAMS @F2@",
+        `0 @I5@ INDI`,
+        `1 NAME Child_${uid} /RTFamily/`,
+        "1 SEX F",
+        "1 BIRT",
+        "2 DATE 12 APR 1995",
+        "2 PLAC New York, New York, USA",
+        "1 FAMC @F2@",
+        "0 @F1@ FAM",
+        "1 HUSB @I1@",
+        "1 WIFE @I2@",
+        "1 CHIL @I3@",
+        "1 MARR",
+        "2 DATE 20 JUN 1963",
+        "2 PLAC Chicago, Illinois, USA",
+        "0 @F2@ FAM",
+        "1 HUSB @I3@",
+        "1 WIFE @I4@",
+        "1 CHIL @I5@",
+        "1 MARR",
+        "2 DATE 15 AUG 1993",
+        "2 PLAC New York, New York, USA",
+        "0 TRLR",
+      ].join("\n");
+
+      let exportedContent = "";
+
       await bdd.given("user is logged in as admin", async () => {
         await login(TEST_USERS.admin);
       });
 
-      await bdd.when("user is on the backup page with form", async () => {
-        await gotoWithRetry(page, "/admin/backup");
-        await page
-          .locator("main")
-          .waitFor({ state: "visible", timeout: 10000 });
-      });
+      await bdd.when(
+        "user imports a multi-generation GEDCOM file",
+        async () => {
+          const filePath = writeTempGedcom(
+            gedcomContent,
+            "multi-gen-roundtrip"
+          );
+          const success = await importGedcomFile(page, filePath);
+          expect(success).toBe(true);
+        }
+      );
 
-      await bdd.then("form should be properly structured", async () => {
-        // Form should exist
-        const form = page.locator("form");
-        const formExists = await form.isVisible();
-        expect(formExists).toBeTruthy();
-
-        // Should have a submit button
-        const submitButton = page.locator(
-          'button[type="submit"], button:has-text("export"), button:has-text("download")'
-        );
-        const hasSubmit = await submitButton.first().isVisible();
-        expect(hasSubmit).toBeTruthy();
-      });
-    });
-
-    test("Scenario: Import form validates file before upload", async ({
-      page,
-      login,
-    }) => {
-      await bdd.given("user is logged in as admin", async () => {
-        await login(TEST_USERS.admin);
-      });
-
-      await bdd.when("user views import form", async () => {
-        await gotoWithRetry(page, "/admin/backup");
+      await bdd.and("user exports the data as GEDCOM", async () => {
+        exportedContent = await exportGedcomFile(page);
       });
 
       await bdd.then(
-        "import button should be disabled without file",
+        "exported GEDCOM contains all imported people with correct data",
         async () => {
-          const importButton = page.getByRole("button", {
-            name: /validate backup|import|upload/i,
-          });
-          const isDisabled = await importButton.isDisabled().catch(() => false);
+          // Verify all names survived (GEDCOM format: "FirstName /LastName/")
+          expect(exportedContent).toContain(`Grandpa_${uid}`);
+          expect(exportedContent).toContain(`Grandma_${uid}`);
+          expect(exportedContent).toContain(`Parent_${uid}`);
+          expect(exportedContent).toContain(`Spouse_${uid}`);
+          expect(exportedContent).toContain(`Child_${uid}`);
+          expect(exportedContent).toContain("/RTFamily/");
+          expect(exportedContent).toContain("/RTMiller/");
 
-          // Button might be visible but disabled, or not visible at all
-          // This is acceptable form validation
-          expect(typeof isDisabled).toBe("boolean");
+          // Verify sex data
+          expect(exportedContent).toContain("1 SEX M");
+          expect(exportedContent).toContain("1 SEX F");
+
+          // Verify birth dates survived (format: "D MON YYYY")
+          expect(exportedContent).toContain("10 MAR 1940");
+          expect(exportedContent).toContain("15 JUN 1942");
+          expect(exportedContent).toContain("5 SEP 1965");
+          expect(exportedContent).toContain("20 DEC 1967");
+          expect(exportedContent).toContain("12 APR 1995");
+
+          // Verify birth places survived
+          expect(exportedContent).toContain("Chicago, Illinois, USA");
+          expect(exportedContent).toContain("Detroit, Michigan, USA");
+          expect(exportedContent).toContain("New York, New York, USA");
+
+          // Verify marriage dates survived
+          expect(exportedContent).toContain("20 JUN 1963");
+          expect(exportedContent).toContain("15 AUG 1993");
+
+          // Verify family structure exists (HUSB/WIFE/CHIL references)
+          expect(exportedContent).toContain("1 HUSB");
+          expect(exportedContent).toContain("1 WIFE");
+          expect(exportedContent).toContain("1 CHIL");
+
+          // Verify GEDCOM structure markers
+          expect(exportedContent).toContain("0 HEAD");
+          expect(exportedContent).toContain("0 TRLR");
+          expect(exportedContent).toMatch(/0 @\w+@ INDI/);
+          expect(exportedContent).toMatch(/0 @\w+@ FAM/);
+        }
+      );
+    });
+
+    test("Scenario: Remarriage and divorce data survives import-export round-trip", async ({
+      page,
+      login,
+    }) => {
+      test.slow();
+
+      const uid = Date.now().toString(36);
+      const gedcomContent = [
+        "0 HEAD",
+        "1 SOUR RoundTripTest",
+        "1 GEDC",
+        "2 VERS 5.5.1",
+        "2 FORM LINEAGE-LINKED",
+        "1 CHAR UTF-8",
+        "0 @I1@ INDI",
+        `1 NAME DivorcedHusband_${uid} /RTDivorce/`,
+        "1 SEX M",
+        "1 BIRT",
+        "2 DATE 3 FEB 1970",
+        "1 FAMS @F1@",
+        "1 FAMS @F2@",
+        "0 @I2@ INDI",
+        `1 NAME FirstWife_${uid} /RTDivorce/`,
+        "1 SEX F",
+        "1 BIRT",
+        "2 DATE 15 MAY 1972",
+        "1 FAMS @F1@",
+        "0 @I3@ INDI",
+        `1 NAME SecondWife_${uid} /RTRemarriage/`,
+        "1 SEX F",
+        "1 BIRT",
+        "2 DATE 22 SEP 1975",
+        "1 FAMS @F2@",
+        "0 @F1@ FAM",
+        "1 HUSB @I1@",
+        "1 WIFE @I2@",
+        "1 MARR",
+        "2 DATE 10 JUN 1995",
+        "1 DIV",
+        "2 DATE 15 MAR 2005",
+        "0 @F2@ FAM",
+        "1 HUSB @I1@",
+        "1 WIFE @I3@",
+        "1 MARR",
+        "2 DATE 20 OCT 2008",
+        "0 TRLR",
+      ].join("\n");
+
+      let exportedContent = "";
+
+      await bdd.given("user is logged in as admin", async () => {
+        await login(TEST_USERS.admin);
+      });
+
+      await bdd.when(
+        "user imports a GEDCOM file with remarriage data",
+        async () => {
+          const filePath = writeTempGedcom(
+            gedcomContent,
+            "remarriage-roundtrip"
+          );
+          const success = await importGedcomFile(page, filePath);
+          expect(success).toBe(true);
+        }
+      );
+
+      await bdd.and("user exports the data as GEDCOM", async () => {
+        exportedContent = await exportGedcomFile(page);
+      });
+
+      await bdd.then(
+        "exported GEDCOM contains divorce and remarriage data",
+        async () => {
+          // Verify all people survived
+          expect(exportedContent).toContain(`DivorcedHusband_${uid}`);
+          expect(exportedContent).toContain(`FirstWife_${uid}`);
+          expect(exportedContent).toContain(`SecondWife_${uid}`);
+
+          // Verify first marriage date
+          expect(exportedContent).toContain("10 JUN 1995");
+
+          // Verify divorce date
+          expect(exportedContent).toContain("1 DIV");
+          expect(exportedContent).toContain("15 MAR 2005");
+
+          // Verify second marriage date
+          expect(exportedContent).toContain("20 OCT 2008");
+
+          // Verify two FAM records exist (for the two marriages)
+          const famMatches = exportedContent.match(/0 @\w+@ FAM/g) || [];
+          expect(famMatches.length).toBeGreaterThanOrEqual(2);
+        }
+      );
+    });
+
+    test("Scenario: Person notes survive import-export round-trip", async ({
+      page,
+      login,
+    }) => {
+      test.slow();
+
+      const uid = Date.now().toString(36);
+      const noteText = "This individual served in the military from 1980-1985.";
+      const gedcomContent = [
+        "0 HEAD",
+        "1 SOUR RoundTripTest",
+        "1 GEDC",
+        "2 VERS 5.5.1",
+        "2 FORM LINEAGE-LINKED",
+        "1 CHAR UTF-8",
+        "0 @I1@ INDI",
+        `1 NAME NotesPerson_${uid} /RTNotes/`,
+        "1 SEX M",
+        "1 BIRT",
+        "2 DATE 25 DEC 1960",
+        "2 PLAC Boston, Massachusetts, USA",
+        `1 NOTE ${noteText}`,
+        "0 TRLR",
+      ].join("\n");
+
+      let exportedContent = "";
+
+      await bdd.given("user is logged in as admin", async () => {
+        await login(TEST_USERS.admin);
+      });
+
+      await bdd.when(
+        "user imports a GEDCOM file with person notes",
+        async () => {
+          const filePath = writeTempGedcom(gedcomContent, "notes-roundtrip");
+          const success = await importGedcomFile(page, filePath);
+          expect(success).toBe(true);
+        }
+      );
+
+      await bdd.and("user exports the data as GEDCOM", async () => {
+        exportedContent = await exportGedcomFile(page);
+      });
+
+      await bdd.then(
+        "exported GEDCOM contains the person with their notes",
+        async () => {
+          // Verify person survived
+          expect(exportedContent).toContain(`NotesPerson_${uid}`);
+          expect(exportedContent).toContain("/RTNotes/");
+
+          // Verify birth data
+          expect(exportedContent).toContain("25 DEC 1960");
+          expect(exportedContent).toContain("Boston, Massachusetts, USA");
+
+          // Verify note content survived (may be split across CONT lines)
+          // The note text should appear somewhere in the export
+          expect(exportedContent).toContain("military");
+          expect(exportedContent).toContain("1980-1985");
+        }
+      );
+    });
+
+    test("Scenario: Deceased person with death data survives import-export round-trip", async ({
+      page,
+      login,
+    }) => {
+      test.slow();
+
+      const uid = Date.now().toString(36);
+      const gedcomContent = [
+        "0 HEAD",
+        "1 SOUR RoundTripTest",
+        "1 GEDC",
+        "2 VERS 5.5.1",
+        "2 FORM LINEAGE-LINKED",
+        "1 CHAR UTF-8",
+        "0 @I1@ INDI",
+        `1 NAME DeceasedPerson_${uid} /RTDeceased/`,
+        "1 SEX M",
+        "1 BIRT",
+        "2 DATE 12 FEB 1920",
+        "2 PLAC Philadelphia, Pennsylvania, USA",
+        "1 DEAT",
+        "2 DATE 5 NOV 2010",
+        "1 OCCU Carpenter",
+        "0 TRLR",
+      ].join("\n");
+
+      let exportedContent = "";
+
+      await bdd.given("user is logged in as admin", async () => {
+        await login(TEST_USERS.admin);
+      });
+
+      await bdd.when(
+        "user imports a GEDCOM file with a deceased person",
+        async () => {
+          const filePath = writeTempGedcom(gedcomContent, "deceased-roundtrip");
+          const success = await importGedcomFile(page, filePath);
+          expect(success).toBe(true);
+        }
+      );
+
+      await bdd.and("user exports the data as GEDCOM", async () => {
+        exportedContent = await exportGedcomFile(page);
+      });
+
+      await bdd.then(
+        "exported GEDCOM contains the deceased person with death and occupation data",
+        async () => {
+          // Verify person survived
+          expect(exportedContent).toContain(`DeceasedPerson_${uid}`);
+          expect(exportedContent).toContain("/RTDeceased/");
+
+          // Verify birth data
+          expect(exportedContent).toContain("12 FEB 1920");
+          expect(exportedContent).toContain("Philadelphia, Pennsylvania, USA");
+
+          // Verify death date survived
+          expect(exportedContent).toContain("1 DEAT");
+          expect(exportedContent).toContain("5 NOV 2010");
+
+          // Verify occupation survived
+          expect(exportedContent).toContain("1 OCCU");
+          expect(exportedContent).toContain("Carpenter");
         }
       );
     });

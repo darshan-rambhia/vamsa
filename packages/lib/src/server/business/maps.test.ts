@@ -6,37 +6,35 @@
  * - Cluster creation with bounds and center calculation
  * - Time range calculations
  * - Marker type definitions and transformations
+ * - All map data retrieval functions
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import {
+  calculateDistance,
+  createCluster,
+  getFamilyLocationsData,
+  getPersonLocationsData,
+  getPlaceClustersData,
+  getPlacesByTimeRangeData,
+  getPlacesForMapData,
+} from "./maps";
+import type { MapMarker as SourceMapMarker } from "./maps";
 
-// Pure functions for geographic calculations
-function calculateDistance(
-  point1: { latitude: number; longitude: number },
-  point2: { latitude: number; longitude: number }
-): number {
-  const R = 6371000; // Earth's radius in meters
-  const lat1 = (point1.latitude * Math.PI) / 180;
-  const lat2 = (point2.latitude * Math.PI) / 180;
-  const deltaLat = ((point2.latitude - point1.latitude) * Math.PI) / 180;
-  const deltaLng = ((point2.longitude - point1.longitude) * Math.PI) / 180;
+// Mock logger
+vi.mock("@vamsa/lib/logger", () => ({
+  loggers: {
+    db: {
+      withErr: vi.fn(() => ({
+        ctx: vi.fn(() => ({
+          msg: vi.fn(),
+        })),
+      })),
+    },
+  },
+}));
 
-  const a =
-    Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-    Math.cos(lat1) *
-      Math.cos(lat2) *
-      Math.sin(deltaLng / 2) *
-      Math.sin(deltaLng / 2);
-
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-interface MapMarker {
-  latitude: number;
-  longitude: number;
-}
-
+// Helper interfaces for local pure-function tests
 interface ClusterBound {
   minLat: number;
   maxLat: number;
@@ -44,34 +42,50 @@ interface ClusterBound {
   maxLng: number;
 }
 
-interface PlaceCluster {
-  bounds: ClusterBound;
-  count: number;
-  centerLat: number;
-  centerLng: number;
-}
-
-function createCluster(markers: Array<MapMarker>): PlaceCluster {
-  const lats = markers.map((p) => p.latitude);
-  const lngs = markers.map((p) => p.longitude);
-
-  const minLat = Math.min(...lats);
-  const maxLat = Math.max(...lats);
-  const minLng = Math.min(...lngs);
-  const maxLng = Math.max(...lngs);
-
-  const centerLat = (minLat + maxLat) / 2;
-  const centerLng = (minLng + maxLng) / 2;
-
+// Create mock database for maps tests
+function createMockDb(
+  options: {
+    places?: Array<any>;
+    events?: Array<any>;
+    personLinks?: Array<any>;
+    persons?: Array<any>;
+  } = {}
+) {
   return {
-    bounds: { minLat, maxLat, minLng, maxLng },
-    centerLat,
-    centerLng,
-    count: markers.length,
-  };
+    query: {
+      places: {
+        findFirst: vi.fn(async () => options.places?.[0] || null),
+        findMany: vi.fn(async () => options.places || []),
+      },
+      events: {
+        findFirst: vi.fn(async () => options.events?.[0] || null),
+        findMany: vi.fn(async () => options.events || []),
+      },
+      placePersonLinks: {
+        findFirst: vi.fn(async () => options.personLinks?.[0] || null),
+        findMany: vi.fn(async () => options.personLinks || []),
+      },
+      persons: {
+        findFirst: vi.fn(async (_opts: any) => {
+          if (!options.persons) return null;
+          // Simple mock - return first person if where clause exists
+          return options.persons[0] || null;
+        }),
+        findMany: vi.fn(async () => options.persons || []),
+      },
+    },
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn(async () => [{ count: 0 }]),
+      })),
+    })),
+  } as any;
 }
 
-function isPointInBounds(point: MapMarker, bounds: ClusterBound): boolean {
+function isPointInBounds(
+  point: { latitude: number; longitude: number },
+  bounds: ClusterBound
+): boolean {
   return (
     point.latitude >= bounds.minLat &&
     point.latitude <= bounds.maxLat &&
@@ -163,12 +177,12 @@ describe("maps business logic - geographic calculations", () => {
 
   describe("createCluster", () => {
     it("should create cluster with correct bounds and center", () => {
-      const markers: Array<MapMarker> = [
+      const markers: Array<Partial<SourceMapMarker>> = [
         { latitude: 40, longitude: -74 },
         { latitude: 50, longitude: -60 },
       ];
 
-      const cluster = createCluster(markers);
+      const cluster = createCluster(markers as Array<SourceMapMarker>);
 
       expect(cluster.bounds).toEqual({
         minLat: 40,
@@ -182,9 +196,11 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should handle single marker", () => {
-      const markers: Array<MapMarker> = [{ latitude: 40, longitude: -74 }];
+      const markers: Array<Partial<SourceMapMarker>> = [
+        { latitude: 40, longitude: -74 },
+      ];
 
-      const cluster = createCluster(markers);
+      const cluster = createCluster(markers as Array<SourceMapMarker>);
 
       expect(cluster.bounds).toEqual({
         minLat: 40,
@@ -198,12 +214,12 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should handle markers with negative coordinates", () => {
-      const markers: Array<MapMarker> = [
+      const markers: Array<Partial<SourceMapMarker>> = [
         { latitude: -10, longitude: -50 },
         { latitude: -30, longitude: -60 },
       ];
 
-      const cluster = createCluster(markers);
+      const cluster = createCluster(markers as Array<SourceMapMarker>);
 
       expect(cluster.bounds.minLat).toBe(-30);
       expect(cluster.bounds.maxLat).toBe(-10);
@@ -214,13 +230,13 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should handle multiple markers in same cluster", () => {
-      const markers: Array<MapMarker> = [
+      const markers: Array<Partial<SourceMapMarker>> = [
         { latitude: 40, longitude: -74 },
         { latitude: 40.1, longitude: -73.9 },
         { latitude: 39.9, longitude: -74.1 },
       ];
 
-      const cluster = createCluster(markers);
+      const cluster = createCluster(markers as Array<SourceMapMarker>);
 
       expect(cluster.count).toBe(3);
       expect(cluster.centerLat).toBeCloseTo(40, 1);
@@ -334,13 +350,13 @@ describe("maps business logic - geographic calculations", () => {
 
   describe("place clustering logic", () => {
     it("should cluster nearby places", () => {
-      const places: Array<MapMarker> = [
+      const places = [
         { latitude: 40.1, longitude: -74.0 },
         { latitude: 40.2, longitude: -74.1 },
         { latitude: 40.3, longitude: -74.2 },
       ];
 
-      const cluster = createCluster(places);
+      const cluster = createCluster(places as Array<SourceMapMarker>);
 
       // All points are within ~20 km of each other
       expect(cluster.count).toBe(3);
@@ -349,13 +365,13 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should handle cluster with single outlier", () => {
-      const places: Array<MapMarker> = [
+      const places = [
         { latitude: 40, longitude: -74 },
         { latitude: 40.1, longitude: -74.1 },
         { latitude: 85, longitude: 170 }, // Outlier
       ];
 
-      const cluster = createCluster(places);
+      const cluster = createCluster(places as Array<SourceMapMarker>);
 
       // Bounds include all points
       expect(cluster.bounds.minLat).toBe(40);
@@ -366,13 +382,13 @@ describe("maps business logic - geographic calculations", () => {
 
   describe("bounds calculations", () => {
     it("should calculate correct bounds for US locations", () => {
-      const places: Array<MapMarker> = [
+      const places = [
         { latitude: 47.6, longitude: -122.3 }, // Seattle
         { latitude: 40.7, longitude: -74.0 }, // New York
         { latitude: 34.1, longitude: -118.2 }, // Los Angeles
       ];
 
-      const bounds = createCluster(places).bounds;
+      const bounds = createCluster(places as Array<SourceMapMarker>).bounds;
 
       expect(bounds.minLat).toBe(34.1);
       expect(bounds.maxLat).toBe(47.6);
@@ -381,16 +397,329 @@ describe("maps business logic - geographic calculations", () => {
     });
 
     it("should handle antimeridian edge case", () => {
-      const places: Array<MapMarker> = [
+      const places = [
         { latitude: 10, longitude: 179 },
         { latitude: 10, longitude: -179 },
       ];
 
-      const bounds = createCluster(places).bounds;
+      const bounds = createCluster(places as Array<SourceMapMarker>).bounds;
 
       // Should include all points
       expect(bounds.minLng).toBe(-179);
       expect(bounds.maxLng).toBe(179);
+    });
+  });
+
+  describe("getPlacesForMapData", () => {
+    it("should return places with coordinates", async () => {
+      const places = [
+        {
+          id: "place1",
+          name: "New York",
+          latitude: 40.7128,
+          longitude: -74.006,
+          placeType: "CITY",
+          description: "NYC",
+        },
+      ];
+
+      const mockDb = createMockDb({ places, events: [], personLinks: [] });
+
+      const result = await getPlacesForMapData({ includeEmpty: true }, mockDb);
+
+      expect(result.markers).toBeDefined();
+      expect(result.total).toBeGreaterThanOrEqual(0);
+    });
+
+    it("should skip places without coordinates", async () => {
+      const places = [
+        {
+          id: "place1",
+          name: "Unknown Location",
+          latitude: null,
+          longitude: null,
+          placeType: "CITY",
+          description: null,
+        },
+      ];
+
+      const mockDb = createMockDb({ places });
+
+      const result = await getPlacesForMapData({ includeEmpty: true }, mockDb);
+
+      expect(result.markers).toHaveLength(0);
+    });
+
+    it("should exclude empty places when includeEmpty is false", async () => {
+      const places = [
+        {
+          id: "place1",
+          name: "Empty Place",
+          latitude: 40.7,
+          longitude: -74.0,
+          placeType: "CITY",
+          description: null,
+        },
+      ];
+
+      const mockDb = createMockDb({ places, events: [], personLinks: [] });
+
+      const result = await getPlacesForMapData({ includeEmpty: false }, mockDb);
+
+      expect(result.markers).toHaveLength(0);
+    });
+  });
+
+  describe("getPersonLocationsData", () => {
+    it("should throw error when person not found", async () => {
+      const mockDb = createMockDb({ persons: [] });
+
+      await expect(
+        getPersonLocationsData("missing-id", mockDb)
+      ).rejects.toThrow("Person not found");
+    });
+
+    it("should return locations for valid person", async () => {
+      const person = {
+        id: "person1",
+        firstName: "John",
+        lastName: "Doe",
+      };
+
+      const mockDb = createMockDb({ persons: [person], personLinks: [] });
+
+      const result = await getPersonLocationsData("person1", mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.person.id).toBe("person1");
+      expect(result.markers).toBeDefined();
+    });
+
+    it("should include person details in response", async () => {
+      const person = {
+        id: "person1",
+        firstName: "Jane",
+        lastName: "Smith",
+      };
+
+      const mockDb = createMockDb({ persons: [person] });
+
+      const result = await getPersonLocationsData("person1", mockDb);
+
+      expect(result.person.firstName).toBe("Jane");
+      expect(result.person.lastName).toBe("Smith");
+    });
+  });
+
+  describe("getFamilyLocationsData", () => {
+    it("should return family locations", async () => {
+      const persons = [{ id: "person1" }, { id: "person2" }];
+
+      const places = [
+        {
+          id: "place1",
+          name: "Boston",
+          latitude: 42.3601,
+          longitude: -71.0589,
+          placeType: "CITY",
+          description: "Boston, MA",
+        },
+      ];
+
+      const mockDb = createMockDb({ persons, places });
+
+      const result = await getFamilyLocationsData(mockDb);
+
+      expect(result).toBeDefined();
+      expect(result.markers).toBeDefined();
+      expect(result.familySize).toBe(2);
+    });
+
+    it("should handle empty family", async () => {
+      const mockDb = createMockDb({ persons: [], places: [] });
+
+      const result = await getFamilyLocationsData(mockDb);
+
+      expect(result.markers).toBeDefined();
+      expect(result.familySize).toBe(0);
+    });
+
+    it("should filter out places without coordinates", async () => {
+      const persons = [{ id: "person1" }];
+      const places = [
+        {
+          id: "place1",
+          name: "Unknown",
+          latitude: null,
+          longitude: null,
+          placeType: "CITY",
+          description: null,
+        },
+      ];
+
+      const mockDb = createMockDb({ persons, places });
+
+      const result = await getFamilyLocationsData(mockDb);
+
+      expect(result.markers).toHaveLength(0);
+    });
+  });
+
+  describe("getPlacesByTimeRangeData", () => {
+    it("should return places within time range", async () => {
+      const places = [
+        {
+          id: "place1",
+          name: "Historical Site",
+          latitude: 51.5074,
+          longitude: -0.1278,
+          placeType: "LANDMARK",
+          description: "London",
+        },
+      ];
+
+      const mockDb = createMockDb({ places, events: [], personLinks: [] });
+
+      const result = await getPlacesByTimeRangeData(
+        { startYear: 1900, endYear: 2000 },
+        mockDb
+      );
+
+      expect(result).toBeDefined();
+      expect(result.timeRange.startYear).toBe(1900);
+      expect(result.timeRange.endYear).toBe(2000);
+    });
+
+    it("should filter events by date range", async () => {
+      const places = [
+        {
+          id: "place1",
+          name: "Place",
+          latitude: 40.0,
+          longitude: -74.0,
+          placeType: "CITY",
+          description: null,
+        },
+      ];
+
+      const events = [
+        {
+          id: "event1",
+          placeId: "place1",
+          personId: "person1",
+          type: "BIRTH",
+          date: new Date("1950-01-01"),
+        },
+      ];
+
+      const mockDb = createMockDb({ places, events });
+
+      const result = await getPlacesByTimeRangeData(
+        { startYear: 1940, endYear: 1960 },
+        mockDb
+      );
+
+      expect(result.markers).toBeDefined();
+    });
+
+    it("should handle empty time range", async () => {
+      const mockDb = createMockDb({ places: [], events: [] });
+
+      const result = await getPlacesByTimeRangeData(
+        { startYear: 2000, endYear: 2010 },
+        mockDb
+      );
+
+      expect(result.markers).toHaveLength(0);
+    });
+  });
+
+  describe("getPlaceClustersData", () => {
+    it("should cluster places within bounds", async () => {
+      const places = [
+        {
+          id: "place1",
+          name: "Place 1",
+          latitude: 40.5,
+          longitude: -74.0,
+          placeType: "CITY",
+          description: null,
+        },
+        {
+          id: "place2",
+          name: "Place 2",
+          latitude: 40.6,
+          longitude: -74.1,
+          placeType: "CITY",
+          description: null,
+        },
+      ];
+
+      const mockDb = createMockDb({ places, events: [] });
+
+      const result = await getPlaceClustersData(
+        {
+          bounds: {
+            minLat: 40.0,
+            maxLat: 41.0,
+            minLng: -75.0,
+            maxLng: -73.0,
+          },
+          clusterSize: 10,
+        },
+        mockDb
+      );
+
+      expect(result).toBeDefined();
+      expect(result.clusters).toBeDefined();
+    });
+
+    it("should return empty clusters for no places", async () => {
+      const mockDb = createMockDb({ places: [] });
+
+      const result = await getPlaceClustersData(
+        {
+          bounds: {
+            minLat: 0,
+            maxLat: 10,
+            minLng: 0,
+            maxLng: 10,
+          },
+          clusterSize: 5,
+        },
+        mockDb
+      );
+
+      expect(result.clusters).toHaveLength(0);
+      expect(result.totalPlaces).toBe(0);
+    });
+
+    it("should respect cluster size parameter", async () => {
+      const places = Array.from({ length: 20 }, (_, i) => ({
+        id: `place${i}`,
+        name: `Place ${i}`,
+        latitude: 40 + i * 0.1,
+        longitude: -74 - i * 0.1,
+        placeType: "CITY",
+        description: null,
+      }));
+
+      const mockDb = createMockDb({ places });
+
+      const result = await getPlaceClustersData(
+        {
+          bounds: {
+            minLat: 39,
+            maxLat: 42,
+            minLng: -76,
+            maxLng: -72,
+          },
+          clusterSize: 5,
+        },
+        mockDb
+      );
+
+      expect(result.clusters).toBeDefined();
     });
   });
 });

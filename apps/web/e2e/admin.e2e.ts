@@ -98,9 +98,7 @@ test.describe("Feature: Admin Operations", () => {
           await expect(firstCard).toBeVisible();
 
           // Check that card contains user information
-          const cardText = await firstCard.textContent();
-          expect(cardText).toBeTruthy();
-          expect(cardText?.length).toBeGreaterThan(0);
+          await expect(firstCard).not.toBeEmpty();
         } else {
           // Empty state is acceptable
           const emptyState = page.locator("text=No users found");
@@ -218,9 +216,7 @@ test.describe("Feature: Admin Operations", () => {
 
       await bdd.then("settings section is accessible", async () => {
         const mainContent = page.locator("main").first();
-        const contentText = await mainContent.textContent();
-        expect(contentText).toBeTruthy();
-        expect(contentText?.length).toBeGreaterThan(0);
+        await expect(mainContent).not.toBeEmpty();
       });
     });
   });
@@ -288,8 +284,7 @@ test.describe("Feature: Admin Operations", () => {
         await expect(mainContent).toBeVisible();
 
         // Verify content exists (either users or empty state)
-        const pageText = await mainContent.textContent();
-        expect(pageText).toBeTruthy();
+        await expect(mainContent).not.toBeEmpty();
       });
     });
 

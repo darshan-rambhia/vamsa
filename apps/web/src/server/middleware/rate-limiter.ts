@@ -52,15 +52,51 @@ export function getRateLimitStore(): RateLimitStore {
 }
 
 /**
+ * Parse environment variable as integer with fallback to default
+ */
+function parseEnvInt(key: string, defaultValue: number): number {
+  const value = process.env[key];
+  if (!value) return defaultValue;
+  const parsed = parseInt(value, 10);
+  if (isNaN(parsed)) {
+    log.warn(
+      { key, value },
+      `Invalid integer in environment variable, using default: ${defaultValue}`
+    );
+    return defaultValue;
+  }
+  return parsed;
+}
+
+/**
  * Rate limit configurations for different actions
+ * All values are configurable via environment variables
  */
 export const RATE_LIMITS = {
-  login: { limit: 5, windowMs: 60 * 1000 }, // 5 attempts per minute
-  register: { limit: 3, windowMs: 60 * 60 * 1000 }, // 3 attempts per hour
-  claimProfile: { limit: 10, windowMs: 60 * 60 * 1000 }, // 10 attempts per hour
-  passwordReset: { limit: 3, windowMs: 60 * 60 * 1000 }, // 3 attempts per hour
-  search: { limit: 30, windowMs: 60 * 1000 }, // 30 searches per minute
-  api: { limit: 100, windowMs: 60 * 1000 }, // 100 API requests per minute
+  login: {
+    limit: parseEnvInt("RATE_LIMIT_LOGIN_MAX", 5),
+    windowMs: parseEnvInt("RATE_LIMIT_LOGIN_WINDOW", 60) * 1000, // Convert seconds to ms
+  },
+  register: {
+    limit: parseEnvInt("RATE_LIMIT_REGISTER_MAX", 3),
+    windowMs: parseEnvInt("RATE_LIMIT_REGISTER_WINDOW", 3600) * 1000, // 1 hour default
+  },
+  claimProfile: {
+    limit: parseEnvInt("RATE_LIMIT_CLAIM_PROFILE_MAX", 10),
+    windowMs: parseEnvInt("RATE_LIMIT_CLAIM_PROFILE_WINDOW", 3600) * 1000, // 1 hour default
+  },
+  passwordReset: {
+    limit: parseEnvInt("RATE_LIMIT_PASSWORD_RESET_MAX", 3),
+    windowMs: parseEnvInt("RATE_LIMIT_PASSWORD_RESET_WINDOW", 3600) * 1000, // 1 hour default
+  },
+  search: {
+    limit: parseEnvInt("RATE_LIMIT_SEARCH_MAX", 30),
+    windowMs: parseEnvInt("RATE_LIMIT_SEARCH_WINDOW", 60) * 1000, // Per minute
+  },
+  api: {
+    limit: parseEnvInt("RATE_LIMIT_API_MAX", 100),
+    windowMs: parseEnvInt("RATE_LIMIT_API_WINDOW", 60) * 1000, // Per minute
+  },
 } as const;
 
 export type RateLimitAction = keyof typeof RATE_LIMITS;

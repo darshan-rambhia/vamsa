@@ -1,468 +1,923 @@
 /**
- * Unit tests for Invites Business Logic
+ * Unit tests for invites business logic
  *
- * Tests cover core validation logic for invite operations:
- * - Email normalization and validation
- * - Status transitions
- * - Token generation
- * - Expiration handling
+ * Tests cover:
+ * - getInvitesData: Query invites with pagination and filtering
+ * - createInviteData: Create new invite with validation
+ * - getInviteByTokenData: Fetch and validate invite by token
+ * - acceptInviteData: Process invite acceptance and user creation
+ * - revokeInviteData: Revoke a pending invite
+ * - deleteInviteData: Delete a revoked invite
+ * - resendInviteData: Resend invite with new token
  *
- * Note: Full database operation tests are best done with integration tests.
- * These tests focus on business rule validation and error handling.
+ * Uses module mocking for database dependency injection.
  */
 
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { clearAllMocks } from "../../testing/shared-mocks";
 
-// Simple pure functions to test
-function normalizeEmail(email: string): string {
-  return email.toLowerCase();
-}
+import {
+  acceptInviteData,
+  createInviteData,
+  deleteInviteData,
+  getInviteByTokenData,
+  getInvitesData,
+  resendInviteData,
+  revokeInviteData,
+} from "./invites";
 
-function generateToken(): string {
-  return "mock-token-" + Math.random().toString(36).substring(7);
-}
+// Create mock drizzle database — typed as any since mocks change shape per test
+const mockDrizzleDb: any = {
+  select: vi.fn(() => ({
+    from: vi.fn(() => ({
+      where: vi.fn(() => Promise.resolve([{ count: 0 }])),
+      limit: vi.fn(() => Promise.resolve([])),
+      leftJoin: vi.fn(() => ({
+        leftJoin: vi.fn(() => ({
+          where: vi.fn(() => ({
+            orderBy: vi.fn(() => ({
+              limit: vi.fn(() => ({
+                offset: vi.fn(() => Promise.resolve([])),
+              })),
+            })),
+          })),
+        })),
+        where: vi.fn(() => ({
+          limit: vi.fn(() => Promise.resolve([])),
+        })),
+      })),
+    })),
+  })),
+  insert: vi.fn(() => ({
+    values: vi.fn(() => ({
+      returning: vi.fn(() => Promise.resolve([])),
+    })),
+  })),
+  update: vi.fn(() => ({
+    set: vi.fn(() => ({
+      where: vi.fn(() => Promise.resolve({})),
+    })),
+  })),
+  delete: vi.fn(() => ({
+    where: vi.fn(() => Promise.resolve({})),
+  })),
+};
 
-function calculateExpirationDate(days: number = 7): Date {
-  return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
-}
+describe("Invites Business Logic", () => {
+  beforeEach(() => {
+    clearAllMocks();
+    (mockDrizzleDb.select as ReturnType<typeof vi.fn>).mockClear();
+    (mockDrizzleDb.insert as ReturnType<typeof vi.fn>).mockClear();
+    (mockDrizzleDb.update as ReturnType<typeof vi.fn>).mockClear();
+    (mockDrizzleDb.delete as ReturnType<typeof vi.fn>).mockClear();
+  });
 
-function isInviteExpired(expiresAt: Date): boolean {
-  return expiresAt < new Date();
-}
+  describe("getInvitesData", () => {
+    it("should return paginated invites with empty results", async () => {
+      const mockCount = { count: "0" };
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve([mockCount])),
+          leftJoin: vi.fn(() => ({
+            leftJoin: vi.fn(() => ({
+              where: vi.fn(() => ({
+                orderBy: vi.fn(() => ({
+                  limit: vi.fn(() => ({
+                    offset: vi.fn(() => Promise.resolve([])),
+                  })),
+                })),
+              })),
+            })),
+          })),
+        })),
+      }));
 
-function validateInviteStatus(
-  status: string,
-  allowedStatuses: Array<string>
-): boolean {
-  return allowedStatuses.includes(status);
-}
+      mockDrizzleDb.select = selectMock;
 
-describe("invites business logic - pure functions", () => {
-  describe("normalizeEmail", () => {
-    it("should convert uppercase to lowercase", () => {
-      expect(normalizeEmail("USER@EXAMPLE.COM")).toBe("user@example.com");
-    });
-
-    it("should handle mixed case", () => {
-      expect(normalizeEmail("John.Doe@Example.COM")).toBe(
-        "john.doe@example.com"
+      const result = await getInvitesData(
+        1,
+        10,
+        "desc",
+        undefined,
+        mockDrizzleDb
       );
+
+      expect(result.items).toHaveLength(0);
+      expect(result.pagination.page).toBe(1);
+      expect(result.pagination.limit).toBe(10);
+      expect(result.pagination.total).toBe(0);
     });
 
-    it("should preserve already lowercase", () => {
-      expect(normalizeEmail("user@example.com")).toBe("user@example.com");
-    });
-  });
-
-  describe("generateToken", () => {
-    it("should generate non-empty token", () => {
-      const token = generateToken();
-      expect(token).toBeTruthy();
-      expect(token.length).toBeGreaterThan(0);
-    });
-
-    it("should generate unique tokens", () => {
-      const token1 = generateToken();
-      const token2 = generateToken();
-      expect(token1).not.toBe(token2);
-    });
-
-    it("should use predictable prefix for testing", () => {
-      const token = generateToken();
-      expect(token.startsWith("mock-token-")).toBe(true);
-    });
-  });
-
-  describe("calculateExpirationDate", () => {
-    it("should default to 7 days", () => {
-      const expiration = calculateExpirationDate();
-      const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
-      const actualDiff = expiration.getTime() - Date.now();
-      // Allow 1 second tolerance
-      expect(Math.abs(actualDiff - sevenDaysMs)).toBeLessThan(1000);
-    });
-
-    it("should accept custom days", () => {
-      const expiration = calculateExpirationDate(14);
-      const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
-      const actualDiff = expiration.getTime() - Date.now();
-      expect(Math.abs(actualDiff - fourteenDaysMs)).toBeLessThan(1000);
-    });
-
-    it("should handle 1 day", () => {
-      const expiration = calculateExpirationDate(1);
-      const oneDayMs = 1 * 24 * 60 * 60 * 1000;
-      const actualDiff = expiration.getTime() - Date.now();
-      expect(Math.abs(actualDiff - oneDayMs)).toBeLessThan(1000);
-    });
-  });
-
-  describe("isInviteExpired", () => {
-    it("should return true for past date", () => {
-      const pastDate = new Date(Date.now() - 1000);
-      expect(isInviteExpired(pastDate)).toBe(true);
-    });
-
-    it("should return false for future date", () => {
-      const futureDate = new Date(Date.now() + 1000);
-      expect(isInviteExpired(futureDate)).toBe(false);
-    });
-
-    it("should handle dates far in past", () => {
-      const pastDate = new Date(2000, 0, 1);
-      expect(isInviteExpired(pastDate)).toBe(true);
-    });
-
-    it("should handle dates far in future", () => {
-      const futureDate = new Date(2030, 0, 1);
-      expect(isInviteExpired(futureDate)).toBe(false);
-    });
-  });
-
-  describe("validateInviteStatus", () => {
-    it("should allow valid status", () => {
-      expect(validateInviteStatus("PENDING", ["PENDING", "ACCEPTED"])).toBe(
-        true
-      );
-    });
-
-    it("should reject invalid status", () => {
-      expect(validateInviteStatus("INVALID", ["PENDING", "ACCEPTED"])).toBe(
-        false
-      );
-    });
-
-    it("should be case-sensitive", () => {
-      expect(validateInviteStatus("pending", ["PENDING", "ACCEPTED"])).toBe(
-        false
-      );
-    });
-
-    it("should handle single allowed status", () => {
-      expect(validateInviteStatus("PENDING", ["PENDING"])).toBe(true);
-    });
-
-    it("should handle empty allowed statuses", () => {
-      expect(validateInviteStatus("PENDING", [])).toBe(false);
-    });
-  });
-
-  describe("invite workflow", () => {
-    it("should create invite with normalized email and 7-day expiration", () => {
-      const email = normalizeEmail("USER@EXAMPLE.COM");
-      const expiresAt = calculateExpirationDate(7);
-      const token = generateToken();
-
-      expect(email).toBe("user@example.com");
-      expect(isInviteExpired(expiresAt)).toBe(false);
-      expect(token.length).toBeGreaterThan(0);
-    });
-
-    it("should validate invite can be accepted only if pending and not expired", () => {
-      const futureDate = calculateExpirationDate(7);
-      const status = "PENDING";
-
-      const isAcceptable =
-        validateInviteStatus(status, ["PENDING"]) &&
-        !isInviteExpired(futureDate);
-
-      expect(isAcceptable).toBe(true);
-    });
-
-    it("should reject acceptance for expired invite", () => {
-      const pastDate = new Date(Date.now() - 1000);
-      const status = "PENDING";
-
-      const isAcceptable =
-        validateInviteStatus(status, ["PENDING"]) && !isInviteExpired(pastDate);
-
-      expect(isAcceptable).toBe(false);
-    });
-
-    it("should reject acceptance for non-pending invite", () => {
-      const futureDate = calculateExpirationDate(7);
-      const status = "ACCEPTED";
-
-      const isAcceptable =
-        validateInviteStatus(status, ["PENDING"]) &&
-        !isInviteExpired(futureDate);
-
-      expect(isAcceptable).toBe(false);
-    });
-
-    it("should allow resending only non-accepted invites", () => {
-      const canResend = (status: string) =>
-        !validateInviteStatus(status, ["ACCEPTED"]);
-
-      expect(canResend("PENDING")).toBe(true);
-      expect(canResend("EXPIRED")).toBe(true);
-      expect(canResend("REVOKED")).toBe(true);
-      expect(canResend("ACCEPTED")).toBe(false);
-    });
-
-    it("should allow delete only for revoked invites", () => {
-      const canDelete = (status: string) =>
-        validateInviteStatus(status, ["REVOKED"]);
-
-      expect(canDelete("REVOKED")).toBe(true);
-      expect(canDelete("PENDING")).toBe(false);
-      expect(canDelete("ACCEPTED")).toBe(false);
-      expect(canDelete("EXPIRED")).toBe(false);
-    });
-  });
-
-  describe("invite status transitions", () => {
-    it("should allow PENDING -> ACCEPTED transition", () => {
-      const currentStatus = "PENDING";
-      const nextStatus = "ACCEPTED";
-      const validTransitions: Record<string, Array<string>> = {
-        PENDING: ["ACCEPTED", "REVOKED", "EXPIRED"],
-        ACCEPTED: [],
-        REVOKED: [],
-        EXPIRED: [],
-      };
-
-      expect(validTransitions[currentStatus]).toContain(nextStatus);
-    });
-
-    it("should allow PENDING -> REVOKED transition", () => {
-      const currentStatus = "PENDING";
-      const nextStatus = "REVOKED";
-      const validTransitions: Record<string, Array<string>> = {
-        PENDING: ["ACCEPTED", "REVOKED", "EXPIRED"],
-        ACCEPTED: [],
-        REVOKED: [],
-        EXPIRED: [],
-      };
-
-      expect(validTransitions[currentStatus]).toContain(nextStatus);
-    });
-
-    it("should prevent ACCEPTED -> PENDING transition", () => {
-      const currentStatus = "ACCEPTED";
-      const nextStatus = "PENDING";
-      const validTransitions: Record<string, Array<string>> = {
-        PENDING: ["ACCEPTED", "REVOKED", "EXPIRED"],
-        ACCEPTED: [],
-        REVOKED: [],
-        EXPIRED: [],
-      };
-
-      expect(validTransitions[currentStatus]).not.toContain(nextStatus);
-    });
-
-    it("should prevent invalid transitions from ACCEPTED", () => {
-      const currentStatus = "ACCEPTED";
-      const validTransitions: Record<string, Array<string>> = {
-        PENDING: ["ACCEPTED", "REVOKED", "EXPIRED"],
-        ACCEPTED: [],
-        REVOKED: [],
-        EXPIRED: [],
-      };
-
-      expect(validTransitions[currentStatus]).toHaveLength(0);
-    });
-  });
-
-  describe("invite role validation", () => {
-    it("should validate supported roles", () => {
-      const validRoles = ["ADMIN", "MEMBER", "VIEWER"];
-      const testRoles = ["ADMIN", "MEMBER", "VIEWER", "INVALID"];
-
-      testRoles.forEach((role) => {
-        expect(validRoles.includes(role)).toBe(role !== "INVALID");
-      });
-    });
-
-    it("should handle role assignment", () => {
-      const assignedRole = "MEMBER";
-      expect(["ADMIN", "MEMBER", "VIEWER"].includes(assignedRole)).toBe(true);
-    });
-  });
-
-  describe("email validation and normalization", () => {
-    it("should be case-insensitive", () => {
-      const email1 = normalizeEmail("John.Doe@Example.com");
-      const email2 = normalizeEmail("john.doe@example.com");
-      expect(email1).toBe(email2);
-    });
-
-    it("should handle special characters", () => {
-      const email = normalizeEmail("user+tag@example.com");
-      expect(email).toBe("user+tag@example.com");
-    });
-
-    it("should preserve domain structure", () => {
-      const email = normalizeEmail("User@SubDomain.EXAMPLE.COM");
-      const result = normalizeEmail(email);
-      expect(result).toBe(email.toLowerCase());
-    });
-
-    it("should handle numeric emails", () => {
-      const email = normalizeEmail("123456@example.com");
-      expect(email).toBe("123456@example.com");
-    });
-  });
-
-  describe("token generation and validation", () => {
-    it("should generate tokens with sufficient entropy", () => {
-      const tokens = new Set();
-      for (let i = 0; i < 100; i++) {
-        tokens.add(generateToken());
-      }
-      // Should have 100 unique tokens (extremely unlikely to have collisions)
-      expect(tokens.size).toBeGreaterThan(95);
-    });
-
-    it("should generate tokens with consistent format", () => {
-      const token = generateToken();
-      expect(token.startsWith("mock-token-")).toBe(true);
-    });
-
-    it("should generate sufficiently long tokens", () => {
-      const token = generateToken();
-      expect(token.length).toBeGreaterThan(15);
-    });
-  });
-
-  describe("expiration date edge cases", () => {
-    it("should allow zero days expiration", () => {
-      const expiration = calculateExpirationDate(0);
-      const nowMs = Date.now();
-      const diffMs = expiration.getTime() - nowMs;
-      // Should be very close to 0
-      expect(Math.abs(diffMs)).toBeLessThan(1000);
-    });
-
-    it("should allow large day values", () => {
-      const expiration = calculateExpirationDate(365);
-      const yearMs = 365 * 24 * 60 * 60 * 1000;
-      const actualDiff = expiration.getTime() - Date.now();
-      expect(Math.abs(actualDiff - yearMs)).toBeLessThan(1000);
-    });
-
-    it("should handle leap years correctly", () => {
-      // Test that the function consistently adds the right amount of time
-      const exp1 = calculateExpirationDate(4 * 365);
-      const exp2 = calculateExpirationDate(365 * 4);
-      expect(Math.abs(exp1.getTime() - exp2.getTime())).toBeLessThan(100);
-    });
-  });
-
-  describe("invite lifecycle edge cases", () => {
-    it("should not allow multiple state transitions", () => {
-      const validTransitions: Record<string, Array<string>> = {
-        PENDING: ["ACCEPTED", "REVOKED", "EXPIRED"],
-        ACCEPTED: [],
-        REVOKED: [],
-        EXPIRED: [],
-      };
-
-      // Simulate transition from PENDING to ACCEPTED to REVOKED
-      const currentState = "ACCEPTED";
-      const nextState = "REVOKED";
-
-      expect(validTransitions[currentState]).not.toContain(nextState);
-    });
-
-    it("should handle rapid status checks", () => {
-      const status = "PENDING";
-      const isExpired = false;
-      const isAcceptable = status === "PENDING" && !isExpired;
-
-      // Check multiple times
-      for (let i = 0; i < 10; i++) {
-        expect(isAcceptable).toBe(true);
-      }
-    });
-
-    it("should validate email before and after normalization", () => {
-      const originalEmail = "USER@EXAMPLE.COM";
-      const normalized = normalizeEmail(originalEmail);
-
-      // Both should be valid
-      expect(originalEmail).toBeDefined();
-      expect(normalized).toBeDefined();
-      expect(normalized).toBe("user@example.com");
-    });
-  });
-
-  describe("batch operations", () => {
-    it("should handle multiple email normalizations", () => {
-      const emails = [
-        "User1@EXAMPLE.COM",
-        "User2@Example.com",
-        "User3@example.COM",
+    it("should filter invites by status", async () => {
+      const mockCount = { count: "1" };
+      const mockInvites = [
+        {
+          Invite: {
+            id: "invite-1",
+            email: "test@example.com",
+            role: "MEMBER",
+            status: "PENDING",
+            token: "token-123",
+            personId: null,
+            expiresAt: new Date("2030-01-01"),
+            acceptedAt: null,
+            createdAt: new Date("2024-01-01"),
+          },
+          Person: null,
+          User: {
+            id: "user-1",
+            name: "Admin",
+            email: "admin@example.com",
+          },
+        },
       ];
 
-      const normalized = emails.map(normalizeEmail);
+      const selectMock = vi
+        .fn()
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => Promise.resolve([mockCount])),
+          })),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            leftJoin: vi.fn(() => ({
+              leftJoin: vi.fn(() => ({
+                where: vi.fn(() => ({
+                  orderBy: vi.fn(() => ({
+                    limit: vi.fn(() => ({
+                      offset: vi.fn(() => Promise.resolve(mockInvites)),
+                    })),
+                  })),
+                })),
+              })),
+            })),
+          })),
+        });
 
-      // All should be lowercase
-      normalized.forEach((email) => {
-        expect(email).toBe(email.toLowerCase());
-      });
+      mockDrizzleDb.select = selectMock;
 
-      // Should have 3 unique emails
-      expect(new Set(normalized).size).toBe(3);
+      const result = await getInvitesData(
+        1,
+        10,
+        "desc",
+        "PENDING",
+        mockDrizzleDb
+      );
+
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0].status).toBe("PENDING");
     });
 
-    it("should validate role consistency", () => {
-      const invites = [
-        { email: "user1@example.com", role: "ADMIN" },
-        { email: "user2@example.com", role: "MEMBER" },
-        { email: "user3@example.com", role: "VIEWER" },
-      ];
+    it("should handle ascending sort order", async () => {
+      const mockCount = { count: "0" };
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve([mockCount])),
+          leftJoin: vi.fn(() => ({
+            leftJoin: vi.fn(() => ({
+              where: vi.fn(() => ({
+                orderBy: vi.fn(() => ({
+                  limit: vi.fn(() => ({
+                    offset: vi.fn(() => Promise.resolve([])),
+                  })),
+                })),
+              })),
+            })),
+          })),
+        })),
+      }));
 
-      const validRoles = ["ADMIN", "MEMBER", "VIEWER"];
+      mockDrizzleDb.select = selectMock;
 
-      invites.forEach((invite) => {
-        expect(validRoles).toContain(invite.role);
-      });
-    });
+      const result = await getInvitesData(
+        1,
+        10,
+        "asc",
+        undefined,
+        mockDrizzleDb
+      );
 
-    it("should handle concurrent-like operations", () => {
-      // Simulate concurrent invite creation
-      const invites = [
-        { email: normalizeEmail("A@EXAMPLE.COM"), token: generateToken() },
-        { email: normalizeEmail("B@EXAMPLE.COM"), token: generateToken() },
-        { email: normalizeEmail("C@EXAMPLE.COM"), token: generateToken() },
-      ];
-
-      // All should have unique tokens
-      const tokens = invites.map((i) => i.token);
-      expect(new Set(tokens).size).toBe(3);
-
-      // All should have normalized emails
-      invites.forEach((invite) => {
-        expect(invite.email).toBe(invite.email.toLowerCase());
-      });
+      expect(result.items).toHaveLength(0);
     });
   });
 
-  describe("security considerations", () => {
-    it("should normalize email before storing", () => {
-      const userInput = "JoHn@ExAmPlE.cOm";
-      const normalized = normalizeEmail(userInput);
+  describe("createInviteData", () => {
+    it("should throw error if active invite exists", async () => {
+      const existingInvite = [
+        {
+          id: "invite-1",
+          email: "test@example.com",
+          status: "PENDING",
+        },
+      ];
 
-      // Should prevent case-sensitive duplicate accounts
-      expect(normalizeEmail("john@example.com")).toBe(normalized);
-      expect(normalizeEmail("JOHN@EXAMPLE.COM")).toBe(normalized);
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve(existingInvite)),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      await expect(
+        createInviteData(
+          "TEST@EXAMPLE.COM",
+          "MEMBER",
+          null,
+          "user-1",
+          mockDrizzleDb
+        )
+      ).rejects.toThrow("An active invite already exists for this email");
     });
 
-    it("should generate sufficiently random tokens", () => {
-      const tokens = new Array(50).fill(0).map(() => generateToken());
-      const uniqueTokens = new Set(tokens);
+    it("should throw error if user already exists", async () => {
+      const existingUser = [
+        {
+          id: "user-1",
+          email: "test@example.com",
+        },
+      ];
 
-      // Should have no collisions in 50 tokens
-      expect(uniqueTokens.size).toBe(50);
+      const selectMock = vi
+        .fn()
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve(existingUser)),
+            })),
+          })),
+        });
+
+      mockDrizzleDb.select = selectMock;
+
+      await expect(
+        createInviteData(
+          "test@example.com",
+          "MEMBER",
+          null,
+          "user-1",
+          mockDrizzleDb
+        )
+      ).rejects.toThrow("A user already exists with this email");
     });
 
-    it("should validate expiration before access", () => {
-      const pastDate = new Date(Date.now() - 1000);
-      const futureDate = new Date(Date.now() + 1000);
+    it("should throw error if person not found", async () => {
+      const selectMock = vi
+        .fn()
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        });
 
-      expect(isInviteExpired(pastDate)).toBe(true);
-      expect(isInviteExpired(futureDate)).toBe(false);
+      mockDrizzleDb.select = selectMock;
+
+      await expect(
+        createInviteData(
+          "test@example.com",
+          "MEMBER",
+          "person-1",
+          "user-1",
+          mockDrizzleDb
+        )
+      ).rejects.toThrow("Person not found");
+    });
+
+    it("should throw error if person already linked to user", async () => {
+      const person = [{ id: "person-1" }];
+      const userWithPerson = [{ id: "user-1", personId: "person-1" }];
+
+      const selectMock = vi
+        .fn()
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve(person)),
+            })),
+          })),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve(userWithPerson)),
+            })),
+          })),
+        });
+
+      mockDrizzleDb.select = selectMock;
+
+      await expect(
+        createInviteData(
+          "test@example.com",
+          "MEMBER",
+          "person-1",
+          "user-1",
+          mockDrizzleDb
+        )
+      ).rejects.toThrow("This person is already linked to a user");
+    });
+
+    it("should create invite successfully without personId", async () => {
+      const newInvite = {
+        id: "invite-1",
+        email: "test@example.com",
+        role: "MEMBER",
+        token: "token-123",
+        personId: null,
+        expiresAt: new Date("2030-01-01"),
+      };
+
+      const selectMock = vi
+        .fn()
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        });
+
+      mockDrizzleDb.select = selectMock;
+
+      const insertMock = vi.fn(() => ({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([newInvite])),
+        })),
+      }));
+
+      mockDrizzleDb.insert = insertMock;
+
+      const result = await createInviteData(
+        "TEST@EXAMPLE.COM",
+        "MEMBER",
+        null,
+        "user-1",
+        mockDrizzleDb
+      );
+
+      expect(result.email).toBe("test@example.com");
+      expect(result.role).toBe("MEMBER");
+      expect(result.token).toBe("token-123");
+    });
+
+    it("should normalize email to lowercase", async () => {
+      const selectMock = vi
+        .fn()
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        });
+
+      const newInvite = {
+        id: "invite-1",
+        email: "user@example.com",
+        role: "MEMBER",
+        token: "token",
+        personId: null,
+        expiresAt: new Date(),
+      };
+
+      const insertMock = vi.fn(() => ({
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([newInvite])),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+      mockDrizzleDb.insert = insertMock;
+
+      const result = await createInviteData(
+        "USER@EXAMPLE.COM",
+        "MEMBER",
+        null,
+        "user-1",
+        mockDrizzleDb
+      );
+
+      expect(result.email).toBe("user@example.com");
+    });
+  });
+
+  describe("getInviteByTokenData", () => {
+    it("should return invalid for non-existent invite", async () => {
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          leftJoin: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve([])),
+            })),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      const result = await getInviteByTokenData("invalid-token", mockDrizzleDb);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Invite not found");
+      expect(result.invite).toBeNull();
+    });
+
+    it("should return invalid for accepted invite", async () => {
+      const acceptedInvite = [
+        {
+          Invite: {
+            id: "invite-1",
+            status: "ACCEPTED",
+          },
+          Person: null,
+        },
+      ];
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          leftJoin: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve(acceptedInvite)),
+            })),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      const result = await getInviteByTokenData("token-123", mockDrizzleDb);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Invite already accepted");
+    });
+
+    it("should return invalid for revoked invite", async () => {
+      const revokedInvite = [
+        {
+          Invite: {
+            id: "invite-1",
+            status: "REVOKED",
+          },
+          Person: null,
+        },
+      ];
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          leftJoin: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve(revokedInvite)),
+            })),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      const result = await getInviteByTokenData("token-123", mockDrizzleDb);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Invite has been revoked");
+    });
+
+    it("should return invalid for expired invite", async () => {
+      const expiredDate = new Date("2020-01-01");
+      const expiredInvite = [
+        {
+          Invite: {
+            id: "invite-1",
+            status: "PENDING",
+            expiresAt: expiredDate,
+          },
+          Person: null,
+        },
+      ];
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          leftJoin: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve(expiredInvite)),
+            })),
+          })),
+        })),
+      }));
+
+      const updateMock = vi.fn(() => ({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+      mockDrizzleDb.update = updateMock;
+
+      const result = await getInviteByTokenData("token-123", mockDrizzleDb);
+
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe("Invite has expired");
+    });
+
+    it("should return valid invite data", async () => {
+      const futureDate = new Date("2030-01-01");
+      const validInvite = [
+        {
+          Invite: {
+            id: "invite-1",
+            email: "test@example.com",
+            role: "MEMBER",
+            status: "PENDING",
+            personId: null,
+            expiresAt: futureDate,
+          },
+          Person: null,
+        },
+      ];
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          leftJoin: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(() => Promise.resolve(validInvite)),
+            })),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      const result = await getInviteByTokenData("token-123", mockDrizzleDb);
+
+      expect(result.valid).toBe(true);
+      expect(result.error).toBeNull();
+      expect(result.invite).toBeDefined();
+      expect(result.invite?.email).toBe("test@example.com");
+    });
+  });
+
+  describe("acceptInviteData", () => {
+    it("should throw error for non-existent invite", async () => {
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([])),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      await expect(
+        acceptInviteData(
+          "invalid-token",
+          "Test User",
+          "password123",
+          mockDrizzleDb
+        )
+      ).rejects.toThrow("Invite not found");
+    });
+
+    it("should throw error for non-pending invite", async () => {
+      const acceptedInvite = [
+        {
+          id: "invite-1",
+          status: "ACCEPTED",
+        },
+      ];
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve(acceptedInvite)),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      await expect(
+        acceptInviteData("token-123", "Test User", "password123", mockDrizzleDb)
+      ).rejects.toThrow("Invite is accepted, cannot accept");
+    });
+
+    it("should throw error for expired invite", async () => {
+      const expiredInvite = [
+        {
+          id: "invite-1",
+          status: "PENDING",
+          expiresAt: new Date("2020-01-01"),
+        },
+      ];
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve(expiredInvite)),
+          })),
+        })),
+      }));
+
+      const updateMock = vi.fn(() => ({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+      mockDrizzleDb.update = updateMock;
+
+      await expect(
+        acceptInviteData("token-123", "Test User", "password123", mockDrizzleDb)
+      ).rejects.toThrow("Invite has expired");
+    });
+  });
+
+  describe("revokeInviteData", () => {
+    it("should throw error for non-existent invite", async () => {
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([])),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      await expect(
+        revokeInviteData("invite-1", "user-1", mockDrizzleDb)
+      ).rejects.toThrow("Invite not found");
+    });
+
+    it("should throw error for non-pending invite", async () => {
+      const revokedInvite = [
+        {
+          id: "invite-1",
+          status: "REVOKED",
+        },
+      ];
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve(revokedInvite)),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      await expect(
+        revokeInviteData("invite-1", "user-1", mockDrizzleDb)
+      ).rejects.toThrow("Can only revoke pending invites");
+    });
+
+    it("should revoke pending invite successfully", async () => {
+      const pendingInvite = [
+        {
+          id: "invite-1",
+          status: "PENDING",
+        },
+      ];
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve(pendingInvite)),
+          })),
+        })),
+      }));
+
+      const updateMock = vi.fn(() => ({
+        set: vi.fn(() => ({
+          where: vi.fn(() => Promise.resolve({})),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+      mockDrizzleDb.update = updateMock;
+
+      const result = await revokeInviteData(
+        "invite-1",
+        "user-1",
+        mockDrizzleDb
+      );
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("deleteInviteData", () => {
+    it("should throw error for non-existent invite", async () => {
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([])),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      await expect(
+        deleteInviteData("invite-1", "user-1", mockDrizzleDb)
+      ).rejects.toThrow("Invite not found");
+    });
+
+    it("should throw error for non-revoked invite", async () => {
+      const pendingInvite = [
+        {
+          id: "invite-1",
+          status: "PENDING",
+        },
+      ];
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve(pendingInvite)),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      await expect(
+        deleteInviteData("invite-1", "user-1", mockDrizzleDb)
+      ).rejects.toThrow("Only revoked invites can be deleted");
+    });
+
+    it("should delete revoked invite successfully", async () => {
+      const revokedInvite = [
+        {
+          id: "invite-1",
+          status: "REVOKED",
+        },
+      ];
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve(revokedInvite)),
+          })),
+        })),
+      }));
+
+      const deleteMock = vi.fn(() => ({
+        where: vi.fn(() => Promise.resolve({})),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+      mockDrizzleDb.delete = deleteMock;
+
+      const result = await deleteInviteData(
+        "invite-1",
+        "user-1",
+        mockDrizzleDb
+      );
+
+      expect(result.success).toBe(true);
+    });
+  });
+
+  describe("resendInviteData", () => {
+    it("should throw error for non-existent invite", async () => {
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve([])),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      await expect(resendInviteData("invite-1", mockDrizzleDb)).rejects.toThrow(
+        "Invite not found"
+      );
+    });
+
+    it("should throw error for accepted invite", async () => {
+      const acceptedInvite = [
+        {
+          id: "invite-1",
+          status: "ACCEPTED",
+        },
+      ];
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve(acceptedInvite)),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+
+      await expect(resendInviteData("invite-1", mockDrizzleDb)).rejects.toThrow(
+        "Cannot resend an accepted invite"
+      );
+    });
+
+    it("should resend expired invite successfully", async () => {
+      const expiredInvite = [
+        {
+          id: "invite-1",
+          email: "test@example.com",
+          role: "MEMBER",
+          status: "EXPIRED",
+          personId: null,
+        },
+      ];
+
+      const updatedInvite = {
+        id: "invite-1",
+        email: "test@example.com",
+        role: "MEMBER",
+        token: "new-token-456",
+        personId: null,
+        expiresAt: new Date("2030-01-01"),
+      };
+
+      const selectMock = vi.fn(() => ({
+        from: vi.fn(() => ({
+          where: vi.fn(() => ({
+            limit: vi.fn(() => Promise.resolve(expiredInvite)),
+          })),
+        })),
+      }));
+
+      const updateMock = vi.fn(() => ({
+        set: vi.fn(() => ({
+          where: vi.fn(() => ({
+            returning: vi.fn(() => Promise.resolve([updatedInvite])),
+          })),
+        })),
+      }));
+
+      mockDrizzleDb.select = selectMock;
+      mockDrizzleDb.update = updateMock;
+
+      const result = await resendInviteData("invite-1", mockDrizzleDb);
+
+      expect(result.success).toBe(true);
+      expect(result.token).toBe("new-token-456");
+      expect(result.expiresAt).toBeDefined();
     });
   });
 });

@@ -9,13 +9,63 @@
  * - Configuration object structure
  */
 
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
 import {
   getTelemetryConfig,
   isTelemetryEnabled,
   startTelemetry,
   stopTelemetry,
 } from "./telemetry";
+
+// Mock the OpenTelemetry SDK before imports
+const { mockSdkStart, mockSdkShutdown, MockNodeSDK } = vi.hoisted(() => {
+  const start = vi.fn();
+  const shutdown = vi.fn();
+
+  class NodeSDKMock {
+    start = start;
+    shutdown = shutdown;
+  }
+
+  return {
+    mockSdkStart: start,
+    mockSdkShutdown: shutdown,
+    MockNodeSDK: NodeSDKMock,
+  };
+});
+
+vi.mock("@opentelemetry/sdk-node", () => ({
+  NodeSDK: MockNodeSDK,
+}));
+
+vi.mock("@opentelemetry/auto-instrumentations-node", () => ({
+  getNodeAutoInstrumentations: vi.fn(() => []),
+}));
+
+vi.mock("@opentelemetry/exporter-metrics-otlp-http", () => ({
+  OTLPMetricExporter: vi.fn(),
+}));
+
+vi.mock("@opentelemetry/exporter-trace-otlp-http", () => ({
+  OTLPTraceExporter: vi.fn(),
+}));
+
+vi.mock("@opentelemetry/resources", () => ({
+  defaultResource: vi.fn(() => ({
+    merge: vi.fn((custom) => custom),
+  })),
+  resourceFromAttributes: vi.fn((attrs) => attrs),
+}));
+
+vi.mock("@opentelemetry/semantic-conventions", () => ({
+  ATTR_SERVICE_NAME: "service.name",
+  ATTR_SERVICE_VERSION: "service.version",
+}));
+
+vi.mock("@opentelemetry/sdk-metrics", () => ({
+  PeriodicExportingMetricReader: vi.fn(),
+}));
 
 describe("Telemetry Module", () => {
   // Store original env values for restoration
@@ -26,6 +76,11 @@ describe("Telemetry Module", () => {
     APP_VERSION: process.env.APP_VERSION,
     NODE_ENV: process.env.NODE_ENV,
   };
+
+  beforeEach(() => {
+    mockSdkStart.mockClear();
+    mockSdkShutdown.mockClear();
+  });
 
   afterEach(async () => {
     // Clean up: ensure telemetry is stopped and env is restored
@@ -185,6 +240,37 @@ describe("Telemetry Module", () => {
       // This should not throw even with disabled
       await expect(startTelemetry()).resolves.toBeUndefined();
     });
+
+    it("should initialize SDK when enabled", async () => {
+      process.env.OTEL_ENABLED = "true";
+      process.env.OTEL_SERVICE_NAME = "test-service";
+      process.env.APP_VERSION = "1.0.0";
+
+      await startTelemetry();
+
+      expect(mockSdkStart).toHaveBeenCalledTimes(1);
+      expect(isTelemetryEnabled()).toBe(true);
+    });
+
+    it("should warn when called twice while enabled", async () => {
+      process.env.OTEL_ENABLED = "true";
+
+      await startTelemetry();
+      await startTelemetry();
+
+      // SDK should only be started once
+      expect(mockSdkStart).toHaveBeenCalledTimes(1);
+    });
+
+    it("should handle SDK initialization errors gracefully", async () => {
+      process.env.OTEL_ENABLED = "true";
+      mockSdkStart.mockImplementationOnce(() => {
+        throw new Error("SDK init failed");
+      });
+
+      await expect(startTelemetry()).resolves.toBeUndefined();
+      // Should not throw, error is caught
+    });
   });
 
   describe("stopTelemetry", () => {
@@ -209,6 +295,27 @@ describe("Telemetry Module", () => {
     it("should handle cleanup errors gracefully", async () => {
       // Stop should not throw even if SDK cleanup fails
       await expect(stopTelemetry()).resolves.toBeUndefined();
+    });
+
+    it("should call SDK shutdown when SDK is running", async () => {
+      process.env.OTEL_ENABLED = "true";
+      await startTelemetry();
+      await stopTelemetry();
+
+      expect(mockSdkShutdown).toHaveBeenCalledTimes(1);
+      expect(isTelemetryEnabled()).toBe(false);
+    });
+
+    it("should handle SDK shutdown errors gracefully", async () => {
+      process.env.OTEL_ENABLED = "true";
+      await startTelemetry();
+
+      mockSdkShutdown.mockImplementationOnce(async () => {
+        throw new Error("Shutdown failed");
+      });
+
+      await expect(stopTelemetry()).resolves.toBeUndefined();
+      // Should not throw, error is caught
     });
   });
 

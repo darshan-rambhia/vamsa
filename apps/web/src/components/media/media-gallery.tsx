@@ -1,6 +1,8 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { ErrorCard } from "../error";
+import { ImagePlaceholder } from "../ui/image-placeholder";
 import { MediaCard } from "./media-card";
 
 interface MediaItem {
@@ -20,6 +22,8 @@ interface MediaItem {
 interface MediaGalleryProps {
   media: Array<MediaItem>;
   isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
   onView: (mediaId: string) => void;
   onSetPrimary?: (mediaId: string) => void;
   onEdit?: (mediaId: string) => void;
@@ -29,6 +33,8 @@ interface MediaGalleryProps {
 export function MediaGallery({
   media,
   isLoading,
+  isError,
+  onRetry,
   onView,
   onSetPrimary,
   onEdit,
@@ -47,23 +53,22 @@ export function MediaGallery({
     );
   }
 
+  if (isError) {
+    return (
+      <ErrorCard
+        variant="compact"
+        title={t("people:mediaLoadErrorTitle")}
+        message={t("people:mediaLoadError")}
+        onRetry={onRetry}
+      />
+    );
+  }
+
   if (media.length === 0) {
     return (
       <div className="py-12 text-center">
         <div className="text-muted-foreground/50 mb-4">
-          <svg
-            className="mx-auto h-16 w-16"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-            />
-          </svg>
+          <ImagePlaceholder variant="landscape" className="mx-auto h-16 w-16" />
         </div>
         <h3 className="font-display text-foreground mb-2 text-xl">
           {t("people:noPhotos")}
