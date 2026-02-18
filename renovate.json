@@ -1,0 +1,56 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "timezone": "America/Los_Angeles",
+  "schedule": ["on monday"],
+  "prConcurrentLimit": 10,
+  "postUpdateOptions": ["bunDedupe"],
+  "semanticCommits": "enabled",
+  "packageRules": [
+    {
+      "description": "Disable major version updates — review manually",
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Group production npm dependency updates",
+      "matchManagers": ["npm"],
+      "matchDepTypes": [
+        "dependencies",
+        "optionalDependencies",
+        "peerDependencies"
+      ],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "production dependencies",
+      "labels": ["dependencies", "npm"],
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "deps"
+    },
+    {
+      "description": "Group development npm dependency updates",
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "development dependencies",
+      "labels": ["dependencies", "npm"],
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "deps"
+    },
+    {
+      "description": "Docker base image updates",
+      "matchManagers": ["dockerfile", "docker-compose"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "labels": ["dependencies", "docker"],
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "docker"
+    },
+    {
+      "description": "GitHub Actions updates",
+      "matchManagers": ["github-actions"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "labels": ["dependencies", "github-actions"],
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "ci"
+    }
+  ]
+}
