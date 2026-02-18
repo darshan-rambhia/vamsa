@@ -63,6 +63,9 @@ export {
   canCoexist,
 } from "./relationships";
 
+// Search Engine abstraction
+export { type SearchEngine, type SearchPersonRow } from "./search-engine";
+
 // PostgreSQL Full-Text Search utilities
 export {
   type SearchConfig,

@@ -8,6 +8,7 @@
  */
 
 import path from "node:path";
+import { existsSync } from "node:fs";
 import i18next from "i18next";
 import Backend from "i18next-fs-backend";
 
@@ -44,6 +45,12 @@ function getLocalesPath(): string {
   if (cwd.endsWith("/apps/web") || cwd.endsWith("\\apps\\web")) {
     // Running from apps/web directory
     return path.join(cwd, "src/i18n/locales/{{lng}}/{{ns}}.json");
+  }
+
+  // Check for compiled binary mode: dist/locales/ adjacent to CWD
+  const distLocalesDir = path.join(cwd, "dist/locales");
+  if (existsSync(distLocalesDir)) {
+    return path.join(distLocalesDir, "{{lng}}/{{ns}}.json");
   }
 
   // Running from project root

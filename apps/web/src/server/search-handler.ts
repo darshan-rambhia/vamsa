@@ -11,14 +11,10 @@
  * to prevent these dependencies from leaking into the client bundle.
  */
 
-import { drizzleDb } from "@vamsa/api";
-import {
-  buildCombinedSearchQuery,
-  buildPersonSearchCountQuery,
-  classifyIntent,
-  executeSearch,
-  sanitizeQuery,
-} from "@vamsa/lib";
+import { drizzleDb, getDbDriver } from "@vamsa/api";
+import { classifyIntent, executeSearch, sanitizeQuery } from "@vamsa/lib";
+import { PgSearchEngine } from "@vamsa/lib/search-engine-pg";
+import { SqliteSearchEngine } from "@vamsa/lib/search-engine-sqlite";
 import { loggers } from "@vamsa/lib/logger";
 import { requireAuth } from "./middleware/require-auth";
 import type { RelationshipDataMaps, SearchResults } from "@vamsa/lib";
@@ -249,19 +245,18 @@ export async function searchPeopleHandler(
   await requireAuth("VIEWER");
 
   const startTime = Date.now();
+  const sanitized = sanitizeQuery(data.query);
+
+  // Return empty results for empty queries
+  if (!sanitized) {
+    return {
+      results: [],
+      total: 0,
+      queryTime: Date.now() - startTime,
+    };
+  }
 
   try {
-    const sanitized = sanitizeQuery(data.query);
-
-    // Return empty results for empty queries
-    if (!sanitized) {
-      return {
-        results: [],
-        total: 0,
-        queryTime: Date.now() - startTime,
-      };
-    }
-
     // Check if this is likely a natural language relationship query
     const nlpCheck = isNLPQuery(data.query);
     if (nlpCheck.isNLP) {
@@ -283,7 +278,7 @@ export async function searchPeopleHandler(
 
         log.info(
           {
-            query: data.query,
+            query: sanitized,
             intentType: nlpResult.type,
             resultCount: personResults.length,
             queryTime,
@@ -305,71 +300,65 @@ export async function searchPeopleHandler(
       } catch (nlpError) {
         log
           .withErr(nlpError)
-          .ctx({ query: data.query })
+          .ctx({ query: sanitized })
           .msg("NLP search failed, falling back to FTS");
         // Fall through to FTS search as fallback
       }
     }
 
     // Use traditional FTS search as fallback or for person name queries
-    const { sql: searchSql, params: searchParams } = buildCombinedSearchQuery(
-      data.query,
-      {
-        limit: data.limit,
-        offset: data.offset,
-        fuzzy: true,
-      }
-    );
-
-    // Build count query to get total results
-    const { sql: countSql, params: countParams } = buildPersonSearchCountQuery(
-      data.query,
-      { language: "english" }
-    );
-
-    // Execute both queries in parallel
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const client = drizzleDb.$client as any;
-    const [rawResults, countResult] = await Promise.all([
-      client.query(searchSql, searchParams),
-      client.query(countSql, countParams),
-    ]);
-
-    const total = (countResult.rows[0]?.total as number) || 0;
-
-    // Transform results to include rank and proper typing
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const results = rawResults.rows.map((row: any) => ({
-      item: {
-        id: row.id,
-        firstName: row.firstName,
-        lastName: row.lastName,
-        maidenName: row.maidenName,
-        photoUrl: row.photoUrl,
-        dateOfBirth: row.dateOfBirth,
-        dateOfPassing: row.dateOfPassing,
-        isLiving: row.isLiving,
-      },
-      rank: row.rank || row.similarity_score || 0,
-    }));
+    const searchEngine =
+      getDbDriver() === "sqlite"
+        ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          new SqliteSearchEngine(drizzleDb.$client as any)
+        : // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          new PgSearchEngine(drizzleDb.$client as any);
+    const ftsResults = await searchEngine.searchPersons(data.query, {
+      limit: data.limit,
+      offset: data.offset,
+    });
 
     const queryTime = Date.now() - startTime;
 
+    // Map SearchPersonRow to PersonSearchResultItem
+    const results = ftsResults.results.map((r) => ({
+      item: {
+        id: r.item.id,
+        firstName: r.item.firstName,
+        lastName: r.item.lastName,
+        maidenName: r.item.maidenName,
+        photoUrl: r.item.photoUrl,
+        dateOfBirth: r.item.dateOfBirth
+          ? new Date(r.item.dateOfBirth as string | number)
+          : null,
+        dateOfPassing: r.item.dateOfPassing
+          ? new Date(r.item.dateOfPassing as string | number)
+          : null,
+        isLiving: r.item.isLiving,
+      },
+      rank: r.rank,
+    }));
+
     log.info(
-      { query: data.query, resultCount: results.length, queryTime, total },
+      {
+        query: sanitized,
+        resultCount: results.length,
+        queryTime,
+        total: ftsResults.total,
+      },
       "FTS search executed"
     );
 
     return {
       results,
-      total,
+      total: ftsResults.total,
       queryTime,
     };
   } catch (error) {
     const queryTime = Date.now() - startTime;
     log
       .withErr(error)
-      .ctx({ query: data.query, queryTime })
+      .ctx({ query: sanitized, queryTime })
       .msg("Search query failed");
 
     throw error;

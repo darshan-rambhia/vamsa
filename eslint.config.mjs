@@ -55,6 +55,7 @@ export default defineConfig(
       "**/.ladle/**", // Ladle component browser config
       "**/tailwind.config.ts", // Tailwind config
       "**/drizzle.config.ts", // Drizzle config
+      "**/drizzle-sqlite.config.ts", // Drizzle SQLite config
       "**/drizzle/schema.ts", // Drizzle schema (has own tsconfig)
       "**/tests/integration/**", // Integration tests (excluded from main tsconfig)
       "**/tests/setup/**", // Test setup files

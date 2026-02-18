@@ -1,10 +1,10 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { and, asc, desc, eq, ilike, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, or, sql } from "drizzle-orm";
 import { createPaginationMeta } from "@vamsa/schemas";
 import { loggers } from "@vamsa/lib/logger";
 import { t } from "../i18n";
 import { recordSearchMetrics } from "../metrics";
-import { escapeLike } from "../db";
+import { caseInsensitiveLike, escapeLike } from "../db";
 import type { SQL } from "drizzle-orm";
 import type {
   Address,
@@ -72,8 +72,14 @@ export function buildPersonWhereClause(search?: string, isLiving?: boolean) {
   if (search) {
     conditions.push(
       or(
-        ilike(drizzleSchema.persons.firstName, `%${escapeLike(search)}%`),
-        ilike(drizzleSchema.persons.lastName, `%${escapeLike(search)}%`)
+        caseInsensitiveLike(
+          drizzleSchema.persons.firstName,
+          `%${escapeLike(search)}%`
+        ),
+        caseInsensitiveLike(
+          drizzleSchema.persons.lastName,
+          `%${escapeLike(search)}%`
+        )
       )!
     );
   }
@@ -609,8 +615,14 @@ export async function searchPersonsData(
   const conditions: Array<SQL<unknown>> = [
     isNull(drizzleSchema.persons.deletedAt),
     or(
-      ilike(drizzleSchema.persons.firstName, `%${escapeLike(query)}%`),
-      ilike(drizzleSchema.persons.lastName, `%${escapeLike(query)}%`)
+      caseInsensitiveLike(
+        drizzleSchema.persons.firstName,
+        `%${escapeLike(query)}%`
+      ),
+      caseInsensitiveLike(
+        drizzleSchema.persons.lastName,
+        `%${escapeLike(query)}%`
+      )
     )!,
   ];
 

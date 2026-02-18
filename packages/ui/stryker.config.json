@@ -1,12 +1,15 @@
 {
   "$schema": "../../node_modules/@stryker-mutator/core/schema/stryker-schema.json",
-  "packageManager": "pnpm",
-  "testRunner": "command",
-  "commandRunner": {
-    "command": "bun run test"
+  "packageManager": "bun",
+  "testRunner": "vitest",
+  "vitest": {
+    "configFile": "vitest.config.ts"
   },
   "checkers": ["typescript"],
-  "plugins": ["@stryker-mutator/typescript-checker"],
+  "plugins": [
+    "@stryker-mutator/typescript-checker",
+    "@stryker-mutator/vitest-runner"
+  ],
   "tsconfigFile": "./tsconfig.json",
   "typescriptChecker": {
     "prioritizePerformanceOverAccuracy": true

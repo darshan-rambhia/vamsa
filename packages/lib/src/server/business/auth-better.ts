@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer, genericOAuth } from "better-auth/plugins";
 // import { tanstackStartCookies } from "better-auth/tanstack-start";
-import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { drizzleDb, drizzleSchema, getDbDriver } from "@vamsa/api";
 
 // Cross-runtime password hashing that works in both Node.js (Vite dev) and Bun
 const isBunRuntime = typeof globalThis.Bun !== "undefined";
@@ -58,7 +58,7 @@ async function verifyPassword(
  */
 export const auth = betterAuth({
   database: drizzleAdapter(drizzleDb, {
-    provider: "pg",
+    provider: getDbDriver() === "sqlite" ? "sqlite" : "pg",
     schema: drizzleSchema,
   }),
 
