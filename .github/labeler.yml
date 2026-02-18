@@ -1,0 +1,32 @@
+area:web:
+  - changed-files:
+      - any-glob-to-any-file: ["apps/web/**"]
+
+area:api:
+  - changed-files:
+      - any-glob-to-any-file: ["packages/api/**"]
+
+area:lib:
+  - changed-files:
+      - any-glob-to-any-file: ["packages/lib/**"]
+
+area:ui:
+  - changed-files:
+      - any-glob-to-any-file: ["packages/ui/**"]
+
+area:schemas:
+  - changed-files:
+      - any-glob-to-any-file: ["packages/schemas/**"]
+
+area:ci:
+  - changed-files:
+      - any-glob-to-any-file: [".github/**"]
+
+area:docker:
+  - changed-files:
+      - any-glob-to-any-file:
+          ["docker/**", "**/Dockerfile*", "**/docker-compose*.yml"]
+
+area:docs:
+  - changed-files:
+      - any-glob-to-any-file: ["**/*.md", "docs/**"]
