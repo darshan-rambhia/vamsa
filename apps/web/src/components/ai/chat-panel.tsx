@@ -126,8 +126,10 @@ export function AIChatPanel() {
         <>
           {/* Backdrop */}
           <div
+            role="none"
             className="fixed inset-0 z-50 bg-black/20 md:bg-transparent"
             onClick={() => setIsOpen(false)}
+            onKeyDown={(e) => e.key === "Escape" && setIsOpen(false)}
           />
 
           {/* Panel */}

@@ -85,7 +85,7 @@ describe("GET /healthz", () => {
     mockCheckLLMHealth.mockResolvedValueOnce({ ok: true });
 
     const res = await app.request("/healthz");
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(200);
     expect(body.status).toBe("healthy");
@@ -102,7 +102,7 @@ describe("GET /healthz", () => {
     });
 
     const res = await app.request("/healthz");
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(body.status).toBe("degraded");
     expect(body.llm.reachable).toBe(false);
@@ -126,7 +126,7 @@ describe("GET /healthz", () => {
 describe("GET /v1/config", () => {
   it("should return model configuration and features", async () => {
     const res = await app.request("/v1/config");
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(200);
     expect(body.provider).toBe("ollama");
@@ -148,7 +148,7 @@ describe("GET /v1/config", () => {
     process.env.TOOL_MODE = "http";
 
     const res = await app.request("/v1/config");
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(body.toolMode).toBe("http");
   });
@@ -170,7 +170,7 @@ describe("API key authentication", () => {
     process.env.AI_API_KEY = "secret-key";
 
     const res = await app.request("/v1/config");
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(401);
     expect(body.error).toBe("Unauthorized");
@@ -258,7 +258,7 @@ describe("POST /v1/chat", () => {
 
   it("should return 400 for missing message", async () => {
     const res = await jsonRequest("/v1/chat", {});
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(400);
     expect(body.error).toBe("Invalid request");
@@ -286,7 +286,7 @@ describe("POST /v1/chat", () => {
     const res = await jsonRequest("/v1/chat", {
       message: "Hello",
     });
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(500);
     expect(body.error).toBe("Chat failed");
@@ -299,7 +299,7 @@ describe("POST /v1/chat", () => {
     });
 
     const res = await jsonRequest("/v1/chat", { message: "Hi" });
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(500);
     expect(body.message).toBe("string error");
@@ -322,7 +322,7 @@ describe("POST /v1/story", () => {
       personId: "p-123",
       personName: "Hari Prasad",
     });
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(200);
     expect(body.narrative).toBe("Hari was born in 1945.");
@@ -391,7 +391,7 @@ describe("POST /v1/story", () => {
     mockRunStoryAgent.mockRejectedValueOnce(new Error("Generation failed"));
 
     const res = await jsonRequest("/v1/story", { personId: "p-1" });
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(500);
     expect(body.error).toBe("Story generation failed");
@@ -402,7 +402,7 @@ describe("POST /v1/story", () => {
     mockRunStoryAgent.mockRejectedValueOnce("model crashed");
 
     const res = await jsonRequest("/v1/story", { personId: "p-1" });
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(500);
     expect(body.message).toBe("model crashed");
@@ -433,7 +433,7 @@ describe("POST /v1/suggest", () => {
       personId: "p-123",
       personName: "Hari",
     });
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(200);
     expect(body.suggestions).toHaveLength(1);
@@ -456,7 +456,7 @@ describe("POST /v1/suggest", () => {
     mockRunSuggestAgent.mockRejectedValueOnce(new Error("Suggestion failed"));
 
     const res = await jsonRequest("/v1/suggest", { personId: "p-1" });
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(500);
     expect(body.error).toBe("Suggestion generation failed");
@@ -467,7 +467,7 @@ describe("POST /v1/suggest", () => {
     mockRunSuggestAgent.mockRejectedValueOnce(404);
 
     const res = await jsonRequest("/v1/suggest", { personId: "p-1" });
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(500);
     expect(body.message).toBe("404");
@@ -481,7 +481,7 @@ describe("POST /v1/suggest", () => {
 describe("404 handler", () => {
   it("should return 404 with available endpoints for unknown paths", async () => {
     const res = await app.request("/nonexistent");
-    const body = await res.json();
+    const body = (await res.json()) as any;
 
     expect(res.status).toBe(404);
     expect(body.error).toBe("Not Found");

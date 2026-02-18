@@ -12,7 +12,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0 # Required for git-revision-date-localized plugin
 
@@ -22,9 +22,9 @@ jobs:
           bun-version: latest
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.14"
 
       - name: Install MkDocs dependencies
         run: pip install -r docs/requirements-docs.txt
@@ -44,7 +44,7 @@ jobs:
       - name: Finalize site
         run: touch docs/site/.nojekyll
 
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v4
         with:
           path: docs/site
 

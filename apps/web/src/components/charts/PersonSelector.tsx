@@ -45,7 +45,7 @@ export function PersonSelector({
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   // Get the display name for a person
   const getDisplayName = useCallback((person: Person) => {
@@ -249,7 +249,7 @@ export function PersonSelector({
 
       {/* Dropdown list */}
       {isOpen && (
-        <ul
+        <div
           ref={listRef}
           role="listbox"
           className="bg-popover border-border absolute z-50 mt-1 max-h-75 w-50 overflow-auto rounded-md border shadow-lg"
@@ -308,7 +308,7 @@ export function PersonSelector({
               </li>
             ))
           )}
-        </ul>
+        </div>
       )}
     </div>
   );

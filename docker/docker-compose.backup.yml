@@ -24,7 +24,7 @@ services:
   # Automatic PostgreSQL Backup Service
   # Uses prodrigestivill/postgres-backup-local image
   postgres-backup:
-    image: prodrigestivill/postgres-backup-local:16
+    image: prodrigestivill/postgres-backup-local:18
     container_name: vamsa-postgres-backup
     restart: unless-stopped
     depends_on:

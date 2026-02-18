@@ -5,6 +5,7 @@
  * See app.ts for route definitions.
  */
 
+import { logger } from "@vamsa/lib/logger";
 import app from "./app";
 import { getLLMConfig } from "./providers/llm";
 
@@ -23,10 +24,16 @@ const server = Bun.serve({
 });
 
 const config = getLLMConfig();
-console.log(`Vamsa AI service listening on http://${HOST}:${PORT}`);
-console.log(`  LLM: ${config.provider} / ${config.model}`);
-console.log(`  Tool mode: ${process.env.TOOL_MODE || "direct"}`);
-console.log(`  Health: http://${HOST}:${PORT}/healthz`);
+logger.info(
+  {
+    host: HOST,
+    port: PORT,
+    provider: config.provider,
+    model: config.model,
+    toolMode: process.env.TOOL_MODE || "direct",
+  },
+  "Vamsa AI service started"
+);
 
 export default app;
 export { server };

@@ -79,6 +79,7 @@ function handleMetric(metric: Metric) {
         : metric.rating === "needs-improvement"
           ? "orange"
           : "red";
+    // eslint-disable-next-line no-console -- browser-only CSS-styled DevTools output, pino not applicable
     console.log(
       `%c[Web Vitals] ${metric.name}: ${metric.value.toFixed(1)} (${metric.rating})`,
       `color: ${color}; font-weight: bold`
