@@ -144,6 +144,55 @@ vi.mock("@vamsa/lib", () => ({
 
 vi.mock("@vamsa/api", () => ({
   drizzleDb: mockDrizzleDb,
+  getDbDriver: () => "postgres",
+}));
+
+vi.mock("@vamsa/lib/search-engine-pg", () => ({
+  PgSearchEngine: class MockPgSearchEngine {
+    private client: { query: (...args: Array<unknown>) => Promise<unknown> };
+    constructor(client: {
+      query: (...args: Array<unknown>) => Promise<unknown>;
+    }) {
+      this.client = client;
+    }
+    async searchPersons() {
+      // Call the client to trigger any patched error behavior in tests
+      const countResult = (await this.client.query(
+        "SELECT COUNT(*) as total",
+        []
+      )) as { rows: Array<Record<string, unknown>> };
+      const rawResults = (await this.client.query("SELECT *", [])) as {
+        rows: Array<Record<string, unknown>>;
+      };
+      const total = (countResult.rows[0]?.total as number) || 0;
+      return {
+        results: rawResults.rows.map((row: Record<string, unknown>) => ({
+          item: {
+            id: row.id,
+            firstName: row.firstName,
+            lastName: row.lastName,
+            maidenName: row.maidenName,
+            photoUrl: row.photoUrl,
+            dateOfBirth: row.dateOfBirth,
+            dateOfPassing: row.dateOfPassing,
+            isLiving: row.isLiving,
+            rank: (row.rank as number) || 0,
+          },
+          rank: (row.rank as number) || 0,
+        })),
+        total,
+        queryTime: 10,
+      };
+    }
+  },
+}));
+
+vi.mock("@vamsa/lib/search-engine-sqlite", () => ({
+  SqliteSearchEngine: class MockSqliteSearchEngine {
+    async searchPersons() {
+      return { results: [], total: 0, queryTime: 0 };
+    }
+  },
 }));
 
 // Mock the require-auth middleware to prevent DATABASE_URL errors
@@ -561,7 +610,9 @@ describe("searchPeople server function", () => {
       });
 
       expect(result).toBeDefined();
-      expect(mockBuildCombinedSearchQuery).toHaveBeenCalled();
+      // FTS path is taken (not NLP) — verify we got search results back
+      expect(result?.results).toBeDefined();
+      expect(result?.results.length).toBeGreaterThan(0);
     });
   });
 });

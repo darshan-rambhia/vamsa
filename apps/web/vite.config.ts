@@ -8,6 +8,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { visualizer } from "rollup-plugin-visualizer";
 import { config } from "dotenv";
 import { vamsaDevApiPlugin } from "./server/dev";
+import { vamsaPreviewPlugin } from "./server/preview-plugin";
 import type { Plugin } from "vite";
 
 /**
@@ -223,6 +224,8 @@ export default defineConfig({
     serverOnlyStubPlugin(),
     // Add API routes in dev mode for dev/prod parity
     vamsaDevApiPlugin(),
+    // Full-app preview via configurePreviewServer
+    vamsaPreviewPlugin(),
     tailwindcss(),
     tsConfigPaths({
       projects: ["./tsconfig.json"],

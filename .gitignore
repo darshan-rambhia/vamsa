@@ -49,7 +49,8 @@ stats.html
 *.tsbuildinfo
 next-env.d.ts
 
-# SQLite (legacy - can be removed if no longer used)
+# SQLite and development data
+data/
 **/*.db
 **/*.db-journal
 

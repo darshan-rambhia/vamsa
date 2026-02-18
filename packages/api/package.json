@@ -17,12 +17,16 @@
   },
   "scripts": {
     "db:generate": "drizzle-kit generate",
+    "db:generate:sqlite": "drizzle-kit generate --config=drizzle-sqlite.config.ts",
     "db:push": "drizzle-kit push",
+    "db:push:sqlite": "drizzle-kit push --config=drizzle-sqlite.config.ts",
     "db:migrate": "drizzle-kit migrate",
+    "db:migrate:sqlite": "drizzle-kit migrate --config=drizzle-sqlite.config.ts",
     "db:seed": "bun src/drizzle/seed.ts",
     "db:seed:dev": "bun src/drizzle/seed-dev.ts",
     "db:seed:e2e": "bun src/drizzle/seed-e2e.ts",
     "db:studio": "drizzle-kit studio",
+    "check:schema-drift": "bun run scripts/check-schema-drift.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun run vitest run"
   },

@@ -14,11 +14,16 @@
 import path from "node:path";
 import { config } from "dotenv";
 
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
 import { loggers } from "@vamsa/lib/logger";
-import * as schema from "./schema";
+import { createSeedConnection, getDbDriver } from "./db-factory";
 import { hashPassword } from "./password";
+
+const driver = getDbDriver();
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function dateVal(isoStr: string): any {
+  return driver === "sqlite" ? isoStr : new Date(isoStr);
+}
 
 // Load .env from monorepo root
 config({
@@ -33,8 +38,7 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is required");
 }
 
-const pool = new Pool({ connectionString });
-const db = drizzle(pool, { schema });
+const { db, schema, close } = await createSeedConnection(connectionString);
 
 async function main() {
   log.info({ script: "seed-e2e.ts" }, "Starting E2E database seed");
@@ -85,7 +89,7 @@ async function main() {
       lastName: "Doe",
       sex: "MALE" as const,
       isLiving: true,
-      dateOfBirth: new Date("1980-01-15"),
+      dateOfBirth: dateVal("1980-01-15"),
     },
     {
       id: personIds.testPerson2,
@@ -93,7 +97,7 @@ async function main() {
       lastName: "Doe",
       sex: "FEMALE" as const,
       isLiving: true,
-      dateOfBirth: new Date("1982-05-20"),
+      dateOfBirth: dateVal("1982-05-20"),
     },
   ];
 
@@ -113,7 +117,7 @@ async function main() {
       relatedPersonId: personIds.testPerson2,
       type: "SPOUSE",
       isActive: true,
-      marriageDate: new Date("2005-06-15"),
+      marriageDate: dateVal("2005-06-15"),
       updatedAt: now,
     },
     {
@@ -122,7 +126,7 @@ async function main() {
       relatedPersonId: personIds.testPerson1,
       type: "SPOUSE",
       isActive: true,
-      marriageDate: new Date("2005-06-15"),
+      marriageDate: dateVal("2005-06-15"),
       updatedAt: now,
     },
   ]);
@@ -184,7 +188,7 @@ async function main() {
     "E2E seed completed successfully"
   );
 
-  await pool.end();
+  await close();
 }
 
 main().catch((e) => {

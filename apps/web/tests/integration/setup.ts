@@ -12,10 +12,9 @@
  *   TEST_DATABASE_URL=postgresql://vamsa_test:vamsa_test_password@localhost:5433/vamsa_test
  */
 
-import { drizzleDb, drizzleSchema } from "@vamsa/api";
+import { drizzleDb, drizzleSchema, getDbDriver } from "@vamsa/api";
 import { sql, eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
-import { migrate } from "drizzle-orm/node-postgres/migrator";
 import path from "path";
 
 // Override DATABASE_URL if TEST_DATABASE_URL is provided
@@ -35,16 +34,27 @@ if (!process.env.DATABASE_URL && !process.env.TEST_DATABASE_URL) {
  */
 async function initializeTestDatabase(): Promise<void> {
   try {
-    // Run migrations from the api package
+    const driver = getDbDriver();
+    const migrationsDir = driver === "sqlite" ? "drizzle-sqlite" : "drizzle";
     const migrationsPath = path.resolve(
       import.meta.dir,
       "../../..",
-      "packages/api/drizzle"
+      `packages/api/${migrationsDir}`
     );
 
-    await migrate(drizzleDb, {
-      migrationsFolder: migrationsPath,
-    });
+    if (driver === "sqlite") {
+      const { migrate: sqliteMigrate } =
+        await import("drizzle-orm/bun-sqlite/migrator");
+      await sqliteMigrate(drizzleDb as Parameters<typeof sqliteMigrate>[0], {
+        migrationsFolder: migrationsPath,
+      });
+    } else {
+      const { migrate: pgMigrate } =
+        await import("drizzle-orm/node-postgres/migrator");
+      await pgMigrate(drizzleDb, {
+        migrationsFolder: migrationsPath,
+      });
+    }
   } catch (error) {
     // Migrations may already be applied or table structure may differ
     // Log but don't fail - the schema might already exist
@@ -68,26 +78,47 @@ export const testDb = {
  */
 export async function cleanupTestData(): Promise<void> {
   const db = drizzleDb;
-  // Delete in order respecting foreign keys
-  // CASCADE will handle dependent records
-  await db.execute(sql`TRUNCATE TABLE "PersonMedia" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "EventMedia" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "MediaObject" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "EventParticipant" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "EventSource" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "Event" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "Relationship" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "Person" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "PlacePersonLink" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "Place" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "Source" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "Invite" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "ResearchNote" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "Suggestion" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "Session" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "Account" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "Verification" CASCADE`);
-  await db.execute(sql`TRUNCATE TABLE "User" CASCADE`);
+  const driver = getDbDriver();
+
+  // Tables ordered by dependency: children first, parents last
+  const tables = [
+    "PersonMedia",
+    "EventMedia",
+    "MediaObject",
+    "EventParticipant",
+    "EventSource",
+    "Event",
+    "Relationship",
+    "PlacePersonLink",
+    "ResearchNote",
+    "Suggestion",
+    "Invite",
+    "AuditLog",
+    "EmailLog",
+    "Source",
+    "Person",
+    "Place",
+    "CalendarToken",
+    "DashboardPreferences",
+    "DeviceToken",
+    "Notification",
+    "Session",
+    "Account",
+    "Verification",
+    "User",
+  ];
+
+  if (driver === "sqlite") {
+    // SQLite: ordered DELETE FROM (no CASCADE support on TRUNCATE)
+    for (const table of tables) {
+      await db.execute(sql.raw(`DELETE FROM "${table}"`));
+    }
+  } else {
+    // PostgreSQL: TRUNCATE with CASCADE for speed
+    for (const table of tables) {
+      await db.execute(sql.raw(`TRUNCATE TABLE "${table}" CASCADE`));
+    }
+  }
 }
 
 /**

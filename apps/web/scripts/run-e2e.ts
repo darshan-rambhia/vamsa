@@ -17,6 +17,7 @@
  *
  * Flags:
  *   --logs         Show webserver output
+ *   --sqlite       Use SQLite instead of PostgreSQL (no Docker required)
  *   --bun-runtime  Run Playwright with Bun runtime (experimental, not yet working)
  *
  * Note: The --bun-runtime flag doesn't work yet because Playwright's TypeScript
@@ -28,6 +29,7 @@
 
 import { spawn } from "bun";
 import { resolve } from "path";
+import { rm } from "node:fs/promises";
 import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.api;
@@ -41,6 +43,7 @@ const COMPOSE_PROFILE = "test";
 
 const E2E_DATABASE_URL =
   "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test?sslmode=disable";
+const E2E_SQLITE_PATH = resolve(ROOT_DIR, "data/e2e-test.db");
 
 async function run(
   cmd: string[],
@@ -83,12 +86,15 @@ async function main() {
   const hasServerLogs =
     playwrightArgs.includes("--logs") || process.env.PLAYWRIGHT_LOGS === "true";
 
+  // Check if --sqlite flag is present to use SQLite instead of PostgreSQL
+  const useSqlite = playwrightArgs.includes("--sqlite");
+
   // Check if --bun-runtime flag is present to use Bun runtime for Playwright
   const useBunRuntime = playwrightArgs.includes("--bun-runtime");
 
   // Remove our custom flags from playwright args (playwright doesn't know about them)
   const filteredArgs = playwrightArgs.filter(
-    (arg) => arg !== "--logs" && arg !== "--bun-runtime"
+    (arg) => arg !== "--logs" && arg !== "--bun-runtime" && arg !== "--sqlite"
   );
 
   // Default to Chromium-only for local development (faster)
@@ -154,65 +160,118 @@ async function main() {
     return;
   }
 
-  // Local development: Start Docker, run migrations, seed, then run tests
-  try {
-    // Step 1: Start PostgreSQL
-    log.info({}, "📦 Step 1/5: Starting PostgreSQL...");
+  // Database environment for the test run
+  const dbEnv: Record<string, string> = useSqlite
+    ? { DB_DRIVER: "sqlite", DATABASE_URL: E2E_SQLITE_PATH }
+    : { DATABASE_URL: E2E_DATABASE_URL };
 
-    // First, ensure any old containers are removed
-    log.info({}, "   - Cleaning up old containers...");
-    await run(
-      [
+  // Local development: set up database, build, run tests, clean up
+  try {
+    if (useSqlite) {
+      // ── SQLite mode: no Docker required ──
+      log.info({}, "🗄️  SQLite mode: no Docker required\n");
+
+      // Step 1: Clean up old SQLite database
+      log.info({}, "📦 Step 1/5: Preparing SQLite database...");
+      try {
+        await rm(E2E_SQLITE_PATH, { force: true });
+        await rm(`${E2E_SQLITE_PATH}-wal`, { force: true });
+        await rm(`${E2E_SQLITE_PATH}-shm`, { force: true });
+      } catch {
+        // Files might not exist
+      }
+      log.info({}, "✅ SQLite database ready\n");
+
+      // Step 2: Push schema and seed
+      log.info({}, "🔄 Step 2/5: Applying SQLite schema and seeding...");
+
+      log.info({}, "   - Applying database schema with Drizzle (SQLite)...");
+      const pushResult = await run(
+        [
+          "bunx",
+          "drizzle-kit",
+          "push",
+          "--config=drizzle-sqlite.config.ts",
+          "--force",
+        ],
+        { cwd: API_DIR, env: dbEnv }
+      );
+      if (pushResult !== 0) {
+        throw new Error(
+          `Drizzle push (SQLite) failed with exit code ${pushResult}`
+        );
+      }
+      log.info({}, "✅ SQLite schema applied");
+
+      log.info({}, "   - Seeding E2E test data...");
+      const seedResult = await run(["bun", "run", "src/drizzle/seed-e2e.ts"], {
+        cwd: API_DIR,
+        env: dbEnv,
+      });
+      if (seedResult !== 0) {
+        throw new Error(
+          `Database seed (SQLite) failed with exit code ${seedResult}`
+        );
+      }
+      log.info({}, "✅ Test data seeded\n");
+    } else {
+      // ── PostgreSQL mode: Docker required ──
+
+      // Step 1: Start PostgreSQL
+      log.info({}, "📦 Step 1/5: Starting PostgreSQL...");
+
+      log.info({}, "   - Cleaning up old containers...");
+      await run(
+        [
+          "docker-compose",
+          "-f",
+          COMPOSE_FILE,
+          "--profile",
+          COMPOSE_PROFILE,
+          "down",
+          "-v",
+        ],
+        { quiet: true }
+      );
+
+      const dockerResult = await run([
         "docker-compose",
         "-f",
         COMPOSE_FILE,
         "--profile",
         COMPOSE_PROFILE,
-        "down",
-        "-v",
-      ],
-      { quiet: true }
-    );
+        "up",
+        "-d",
+        "--wait",
+      ]);
+      if (dockerResult !== 0) {
+        throw new Error(`Docker compose failed with exit code ${dockerResult}`);
+      }
+      log.info({}, "✅ PostgreSQL is ready\n");
 
-    const dockerResult = await run([
-      "docker-compose",
-      "-f",
-      COMPOSE_FILE,
-      "--profile",
-      COMPOSE_PROFILE,
-      "up",
-      "-d",
-      "--wait",
-    ]);
-    if (dockerResult !== 0) {
-      throw new Error(`Docker compose failed with exit code ${dockerResult}`);
+      // Step 2: Run Drizzle migrations and seed
+      log.info({}, "🔄 Step 2/5: Running Drizzle migrations and seeding...");
+
+      log.info({}, "   - Applying database schema with Drizzle...");
+      const pushResult = await run(["bunx", "drizzle-kit", "push", "--force"], {
+        cwd: API_DIR,
+        env: dbEnv,
+      });
+      if (pushResult !== 0) {
+        throw new Error(`Drizzle push failed with exit code ${pushResult}`);
+      }
+      log.info({}, "✅ Database schema applied");
+
+      log.info({}, "   - Seeding E2E test data...");
+      const seedResult = await run(["bun", "run", "src/drizzle/seed-e2e.ts"], {
+        cwd: API_DIR,
+        env: dbEnv,
+      });
+      if (seedResult !== 0) {
+        throw new Error(`Database seed failed with exit code ${seedResult}`);
+      }
+      log.info({}, "✅ Test data seeded\n");
     }
-    log.info({}, "✅ PostgreSQL is ready\n");
-
-    // Step 2: Run Drizzle migrations and seed
-    log.info({}, "🔄 Step 2/5: Running Drizzle migrations and seeding...");
-
-    // Push schema to database using Drizzle
-    log.info({}, "   - Applying database schema with Drizzle...");
-    const pushResult = await run(["bunx", "drizzle-kit", "push", "--force"], {
-      cwd: API_DIR,
-      env: { DATABASE_URL: E2E_DATABASE_URL },
-    });
-    if (pushResult !== 0) {
-      throw new Error(`Drizzle push failed with exit code ${pushResult}`);
-    }
-    log.info({}, "✅ Database schema applied");
-
-    // Run seed-e2e to create test users and minimal test data
-    log.info({}, "   - Seeding E2E test data...");
-    const seedResult = await run(["bun", "run", "src/drizzle/seed-e2e.ts"], {
-      cwd: API_DIR,
-      env: { DATABASE_URL: E2E_DATABASE_URL },
-    });
-    if (seedResult !== 0) {
-      throw new Error(`Database seed failed with exit code ${seedResult}`);
-    }
-    log.info({}, "✅ Test data seeded\n");
 
     // Step 3: Build the application for production server
     log.info({}, "🔨 Step 3/5: Building application...");
@@ -227,8 +286,6 @@ async function main() {
     // Step 4: Run Playwright tests
     log.info({}, "🧪 Step 4/5: Running Playwright tests...\n");
 
-    // Build the playwright command
-    // Using `bun --bun x` runs the command with Bun as the JavaScript runtime
     const playwrightCmd = useBunRuntime
       ? ["bun", "--bun", "x", "playwright", "test", ...filteredArgs]
       : ["bunx", "playwright", "test", ...filteredArgs];
@@ -237,17 +294,26 @@ async function main() {
       cwd: WEB_DIR,
       env: {
         ...process.env,
-        DATABASE_URL: E2E_DATABASE_URL,
-        // Pass server logs flag to Playwright config
+        ...dbEnv,
         PLAYWRIGHT_LOGS: hasServerLogs ? "true" : "false",
-        // Disable Playwright's ESM transform when using Bun runtime
         ...(useBunRuntime && { PW_DISABLE_TS_ESM: "1" }),
       },
     });
 
     // Step 5: Cleanup
     log.info({}, "\n🧹 Step 5/5: Cleaning up...");
-    await cleanup();
+    if (useSqlite) {
+      try {
+        await rm(E2E_SQLITE_PATH, { force: true });
+        await rm(`${E2E_SQLITE_PATH}-wal`, { force: true });
+        await rm(`${E2E_SQLITE_PATH}-shm`, { force: true });
+      } catch {
+        // Ignore cleanup errors
+      }
+      log.info({}, "✅ SQLite cleanup complete\n");
+    } else {
+      await cleanup();
+    }
 
     // Exit with test result code
     if (testResult !== 0) {
@@ -261,7 +327,13 @@ async function main() {
 
     // Cleanup on error
     try {
-      await cleanup();
+      if (useSqlite) {
+        await rm(E2E_SQLITE_PATH, { force: true });
+        await rm(`${E2E_SQLITE_PATH}-wal`, { force: true });
+        await rm(`${E2E_SQLITE_PATH}-shm`, { force: true });
+      } else {
+        await cleanup();
+      }
     } catch {
       // Ignore cleanup errors
     }

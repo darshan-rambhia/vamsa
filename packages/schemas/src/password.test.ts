@@ -77,6 +77,81 @@ describe("getPasswordStrength", () => {
     const result = getPasswordStrength("MyPassword1!");
     expect(result.feedback).toHaveLength(0);
   });
+
+  it("returns score 1 for 11-char password (just under minimum)", () => {
+    const result = getPasswordStrength("Abcdefghi1!"); // 11 chars, all 4 classes
+    expect(result.score).toBe(1); // Under min length = score 1 regardless of classes
+    expect(result.checks.minLength).toBe(false);
+  });
+
+  it("returns score 4 for exactly 12-char password with all classes", () => {
+    const result = getPasswordStrength("Abcdefghij1!"); // 12 chars, all 4 classes
+    expect(result.score).toBe(4);
+    expect(result.checks.minLength).toBe(true);
+  });
+
+  it("returns correct feedback messages for each failed check on empty string", () => {
+    const result = getPasswordStrength(""); // empty
+    expect(result.feedback).toContain("Must be at least 12 characters");
+    expect(result.feedback).toContain("Add an uppercase letter");
+    expect(result.feedback).toContain("Add a lowercase letter");
+    expect(result.feedback).toContain("Add a number");
+    expect(result.feedback).toContain("Add a special character");
+    expect(result.feedback).toHaveLength(5);
+  });
+
+  it("returns exactly one feedback for uppercase+lowercase+digit long password (missing special)", () => {
+    // 13 chars, uppercase + lowercase + digit = 3 classes, missing special
+    const result = getPasswordStrength("Abcdefghijk12");
+    expect(result.feedback).toEqual(["Add a special character"]);
+  });
+
+  it("returns score 2 for 12+ chars with exactly 2 classes (upper + lower)", () => {
+    const result = getPasswordStrength("ABCDEFghijkl"); // upper + lower = 2 classes
+    expect(result.score).toBe(2);
+  });
+
+  it("distinguishes score 1 vs 2: minLength is required for score above 1", () => {
+    // Short password with 4 classes still gets score 1
+    const short = getPasswordStrength("Aa1!Bb2@Cc"); // 10 chars, all 4 classes
+    expect(short.score).toBe(1);
+
+    // Same classes but 12+ chars gets score 4
+    const long = getPasswordStrength("Aa1!Bb2@Cc33"); // 12 chars, all 4 classes
+    expect(long.score).toBe(4);
+  });
+
+  it("returns score 0 for zero-length password explicitly", () => {
+    const result = getPasswordStrength("");
+    expect(result.score).toBe(0);
+  });
+
+  it("returns feedback message 'Must be at least 12 characters' for short password", () => {
+    const result = getPasswordStrength("abc");
+    expect(result.feedback[0]).toBe("Must be at least 12 characters");
+  });
+
+  it("returns feedback message 'Add an uppercase letter' when uppercase missing", () => {
+    const result = getPasswordStrength("abcdefghijkl1!");
+    expect(result.feedback).toContain("Add an uppercase letter");
+    expect(result.feedback).not.toContain("Add a lowercase letter");
+  });
+
+  it("returns feedback message 'Add a lowercase letter' when lowercase missing", () => {
+    const result = getPasswordStrength("ABCDEFGHIJKL1!");
+    expect(result.feedback).toContain("Add a lowercase letter");
+    expect(result.feedback).not.toContain("Add an uppercase letter");
+  });
+
+  it("returns feedback message 'Add a number' when digit missing", () => {
+    const result = getPasswordStrength("ABCDEFghijkl!");
+    expect(result.feedback).toContain("Add a number");
+  });
+
+  it("returns feedback message 'Add a special character' when special missing", () => {
+    const result = getPasswordStrength("ABCDEFghijk1");
+    expect(result.feedback).toContain("Add a special character");
+  });
 });
 
 describe("passwordSchema", () => {
@@ -119,5 +194,43 @@ describe("passwordSchema", () => {
 
   it("accepts passwords with Unicode special chars", () => {
     expect(passwordSchema.safeParse("MyPassword1ü").success).toBe(true); // upper + lower + digit + special(ü)
+  });
+
+  it("rejects 11-char password even with all character classes", () => {
+    const result = passwordSchema.safeParse("Abcdefghi1!"); // 11 chars
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((i) => i.message);
+      expect(messages.some((m) => m.includes("12 characters"))).toBe(true);
+    }
+  });
+
+  it("provides correct error message for too-short password", () => {
+    const result = passwordSchema.safeParse("Abc1!");
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(
+        "Password must be at least 12 characters"
+      );
+    }
+  });
+
+  it("provides correct error message for too-long password", () => {
+    const result = passwordSchema.safeParse("Aa1!" + "x".repeat(125)); // 129 chars
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.error.issues[0].message).toBe(
+        "Password must be at most 128 characters"
+      );
+    }
+  });
+
+  it("provides correct error message for insufficient character classes", () => {
+    const result = passwordSchema.safeParse("abcdefghijkl1"); // 2 classes only
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      const messages = result.error.issues.map((i) => i.message);
+      expect(messages.some((m) => m.includes("3 of"))).toBe(true);
+    }
   });
 });

@@ -12,11 +12,9 @@
 import path from "node:path";
 import { config } from "dotenv";
 
-import { drizzle } from "drizzle-orm/node-postgres";
-import { Pool } from "pg";
 import { eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
-import * as schema from "./schema";
+import { createSeedConnection } from "./db-factory";
 import { hashPassword } from "./password";
 
 // Load .env from monorepo root
@@ -32,8 +30,7 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is required");
 }
 
-const pool = new Pool({ connectionString });
-const db = drizzle(pool, { schema });
+const { db, schema, close } = await createSeedConnection(connectionString);
 
 async function main() {
   log.info({ script: "seed.ts" }, "Starting production database seed");
@@ -66,7 +63,7 @@ async function main() {
 
   if (existingAdmin.length > 0) {
     log.info({ adminExists: true }, "Admin user already exists, skipping");
-    await pool.end();
+    await close();
     return;
   }
 
@@ -77,7 +74,7 @@ async function main() {
       { missingEnv: "ADMIN_EMAIL" },
       "ADMIN_EMAIL environment variable is required"
     );
-    await pool.end();
+    await close();
     process.exit(1);
   }
 
@@ -127,7 +124,7 @@ async function main() {
   }
 
   log.info({ success: true }, "Seed completed successfully");
-  await pool.end();
+  await close();
 }
 
 main().catch((e) => {
