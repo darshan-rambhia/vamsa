@@ -14,6 +14,7 @@ on:
       - ".gitignore"
   pull_request:
     branches: [main, develop]
+    types: [opened, synchronize, reopened, labeled]
     paths-ignore:
       - "**/*.md"
       - ".github/workflows/**"
@@ -145,6 +146,10 @@ jobs:
     name: Docker Build
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'area:docker')
 
     steps:
       - name: Checkout code
@@ -199,7 +204,7 @@ jobs:
             exit 1
           fi
 
-          if [[ "$DOCKER_RESULT" != "success" ]]; then
+          if [[ "$DOCKER_RESULT" != "success" && "$DOCKER_RESULT" != "skipped" ]]; then
             echo "Docker build failed"
             exit 1
           fi
