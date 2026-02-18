@@ -48,7 +48,9 @@ const createMockDeleteChain = () => ({
 });
 
 const mockDrizzleDb = {
-  insert: vi.fn(() => createMockInsertChain()),
+  insert: vi.fn(() => {
+    return createMockInsertChain();
+  }),
   query: {
     calendarTokens: {
       findFirst: vi.fn(() => Promise.resolve(null)),
@@ -68,7 +70,9 @@ describe("Calendar Server Functions", () => {
     mockWithErrBuilder.msg.mockClear();
     (mockDrizzleDb.insert as any).mockClear();
     (mockDrizzleDb.query.calendarTokens.findFirst as any).mockClear();
+    (mockDrizzleDb.query.calendarTokens.findMany as any).mockClear();
     (mockDrizzleDb.update as any).mockClear();
+    (mockDrizzleDb.delete as any).mockClear();
   });
 
   describe("generateCalendarTokenLogic", () => {
@@ -86,11 +90,21 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      const insertChain = createMockInsertChain();
-      (insertChain.values as any).mockReturnValueOnce({
-        returning: () => Promise.resolve([mockToken]),
-      });
-      (mockDrizzleDb.insert as any).mockReturnValueOnce(insertChain);
+      // First insert: calendar token with returning
+      const tokenInsertChain = {
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([mockToken])),
+        })),
+      };
+
+      // Second insert: audit log (no returning)
+      const auditLogInsertChain = {
+        values: vi.fn(() => Promise.resolve()),
+      };
+
+      (mockDrizzleDb.insert as any)
+        .mockReturnValueOnce(tokenInsertChain)
+        .mockReturnValueOnce(auditLogInsertChain);
 
       const result = await generateCalendarTokenLogic(
         userId,
@@ -102,7 +116,7 @@ describe("Calendar Server Functions", () => {
       expect(result.success).toBe(true);
       expect(result.token).toBe("abc123def456");
       expect(result.name).toBe(tokenName);
-      expect(mockDrizzleDb.insert).toHaveBeenCalled();
+      expect(mockDrizzleDb.insert).toHaveBeenCalledTimes(2); // Token + audit log
     });
 
     it("should set expiration date correctly", async () => {
@@ -115,11 +129,19 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      const insertChain = createMockInsertChain();
-      (insertChain.values as any).mockReturnValueOnce({
-        returning: () => Promise.resolve([mockToken]),
-      });
-      (mockDrizzleDb.insert as any).mockReturnValueOnce(insertChain);
+      const tokenInsertChain = {
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([mockToken])),
+        })),
+      };
+
+      const auditLogInsertChain = {
+        values: vi.fn(() => Promise.resolve()),
+      };
+
+      (mockDrizzleDb.insert as any)
+        .mockReturnValueOnce(tokenInsertChain)
+        .mockReturnValueOnce(auditLogInsertChain);
 
       await generateCalendarTokenLogic(
         "user-1",
@@ -128,8 +150,7 @@ describe("Calendar Server Functions", () => {
         mockDrizzleDb as any
       );
 
-      // Verify that drizzle insert was called
-      expect(mockDrizzleDb.insert).toHaveBeenCalled();
+      expect(mockDrizzleDb.insert).toHaveBeenCalledTimes(2);
     });
 
     it("should log info message", async () => {
@@ -142,11 +163,19 @@ describe("Calendar Server Functions", () => {
         isActive: true,
       };
 
-      const insertChain = createMockInsertChain();
-      (insertChain.values as any).mockReturnValueOnce({
-        returning: () => Promise.resolve([mockToken]),
-      });
-      (mockDrizzleDb.insert as any).mockReturnValueOnce(insertChain);
+      const tokenInsertChain = {
+        values: vi.fn(() => ({
+          returning: vi.fn(() => Promise.resolve([mockToken])),
+        })),
+      };
+
+      const auditLogInsertChain = {
+        values: vi.fn(() => Promise.resolve()),
+      };
+
+      (mockDrizzleDb.insert as any)
+        .mockReturnValueOnce(tokenInsertChain)
+        .mockReturnValueOnce(auditLogInsertChain);
 
       await generateCalendarTokenLogic(
         "user-1",
@@ -299,6 +328,12 @@ describe("Calendar Server Functions", () => {
       });
       (mockDrizzleDb.update as any).mockReturnValueOnce(updateChain);
 
+      // Audit log insert
+      const auditLogInsertChain = {
+        values: vi.fn(() => Promise.resolve()),
+      };
+      (mockDrizzleDb.insert as any).mockReturnValueOnce(auditLogInsertChain);
+
       const result = await revokeCalendarTokenLogic(
         tokenId,
         userId,
@@ -307,6 +342,7 @@ describe("Calendar Server Functions", () => {
 
       expect(result.success).toBe(true);
       expect(mockDrizzleDb.update).toHaveBeenCalled();
+      expect(mockDrizzleDb.insert).toHaveBeenCalledTimes(1); // Audit log
     });
 
     it("should throw error if token not found", async () => {
@@ -425,6 +461,12 @@ describe("Calendar Server Functions", () => {
       (deleteChain.where as any).mockResolvedValueOnce(undefined);
       (mockDrizzleDb.delete as any).mockReturnValueOnce(deleteChain);
 
+      // Audit log insert
+      const auditLogInsertChain = {
+        values: vi.fn(() => Promise.resolve()),
+      };
+      (mockDrizzleDb.insert as any).mockReturnValueOnce(auditLogInsertChain);
+
       const result = await deleteCalendarTokenLogic(
         tokenId,
         userId,
@@ -433,6 +475,7 @@ describe("Calendar Server Functions", () => {
 
       expect(result.success).toBe(true);
       expect(mockDrizzleDb.delete).toHaveBeenCalled();
+      expect(mockDrizzleDb.insert).toHaveBeenCalledTimes(1); // Audit log
     });
 
     it("should throw error if token not found", async () => {

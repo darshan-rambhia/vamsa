@@ -35,9 +35,10 @@ test.describe("API Documentation", () => {
     // If Swagger UI fully renders (CDN is accessible), verify content
     // This is optional - we skip if CDN assets don't load
     const swaggerContent = page.locator('.swagger-ui, [class*="swagger"]');
+    // Genuine conditional guard - CDN may not be accessible in all environments
     const hasSwaggerContent = await swaggerContent
       .first()
-      .isVisible({ timeout: 5000 })
+      .isVisible()
       .catch(() => false);
 
     if (hasSwaggerContent) {

@@ -48,6 +48,7 @@ test.describe("Calendar Token Management", () => {
         ':text("no calendar tokens"), :text("No tokens"), :text("Create your first"), [data-empty-state]'
       );
 
+      // Genuine conditional guard - checking which UI state is shown
       const hasTable = await table.isVisible().catch(() => false);
       const hasEmptyState = await emptyState
         .first()

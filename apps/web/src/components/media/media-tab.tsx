@@ -28,7 +28,12 @@ export function MediaTab() {
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   // Fetch all media for this person
-  const { data: mediaData, isLoading: isLoadingMedia } = useQuery({
+  const {
+    data: mediaData,
+    isLoading: isLoadingMedia,
+    isError: isMediaError,
+    refetch: refetchMedia,
+  } = useQuery({
     queryKey: ["personMedia", personId],
     queryFn: () => getPersonMedia({ data: { personId } }),
   });
@@ -218,6 +223,8 @@ export function MediaTab() {
             <MediaGallery
               media={media}
               isLoading={isLoadingMedia}
+              isError={isMediaError}
+              onRetry={() => refetchMedia()}
               onView={handleView}
               onSetPrimary={handleSetPrimary}
               onEdit={handleEdit}
