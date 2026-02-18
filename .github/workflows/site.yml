@@ -8,6 +8,9 @@ on:
       - "apps/web/src/components/charts/**"
       - "apps/web/src/stories/**"
       - "apps/web/.ladle/**"
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
 # Explicit permissions following principle of least privilege
@@ -17,6 +20,10 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'area:docs')
     steps:
       - uses: actions/checkout@v4
         with:
@@ -57,6 +64,7 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     permissions:
       pages: write
       id-token: write
