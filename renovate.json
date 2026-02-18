@@ -8,9 +8,11 @@
   "semanticCommits": "enabled",
   "packageRules": [
     {
-      "description": "Disable major version updates — review manually",
+      "description": "Major version updates — individual PRs for manual review",
       "matchUpdateTypes": ["major"],
-      "enabled": false
+      "labels": ["dependencies", "major"],
+      "semanticCommitType": "chore",
+      "semanticCommitScope": "deps"
     },
     {
       "description": "Group production npm dependency updates",
