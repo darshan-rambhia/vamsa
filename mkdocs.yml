@@ -1,0 +1,124 @@
+site_name: Vamsa
+site_url: https://darshan-rambhia.github.io/vamsa/
+site_description: A private, self-hosted family tree application
+repo_url: https://github.com/darshan-rambhia/vamsa
+repo_name: darshan-rambhia/vamsa
+copyright: Copyright &copy; 2024-2026 Darshan Rambhia
+
+docs_dir: docs/content
+site_dir: docs/site
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+  palette:
+    - scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Source Sans 3
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - navigation.indexes
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - toc.follow
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - getting-started/index.md
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quick-start.md
+      - Configuration: getting-started/configuration.md
+  - User Guides:
+      - guides/index.md
+      - Managing People: guides/managing-people.md
+      - Family Relationships: guides/relationships.md
+      - Viewing Your Family Tree: guides/family-tree.md
+      - Backups & Data Safety: guides/backup-restore.md
+      - Users & Permissions: guides/users-and-permissions.md
+      - Importing Data: guides/importing-data.md
+      - Exporting Data: guides/exporting-data.md
+  - Operations:
+      - operations/index.md
+      - Updating Vamsa: operations/updating.md
+      - Monitoring: operations/monitoring.md
+      - AI Features: operations/ai-features.md
+      - Security: operations/security.md
+      - Database Migrations: operations/database-migrations.md
+      - Troubleshooting: operations/troubleshooting.md
+  - Developer Guide:
+      - developer/index.md
+      - Claude Code Overview: developer/claude-code-overview.md
+      - The Agent Team: developer/agent-team.md
+      - Beads Workflow: developer/beads-workflow.md
+      - Development Loops: developer/development-loops.md
+      - Skills & Rules: developer/skills-and-rules.md
+      - Parallel Patterns: developer/parallel-patterns.md
+      - Quality Gates: developer/quality-gates.md
+      - Getting Started with Claude Code: developer/claude-code-setup.md
+  - Architecture:
+      - architecture/index.md
+      - System Overview: architecture/overview.md
+      - API Reference: architecture/api.md
+      - Authentication: architecture/authentication.md
+      - Decisions:
+          - architecture/decisions/index.md
+  - Component Playground: https://darshan-rambhia.github.io/vamsa/components/
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - def_list
+  - footnotes
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/darshan-rambhia/vamsa
+
+extra_css:
+  - assets/stylesheets/custom.css

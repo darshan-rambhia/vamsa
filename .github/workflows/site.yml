@@ -3,7 +3,8 @@ on:
   push:
     branches: [main]
     paths:
-      - "docs/site/**"
+      - "docs/**"
+      - "mkdocs.yml"
       - "apps/web/src/components/charts/**"
       - "apps/web/src/stories/**"
       - "apps/web/.ladle/**"
@@ -11,24 +12,43 @@ on:
 
 # Explicit permissions following principle of least privilege
 permissions:
-  contents: read # Required for actions/checkout
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for git-revision-date-localized plugin
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
-      - name: Install dependencies
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install MkDocs dependencies
+        run: pip install -r docs/requirements-docs.txt
+
+      - name: Install Node dependencies
         run: bun install
+
+      - name: Prebuild docs
+        run: bash scripts/docs-prebuild.sh
+
+      - name: Build MkDocs
+        run: mkdocs build
 
       - name: Build Ladle
         run: bun run --filter @vamsa/web ladle:build
+
+      - name: Finalize site
+        run: touch docs/site/.nojekyll
 
       - uses: actions/upload-pages-artifact@v3
         with:
