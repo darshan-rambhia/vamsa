@@ -114,7 +114,7 @@
     "rss": "1.2.2"
   },
   "devDependencies": {
-    "@eslint/js": "9.39.2",
+    "@eslint/js": "9.39.3",
     "@lhci/cli": "0.15.1",
     "@semantic-release/changelog": "6.0.3",
     "@semantic-release/git": "10.0.1",
@@ -129,7 +129,7 @@
     "@vitest/coverage-v8": "4.0.18",
     "better-sqlite3": "12.6.2",
     "conventional-changelog-conventionalcommits": "9.1.0",
-    "eslint": "9.39.2",
+    "eslint": "9.39.3",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-jsx-a11y": "6.10.2",
     "eslint-plugin-react": "7.37.5",
