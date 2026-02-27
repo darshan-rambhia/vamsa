@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod";
 
 export const backupExportSchema = z.object({
   includePhotos: z.boolean().default(true),

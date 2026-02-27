@@ -65,8 +65,8 @@ const HoverCardTrigger = ({
 
   return (
     <span
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onPointerEnter={handleMouseEnter}
+      onPointerLeave={handleMouseLeave}
       style={{ display: "contents" }}
     >
       {children}
@@ -93,10 +93,10 @@ const HoverCardContent = React.forwardRef<
     return (
       <div
         ref={ref}
-        onMouseEnter={() => {
+        onPointerEnter={() => {
           if (closeTimer.current) clearTimeout(closeTimer.current);
         }}
-        onMouseLeave={() => {
+        onPointerLeave={() => {
           closeTimer.current = setTimeout(
             () => ctx.setOpen(false),
             ctx.closeDelay

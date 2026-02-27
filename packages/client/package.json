@@ -14,13 +14,13 @@
     "test": "bun --bun vitest run"
   },
   "dependencies": {
-    "hono": ">=4.11.7"
+    "hono": ">=4.12.3"
   },
   "peerDependencies": {
     "@vamsa/schemas": "workspace:*"
   },
   "devDependencies": {
-    "@types/bun": "^1.3.8",
+    "@types/bun": "^1.3.9",
     "typescript": "^5.9.3"
   }
 }
