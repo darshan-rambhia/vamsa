@@ -7,35 +7,37 @@ Integration tests validate server functions and business logic against a real Po
 
 ## Quick Start
 
-### 1. Start Test Database
+### SQLite (fast, no Docker required)
 
 ```bash
-docker compose -f docker/docker-compose.local.yml --profile test up -d
+bun run test:int          # runs SQLite variant by default
+bun run test:int:sqlite   # explicit
 ```
 
-Wait for the database to be healthy:
+Each test file runs in its own process with an isolated in-memory SQLite database.
+No setup required.
+
+### PostgreSQL (requires Docker)
 
 ```bash
-docker compose -f docker/docker-compose.local.yml --profile test logs postgres
-# Look for "database system is ready to accept connections"
-```
+# 1. Start test database
+docker compose -f docker/docker-compose.local.yml --profile test up -d --wait
 
-### 2. Run Integration Tests
+# 2. Run tests
+bun run test:int:postgres
 
-```bash
-bun run test:int
-```
-
-To run specific test file:
-
-```bash
-bun test ./tests/integration/persons.int.ts
-```
-
-### 3. Stop Test Database
-
-```bash
+# 3. Stop test database
 docker compose -f docker/docker-compose.local.yml --profile test down -v
+```
+
+### Run a specific file
+
+```bash
+# SQLite
+DB_DRIVER=sqlite DATABASE_URL=:memory: vitest run --config vitest.integration.config.ts tests/integration/persons.int.ts
+
+# Postgres
+vitest run --config vitest.integration.config.ts tests/integration/persons.int.ts
 ```
 
 ## Environment Setup
@@ -73,14 +75,7 @@ tests/integration/
 ### Basic Test Template
 
 ```typescript
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterAll,
-  beforeAll,
-} from "bun:test";
+import { describe, it, expect, beforeEach, afterAll, beforeAll } from "vitest";
 import { testDb, cleanupTestData, seedTestData, eq } from "./setup";
 
 describe("Feature Integration Tests", () => {

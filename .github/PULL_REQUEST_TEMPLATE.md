@@ -8,9 +8,9 @@
 
 ## Testing
 
-- [ ] `bun run lint`
-- [ ] `bun run typecheck`
-- [ ] `bun run test:unit`
+- [ ] `bun run quality:ci`
+- [ ] `bun run test:ci`
+- [ ] `bun run test:focus --suite unit`
 - [ ] `bun run test:e2e`
 - [ ] Other (describe):
 

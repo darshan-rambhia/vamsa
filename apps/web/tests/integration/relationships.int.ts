@@ -9,14 +9,10 @@
  *   2. Run tests: bun run test:int
  */
 
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterAll,
-  beforeAll,
-} from "bun:test";
+import { describe, it, expect, beforeEach, afterAll, beforeAll } from "vitest";
+
+// SQLite stores timestamps as epoch seconds (loses ms precision)
+const isSqlite = process.env.DB_DRIVER === "sqlite";
 import {
   testDb,
   cleanupTestData,
@@ -26,6 +22,7 @@ import {
   countRelationships,
   findPersonById,
   eq,
+  randomUUID,
 } from "./setup";
 
 describe("Relationships Integration Tests", () => {
@@ -52,6 +49,7 @@ describe("Relationships Integration Tests", () => {
       const [parent] = await testDb.db
         .insert(testDb.schema.persons)
         .values({
+          id: randomUUID(),
           firstName: "Alice",
           lastName: "Smith",
           gender: "FEMALE",
@@ -64,10 +62,11 @@ describe("Relationships Integration Tests", () => {
       const [child] = await testDb.db
         .insert(testDb.schema.persons)
         .values({
+          id: randomUUID(),
           firstName: "Bob",
           lastName: "Smith",
           gender: "MALE",
-          dateOfBirth: new Date("2005-01-01"),
+          dateOfBirth: "2005-01-01",
           isLiving: true,
           createdById: creator.id,
           updatedAt: new Date(),
@@ -78,18 +77,18 @@ describe("Relationships Integration Tests", () => {
       const [relationship] = await testDb.db
         .insert(testDb.schema.relationships)
         .values({
-          personFromId: parent.id,
-          personToId: child.id,
-          relationshipType: "PARENT",
-          createdById: creator.id,
+          id: randomUUID(),
+          personId: parent.id,
+          relatedPersonId: child.id,
+          type: "PARENT",
           updatedAt: new Date(),
         })
         .returning();
 
       expect(relationship).toBeDefined();
-      expect(relationship.personFromId).toBe(parent.id);
-      expect(relationship.personToId).toBe(child.id);
-      expect(relationship.relationshipType).toBe("PARENT");
+      expect(relationship.personId).toBe(parent.id);
+      expect(relationship.relatedPersonId).toBe(child.id);
+      expect(relationship.type).toBe("PARENT");
     });
 
     it("creates multiple family relationships", async () => {
@@ -98,16 +97,12 @@ describe("Relationships Integration Tests", () => {
       );
 
       const relationships = await testDb.db.query.relationships.findMany({
-        where: eq(testDb.schema.relationships.personToId, child.id),
+        where: eq(testDb.schema.relationships.relatedPersonId, child.id),
       });
 
       expect(relationships.length).toBe(2);
-      expect(relationships.some((r) => r.personFromId === parent1.id)).toBe(
-        true
-      );
-      expect(relationships.some((r) => r.personFromId === parent2.id)).toBe(
-        true
-      );
+      expect(relationships.some((r) => r.personId === parent1.id)).toBe(true);
+      expect(relationships.some((r) => r.personId === parent2.id)).toBe(true);
     });
   });
 
@@ -116,6 +111,7 @@ describe("Relationships Integration Tests", () => {
       const person1 = await testDb.db
         .insert(testDb.schema.persons)
         .values({
+          id: randomUUID(),
           firstName: "Person",
           lastName: "One",
           isLiving: true,
@@ -128,6 +124,7 @@ describe("Relationships Integration Tests", () => {
       const person2 = await testDb.db
         .insert(testDb.schema.persons)
         .values({
+          id: randomUUID(),
           firstName: "Person",
           lastName: "Two",
           isLiving: true,
@@ -139,19 +136,19 @@ describe("Relationships Integration Tests", () => {
 
       const relationshipTypes = ["PARENT", "SIBLING", "SPOUSE", "CHILD"];
 
-      for (const type of relationshipTypes) {
+      for (const relType of relationshipTypes) {
         const [rel] = await testDb.db
           .insert(testDb.schema.relationships)
           .values({
-            personFromId: person1.id,
-            personToId: person2.id,
-            relationshipType: type as any,
-            createdById: creator.id,
+            id: randomUUID(),
+            personId: person1.id,
+            relatedPersonId: person2.id,
+            type: relType as any,
             updatedAt: new Date(),
           })
           .returning();
 
-        expect(rel.relationshipType).toBe(type);
+        expect(rel.type).toBe(relType);
       }
     });
   });
@@ -164,7 +161,7 @@ describe("Relationships Integration Tests", () => {
 
       // Find all relationships where child is the "to" person
       const childRelationships = await testDb.db.query.relationships.findMany({
-        where: eq(testDb.schema.relationships.personToId, child.id),
+        where: eq(testDb.schema.relationships.relatedPersonId, child.id),
       });
 
       expect(childRelationships.length).toBe(2);
@@ -179,10 +176,11 @@ describe("Relationships Integration Tests", () => {
       const [grandchild] = await testDb.db
         .insert(testDb.schema.persons)
         .values({
+          id: randomUUID(),
           firstName: "Grandchild",
           lastName: "Doe",
           gender: "FEMALE",
-          dateOfBirth: new Date("2025-01-01"),
+          dateOfBirth: "2025-01-01",
           isLiving: true,
           createdById: creator.id,
           updatedAt: new Date(),
@@ -191,20 +189,20 @@ describe("Relationships Integration Tests", () => {
 
       // Create relationship: child -> grandchild
       await testDb.db.insert(testDb.schema.relationships).values({
-        personFromId: child.id,
-        personToId: grandchild.id,
-        relationshipType: "PARENT",
-        createdById: creator.id,
+        id: randomUUID(),
+        personId: child.id,
+        relatedPersonId: grandchild.id,
+        type: "PARENT",
         updatedAt: new Date(),
       });
 
       // Query all relationships where child is "from"
       const childAsParent = await testDb.db.query.relationships.findMany({
-        where: eq(testDb.schema.relationships.personFromId, child.id),
+        where: eq(testDb.schema.relationships.personId, child.id),
       });
 
       expect(childAsParent.length).toBe(1);
-      expect(childAsParent[0].personToId).toBe(grandchild.id);
+      expect(childAsParent[0].relatedPersonId).toBe(grandchild.id);
     });
   });
 
@@ -216,26 +214,26 @@ describe("Relationships Integration Tests", () => {
 
       // Find the relationship
       const relationship = await testDb.db.query.relationships.findFirst({
-        where: eq(testDb.schema.relationships.personFromId, parent1.id),
+        where: eq(testDb.schema.relationships.personId, parent1.id),
       });
 
       expect(relationship).toBeDefined();
-      expect(relationship?.personToId).toBe(child.id);
-      expect(relationship?.createdById).toBe(creator.id);
+      expect(relationship?.relatedPersonId).toBe(child.id);
       expect(relationship?.updatedAt).toBeDefined();
     });
 
-    it("tracks relationship creation metadata", async () => {
+    // SQLite stores timestamps as epoch seconds (loses ms precision), so timing assertions fail
+    it.skipIf(isSqlite)("tracks relationship creation metadata", async () => {
       const { parent1, child } = await createTestPersonWithRelatives(
         creator.id
       );
 
       const before = new Date();
       await testDb.db.insert(testDb.schema.relationships).values({
-        personFromId: parent1.id,
-        personToId: child.id,
-        relationshipType: "SIBLING",
-        createdById: creator.id,
+        id: randomUUID(),
+        personId: parent1.id,
+        relatedPersonId: child.id,
+        type: "SIBLING",
         updatedAt: new Date(),
       });
       const after = new Date();
@@ -243,12 +241,13 @@ describe("Relationships Integration Tests", () => {
       const relationships = await testDb.db.query.relationships.findMany();
       expect(relationships.length).toBeGreaterThan(0);
 
-      const lastRel = relationships[relationships.length - 1];
-      expect(lastRel.createdById).toBe(creator.id);
-      expect(new Date(lastRel.updatedAt).getTime()).toBeGreaterThanOrEqual(
+      // Find the SIBLING relationship we just created
+      const siblingRel = relationships.find((r) => r.type === "SIBLING");
+      expect(siblingRel).toBeDefined();
+      expect(new Date(siblingRel!.updatedAt).getTime()).toBeGreaterThanOrEqual(
         before.getTime()
       );
-      expect(new Date(lastRel.updatedAt).getTime()).toBeLessThanOrEqual(
+      expect(new Date(siblingRel!.updatedAt).getTime()).toBeLessThanOrEqual(
         after.getTime()
       );
     });
@@ -260,6 +259,7 @@ describe("Relationships Integration Tests", () => {
       const [grandparent1] = await testDb.db
         .insert(testDb.schema.persons)
         .values({
+          id: randomUUID(),
           firstName: "Grandparent",
           lastName: "One",
           gender: "MALE",
@@ -273,6 +273,7 @@ describe("Relationships Integration Tests", () => {
       const [parent] = await testDb.db
         .insert(testDb.schema.persons)
         .values({
+          id: randomUUID(),
           firstName: "Parent",
           lastName: "One",
           gender: "MALE",
@@ -286,6 +287,7 @@ describe("Relationships Integration Tests", () => {
       const [child] = await testDb.db
         .insert(testDb.schema.persons)
         .values({
+          id: randomUUID(),
           firstName: "Child",
           lastName: "One",
           gender: "MALE",
@@ -298,17 +300,17 @@ describe("Relationships Integration Tests", () => {
       // Create relationships
       await testDb.db.insert(testDb.schema.relationships).values([
         {
-          personFromId: grandparent1.id,
-          personToId: parent.id,
-          relationshipType: "PARENT",
-          createdById: creator.id,
+          id: randomUUID(),
+          personId: grandparent1.id,
+          relatedPersonId: parent.id,
+          type: "PARENT",
           updatedAt: new Date(),
         },
         {
-          personFromId: parent.id,
-          personToId: child.id,
-          relationshipType: "PARENT",
-          createdById: creator.id,
+          id: randomUUID(),
+          personId: parent.id,
+          relatedPersonId: child.id,
+          type: "PARENT",
           updatedAt: new Date(),
         },
       ]);
@@ -318,10 +320,10 @@ describe("Relationships Integration Tests", () => {
 
       // Verify chain: grandparent -> parent -> child
       const grandparentToParent = allRelationships.find(
-        (r) => r.personFromId === grandparent1.id && r.personToId === parent.id
+        (r) => r.personId === grandparent1.id && r.relatedPersonId === parent.id
       );
       const parentToChild = allRelationships.find(
-        (r) => r.personFromId === parent.id && r.personToId === child.id
+        (r) => r.personId === parent.id && r.relatedPersonId === child.id
       );
 
       expect(grandparentToParent).toBeDefined();
@@ -336,7 +338,7 @@ describe("Relationships Integration Tests", () => {
       );
 
       const relationship = await testDb.db.query.relationships.findFirst({
-        where: eq(testDb.schema.relationships.personFromId, parent1.id),
+        where: eq(testDb.schema.relationships.personId, parent1.id),
       });
 
       expect(relationship).toBeDefined();
@@ -359,6 +361,7 @@ describe("Relationships Integration Tests", () => {
       const [person1] = await testDb.db
         .insert(testDb.schema.persons)
         .values({
+          id: randomUUID(),
           firstName: "John",
           lastName: "Doe",
           gender: "MALE",
@@ -371,6 +374,7 @@ describe("Relationships Integration Tests", () => {
       const [person2] = await testDb.db
         .insert(testDb.schema.persons)
         .values({
+          id: randomUUID(),
           firstName: "Jane",
           lastName: "Smith",
           gender: "FEMALE",
@@ -383,23 +387,23 @@ describe("Relationships Integration Tests", () => {
       // Create bidirectional spouse relationship
       await testDb.db.insert(testDb.schema.relationships).values([
         {
-          personFromId: person1.id,
-          personToId: person2.id,
-          relationshipType: "SPOUSE",
-          createdById: creator.id,
+          id: randomUUID(),
+          personId: person1.id,
+          relatedPersonId: person2.id,
+          type: "SPOUSE",
           updatedAt: new Date(),
         },
         {
-          personFromId: person2.id,
-          personToId: person1.id,
-          relationshipType: "SPOUSE",
-          createdById: creator.id,
+          id: randomUUID(),
+          personId: person2.id,
+          relatedPersonId: person1.id,
+          type: "SPOUSE",
           updatedAt: new Date(),
         },
       ]);
 
       const spouseRelationships = await testDb.db.query.relationships.findMany({
-        where: eq(testDb.schema.relationships.relationshipType, "SPOUSE"),
+        where: eq(testDb.schema.relationships.type, "SPOUSE"),
       });
 
       expect(spouseRelationships.length).toBe(2);

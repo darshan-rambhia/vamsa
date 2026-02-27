@@ -7,39 +7,37 @@ import { Checkbox } from "./checkbox";
 
 describe("Checkbox", () => {
   describe("rendering", () => {
-    test("renders checkbox element", () => {
+    test("renders checkbox input element", () => {
       const { container } = render(<Checkbox />);
-      const checkbox = container.querySelector("button[role='checkbox']");
+      const checkbox = container.querySelector("input[type='checkbox']");
       expect(checkbox).toBeDefined();
     });
 
-    test("renders checkbox with correct initial role", () => {
+    test("renders wrapper span element", () => {
       const { container } = render(<Checkbox />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.getAttribute("role")).toBe("checkbox");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.tagName.toLowerCase()).toBe("span");
     });
 
-    test("renders Check icon inside indicator", () => {
-      const { container } = render(<Checkbox />);
-      // The Check icon from lucide-react should be present
+    test("renders Check icon only when checked", () => {
+      const { container } = render(<Checkbox defaultChecked={true} />);
       const svgIcon = container.querySelector("svg");
-      expect(svgIcon).toBeDefined();
+      expect(svgIcon).not.toBeNull();
     });
 
-    test("renders with proper base classes", () => {
+    test("does not render Check icon when unchecked", () => {
       const { container } = render(<Checkbox />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.className).toContain("peer");
-      expect(checkbox?.className).toContain("h-4");
-      expect(checkbox?.className).toContain("w-4");
-      expect(checkbox?.className).toContain("rounded-sm");
-      expect(checkbox?.className).toContain("border");
+      const svgIcon = container.querySelector("svg");
+      expect(svgIcon).toBeNull();
     });
 
-    test("renders as button type", () => {
+    test("renders wrapper with proper base classes", () => {
       const { container } = render(<Checkbox />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.getAttribute("type")).toBe("button");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.className).toContain("h-4");
+      expect(wrapper?.className).toContain("w-4");
+      expect(wrapper?.className).toContain("rounded-sm");
+      expect(wrapper?.className).toContain("border");
     });
   });
 
@@ -47,39 +45,38 @@ describe("Checkbox", () => {
     test("renders unchecked by default", () => {
       const { container } = render(<Checkbox />);
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
-      expect(checkbox.getAttribute("aria-checked")).toBe("false");
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
+      expect(checkbox.checked).toBe(false);
     });
 
     test("renders checked when defaultChecked is true", () => {
       const { container } = render(<Checkbox defaultChecked={true} />);
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
-      expect(checkbox.getAttribute("aria-checked")).toBe("true");
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
+      expect(checkbox.checked).toBe(true);
     });
 
-    test("applies checked styling classes", () => {
+    test("applies checked styling classes on wrapper", () => {
       const { container } = render(<Checkbox defaultChecked={true} />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      // These are the checked state Tailwind classes in the component
-      expect(checkbox?.className).toContain("data-[state=checked]:bg-primary");
-      expect(checkbox?.className).toContain(
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.className).toContain("data-[state=checked]:bg-primary");
+      expect(wrapper?.className).toContain(
         "data-[state=checked]:text-primary-foreground"
       );
     });
 
     test("has data-state attribute for unchecked", () => {
       const { container } = render(<Checkbox />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.getAttribute("data-state")).toBe("unchecked");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.getAttribute("data-state")).toBe("unchecked");
     });
 
     test("has data-state attribute for checked", () => {
       const { container } = render(<Checkbox defaultChecked={true} />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.getAttribute("data-state")).toBe("checked");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.getAttribute("data-state")).toBe("checked");
     });
   });
 
@@ -87,11 +84,11 @@ describe("Checkbox", () => {
     test("accepts onCheckedChange prop", () => {
       const handleChange = () => {};
       const { container } = render(<Checkbox onCheckedChange={handleChange} />);
-      const checkbox = container.querySelector("button[role='checkbox']");
+      const checkbox = container.querySelector("input[type='checkbox']");
       expect(checkbox).toBeDefined();
     });
 
-    test("has onCheckedChange handler attached", () => {
+    test("calls onCheckedChange when input is clicked", () => {
       let clickCount = 0;
       const TestComponent = () => {
         const handleChange = () => {
@@ -102,17 +99,15 @@ describe("Checkbox", () => {
 
       const { container } = render(<TestComponent />);
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
       expect(checkbox).toBeDefined();
 
       fireEvent.click(checkbox);
-      // Verify the element still exists and can be interacted with
-      expect(checkbox).toBeDefined();
       expect(clickCount).toBe(1);
     });
 
-    test("forwards onCheckedChange to radix checkbox", () => {
+    test("forwards onCheckedChange to checkbox input", () => {
       let changeCount = 0;
       const handleChange = () => {
         changeCount++;
@@ -120,14 +115,11 @@ describe("Checkbox", () => {
 
       const { container } = render(<Checkbox onCheckedChange={handleChange} />);
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
       expect(checkbox).toBeDefined();
 
-      // Radix checkbox handles the onCheckedChange internally
       fireEvent.click(checkbox);
-      // The component should be renderable and clickable
-      expect(checkbox).toBeDefined();
       expect(changeCount).toBe(1);
     });
   });
@@ -136,16 +128,18 @@ describe("Checkbox", () => {
     test("renders disabled attribute when disabled is true", () => {
       const { container } = render(<Checkbox disabled={true} />);
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
-      expect(checkbox.hasAttribute("disabled")).toBe(true);
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
+      expect(checkbox.disabled).toBe(true);
     });
 
-    test("applies disabled styling", () => {
+    test("applies disabled styling on wrapper", () => {
       const { container } = render(<Checkbox disabled={true} />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.className).toContain("disabled:cursor-not-allowed");
-      expect(checkbox?.className).toContain("disabled:opacity-50");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.className).toContain(
+        "data-[disabled]:cursor-not-allowed"
+      );
+      expect(wrapper?.className).toContain("data-[disabled]:opacity-50");
     });
 
     test("does not call onCheckedChange when disabled and clicked", () => {
@@ -158,136 +152,133 @@ describe("Checkbox", () => {
         <Checkbox disabled={true} onCheckedChange={mockOnChange} />
       );
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
 
       fireEvent.click(checkbox);
-      // Disabled checkboxes should not trigger onCheckedChange
       expect(callCount).toBe(0);
     });
 
     test("preserves disabled state across renders", () => {
       const { container, rerender } = render(<Checkbox disabled={true} />);
       let checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
-      expect(checkbox.hasAttribute("disabled")).toBe(true);
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
+      expect(checkbox.disabled).toBe(true);
 
       rerender(<Checkbox disabled={true} />);
       checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
-      expect(checkbox.hasAttribute("disabled")).toBe(true);
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
+      expect(checkbox.disabled).toBe(true);
     });
   });
 
   describe("className forwarding", () => {
-    test("applies custom className", () => {
+    test("applies custom className to wrapper", () => {
       const { container } = render(<Checkbox className="custom-class" />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.className).toContain("custom-class");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.className).toContain("custom-class");
     });
 
     test("preserves base classes with custom className", () => {
       const { container } = render(<Checkbox className="custom-class" />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.className).toContain("h-4");
-      expect(checkbox?.className).toContain("w-4");
-      expect(checkbox?.className).toContain("custom-class");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.className).toContain("h-4");
+      expect(wrapper?.className).toContain("w-4");
+      expect(wrapper?.className).toContain("custom-class");
     });
 
     test("merges multiple custom classes", () => {
       const { container } = render(
         <Checkbox className="custom-1 custom-2 custom-3" />
       );
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.className).toContain("custom-1");
-      expect(checkbox?.className).toContain("custom-2");
-      expect(checkbox?.className).toContain("custom-3");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.className).toContain("custom-1");
+      expect(wrapper?.className).toContain("custom-2");
+      expect(wrapper?.className).toContain("custom-3");
     });
 
     test("overrides conflicting Tailwind classes", () => {
       const { container } = render(<Checkbox className="h-6 w-6" />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      // The custom classes should override the base h-4 w-4
-      const classStr = checkbox?.className || "";
-      // Check that at least one of the custom sizes appears
+      const wrapper = container.firstElementChild;
+      const classStr = wrapper?.className || "";
       expect(classStr).toMatch(/h-6|w-6/);
     });
   });
 
   describe("accessibility attributes", () => {
-    test("has proper focus-visible styling", () => {
+    test("has proper focus-within styling on wrapper", () => {
       const { container } = render(<Checkbox />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.className).toContain("focus-visible:ring-2");
-      expect(checkbox?.className).toContain("focus-visible:outline-none");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.className).toContain("focus-within:ring-2");
+      expect(wrapper?.className).toContain("focus-within:outline-none");
     });
 
-    test("supports aria-label attribute", () => {
+    test("supports aria-label attribute on input", () => {
       const { container } = render(<Checkbox aria-label="Accept terms" />);
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
       expect(checkbox.getAttribute("aria-label")).toBe("Accept terms");
     });
 
-    test("supports aria-labelledby attribute", () => {
+    test("supports aria-labelledby attribute on input", () => {
       const { container } = render(
         <Checkbox aria-labelledby="checkbox-label" />
       );
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
       expect(checkbox.getAttribute("aria-labelledby")).toBe("checkbox-label");
     });
 
-    test("supports aria-describedby attribute", () => {
+    test("supports aria-describedby attribute on input", () => {
       const { container } = render(
         <Checkbox aria-describedby="checkbox-description" />
       );
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
       expect(checkbox.getAttribute("aria-describedby")).toBe(
         "checkbox-description"
       );
     });
 
-    test("forwards attributes through props", () => {
+    test("forwards attributes through props to input", () => {
       const { container } = render(<Checkbox data-test-attr="accept-terms" />);
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
       expect(checkbox.getAttribute("data-test-attr")).toBe("accept-terms");
     });
 
-    test("supports id attribute", () => {
+    test("supports id attribute on input", () => {
       const { container } = render(<Checkbox id="my-checkbox" />);
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
       expect(checkbox.getAttribute("id")).toBe("my-checkbox");
     });
 
-    test("supports value attribute", () => {
+    test("supports value attribute on input", () => {
       const { container } = render(<Checkbox value="option-1" />);
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
       expect(checkbox.getAttribute("value")).toBe("option-1");
     });
 
-    test("ring offset is applied on focus", () => {
+    test("ring offset is applied on wrapper", () => {
       const { container } = render(<Checkbox />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.className).toContain("ring-offset-background");
-      expect(checkbox?.className).toContain("focus-visible:ring-offset-2");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.className).toContain("ring-offset-background");
+      expect(wrapper?.className).toContain("focus-within:ring-offset-2");
     });
   });
 
   describe("ref forwarding", () => {
-    test("forwards ref to button element", () => {
+    test("forwards ref to input element", () => {
       let checkboxRef: any = null;
       render(
         <Checkbox
@@ -296,8 +287,8 @@ describe("Checkbox", () => {
           }}
         />
       );
-      expect(checkboxRef).toBeDefined();
-      expect(checkboxRef?.getAttribute("role")).toBe("checkbox");
+      expect(checkboxRef).not.toBeNull();
+      expect(checkboxRef.tagName).toBe("INPUT");
     });
   });
 
@@ -307,62 +298,55 @@ describe("Checkbox", () => {
       expect(getByTestId("my-checkbox")).toBeDefined();
     });
 
-    test("forwards custom data attributes", () => {
+    test("forwards custom data attributes to input", () => {
       const { container } = render(
         <Checkbox data-custom="custom-value" data-another="another-value" />
       );
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
       expect(checkbox.getAttribute("data-custom")).toBe("custom-value");
       expect(checkbox.getAttribute("data-another")).toBe("another-value");
     });
   });
 
   describe("indicator and icon", () => {
-    test("renders CheckboxPrimitive.Indicator component", () => {
+    test("renders wrapper span element", () => {
       const { container } = render(<Checkbox />);
-      // The indicator should be a span that contains the icon
-      const indicator = container.querySelector("span");
-      expect(indicator).toBeDefined();
+      const wrapper = container.querySelector("span");
+      expect(wrapper).toBeDefined();
     });
 
-    test("icon (Check) is rendered", () => {
-      const { container } = render(<Checkbox />);
-      const icon = container.querySelector("svg");
-      expect(icon).toBeDefined();
-    });
-
-    test("indicator renders with span element", () => {
-      const { container } = render(<Checkbox />);
-      // Look for the indicator span that has data-state
-      const indicator = container.querySelector("span[data-state]");
-      expect(indicator).toBeDefined();
-    });
-
-    test("CheckboxPrimitive.Indicator component renders SVG icon when checked", () => {
+    test("icon (Check) is rendered when checked", () => {
       const { container } = render(<Checkbox defaultChecked={true} />);
-      // The SVG icon (Check from lucide-react) should be rendered when checked
       const icon = container.querySelector("svg");
-      expect(icon).toBeDefined();
+      expect(icon).not.toBeNull();
     });
 
-    test("CheckboxPrimitive.Indicator hides icon when unchecked", () => {
-      const { container } = render(<Checkbox defaultChecked={false} />);
-      // Icon should not be visible (or rendered at all) when unchecked
+    test("wrapper span has data-state attribute", () => {
+      const { container } = render(<Checkbox />);
+      const wrapper = container.querySelector("span[data-state]");
+      expect(wrapper).toBeDefined();
+    });
+
+    test("icon is rendered when explicitly checked", () => {
+      const { container } = render(<Checkbox defaultChecked={true} />);
       const icon = container.querySelector("svg");
-      // In unchecked state, the indicator is present but empty/hidden
-      const indicator = container.querySelector("span[data-state='unchecked']");
-      expect(indicator).toBeDefined();
+      expect(icon).not.toBeNull();
+    });
+
+    test("icon is not rendered when unchecked", () => {
+      const { container } = render(<Checkbox defaultChecked={false} />);
+      const icon = container.querySelector("svg");
+      const wrapper = container.querySelector("span[data-state='unchecked']");
+      expect(wrapper).toBeDefined();
       expect(icon).toBeNull();
     });
   });
 
   describe("display name", () => {
-    test("has correct displayName from CheckboxPrimitive.Root", () => {
-      expect(Checkbox.displayName).toBe(
-        require("@radix-ui/react-checkbox").Root.displayName
-      );
+    test("has correct displayName", () => {
+      expect(Checkbox.displayName).toBe("Checkbox");
     });
   });
 
@@ -370,24 +354,24 @@ describe("Checkbox", () => {
     test("renders multiple checkboxes independently", () => {
       const { container } = render(
         <>
-          <Checkbox data-testid="checkbox-1" />
-          <Checkbox data-testid="checkbox-2" />
-          <Checkbox data-testid="checkbox-3" />
+          <Checkbox />
+          <Checkbox />
+          <Checkbox />
         </>
       );
 
-      const checkboxes = container.querySelectorAll("button[role='checkbox']");
+      const checkboxes = container.querySelectorAll("input[type='checkbox']");
       expect(checkboxes.length).toBe(3);
-      expect(checkboxes[0].getAttribute("aria-checked")).toBe("false");
-      expect(checkboxes[1].getAttribute("aria-checked")).toBe("false");
-      expect(checkboxes[2].getAttribute("aria-checked")).toBe("false");
+      expect((checkboxes[0] as HTMLInputElement).checked).toBe(false);
+      expect((checkboxes[1] as HTMLInputElement).checked).toBe(false);
+      expect((checkboxes[2] as HTMLInputElement).checked).toBe(false);
     });
 
     test("handles rapid clicks", () => {
       const { container } = render(<Checkbox />);
       const checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
 
       fireEvent.click(checkbox);
       fireEvent.click(checkbox);
@@ -399,53 +383,52 @@ describe("Checkbox", () => {
     test("properly transitions from disabled to enabled state", () => {
       const { container, rerender } = render(<Checkbox disabled={true} />);
       let checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
-      expect(checkbox.hasAttribute("disabled")).toBe(true);
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
+      expect(checkbox.disabled).toBe(true);
 
       rerender(<Checkbox disabled={false} />);
       checkbox = container.querySelector(
-        "button[role='checkbox']"
-      ) as HTMLElement;
-      expect(checkbox.hasAttribute("disabled")).toBe(false);
+        "input[type='checkbox']"
+      ) as HTMLInputElement;
+      expect(checkbox.disabled).toBe(false);
     });
 
     test("works with mixed checked and unchecked states", () => {
       const { container } = render(
         <>
-          <Checkbox defaultChecked={true} data-testid="checked" />
-          <Checkbox defaultChecked={false} data-testid="unchecked" />
-          <Checkbox data-testid="default" />
+          <Checkbox defaultChecked={true} />
+          <Checkbox defaultChecked={false} />
+          <Checkbox />
         </>
       );
 
-      const checked = container.querySelector("button[aria-checked='true']");
-      const unchecked = container.querySelectorAll(
-        "button[aria-checked='false']"
+      const allCheckboxes = container.querySelectorAll(
+        "input[type='checkbox']"
       );
-
-      expect(checked).toBeDefined();
-      expect(unchecked.length).toBe(2);
+      expect((allCheckboxes[0] as HTMLInputElement).checked).toBe(true);
+      expect((allCheckboxes[1] as HTMLInputElement).checked).toBe(false);
+      expect((allCheckboxes[2] as HTMLInputElement).checked).toBe(false);
     });
   });
 
   describe("border and focus ring styles", () => {
-    test("has primary border color", () => {
+    test("has primary border color on wrapper", () => {
       const { container } = render(<Checkbox />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.className).toContain("border-primary");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.className).toContain("border-primary");
     });
 
-    test("has ring styling on focus", () => {
+    test("has ring styling on focus within wrapper", () => {
       const { container } = render(<Checkbox />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.className).toContain("focus-visible:ring-ring");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.className).toContain("focus-within:ring-ring");
     });
 
     test("has shrink-0 to prevent flex shrinking", () => {
       const { container } = render(<Checkbox />);
-      const checkbox = container.querySelector("button[role='checkbox']");
-      expect(checkbox?.className).toContain("shrink-0");
+      const wrapper = container.firstElementChild;
+      expect(wrapper?.className).toContain("shrink-0");
     });
   });
 });

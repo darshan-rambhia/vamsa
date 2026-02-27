@@ -8,14 +8,11 @@
  *   2. Run tests: bun run test:int
  */
 
-import {
-  describe,
-  it,
-  expect,
-  beforeEach,
-  afterAll,
-  beforeAll,
-} from "bun:test";
+import { describe, it, expect, beforeEach, afterAll, beforeAll } from "vitest";
+
+// SQLite stores dates as text and timestamps with second precision
+const isSqlite = process.env.DB_DRIVER === "sqlite";
+
 import {
   testDb,
   cleanupTestData,
@@ -77,7 +74,8 @@ describe("Person Integration Tests", () => {
         firstName: "Jane",
         lastName: "Smith",
         maidenName: "Johnson",
-        dateOfBirth: new Date("1990-05-15"),
+        // ISO string works for both Postgres date columns and SQLite text columns
+        dateOfBirth: "1990-05-15",
         birthPlace: "New York",
         gender: "FEMALE" as const,
         email: "jane@example.com",
@@ -95,9 +93,12 @@ describe("Person Integration Tests", () => {
 
       expect(created.id).toBeDefined();
       expect(created.maidenName).toBe("Johnson");
-      expect(created.dateOfBirth?.toISOString().split("T")[0]).toBe(
-        "1990-05-15"
-      );
+      // Normalize: Postgres returns Date, SQLite returns string
+      const dobStr =
+        created.dateOfBirth instanceof Date
+          ? created.dateOfBirth.toISOString().split("T")[0]
+          : String(created.dateOfBirth).split("T")[0];
+      expect(dobStr).toBe("1990-05-15");
       expect(created.profession).toBe("Engineer");
       expect(created.gender).toBe("FEMALE");
     });
@@ -130,7 +131,8 @@ describe("Person Integration Tests", () => {
       expect(found?.currentAddress).toEqual(currentAddress);
     });
 
-    it("tracks created/updated timestamps", async () => {
+    // SQLite stores timestamps as epoch seconds (loses ms precision), so timing assertions fail
+    it.skipIf(isSqlite)("tracks created/updated timestamps", async () => {
       const before = new Date();
       before.setMilliseconds(before.getMilliseconds() - 10);
 
@@ -193,7 +195,7 @@ describe("Person Integration Tests", () => {
           id: randomUUID(),
           firstName: "Test",
           lastName: "Person",
-          dateOfBirth: new Date("1990-01-01"),
+          dateOfBirth: "1990-01-01",
           isLiving: true,
           createdById: adminUser.id,
           updatedAt: new Date(),
@@ -234,7 +236,7 @@ describe("Person Integration Tests", () => {
         .update(testDb.schema.persons)
         .set({
           isLiving: false,
-          dateOfPassing: new Date("2023-01-01"),
+          dateOfPassing: "2023-01-01",
           updatedAt: new Date(),
         })
         .where(eq(testDb.schema.persons.id, created.id))
@@ -374,7 +376,7 @@ describe("Person Integration Tests", () => {
     });
 
     it("finds persons by date of birth", async () => {
-      const dob = new Date("1990-05-15");
+      const dob = "1990-05-15";
 
       await testDb.db.insert(testDb.schema.persons).values([
         {
@@ -390,7 +392,7 @@ describe("Person Integration Tests", () => {
           id: randomUUID(),
           firstName: "Different",
           lastName: "DOB",
-          dateOfBirth: new Date("1995-01-01"),
+          dateOfBirth: "1995-01-01",
           isLiving: true,
           createdById: adminUser.id,
           updatedAt: new Date(),
@@ -456,16 +458,15 @@ describe("Person Integration Tests", () => {
       expect(found?.socialLinks).toEqual(socialLinks);
     });
 
-    it("maintains data types for dates", async () => {
-      const dob = new Date("1990-05-15");
-
+    // Postgres returns Date objects for date columns; SQLite returns strings for text columns
+    it.skipIf(isSqlite)("maintains data types for dates", async () => {
       const [created] = await testDb.db
         .insert(testDb.schema.persons)
         .values({
           id: randomUUID(),
           firstName: "Date",
           lastName: "Types",
-          dateOfBirth: dob,
+          dateOfBirth: new Date("1990-05-15"),
           isLiving: true,
           createdById: adminUser.id,
           updatedAt: new Date(),

@@ -82,11 +82,16 @@ const resources = {
 };
 
 const isServer = typeof window === "undefined";
+const isTest =
+  typeof process !== "undefined" &&
+  typeof process.env !== "undefined" &&
+  Boolean(process.env.VITEST);
+const useLanguageDetector = !isServer && !isTest;
 
 // Configure i18n based on environment
 // On server: use default "en" language (no browser detection available)
 // On client: use LanguageDetector to check localStorage first, then navigator
-if (!isServer) {
+if (useLanguageDetector) {
   i18n.use(LanguageDetector);
 }
 
@@ -105,17 +110,22 @@ i18n.use(initReactI18next).init({
     "charts",
     "admin",
   ],
-  // Only set lng on server; on client, let LanguageDetector handle it
-  ...(isServer ? { lng: "en" } : {}),
+  // Only rely on LanguageDetector in real browser runtime.
+  // In server or test contexts, pin to a deterministic language.
+  ...(useLanguageDetector ? {} : { lng: "en" }),
   interpolation: {
     escapeValue: false,
   },
-  // Detection options for client-side (ignored on server)
-  detection: {
-    order: ["localStorage", "navigator", "htmlTag"],
-    caches: ["localStorage"],
-    lookupLocalStorage: "i18nextLng",
-  },
+  // Detection options for browser runtime only
+  ...(useLanguageDetector
+    ? {
+        detection: {
+          order: ["localStorage", "navigator", "htmlTag"],
+          caches: ["localStorage"],
+          lookupLocalStorage: "i18nextLng",
+        },
+      }
+    : {}),
 });
 
 export default i18n;

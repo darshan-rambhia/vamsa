@@ -1,40 +1,125 @@
 import * as React from "react";
-import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
 import { cn } from "../lib/utils";
 
-const HoverCard = HoverCardPrimitive.Root;
+interface HoverCardContextValue {
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  openDelay: number;
+  closeDelay: number;
+}
 
-const HoverCardTrigger = HoverCardPrimitive.Trigger;
+const HoverCardContext = React.createContext<HoverCardContextValue | null>(
+  null
+);
+
+function useHoverCardContext() {
+  const ctx = React.useContext(HoverCardContext);
+  if (!ctx) {
+    throw new Error("HoverCard components must be used within a HoverCard");
+  }
+  return ctx;
+}
+
+interface HoverCardProps {
+  children: React.ReactNode;
+  openDelay?: number;
+  closeDelay?: number;
+}
+
+const HoverCard = ({
+  children,
+  openDelay = 300,
+  closeDelay = 300,
+}: HoverCardProps) => {
+  const [open, setOpen] = React.useState(false);
+
+  return (
+    <HoverCardContext.Provider value={{ open, setOpen, openDelay, closeDelay }}>
+      <div className="relative inline-block">{children}</div>
+    </HoverCardContext.Provider>
+  );
+};
+
+interface HoverCardTriggerProps {
+  children: React.ReactNode;
+  asChild?: boolean;
+}
+
+const HoverCardTrigger = ({
+  children,
+  asChild: _asChild,
+}: HoverCardTriggerProps) => {
+  const ctx = useHoverCardContext();
+  const openTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleMouseEnter = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    openTimer.current = setTimeout(() => ctx.setOpen(true), ctx.openDelay);
+  };
+
+  const handleMouseLeave = () => {
+    if (openTimer.current) clearTimeout(openTimer.current);
+    closeTimer.current = setTimeout(() => ctx.setOpen(false), ctx.closeDelay);
+  };
+
+  return (
+    <span
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      style={{ display: "contents" }}
+    >
+      {children}
+    </span>
+  );
+};
 
 const HoverCardContent = React.forwardRef<
-  React.ElementRef<typeof HoverCardPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof HoverCardPrimitive.Content>
->(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
-  <HoverCardPrimitive.Content
-    ref={ref}
-    align={align}
-    sideOffset={sideOffset}
-    className={cn(
-      // Positioning and layering
-      "z-50 w-64",
-      // Visual styling
-      "bg-popover text-popover-foreground border-border rounded-lg border-2 shadow-md",
-      // Padding
-      "p-4",
-      // Remove outline on focus (Radix manages focus)
-      "outline-none",
-      // Animation states
-      "data-[state=open]:animate-in data-[state=closed]:animate-out",
-      "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      "data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-      // Slide animations based on side
-      "data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2",
-      "data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-      className
-    )}
-    {...props}
-  />
-));
-HoverCardContent.displayName = HoverCardPrimitive.Content.displayName;
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement> & {
+    align?: "start" | "center" | "end";
+    sideOffset?: number;
+  }
+>(
+  (
+    { className, children, align = "center", sideOffset = 4, ...props },
+    ref
+  ) => {
+    const ctx = useHoverCardContext();
+    const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    if (!ctx.open) return null;
+
+    return (
+      <div
+        ref={ref}
+        onMouseEnter={() => {
+          if (closeTimer.current) clearTimeout(closeTimer.current);
+        }}
+        onMouseLeave={() => {
+          closeTimer.current = setTimeout(
+            () => ctx.setOpen(false),
+            ctx.closeDelay
+          );
+        }}
+        style={{ top: `calc(100% + ${sideOffset}px)` }}
+        className={cn(
+          "absolute z-50 w-64",
+          "bg-popover text-popover-foreground border-border rounded-lg border-2 shadow-md",
+          "p-4 outline-none",
+          "animate-in fade-in-0 zoom-in-95",
+          align === "center" && "left-1/2 -translate-x-1/2",
+          align === "start" && "left-0",
+          align === "end" && "right-0",
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+);
+HoverCardContent.displayName = "HoverCardContent";
 
 export { HoverCard, HoverCardTrigger, HoverCardContent };

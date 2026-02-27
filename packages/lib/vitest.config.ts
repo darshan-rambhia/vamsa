@@ -6,7 +6,7 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     setupFiles: ["./tests/setup/test-logger-mock.ts"],
     coverage: {
-      provider: "v8",
+      provider: "istanbul",
       include: ["src/**/*.ts"],
       exclude: ["src/**/*.test.ts", "src/testing/**", "tests/**"],
       thresholds: { lines: 80, branches: 80 },

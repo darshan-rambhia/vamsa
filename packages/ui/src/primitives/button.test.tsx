@@ -144,19 +144,6 @@ describe("Button", () => {
     });
   });
 
-  describe("asChild", () => {
-    test("renders as child element when asChild is true", () => {
-      const { getByRole } = render(
-        <Button asChild>
-          <a href="/link">Link Button</a>
-        </Button>
-      );
-      const link = getByRole("link");
-      expect(link).toBeDefined();
-      expect(link.getAttribute("href")).toBe("/link");
-    });
-  });
-
   describe("HTML attributes", () => {
     test("passes through type attribute", () => {
       const { getByRole } = render(<Button type="submit">Submit</Button>);

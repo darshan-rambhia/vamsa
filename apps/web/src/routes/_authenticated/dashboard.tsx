@@ -1,7 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Button, Container, PageHeader } from "@vamsa/ui";
+import { Container, PageHeader, buttonVariants } from "@vamsa/ui";
 import { getDashboardStats } from "~/server/dashboard";
 import { OnboardingDashboard } from "~/components/onboarding";
 import { ConfigurableDashboard } from "~/components/dashboard/ConfigurableDashboard";
@@ -41,9 +41,9 @@ function DashboardComponent() {
         title={t("dashboard.title")}
         description={t("dashboard.welcome")}
         actions={
-          <Button asChild>
-            <Link to="/people/new">{t("people.addPerson")}</Link>
-          </Button>
+          <Link to="/people/new" className={buttonVariants()}>
+            {t("people.addPerson")}
+          </Link>
         }
       />
 

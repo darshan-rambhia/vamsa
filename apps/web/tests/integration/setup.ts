@@ -1,75 +1,111 @@
 /**
  * Integration Test Setup
  *
- * Uses the existing Drizzle database from @vamsa/api for integration tests.
- * Requires a running PostgreSQL test database.
+ * Creates database connections for integration tests.
+ * - SQLite: uses better-sqlite3 (works in Node.js / Vitest workers)
+ * - PostgreSQL: uses pg + drizzle-orm/node-postgres
  *
- * Setup:
+ * Run:
+ *   bun run test:int           # SQLite (default, no Docker needed)
+ *   bun run test:int:postgres  # PostgreSQL (requires Docker test DB)
+ *
+ * Start test DB for Postgres:
  *   docker compose -f docker/docker-compose.local.yml --profile test up -d --wait
- *   bun run test:int
- *
- * Environment Variables:
- *   TEST_DATABASE_URL=postgresql://vamsa_test:vamsa_test_password@localhost:5433/vamsa_test
  */
 
-import { drizzleDb, drizzleSchema, getDbDriver } from "@vamsa/api";
 import { sql, eq } from "drizzle-orm";
 import { randomUUID } from "crypto";
 import path from "path";
+
+import type * as pgSchemaTypes from "../../../../packages/api/src/drizzle/schema/index";
 
 // Override DATABASE_URL if TEST_DATABASE_URL is provided
 if (process.env.TEST_DATABASE_URL) {
   process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
 }
 
-// Set default test database URL if not provided
-if (!process.env.DATABASE_URL && !process.env.TEST_DATABASE_URL) {
-  process.env.DATABASE_URL =
-    "postgresql://vamsa_test:vamsa_test_password@localhost:5433/vamsa_test";
+/**
+ * Detect the database driver from environment variables.
+ * Mirrors the logic in @vamsa/api's getDbDriver().
+ */
+function getDriver(): "sqlite" | "postgres" {
+  if (process.env.DB_DRIVER === "postgres") return "postgres";
+  if (process.env.DB_DRIVER === "sqlite") return "sqlite";
+  const url = process.env.DATABASE_URL ?? "";
+  if (url.startsWith("postgres://") || url.startsWith("postgresql://"))
+    return "postgres";
+  return "sqlite";
 }
 
-/**
- * Initialize test database with migrations
- * Called automatically on module load
- */
-async function initializeTestDatabase(): Promise<void> {
-  try {
-    const driver = getDbDriver();
-    const migrationsDir = driver === "sqlite" ? "drizzle-sqlite" : "drizzle";
-    const migrationsPath = path.resolve(
-      import.meta.dir,
-      "../../..",
-      `packages/api/${migrationsDir}`
-    );
+const driver = getDriver();
 
-    if (driver === "sqlite") {
-      const { migrate: sqliteMigrate } =
-        await import("drizzle-orm/bun-sqlite/migrator");
-      await sqliteMigrate(drizzleDb as Parameters<typeof sqliteMigrate>[0], {
-        migrationsFolder: migrationsPath,
-      });
-    } else {
-      const { migrate: pgMigrate } =
-        await import("drizzle-orm/node-postgres/migrator");
-      await pgMigrate(drizzleDb, {
-        migrationsFolder: migrationsPath,
-      });
-    }
+// Mutable references set during initialization below
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+let _db: any;
+let _schema: typeof pgSchemaTypes;
+
+if (driver === "sqlite") {
+  const { default: Database } = await import("better-sqlite3");
+  const { drizzle } = await import("drizzle-orm/better-sqlite3");
+  const sqliteSchema =
+    await import("../../../../packages/api/src/drizzle/schema-sqlite/index");
+
+  const dbPath = process.env.DATABASE_URL || ":memory:";
+  const sqlite = new Database(dbPath);
+  sqlite.pragma("journal_mode = WAL");
+  sqlite.pragma("foreign_keys = ON");
+
+  _db = drizzle(sqlite, { schema: sqliteSchema });
+  _schema = sqliteSchema as unknown as typeof pgSchemaTypes;
+
+  // Run SQLite migrations (synchronous in better-sqlite3)
+  try {
+    const { migrate } = await import("drizzle-orm/better-sqlite3/migrator");
+    const migrationsPath = path.resolve(
+      import.meta.dirname,
+      "../../../../packages/api/drizzle-sqlite"
+    );
+    migrate(_db, { migrationsFolder: migrationsPath });
   } catch (error) {
-    // Migrations may already be applied or table structure may differ
-    // Log but don't fail - the schema might already exist
+    if (error instanceof Error) {
+      console.debug(`Migration note: ${error.message}`);
+    }
+  }
+} else {
+  // Set default test database URL if not provided
+  if (!process.env.DATABASE_URL) {
+    process.env.DATABASE_URL =
+      "postgresql://vamsa_test:vamsa_test@localhost:5433/vamsa_test";
+  }
+
+  const { drizzle } = await import("drizzle-orm/node-postgres");
+  const { Pool } = await import("pg");
+  const pgSchema =
+    await import("../../../../packages/api/src/drizzle/schema/index");
+
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  _db = drizzle(pool, { schema: pgSchema });
+  _schema = pgSchema;
+
+  // Run PostgreSQL migrations
+  try {
+    const { migrate } = await import("drizzle-orm/node-postgres/migrator");
+    const migrationsPath = path.resolve(
+      import.meta.dirname,
+      "../../../../packages/api/drizzle"
+    );
+    await migrate(_db, { migrationsFolder: migrationsPath });
+  } catch (error) {
     if (error instanceof Error) {
       console.debug(`Migration note: ${error.message}`);
     }
   }
 }
 
-// Initialize database on module load
-await initializeTestDatabase();
-
 export const testDb = {
-  db: drizzleDb,
-  schema: drizzleSchema,
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  db: _db,
+  schema: _schema,
 };
 
 /**
@@ -77,8 +113,7 @@ export const testDb = {
  * Call in beforeEach() to ensure test isolation
  */
 export async function cleanupTestData(): Promise<void> {
-  const db = drizzleDb;
-  const driver = getDbDriver();
+  const db = _db;
 
   // Tables ordered by dependency: children first, parents last
   const tables = [
@@ -110,8 +145,9 @@ export async function cleanupTestData(): Promise<void> {
 
   if (driver === "sqlite") {
     // SQLite: ordered DELETE FROM (no CASCADE support on TRUNCATE)
+    // drizzle/better-sqlite3 uses db.run() for DML without results
     for (const table of tables) {
-      await db.execute(sql.raw(`DELETE FROM "${table}"`));
+      db.run(sql.raw(`DELETE FROM "${table}"`));
     }
   } else {
     // PostgreSQL: TRUNCATE with CASCADE for speed
@@ -126,14 +162,15 @@ export async function cleanupTestData(): Promise<void> {
  * Creates an admin user and returns it for use in tests
  */
 export async function seedTestData(): Promise<{
-  adminUser: typeof drizzleSchema.users.$inferSelect;
-  testPerson: typeof drizzleSchema.persons.$inferSelect;
+  adminUser: typeof pgSchemaTypes.users.$inferSelect;
+  testPerson: typeof pgSchemaTypes.persons.$inferSelect;
 }> {
-  const db = drizzleDb;
+  const db = _db;
+  const schema = _schema;
 
   // Create admin user
   const [adminUser] = await db
-    .insert(drizzleSchema.users)
+    .insert(schema.users)
     .values({
       id: randomUUID(),
       email: `admin+${randomUUID()}@test.local`,
@@ -150,7 +187,7 @@ export async function seedTestData(): Promise<{
 
   // Create test person
   const [testPerson] = await db
-    .insert(drizzleSchema.persons)
+    .insert(schema.persons)
     .values({
       id: randomUUID(),
       firstName: "Test",
@@ -172,12 +209,13 @@ export async function seedTestData(): Promise<{
  * Create a test user with a specific role
  */
 export async function createTestUser(
-  role: "ADMIN" | "MEMBER" | "GUEST" = "MEMBER"
-): Promise<typeof drizzleSchema.users.$inferSelect> {
-  const db = drizzleDb;
+  role: "ADMIN" | "MEMBER" | "VIEWER" = "MEMBER"
+): Promise<typeof pgSchemaTypes.users.$inferSelect> {
+  const db = _db;
+  const schema = _schema;
 
   const [user] = await db
-    .insert(drizzleSchema.users)
+    .insert(schema.users)
     .values({
       id: randomUUID(),
       email: `user+${randomUUID()}@test.local`,
@@ -201,15 +239,15 @@ export async function createTestUser(
 export async function createTestPersonWithRelatives(
   creatorId: string
 ): Promise<{
-  parent1: typeof drizzleSchema.persons.$inferSelect;
-  parent2: typeof drizzleSchema.persons.$inferSelect;
-  child: typeof drizzleSchema.persons.$inferSelect;
+  parent1: typeof pgSchemaTypes.persons.$inferSelect;
+  parent2: typeof pgSchemaTypes.persons.$inferSelect;
+  child: typeof pgSchemaTypes.persons.$inferSelect;
 }> {
-  const db = drizzleDb;
+  const db = _db;
+  const schema = _schema;
 
-  // Create two parents
   const [parent1] = await db
-    .insert(drizzleSchema.persons)
+    .insert(schema.persons)
     .values({
       id: randomUUID(),
       firstName: "John",
@@ -222,7 +260,7 @@ export async function createTestPersonWithRelatives(
     .returning();
 
   const [parent2] = await db
-    .insert(drizzleSchema.persons)
+    .insert(schema.persons)
     .values({
       id: randomUUID(),
       firstName: "Jane",
@@ -234,15 +272,15 @@ export async function createTestPersonWithRelatives(
     })
     .returning();
 
-  // Create a child
   const [child] = await db
-    .insert(drizzleSchema.persons)
+    .insert(schema.persons)
     .values({
       id: randomUUID(),
       firstName: "Jack",
       lastName: "Doe",
       gender: "MALE",
-      dateOfBirth: new Date("2000-01-01"),
+      // Use ISO string — works for both Postgres date columns and SQLite text columns
+      dateOfBirth: "2000-01-01",
       isLiving: true,
       createdById: creatorId,
       updatedAt: new Date(),
@@ -253,22 +291,19 @@ export async function createTestPersonWithRelatives(
     throw new Error("Failed to create test persons with relatives");
   }
 
-  // Create relationships
-  await db.insert(drizzleSchema.relationships).values([
+  await db.insert(schema.relationships).values([
     {
       id: randomUUID(),
-      personFromId: parent1.id,
-      personToId: child.id,
-      relationshipType: "PARENT",
-      createdById: creatorId,
+      personId: parent1.id,
+      relatedPersonId: child.id,
+      type: "PARENT",
       updatedAt: new Date(),
     },
     {
       id: randomUUID(),
-      personFromId: parent2.id,
-      personToId: child.id,
-      relationshipType: "PARENT",
-      createdById: creatorId,
+      personId: parent2.id,
+      relatedPersonId: child.id,
+      type: "PARENT",
       updatedAt: new Date(),
     },
   ]);
@@ -281,7 +316,7 @@ export async function createTestPersonWithRelatives(
  */
 export async function findPersonById(
   id: string
-): Promise<typeof drizzleSchema.persons.$inferSelect | undefined> {
+): Promise<typeof pgSchemaTypes.persons.$inferSelect | undefined> {
   return testDb.db.query.persons.findFirst({
     where: eq(testDb.schema.persons.id, id),
   });
@@ -292,7 +327,7 @@ export async function findPersonById(
  */
 export async function findUserById(
   id: string
-): Promise<typeof drizzleSchema.users.$inferSelect | undefined> {
+): Promise<typeof pgSchemaTypes.users.$inferSelect | undefined> {
   return testDb.db.query.users.findFirst({
     where: eq(testDb.schema.users.id, id),
   });
@@ -302,10 +337,21 @@ export async function findUserById(
  * Helper to count relationships
  */
 export async function countRelationships(): Promise<number> {
+  if (driver === "sqlite") {
+    // drizzle/better-sqlite3: db.all() for queries returning rows (synchronous)
+    const rows = testDb.db.all(
+      sql`SELECT COUNT(*) as count FROM "Relationship"`
+    );
+    return Number((rows as { count: unknown }[])[0]?.count ?? 0);
+  }
+  // Postgres: db.execute() returns QueryResult; rows are in result.rows
   const result = await testDb.db.execute(
-    sql`SELECT COUNT(*) as count FROM relationships`
+    sql`SELECT COUNT(*) as count FROM "Relationship"`
   );
-  return (result[0] as { count: number }).count;
+  const rows = Array.isArray(result)
+    ? result
+    : ((result as { rows: unknown[] }).rows ?? []);
+  return Number((rows[0] as { count: unknown })?.count ?? 0);
 }
 
 export { eq, sql, randomUUID };

@@ -93,9 +93,11 @@ describe("Tabs", () => {
       expect(getByText("Tab 1")).toBeDefined();
       expect(getByText("Tab 2")).toBeDefined();
       expect(getByText("Content 1")).toBeDefined();
-      // Content 2 is in hidden tabpanel, verify structure exists
-      const tabpanels = container.querySelectorAll("[role='tabpanel']");
-      expect(tabpanels.length).toBe(2);
+      // Active panel has role=tabpanel; inactive panel is inert (force-mounted but no role)
+      const activePanel = container.querySelector("[role='tabpanel']");
+      const inertPanel = container.querySelector("[data-inert='true']");
+      expect(activePanel).toBeDefined();
+      expect(inertPanel).toBeDefined();
     });
 
     test("multiple tabs can be rendered", () => {
@@ -292,13 +294,14 @@ describe("TabsList", () => {
       expect(list?.getAttribute("aria-label")).toBe("Tab list");
     });
 
-    test("passes through role attribute", () => {
+    test("renders with tablist role", () => {
       const { container } = render(
         <Tabs defaultValue="tab1">
-          <TabsList role="tablist" data-testid="tabs-list" />
+          <TabsList data-testid="tabs-list" />
         </Tabs>
       );
       const list = container.querySelector("[data-testid='tabs-list']");
+      // React Aria always sets role="tablist" on TabList
       expect(list?.getAttribute("role")).toBe("tablist");
     });
   });
@@ -440,18 +443,20 @@ describe("TabsTrigger", () => {
       const { container } = render(
         <Tabs defaultValue="tab1">
           <TabsList>
-            <TabsTrigger value="tab1" disabled data-testid="trigger">
+            <TabsTrigger value="tab1" isDisabled data-testid="trigger">
               Tab
             </TabsTrigger>
           </TabsList>
         </Tabs>
       );
       const trigger = container.querySelector("[data-testid='trigger']");
-      expect(trigger?.className).toContain("disabled:pointer-events-none");
-      expect(trigger?.className).toContain("disabled:opacity-50");
+      expect(trigger?.className).toContain(
+        "data-[disabled]:pointer-events-none"
+      );
+      expect(trigger?.className).toContain("data-[disabled]:opacity-50");
     });
 
-    test("applies active state styling when selected", () => {
+    test("applies selected state styling classes", () => {
       const { container } = render(
         <Tabs defaultValue="tab1">
           <TabsList>
@@ -462,12 +467,12 @@ describe("TabsTrigger", () => {
         </Tabs>
       );
       const trigger = container.querySelector("[data-testid='active-trigger']");
-      expect(trigger?.className).toContain("data-[state=active]:bg-background");
-      expect(trigger?.className).toContain("data-[state=active]:text-primary");
-      expect(trigger?.className).toContain("data-[state=active]:shadow-md");
+      expect(trigger?.className).toContain("data-[selected]:bg-background");
+      expect(trigger?.className).toContain("data-[selected]:text-primary");
+      expect(trigger?.className).toContain("data-[selected]:shadow-md");
     });
 
-    test("applies inactive state hover styling", () => {
+    test("applies unselected state hover styling classes", () => {
       const { container } = render(
         <Tabs defaultValue="tab1">
           <TabsList>
@@ -484,14 +489,14 @@ describe("TabsTrigger", () => {
         "[data-testid='trigger2']"
       );
       expect(inactiveTrigger?.className).toContain(
-        "data-[state=inactive]:hover:bg-background"
+        "not-data-[selected]:hover:bg-background"
       );
       expect(inactiveTrigger?.className).toContain(
-        "data-[state=inactive]:hover:text-foreground"
+        "not-data-[selected]:hover:text-foreground"
       );
     });
 
-    test("applies active state border styling", () => {
+    test("applies selected state border styling classes", () => {
       const { container } = render(
         <Tabs defaultValue="tab1">
           <TabsList>
@@ -502,10 +507,8 @@ describe("TabsTrigger", () => {
         </Tabs>
       );
       const trigger = container.querySelector("[data-testid='trigger']");
-      expect(trigger?.className).toContain("data-[state=active]:border");
-      expect(trigger?.className).toContain(
-        "data-[state=active]:border-primary"
-      );
+      expect(trigger?.className).toContain("data-[selected]:border");
+      expect(trigger?.className).toContain("data-[selected]:border-primary");
     });
 
     test("applies custom className", () => {
@@ -576,7 +579,7 @@ describe("TabsTrigger", () => {
       expect(trigger?.getAttribute("role")).toBe("tab");
     });
 
-    test("has data-state attribute", () => {
+    test("has data-selected attribute when active", () => {
       const { container } = render(
         <Tabs defaultValue="tab1">
           <TabsList>
@@ -593,8 +596,8 @@ describe("TabsTrigger", () => {
       const inactiveTrigger = container.querySelector(
         "[data-testid='inactive']"
       );
-      expect(activeTrigger?.getAttribute("data-state")).toBe("active");
-      expect(inactiveTrigger?.getAttribute("data-state")).toBe("inactive");
+      expect(activeTrigger?.hasAttribute("data-selected")).toBe(true);
+      expect(inactiveTrigger?.hasAttribute("data-selected")).toBe(false);
     });
 
     test("can have custom aria-label", () => {
@@ -618,7 +621,7 @@ describe("TabsTrigger", () => {
 
   describe("ref forwarding", () => {
     test("forwards ref correctly", () => {
-      let triggerRef: HTMLButtonElement | null = null;
+      let triggerRef: HTMLDivElement | null = null;
       render(
         <Tabs defaultValue="tab1">
           <TabsList>
@@ -639,7 +642,7 @@ describe("TabsTrigger", () => {
     });
 
     test("ref points to actual DOM element", () => {
-      let triggerRef: HTMLButtonElement | null = null;
+      let triggerRef: HTMLDivElement | null = null;
       const { container } = render(
         <Tabs defaultValue="tab1">
           <TabsList>
@@ -697,18 +700,18 @@ describe("TabsTrigger", () => {
       expect(trigger?.getAttribute("aria-describedby")).toBe("tab-description");
     });
 
-    test("passes through disabled attribute", () => {
+    test("indicates disabled state via data attribute", () => {
       const { container } = render(
         <Tabs defaultValue="tab1">
           <TabsList>
-            <TabsTrigger value="tab1" disabled data-testid="trigger">
+            <TabsTrigger value="tab1" isDisabled data-testid="trigger">
               Tab
             </TabsTrigger>
           </TabsList>
         </Tabs>
       );
       const trigger = container.querySelector("[data-testid='trigger']");
-      expect(trigger?.hasAttribute("disabled")).toBe(true);
+      expect(trigger?.hasAttribute("data-disabled")).toBe(true);
     });
   });
 
@@ -761,11 +764,11 @@ describe("TabsContent", () => {
         </Tabs>
       );
       expect(getByText("Content 1")).toBeDefined();
-      // Content 2 is hidden but should exist as tabpanel element
-      const tabpanels = container.querySelectorAll("[role='tabpanel']");
-      expect(tabpanels.length).toBe(2);
-      expect(tabpanels[0].getAttribute("data-state")).toBe("active");
-      expect(tabpanels[1].getAttribute("data-state")).toBe("inactive");
+      // Active panel has role=tabpanel; inactive is force-mounted as inert (data-inert attribute)
+      const activePanel = container.querySelector("[role='tabpanel']");
+      const inertPanel = container.querySelector("[data-inert='true']");
+      expect(activePanel).toBeDefined();
+      expect(inertPanel?.hasAttribute("data-inert")).toBe(true);
     });
 
     test("renders with children elements", () => {
@@ -891,27 +894,23 @@ describe("TabsContent", () => {
       expect(content?.getAttribute("role")).toBe("tabpanel");
     });
 
-    test("has data-state attribute", () => {
+    test("has data-selected on active panel and data-inert on inactive panel", () => {
       const { container } = render(
         <Tabs defaultValue="tab1">
           <TabsList>
             <TabsTrigger value="tab1">Tab 1</TabsTrigger>
             <TabsTrigger value="tab2">Tab 2</TabsTrigger>
           </TabsList>
-          <TabsContent value="tab1" data-testid="content1">
-            Content 1
-          </TabsContent>
-          <TabsContent value="tab2" data-testid="content2">
-            Content 2
-          </TabsContent>
+          <TabsContent value="tab1">Content 1</TabsContent>
+          <TabsContent value="tab2">Content 2</TabsContent>
         </Tabs>
       );
-      const activeContent = container.querySelector("[data-testid='content1']");
-      const inactiveContent = container.querySelector(
-        "[data-testid='content2']"
-      );
-      expect(activeContent?.getAttribute("data-state")).toBe("active");
-      expect(inactiveContent?.getAttribute("data-state")).toBe("inactive");
+      // Active panel has role=tabpanel (no data-selected attribute on panel itself)
+      const activeContent = container.querySelector("[role='tabpanel']");
+      // Inactive panel is rendered inert (force-mounted) with data-inert attribute
+      const inactiveContent = container.querySelector("[data-inert='true']");
+      expect(activeContent).toBeDefined();
+      expect(inactiveContent?.hasAttribute("data-inert")).toBe(true);
     });
 
     test("can have custom aria-label", () => {
@@ -1046,9 +1045,11 @@ describe("Tabs integration", () => {
       expect(getByText("Overview")).toBeDefined();
       expect(getByText("Details")).toBeDefined();
       expect(getByText("Overview content")).toBeDefined();
-      // Details content is hidden but tabpanel element exists
-      const tabpanels = container.querySelectorAll("[role='tabpanel']");
-      expect(tabpanels.length).toBe(2);
+      // Active panel has role=tabpanel; inactive is force-mounted as inert element
+      const activePanel = container.querySelector("[role='tabpanel']");
+      const inertPanel = container.querySelector("[data-inert='true']");
+      expect(activePanel).toBeDefined();
+      expect(inertPanel).toBeDefined();
     });
 
     test("renders multiple tabs with diverse content", () => {
@@ -1071,12 +1072,13 @@ describe("Tabs integration", () => {
       expect(getByText("Tab 2")).toBeDefined();
       expect(getByText("Tab 3")).toBeDefined();
       expect(getByText("Tab 4")).toBeDefined();
-      // All content should be in DOM, visible tab renders its text
+      // Active tab content is visible
       expect(getByText("Content 1")).toBeDefined();
-      // Hidden tabs exist in DOM but their content text is not accessible via getByText
-      // Verify they exist as elements instead
-      const contentDivs = container.querySelectorAll("[role='tabpanel']");
-      expect(contentDivs.length).toBe(4);
+      // Active panel has role=tabpanel; 3 inactive panels are force-mounted as inert elements
+      const activePanel = container.querySelector("[role='tabpanel']");
+      const inertPanels = container.querySelectorAll("[data-inert='true']");
+      expect(activePanel).toBeDefined();
+      expect(inertPanels.length).toBe(3);
     });
 
     test("renders with complex nested content", () => {

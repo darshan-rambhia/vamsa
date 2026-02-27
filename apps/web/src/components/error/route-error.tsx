@@ -1,6 +1,6 @@
 import { Link, useRouter } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { Button, Container } from "@vamsa/ui";
+import { Container, buttonVariants, cn } from "@vamsa/ui";
 import { Home } from "lucide-react";
 import { ErrorCard } from "./error-card";
 import type { ErrorComponentProps } from "@tanstack/react-router";
@@ -26,12 +26,13 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
         error={error}
         onRetry={handleRetry}
         actions={
-          <Button variant="outline" asChild>
-            <Link to="/dashboard">
-              <Home className="mr-2 h-4 w-4" />
-              {t("goToDashboard")}
-            </Link>
-          </Button>
+          <Link
+            to="/dashboard"
+            className={cn(buttonVariants({ variant: "outline" }))}
+          >
+            <Home className="mr-2 h-4 w-4" />
+            {t("goToDashboard")}
+          </Link>
         }
       />
     </Container>

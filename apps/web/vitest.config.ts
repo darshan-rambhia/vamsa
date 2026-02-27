@@ -6,6 +6,7 @@ export default defineConfig({
   test: {
     name: "web",
     environment: "happy-dom",
+    execArgv: [],
     include: [
       "src/**/*.test.{ts,tsx}",
       "server/**/*.test.{ts,tsx}",
@@ -14,7 +15,7 @@ export default defineConfig({
     exclude: ["**/integration/**", "**/e2e/**"],
     setupFiles: ["./tests/setup/test-logger-mock.ts"],
     coverage: {
-      provider: "v8",
+      provider: "istanbul",
       include: ["src/**/*.{ts,tsx}", "server/**/*.{ts,tsx}"],
       exclude: [
         "src/**/*.test.{ts,tsx}",

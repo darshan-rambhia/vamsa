@@ -482,3 +482,36 @@ CREATE INDEX `idx_notification_userId` ON `Notification` (`userId`);--> statemen
 CREATE INDEX `idx_notification_type` ON `Notification` (`type`);--> statement-breakpoint
 CREATE INDEX `idx_notification_createdAt` ON `Notification` (`createdAt`);--> statement-breakpoint
 CREATE INDEX `idx_notification_userId_readAt` ON `Notification` (`userId`,`readAt`);
+
+-- FTS5 virtual table for person full-text search
+CREATE VIRTUAL TABLE IF NOT EXISTS persons_fts USING fts5(
+  id UNINDEXED,
+  firstName,
+  lastName,
+  maidenName,
+  profession,
+  bio,
+  birthPlace,
+  nativePlace
+);
+
+-- Populate from existing data
+INSERT INTO persons_fts(id, firstName, lastName, maidenName, profession, bio, birthPlace, nativePlace)
+SELECT id, firstName, lastName, coalesce(maidenName,''), coalesce(profession,''), coalesce(bio,''), coalesce(birthPlace,''), coalesce(nativePlace,'')
+FROM Person;
+
+-- Sync triggers
+CREATE TRIGGER IF NOT EXISTS persons_fts_insert AFTER INSERT ON Person BEGIN
+  INSERT INTO persons_fts(id, firstName, lastName, maidenName, profession, bio, birthPlace, nativePlace)
+  VALUES (new.id, new.firstName, new.lastName, coalesce(new.maidenName,''), coalesce(new.profession,''), coalesce(new.bio,''), coalesce(new.birthPlace,''), coalesce(new.nativePlace,''));
+END;
+
+CREATE TRIGGER IF NOT EXISTS persons_fts_update AFTER UPDATE ON Person BEGIN
+  DELETE FROM persons_fts WHERE id = old.id;
+  INSERT INTO persons_fts(id, firstName, lastName, maidenName, profession, bio, birthPlace, nativePlace)
+  VALUES (new.id, new.firstName, new.lastName, coalesce(new.maidenName,''), coalesce(new.profession,''), coalesce(new.bio,''), coalesce(new.birthPlace,''), coalesce(new.nativePlace,''));
+END;
+
+CREATE TRIGGER IF NOT EXISTS persons_fts_delete AFTER DELETE ON Person BEGIN
+  DELETE FROM persons_fts WHERE id = old.id;
+END;

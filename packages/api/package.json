@@ -28,7 +28,7 @@
     "db:studio": "drizzle-kit studio",
     "check:schema-drift": "bun run scripts/check-schema-drift.ts",
     "typecheck": "tsc --noEmit",
-    "test": "bun run vitest run"
+    "test": "bun --bun vitest run"
   },
   "dependencies": {
     "@vamsa/schemas": "workspace:*",

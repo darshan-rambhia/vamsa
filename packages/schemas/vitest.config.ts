@@ -5,7 +5,7 @@ export default defineConfig({
     name: "schemas",
     include: ["src/**/*.test.ts"],
     coverage: {
-      provider: "v8",
+      provider: "istanbul",
       include: ["src/**/*.ts"],
       exclude: ["src/**/*.test.ts"],
       thresholds: { lines: 90, branches: 85 },

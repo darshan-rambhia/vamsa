@@ -10,6 +10,8 @@ import {
   Container,
   Input,
   PageHeader,
+  buttonVariants,
+  cn,
 } from "@vamsa/ui";
 import {
   ArrowDown,
@@ -153,9 +155,9 @@ function PeopleListComponent() {
         title="People"
         description="Everyone in your family tree"
         actions={
-          <Button asChild>
-            <Link to="/people/new">Add Person</Link>
-          </Button>
+          <Link to="/people/new" className={buttonVariants()}>
+            Add Person
+          </Link>
         }
       />
 
@@ -192,9 +194,9 @@ function PeopleListComponent() {
             <p className="text-muted-foreground mx-auto mt-2 max-w-sm">
               Start building your family tree by adding the first person.
             </p>
-            <Button asChild className="mt-6">
-              <Link to="/people/new">Add the first person</Link>
-            </Button>
+            <Link to="/people/new" className={cn(buttonVariants(), "mt-6")}>
+              Add the first person
+            </Link>
           </CardContent>
         </Card>
       ) : persons.items.length === 0 && search ? (

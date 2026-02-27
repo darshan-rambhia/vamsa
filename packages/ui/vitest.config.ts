@@ -7,7 +7,7 @@ export default defineConfig({
     include: ["src/**/*.test.{ts,tsx}"],
     setupFiles: ["./src/test-setup.ts"],
     coverage: {
-      provider: "v8",
+      provider: "istanbul",
       include: ["src/**/*.{ts,tsx}"],
       exclude: ["src/**/*.test.{ts,tsx}", "src/test-setup.ts"],
       thresholds: { lines: 95, branches: 95 },

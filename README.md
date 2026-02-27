@@ -133,8 +133,10 @@ packages/
 bun run dev              # Start dev server
 bun run build            # Build for production
 bun run preview          # Preview production build locally
+bun run quality          # Local quality checks (fix/format + lint + typecheck + test)
+bun run quality:ci       # CI-safe quality gate (no auto-fixes)
 bun run typecheck        # Run TypeScript checks
-bun run lint               # Run ESLint
+bun run lint             # Run ESLint
 ```
 
 ### Database
@@ -148,11 +150,25 @@ bun run db:seed         # Seed initial data
 ### Testing
 
 ```bash
-bun run test            # Run unit tests
-bun run test:e2e        # Run E2E tests
-bun run test:ui         # Run tests with UI
-bun run test:coverage      # Generate coverage report
+bun run test                          # Canonical unit test command
+bun run test:integration              # Integration tests (SQLite default)
+bun run test:e2e                      # E2E tests
+bun run test:focus --suite visual     # Focused visual suite
+bun run test:focus --suite perf       # Focused performance suite
+bun run test:ci                       # CI test suite (unit+integration)
 ```
+
+### Command Center
+
+```bash
+bun run cmd -- db migrate        # Database operations
+bun run cmd -- docker dev        # Docker workflow operations
+bun run cmd -- docs build        # Documentation operations
+bun run cmd -- obs up            # Observability stack operations
+bun run cmd -- load run search   # Load-test scenario operations
+```
+
+See `docs/guides/command-architecture.md` for migration guidance and deprecated alias mappings.
 
 ### Project Management
 

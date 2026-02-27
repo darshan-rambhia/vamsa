@@ -1,18 +1,19 @@
 /**
  * SQLite Search Engine Implementation
  *
- * Provides person search for SQLite using LIKE-based matching with
- * basic relevance scoring. Searches across the same fields as the
- * PG full-text search (firstName, lastName, maidenName, bio, birthPlace,
- * nativePlace, profession) but uses SQLite-compatible operators.
+ * Provides person search for SQLite using FTS5 virtual tables for full-text search.
+ * Searches across firstName, lastName, maidenName, bio, birthPlace, nativePlace,
+ * and profession fields. Falls back to LIKE-based matching if FTS5 table doesn't exist.
  *
- * When FTS5 virtual tables are available (created in Phase 4 migrations),
- * this engine will be upgraded to use them for better performance and
- * ranking. For typical Vamsa datasets (200-2000 persons), LIKE-based
- * search is more than adequate.
+ * FTS5 provides:
+ * - Phrase search and prefix search support
+ * - Built-in ranking by relevance
+ * - High performance even on large datasets
+ * - Automatic sync triggers on Person table
  */
 
 import { sanitizeQuery } from "./search";
+import { logger } from "./logger";
 
 import type { SearchConfig, SearchResults } from "./search";
 import type { SearchEngine, SearchPersonRow } from "./search-engine";
@@ -28,16 +29,10 @@ interface SqliteQueryClient {
 }
 
 /**
- * SQLite search engine using LIKE-based matching with relevance scoring.
+ * SQLite search engine using FTS5 with automatic fallback to LIKE.
  *
- * Scoring strategy:
- * - firstName exact match (case-insensitive): 10 points
- * - lastName exact match (case-insensitive): 10 points
- * - firstName prefix match: 8 points
- * - lastName prefix match: 8 points
- * - firstName/lastName contains: 5 points
- * - maidenName match: 4 points
- * - bio/birthPlace/nativePlace/profession contains: 2 points each
+ * Primary strategy: FTS5 MATCH query with built-in ranking
+ * Fallback: LIKE-based matching if FTS5 table doesn't exist (graceful degradation)
  */
 export class SqliteSearchEngine implements SearchEngine {
   constructor(private readonly client: SqliteQueryClient) {}
@@ -54,7 +49,107 @@ export class SqliteSearchEngine implements SearchEngine {
       return { results: [], total: 0, queryTime: Date.now() - startTime };
     }
 
-    // Split query into individual terms for multi-word search
+    // Try FTS5 first, fall back to LIKE if it doesn't exist
+    try {
+      return await this.searchWithFts5(sanitized, limit, offset, startTime);
+    } catch (error) {
+      logger.debug(
+        { error: String(error) },
+        "FTS5 search failed, falling back to LIKE-based search"
+      );
+      return await this.searchWithLike(sanitized, limit, offset, startTime);
+    }
+  }
+
+  /**
+   * Search using FTS5 virtual table
+   * Provides phrase search, prefix search, and built-in ranking
+   */
+  private async searchWithFts5(
+    sanitized: string,
+    limit: number,
+    offset: number,
+    startTime: number
+  ): Promise<SearchResults<SearchPersonRow>> {
+    // Prepare FTS5 query string
+    // FTS5 MATCH syntax:
+    // - "phrase" for exact phrase
+    // - term* for prefix search
+    // - Multiple terms are AND by default
+    const fts5Query = sanitized
+      .split(/\s+/)
+      .filter((t) => t.length > 0)
+      .map((term) => `${escapeFts5Term(term)}*`) // prefix search
+      .join(" ");
+
+    // Count query
+    const countSql =
+      "SELECT COUNT(*) as total FROM persons_fts WHERE persons_fts MATCH ?";
+    const countResult = this.client.prepare(countSql).all(fts5Query);
+    const total = (countResult[0]?.total as number) || 0;
+
+    if (total === 0) {
+      return { results: [], total: 0, queryTime: Date.now() - startTime };
+    }
+
+    // Search query with FTS5 ranking and join to Person table
+    // FTS5 rank is negative, so ORDER BY rank DESC gives best matches first
+    const searchSql = `
+      SELECT
+        p.id, p."firstName", p."lastName", p."maidenName", p."photoUrl",
+        p."dateOfBirth", p."dateOfPassing", p."isLiving",
+        fts.rank as rank
+      FROM persons_fts fts
+      JOIN "Person" p ON fts.id = p.id
+      WHERE fts.persons_fts MATCH ?
+      ORDER BY fts.rank ASC
+      LIMIT ? OFFSET ?
+    `;
+
+    const rows = this.client.prepare(searchSql).all(fts5Query, limit, offset);
+
+    const results = rows.map((row) => ({
+      item: {
+        id: row.id as string,
+        firstName: row.firstName as string,
+        lastName: row.lastName as string,
+        maidenName: row.maidenName as string | null,
+        photoUrl: row.photoUrl as string | null,
+        dateOfBirth: row.dateOfBirth as Date | string | null,
+        dateOfPassing: row.dateOfPassing as Date | string | null,
+        isLiving: Boolean(row.isLiving),
+        // FTS5 rank is negative (lower is better), so negate for positive scores
+        rank: Math.abs((row.rank as number) || 0),
+      },
+      rank: Math.abs((row.rank as number) || 0),
+    }));
+
+    return {
+      results,
+      total,
+      queryTime: Date.now() - startTime,
+    };
+  }
+
+  /**
+   * Fallback search using LIKE-based matching with relevance scoring.
+   * Used if FTS5 table doesn't exist or FTS5 query fails.
+   *
+   * Scoring strategy:
+   * - firstName exact match (case-insensitive): 10 points
+   * - lastName exact match (case-insensitive): 10 points
+   * - firstName prefix match: 8 points
+   * - lastName prefix match: 8 points
+   * - firstName/lastName contains: 5 points
+   * - maidenName match: 4 points
+   * - bio/birthPlace/nativePlace/profession contains: 2 points each
+   */
+  private async searchWithLike(
+    sanitized: string,
+    limit: number,
+    offset: number,
+    startTime: number
+  ): Promise<SearchResults<SearchPersonRow>> {
     const terms = sanitized
       .toLowerCase()
       .split(/\s+/)
@@ -65,11 +160,9 @@ export class SqliteSearchEngine implements SearchEngine {
     }
 
     // Build LIKE conditions for each term across searchable fields
-    // Each term must match at least one field (AND across terms)
     const termConditions: Array<string> = [];
 
     for (const _term of terms) {
-      // This term must match at least one searchable field
       termConditions.push(`(
         LOWER("firstName") LIKE ? ESCAPE '\\' OR
         LOWER("lastName") LIKE ? ESCAPE '\\' OR
@@ -81,7 +174,6 @@ export class SqliteSearchEngine implements SearchEngine {
       )`);
     }
 
-    // WHERE params then scoring params then pagination
     const whereParams: Array<unknown> = [];
     const scoreParams: Array<unknown> = [];
 
@@ -186,4 +278,15 @@ export class SqliteSearchEngine implements SearchEngine {
  */
 function escapeSqliteLike(value: string): string {
   return value.replace(/[%_\\]/g, "\\$&");
+}
+
+/**
+ * Escape special characters in an FTS5 MATCH query.
+ * FTS5 has special characters: ", *, :, etc.
+ * Double quotes delimit phrases, so they must be escaped or removed.
+ * Wildcard * is handled separately in the query builder.
+ */
+function escapeFts5Term(value: string): string {
+  // Remove or escape double quotes which have special meaning in FTS5
+  return value.replace(/"/g, "");
 }

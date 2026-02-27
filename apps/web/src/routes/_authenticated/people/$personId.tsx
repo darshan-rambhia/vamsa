@@ -1,11 +1,10 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { calculateAge, formatDate } from "@vamsa/lib";
-import { Container } from "@vamsa/ui";
+import { Container, buttonVariants } from "@vamsa/ui";
 import {
   Avatar,
   Badge,
-  Button,
   Card,
   CardContent,
   Tabs,
@@ -114,9 +113,9 @@ function PersonDetailComponent() {
             <p className="text-muted-foreground mb-6">
               This person may have been removed or the link is incorrect.
             </p>
-            <Button asChild>
-              <Link to="/people">Back to People</Link>
-            </Button>
+            <Link to="/people" className={buttonVariants()}>
+              Back to People
+            </Link>
           </CardContent>
         </Card>
       </Container>
@@ -196,11 +195,13 @@ function PersonDetailComponent() {
               )}
             </div>
 
-            <Button asChild variant="outline">
-              <Link to="/people/$personId/edit" params={{ personId }}>
-                Edit Profile
-              </Link>
-            </Button>
+            <Link
+              to="/people/$personId/edit"
+              params={{ personId }}
+              className={buttonVariants({ variant: "outline" })}
+            >
+              Edit Profile
+            </Link>
           </div>
         </CardContent>
       </Card>

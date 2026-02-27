@@ -5,7 +5,7 @@ export default defineConfig({
     name: "ai",
     include: ["src/**/*.test.ts"],
     coverage: {
-      provider: "v8",
+      provider: "istanbul",
       include: ["src/**/*.ts"],
       exclude: [
         "src/**/*.test.ts",

@@ -53,14 +53,8 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Check formatting
-        run: bun run format:check
-
-      - name: Run ESLint
-        run: bun run lint
-
-      - name: TypeScript check
-        run: bun run typecheck
+      - name: Run quality checks
+        run: bun run quality:ci
 
   unit-tests:
     name: Unit Tests
@@ -80,7 +74,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Run unit tests with coverage
-        run: bun run vitest run --coverage
+        run: bun run test:focus -- --suite unit --coverage
         env:
           CI: true
 
@@ -93,6 +87,60 @@ jobs:
             packages/*/coverage/
             apps/*/coverage/
           retention-days: 7
+
+  integration-tests:
+    name: Integration Tests (${{ matrix.db-driver }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: |
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'area:backend')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        db-driver: [sqlite, postgres]
+
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: vamsa_test
+          POSTGRES_PASSWORD: vamsa_test
+          POSTGRES_DB: vamsa_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Run integration tests (SQLite)
+        if: matrix.db-driver == 'sqlite'
+        run: bun run test:integration -- --db sqlite
+        env:
+          CI: true
+
+      - name: Run integration tests (PostgreSQL)
+        if: matrix.db-driver == 'postgres'
+        run: bun run test:integration -- --db postgres
+        env:
+          CI: true
+          DATABASE_URL: postgresql://vamsa_test:vamsa_test@localhost:5432/vamsa_test
 
   schema-drift:
     name: Schema Drift Check
@@ -170,7 +218,7 @@ jobs:
 
   quality-gate:
     name: Quality Gate
-    needs: [quality, unit-tests, build, docker, schema-drift]
+    needs: [quality, unit-tests, integration-tests, build, docker, schema-drift]
     runs-on: ubuntu-latest
     if: always()
 
@@ -179,12 +227,14 @@ jobs:
         env:
           QUALITY_RESULT: ${{ needs.quality.result }}
           TESTS_RESULT: ${{ needs.unit-tests.result }}
+          INT_TESTS_RESULT: ${{ needs.integration-tests.result }}
           BUILD_RESULT: ${{ needs.build.result }}
           DOCKER_RESULT: ${{ needs.docker.result }}
           SCHEMA_RESULT: ${{ needs.schema-drift.result }}
         run: |
           echo "Quality: $QUALITY_RESULT"
           echo "Unit Tests: $TESTS_RESULT"
+          echo "Integration Tests: $INT_TESTS_RESULT"
           echo "Build: $BUILD_RESULT"
           echo "Docker: $DOCKER_RESULT"
           echo "Schema Drift: $SCHEMA_RESULT"
@@ -196,6 +246,11 @@ jobs:
 
           if [[ "$TESTS_RESULT" != "success" ]]; then
             echo "Unit tests failed or coverage below threshold"
+            exit 1
+          fi
+
+          if [[ "$INT_TESTS_RESULT" != "success" && "$INT_TESTS_RESULT" != "skipped" ]]; then
+            echo "Integration tests failed"
             exit 1
           fi
 

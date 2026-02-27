@@ -15,7 +15,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint src/",
-    "test": "bun run vitest run"
+    "test": "bun --bun vitest run"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.20"

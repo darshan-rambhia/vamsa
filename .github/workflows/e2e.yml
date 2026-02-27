@@ -78,6 +78,11 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
 
+    outputs:
+      chromium-result: ${{ steps.set-browser-result.outputs.chromium-result }}
+      firefox-result: ${{ steps.set-browser-result.outputs.firefox-result }}
+      webkit-result: ${{ steps.set-browser-result.outputs.webkit-result }}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -196,6 +201,24 @@ jobs:
         if: always()
         run: docker compose -f docker/docker-compose.local.yml --profile e2e down -v
 
+      - id: set-browser-result
+        if: always()
+        env:
+          BROWSER: ${{ matrix.browser }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          case "$BROWSER" in
+            chromium)
+              echo "chromium-result=$JOB_STATUS" >> $GITHUB_OUTPUT
+              ;;
+            firefox)
+              echo "firefox-result=$JOB_STATUS" >> $GITHUB_OUTPUT
+              ;;
+            webkit)
+              echo "webkit-result=$JOB_STATUS" >> $GITHUB_OUTPUT
+              ;;
+          esac
+
   e2e-summary:
     name: E2E Summary
     needs: e2e-tests
@@ -227,12 +250,20 @@ jobs:
         with:
           script: |
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            const result = '${{ needs.e2e-tests.result }}';
-            const resultEmoji = result === 'success' ? '✅' : '❌';
-            const marker = '<!-- vamsa-e2e-results -->';
-            const overallText = result === 'success' ? '✅ All browsers passed' : '❌ Some browsers failed';
+            const chromiumResult = '${{ needs.e2e-tests.outputs.chromium-result }}';
+            const firefoxResult = '${{ needs.e2e-tests.outputs.firefox-result }}';
+            const webkitResult = '${{ needs.e2e-tests.outputs.webkit-result }}';
 
-            const body = `${marker}\n## E2E Test Results\n\n| Browser | Status |\n|---------|--------|\n| Chromium | ${resultEmoji} |\n| Firefox | ${resultEmoji} |\n| WebKit | ${resultEmoji} |\n\n**Overall Result:** ${overallText}\n\n[View full Playwright report](${runUrl})`;
+            const getEmoji = (result) => result === 'success' ? '✅' : '❌';
+            const chromiumEmoji = getEmoji(chromiumResult);
+            const firefoxEmoji = getEmoji(firefoxResult);
+            const webkitEmoji = getEmoji(webkitResult);
+
+            const allPassed = chromiumResult === 'success' && firefoxResult === 'success' && webkitResult === 'success';
+            const overallText = allPassed ? '✅ All browsers passed' : '❌ Some browsers failed';
+
+            const marker = '<!-- vamsa-e2e-results -->';
+            const body = `${marker}\n## E2E Test Results\n\n| Browser | Status |\n|---------|--------|\n| Chromium | ${chromiumEmoji} |\n| Firefox | ${firefoxEmoji} |\n| WebKit | ${webkitEmoji} |\n\n**Overall Result:** ${overallText}\n\n[View full Playwright report](${runUrl})`;
 
             // Find existing comment with marker
             const { data: comments } = await github.rest.issues.listComments({
@@ -261,26 +292,43 @@ jobs:
       - name: Write GitHub Actions Job Summary
         if: always()
         env:
-          E2E_RESULT: ${{ needs.e2e-tests.result }}
+          CHROMIUM_RESULT: ${{ needs.e2e-tests.outputs.chromium-result }}
+          FIREFOX_RESULT: ${{ needs.e2e-tests.outputs.firefox-result }}
+          WEBKIT_RESULT: ${{ needs.e2e-tests.outputs.webkit-result }}
           RUN_ID: ${{ github.run_id }}
           REPO: ${{ github.repository }}
         run: |
-          RESULT_EMOJI=$([ "$E2E_RESULT" = "success" ] && echo "✅" || echo "❌")
+          get_emoji() {
+            if [ "$1" = "success" ]; then
+              echo "✅"
+            else
+              echo "❌"
+            fi
+          }
+
+          CHROMIUM_EMOJI=$(get_emoji "$CHROMIUM_RESULT")
+          FIREFOX_EMOJI=$(get_emoji "$FIREFOX_RESULT")
+          WEBKIT_EMOJI=$(get_emoji "$WEBKIT_RESULT")
+
           RUN_URL="https://github.com/$REPO/actions/runs/$RUN_ID"
+
+          # Determine overall result
+          if [ "$CHROMIUM_RESULT" = "success" ] && [ "$FIREFOX_RESULT" = "success" ] && [ "$WEBKIT_RESULT" = "success" ]; then
+            OVERALL_TEXT="✅ All browsers passed"
+          else
+            OVERALL_TEXT="❌ Some browsers failed"
+          fi
+
           {
             echo "## E2E Test Results"
             echo ""
             echo "| Browser | Status |"
             echo "|---------|--------|"
-            echo "| Chromium | $RESULT_EMOJI |"
-            echo "| Firefox | $RESULT_EMOJI |"
-            echo "| WebKit | $RESULT_EMOJI |"
+            echo "| Chromium | $CHROMIUM_EMOJI |"
+            echo "| Firefox | $FIREFOX_EMOJI |"
+            echo "| WebKit | $WEBKIT_EMOJI |"
             echo ""
-            if [ "$E2E_RESULT" = "success" ]; then
-              echo "**Overall Result:** ✅ All browsers passed"
-            else
-              echo "**Overall Result:** ❌ Some browsers failed"
-            fi
+            echo "**Overall Result:** $OVERALL_TEXT"
             echo ""
             echo "[View full Playwright report]($RUN_URL)"
           } >> "$GITHUB_STEP_SUMMARY"
