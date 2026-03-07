@@ -16,7 +16,6 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import ical, { ICalEventRepeatingFreq } from "ical-generator";
-// @ts-expect-error - rss package lacks type declarations
 import RSS from "rss";
 import { loggers } from "@vamsa/lib/logger";
 import type { ICalCalendar } from "ical-generator";
