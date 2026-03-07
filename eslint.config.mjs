@@ -25,10 +25,12 @@ export default defineConfig(
   // Base ESLint recommended rules
   eslint.configs.recommended,
 
-  // TypeScript ESLint recommended rules
-  ...tseslint.configs.recommended,
+  // TypeScript ESLint recommended rules (strip plugins to avoid conflict with tanstackConfig)
+  // tanstackConfig registers @typescript-eslint; spreading recommended's plugins would
+  // cause "Cannot redefine plugin" errors with typescript-eslint >= 8.56.1
+  ...tseslint.configs.recommended.map(({ plugins: _plugins, ...rest }) => rest),
 
-  // TanStack ESLint configuration
+  // TanStack ESLint configuration (registers @typescript-eslint plugin)
   ...tanstackConfig,
 
   // Global ignores
