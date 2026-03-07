@@ -173,7 +173,7 @@ jobs:
 
       - name: Upload Playwright HTML report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: playwright-report-${{ matrix.browser }}
           path: test-output/e2e/playwright/
@@ -182,7 +182,7 @@ jobs:
 
       - name: Upload test artifacts (screenshots, videos, traces)
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: test-artifacts-${{ matrix.browser }}
           path: test-output/e2e/results/
