@@ -34,7 +34,7 @@ test.describe("Family Tree Visualization", () => {
     await expect(mainElement).toBeVisible();
 
     // Should have chart type selector
-    const chartTypeSelect = page.getByLabel(/chart type/i);
+    const chartTypeSelect = page.getByTestId("chart-type-select");
     await expect(chartTypeSelect).toBeVisible();
   });
 
@@ -93,7 +93,7 @@ test.describe("Family Tree Visualization", () => {
     await expect(page).toHaveURL(/type=ancestor/);
 
     // Chart type selector should show ancestor
-    const chartTypeSelect = page.getByLabel(/chart type/i);
+    const chartTypeSelect = page.getByTestId("chart-type-select");
     await expect(chartTypeSelect).toContainText(/ancestor/i);
   });
 
@@ -147,7 +147,7 @@ test.describe("Family Tree Visualization", () => {
 
     // Chart type should be preserved after reload
     await expect(page).toHaveURL(/type=timeline/);
-    const chartTypeSelect = page.getByLabel(/chart type/i);
+    const chartTypeSelect = page.getByTestId("chart-type-select");
     await expect(chartTypeSelect).toContainText(/timeline/i);
   });
 

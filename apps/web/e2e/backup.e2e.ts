@@ -42,7 +42,7 @@ test.describe("Feature: Backup & Export", () => {
         await expect(pageHeading.first()).toBeVisible();
 
         // Verify export form exists
-        const form = page.locator("form");
+        const form = page.locator("form").first();
         await expect(form).toBeVisible();
       });
 
@@ -65,7 +65,7 @@ test.describe("Feature: Backup & Export", () => {
 
       await bdd.and("user is on the backup export page", async () => {
         await gotoWithRetry(page, "/admin/backup");
-        const form = page.locator("form");
+        const form = page.locator("form").first();
         await expect(form).toBeVisible();
       });
 
@@ -118,7 +118,7 @@ test.describe("Feature: Backup & Export", () => {
         const url = page.url();
         const hasBackupContent =
           url.includes("admin") && url.includes("backup");
-        const hasForm = await page.locator("form").isVisible();
+        const hasForm = await page.locator("form").first().isVisible();
 
         expect(hasBackupContent || hasForm).toBeTruthy();
       });
@@ -344,7 +344,10 @@ test.describe("Feature: Backup & Export", () => {
 
       await bdd.and("user navigates to GEDCOM tab", async () => {
         await gotoWithRetry(page, "/admin/backup");
-        const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+        const gedcomTab = page.getByRole("tab", {
+          name: "GEDCOM",
+          exact: true,
+        });
         await expect(gedcomTab).toBeVisible();
         await gedcomTab.click();
       });
@@ -385,7 +388,10 @@ test.describe("Feature: Backup & Export", () => {
 
       await bdd.and("user is on the GEDCOM tab", async () => {
         await gotoWithRetry(page, "/admin/backup");
-        const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+        const gedcomTab = page.getByRole("tab", {
+          name: "GEDCOM",
+          exact: true,
+        });
         await gedcomTab.click();
       });
 
@@ -543,7 +549,10 @@ test.describe("Feature: Backup & Export", () => {
 
       await bdd.then("GEDCOM tab should be visible", async () => {
         // The GEDCOM tab should be present on the backup page
-        const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+        const gedcomTab = page.getByRole("tab", {
+          name: "GEDCOM",
+          exact: true,
+        });
         await expect(gedcomTab).toBeVisible();
 
         // The backup page description mentions GEDCOM
@@ -561,7 +570,10 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.then("GEDCOM tab can be clicked", async () => {
-        const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+        const gedcomTab = page.getByRole("tab", {
+          name: "GEDCOM",
+          exact: true,
+        });
         await expect(gedcomTab).toBeVisible();
 
         // Click should not throw error
@@ -582,7 +594,10 @@ test.describe("Feature: Backup & Export", () => {
 
       await bdd.when("user views GEDCOM import instructions", async () => {
         await gotoWithRetry(page, "/admin/backup");
-        const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+        const gedcomTab = page.getByRole("tab", {
+          name: "GEDCOM",
+          exact: true,
+        });
         await gedcomTab.click();
 
         // Wait for tab content to load
@@ -725,7 +740,7 @@ test.describe("Feature: Backup & Export", () => {
           } else {
             // Direct navigation should still work
             await gotoWithRetry(page, "/admin/backup");
-            const formExists = await page.locator("form").isVisible();
+            const formExists = await page.locator("form").first().isVisible();
             expect(formExists).toBeTruthy();
           }
         }
@@ -812,7 +827,7 @@ test.describe("Feature: Backup & Export", () => {
           await gedcomTab.click();
 
           // Wait for the GEDCOM tab to become selected
-          await expect(gedcomTab).toHaveAttribute("data-state", "active", {
+          await expect(gedcomTab).toHaveAttribute("aria-selected", "true", {
             timeout: 5000,
           });
 
@@ -876,7 +891,7 @@ test.describe("Feature: Backup & Export", () => {
       await waitForHydration(page);
 
       // Switch to GEDCOM tab
-      const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+      const gedcomTab = page.getByRole("tab", { name: "GEDCOM", exact: true });
       await expect(gedcomTab).toBeVisible({ timeout: 5000 });
       await gedcomTab.click();
 
@@ -939,7 +954,7 @@ test.describe("Feature: Backup & Export", () => {
       await waitForHydration(page);
 
       // Switch to GEDCOM tab
-      const gedcomTab = page.getByRole("tab", { name: /gedcom/i });
+      const gedcomTab = page.getByRole("tab", { name: "GEDCOM", exact: true });
       await expect(gedcomTab).toBeVisible({ timeout: 5000 });
       await gedcomTab.click();
 
