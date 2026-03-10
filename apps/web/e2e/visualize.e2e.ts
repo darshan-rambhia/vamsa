@@ -16,7 +16,7 @@ test.describe("Visualization Page", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/visualize", { waitUntil: "domcontentloaded" });
     await page
-      .getByLabel(/chart type/i)
+      .getByTestId("chart-type-select")
       .waitFor({ state: "visible", timeout: 10000 });
   });
 
@@ -24,7 +24,7 @@ test.describe("Visualization Page", () => {
     test("loads with Interactive Tree as default", async ({ page }) => {
       await expect(page).toHaveURL(/visualize/);
 
-      const chartTypeSelect = page.getByLabel(/chart type/i);
+      const chartTypeSelect = page.getByTestId("chart-type-select");
       await expect(chartTypeSelect).toContainText(/tree/i);
 
       // Main content renders
@@ -33,7 +33,7 @@ test.describe("Visualization Page", () => {
 
     test("shows all required controls", async ({ page }) => {
       // Chart type selector
-      await expect(page.getByLabel(/chart type/i)).toBeVisible();
+      await expect(page.getByTestId("chart-type-select")).toBeVisible();
 
       // Person selector
       await expect(page.getByLabel(/center on/i)).toBeVisible();
@@ -49,7 +49,7 @@ test.describe("Visualization Page", () => {
   test.describe("Chart Type Selection", () => {
     // Test that chart type selector can be opened
     test("user can open chart type dropdown", async ({ page }) => {
-      const chartTypeSelect = page.getByLabel(/chart type/i);
+      const chartTypeSelect = page.getByTestId("chart-type-select");
       await expect(chartTypeSelect).toBeVisible();
 
       // Click to open dropdown
@@ -99,9 +99,12 @@ test.describe("Visualization Page", () => {
       await expect(personInput).toBeVisible({ timeout: 10000 });
 
       // Wait for React hydration — the Chart Type selector shows text only after React state initializes
-      await expect(page.getByLabel(/chart type/i)).toContainText(/tree/i, {
-        timeout: 10000,
-      });
+      await expect(page.getByTestId("chart-type-select")).toContainText(
+        /tree/i,
+        {
+          timeout: 10000,
+        }
+      );
 
       // Click the input to focus it and open the dropdown
       await personInput.click();
@@ -124,7 +127,7 @@ test.describe("Visualization Page", () => {
 
       // Verify page loaded correctly
       await expect(page.locator("main")).toBeVisible();
-      await expect(page.getByLabel(/chart type/i)).toBeVisible();
+      await expect(page.getByTestId("chart-type-select")).toBeVisible();
     });
 
     test("restores chart from URL parameters on load", async ({ page }) => {
@@ -132,7 +135,7 @@ test.describe("Visualization Page", () => {
         waitUntil: "domcontentloaded",
       });
 
-      const chartTypeSelect = page.getByLabel(/chart type/i);
+      const chartTypeSelect = page.getByTestId("chart-type-select");
       await expect(chartTypeSelect).toContainText(/matrix/i);
     });
 
@@ -175,7 +178,7 @@ test.describe("Visualization Page", () => {
         await page.waitForTimeout(300);
 
         // Chart selector and main content should be visible at all sizes
-        await expect(page.getByLabel(/chart type/i)).toBeVisible();
+        await expect(page.getByTestId("chart-type-select")).toBeVisible();
         await expect(page.locator("main")).toBeVisible();
       }
     });
@@ -183,7 +186,7 @@ test.describe("Visualization Page", () => {
 
   test.describe("Keyboard Navigation", () => {
     test("supports keyboard navigation on chart selector", async ({ page }) => {
-      const chartTypeSelect = page.getByLabel(/chart type/i);
+      const chartTypeSelect = page.getByTestId("chart-type-select");
       await chartTypeSelect.focus();
 
       // Arrow key should open/navigate dropdown

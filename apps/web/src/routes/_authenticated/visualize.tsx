@@ -363,7 +363,11 @@ function VisualizeComponent() {
                 handleTypeChange(value as VisualizationType)
               }
             >
-              <SelectTrigger id={chartTypeId} className="h-9 w-40">
+              <SelectTrigger
+                id={chartTypeId}
+                className="h-9 w-40"
+                data-testid="chart-type-select"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
