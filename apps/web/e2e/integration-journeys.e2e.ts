@@ -334,7 +334,7 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
         await expect(visualizeContent).toBeVisible({ timeout: 10000 });
 
         // Tree should be loaded
-        const chartTypeSelect = page.getByLabel(/chart type/i);
+        const chartTypeSelect = page.getByTestId("chart-type-select");
         await expect(chartTypeSelect).toBeVisible({ timeout: 5000 });
       }
     );
