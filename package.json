@@ -136,7 +136,7 @@
     "@types/bun": "latest",
     "@types/node": "25.4.0",
     "@vitest/coverage-istanbul": "4.0.18",
-    "better-sqlite3": "12.6.2",
+    "better-sqlite3": "12.8.0",
     "conventional-changelog-conventionalcommits": "9.3.0",
     "eslint": "9.39.4",
     "eslint-config-prettier": "10.1.8",
