@@ -22,6 +22,7 @@ WORKDIR /app
 # Copy package files for dependency installation
 COPY package.json bun.lock bunfig.toml ./
 COPY apps/ai/package.json ./apps/ai/
+COPY apps/mobile/package.json ./apps/mobile/
 COPY apps/web/package.json ./apps/web/
 COPY packages/api/package.json ./packages/api/
 COPY packages/client/package.json ./packages/client/
@@ -61,6 +62,7 @@ WORKDIR /app
 
 COPY package.json bun.lock bunfig.toml ./
 COPY apps/ai/package.json ./apps/ai/
+COPY apps/mobile/package.json ./apps/mobile/
 COPY apps/web/package.json ./apps/web/
 COPY packages/api/package.json ./packages/api/
 COPY packages/client/package.json ./packages/client/
