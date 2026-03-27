@@ -2,8 +2,12 @@
  * Integration Test Setup
  *
  * Creates database connections for integration tests.
- * - SQLite: uses better-sqlite3 (works in Node.js / Vitest workers)
+ * - SQLite: uses bun:sqlite (Bun-native, no native addons needed)
  * - PostgreSQL: uses pg + drizzle-orm/node-postgres
+ *
+ * PostgreSQL migrations are handled once by global-setup.ts before forks
+ * start, to avoid race conditions between parallel test workers.
+ * SQLite runs migrations inline since each fork has its own :memory: DB.
  *
  * Run:
  *   bun run test:int           # SQLite (default, no Docker needed)
@@ -45,22 +49,22 @@ let _db: any;
 let _schema: typeof pgSchemaTypes;
 
 if (driver === "sqlite") {
-  const { default: Database } = await import("better-sqlite3");
-  const { drizzle } = await import("drizzle-orm/better-sqlite3");
+  const { Database } = await import("bun:sqlite");
+  const { drizzle } = await import("drizzle-orm/bun-sqlite");
   const sqliteSchema =
     await import("../../../../packages/api/src/drizzle/schema-sqlite/index");
 
   const dbPath = process.env.DATABASE_URL || ":memory:";
   const sqlite = new Database(dbPath);
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
+  sqlite.run("PRAGMA journal_mode = WAL");
+  sqlite.run("PRAGMA foreign_keys = ON");
 
   _db = drizzle(sqlite, { schema: sqliteSchema });
   _schema = sqliteSchema as unknown as typeof pgSchemaTypes;
 
-  // Run SQLite migrations (synchronous in better-sqlite3)
+  // Run SQLite migrations (synchronous, per-fork — each fork has its own :memory: DB)
   try {
-    const { migrate } = await import("drizzle-orm/better-sqlite3/migrator");
+    const { migrate } = await import("drizzle-orm/bun-sqlite/migrator");
     const migrationsPath = path.resolve(
       import.meta.dirname,
       "../../../../packages/api/drizzle-sqlite"
@@ -86,20 +90,8 @@ if (driver === "sqlite") {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   _db = drizzle(pool, { schema: pgSchema });
   _schema = pgSchema;
-
-  // Run PostgreSQL migrations
-  try {
-    const { migrate } = await import("drizzle-orm/node-postgres/migrator");
-    const migrationsPath = path.resolve(
-      import.meta.dirname,
-      "../../../../packages/api/drizzle"
-    );
-    await migrate(_db, { migrationsFolder: migrationsPath });
-  } catch (error) {
-    if (error instanceof Error) {
-      console.debug(`Migration note: ${error.message}`);
-    }
-  }
+  // Migrations are run once by global-setup.ts before any forks start,
+  // preventing race conditions when parallel workers all try to migrate.
 }
 
 export const testDb = {
@@ -145,7 +137,6 @@ export async function cleanupTestData(): Promise<void> {
 
   if (driver === "sqlite") {
     // SQLite: ordered DELETE FROM (no CASCADE support on TRUNCATE)
-    // drizzle/better-sqlite3 uses db.run() for DML without results
     for (const table of tables) {
       db.run(sql.raw(`DELETE FROM "${table}"`));
     }
@@ -338,7 +329,7 @@ export async function findUserById(
  */
 export async function countRelationships(): Promise<number> {
   if (driver === "sqlite") {
-    // drizzle/better-sqlite3: db.all() for queries returning rows (synchronous)
+    // drizzle/bun-sqlite: db.all() is synchronous
     const rows = testDb.db.all(
       sql`SELECT COUNT(*) as count FROM "Relationship"`
     );
