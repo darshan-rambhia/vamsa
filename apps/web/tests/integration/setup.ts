@@ -270,8 +270,7 @@ export async function createTestPersonWithRelatives(
       firstName: "Jack",
       lastName: "Doe",
       gender: "MALE",
-      // Use ISO string — works for both Postgres date columns and SQLite text columns
-      dateOfBirth: "2000-01-01",
+      dateOfBirth: toDateValue("2000-01-01"),
       isLiving: true,
       createdById: creatorId,
       updatedAt: new Date(),
@@ -343,6 +342,14 @@ export async function countRelationships(): Promise<number> {
     ? result
     : ((result as { rows: unknown[] }).rows ?? []);
   return Number((rows[0] as { count: unknown })?.count ?? 0);
+}
+
+/**
+ * Convert a date string to the correct type for the current database driver.
+ * Postgres date columns (mode: "date") require Date objects; SQLite text columns accept strings.
+ */
+export function toDateValue(dateStr: string): Date | string {
+  return driver === "postgres" ? new Date(dateStr) : dateStr;
 }
 
 export { eq, sql, randomUUID };

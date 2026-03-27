@@ -18,6 +18,7 @@ import {
   cleanupTestData,
   seedTestData,
   findPersonById,
+  toDateValue,
   eq,
   randomUUID,
 } from "./setup";
@@ -74,8 +75,7 @@ describe("Person Integration Tests", () => {
         firstName: "Jane",
         lastName: "Smith",
         maidenName: "Johnson",
-        // ISO string works for both Postgres date columns and SQLite text columns
-        dateOfBirth: "1990-05-15",
+        dateOfBirth: toDateValue("1990-05-15"),
         birthPlace: "New York",
         gender: "FEMALE" as const,
         email: "jane@example.com",
@@ -195,7 +195,7 @@ describe("Person Integration Tests", () => {
           id: randomUUID(),
           firstName: "Test",
           lastName: "Person",
-          dateOfBirth: "1990-01-01",
+          dateOfBirth: toDateValue("1990-01-01"),
           isLiving: true,
           createdById: adminUser.id,
           updatedAt: new Date(),
@@ -236,7 +236,7 @@ describe("Person Integration Tests", () => {
         .update(testDb.schema.persons)
         .set({
           isLiving: false,
-          dateOfPassing: "2023-01-01",
+          dateOfPassing: toDateValue("2023-01-01"),
           updatedAt: new Date(),
         })
         .where(eq(testDb.schema.persons.id, created.id))
@@ -377,13 +377,14 @@ describe("Person Integration Tests", () => {
 
     it("finds persons by date of birth", async () => {
       const dob = "1990-05-15";
+      const dobValue = toDateValue(dob);
 
       await testDb.db.insert(testDb.schema.persons).values([
         {
           id: randomUUID(),
           firstName: "Person",
           lastName: "OneDOB",
-          dateOfBirth: dob,
+          dateOfBirth: dobValue,
           isLiving: true,
           createdById: adminUser.id,
           updatedAt: new Date(),
@@ -392,7 +393,7 @@ describe("Person Integration Tests", () => {
           id: randomUUID(),
           firstName: "Different",
           lastName: "DOB",
-          dateOfBirth: "1995-01-01",
+          dateOfBirth: toDateValue("1995-01-01"),
           isLiving: true,
           createdById: adminUser.id,
           updatedAt: new Date(),
@@ -400,7 +401,7 @@ describe("Person Integration Tests", () => {
       ]);
 
       const matching = await testDb.db.query.persons.findMany({
-        where: eq(testDb.schema.persons.dateOfBirth, dob),
+        where: eq(testDb.schema.persons.dateOfBirth, dobValue),
       });
 
       expect(matching.length).toBeGreaterThanOrEqual(1);
