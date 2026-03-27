@@ -1,5 +1,13 @@
-import { useState } from "react";
-import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import { useRouter } from "expo-router";
 
 import {
   loginWithEmail,
@@ -7,6 +15,79 @@ import {
   setManualAuthCookie,
 } from "@/src/features/auth/api";
 import { useAuthState } from "@/src/features/auth/use-auth-state";
+import { useServerConfig } from "@/src/context/server-config-context";
+
+type ProbeStatus = "idle" | "probing" | "ok" | "fail";
+
+function ServerSection() {
+  const { activeUrl, probeServer } = useServerConfig();
+  const [status, setStatus] = useState<ProbeStatus>("idle");
+  const router = useRouter();
+
+  useEffect(() => {
+    let cancelled = false;
+    setStatus("probing");
+    probeServer(activeUrl).then((ok) => {
+      if (!cancelled) setStatus(ok ? "ok" : "fail");
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeUrl, probeServer]);
+
+  const dotColor =
+    status === "ok" ? "#16a34a" : status === "fail" ? "#dc2626" : "#9ca3af";
+
+  return (
+    <View
+      style={{
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: "#d1d5db",
+        backgroundColor: "#fff",
+        padding: 16,
+        gap: 10,
+      }}
+    >
+      <Text selectable style={{ color: "#111827", fontWeight: "600" }}>
+        Server
+      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        {status === "probing" ? (
+          <ActivityIndicator size="small" color="#6b7280" />
+        ) : (
+          <View
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 5,
+              backgroundColor: dotColor,
+              marginTop: 1,
+            }}
+          />
+        )}
+        <Text
+          selectable
+          numberOfLines={1}
+          style={{ color: "#374151", flex: 1, fontSize: 13 }}
+        >
+          {activeUrl}
+        </Text>
+      </View>
+      <Pressable
+        onPress={() => router.push("/settings/servers" as never)}
+        style={{
+          borderRadius: 10,
+          paddingVertical: 9,
+          alignItems: "center",
+          backgroundColor: "#2563eb",
+        }}
+      >
+        <Text style={{ color: "#fff", fontWeight: "600" }}>Manage Servers</Text>
+      </Pressable>
+    </View>
+  );
+}
 
 export default function TabTwoScreen() {
   const auth = useAuthState();
@@ -92,6 +173,9 @@ export default function TabTwoScreen() {
       >
         Settings
       </Text>
+
+      <ServerSection />
+
       <View
         style={{
           borderRadius: 16,

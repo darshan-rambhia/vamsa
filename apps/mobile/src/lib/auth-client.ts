@@ -3,7 +3,7 @@ import { createAuthClient } from "better-auth/react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
-import { getServerBaseUrl } from "./api-base-url";
+import { getActiveServerUrl } from "./server-config";
 
 const storage =
   Platform.OS === "web"
@@ -48,14 +48,31 @@ const storage =
         },
       };
 
-export const authClient = createAuthClient({
-  baseURL: getServerBaseUrl(),
-  plugins: [
-    expoClient({
-      storage,
-      storagePrefix: "vamsa-mobile",
-      cookiePrefix: "better-auth",
-      scheme: "mobile",
-    }),
-  ],
-});
+function buildClient(baseUrl: string) {
+  return createAuthClient({
+    baseURL: baseUrl,
+    plugins: [
+      expoClient({
+        storage,
+        storagePrefix: "vamsa-mobile",
+        cookiePrefix: "better-auth",
+        scheme: "mobile",
+      }),
+    ],
+  });
+}
+
+type AuthClient = ReturnType<typeof buildClient>;
+
+let _client: AuthClient | null = null;
+
+export function getAuthClient(): AuthClient {
+  if (!_client) {
+    _client = buildClient(getActiveServerUrl());
+  }
+  return _client;
+}
+
+export function resetAuthClient(): void {
+  _client = null;
+}

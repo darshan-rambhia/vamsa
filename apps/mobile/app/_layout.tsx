@@ -24,6 +24,7 @@ import "react-native-reanimated";
 
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
+import { ServerConfigProvider } from "@/src/context/server-config-context";
 
 const CustomLightTheme: Theme = {
   ...DefaultTheme,
@@ -92,7 +93,11 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <ServerConfigProvider>
+      <RootLayoutNav />
+    </ServerConfigProvider>
+  );
 }
 
 function RootLayoutNav() {
@@ -105,6 +110,7 @@ function RootLayoutNav() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="person/[id]" options={{ title: "Person" }} />
+        <Stack.Screen name="settings/servers" options={{ title: "Servers" }} />
         <Stack.Screen name="modal" options={{ presentation: "modal" }} />
       </Stack>
     </ThemeProvider>
