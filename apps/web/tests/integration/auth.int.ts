@@ -112,7 +112,7 @@ describe("Authentication Integration Tests", () => {
       // Create multiple members
       await createTestUser("MEMBER");
       await createTestUser("MEMBER");
-      await createTestUser("GUEST");
+      await createTestUser("VIEWER");
 
       const members = await testDb.db.query.users.findMany({
         where: eq(testDb.schema.users.role, "MEMBER"),
