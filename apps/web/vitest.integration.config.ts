@@ -21,6 +21,9 @@ export default defineConfig({
     environment: "node",
     include: ["tests/integration/**/*.int.ts"],
     testTimeout: 30000,
+    // Runs migrations once before any forks start (postgres only).
+    // Prevents race conditions when parallel workers all try to migrate the same DB.
+    globalSetup: ["./tests/integration/global-setup.ts"],
     // Each file runs in its own process — critical for SQLite :memory: isolation
     // and for ensuring each file gets a fresh DB connection.
     pool: "forks",
