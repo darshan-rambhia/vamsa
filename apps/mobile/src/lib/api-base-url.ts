@@ -1,24 +1,9 @@
-import { Platform } from "react-native";
-
-const removeTrailingSlash = (value: string) => value.replace(/\/+$/, "");
+import { getActiveServerUrl } from "./server-config";
 
 export function getServerBaseUrl(): string {
-  const configured = process.env.EXPO_PUBLIC_API_BASE_URL;
-  if (configured) {
-    return removeTrailingSlash(configured);
-  }
-
-  if (Platform.OS === "web" && typeof window !== "undefined") {
-    return removeTrailingSlash(window.location.origin);
-  }
-
-  if (Platform.OS === "android") {
-    return "http://10.0.2.2:3000";
-  }
-
-  return "http://localhost:3000";
+  return getActiveServerUrl();
 }
 
 export function getApiBaseUrl(): string {
-  return `${getServerBaseUrl()}/api/v1`;
+  return `${getActiveServerUrl()}/api/v1`;
 }

@@ -1,4 +1,4 @@
-import { authClient } from "@/src/lib/auth-client";
+import { getAuthClient } from "@/src/lib/auth-client";
 
 export type AuthCookieSource = "none" | "env" | "client" | "manual";
 
@@ -46,14 +46,15 @@ export function subscribeAuthChange(listener: () => void): () => void {
 
 export function getAuthCookieSource(): AuthCookieSource {
   if (manualCookieOverride) return "manual";
-  const clientCookie = authClient.getCookie();
+  const clientCookie = getAuthClient().getCookie();
   if (clientCookie) return "client";
   if (envCookie) return "env";
   return "none";
 }
 
 export function getAuthCookie(): string | undefined {
-  const cookie = manualCookieOverride || authClient.getCookie() || envCookie;
+  const cookie =
+    manualCookieOverride || getAuthClient().getCookie() || envCookie;
   if (!cookie) {
     return undefined;
   }
@@ -77,7 +78,7 @@ export async function loginWithEmail(
   email: string,
   password: string
 ): Promise<{ warning?: string }> {
-  const response = await authClient.signIn.email({
+  const response = await getAuthClient().signIn.email({
     email,
     password,
   });
@@ -100,7 +101,7 @@ export async function loginWithEmail(
 }
 
 export async function logout() {
-  const response = await authClient.signOut();
+  const response = await getAuthClient().signOut();
   if (response.error) {
     throw new Error(response.error.message || "Logout failed");
   }

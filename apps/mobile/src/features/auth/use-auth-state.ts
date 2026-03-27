@@ -6,10 +6,10 @@ import {
   getAuthVersionSnapshot,
   subscribeAuthChange,
 } from "./api";
-import { authClient } from "@/src/lib/auth-client";
+import { getAuthClient } from "@/src/lib/auth-client";
 
 export function useAuthState() {
-  const { data: session, isPending } = authClient.useSession();
+  const { data: session, isPending } = getAuthClient().useSession();
   useSyncExternalStore(
     subscribeAuthChange,
     getAuthVersionSnapshot,
