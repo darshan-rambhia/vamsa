@@ -116,7 +116,7 @@
     "@hono/zod-openapi": "1.2.4",
     "cmdk": "1.1.1",
     "date-fns": "4.1.0",
-    "drizzle-orm": "0.45.1",
+    "drizzle-orm": "0.45.2",
     "html2canvas": "1.4.1",
     "ical-generator": "10.0.0",
     "maplibre-gl": "5.19.0",
@@ -159,7 +159,7 @@
   },
   "overrides": {
     "@react-email/render": "^2.0.4",
-    "drizzle-orm": "0.45.1",
+    "drizzle-orm": "0.45.2",
     "hono": ">=4.12.3",
     "lodash": ">=4.17.23",
     "playwright-core": "1.58.2",
