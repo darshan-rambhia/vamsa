@@ -134,7 +134,7 @@
     "@testing-library/react": "16.3.2",
     "@types/better-sqlite3": "7.6.13",
     "@types/bun": "latest",
-    "@types/node": "25.5.0",
+    "@types/node": "25.6.0",
     "@vitest/coverage-istanbul": "4.1.2",
     "better-sqlite3": "12.9.0",
     "conventional-changelog-conventionalcommits": "9.3.1",
