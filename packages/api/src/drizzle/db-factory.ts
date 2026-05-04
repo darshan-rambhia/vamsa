@@ -53,7 +53,7 @@ export async function createSeedConnection(
   const pool = new Pool({ connectionString });
   const db = drizzle(pool, { schema: pgSchema });
   return {
-    db: db as unknown as DrizzleDB,
+    db: db,
     schema: pgSchema,
     close: async () => {
       await pool.end();

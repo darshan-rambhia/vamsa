@@ -601,7 +601,7 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
         }),
       } as any;
 
-      const result = await createPersonData(personData as any, userId, mockDb);
+      const result = await createPersonData(personData, userId, mockDb);
 
       expect(transactionCalled).toBe(true);
       expect(result.id).toBeDefined();

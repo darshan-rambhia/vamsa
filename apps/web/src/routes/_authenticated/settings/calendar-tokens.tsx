@@ -129,7 +129,7 @@ function CalendarTokensPage() {
       queryClient.invalidateQueries({ queryKey: ["calendar-tokens"] });
       setError(null);
       // Show the updated URLs dialog with the new token
-      setRotatedToken(newToken as CalendarToken);
+      setRotatedToken(newToken);
     },
     onError: (err) => {
       setError(err instanceof Error ? err.message : "Failed to rotate token");

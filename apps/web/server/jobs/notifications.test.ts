@@ -170,7 +170,7 @@ describe("Backup Notifications", () => {
       const input: BackupNotificationInput = {
         type: "success",
         filename: "backup.zip",
-        emails: [] as any,
+        emails: [],
       };
 
       let errorThrown = false;

@@ -154,7 +154,7 @@ MIIBkTCB+wIJAKHHCgVZKwVOMA0GCSqGSIb3DQEBBQUAMBMxETAPBgNVBAMMCENv
   describe("invalid modes", () => {
     it("should use default behavior for unrecognized SSL mode", () => {
       vi.stubEnv("NODE_ENV", "production");
-      vi.stubEnv("DB_SSL_MODE", "invalid-mode" as any);
+      vi.stubEnv("DB_SSL_MODE", "invalid-mode");
 
       const config = getSslConfig();
 

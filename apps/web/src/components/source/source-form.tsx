@@ -112,7 +112,7 @@ export function SourceForm({
         data: {
           id: sourceId,
           ...data,
-        } as SourceUpdateInput,
+        },
       });
     } else {
       createMutation.mutate({ data });

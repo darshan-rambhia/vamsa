@@ -30,7 +30,6 @@ import {
 } from "@vamsa/lib/server/business";
 import { requireAuth } from "./middleware/require-auth";
 import type {
-  Backup,
   BackupExportInput,
   BackupMetadata,
   BackupSettings,
@@ -186,7 +185,7 @@ export const listBackups = createServerFn({ method: "POST" })
         error: b.error,
         createdAt: b.createdAt,
         deletedAt: b.deletedAt,
-      })) as Array<Backup>,
+      })),
       total,
       hasMore: data.offset + data.limit < total,
     };
