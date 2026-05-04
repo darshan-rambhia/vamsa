@@ -73,7 +73,7 @@ export async function validateBackupData(
       },
       errors: [],
       warnings: [],
-    } as ValidationResult;
+    };
   } catch (error) {
     log.withErr(error).msg("Backup validation error");
     throw new Error(
@@ -152,7 +152,7 @@ export async function previewImportData(
         minSeconds: 5,
         maxSeconds: 30,
       },
-    } as ImportPreview;
+    };
   } catch (error) {
     log.withErr(error).msg("Import preview error");
     throw new Error(
@@ -235,7 +235,7 @@ export async function importBackupData(
         },
         errors: [],
         warnings: [],
-      } as ImportResult;
+      };
     });
 
     return result;

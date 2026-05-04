@@ -15,7 +15,6 @@ import { loggers } from "@vamsa/lib/logger";
 import { db, drizzleSchema } from "../db";
 import { deleteFromStorage, uploadToStorage } from "./storage";
 import { sendBackupNotification } from "./notifications";
-import type { StorageProvider } from "./storage";
 import type { BackupSettings, BackupType } from "@vamsa/api";
 
 const log = loggers.jobs;
@@ -240,16 +239,11 @@ export async function performBackup(type: BackupType): Promise<string> {
     // Upload to cloud storage if configured
     if (settings?.storageProvider && settings.storageProvider !== "LOCAL") {
       try {
-        await uploadToStorage(
-          settings.storageProvider as StorageProvider,
-          filename,
-          zipBuffer,
-          {
-            bucket: settings.storageBucket!,
-            region: settings.storageRegion || undefined,
-            prefix: settings.storagePath || undefined,
-          }
-        );
+        await uploadToStorage(settings.storageProvider, filename, zipBuffer, {
+          bucket: settings.storageBucket!,
+          region: settings.storageRegion || undefined,
+          prefix: settings.storagePath || undefined,
+        });
         log.info(
           { provider: settings.storageProvider },
           "Backup uploaded to cloud"
@@ -402,7 +396,7 @@ async function rotateBackups(
     if (backupToDelete.location !== "LOCAL" && settings.storageBucket) {
       try {
         await deleteFromStorage(
-          backupToDelete.location as StorageProvider,
+          backupToDelete.location,
           backupToDelete.filename,
           {
             bucket: settings.storageBucket,

@@ -75,7 +75,7 @@ function ServerSection() {
         </Text>
       </View>
       <Pressable
-        onPress={() => router.push("/settings/servers" as never)}
+        onPress={() => router.push("/settings/servers")}
         style={{
           borderRadius: 10,
           paddingVertical: 9,

@@ -52,7 +52,7 @@ export function PeopleStatisticsWidget({
     <BaseWidget
       config={config}
       isLoading={isLoading}
-      error={error as Error}
+      error={error}
       onRemove={onRemove}
       onRefresh={() => refetch()}
       className={className}

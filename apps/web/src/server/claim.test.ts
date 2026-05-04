@@ -70,6 +70,7 @@ const {
   })),
   mockGetOIDCClaimStatusData: vi.fn(
     async () =>
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       ({
         userId: "user-1",
         email: "test@example.com",

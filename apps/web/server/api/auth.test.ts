@@ -20,7 +20,9 @@ import authRouter from "./auth";
 const { mockBetterAuthLogin, mockBetterAuthRegister, mockBetterAuthSignOut } =
   vi.hoisted(() => ({
     // Use `as unknown` to allow flexible return types in tests
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     mockBetterAuthLogin: vi.fn(async () => null as unknown),
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     mockBetterAuthRegister: vi.fn(async () => null as unknown),
     mockBetterAuthSignOut: vi.fn(async () => undefined),
   }));

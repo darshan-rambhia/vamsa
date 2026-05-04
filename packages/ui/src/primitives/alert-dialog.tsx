@@ -93,11 +93,7 @@ function AlertDialogTrigger({
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick as React.MouseEventHandler<HTMLButtonElement>}
-      {...htmlProps}
-    >
+    <button type="button" onClick={handleClick} {...htmlProps}>
       {children}
     </button>
   );
@@ -155,8 +151,7 @@ const AlertDialogContent = React.forwardRef<
             "bg-background data-[entering]:animate-in data-[exiting]:animate-out data-[exiting]:fade-out-0 data-[entering]:fade-in-0 data-[exiting]:zoom-out-95 data-[entering]:zoom-in-95 grid w-full max-w-lg gap-4 border p-6 shadow-lg duration-200 sm:rounded-lg",
             className
           )}
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          {...(dataProps as any)}
+          {...dataProps}
         >
           {({ close }) => (
             <AlertDialogCloseContext.Provider value={close}>

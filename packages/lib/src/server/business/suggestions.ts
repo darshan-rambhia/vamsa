@@ -287,7 +287,7 @@ async function applySuggestionData(
       delete updateData.id;
       await db
         .update(drizzleSchema.persons)
-        .set(updateData as never)
+        .set(updateData)
         .where(eq(drizzleSchema.persons.id, suggestion.targetPersonId));
       break;
     }

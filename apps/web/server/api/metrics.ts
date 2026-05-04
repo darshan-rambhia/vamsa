@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion */
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
 import { drizzleDb, getDrizzlePoolStats } from "@vamsa/api";

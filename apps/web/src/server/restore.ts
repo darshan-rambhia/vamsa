@@ -82,12 +82,6 @@ export const getImportHistory = createServerFn({ method: "GET" }).handler(
   > => {
     const user = await requireAuth("ADMIN");
     const history = await getImportHistoryData(user);
-    return history as Array<{
-      id: string;
-      importedAt: string;
-      importedBy: string;
-      strategy: string;
-      success: boolean;
-    }>;
+    return history;
   }
 );
