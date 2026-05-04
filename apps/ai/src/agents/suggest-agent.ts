@@ -128,7 +128,7 @@ export function parseSuggestions(text: string): Array<Suggestion> {
       suggestedValue: current.suggestedValue,
       reasoning: current.reasoning ?? "",
       confidence: current.confidence ?? "low",
-    } as Suggestion);
+    });
   }
 
   return suggestions;

@@ -203,7 +203,7 @@ function initSqliteDb(dbPath: string): void {
   dbInstance = sqliteDrizzle(sqlite, {
     schema: sqliteSchema,
     logger: process.env.DRIZZLE_LOG === "true",
-  }) as unknown as ReturnType<typeof pgDrizzle<typeof pgSchema>>;
+  });
 }
 
 const getDb = () => {

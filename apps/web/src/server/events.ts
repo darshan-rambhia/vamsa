@@ -13,7 +13,6 @@ import {
   removeEventParticipantData,
   updateEventData,
 } from "@vamsa/lib/server/business";
-import type { EventCreateOutput, EventUpdateOutput } from "@vamsa/schemas";
 import type { Event, EventParticipant } from "@vamsa/lib/server/business";
 
 /**
@@ -35,7 +34,7 @@ export const createEvent = createServerFn({ method: "POST" })
     return eventCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<Event> => {
-    return createEventData(data as EventCreateOutput);
+    return createEventData(data);
   });
 
 /**
@@ -47,7 +46,7 @@ export const updateEvent = createServerFn({ method: "POST" })
     return eventUpdateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<Event> => {
-    const { id, ...updates } = data as EventUpdateOutput;
+    const { id, ...updates } = data;
     return updateEventData(id, updates);
   });
 

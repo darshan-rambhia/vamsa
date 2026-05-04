@@ -135,8 +135,8 @@ export const saveDashboardPreferences = createServerFn({ method: "POST" })
         await drizzleDb
           .update(drizzleSchema.dashboardPreferences)
           .set({
-            layout: parsed.layout as unknown,
-            widgets: parsed.widgets as unknown,
+            layout: parsed.layout,
+            widgets: parsed.widgets,
             updatedAt: new Date(),
           })
           .where(eq(drizzleSchema.dashboardPreferences.userId, user.id));
@@ -156,8 +156,8 @@ export const saveDashboardPreferences = createServerFn({ method: "POST" })
         await drizzleDb.insert(drizzleSchema.dashboardPreferences).values({
           id: generateId(),
           userId: user.id,
-          layout: parsed.layout as unknown,
-          widgets: parsed.widgets as unknown,
+          layout: parsed.layout,
+          widgets: parsed.widgets,
           createdAt: new Date(),
           updatedAt: new Date(),
         });

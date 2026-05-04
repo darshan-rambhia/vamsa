@@ -324,7 +324,7 @@ export async function getPersonData(
     ),
     with: {
       relationshipsFrom: {
-        with: { relatedPerson: true } as Record<string, boolean>,
+        with: { relatedPerson: true },
       },
     },
   })) as unknown as PersonWithRelationships | undefined;
@@ -364,11 +364,11 @@ export async function getPersonData(
     bio: person.bio,
     email: person.email,
     phone: person.phone,
-    currentAddress: (person.currentAddress ?? null) as Address | null,
-    workAddress: (person.workAddress ?? null) as Address | null,
+    currentAddress: person.currentAddress ?? null,
+    workAddress: person.workAddress ?? null,
     profession: person.profession,
     employer: person.employer,
-    socialLinks: (person.socialLinks ?? null) as SocialLinks | null,
+    socialLinks: person.socialLinks ?? null,
     isLiving: person.isLiving,
     createdAt: person.createdAt.toISOString(),
     updatedAt: person.updatedAt.toISOString(),

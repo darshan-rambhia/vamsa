@@ -74,7 +74,7 @@ describe("searchPeopleTool", () => {
 
     const result = await searchPeopleTool.execute!(
       { query: "Hari", limit: 10 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({
@@ -100,7 +100,7 @@ describe("searchPeopleTool", () => {
 
     const result = await searchPeopleTool.execute!(
       { query: "Test", limit: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ results: [{ id: "p1" }], total: 1 });
@@ -113,7 +113,7 @@ describe("searchPeopleTool", () => {
 
     const result = await searchPeopleTool.execute!(
       { query: "Hari", limit: 10 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Search failed: HTTP 500" });
@@ -126,7 +126,7 @@ describe("searchPeopleTool", () => {
 
     const result = await searchPeopleTool.execute!(
       { query: "Test", limit: 10 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Search failed: Connection refused" });
@@ -137,7 +137,7 @@ describe("searchPeopleTool", () => {
 
     const result = await searchPeopleTool.execute!(
       { query: "Test", limit: 10 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Search failed: timeout string" });
@@ -150,7 +150,7 @@ describe("searchPeopleTool", () => {
 
     const result = await searchPeopleTool.execute!(
       { query: "Nobody", limit: 10 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ results: [], total: 0 });
@@ -163,7 +163,7 @@ describe("searchPeopleTool", () => {
 
     await searchPeopleTool.execute!(
       { query: "Lakshmi", limit: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     const calledURL = vi.mocked(fetch).mock.calls[0][0] as string;
@@ -191,7 +191,7 @@ describe("getPersonDetailsTool", () => {
 
     const result = await getPersonDetailsTool.execute!(
       { personId: "p-123" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual(personData);
@@ -208,7 +208,7 @@ describe("getPersonDetailsTool", () => {
 
     const result = await getPersonDetailsTool.execute!(
       { personId: "nonexistent" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Person lookup failed: HTTP 404" });
@@ -221,7 +221,7 @@ describe("getPersonDetailsTool", () => {
 
     const result = await getPersonDetailsTool.execute!(
       { personId: "p-123" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Person lookup failed: ECONNREFUSED" });
@@ -232,7 +232,7 @@ describe("getPersonDetailsTool", () => {
 
     const result = await getPersonDetailsTool.execute!(
       { personId: "p-123" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Person lookup failed: 42" });
@@ -257,7 +257,7 @@ describe("findAncestorsTool", () => {
 
     const result = await findAncestorsTool.execute!(
       { personId: "p-123", maxGenerations: 3 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual(ancestorData);
@@ -274,7 +274,7 @@ describe("findAncestorsTool", () => {
 
     const result = await findAncestorsTool.execute!(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Ancestor lookup failed: HTTP 500" });
@@ -285,7 +285,7 @@ describe("findAncestorsTool", () => {
 
     const result = await findAncestorsTool.execute!(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Ancestor lookup failed: Timeout" });
@@ -296,7 +296,7 @@ describe("findAncestorsTool", () => {
 
     const result = await findAncestorsTool.execute!(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Ancestor lookup failed: undefined" });
@@ -318,7 +318,7 @@ describe("findDescendantsTool", () => {
 
     const result = await findDescendantsTool.execute!(
       { personId: "p-123", maxGenerations: 2 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual(descendantData);
@@ -335,7 +335,7 @@ describe("findDescendantsTool", () => {
 
     const result = await findDescendantsTool.execute!(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Descendant lookup failed: HTTP 403" });
@@ -348,7 +348,7 @@ describe("findDescendantsTool", () => {
 
     const result = await findDescendantsTool.execute!(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({
@@ -361,7 +361,7 @@ describe("findDescendantsTool", () => {
 
     const result = await findDescendantsTool.execute!(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Descendant lookup failed: null" });
@@ -386,7 +386,7 @@ describe("findRelationshipPathTool", () => {
 
     const result = await findRelationshipPathTool.execute!(
       { fromPersonId: "p-1", toPersonId: "p-3" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual(pathData);
@@ -404,7 +404,7 @@ describe("findRelationshipPathTool", () => {
 
     const result = await findRelationshipPathTool.execute!(
       { fromPersonId: "p-1", toPersonId: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Path lookup failed: HTTP 500" });
@@ -417,7 +417,7 @@ describe("findRelationshipPathTool", () => {
 
     const result = await findRelationshipPathTool.execute!(
       { fromPersonId: "p-1", toPersonId: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Path lookup failed: Request timed out" });
@@ -428,7 +428,7 @@ describe("findRelationshipPathTool", () => {
 
     const result = await findRelationshipPathTool.execute!(
       { fromPersonId: "p-1", toPersonId: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Path lookup failed: false" });
@@ -452,7 +452,7 @@ describe("findCommonAncestorTool", () => {
 
     const result = await findCommonAncestorTool.execute!(
       { personId1: "p-100", personId2: "p-200" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual(ancestorData);
@@ -470,7 +470,7 @@ describe("findCommonAncestorTool", () => {
 
     const result = await findCommonAncestorTool.execute!(
       { personId1: "p-1", personId2: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({
@@ -483,7 +483,7 @@ describe("findCommonAncestorTool", () => {
 
     const result = await findCommonAncestorTool.execute!(
       { personId1: "p-1", personId2: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({
@@ -496,7 +496,7 @@ describe("findCommonAncestorTool", () => {
 
     const result = await findCommonAncestorTool.execute!(
       { personId1: "p-1", personId2: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined as any }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined }
     );
 
     expect(result).toEqual({ error: "Common ancestor lookup failed: 0" });

@@ -69,7 +69,7 @@ describe("Route: /_authenticated/visualize", () => {
       // Note: The router validation accepts any type value
       // Actual validation happens in React component logic
       const result = validateSearch({
-        type: "invalid-type" as VisualizationType,
+        type: "invalid-type",
       });
       expect(result.type).toBe("invalid-type" as VisualizationType);
     });
@@ -464,7 +464,7 @@ describe("Route: /_authenticated/visualize", () => {
         type: "ancestor",
         invalidParam: "value",
         personId: "person-123",
-      } as Record<string, unknown>);
+      });
 
       expect(result.type).toBe("ancestor");
       expect(result.personId).toBe("person-123");

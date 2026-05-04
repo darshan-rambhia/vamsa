@@ -127,7 +127,7 @@ export const updateUser = createServerFn({ method: "POST" })
     const user = await requireAuth("ADMIN");
     const { id, ...updates } = data as { id: string } & UserUpdateInput;
 
-    return updateUserData(id, updates as UserUpdateInput, user.id);
+    return updateUserData(id, updates, user.id);
   });
 
 /**

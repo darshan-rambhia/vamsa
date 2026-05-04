@@ -471,7 +471,7 @@ describe("Suggestions Business Logic", () => {
       const result = await createSuggestionData(
         "CREATE",
         null,
-        {} as any,
+        {},
         "Test",
         "user-1",
         mockDrizzleDb as any

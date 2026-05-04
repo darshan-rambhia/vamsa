@@ -8,7 +8,6 @@ import {
   updateFamilySettingsData,
 } from "@vamsa/lib/server/business/settings";
 import { requireAuth } from "./middleware/require-auth";
-import type { UpdateFamilySettingsInput } from "@vamsa/lib/server/business/settings";
 
 /**
  * Update family settings schema for input validation
@@ -83,11 +82,7 @@ export const updateFamilySettings = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const currentUser = await requireAuth("ADMIN");
 
-    await updateFamilySettingsData(
-      data as UpdateFamilySettingsInput,
-      currentUser.role,
-      currentUser.id
-    );
+    await updateFamilySettingsData(data, currentUser.role, currentUser.id);
 
     return { success: true, id: currentUser.id };
   });

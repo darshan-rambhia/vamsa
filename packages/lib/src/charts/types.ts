@@ -82,5 +82,5 @@ export const CHART_DEFAULTS = {
     right: 40,
     bottom: 40,
     left: 40,
-  } as Margin,
+  },
 };

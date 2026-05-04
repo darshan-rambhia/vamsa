@@ -125,10 +125,10 @@ export function ResearchNoteForm({
         data: {
           id: noteId,
           ...payload,
-        } as ResearchNoteUpdateInput,
+        },
       });
     } else {
-      createMutation.mutate({ data: payload as ResearchNoteCreateInput });
+      createMutation.mutate({ data: payload });
     }
   };
 

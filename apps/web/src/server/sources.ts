@@ -22,7 +22,6 @@ import {
   updateSourceData,
 } from "@vamsa/lib/server/business";
 import type {
-  CitationFormat,
   EventSourceResult,
   GeneratedCitation,
   PersonSourcesResponse,
@@ -149,9 +148,7 @@ export const linkSourceToEvent = createServerFn({ method: "POST" })
     return linkSourceToEventSchema.parse(data);
   })
   .handler(async ({ data }): Promise<EventSourceResult> => {
-    return linkSourceToEventData(
-      data as Parameters<typeof linkSourceToEventData>[0]
-    );
+    return linkSourceToEventData(data);
   });
 
 /**
@@ -175,7 +172,7 @@ export const generateCitation = createServerFn({ method: "POST" })
     return citationGenerateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<GeneratedCitation> => {
-    return generateCitationData(data.sourceId, data.format as CitationFormat);
+    return generateCitationData(data.sourceId, data.format);
   });
 
 /**

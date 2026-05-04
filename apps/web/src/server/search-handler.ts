@@ -200,11 +200,9 @@ function extractPersonsFromNLPResults(
           firstName: person.firstName,
           lastName: person.lastName,
           photoUrl: person.photoUrl ?? null,
-          dateOfBirth: person.dateOfBirth
-            ? new Date(person.dateOfBirth as string | number)
-            : null,
+          dateOfBirth: person.dateOfBirth ? new Date(person.dateOfBirth) : null,
           dateOfPassing: person.dateOfPassing
-            ? new Date(person.dateOfPassing as string | number)
+            ? new Date(person.dateOfPassing)
             : null,
           isLiving: person.isLiving ?? true,
         });
@@ -273,7 +271,7 @@ export async function searchPeopleHandler(
         // people map has RuntimePersonData at runtime (wider than RelationshipNode type)
         const personResults = extractPersonsFromNLPResults(
           nlpResult.results,
-          relationships.people as Map<string, unknown>
+          relationships.people
         );
 
         log.info(
@@ -311,8 +309,7 @@ export async function searchPeopleHandler(
       getDbDriver() === "sqlite"
         ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
           new SqliteSearchEngine(drizzleDb.$client as any)
-        : // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          new PgSearchEngine(drizzleDb.$client as any);
+        : new PgSearchEngine(drizzleDb.$client);
     const ftsResults = await searchEngine.searchPersons(data.query, {
       limit: data.limit,
       offset: data.offset,

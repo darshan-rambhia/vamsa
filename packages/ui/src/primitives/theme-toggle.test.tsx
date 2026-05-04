@@ -114,8 +114,7 @@ describe("ThemeToggle", () => {
       const { container } = render(<ThemeToggle size="sm" />);
       const svg = container.querySelector("svg");
 
-      const classStr =
-        svg?.className.baseVal || (svg?.className as unknown as string) || "";
+      const classStr = svg?.className.baseVal || svg?.className || "";
       expect(classStr).toContain("h-4");
       expect(classStr).toContain("w-4");
     });
@@ -124,8 +123,7 @@ describe("ThemeToggle", () => {
       const { container } = render(<ThemeToggle size="md" />);
       const svg = container.querySelector("svg");
 
-      const classStr =
-        svg?.className.baseVal || (svg?.className as unknown as string) || "";
+      const classStr = svg?.className.baseVal || svg?.className || "";
       expect(classStr).toContain("h-5");
       expect(classStr).toContain("w-5");
     });
@@ -449,8 +447,7 @@ describe("ThemeToggle", () => {
       const { container } = render(<ThemeToggle />);
       const svg = container.querySelector("svg");
 
-      const classStr =
-        svg?.className.baseVal || (svg?.className as unknown as string) || "";
+      const classStr = svg?.className.baseVal || svg?.className || "";
       expect(classStr).toContain("text-foreground");
     });
 
@@ -589,8 +586,7 @@ describe("ThemeToggle", () => {
       const { container } = render(<ThemeToggle />);
       const svg = container.querySelector("svg");
 
-      const classStr =
-        svg?.className.baseVal || (svg?.className as unknown as string) || "";
+      const classStr = svg?.className.baseVal || svg?.className || "";
       expect(classStr).toContain("h-");
       expect(classStr).toContain("w-");
     });
@@ -632,8 +628,7 @@ describe("ThemeToggle", () => {
       const { container } = render(<ThemeToggle />);
       const svg = container.querySelector("svg");
 
-      const classStr =
-        svg?.className.baseVal || (svg?.className as unknown as string) || "";
+      const classStr = svg?.className.baseVal || svg?.className || "";
       expect(classStr).toContain("text-foreground");
     });
   });
