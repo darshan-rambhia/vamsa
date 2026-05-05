@@ -119,7 +119,7 @@
     "drizzle-orm": "0.45.2",
     "html2canvas": "1.4.1",
     "ical-generator": "10.1.0",
-    "maplibre-gl": "5.19.0",
+    "maplibre-gl": "5.24.0",
     "rss": "1.2.2"
   },
   "devDependencies": {
