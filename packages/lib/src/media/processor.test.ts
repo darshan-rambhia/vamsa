@@ -16,14 +16,21 @@ import {
 } from "./processor";
 import type { ImageSize, ProcessedImage } from "./processor";
 
-// Create a valid test PNG image (100x100 red)
+// Create a valid test PNG image (100x100 red).
+// Generated via sharp at runtime so the fixture stays valid across sharp/libpng
+// upgrades (a hardcoded base64 PNG broke under sharp 0.35's stricter libpng).
 async function createTestImageFile(): Promise<Buffer> {
-  // This is a base64-encoded valid 100x100 red PNG image
-  // Created using sharp for guaranteed validity
-  const pngBase64 =
-    "iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAIAAAD/gAIDAAAACXBIWXMAAAPoAAAD6AG1e1JrAAABUElEQVR4nO3XwQmAUBDE0Om/6djCv0gILLwCwrAqju3wNsIttfdbubF2Y+2Pd8td1m6s3WXN/XDfY7gba3dZu8dwlV8Iv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4AOv4COD54t6yshm4MnAAAAAElFTkSuQmCC";
-
-  return Buffer.from(pngBase64, "base64");
+  const sharp = (await import("sharp")).default;
+  return sharp({
+    create: {
+      width: 100,
+      height: 100,
+      channels: 4,
+      background: { r: 255, g: 0, b: 0, alpha: 1 },
+    },
+  })
+    .png()
+    .toBuffer();
 }
 
 describe("Image Processing Pipeline", () => {
