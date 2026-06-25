@@ -169,14 +169,16 @@ test.describe("Calendar Subscription", () => {
     });
 
     test("shows RSS feed reader section", async ({ page }) => {
-      // RSS Feed Readers section is at bottom of SubscriptionInstructions component
-      // Wait for element to be attached before scrolling (webkit hydration timing)
+      // RSS Feed Readers section is at bottom of SubscriptionInstructions component.
+      // On webkit the element can detach/re-attach during hydration between the
+      // scroll and the visibility check, so retry the whole block until it settles.
       const rssHeading = page.getByRole("heading", {
         name: /rss feed readers/i,
       });
-      await expect(rssHeading).toBeAttached({ timeout: 10000 });
-      await rssHeading.scrollIntoViewIfNeeded();
-      await expect(rssHeading).toBeVisible({ timeout: 5000 });
+      await expect(async () => {
+        await rssHeading.scrollIntoViewIfNeeded();
+        await expect(rssHeading).toBeVisible();
+      }).toPass({ timeout: 15000 });
     });
   });
 
