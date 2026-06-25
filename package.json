@@ -162,7 +162,7 @@
     "drizzle-orm": "0.45.2",
     "hono": ">=4.12.3",
     "lodash": ">=4.17.23",
-    "playwright-core": "1.60.0",
+    "playwright-core": "1.61.1",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   },
