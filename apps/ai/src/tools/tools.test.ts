@@ -72,9 +72,9 @@ describe("searchPeopleTool", () => {
       )
     );
 
-    const result = await searchPeopleTool.execute!(
+    const result = await searchPeopleTool.execute(
       { query: "Hari", limit: 10 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({
@@ -98,9 +98,9 @@ describe("searchPeopleTool", () => {
       })
     );
 
-    const result = await searchPeopleTool.execute!(
+    const result = await searchPeopleTool.execute(
       { query: "Test", limit: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ results: [{ id: "p1" }], total: 1 });
@@ -111,9 +111,9 @@ describe("searchPeopleTool", () => {
       new Response("", { status: 500 })
     );
 
-    const result = await searchPeopleTool.execute!(
+    const result = await searchPeopleTool.execute(
       { query: "Hari", limit: 10 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Search failed: HTTP 500" });
@@ -124,9 +124,9 @@ describe("searchPeopleTool", () => {
       new Error("Connection refused")
     );
 
-    const result = await searchPeopleTool.execute!(
+    const result = await searchPeopleTool.execute(
       { query: "Test", limit: 10 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Search failed: Connection refused" });
@@ -135,9 +135,9 @@ describe("searchPeopleTool", () => {
   it("should handle non-Error thrown values", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce("timeout string");
 
-    const result = await searchPeopleTool.execute!(
+    const result = await searchPeopleTool.execute(
       { query: "Test", limit: 10 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Search failed: timeout string" });
@@ -148,9 +148,9 @@ describe("searchPeopleTool", () => {
       new Response(JSON.stringify({ count: 0 }), { status: 200 })
     );
 
-    const result = await searchPeopleTool.execute!(
+    const result = await searchPeopleTool.execute(
       { query: "Nobody", limit: 10 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ results: [], total: 0 });
@@ -161,9 +161,9 @@ describe("searchPeopleTool", () => {
       new Response(JSON.stringify({ items: [], total: 0 }), { status: 200 })
     );
 
-    await searchPeopleTool.execute!(
+    await searchPeopleTool.execute(
       { query: "Lakshmi", limit: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     const calledURL = vi.mocked(fetch).mock.calls[0][0] as string;
@@ -189,9 +189,9 @@ describe("getPersonDetailsTool", () => {
       new Response(JSON.stringify(personData), { status: 200 })
     );
 
-    const result = await getPersonDetailsTool.execute!(
+    const result = await getPersonDetailsTool.execute(
       { personId: "p-123" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual(personData);
@@ -206,9 +206,9 @@ describe("getPersonDetailsTool", () => {
       new Response("", { status: 404 })
     );
 
-    const result = await getPersonDetailsTool.execute!(
+    const result = await getPersonDetailsTool.execute(
       { personId: "nonexistent" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Person lookup failed: HTTP 404" });
@@ -219,9 +219,9 @@ describe("getPersonDetailsTool", () => {
       new Error("ECONNREFUSED")
     );
 
-    const result = await getPersonDetailsTool.execute!(
+    const result = await getPersonDetailsTool.execute(
       { personId: "p-123" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Person lookup failed: ECONNREFUSED" });
@@ -230,9 +230,9 @@ describe("getPersonDetailsTool", () => {
   it("should handle non-Error thrown values", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(42);
 
-    const result = await getPersonDetailsTool.execute!(
+    const result = await getPersonDetailsTool.execute(
       { personId: "p-123" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Person lookup failed: 42" });
@@ -255,9 +255,9 @@ describe("findAncestorsTool", () => {
       new Response(JSON.stringify(ancestorData), { status: 200 })
     );
 
-    const result = await findAncestorsTool.execute!(
+    const result = await findAncestorsTool.execute(
       { personId: "p-123", maxGenerations: 3 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual(ancestorData);
@@ -272,9 +272,9 @@ describe("findAncestorsTool", () => {
       new Response("", { status: 500 })
     );
 
-    const result = await findAncestorsTool.execute!(
+    const result = await findAncestorsTool.execute(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Ancestor lookup failed: HTTP 500" });
@@ -283,9 +283,9 @@ describe("findAncestorsTool", () => {
   it("should return error on network failure", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error("Timeout"));
 
-    const result = await findAncestorsTool.execute!(
+    const result = await findAncestorsTool.execute(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Ancestor lookup failed: Timeout" });
@@ -294,9 +294,9 @@ describe("findAncestorsTool", () => {
   it("should handle non-Error thrown values", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(undefined);
 
-    const result = await findAncestorsTool.execute!(
+    const result = await findAncestorsTool.execute(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Ancestor lookup failed: undefined" });
@@ -316,9 +316,9 @@ describe("findDescendantsTool", () => {
       new Response(JSON.stringify(descendantData), { status: 200 })
     );
 
-    const result = await findDescendantsTool.execute!(
+    const result = await findDescendantsTool.execute(
       { personId: "p-123", maxGenerations: 2 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual(descendantData);
@@ -333,9 +333,9 @@ describe("findDescendantsTool", () => {
       new Response("", { status: 403 })
     );
 
-    const result = await findDescendantsTool.execute!(
+    const result = await findDescendantsTool.execute(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Descendant lookup failed: HTTP 403" });
@@ -346,9 +346,9 @@ describe("findDescendantsTool", () => {
       new Error("DNS resolution failed")
     );
 
-    const result = await findDescendantsTool.execute!(
+    const result = await findDescendantsTool.execute(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({
@@ -359,9 +359,9 @@ describe("findDescendantsTool", () => {
   it("should handle non-Error thrown values", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(null);
 
-    const result = await findDescendantsTool.execute!(
+    const result = await findDescendantsTool.execute(
       { personId: "p-123", maxGenerations: 5 },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Descendant lookup failed: null" });
@@ -384,9 +384,9 @@ describe("findRelationshipPathTool", () => {
       new Response(JSON.stringify(pathData), { status: 200 })
     );
 
-    const result = await findRelationshipPathTool.execute!(
+    const result = await findRelationshipPathTool.execute(
       { fromPersonId: "p-1", toPersonId: "p-3" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual(pathData);
@@ -402,9 +402,9 @@ describe("findRelationshipPathTool", () => {
       new Response("", { status: 500 })
     );
 
-    const result = await findRelationshipPathTool.execute!(
+    const result = await findRelationshipPathTool.execute(
       { fromPersonId: "p-1", toPersonId: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Path lookup failed: HTTP 500" });
@@ -415,9 +415,9 @@ describe("findRelationshipPathTool", () => {
       new Error("Request timed out")
     );
 
-    const result = await findRelationshipPathTool.execute!(
+    const result = await findRelationshipPathTool.execute(
       { fromPersonId: "p-1", toPersonId: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Path lookup failed: Request timed out" });
@@ -426,9 +426,9 @@ describe("findRelationshipPathTool", () => {
   it("should handle non-Error thrown values", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(false);
 
-    const result = await findRelationshipPathTool.execute!(
+    const result = await findRelationshipPathTool.execute(
       { fromPersonId: "p-1", toPersonId: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Path lookup failed: false" });
@@ -450,9 +450,9 @@ describe("findCommonAncestorTool", () => {
       new Response(JSON.stringify(ancestorData), { status: 200 })
     );
 
-    const result = await findCommonAncestorTool.execute!(
+    const result = await findCommonAncestorTool.execute(
       { personId1: "p-100", personId2: "p-200" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual(ancestorData);
@@ -468,9 +468,9 @@ describe("findCommonAncestorTool", () => {
       new Response("", { status: 500 })
     );
 
-    const result = await findCommonAncestorTool.execute!(
+    const result = await findCommonAncestorTool.execute(
       { personId1: "p-1", personId2: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({
@@ -481,9 +481,9 @@ describe("findCommonAncestorTool", () => {
   it("should return error on network failure", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(new Error("ETIMEDOUT"));
 
-    const result = await findCommonAncestorTool.execute!(
+    const result = await findCommonAncestorTool.execute(
       { personId1: "p-1", personId2: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({
@@ -494,9 +494,9 @@ describe("findCommonAncestorTool", () => {
   it("should handle non-Error thrown values", async () => {
     vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(0);
 
-    const result = await findCommonAncestorTool.execute!(
+    const result = await findCommonAncestorTool.execute(
       { personId1: "p-1", personId2: "p-2" },
-      { toolCallId: "tc1", messages: [], abortSignal: undefined }
+      { toolCallId: "tc1", messages: [], abortSignal: undefined, context: {} }
     );
 
     expect(result).toEqual({ error: "Common ancestor lookup failed: 0" });
