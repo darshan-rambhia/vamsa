@@ -43,8 +43,12 @@ COPY packages/ui/package.json ./packages/ui/
 # Install all dependencies (including devDependencies for build)
 # --frozen-lockfile: ensure exact versions from pnpm-lock.yaml (reproducible)
 # --ignore-scripts: skip prepare/postinstall (husky not needed in Docker)
-# --node-linker=hoisted: flat node_modules so it copies cleanly across stages
-RUN pnpm install --frozen-lockfile --ignore-scripts --node-linker=hoisted
+# Default (isolated) node-linker: symlinks a single physical React through the
+# .pnpm store so externalized react-aria (ESM) and react-dom/server (CJS) share
+# one React instance. Hoisted left two copies and crashed SSR of form pages.
+# The whole /app tree (incl. node_modules/.pnpm + relative symlinks) is copied to
+# the runner below, so the symlinks stay resolvable.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy source code
 COPY . .

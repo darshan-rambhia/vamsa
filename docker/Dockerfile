@@ -38,8 +38,11 @@ COPY packages/ui/package.json ./packages/ui/
 # Install all dependencies
 # --frozen-lockfile: faster, skips dependency resolution
 # --ignore-scripts: skips prepare/postinstall (husky not needed in Docker)
-# --node-linker=hoisted: flat node_modules so it copies cleanly across stages
-RUN pnpm install --frozen-lockfile --ignore-scripts --node-linker=hoisted
+# Use pnpm's default (isolated) node-linker: it symlinks a single physical copy
+# of each package (incl. React) through the .pnpm store, so externalized ESM
+# react-aria and CJS react-dom/server resolve the SAME React at runtime. The
+# hoisted linker left two physical React copies and crashed SSR of form pages.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Copy source code
 COPY . .
