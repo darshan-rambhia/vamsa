@@ -20,20 +20,10 @@ export type { backups, backupSettings } from "./drizzle/schema/backup";
 // Export enum types for external use
 export type BackupType = "DAILY" | "WEEKLY" | "MONTHLY" | "MANUAL";
 export type BackupStatus =
-  | "PENDING"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "FAILED"
-  | "DELETED";
+  "PENDING" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "DELETED";
 export type StorageProvider = "LOCAL" | "S3" | "R2" | "B2";
 export type PersonPlaceType =
-  | "BIRTH"
-  | "MARRIAGE"
-  | "DEATH"
-  | "LIVED"
-  | "WORKED"
-  | "STUDIED"
-  | "OTHER";
+  "BIRTH" | "MARRIAGE" | "DEATH" | "LIVED" | "WORKED" | "STUDIED" | "OTHER";
 export type BackupSettings = InferSelectModel<typeof backupSettingsTable>;
 
 // Re-export email service and templates

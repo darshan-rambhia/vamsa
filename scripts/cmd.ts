@@ -4,13 +4,7 @@ import { spawn } from "bun";
 import { logger } from "../packages/lib/src/logger";
 
 type Domain =
-  | "db"
-  | "docker"
-  | "docs"
-  | "obs"
-  | "observability"
-  | "prod"
-  | "load";
+  "db" | "docker" | "docs" | "obs" | "observability" | "prod" | "load";
 
 interface CommandDef {
   cmd: string[];
