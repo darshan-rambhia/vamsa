@@ -8,7 +8,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import archiver from "archiver";
+import { ZipArchive } from "archiver";
 
 // Drizzle imports
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
@@ -493,7 +493,7 @@ export async function exportGedcomDataZip(
     );
 
     // Create the archive
-    const archive = archiver("zip", {
+    const archive = new ZipArchive({
       zlib: { level: 9 }, // Maximum compression
     });
 
