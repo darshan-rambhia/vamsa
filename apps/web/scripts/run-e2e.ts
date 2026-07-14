@@ -9,7 +9,7 @@
  * 4. Run Playwright tests
  * 5. Clean up Docker containers
  *
- * Both local and CI use the production server (`bun run start`) for consistency.
+ * Both local and CI use the production server (`pnpm start`) for consistency.
  * The only difference is the database port: CI uses 5432 (GitHub Actions service),
  * local uses 5433 (Docker).
  *
@@ -275,7 +275,7 @@ async function main() {
 
     // Step 3: Build the application for production server
     log.info({}, "🔨 Step 3/5: Building application...");
-    const buildResult = await run(["bun", "run", "build"], {
+    const buildResult = await run(["pnpm", "build"], {
       cwd: ROOT_DIR,
     });
     if (buildResult !== 0) {

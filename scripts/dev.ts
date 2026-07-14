@@ -33,11 +33,11 @@ async function startWithSqlite() {
 
   // Seed database with dev data (ignore errors if already seeded)
   logger.info("Seeding database with dev data...");
-  await $`DB_DRIVER=sqlite DATABASE_URL=${SQLITE_DB_PATH} bun run db:seed:dev`.nothrow();
+  await $`DB_DRIVER=sqlite DATABASE_URL=${SQLITE_DB_PATH} pnpm db:seed:dev`.nothrow();
 
   // Start dev server with SQLite env vars
   logger.info("Starting development server (SQLite)...");
-  await $`DB_DRIVER=sqlite DATABASE_URL=${SQLITE_DB_PATH} bun run --filter @vamsa/web dev`;
+  await $`DB_DRIVER=sqlite DATABASE_URL=${SQLITE_DB_PATH} pnpm --filter @vamsa/web dev`;
 }
 
 async function startWithPostgres() {
@@ -83,11 +83,11 @@ async function startWithPostgres() {
 
   // Seed database with dev data
   logger.info("Seeding database with dev data...");
-  await $`DB_DRIVER=postgres bun run db:seed:dev`.nothrow();
+  await $`DB_DRIVER=postgres pnpm db:seed:dev`.nothrow();
 
   // Start dev server
   logger.info("Starting development server (PostgreSQL)...");
-  await $`DB_DRIVER=postgres bun run --filter @vamsa/web dev`;
+  await $`DB_DRIVER=postgres pnpm --filter @vamsa/web dev`;
 }
 
 async function main() {

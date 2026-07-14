@@ -81,7 +81,7 @@ async function checkBundleSizes(): Promise<boolean> {
     if (jsFiles.length === 0) {
       console.warn("⚠️  No JavaScript files found in dist/client/assets");
       console.info(
-        "Make sure to run 'bun run build' before checking bundle sizes"
+        "Make sure to run 'pnpm build' before checking bundle sizes"
       );
       return false;
     }
@@ -182,9 +182,7 @@ async function checkBundleSizes(): Promise<boolean> {
     return true;
   } catch (error) {
     console.error("Error checking bundle sizes:", error);
-    console.log(
-      "Make sure to run 'bun run build' before checking bundle sizes"
-    );
+    console.log("Make sure to run 'pnpm build' before checking bundle sizes");
     process.exit(1);
   }
 }

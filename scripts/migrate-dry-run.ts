@@ -219,7 +219,7 @@ async function main(): Promise<void> {
   }
 
   // Show pending migrations
-  logSection(`Pending Migrations (will be applied with 'bun run db:migrate')`);
+  logSection(`Pending Migrations (will be applied with 'pnpm db:migrate')`);
 
   for (const migration of pending) {
     const content = readMigrationContent(migration.path);
@@ -278,7 +278,7 @@ async function main(): Promise<void> {
     `  ${colors.yellow}${pending.length} migration(s) ready to apply${colors.reset}`
   );
   console.log(
-    `  ${colors.gray}Run: ${colors.cyan}bun run db:migrate${colors.gray} to apply${colors.reset}`
+    `  ${colors.gray}Run: ${colors.cyan}pnpm db:migrate${colors.gray} to apply${colors.reset}`
   );
 
   process.exit(0);

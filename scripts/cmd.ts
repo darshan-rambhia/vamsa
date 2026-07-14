@@ -12,17 +12,17 @@ interface CommandDef {
 
 const COMMANDS: Record<string, Record<string, CommandDef>> = {
   db: {
-    generate: { cmd: ["bun", "run", "--filter", "@vamsa/api", "db:generate"] },
-    push: { cmd: ["bun", "run", "--filter", "@vamsa/api", "db:push"] },
-    migrate: { cmd: ["bun", "run", "--filter", "@vamsa/api", "db:migrate"] },
-    seed: { cmd: ["bun", "run", "--filter", "@vamsa/api", "db:seed"] },
+    generate: { cmd: ["pnpm", "--filter", "@vamsa/api", "db:generate"] },
+    push: { cmd: ["pnpm", "--filter", "@vamsa/api", "db:push"] },
+    migrate: { cmd: ["pnpm", "--filter", "@vamsa/api", "db:migrate"] },
+    seed: { cmd: ["pnpm", "--filter", "@vamsa/api", "db:seed"] },
     "seed-dev": {
-      cmd: ["bun", "run", "--filter", "@vamsa/api", "db:seed:dev"],
+      cmd: ["pnpm", "--filter", "@vamsa/api", "db:seed:dev"],
     },
     "seed-e2e": {
-      cmd: ["bun", "run", "--filter", "@vamsa/api", "db:seed:e2e"],
+      cmd: ["pnpm", "--filter", "@vamsa/api", "db:seed:e2e"],
     },
-    studio: { cmd: ["bun", "run", "--filter", "@vamsa/api", "db:studio"] },
+    studio: { cmd: ["pnpm", "--filter", "@vamsa/api", "db:studio"] },
     backup: { cmd: ["bun", "scripts/backup-database.ts", "--type=full"] },
     "backup-pre-migration": {
       cmd: [
@@ -306,7 +306,7 @@ function printHelp() {
 Command Center
 
 Usage:
-  bun run cmd -- <domain> <action> [...args]
+  pnpm cmd -- <domain> <action> [...args]
 
 Domains:
   db            Database tasks
@@ -317,9 +317,9 @@ Domains:
   load          k6 load testing
 
 Examples:
-  bun run cmd -- db migrate
-  bun run cmd -- docker dev
-  bun run cmd -- load run search
+  pnpm cmd -- db migrate
+  pnpm cmd -- docker dev
+  pnpm cmd -- load run search
 `);
 }
 
