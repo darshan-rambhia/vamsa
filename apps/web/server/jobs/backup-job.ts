@@ -138,10 +138,10 @@ export async function performBackup(type: BackupType): Promise<string> {
     };
 
     // Import archiver dynamically
-    const archiver = (await import("archiver")).default;
+    const { ZipArchive } = await import("archiver");
 
     // Create ZIP archive
-    const archive = archiver("zip", {
+    const archive = new ZipArchive({
       zlib: { level: settings?.compressLevel ?? 6 },
     });
 

@@ -20,7 +20,7 @@
 
 import * as fs from "node:fs";
 import * as path from "node:path";
-import archiver from "archiver";
+import { ZipArchive } from "archiver";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { gte } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
@@ -170,7 +170,7 @@ export async function createBackupArchive(
   data: Awaited<ReturnType<typeof gatherBackupData>>,
   metadata: BackupMetadata
 ): Promise<string> {
-  const archive = archiver("zip", {
+  const archive = new ZipArchive({
     zlib: { level: 9 }, // Maximum compression for storage efficiency
   });
 
