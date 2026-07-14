@@ -86,7 +86,11 @@ const EXTENDED_PROJECT_CONFIG = {
 export default defineConfig({
   testDir: path.join(__dirname, "e2e"),
   testMatch: "**/*.e2e.ts",
-  timeout: 30 * 1000,
+  // CI runs with only 2 workers (memory pressure) so heavy multi-page journey
+  // tests marked test.slow() (which triples this base) intermittently exceed the
+  // limit on a cold/contended runner — one has been observed timing out at 90s
+  // then passing on retry in ~3.5s. Give CI more headroom: base 45s -> slow 135s.
+  timeout: (process.env.CI ? 45 : 30) * 1000,
   expect: {
     timeout: 10 * 1000,
   },
