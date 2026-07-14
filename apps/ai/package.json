@@ -17,7 +17,7 @@
     "@ai-sdk/openai-compatible": "^2.0.28",
     "@vamsa/lib": "workspace:*",
     "@vamsa/schemas": "workspace:*",
-    "ai": "^6.0.79",
+    "ai": "^7.0.0",
     "hono": "^4.11.7",
     "zod": "^4.3.6"
   },
