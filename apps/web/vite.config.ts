@@ -145,6 +145,13 @@ export default defineConfig({
     port: 3000,
   },
   resolve: {
+    // Force a single React instance. react-aria (ESM) and react-dom/server (CJS)
+    // are externalized in the SSR build and, without this, bun resolves them to
+    // two different React module instances at runtime — react-aria's SSR-only
+    // <Hidden> wrapper (rendered by form Selects) then calls useContext on a
+    // React whose dispatcher is null ("more than one copy of React"), crashing
+    // the server render of form pages like /people/new.
+    dedupe: ["react", "react-dom"],
     alias: {
       "@vamsa/ui": path.resolve(__dirname, "../../packages/ui/src"),
       "@vamsa/api": path.resolve(__dirname, "../../packages/api"),
@@ -166,6 +173,18 @@ export default defineConfig({
     ],
   },
   ssr: {
+    // Bundle react-aria / react-stately into the SSR output instead of leaving
+    // them external. Externalized, they load as ESM at runtime and pick up a
+    // different React instance than the (CJS) react-dom/server renderer, which
+    // makes react-aria's <Hidden> useContext see a null dispatcher and crash the
+    // SSR of form pages. Bundling them makes them share the SSR bundle's React.
+    noExternal: [
+      /^react-aria/,
+      /^react-stately/,
+      /^@react-aria\//,
+      /^@react-stately\//,
+      /^@react-types\//,
+    ],
     external: [
       // Server-only dependencies that shouldn't be bundled into SSR
       "archiver",
