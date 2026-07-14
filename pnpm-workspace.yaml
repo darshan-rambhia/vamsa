@@ -2,6 +2,13 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# Disable pnpm 11's default minimum-release-age supply-chain gate. It rejects
+# packages published within the last day, which breaks installs of freshly
+# released dependencies (e.g. Renovate bumps to latest) and CI. The pre-pnpm
+# (bun) setup had no such gate. Re-enable with a value + an allowlist if the
+# team decides to adopt release-age gating deliberately.
+minimumReleaseAge: 0
+
 # Dependencies allowed to run install/build scripts (native bindings, bundlers).
 # pnpm blocks these by default; bun built them automatically, so we allowlist
 # the ones this repo needs.
