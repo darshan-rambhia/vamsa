@@ -194,9 +194,9 @@ bd status vamsa-abc in_progress
 # (implement, test, or review)
 
 # 4. Run quality gates
-bun run typecheck
-bun run lint
-bun run build
+pnpm typecheck
+pnpm lint
+pnpm build
 
 # 5. Report ready with results
 bd status vamsa-abc ready

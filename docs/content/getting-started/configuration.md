@@ -22,7 +22,7 @@ Vamsa is configured through a single `.env` file in the project root. This page 
 
         ```bash
         # Press Ctrl+C to stop, then:
-        bun run start
+        pnpm start
         ```
 
 ---
@@ -364,7 +364,7 @@ LOG_LEVEL="info"
         Logs print directly to your terminal. Use `LOG_LEVEL=debug` to see more detail:
 
         ```bash
-        LOG_LEVEL=debug bun run start
+        LOG_LEVEL=debug pnpm start
         ```
 
 ### OpenTelemetry

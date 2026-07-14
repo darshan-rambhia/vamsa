@@ -26,27 +26,27 @@ You MUST run ALL of these commands and ALL must pass before closing any bead:
 
 ```bash
 # 1. Run all quality checks
-bun run check
+pnpm check
 # Expected: All checks pass, no failures
 
-# 2. Unit Tests, if `bun run check` indicates test failures
-bun run test
+# 2. Unit Tests, if `pnpm check` indicates test failures
+pnpm test
 # Expected: All tests pass, no failures
 
-# 3. Linting, if `bun run check` indicates linting failures
-bun run lint
+# 3. Linting, if `pnpm check` indicates linting failures
+pnpm lint
 # Expected: No errors (warnings acceptable)
 
-# 4. TypeScript, if `bun run check` indicates typecheck failures
-bun run typecheck
+# 4. TypeScript, if `pnpm check` indicates typecheck failures
+pnpm typecheck
 # Expected: No type errors
 
 # 5. Production Build
-bun run build
+pnpm build
 # Expected: Build succeeds without errors
 
 # 6. Development Server
-bun run dev &
+pnpm dev &
 sleep 15
 curl -s http://localhost:3000 > /dev/null && echo "Dev server OK" || echo "Dev server FAILED"
 # Kill the dev server after check
@@ -67,15 +67,15 @@ docker stop vamsa-review-container
 
 ### Quality Gate Summary Table
 
-| Gate         | Command              | Must Pass |
-| ------------ | -------------------- | --------- |
-| Unit Tests   | `bun run test`       | YES       |
-| Lint         | `bun run lint`       | YES       |
-| TypeScript   | `bun run typecheck`  | YES       |
-| Build        | `bun run build`      | YES       |
-| Dev Server   | `bun run dev` + curl | YES       |
-| Docker Build | `docker build`       | YES       |
-| Docker Run   | `docker run` + curl  | YES       |
+| Gate         | Command             | Must Pass |
+| ------------ | ------------------- | --------- |
+| Unit Tests   | `pnpm test`         | YES       |
+| Lint         | `pnpm lint`         | YES       |
+| TypeScript   | `pnpm typecheck`    | YES       |
+| Build        | `pnpm build`        | YES       |
+| Dev Server   | `pnpm dev` + curl   | YES       |
+| Docker Build | `docker build`      | YES       |
+| Docker Run   | `docker run` + curl | YES       |
 
 **ALL 8 gates must pass. No exceptions.**
 
@@ -84,8 +84,8 @@ docker stop vamsa-review-container
 ### 1. Code Quality
 
 ```bash
-bun run typecheck
-bun run lint
+pnpm typecheck
+pnpm lint
 ```
 
 - [ ] No `as any`, `@ts-ignore`, `@ts-expect-error`
@@ -96,8 +96,8 @@ bun run lint
 ### 2. Tests
 
 ```bash
-bun run test
-bun run test:e2e  # If E2E tests exist for feature
+pnpm test
+pnpm test:e2e  # If E2E tests exist for feature
 ```
 
 - [ ] All tests pass
@@ -107,7 +107,7 @@ bun run test:e2e  # If E2E tests exist for feature
 ### 3. Build Verification
 
 ```bash
-bun run build
+pnpm build
 ```
 
 - [ ] Build succeeds
@@ -117,7 +117,7 @@ bun run build
 
 ```bash
 # Dev server
-bun run dev &
+pnpm dev &
 sleep 15
 curl -s http://localhost:3000
 pkill -f "next dev" || pkill -f "vinxi" || true
@@ -173,7 +173,7 @@ When quality gates fail or acceptance criteria not met:
 bd comment {bead-id} --body "Review FAILED. Issues found:
 
 ## Failed Gates
-- [ ] bun run typecheck - 3 errors
+- [ ] pnpm typecheck - 3 errors
 - [ ] docker build - Dockerfile syntax error
 
 ## Details
@@ -194,15 +194,15 @@ Reassign to @backend for fixes."
 
 ### Quality Gates
 
-| Gate         | Command           | Status    | Details           |
-| ------------ | ----------------- | --------- | ----------------- |
-| Unit Tests   | bun run test      | PASS/FAIL | X tests, Y passed |
-| Lint         | bun run lint      | PASS/FAIL | X errors          |
-| TypeScript   | bun run typecheck | PASS/FAIL | X errors          |
-| Build        | bun run build     | PASS/FAIL | -                 |
-| Dev Server   | bun run dev       | PASS/FAIL | Responds: yes/no  |
-| Docker Build | docker build      | PASS/FAIL | -                 |
-| Docker Run   | docker run        | PASS/FAIL | Responds: yes/no  |
+| Gate         | Command        | Status    | Details           |
+| ------------ | -------------- | --------- | ----------------- |
+| Unit Tests   | pnpm test      | PASS/FAIL | X tests, Y passed |
+| Lint         | pnpm lint      | PASS/FAIL | X errors          |
+| TypeScript   | pnpm typecheck | PASS/FAIL | X errors          |
+| Build        | pnpm build     | PASS/FAIL | -                 |
+| Dev Server   | pnpm dev       | PASS/FAIL | Responds: yes/no  |
+| Docker Build | docker build   | PASS/FAIL | -                 |
+| Docker Run   | docker run     | PASS/FAIL | Responds: yes/no  |
 
 ### Acceptance Criteria
 

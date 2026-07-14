@@ -215,7 +215,7 @@ GRAFANA_PASSWORD=choose_a_strong_password
 ### Step 2 -- Start the observability stack
 
 ```bash
-bun run observability
+pnpm observability
 ```
 
 You should see:
@@ -248,7 +248,7 @@ Vamsa ships with pre-configured dashboards. You should see panels showing:
 ### Stopping the observability stack
 
 ```bash
-bun run observability:down
+pnpm observability:down
 ```
 
 This stops Grafana and Prometheus but does not affect your Vamsa application.
@@ -275,7 +275,7 @@ OTEL_SERVICE_NAME=vamsa-web
 Then restart Vamsa.
 
 !!! tip "The built-in Grafana stack includes trace collection"
-    If you started the observability stack with `bun run observability`, trace collection is already configured. You do not need to set up a separate backend.
+    If you started the observability stack with `pnpm observability`, trace collection is already configured. You do not need to set up a separate backend.
 
 ---
 

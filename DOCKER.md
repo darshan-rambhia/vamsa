@@ -92,7 +92,7 @@ For local development, use the local compose file with the `dev` profile:
 docker compose -f docker/docker-compose.local.yml --profile dev up -d
 
 # Then run the app locally
-bun run dev
+pnpm dev
 
 # Or start PostgreSQL + app together (test production builds locally)
 docker compose -f docker/docker-compose.local.yml --profile dev-app up -d

@@ -15,5 +15,6 @@ This section contains Architecture Decision Records (ADRs) that document signifi
 | [009](009-agentic-autonomous-workflow.md) | Agentic Autonomous Workflow | Accepted |
 | [010](010-agentic-plugin-design.md) | Agentic Plugin Design | Accepted |
 | [011](011-better-auth-migration.md) | Better Auth Migration | Accepted |
-| [012](012-bun-package-manager-migration.md) | Bun Package Manager Migration | Accepted |
+| [012](012-bun-package-manager-migration.md) | Bun Package Manager Migration | Superseded by [014](014-pnpm-package-manager.md) |
 | [013](013-di-pattern.md) | Dependency Injection Pattern | Accepted |
+| [014](014-pnpm-package-manager.md) | Revert Package Manager to pnpm (Bun Remains Runtime) | Accepted |

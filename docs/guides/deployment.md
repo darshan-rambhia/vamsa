@@ -6,6 +6,7 @@ This guide covers deploying Vamsa to production. For Docker-based deployments, s
 
 | Requirement | Minimum Version | Notes |
 |-------------|----------------|-------|
+| **pnpm** | 11+ | Package manager and script runner |
 | **Bun** | 1.0+ | JavaScript runtime (non-negotiable) |
 | **PostgreSQL** | 18+ | Primary database |
 | **nginx** | 1.24+ | Reverse proxy (recommended, not required) |
@@ -26,12 +27,17 @@ The Docker stack runs PostgreSQL, the Vamsa application (Bun + Hono), and option
 
 ## Bare-Metal / VPS Deployment
 
-### 1. Install Bun
+### 1. Install pnpm and Bun
 
 ```bash
+# Bun (JavaScript runtime)
 curl -fsSL https://bun.sh/install | bash
 source ~/.bashrc  # or restart your shell
 bun --version
+
+# pnpm (package manager) -- installs via npm/corepack
+npm install -g pnpm
+pnpm --version
 ```
 
 ### 2. Clone and Install
@@ -39,7 +45,7 @@ bun --version
 ```bash
 git clone https://github.com/your-org/vamsa.git
 cd vamsa
-bun install
+pnpm install
 ```
 
 ### 3. Set Up PostgreSQL
@@ -99,19 +105,19 @@ See the [Environment Variables](#environment-variables) section for the full ref
 ### 5. Run Database Migrations
 
 ```bash
-bun run db:migrate
+pnpm db:migrate
 ```
 
 To seed the initial admin account:
 
 ```bash
-bun run db:seed
+pnpm db:seed
 ```
 
 ### 6. Build
 
 ```bash
-bun run build
+pnpm build
 ```
 
 This builds all packages (`packages/*`) and the web application (`apps/web`). The output goes to `apps/web/dist/` with `client/` (static assets) and `server/` (SSR bundle).
@@ -119,7 +125,7 @@ This builds all packages (`packages/*`) and the web application (`apps/web`). Th
 ### 7. Start the Server
 
 ```bash
-bun run start:prod
+pnpm start:prod
 ```
 
 This starts the Bun + Hono production server on port 3000 (configurable via `PORT`). The server:
@@ -234,7 +240,7 @@ Group=vamsa
 WorkingDirectory=/path/to/vamsa/apps/web
 Environment=NODE_ENV=production
 EnvironmentFile=/path/to/vamsa/.env
-ExecStart=/home/vamsa/.bun/bin/bun run start:prod
+ExecStart=/home/vamsa/.local/share/pnpm/pnpm start:prod
 Restart=on-failure
 RestartSec=5
 StandardOutput=journal
@@ -368,16 +374,16 @@ Database backups can be automated with the built-in backup tooling:
 
 ```bash
 # Manual backup
-bun run db:backup
+pnpm db:backup
 
 # Pre-migration backup with verification
-bun run db:backup:pre-migration
+pnpm db:backup:pre-migration
 
 # Check backup status
-bun run db:backup:status
+pnpm db:backup:status
 
 # Docker-based scheduled backups
-bun run docker:backup
+pnpm docker:backup
 ```
 
 Configure retention via environment:
@@ -398,9 +404,9 @@ To deploy a new version:
 ```bash
 cd /path/to/vamsa
 git pull origin main
-bun install
-bun run db:migrate       # Run any new migrations
-bun run build
+pnpm install
+pnpm db:migrate       # Run any new migrations
+pnpm build
 sudo systemctl restart vamsa
 ```
 

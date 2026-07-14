@@ -84,15 +84,15 @@ bd close {bead-id}
 Your project runs:
 
 ```bash
-bun run format
-bun run typecheck
-bun run lint
-bun run build
-bun run test:run
-bun run test:coverage
-bun run test:e2e
-bunx prisma validate
-bunx prisma migrate dev
+pnpm format
+pnpm typecheck
+pnpm lint
+pnpm build
+pnpm test:run
+pnpm test:coverage
+pnpm test:e2e
+pnpm exec prisma validate
+pnpm exec prisma migrate dev
 ```
 
 **Problem:** Different projects have different commands:

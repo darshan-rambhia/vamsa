@@ -54,10 +54,10 @@ This prevents bypassing quality gates
 **Allowed:**
 
 - ✓ Implement components, pages, forms
-- ✓ Run `bun run format`
-- ✓ Run `bun run typecheck`
-- ✓ Run `bun run lint`
-- ✓ Run `bun run build`
+- ✓ Run `pnpm format`
+- ✓ Run `pnpm typecheck`
+- ✓ Run `pnpm lint`
+- ✓ Run `pnpm build`
 - ✓ Update bead status to `in_progress` and `ready`
 - ✓ Post completion comments
 - ✗ **CANNOT close beads**
@@ -86,10 +86,10 @@ Reviewer: validates → closes bead
 **Allowed:**
 
 - ✓ Implement server actions, schemas, migrations
-- ✓ Run `bunx prisma validate`
-- ✓ Run `bun run typecheck`
-- ✓ Run `bun run lint`
-- ✓ Run `bun run build`
+- ✓ Run `pnpm exec prisma validate`
+- ✓ Run `pnpm typecheck`
+- ✓ Run `pnpm lint`
+- ✓ Run `pnpm build`
 - ✓ Update bead status to `in_progress` and `ready`
 - ✓ Post completion comments
 - ✗ **CANNOT close beads**
@@ -109,7 +109,7 @@ Reviewer: validates → closes bead
 
 - ✓ Write unit tests (vitest)
 - ✓ Write E2E tests (playwright)
-- ✓ Run `bun run test:*` commands
+- ✓ Run `pnpm test:*` commands
 - ✓ Update bead status to `in_progress` and `ready`
 - ✓ Post test results and coverage metrics
 - ✗ **CANNOT close beads**
@@ -143,11 +143,11 @@ Only reviewer running the full suite catches these issues.
 
 **Allowed:**
 
-- ✓ Run `bun run typecheck` - verify no type errors
-- ✓ Run `bun run lint` - verify code style
-- ✓ Run `bun run test:run` - verify tests pass
-- ✓ Run `bun run test:coverage` - verify thresholds met
-- ✓ Run `bun run build` - verify production build
+- ✓ Run `pnpm typecheck` - verify no type errors
+- ✓ Run `pnpm lint` - verify code style
+- ✓ Run `pnpm test:run` - verify tests pass
+- ✓ Run `pnpm test:coverage` - verify thresholds met
+- ✓ Run `pnpm build` - verify production build
 - ✓ **Close beads with `bd close`** (ONLY agent with this power)
 - ✓ Post detailed review comments
 - ✓ Identify which agent should fix issues
@@ -226,7 +226,7 @@ Each agent has `permission` config in their `.opencode/agent/*.md`:
 permission:
   bash:
     "bd *": allow # Can run any bd command
-    "bun run *": allow # Can run tests, build, etc.
+    "pnpm *": allow # Can run tests, build, etc.
     "*": ask # Ask for anything else
   # Note: No "bd close" in allow list!
 ```
@@ -237,7 +237,7 @@ permission:
 permission:
   bash:
     "bd *": allow # Can run any bd command, including close
-    "bun run *": allow # Can run all quality gates
+    "pnpm *": allow # Can run all quality gates
     "*": ask # Ask for anything else
 ```
 
@@ -249,7 +249,7 @@ permission:
     "bd comment*": allow # Can post results
     "bd show*": allow # Can read bead details
     "bd status*": allow # Can update status
-    "bun run *": allow # Can run tests
+    "pnpm *": allow # Can run tests
     "*": deny # Cannot do anything else
 ```
 
@@ -278,7 +278,7 @@ When reviewer finds issues, the governance model ensures proper handling:
 
 ```bash
 # Reviewer finds TypeScript error
-bun run typecheck
+pnpm typecheck
 # Output: Error in src/actions/person.ts:45
 
 # Reviewer documents:
@@ -309,8 +309,8 @@ bd assign {bead-id} @backend
 # Backend agent:
 bd status {bead-id} in_progress
 # Fix the TypeScript error
-bun run typecheck  # Verify fix
-bun run build      # Verify build
+pnpm typecheck  # Verify fix
+pnpm build      # Verify build
 bd status {bead-id} ready
 bd comment {bead-id} --body "Issues fixed. TypeScript ✓, build ✓"
 ```

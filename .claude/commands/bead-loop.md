@@ -120,11 +120,11 @@ After tester reports ready, invoke reviewer with FULL quality gates:
 **Reviewer MUST run ALL of these commands**:
 
 ```bash
-bun run test           # All unit tests pass
-bun run lint           # ESLint validation
-bun run typecheck      # TypeScript checks
-bun run build          # Production build
-bun run dev &          # Start dev server (background)
+pnpm test           # All unit tests pass
+pnpm lint           # ESLint validation
+pnpm typecheck      # TypeScript checks
+pnpm build          # Production build
+pnpm dev &          # Start dev server (background)
 # Wait for server ready
 docker build -t vamsa-test -f docker/Dockerfile .  # Docker build
 docker run --rm -d -p 3001:3000 vamsa-test         # Docker run test
@@ -204,11 +204,11 @@ Tech Lead (orchestrator)
   │  └─ Writes unit tests, E2E tests
   │
   ├─ Phase 5: @reviewer (comprehensive)
-  │  ├─ bun run test
-  │  ├─ bun run lint
-  │  ├─ bun run typecheck
-  │  ├─ bun run build
-  │  ├─ bun run dev (verify startup)
+  │  ├─ pnpm test
+  │  ├─ pnpm lint
+  │  ├─ pnpm typecheck
+  │  ├─ pnpm build
+  │  ├─ pnpm dev (verify startup)
   │  ├─ docker build
   │  └─ docker run (verify container)
   │
@@ -220,15 +220,15 @@ Tech Lead (orchestrator)
 
 ## Quality Gates (Reviewer Must Run All)
 
-| Command             | Purpose           | Must Pass |
-| ------------------- | ----------------- | --------- |
-| `bun run test`      | Unit tests        | Yes       |
-| `bun run lint`      | ESLint            | Yes       |
-| `bun run typecheck` | TypeScript        | Yes       |
-| `bun run build`     | Production build  | Yes       |
-| `bun run dev`       | Dev server starts | Yes       |
-| `docker build`      | Container builds  | Yes       |
-| `docker run`        | Container runs    | Yes       |
+| Command          | Purpose           | Must Pass |
+| ---------------- | ----------------- | --------- |
+| `pnpm test`      | Unit tests        | Yes       |
+| `pnpm lint`      | ESLint            | Yes       |
+| `pnpm typecheck` | TypeScript        | Yes       |
+| `pnpm build`     | Production build  | Yes       |
+| `pnpm dev`       | Dev server starts | Yes       |
+| `docker build`   | Container builds  | Yes       |
+| `docker run`     | Container runs    | Yes       |
 
 **Bead can only be closed if ALL gates pass.**
 
@@ -289,11 +289,11 @@ Tech Lead (Iteration N+1):
 
 Tech Lead (Iteration N+2):
   Reviewer running quality gates:
-  ✓ bun run test - 156 tests passed
-  ✓ bun run lint - No errors
-  ✓ bun run typecheck - No errors
-  ✓ bun run build - Success
-  ✓ bun run dev - Server started
+  ✓ pnpm test - 156 tests passed
+  ✓ pnpm lint - No errors
+  ✓ pnpm typecheck - No errors
+  ✓ pnpm build - Success
+  ✓ pnpm dev - Server started
   ✓ docker build - Image built
   ✓ docker run - Container healthy
 
@@ -355,7 +355,8 @@ If a bead is too complex or blocked:
 - `bd` (beads CLI) - Installed and configured
 - All agent configs in `.claude/agents/`
 - Docker - For container validation
-- bun - Package manager and runtime
+- pnpm - Package manager and script runner
+- bun - JavaScript runtime
 - Permissions for all quality gate commands
 
 ---

@@ -86,9 +86,9 @@ The Backend agent handles all server-side implementation: TanStack Start server 
 Before reporting ready, the backend agent runs:
 
 ```bash
-bun run typecheck   # TypeScript compilation
-bun run lint        # ESLint validation
-bun run build       # Production build
+pnpm typecheck   # TypeScript compilation
+pnpm lint        # ESLint validation
+pnpm build       # Production build
 ```
 
 ### Key Patterns
@@ -149,10 +149,10 @@ Before writing any UI code, the frontend agent reads the design skill files:
 ### Quality Gates
 
 ```bash
-bun run format      # Prettier formatting
-bun run typecheck   # TypeScript compilation
-bun run lint        # ESLint validation
-bun run build       # Production build
+pnpm format      # Prettier formatting
+pnpm typecheck   # TypeScript compilation
+pnpm lint        # ESLint validation
+pnpm build       # Production build
 ```
 
 ### Restrictions
@@ -239,11 +239,11 @@ The reviewer must run **all seven gates** -- no exceptions:
 
 | Gate | Command | Purpose |
 |---|---|---|
-| Unit Tests | `bun run test` | All tests pass |
-| Lint | `bun run lint` | No style violations |
-| TypeScript | `bun run typecheck` | No type errors |
-| Build | `bun run build` | Production build succeeds |
-| Dev Server | `bun run dev` + curl | Server starts and responds |
+| Unit Tests | `pnpm test` | All tests pass |
+| Lint | `pnpm lint` | No style violations |
+| TypeScript | `pnpm typecheck` | No type errors |
+| Build | `pnpm build` | Production build succeeds |
+| Dev Server | `pnpm dev` + curl | Server starts and responds |
 | Docker Build | `docker build` | Container image builds |
 | Docker Run | `docker run` + curl | Container runs and app responds |
 

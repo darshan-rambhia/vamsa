@@ -89,3 +89,7 @@ docs/site/
 !.claude
 !CLAUDE.md
 .claude/settings.local.json
+
+# pnpm config is committed (some global gitignores exclude .npmrc); it holds
+# repo package-manager settings, not secrets.
+!.npmrc

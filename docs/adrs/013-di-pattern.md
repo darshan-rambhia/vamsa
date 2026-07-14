@@ -152,7 +152,7 @@ Created comprehensive test files demonstrating the DI pattern:
 
 ### Type Checking
 ```bash
-bun run typecheck
+pnpm typecheck
 ```
 - ✅ No new errors introduced
 - ✅ All type exports validated
@@ -168,7 +168,7 @@ bun test apps/web/src/server/charts.server.test.ts apps/web/src/server/claim.ser
 
 ### All Tests
 ```bash
-bun run test:unit
+pnpm test:unit
 ```
 - ✅ 148 tests passing
 - ✅ No regressions
@@ -284,19 +284,19 @@ Recommend applying to high-value modules that need testing:
 
 ```bash
 # Type checking
-bun run typecheck
+pnpm typecheck
 
 # Run new tests
 bun test apps/web/src/server/charts.server.test.ts apps/web/src/server/claim.server.test.ts
 
 # Run all unit tests
-bun run test:unit
+pnpm test:unit
 
 # Build everything
-bun run build
+pnpm build
 
 # Lint
-bun run lint
+pnpm lint
 ```
 
 All commands pass without errors or regressions.

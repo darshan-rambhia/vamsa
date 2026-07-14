@@ -136,26 +136,26 @@ bd comment {bead-id} --body "Work complete. Quality gates: [status]"
 ### Backend Agent
 
 ```bash
-bun run typecheck     # TypeScript checks
-bun run lint          # ESLint validation
-bun run build         # Production build succeeds
+pnpm typecheck     # TypeScript checks
+pnpm lint          # ESLint validation
+pnpm build         # Production build succeeds
 ```
 
 ### Frontend Agent
 
 ```bash
-bun run format        # Prettier formatting
-bun run typecheck     # TypeScript checks
-bun run lint          # ESLint validation
-bun run build         # Production build succeeds
+pnpm format        # Prettier formatting
+pnpm typecheck     # TypeScript checks
+pnpm lint          # ESLint validation
+pnpm build         # Production build succeeds
 ```
 
 ### Tester Agent
 
 ```bash
-bun run test           # Unit tests pass
-bun run test:coverage  # Coverage >= 90% statements, 85% branches
-bun run test:e2e       # E2E tests pass
+pnpm test           # Unit tests pass
+pnpm test:coverage  # Coverage >= 90% statements, 85% branches
+pnpm test:e2e       # E2E tests pass
 ```
 
 ### Reviewer Agent

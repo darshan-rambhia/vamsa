@@ -295,7 +295,7 @@ See: `.opencode/agent/techlead.md` for full updated prompt.
 - `bd` (beads CLI) - Must be installed and configured
 - All agent configs in `.opencode/agent/` - Must be present
 - Stop hook - Must be configured to detect completion promise
-- Permissions - Tech Lead must have permission for `bd *` and `bun run *` commands
+- Permissions - Tech Lead must have permission for `bd *` and `pnpm *` commands
 
 ## Troubleshooting
 

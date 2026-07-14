@@ -86,7 +86,7 @@ Reviewer: validates → closes bead
 **Allowed:**
 
 - ✓ Implement server functions, schemas, migrations
-- ✓ Run `bun run db:generate` (Drizzle generate)
+- ✓ Run `pnpm db:generate` (Drizzle generate)
 - ✓ Run `pnpm typecheck`
 - ✓ Run `pnpm lint`
 - ✓ Run `pnpm build`
@@ -222,7 +222,7 @@ When reviewer finds issues, the governance model ensures proper handling:
 
 ```bash
 # Reviewer finds TypeScript error
-bun run typecheck
+pnpm typecheck
 # Output: Error in src/actions/person.ts:45
 
 # Reviewer documents:

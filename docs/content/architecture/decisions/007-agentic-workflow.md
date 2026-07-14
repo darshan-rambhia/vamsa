@@ -79,7 +79,7 @@ Tester:
 3. `bd status {epic-id} in_progress` → signal start
 4. Write unit tests (vitest)
 5. Write E2E tests (playwright)
-6. Run: `bun run test:run && bun run test:coverage && bun run test:e2e`
+6. Run: `pnpm test:run && pnpm test:coverage && pnpm test:e2e`
 7. Verify coverage: Statements ≥90%, Branches ≥85%, Functions ≥90%, Lines ≥90%
 8. `bd status {epic-id} ready` → signal completion
 9. `bd comment {epic-id} --body "Tests: X passing. Coverage: X%"` → post results
@@ -107,11 +107,11 @@ bd show {epic-id}  # Should show: ready
 
 Reviewer runs:
 
-1. `bun run typecheck` → no type errors
-2. `bun run lint` → no lint warnings
-3. `bun run test:run` → all tests pass
-4. `bun run test:coverage` → coverage thresholds met
-5. `bun run build` → production build succeeds
+1. `pnpm typecheck` → no type errors
+2. `pnpm lint` → no lint warnings
+3. `pnpm test:run` → all tests pass
+4. `pnpm test:coverage` → coverage thresholds met
+5. `pnpm build` → production build succeeds
 
 **Scenario A - All checks pass:**
 
@@ -222,25 +222,25 @@ bd sync --from-main
 
 ```bash
 # Format code
-bun run format
+pnpm format
 
 # Type check
-bun run typecheck
+pnpm typecheck
 
 # Lint
-bun run lint
+pnpm lint
 
 # Build
-bun run build
+pnpm build
 
 # Run tests
-bun run test:run      # Unit tests
-bun run test:e2e      # E2E tests
-bun run test:coverage # Coverage with thresholds
+pnpm test:run      # Unit tests
+pnpm test:e2e      # E2E tests
+pnpm test:coverage # Coverage with thresholds
 
 # Prisma
-bunx prisma validate  # Validate schema
-bunx prisma migrate dev --name {name}  # Create migration
+pnpm exec prisma validate  # Validate schema
+pnpm exec prisma migrate dev --name {name}  # Create migration
 ```
 
 ---
@@ -292,7 +292,7 @@ bd show {bead-id}
 
 ```bash
 # Identify which files lack coverage
-bun run test:coverage
+pnpm test:coverage
 
 # Tech Lead reassigns to tester to add more tests
 bd assign {bead-id} @tester
@@ -327,7 +327,7 @@ bd assign {bead-id} @{agent-name}
 
 ```bash
 # Check error
-bun run build
+pnpm build
 
 # Determine responsible agent
 # Usually TypeScript error → whoever touched the file
@@ -336,9 +336,9 @@ bun run build
 bd assign {bead-id} @{agent-name}
 
 # Agent runs:
-bun run typecheck  # Find type errors
+pnpm typecheck  # Find type errors
 # Fix issues
-bun run build      # Verify build succeeds
+pnpm build      # Verify build succeeds
 ```
 
 ---

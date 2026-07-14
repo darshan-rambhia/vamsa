@@ -30,7 +30,8 @@ A modern web application for managing family genealogy with server-side renderin
 - **Backend API**: TanStack React Start server functions
 - **Database**: PostgreSQL 18 with Drizzle ORM
 - **Runtime**: Bun
-- **Monorepo**: Bun workspaces
+- **Package Manager**: pnpm
+- **Monorepo**: pnpm workspaces
 - **UI**: Tailwind CSS + shadcn/ui components
 - **Tree Visualization**: React Flow
 - **State Management**: TanStack Query
@@ -41,7 +42,8 @@ A modern web application for managing family genealogy with server-side renderin
 
 ### Prerequisites
 
-- **Bun** 1.0+ ([install](https://bun.sh/))
+- **pnpm** 11+ ([install](https://pnpm.io/installation)) -- package manager
+- **Bun** 1.0+ ([install](https://bun.sh/)) -- JavaScript runtime
 - **Docker & Docker Compose** (for PostgreSQL)
 - **Node.js** 18+ (optional, Bun is the runtime)
 
@@ -66,7 +68,7 @@ docker compose -f docker/docker-compose.yml up -d
 
 ```bash
 # Install dependencies
-bun install
+pnpm install
 
 # Configure environment
 cp .env.example .env
@@ -83,10 +85,10 @@ docker run -d --name vamsa-postgres \
 # DATABASE_URL="postgresql://vamsa:vamsa@localhost:5432/vamsa"
 
 # Run migrations
-bun run db:migrate
+pnpm db:migrate
 
 # Start development server
-bun run dev
+pnpm dev
 
 # App available at http://localhost:5173
 ```
@@ -130,42 +132,42 @@ packages/
 ### Development
 
 ```bash
-bun run dev              # Start dev server
-bun run build            # Build for production
-bun run preview          # Preview production build locally
-bun run quality          # Local quality checks (fix/format + lint + typecheck + test)
-bun run quality:ci       # CI-safe quality gate (no auto-fixes)
-bun run typecheck        # Run TypeScript checks
-bun run lint             # Run ESLint
+pnpm dev              # Start dev server
+pnpm build            # Build for production
+pnpm preview          # Preview production build locally
+pnpm quality          # Local quality checks (fix/format + lint + typecheck + test)
+pnpm quality:ci       # CI-safe quality gate (no auto-fixes)
+pnpm typecheck        # Run TypeScript checks
+pnpm lint             # Run ESLint
 ```
 
 ### Database
 
 ```bash
-bun run db:migrate      # Run Drizzle migrations
-bun run db:studio       # Open Drizzle Studio
-bun run db:seed         # Seed initial data
+pnpm db:migrate      # Run Drizzle migrations
+pnpm db:studio       # Open Drizzle Studio
+pnpm db:seed         # Seed initial data
 ```
 
 ### Testing
 
 ```bash
-bun run test                          # Canonical unit test command
-bun run test:integration              # Integration tests (SQLite default)
-bun run test:e2e                      # E2E tests
-bun run test:focus --suite visual     # Focused visual suite
-bun run test:focus --suite perf       # Focused performance suite
-bun run test:ci                       # CI test suite (unit+integration)
+pnpm test                          # Canonical unit test command
+pnpm test:integration              # Integration tests (SQLite default)
+pnpm test:e2e                      # E2E tests
+pnpm test:focus --suite visual     # Focused visual suite
+pnpm test:focus --suite perf       # Focused performance suite
+pnpm test:ci                       # CI test suite (unit+integration)
 ```
 
 ### Command Center
 
 ```bash
-bun run cmd -- db migrate        # Database operations
-bun run cmd -- docker dev        # Docker workflow operations
-bun run cmd -- docs build        # Documentation operations
-bun run cmd -- obs up            # Observability stack operations
-bun run cmd -- load run search   # Load-test scenario operations
+pnpm cmd -- db migrate        # Database operations
+pnpm cmd -- docker dev        # Docker workflow operations
+pnpm cmd -- docs build        # Documentation operations
+pnpm cmd -- obs up            # Observability stack operations
+pnpm cmd -- load run search   # Load-test scenario operations
 ```
 
 See `docs/guides/command-architecture.md` for migration guidance and deprecated alias mappings.
@@ -198,7 +200,7 @@ This approach ensures:
 
 ### Monorepo Structure
 
-Using **Bun workspaces** for:
+Using **pnpm workspaces** for:
 
 - Shared packages (`ui`, `schemas`, `lib`) usable across clients
 - Efficient builds with caching

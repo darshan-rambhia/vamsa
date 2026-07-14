@@ -2,36 +2,34 @@
   "name": "vamsa",
   "version": "0.1.0",
   "private": true,
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
+  "packageManager": "pnpm@11.12.0",
   "engines": {
-    "bun": ">=1.0.0"
+    "bun": ">=1.0.0",
+    "pnpm": ">=11.0.0"
   },
   "scripts": {
-    "postinstall": "[ -f packages/api/src/drizzle/schema/index.ts ] && bun run db:generate || true",
+    "postinstall": "[ -f packages/api/src/drizzle/schema/index.ts ] && pnpm db:generate || true",
     "// === Development ===": "",
     "dev": "bun scripts/dev.ts",
     "dev:pg": "DB_DRIVER=postgres bun scripts/dev.ts",
-    "dev:web-only": "bun run --filter @vamsa/web dev",
-    "dev:ai": "bun run --filter @vamsa/ai dev",
+    "dev:web-only": "pnpm --filter @vamsa/web dev",
+    "dev:ai": "pnpm --filter @vamsa/ai dev",
     "// === Build ===": "",
-    "build": "bun run --filter '*' build",
-    "build:web": "bun run --filter @vamsa/web build",
-    "build:ai": "bun run --filter @vamsa/ai build",
-    "preview": "bun run --filter @vamsa/web preview",
+    "build": "pnpm -r build",
+    "build:web": "pnpm --filter @vamsa/web build",
+    "build:ai": "pnpm --filter @vamsa/ai build",
+    "preview": "pnpm --filter @vamsa/web preview",
     "// === Code Quality ===": "",
     "cmd": "bun scripts/cmd.ts",
     "quality": "bun scripts/check-all.ts",
-    "quality:ci": "bun run format:check && bun run lint && bun run typecheck && bun run build",
-    "ci": "bun run quality:ci && bun run test:ci",
+    "quality:ci": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm build",
+    "ci": "pnpm quality:ci && pnpm test:ci",
     "check": "bun scripts/check-all.ts",
     "lint": "NODE_OPTIONS=--max-old-space-size=8192 eslint .",
     "lint:fix": "NODE_OPTIONS=--max-old-space-size=8192 eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "bun run --filter '*' typecheck",
+    "typecheck": "pnpm -r typecheck",
     "// === Testing ===": "",
     "test": "bun scripts/test.ts unit",
     "test:ci": "bun scripts/test.ts ci",
@@ -46,9 +44,9 @@
     "test:int:sqlite": "bun scripts/test.ts integration --db sqlite",
     "test:int:postgres": "bun scripts/test.ts integration --db postgres",
     "test:mutation": "bun scripts/test.ts mutation",
-    "analyze": "bun run --filter @vamsa/web analyze",
-    "check:bundle": "bun run --filter @vamsa/web check:bundle",
-    "lighthouse": "bunx @lhci/cli autorun",
+    "analyze": "pnpm --filter @vamsa/web analyze",
+    "check:bundle": "pnpm --filter @vamsa/web check:bundle",
+    "lighthouse": "pnpm exec lhci autorun",
     "load-test": "bun scripts/cmd.ts load run mixed",
     "load-test:auth": "bun scripts/cmd.ts load run auth",
     "load-test:people": "bun scripts/cmd.ts load run people",
@@ -107,8 +105,8 @@
     "setup": "bun scripts/setup-env.ts",
     "setup:docker": "bun scripts/setup-env.ts --docker",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules",
-    "release": "bunx semantic-release",
-    "release:dry": "bunx semantic-release --dry-run",
+    "release": "pnpm exec semantic-release",
+    "release:dry": "pnpm exec semantic-release --dry-run",
     "prepare": "husky"
   },
   "dependencies": {
@@ -157,20 +155,11 @@
     "yaml": "2.9.0",
     "zod": "4.3.6"
   },
-  "overrides": {
-    "@react-email/render": "^2.0.4",
-    "drizzle-orm": "0.45.2",
-    "hono": ">=4.12.3",
-    "lodash": ">=4.17.23",
-    "playwright-core": "1.61.1",
-    "react": "19.2.7",
-    "react-dom": "19.2.7"
-  },
   "lint-staged": {
     "*.{ts,tsx}": [
       "eslint --fix",
       "prettier --write",
-      "bash -c 'bun run typecheck'"
+      "bash -c 'pnpm typecheck'"
     ],
     "*.{js,jsx,json,md,yml,yaml,css}": [
       "prettier --write"

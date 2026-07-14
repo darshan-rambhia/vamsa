@@ -497,35 +497,35 @@ Agents communicate via:
 
 Each implements independently and runs:
 
-- `bun run format` - Code formatting
-- `bun run typecheck` - Type safety
-- `bun run lint` - Code style
-- `bun run build` - Production build
+- `pnpm format` - Code formatting
+- `pnpm typecheck` - Type safety
+- `pnpm lint` - Code style
+- `pnpm build` - Production build
 
 Backend additionally:
 
-- `bunx prisma validate` - Database schema integrity
+- `pnpm exec prisma validate` - Database schema integrity
 
 ### Phase 3 (Tester)
 
 ```bash
-bun run test:run        # Unit tests must pass
-bun run test:coverage   # Coverage thresholds:
+pnpm test:run        # Unit tests must pass
+pnpm test:coverage   # Coverage thresholds:
                         #   Statements ≥ 90%
                         #   Branches ≥ 85%
                         #   Functions ≥ 90%
                         #   Lines ≥ 90%
-bun run test:e2e        # E2E tests must pass
+pnpm test:e2e        # E2E tests must pass
 ```
 
 ### Phase 4 (Reviewer - Full Suite)
 
 ```bash
-bun run typecheck       # No type errors
-bun run lint            # No lint warnings
-bun run test:run        # All tests pass
-bun run test:coverage   # Coverage validated
-bun run build           # Production build succeeds
+pnpm typecheck       # No type errors
+pnpm lint            # No lint warnings
+pnpm test:run        # All tests pass
+pnpm test:coverage   # Coverage validated
+pnpm build           # Production build succeeds
 ```
 
 If all pass → Reviewer closes beads

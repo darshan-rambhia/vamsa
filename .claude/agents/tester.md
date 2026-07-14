@@ -155,9 +155,9 @@ await page.click("div.form > button.btn-primary");
 ## Quality Gates
 
 ```bash
-bun run test           # Unit tests
-bun run test:e2e       # E2E tests
-bun run test:coverage  # Coverage report
+pnpm test           # Unit tests
+pnpm test:e2e       # E2E tests
+pnpm test:coverage  # Coverage report
 ```
 
 ## Workflow
@@ -174,14 +174,14 @@ Before completing any task, ALWAYS run these commands in sequence:
 
 ```bash
 # 1. Verify unit tests pass
-bun run test
+pnpm test
 
 # 2. Verify coverage meets thresholds
-bun run test:coverage
+pnpm test:coverage
 
 # 3. Verify E2E tests pass (requires dev server)
 # Note: E2E tests auto-start the dev server via webServer config in playwright.config.ts
-bun run test:e2e
+pnpm test:e2e
 ```
 
 ## Rules

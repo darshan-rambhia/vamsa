@@ -96,10 +96,10 @@ bun scripts/backup-database.ts --verify
 
 ```bash
 # Create backup (runs shell script)
-bun run db:backup
+pnpm db:backup
 
 # Restore from backup (runs shell script)
-bun run db:restore
+pnpm db:restore
 ```
 
 ## Backup Management
@@ -208,7 +208,7 @@ bun scripts/backup-database.ts --type=full
 5. **Verify the restoration**
    ```bash
    # Check database integrity
-   bun run db:studio
+   pnpm db:studio
 
    # Or run manual verification
    psql $DATABASE_URL -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';"
@@ -237,7 +237,7 @@ bun scripts/backup-database.ts --type=full
 
 5. Verify data is restored
    ```bash
-   bun run db:studio
+   pnpm db:studio
    ```
 
 6. Restart the application

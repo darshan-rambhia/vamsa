@@ -62,6 +62,7 @@ Vamsa is open source and built with an innovative AI-assisted development workfl
 | Backend | TanStack Server Functions |
 | Database | PostgreSQL (Drizzle ORM) |
 | Runtime | Bun |
+| Package Manager | pnpm |
 | UI | shadcn/ui |
 | Auth | Better Auth |
 | Testing | Vitest + Playwright |

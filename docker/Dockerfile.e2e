@@ -22,10 +22,14 @@ FROM oven/bun:1-alpine AS builder
 ARG SKIP_SSL_VERIFY
 ENV NODE_TLS_REJECT_UNAUTHORIZED=${SKIP_SSL_VERIFY:+0}
 
+# pnpm is the package manager; bun (from the base image) stays as the runtime.
+# The base oven/bun image has no Node.js, so add Node + pnpm for installs.
+RUN apk add --no-cache nodejs npm && npm install -g pnpm@11.12.0
+
 WORKDIR /app
 
 # Copy package files for dependency installation
-COPY package.json bun.lock bunfig.toml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/ai/package.json ./apps/ai/
 COPY apps/mobile/package.json ./apps/mobile/
 COPY apps/web/package.json ./apps/web/
@@ -37,9 +41,10 @@ COPY packages/schemas/package.json ./packages/schemas/
 COPY packages/ui/package.json ./packages/ui/
 
 # Install all dependencies (including devDependencies for build)
-# --frozen-lockfile: ensure exact versions from bun.lock (reproducible builds)
+# --frozen-lockfile: ensure exact versions from pnpm-lock.yaml (reproducible)
 # --ignore-scripts: skip prepare/postinstall (husky not needed in Docker)
-RUN bun install --frozen-lockfile --ignore-scripts
+# --node-linker=hoisted: flat node_modules so it copies cleanly across stages
+RUN pnpm install --frozen-lockfile --ignore-scripts --node-linker=hoisted
 
 # Copy source code
 COPY . .
@@ -47,11 +52,11 @@ COPY . .
 # Generate Drizzle client
 WORKDIR /app/packages/api
 ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
-RUN bun run db:generate
+RUN pnpm db:generate
 
 # Build the web app
 WORKDIR /app/apps/web
-RUN bun run build
+RUN pnpm build
 
 # =============================================================================
 # Stage 2: E2E Test Runner

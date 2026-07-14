@@ -31,7 +31,7 @@ docker compose -f docker/docker-compose.local.yml --profile test logs postgres
 ### 2. Run Integration Tests
 
 ```bash
-bun run test:int
+pnpm test:int
 ```
 
 Or run specific test file:

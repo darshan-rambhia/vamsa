@@ -17,10 +17,14 @@ FROM --platform=$BUILDPLATFORM oven/bun:1-alpine AS builder
 ARG SKIP_SSL_VERIFY
 ENV NODE_TLS_REJECT_UNAUTHORIZED=${SKIP_SSL_VERIFY:+0}
 
+# pnpm is the package manager; bun (from the base image) stays as the runtime.
+# The base oven/bun image has no Node.js, so add Node + pnpm for installs.
+RUN apk add --no-cache nodejs npm && npm install -g pnpm@11.12.0
+
 WORKDIR /app
 
 # Copy package files for dependency installation
-COPY package.json bun.lock bunfig.toml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 COPY apps/ai/package.json ./apps/ai/
 COPY apps/mobile/package.json ./apps/mobile/
 COPY apps/web/package.json ./apps/web/
@@ -34,7 +38,8 @@ COPY packages/ui/package.json ./packages/ui/
 # Install all dependencies
 # --frozen-lockfile: faster, skips dependency resolution
 # --ignore-scripts: skips prepare/postinstall (husky not needed in Docker)
-RUN bun install --frozen-lockfile --ignore-scripts
+# --node-linker=hoisted: flat node_modules so it copies cleanly across stages
+RUN pnpm install --frozen-lockfile --ignore-scripts --node-linker=hoisted
 
 # Copy source code
 COPY . .
@@ -42,42 +47,14 @@ COPY . .
 # Generate Drizzle client
 WORKDIR /app/packages/api
 ENV DATABASE_URL=postgresql://dummy:dummy@localhost:5432/dummy
-RUN bun run db:generate
+RUN pnpm db:generate
 
 # Build the web app
 WORKDIR /app/apps/web
-RUN bun run build
+RUN pnpm build
 
 # =============================================================================
-# Stage 2: Production dependencies
-# =============================================================================
-# Use BUILDPLATFORM for native speed during dependency installation
-FROM --platform=$BUILDPLATFORM oven/bun:1-alpine AS prod-deps
-
-# Build arg to skip SSL verification (for corporate proxies)
-ARG SKIP_SSL_VERIFY
-ENV NODE_TLS_REJECT_UNAUTHORIZED=${SKIP_SSL_VERIFY:+0}
-
-WORKDIR /app
-
-COPY package.json bun.lock bunfig.toml ./
-COPY apps/ai/package.json ./apps/ai/
-COPY apps/mobile/package.json ./apps/mobile/
-COPY apps/web/package.json ./apps/web/
-COPY packages/api/package.json ./packages/api/
-COPY packages/client/package.json ./packages/client/
-COPY packages/lib/package.json ./packages/lib/
-COPY packages/query-hooks/package.json ./packages/query-hooks/
-COPY packages/schemas/package.json ./packages/schemas/
-COPY packages/ui/package.json ./packages/ui/
-
-# Production dependencies only (excludes devDependencies)
-# --frozen-lockfile: faster, skips dependency resolution
-# --ignore-scripts: skips lifecycle scripts like prepare (husky)
-RUN bun install --production --frozen-lockfile --ignore-scripts
-
-# =============================================================================
-# Stage 3: Production runtime
+# Stage 2: Production runtime
 # =============================================================================
 # TARGETPLATFORM is implicit default, no need to specify
 FROM oven/bun:1-alpine AS runner
@@ -88,19 +65,12 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 bunuser && \
     adduser --system --uid 1001 --ingroup bunuser vamsa
 
-# Copy production node_modules
-COPY --from=prod-deps --chown=vamsa:bunuser /app/node_modules ./node_modules
-COPY --from=builder --chown=vamsa:bunuser /app/apps/web/node_modules ./apps/web/node_modules
-
-# Copy built application
-COPY --from=builder --chown=vamsa:bunuser /app/apps/web/dist ./apps/web/dist
-COPY --from=builder --chown=vamsa:bunuser /app/apps/web/server ./apps/web/server
-COPY --from=builder --chown=vamsa:bunuser /app/apps/web/src ./apps/web/src
-COPY --from=builder --chown=vamsa:bunuser /app/packages ./packages
-
-# Copy config files
-COPY --from=builder --chown=vamsa:bunuser /app/package.json ./
-COPY --from=builder --chown=vamsa:bunuser /app/apps/web/package.json ./apps/web/
+# Copy the whole workspace from the builder as a single tree. pnpm's node_modules
+# use symlinks into node_modules/.pnpm, so the tree must be copied intact for them
+# to resolve; the runtime app imports TypeScript source from packages/* directly.
+# NOTE: this ships devDependencies (larger image). Slimming to prod-only without
+# breaking pnpm's workspace symlinks is a follow-up (e.g. `pnpm deploy`).
+COPY --from=builder --chown=vamsa:bunuser /app /app
 
 # Create uploads directory
 RUN mkdir -p /app/data/uploads && chown -R vamsa:bunuser /app/data
