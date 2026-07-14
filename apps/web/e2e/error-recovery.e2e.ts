@@ -383,15 +383,17 @@ test.describe("Feature: Error Recovery", () => {
       });
 
       await bdd.then("page eventually loads despite slow network", async () => {
-        // Page should be on dashboard URL
-        await expect(page).toHaveURL(/\/dashboard/);
+        // Page should be on dashboard URL. Generous timeout — the test throttles
+        // every request by 100ms, so navigation is intentionally slow.
+        await expect(page).toHaveURL(/\/dashboard/, { timeout: 15000 });
       });
 
       await bdd.and("user can still interact with page", async () => {
-        // Navigation should be available
+        // Navigation should be available. Use a web-first assertion so it
+        // retries until the nav renders — a point-in-time isVisible() check
+        // races the deliberately-throttled network and flakes intermittently.
         const nav = page.locator("nav").first();
-        const navVisible = await nav.isVisible().catch(() => false);
-        expect(navVisible).toBeTruthy();
+        await expect(nav).toBeVisible({ timeout: 10000 });
       });
     });
 

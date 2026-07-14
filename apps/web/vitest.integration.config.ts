@@ -27,5 +27,10 @@ export default defineConfig({
     // Each file runs in its own process — critical for SQLite :memory: isolation
     // and for ensuring each file gets a fresh DB connection.
     pool: "forks",
+    // SQLite uses an isolated :memory: DB per fork, so files can run in parallel.
+    // PostgreSQL shares one test database across all forks, so parallel files
+    // race on cleanupTestData()'s TRUNCATE ... CASCADE (one file wipes another's
+    // rows mid-test). Serialize files for postgres to keep tests isolated.
+    fileParallelism: process.env.DB_DRIVER !== "postgres",
   },
 });
