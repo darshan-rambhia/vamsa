@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@types/bun": "^1.3.9",
-    "@types/node": "^25.3.2",
+    "@types/node": "^26.0.0",
     "@types/pg": "^8.16.0",
     "@vamsa/lib": "workspace:*",
     "drizzle-orm": "0.45.2",
