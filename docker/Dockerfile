@@ -53,6 +53,15 @@ RUN pnpm db:generate
 WORKDIR /app/apps/web
 RUN pnpm build
 
+# Create a self-contained, production-only deployment of the web app.
+# `pnpm deploy` copies workspace dependencies (@vamsa/*) in as real files rather
+# than symlinks into the .pnpm store, so the result copies to the runtime image
+# without dangling links and without devDependencies — much smaller than shipping
+# the whole workspace. --legacy: required since pnpm 10 for non-injected
+# workspaces; --ignore-scripts: db:generate already ran above, skip husky.
+WORKDIR /app
+RUN pnpm --filter=@vamsa/web deploy --prod --legacy --ignore-scripts /prod
+
 # =============================================================================
 # Stage 2: Production runtime
 # =============================================================================
@@ -65,12 +74,9 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 bunuser && \
     adduser --system --uid 1001 --ingroup bunuser vamsa
 
-# Copy the whole workspace from the builder as a single tree. pnpm's node_modules
-# use symlinks into node_modules/.pnpm, so the tree must be copied intact for them
-# to resolve; the runtime app imports TypeScript source from packages/* directly.
-# NOTE: this ships devDependencies (larger image). Slimming to prod-only without
-# breaking pnpm's workspace symlinks is a follow-up (e.g. `pnpm deploy`).
-COPY --from=builder --chown=vamsa:bunuser /app /app
+# Copy the self-contained prod deployment (apps/web app files + prod node_modules
+# with @vamsa/* workspace deps materialized). The app runs from source via bun.
+COPY --from=builder --chown=vamsa:bunuser /prod /app
 
 # Create uploads directory
 RUN mkdir -p /app/data/uploads && chown -R vamsa:bunuser /app/data
@@ -82,5 +88,4 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST=0.0.0.0
 
-WORKDIR /app/apps/web
 CMD ["bun", "run", "server/index.ts"]
