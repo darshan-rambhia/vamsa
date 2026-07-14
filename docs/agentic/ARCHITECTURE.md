@@ -458,10 +458,10 @@ Receive bead → Run ALL quality gates →
 
 Each implements independently and runs:
 
-- `bun run format` - Code formatting
-- `bun run typecheck` - Type safety
-- `bun run lint` - Code style
-- `bun run build` - Production build
+- `pnpm format` - Code formatting
+- `pnpm typecheck` - Type safety
+- `pnpm lint` - Code style
+- `pnpm build` - Production build
 
 Backend additionally:
 

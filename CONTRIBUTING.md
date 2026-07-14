@@ -29,7 +29,8 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 Before contributing, ensure you have the following installed:
 
-- **Bun** 1.0 or higher ([installation guide](https://bun.sh/))
+- **pnpm** 11 or higher ([installation guide](https://pnpm.io/installation)) -- package manager
+- **Bun** 1.0 or higher ([installation guide](https://bun.sh/)) -- JavaScript runtime
 - **Docker** and **Docker Compose** (for PostgreSQL and services)
 - **Git** for version control
 
@@ -52,7 +53,7 @@ Before contributing, ensure you have the following installed:
 
 ```bash
 # Install dependencies
-bun install
+pnpm install
 
 # Copy environment variables
 cp .env.example .env
@@ -67,7 +68,7 @@ docker compose -f docker/docker-compose.yml up -d
 
 ```bash
 # Install dependencies
-bun install
+pnpm install
 
 # Copy and configure environment variables
 cp .env.example .env
@@ -82,20 +83,20 @@ docker run -d --name vamsa-postgres \
   postgres:18-alpine
 
 # Run database migrations
-bun run db:migrate
+pnpm db:migrate
 
 # (Optional) Seed the database
-bun run db:seed
+pnpm db:seed
 
 # Start development server
-bun run dev
+pnpm dev
 ```
 
 The application will be available at http://localhost:5173.
 
 ## Project Structure
 
-Vamsa is a monorepo managed with **Bun workspaces**:
+Vamsa is a monorepo managed with **pnpm workspaces**:
 
 ```
 vamsa/
@@ -172,10 +173,10 @@ Unit tests use **Vitest** and focus on `@vamsa/lib` and `@vamsa/ui` packages:
 
 ```bash
 # Run unit tests
-bun run test:unit
+pnpm test:unit
 
 # Run with coverage
-bun run test:coverage
+pnpm test:coverage
 ```
 
 ### End-to-End Tests
@@ -184,19 +185,19 @@ E2E tests use **Playwright** and test the full application:
 
 ```bash
 # Run E2E tests (headless)
-bun run test:e2e
+pnpm test:e2e
 
 # Run with UI
-bun run test:e2e:ui
+pnpm test:e2e:ui
 
 # Run in headed mode (see browser)
-bun run test:e2e:headed
+pnpm test:e2e:headed
 
 # Run in debug mode
-bun run test:e2e:debug
+pnpm test:e2e:debug
 
 # View test report
-bun run test:e2e:report
+pnpm test:e2e:report
 ```
 
 ### Accessibility Testing
@@ -219,16 +220,16 @@ The project uses **ESLint** and **Prettier**:
 
 ```bash
 # Check for linting errors
-bun run lint
+pnpm lint
 
 # Fix auto-fixable linting issues
-bun run lint:fix
+pnpm lint:fix
 
 # Check code formatting
-bun run format:check
+pnpm format:check
 
 # Format code
-bun run format
+pnpm format
 ```
 
 ### TypeScript
@@ -236,7 +237,7 @@ bun run format
 - Enable **strict mode** is enabled
 - Use **explicit types** where helpful for clarity
 - Avoid `any` types; use `unknown` if needed
-- Run type checking: `bun run typecheck`
+- Run type checking: `pnpm typecheck`
 
 ### Code Conventions
 
@@ -297,10 +298,10 @@ test(e2e): add tests for person profile editing
 1. **Run all checks locally**:
 
    ```bash
-   bun run lint
-   bun run typecheck
-   bun run test:unit
-   bun run test:e2e
+   pnpm lint
+   pnpm typecheck
+   pnpm test:unit
+   pnpm test:e2e
    ```
 
 2. **Update documentation** if needed:
@@ -374,7 +375,7 @@ The database schema is in `packages/api/src/drizzle/schema/`.
 2. **Create a migration**:
 
    ```bash
-   bun run db:migrate
+   pnpm db:migrate
    ```
 
    This will:
@@ -384,7 +385,7 @@ The database schema is in `packages/api/src/drizzle/schema/`.
 
 3. **Test your changes**:
    - Run the app and test functionality
-   - Run tests: `bun run test:unit` and `bun run test:e2e`
+   - Run tests: `pnpm test:unit` and `pnpm test:e2e`
 
 4. **Commit the migration**:
    - Include both the schema changes AND the migration files
@@ -415,7 +416,7 @@ docker compose -f docker/docker-compose.local.yml --profile dev up -d
 docker compose -f docker/docker-compose.local.yml --profile dev-app up -d
 
 # Observability stack (Prometheus, Grafana, etc.)
-bun run observability
+pnpm observability
 
 # Stop all services
 docker compose -f docker/docker-compose.yml down
@@ -425,10 +426,10 @@ docker compose -f docker/docker-compose.yml down
 
 ```bash
 # View logs
-bun run docker:logs
+pnpm docker:logs
 
 # Rebuild containers
-bun run docker:build
+pnpm docker:build
 
 # Start fresh (remove volumes)
 docker compose -f docker/docker-compose.yml down -v
@@ -438,7 +439,7 @@ docker compose -f docker/docker-compose.yml down -v
 
 - Access PostgreSQL: `docker exec -it vamsa-postgres psql -U vamsa -d vamsa`
 - View container logs: `docker logs vamsa-web -f`
-- Inspect database: `bun run db:studio` (opens Drizzle Studio)
+- Inspect database: `pnpm db:studio` (opens Drizzle Studio)
 
 ## Observability
 
@@ -448,13 +449,13 @@ Vamsa includes an observability stack with OpenTelemetry, Prometheus, and Grafan
 
 ```bash
 # Start observability services
-bun run observability
+pnpm observability
 
 # Stop observability services
-bun run observability:down
+pnpm observability:down
 
 # View observability logs
-bun run observability:logs
+pnpm observability:logs
 
 # Access Grafana: http://localhost:3001 (admin/admin)
 # Access Prometheus: http://localhost:9090

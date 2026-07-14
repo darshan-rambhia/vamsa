@@ -294,7 +294,7 @@ This shows logs from all containers. Look for the first error message -- it usua
 ### Preview the migration
 
 ```bash
-bun run db:migrate:dry-run
+pnpm db:migrate:dry-run
 ```
 
 This shows what the migration would do without actually applying it.
@@ -338,7 +338,7 @@ docker compose --env-file .env -f docker/docker-compose.yml build --no-cache
 docker compose --env-file .env -f docker/docker-compose.yml up -d
 
 # Bare metal
-bun run build
+pnpm build
 # Restart Vamsa
 ```
 

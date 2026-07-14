@@ -19,13 +19,13 @@ Different agents run different checks during implementation. The reviewer runs a
 
 | Gate | Backend | Frontend | Tester | Reviewer |
 |------|:-------:|:--------:|:------:|:--------:|
-| `bun run typecheck` | :material-check: | :material-check: | | :material-check: |
-| `bun run lint` | :material-check: | :material-check: | | :material-check: |
-| `bun run format:check` | | :material-check: | | :material-check: |
-| `bun run build` | :material-check: | :material-check: | | :material-check: |
-| `bun run test` | | | :material-check: | :material-check: |
-| `bun run test:coverage` | | | :material-check: | :material-check: |
-| `bun run dev` (verify startup) | | | | :material-check: |
+| `pnpm typecheck` | :material-check: | :material-check: | | :material-check: |
+| `pnpm lint` | :material-check: | :material-check: | | :material-check: |
+| `pnpm format:check` | | :material-check: | | :material-check: |
+| `pnpm build` | :material-check: | :material-check: | | :material-check: |
+| `pnpm test` | | | :material-check: | :material-check: |
+| `pnpm test:coverage` | | | :material-check: | :material-check: |
+| `pnpm dev` (verify startup) | | | | :material-check: |
 | `docker build` | | | | :material-check: |
 | `docker run` (verify container) | | | | :material-check: |
 
@@ -48,19 +48,19 @@ The reviewer runs `bd show {bead-id}` to read acceptance criteria and understand
 
 ```bash
 # Static analysis
-bun run typecheck        # No type errors
-bun run lint             # No lint errors (warnings acceptable)
-bun run format:check     # Code is properly formatted
+pnpm typecheck        # No type errors
+pnpm lint             # No lint errors (warnings acceptable)
+pnpm format:check     # Code is properly formatted
 
 # Build verification
-bun run build            # Production build succeeds
+pnpm build            # Production build succeeds
 
 # Test verification
-bun run test             # All unit tests pass
-bun run test:coverage    # Coverage meets thresholds
+pnpm test             # All unit tests pass
+pnpm test:coverage    # Coverage meets thresholds
 
 # Runtime verification
-bun run dev &            # Dev server starts
+pnpm dev &            # Dev server starts
 sleep 15
 curl -s http://localhost:3000  # App responds
 pkill -f "vinxi" || true
@@ -148,7 +148,7 @@ The reviewer documents issues in bead comments with enough detail for the respon
 bd comment {bead-id} --body "Review FAILED. Issues found:
 
 ## Failed Gates
-- [ ] bun run typecheck - 3 errors
+- [ ] pnpm typecheck - 3 errors
 - [ ] docker build - Dockerfile syntax error
 
 ## Details

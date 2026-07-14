@@ -1,12 +1,14 @@
 # Dependencies
-node_modules
+# Use **/ so nested workspace node_modules are excluded too — pnpm's isolated
+# node_modules contain symlinks that otherwise clash with the in-image install.
+**/node_modules
 .pnp
 .pnp.js
 
 # Build outputs
 .next
 out
-dist
+**/dist
 build
 .vinxi
 .turbo

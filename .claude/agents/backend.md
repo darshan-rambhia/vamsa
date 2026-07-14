@@ -78,7 +78,7 @@ export type ThingInput = z.infer<typeof thingSchema>;
 ```bash
 # 1. Edit packages/api/src/drizzle/schema/*.ts
 # 2. Run migration
-bun run db:migrate
+pnpm db:migrate
 ```
 
 ### Auth Helpers
@@ -92,9 +92,9 @@ import { requireAuth, requireAdmin, requireMember } from "@/lib/auth";
 Run BEFORE completing:
 
 ```bash
-bun run typecheck
-bun run lint
-bun run build
+pnpm typecheck
+pnpm lint
+pnpm build
 ```
 
 If ANY fail, fix before reporting complete.

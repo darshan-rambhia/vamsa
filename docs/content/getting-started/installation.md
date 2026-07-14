@@ -226,6 +226,7 @@ This method runs Vamsa directly on your machine without Docker. This is best for
 
 ### What you need
 
+- **[pnpm](https://pnpm.io/installation)** (package manager) -- version 11 or later
 - **[Bun](https://bun.sh)** (JavaScript runtime) -- version 1.1 or later
 - **[PostgreSQL](https://www.postgresql.org/download/)** -- version 15 or later
 - **[Git](https://git-scm.com/)**
@@ -235,13 +236,13 @@ This method runs Vamsa directly on your machine without Docker. This is best for
 ```bash
 git clone https://github.com/darshan-rambhia/vamsa.git
 cd vamsa
-bun install
+pnpm install
 ```
 
 You should see:
 
 ```
-bun install v1.x.x
+pnpm install v1.x.x
 ...
 Saved lockfile
 Done in X.XXs
@@ -277,7 +278,7 @@ Also set `BETTER_AUTH_SECRET` (see [Docker Step 3](#step-3-set-required-password
 ### Step 3 -- Set up the database and seed initial data
 
 ```bash
-bun run db:migrate
+pnpm db:migrate
 ```
 
 You should see:
@@ -290,7 +291,7 @@ Migration complete.
 Then seed the admin account:
 
 ```bash
-bun run db:seed
+pnpm db:seed
 ```
 
 ```
@@ -301,8 +302,8 @@ Created admin user: admin@vamsa.local
 ### Step 4 -- Build and start
 
 ```bash
-bun run build
-bun run start
+pnpm build
+pnpm start
 ```
 
 You should see:
@@ -317,7 +318,7 @@ Listening on http://localhost:3000
 Open your browser and go to **[http://localhost:3000](http://localhost:3000)**.
 
 !!! tip "Development mode"
-    If you want to make changes to the code with hot reloading, run `bun run dev` instead of `bun run build && bun run start`. The dev server starts at `http://localhost:3000`.
+    If you want to make changes to the code with hot reloading, run `pnpm dev` instead of `pnpm build && pnpm start`. The dev server starts at `http://localhost:3000`.
 
 ---
 
@@ -335,8 +336,8 @@ Regardless of which cloud platform you choose:
 1. You need a **PostgreSQL database** (most platforms offer managed PostgreSQL)
 2. Set all required environment variables from `.env.example` (at minimum: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `ADMIN_EMAIL`)
 3. Set `APP_URL` to your public domain (for example, `https://family.example.com`)
-4. The build command is `bun run build`
-5. The start command is `bun run start`
+4. The build command is `pnpm build`
+5. The start command is `pnpm start`
 
 ### Platform-specific notes
 
@@ -369,8 +370,8 @@ Regardless of which cloud platform you choose:
     1. Create a new **Web Service** on [Render](https://render.com)
     2. Add a **PostgreSQL** database
     3. Connect your repository
-    4. Set the build command to `bun run build`
-    5. Set the start command to `bun run start`
+    4. Set the build command to `pnpm build`
+    5. Set the start command to `pnpm start`
     6. Add environment variables in the Render dashboard
 
 !!! tip "Custom domain"

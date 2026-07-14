@@ -1,8 +1,10 @@
 # ADR 012: Migration from pnpm to Bun Package Manager
 
+> **Superseded by [ADR 014: Revert Package Manager to pnpm](014-pnpm-package-manager.md).** The package-manager role has been reverted from Bun back to pnpm; Bun remains the JavaScript runtime. The decision below is retained for historical context only.
+
 ## Status
 
-**Accepted** (Experiment Branch: `experiment/bun-package-manager`)
+**Superseded** by [ADR 014](014-pnpm-package-manager.md) (reverts package management to pnpm while keeping Bun as the runtime). Originally Accepted (Experiment Branch: `experiment/bun-package-manager`).
 
 ## Context
 

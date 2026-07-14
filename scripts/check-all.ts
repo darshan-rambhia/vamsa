@@ -23,10 +23,10 @@ interface ProcessResult {
 }
 
 const CHECKS = [
-  { name: "Lint", command: "bun run lint:fix" },
-  { name: "Format", command: "bun run format" },
-  { name: "Typecheck", command: "bun run typecheck" },
-  { name: "Test", command: "bun run test" },
+  { name: "Lint", command: "pnpm lint:fix" },
+  { name: "Format", command: "pnpm format" },
+  { name: "Typecheck", command: "pnpm typecheck" },
+  { name: "Test", command: "pnpm test" },
 ];
 
 async function runCommand(

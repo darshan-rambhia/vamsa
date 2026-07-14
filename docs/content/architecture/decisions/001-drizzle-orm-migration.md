@@ -113,10 +113,10 @@ export const db = drizzle(sql);
 
 After each phase:
 
-- [ ] `bun run typecheck` passes
-- [ ] `bun run test` passes
-- [ ] `bun run build` succeeds
-- [ ] `bun run dev` starts and pages load
+- [ ] `pnpm typecheck` passes
+- [ ] `pnpm test` passes
+- [ ] `pnpm build` succeeds
+- [ ] `pnpm dev` starts and pages load
 - [ ] Manual verification of affected features
 
 After full migration:

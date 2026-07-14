@@ -799,7 +799,7 @@ docker logs vamsa-app | grep "request-id-here"
 
 Common causes:
 - Database connection pool exhausted (check `GET /health` for pool stats)
-- Migration not applied after an upgrade (`bun run db:migrate`)
+- Migration not applied after an upgrade (`pnpm db:migrate`)
 - Missing environment variable (check server startup logs)
 
 #### CORS errors in browser console

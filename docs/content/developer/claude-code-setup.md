@@ -12,11 +12,12 @@ Before you begin, make sure you have the following installed:
 |------|---------|---------|
 | [Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code) | AI-assisted development | `npm install -g @anthropic-ai/claude-code` |
 | [Git](https://git-scm.com/) | Version control | System package manager |
-| [Bun](https://bun.sh/) | JavaScript runtime and package manager | `curl -fsSL https://bun.sh/install \| bash` |
+| [pnpm](https://pnpm.io/) | Package manager and script runner | `npm install -g pnpm` |
+| [Bun](https://bun.sh/) | JavaScript runtime | `curl -fsSL https://bun.sh/install \| bash` |
 | [Docker](https://www.docker.com/) | Container runtime (for comprehensive reviews) | [Docker Desktop](https://www.docker.com/products/docker-desktop/) |
 
-!!! info "Why Bun?"
-    Bun is non-negotiable for Vamsa. The project uses Bun workspaces, Bun's native TypeScript support, and Bun as the production server runtime. Do not substitute with Node.js or pnpm.
+!!! info "Why pnpm and Bun?"
+    Vamsa uses **pnpm** as its package manager and script runner (pnpm workspaces for the monorepo), and **Bun** as the JavaScript runtime (native TypeScript support and the production server runtime). Both are required: pnpm to manage dependencies and run scripts, Bun to execute the code. Do not substitute Bun as the runtime with Node.js.
 
 ---
 
@@ -32,7 +33,7 @@ cd vamsa
 ### 2. Install Dependencies
 
 ```bash
-bun install
+pnpm install
 ```
 
 This installs dependencies for all packages in the monorepo workspace.
@@ -40,8 +41,8 @@ This installs dependencies for all packages in the monorepo workspace.
 ### 3. Verify the Setup
 
 ```bash
-bun run check    # Runs lint, format, typecheck, and tests in parallel
-bun run build    # Builds all packages for production
+pnpm check    # Runs lint, format, typecheck, and tests in parallel
+pnpm build    # Builds all packages for production
 ```
 
 ### 4. Open with Claude Code
@@ -206,7 +207,7 @@ Claude Code asks for permission before running bash commands that are not pre-ap
 
 Common commands that run without prompting:
 
-- `bun run *` -- all project scripts (dev, build, test, lint, etc.)
+- `pnpm *` -- all project scripts (dev, build, test, lint, etc.)
 - `bd *` -- all bead CLI commands (create, list, show, close, etc.)
 - `docker *` -- Docker build, run, stop, etc.
 - `git add *`, `git commit *` -- version control operations

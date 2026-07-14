@@ -124,13 +124,13 @@ git pull
 ### Step 2 -- Install updated dependencies
 
 ```bash
-bun install
+pnpm install
 ```
 
 You should see:
 
 ```
-bun install v1.x.x
+pnpm install v1.x.x
 ...
 Done in X.XXs
 ```
@@ -138,7 +138,7 @@ Done in X.XXs
 ### Step 3 -- Run database migrations
 
 ```bash
-bun run db:migrate
+pnpm db:migrate
 ```
 
 You should see:
@@ -149,12 +149,12 @@ Migration complete.
 ```
 
 !!! tip "Preview before applying"
-    If you want to see what the migration will change before applying it, run `bun run db:migrate:dry-run` first. See [Database Migrations](database-migrations.md) for details.
+    If you want to see what the migration will change before applying it, run `pnpm db:migrate:dry-run` first. See [Database Migrations](database-migrations.md) for details.
 
 ### Step 4 -- Rebuild and restart
 
 ```bash
-bun run build
+pnpm build
 ```
 
 You should see:
@@ -168,7 +168,7 @@ Then restart your Vamsa process. How you do this depends on how you run it:
 
 - **If you use systemd**: `sudo systemctl restart vamsa`
 - **If you use pm2**: `pm2 restart vamsa`
-- **If you run it manually**: Stop the current process (Ctrl+C) and run `bun run start`
+- **If you run it manually**: Stop the current process (Ctrl+C) and run `pnpm start`
 
 ### Step 5 -- Verify
 
@@ -262,8 +262,8 @@ docker compose --env-file .env -f docker/docker-compose.yml up -d
 For bare metal:
 
 ```bash
-bun install
-bun run build
+pnpm install
+pnpm build
 # Restart your Vamsa process
 ```
 

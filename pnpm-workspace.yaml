@@ -1,0 +1,33 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Disable pnpm 11's default minimum-release-age supply-chain gate. It rejects
+# packages published within the last day, which breaks installs of freshly
+# released dependencies (e.g. Renovate bumps to latest) and CI. The pre-pnpm
+# (bun) setup had no such gate. Re-enable with a value + an allowlist if the
+# team decides to adopt release-age gating deliberately.
+minimumReleaseAge: 0
+
+# Dependencies allowed to run install/build scripts (native bindings, bundlers).
+# pnpm blocks these by default; bun built them automatically, so we allowlist
+# the ones this repo needs.
+allowBuilds:
+  "@swc/core": true
+  better-sqlite3: true
+  core-js: true
+  esbuild: true
+  msw: true
+  protobufjs: true
+  unrs-resolver: true
+
+# Dependency version overrides (migrated from package.json "overrides"; pnpm 11
+# reads these from pnpm-workspace.yaml, not package.json).
+overrides:
+  "@react-email/render": "^2.0.4"
+  drizzle-orm: "0.45.2"
+  hono: ">=4.12.3"
+  lodash: ">=4.17.23"
+  playwright-core: "1.61.1"
+  react: "19.2.7"
+  react-dom: "19.2.7"

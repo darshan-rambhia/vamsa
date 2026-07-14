@@ -4,7 +4,7 @@
 
 Vamsa is a self-hosted family genealogy application for managing family trees, relationships, historical records, and media. It is designed as a private application -- all content is behind authentication and explicitly blocked from search engine indexing.
 
-The application is built as a Bun monorepo using TanStack Start (React + SSR) for the frontend, Hono as the production HTTP server, PostgreSQL via Drizzle ORM for persistence, and Better Auth for authentication.
+The application is built as a pnpm monorepo (with Bun as the runtime) using TanStack Start (React + SSR) for the frontend, Hono as the production HTTP server, PostgreSQL via Drizzle ORM for persistence, and Better Auth for authentication.
 
 ## Package Structure
 
@@ -157,7 +157,8 @@ Rate limit state is stored in memory by default. Set `REDIS_URL` for persistence
 
 | Technology | Role |
 |-----------|------|
-| **Bun** | JavaScript runtime, package manager, bundler |
+| **Bun** | JavaScript runtime, bundler |
+| **pnpm** | Package manager, workspace and script runner |
 | **TanStack Start** | Full-stack React framework with SSR and server functions |
 | **Hono** | Production HTTP server, middleware, routing |
 | **React 19** | UI rendering |
@@ -200,8 +201,8 @@ Data is sent to the OTLP endpoint configured in `OTEL_EXPORTER_OTLP_ENDPOINT` (d
 A full Grafana + Prometheus + OTEL Collector stack is available in `docker/observability/`:
 
 ```bash
-bun run observability        # Start the observability stack
-bun run observability:down   # Stop it
+pnpm observability        # Start the observability stack
+pnpm observability:down   # Stop it
 ```
 
 ### Health Checks

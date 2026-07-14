@@ -15,14 +15,14 @@ interface ParsedArgs {
 }
 
 const LEGACY_TEST_SCRIPT_REPLACEMENTS: Record<string, string> = {
-  "test:unit": "bun run test",
-  "test:int": "bun run test:integration --db sqlite",
-  "test:int:sqlite": "bun run test:integration --db sqlite",
-  "test:int:postgres": "bun run test:integration --db postgres",
-  "test:perf": "bun run test:focus --suite perf",
-  "test:visual": "bun run test:focus --suite visual",
-  "test:visual:update": "bun run test:focus --suite visual --update-snapshots",
-  "test:mutation": "bun run test:focus --suite mutation",
+  "test:unit": "pnpm test",
+  "test:int": "pnpm test:integration --db sqlite",
+  "test:int:sqlite": "pnpm test:integration --db sqlite",
+  "test:int:postgres": "pnpm test:integration --db postgres",
+  "test:perf": "pnpm test:focus --suite perf",
+  "test:visual": "pnpm test:focus --suite visual",
+  "test:visual:update": "pnpm test:focus --suite visual --update-snapshots",
+  "test:mutation": "pnpm test:focus --suite mutation",
 };
 
 function warnIfDeprecatedAliasUsed() {
@@ -54,9 +54,12 @@ function parseArgs(argv: string[]): ParsedArgs {
   for (let i = 0; i < rest.length; i++) {
     const arg = rest[i];
 
+    // Tolerate a lone "--" separator. pnpm (unlike bun) forwards it to the
+    // script, so dumping everything after it into passthrough would leak
+    // orchestrator flags like --db into the inner vitest command. Skip it and
+    // keep parsing; unrecognized args still fall through to passthrough below.
     if (arg === "--") {
-      passthrough.push(...rest.slice(i + 1));
-      break;
+      continue;
     }
 
     if (arg === "--db" && rest[i + 1]) {
@@ -145,8 +148,7 @@ async function runMode(args: ParsedArgs) {
     case "integration": {
       if (args.db === "postgres") {
         await run([
-          "bun",
-          "run",
+          "pnpm",
           "--filter",
           "@vamsa/web",
           "test:int:postgres",
@@ -155,8 +157,7 @@ async function runMode(args: ParsedArgs) {
       } else {
         await run(
           [
-            "bun",
-            "run",
+            "pnpm",
             "--filter",
             "@vamsa/web",
             "test:int:sqlite",
@@ -176,14 +177,7 @@ async function runMode(args: ParsedArgs) {
       if (args.updateSnapshots) {
         e2eArgs.push("--update-snapshots");
       }
-      await run([
-        "bun",
-        "run",
-        "--filter",
-        "@vamsa/web",
-        "test:e2e",
-        ...e2eArgs,
-      ]);
+      await run(["pnpm", "--filter", "@vamsa/web", "test:e2e", ...e2eArgs]);
       return;
     }
 
@@ -194,8 +188,8 @@ async function runMode(args: ParsedArgs) {
 
     case "ci": {
       await run(unitVitestCommand(true, []));
-      await run(["bun", "run", "--filter", "@vamsa/web", "test:int:sqlite"]);
-      await run(["bun", "run", "--filter", "@vamsa/web", "test:int:postgres"]);
+      await run(["pnpm", "--filter", "@vamsa/web", "test:int:sqlite"]);
+      await run(["pnpm", "--filter", "@vamsa/web", "test:int:postgres"]);
       return;
     }
 
@@ -218,8 +212,7 @@ async function runMode(args: ParsedArgs) {
 
       if (suite === "visual") {
         await run([
-          "bun",
-          "run",
+          "pnpm",
           "--filter",
           "@vamsa/web",
           "test:visual",
@@ -231,8 +224,7 @@ async function runMode(args: ParsedArgs) {
 
       if (suite === "perf") {
         await run([
-          "bun",
-          "run",
+          "pnpm",
           "--filter",
           "@vamsa/web",
           "test:perf",

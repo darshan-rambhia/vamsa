@@ -222,11 +222,11 @@ Unlike `/techlead-loop`, the bead loop does not create new beads. Instead, it:
     The bead loop uses **comprehensive quality gates** -- the full seven-gate suite including Docker:
 
     ```bash
-    bun run test         # Unit tests
-    bun run lint         # ESLint
-    bun run typecheck    # TypeScript
-    bun run build        # Production build
-    bun run dev          # Dev server starts
+    pnpm test         # Unit tests
+    pnpm lint         # ESLint
+    pnpm typecheck    # TypeScript
+    pnpm build        # Production build
+    pnpm dev          # Dev server starts
     docker build         # Container image builds
     docker run           # Container runs and app responds
     ```

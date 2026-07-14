@@ -85,8 +85,8 @@ This rule enforces a single, critical principle:
 The testing protocol requires these steps before any commit:
 
 1. Make the code change
-2. Run `bun run typecheck` and `bun run build`
-3. Start the dev server with `bun run dev`
+2. Run `pnpm typecheck` and `pnpm build`
+3. Start the dev server with `pnpm dev`
 4. Navigate to the affected page or feature
 5. Verify the page loads successfully
 6. Check server logs for errors (ECONNRESET, etc.)
@@ -137,7 +137,8 @@ Each entry in the allow list follows the format `Bash(command-prefix:*)`, which 
 {
   "permissions": {
     "allow": [
-      "Bash(bun run:*)",
+      "Bash(pnpm:*)",
+      "Bash(bun:*)",
       "Bash(bd create:*)",
       "Bash(docker build:*)",
       "Bash(git add:*)",
@@ -152,7 +153,7 @@ Each entry in the allow list follows the format `Bash(command-prefix:*)`, which 
 The permission system uses explicit allowlists rather than blanket access for several reasons:
 
 - **Prevents accidental destructive commands**: Agents cannot run `rm -rf`, `git push --force`, or `DROP TABLE` without explicit user approval
-- **Scopes to project tools**: Only `bun`, `bd`, `docker`, and `git` commands are pre-approved
+- **Scopes to project tools**: Only `pnpm`, `bun`, `bd`, `docker`, and `git` commands are pre-approved
 - **Audit trail**: The patterns document exactly what agents can do autonomously
 
 ### Reviewer Bypass

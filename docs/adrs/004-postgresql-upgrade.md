@@ -67,12 +67,12 @@ pg_dump -U vamsa -d vamsa > backup_$(date +%Y%m%d_%H%M%S).sql
 4. Run migrations:
 
    ```bash
-   bun run db:migrate
+   pnpm db:migrate
    ```
 
 5. Seed initial data:
    ```bash
-   bun run db:seed
+   pnpm db:seed
    ```
 
 ### Option 2: Data Migration (Production)
@@ -240,7 +240,7 @@ Error: permission denied for relation
 Solution: Run migrations to update schema permissions:
 
 ```bash
-bun run db:migrate
+pnpm db:migrate
 ```
 
 ### Data Corruption

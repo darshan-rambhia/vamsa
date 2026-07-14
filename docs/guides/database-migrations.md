@@ -20,10 +20,10 @@ Shows all pending database migrations and displays the SQL that would be execute
 
 ```bash
 # Show all migrations and pending SQL
-bun run db:migrate:dry-run
+pnpm db:migrate:dry-run
 
 # Show help
-bun run db:migrate:dry-run --help
+pnpm db:migrate:dry-run --help
 ```
 
 ### Features
@@ -45,7 +45,7 @@ bun run db:migrate:dry-run --help
 [INFO] Applied migrations: 0
 [INFO] Pending migrations: 2
 
-==== Pending Migrations (will be applied with 'bun run db:migrate') ====
+==== Pending Migrations (will be applied with 'pnpm db:migrate') ====
 
 0000_initial.sql
 129 SQL statement(s)
@@ -80,10 +80,10 @@ Verifies that backup files are valid and optionally tests restore functionality 
 
 ```bash
 # Verify the latest backup
-bun run db:backup:verify
+pnpm db:backup:verify
 
 # Verify the latest backup and test restore with Docker
-bun run db:backup:verify:docker
+pnpm db:backup:verify:docker
 
 # Verify a specific backup file
 bun scripts/test-backup-restore.ts --file=/path/to/backup.sql.gz
@@ -131,8 +131,8 @@ Tip: Use --with-docker to test restore
 
 ### When to Use
 
-- **Before migrations**: `bun run db:backup:verify` - Quick integrity check
-- **Before major updates**: `bun run db:backup:verify:docker` - Full restore test
+- **Before migrations**: `pnpm db:backup:verify` - Quick integrity check
+- **Before major updates**: `pnpm db:backup:verify:docker` - Full restore test
 - **Production deployments**: Always run at least the standard verification
 
 ### Environment Variables
@@ -168,7 +168,7 @@ The seed scripts are already properly separated by use case:
 
 **Example**:
 ```bash
-ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=SecurePassword123 bun run db:seed
+ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=SecurePassword123 pnpm db:seed
 ```
 
 ### Development Seed (`db:seed:dev`)
@@ -185,7 +185,7 @@ ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=SecurePassword123 bun run db:seed
 
 **When to use**:
 - Local development
-- Automatic during `bun run dev` (dev.ts calls this)
+- Automatic during `pnpm dev` (dev.ts calls this)
 - When testing UI with realistic family data
 
 **Features**:
@@ -207,30 +207,30 @@ When planning a database migration:
 
 1. **Create backup**
    ```bash
-   bun run db:backup:pre-migration
+   pnpm db:backup:pre-migration
    ```
    This creates a backup with 90-day retention for safety
 
 2. **Verify backup integrity** (optional but recommended)
    ```bash
-   bun run db:backup:verify
+   pnpm db:backup:verify
    ```
 
 3. **Review pending migrations**
    ```bash
-   bun run db:migrate:dry-run
+   pnpm db:migrate:dry-run
    ```
 
 4. **Apply migrations** (when ready)
    ```bash
-   bun run db:migrate
+   pnpm db:migrate
    ```
 
 5. **Seed initial data** (if new database)
    ```bash
-   bun run db:seed              # Production
+   pnpm db:seed              # Production
    # OR
-   bun run db:seed:dev         # Development
+   pnpm db:seed:dev         # Development
    ```
 
 ## Troubleshooting
@@ -250,13 +250,13 @@ The backup verification script works without Docker, but restore testing require
 
 **Solutions**:
 - Install Docker Desktop
-- Or use `bun run db:backup:verify` (without `--with-docker`)
+- Or use `pnpm db:backup:verify` (without `--with-docker`)
 
 ### "Migrations table does not exist"
 
 This is normal for a fresh database. The tools handle this gracefully.
 
-**Solution**: Run `bun run db:migrate` to initialize migrations
+**Solution**: Run `pnpm db:migrate` to initialize migrations
 
 ### "Backup file not found"
 
@@ -266,7 +266,7 @@ The default backup directory is `./backups`. Check:
 
 **Example**:
 ```bash
-BACKUP_DIR=/data/backups bun run db:backup:verify --latest
+BACKUP_DIR=/data/backups pnpm db:backup:verify --latest
 ```
 
 ## Implementation Details

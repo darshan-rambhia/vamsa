@@ -6,7 +6,7 @@
  *   bun run scripts/build-binary.ts [--output <path>] [--target <bun-target>]
  *
  * Steps:
- *   1. Runs `bun run build` (Vite/TanStack Start) to produce dist/
+ *   1. Runs `pnpm build` (Vite/TanStack Start) to produce dist/
  *   2. Copies i18n locale files into dist/locales/
  *   3. Runs `bun build --compile` on the server entry point
  *
@@ -42,7 +42,7 @@ console.log("=== Vamsa Single Binary Build ===\n");
 
 // Step 1: Build the web app (Vite + TanStack Start)
 console.log("[1/3] Building web app...");
-const buildResult = await $`bun run build`.cwd(webRoot).nothrow();
+const buildResult = await $`pnpm build`.cwd(webRoot).nothrow();
 if (buildResult.exitCode !== 0) {
   console.error("Build failed!");
   process.exit(1);

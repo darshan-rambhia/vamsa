@@ -25,9 +25,9 @@ Vamsa uses [Drizzle ORM](https://orm.drizzle.team/) to manage migrations. Drizzl
 
 ```bash
 git pull
-bun install
-bun run db:migrate
-bun run build
+pnpm install
+pnpm db:migrate
+pnpm build
 # Restart Vamsa
 ```
 
@@ -51,7 +51,7 @@ Yes. Here is why:
 If you want to see what a migration will do before applying it, use the dry-run command:
 
 ```bash
-bun run db:migrate:dry-run
+pnpm db:migrate:dry-run
 ```
 
 You should see output like:
@@ -62,7 +62,7 @@ Pending migrations:
     - CREATE TABLE "media_tags" (...)
     - ALTER TABLE "media" ADD COLUMN "tag_id" ...
 
-No changes were applied. Run 'bun run db:migrate' to apply.
+No changes were applied. Run 'pnpm db:migrate' to apply.
 ```
 
 If there are no pending migrations:
@@ -81,7 +81,7 @@ No pending migrations. Database is up to date.
 If you need to apply migrations yourself (bare metal installations):
 
 ```bash
-bun run db:migrate
+pnpm db:migrate
 ```
 
 You should see:
@@ -150,8 +150,8 @@ pg_restore -U vamsa -d vamsa your-backup-file.dump
 git checkout HEAD~1
 
 # Rebuild
-bun install
-bun run build
+pnpm install
+pnpm build
 # Restart Vamsa
 ```
 
@@ -175,7 +175,7 @@ If a migration fails, it is likely a bug. Please report it:
 
     Migrations live in the `packages/api/drizzle/` directory as numbered SQL files. Each file contains the SQL statements needed to make a specific change.
 
-    When Vamsa starts (or when you run `bun run db:migrate`), Drizzle checks a special table in the database called `__drizzle_migrations`. This table records which migration files have already been applied. Drizzle compares this list against the migration files on disk and runs any that are new.
+    When Vamsa starts (or when you run `pnpm db:migrate`), Drizzle checks a special table in the database called `__drizzle_migrations`. This table records which migration files have already been applied. Drizzle compares this list against the migration files on disk and runs any that are new.
 
     The process looks like this:
 

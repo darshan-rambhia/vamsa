@@ -16,7 +16,8 @@ Vamsa is a family genealogy application built with:
 - **Backend API**: TanStack React Start server functions
 - **Database**: PostgreSQL (via Drizzle ORM)
 - **Runtime**: Bun (non-negotiable)
-- **Monorepo**: Bun workspaces
+- **Package Manager**: pnpm
+- **Monorepo**: pnpm workspaces
 
 ## Package Structure
 
@@ -48,20 +49,20 @@ Editorial + Earth Tones aesthetic:
 ### Development
 
 ```bash
-bun run dev             # Start web development server (TanStack Start on port 3000+)
-bun run dev:web-only    # Start only web app (skip API/UI builds)
-bun run build           # Build all packages for production
-bun run build:web       # Build web app only
-bun run preview         # Preview production build locally
+pnpm dev             # Start web development server (TanStack Start on port 3000+)
+pnpm dev:web-only    # Start only web app (skip API/UI builds)
+pnpm build           # Build all packages for production
+pnpm build:web       # Build web app only
+pnpm preview         # Preview production build locally
 ```
 
 ### Production Server
 
 ```bash
 cd apps/web
-bun run build           # Build the app first
-bun run start           # Start Bun + Hono production server
-bun run start:prod      # Start with NODE_ENV=production
+pnpm build           # Build the app first
+pnpm start           # Start Bun + Hono production server
+pnpm start:prod      # Start with NODE_ENV=production
 ```
 
 The production server (`apps/web/server/index.ts`) uses:
@@ -73,36 +74,36 @@ The production server (`apps/web/server/index.ts`) uses:
 ### Code Quality
 
 ```bash
-bun run check           # Run all checks in parallel (lint, format, typecheck, test)
-bun run lint            # Run ESLint
-bun run lint:fix        # Fix ESLint issues
-bun run format          # Format code with Prettier
-bun run format:check    # Check formatting without modifying
-bun run typecheck       # Run TypeScript type checks
-bun run test            # Run all unit tests (Vitest)
-bun run test:unit       # Run lib and ui unit tests
-bun run test:coverage   # Run tests with coverage (Vitest)
-bun run test:e2e        # Run E2E tests with Playwright
+pnpm check           # Run all checks in parallel (lint, format, typecheck, test)
+pnpm lint            # Run ESLint
+pnpm lint:fix        # Fix ESLint issues
+pnpm format          # Format code with Prettier
+pnpm format:check    # Check formatting without modifying
+pnpm typecheck       # Run TypeScript type checks
+pnpm test            # Run all unit tests (Vitest)
+pnpm test:unit       # Run lib and ui unit tests
+pnpm test:coverage   # Run tests with coverage (Vitest)
+pnpm test:e2e        # Run E2E tests with Playwright
 ```
 
 ### Database
 
 ```bash
-bun run db:generate        # Generate Drizzle client
-bun run db:migrate         # Run pending Drizzle migrations
-bun run db:migrate:deploy  # Deploy migrations (production)
-bun run db:push            # Push Drizzle schema to database
-bun run db:seed            # Seed database with initial data
-bun run db:studio          # Open Drizzle Studio GUI
+pnpm db:generate        # Generate Drizzle client
+pnpm db:migrate         # Run pending Drizzle migrations
+pnpm db:migrate:deploy  # Deploy migrations (production)
+pnpm db:push            # Push Drizzle schema to database
+pnpm db:seed            # Seed database with initial data
+pnpm db:studio          # Open Drizzle Studio GUI
 ```
 
 ### Docker
 
 ```bash
-bun run docker          # Start all production services (PostgreSQL + app + nginx)
-bun run docker:down     # Stop all Docker services
-bun run docker:logs     # View logs from all services
-bun run docker:build    # Rebuild Docker images
+pnpm docker          # Start all production services (PostgreSQL + app + nginx)
+pnpm docker:down     # Stop all Docker services
+pnpm docker:logs     # View logs from all services
+pnpm docker:build    # Rebuild Docker images
 ```
 
 See [DOCKER.md](./DOCKER.md) for complete Docker documentation.
@@ -112,7 +113,7 @@ See [DOCKER.md](./DOCKER.md) for complete Docker documentation.
 ```bash
 bd ready                # Show beads ready to work
 bd sync                 # Sync beads with git
-bun run clean           # Remove all node_modules
+pnpm clean           # Remove all node_modules
 ```
 
 ## Skills

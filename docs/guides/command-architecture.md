@@ -6,34 +6,34 @@ This guide documents Vamsa's consolidated command surface and how to migrate fro
 
 Use these as your default entry points:
 
-- `bun run dev`
-- `bun run quality`
-- `bun run quality:ci`
-- `bun run test`
-- `bun run test:integration`
-- `bun run test:e2e`
-- `bun run test:focus --suite <unit|integration|e2e|visual|perf|mutation>`
-- `bun run test:ci`
-- `bun run cmd -- <domain> <action> [...args]`
+- `pnpm dev`
+- `pnpm quality`
+- `pnpm quality:ci`
+- `pnpm test`
+- `pnpm test:integration`
+- `pnpm test:e2e`
+- `pnpm test:focus --suite <unit|integration|e2e|visual|perf|mutation>`
+- `pnpm test:ci`
+- `pnpm cmd -- <domain> <action> [...args]`
 
 ## Test Command Migration
 
 | Legacy command | Canonical replacement |
 |---|---|
-| `bun run test:unit` | `bun run test` |
-| `bun run test:int` | `bun run test:integration --db sqlite` |
-| `bun run test:int:sqlite` | `bun run test:integration --db sqlite` |
-| `bun run test:int:postgres` | `bun run test:integration --db postgres` |
-| `bun run test:perf` | `bun run test:focus --suite perf` |
-| `bun run test:visual` | `bun run test:focus --suite visual` |
-| `bun run test:visual:update` | `bun run test:focus --suite visual --update-snapshots` |
-| `bun run test:mutation` | `bun run test:focus --suite mutation` |
+| `pnpm test:unit` | `pnpm test` |
+| `pnpm test:int` | `pnpm test:integration --db sqlite` |
+| `pnpm test:int:sqlite` | `pnpm test:integration --db sqlite` |
+| `pnpm test:int:postgres` | `pnpm test:integration --db postgres` |
+| `pnpm test:perf` | `pnpm test:focus --suite perf` |
+| `pnpm test:visual` | `pnpm test:focus --suite visual` |
+| `pnpm test:visual:update` | `pnpm test:focus --suite visual --update-snapshots` |
+| `pnpm test:mutation` | `pnpm test:focus --suite mutation` |
 
 Legacy aliases still work for compatibility, but emit deprecation warnings.
 
 ## Command Center Domains
 
-Use `bun run cmd -- ...` for operational tasks:
+Use `pnpm cmd -- ...` for operational tasks:
 
 - `db`: schema, migration, seed, backup, restore
 - `docker`: production, development, e2e, backup workflows
@@ -44,11 +44,11 @@ Use `bun run cmd -- ...` for operational tasks:
 
 ### Examples
 
-- `bun run cmd -- db migrate`
-- `bun run cmd -- docker dev`
-- `bun run cmd -- docs build`
-- `bun run cmd -- obs up`
-- `bun run cmd -- load run search`
+- `pnpm cmd -- db migrate`
+- `pnpm cmd -- docker dev`
+- `pnpm cmd -- docs build`
+- `pnpm cmd -- obs up`
+- `pnpm cmd -- load run search`
 
 ## Deprecated Domain Alias
 
@@ -57,12 +57,12 @@ Use `bun run cmd -- ...` for operational tasks:
 
 Example:
 
-- Old: `bun run cmd -- observability up`
-- New: `bun run cmd -- obs up`
+- Old: `pnpm cmd -- observability up`
+- New: `pnpm cmd -- obs up`
 
 ## CI Recommendation
 
 Use canonical quality and test gates in CI:
 
-- `bun run quality:ci`
-- `bun run test:ci`
+- `pnpm quality:ci`
+- `pnpm test:ci`

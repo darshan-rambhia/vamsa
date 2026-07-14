@@ -309,20 +309,20 @@ await expect(page.getByText("Success")).toBeVisible({ timeout: 3000 });
 
 ```bash
 # Unit tests (Vitest)
-bun run test                # All unit tests (runs each package's vitest)
-bun run test:unit           # lib and ui only
-bun run vitest run          # Run from root workspace (all projects)
+pnpm test                # All unit tests (runs each package's vitest)
+pnpm test:unit           # lib and ui only
+pnpm exec vitest run     # Run from root workspace (all projects)
 
 # E2E tests (Playwright)
-bun run test:e2e            # All E2E tests
-bun run test:e2e --ui       # Interactive mode
-bun run test:e2e auth.spec.ts  # Specific file
-bun run test:e2e --grep "login"  # Pattern match
+pnpm test:e2e            # All E2E tests
+pnpm test:e2e --ui       # Interactive mode
+pnpm test:e2e auth.spec.ts  # Specific file
+pnpm test:e2e --grep "login"  # Pattern match
 
 # Specific package
-cd packages/lib && bun run test
-cd packages/ui && bun run test
-cd apps/web && bun run test
+cd packages/lib && pnpm test
+cd packages/ui && pnpm test
+cd apps/web && pnpm test
 ```
 
 ## Coverage Requirements

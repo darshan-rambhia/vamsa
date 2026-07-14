@@ -123,10 +123,10 @@ Import from `@/components/ui/*` (shadcn patterns)
 Run BEFORE completing:
 
 ```bash
-bun run format
-bun run typecheck
-bun run lint
-bun run build
+pnpm format
+pnpm typecheck
+pnpm lint
+pnpm build
 ```
 
 If ANY fail, fix before reporting complete.

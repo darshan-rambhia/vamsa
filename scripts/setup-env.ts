@@ -183,9 +183,7 @@ if (updated) {
 }
 
 if (isDocker) {
-  console.log(
-    "\n📦 Docker mode: Run 'bun run docker:build' to build the image"
-  );
+  console.log("\n📦 Docker mode: Run 'pnpm docker:build' to build the image");
 } else {
-  console.log("\n🚀 Run 'bun run dev' to start the development server");
+  console.log("\n🚀 Run 'pnpm dev' to start the development server");
 }
