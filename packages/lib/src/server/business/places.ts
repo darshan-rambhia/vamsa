@@ -25,13 +25,7 @@ export type PlaceType =
   | "OTHER";
 
 export type PersonPlaceType =
-  | "BIRTH"
-  | "MARRIAGE"
-  | "DEATH"
-  | "LIVED"
-  | "WORKED"
-  | "STUDIED"
-  | "OTHER";
+  "BIRTH" | "MARRIAGE" | "DEATH" | "LIVED" | "WORKED" | "STUDIED" | "OTHER";
 
 /**
  * Place response interface for formatted place data

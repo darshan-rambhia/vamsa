@@ -878,11 +878,7 @@ export async function getPersonSourcesData(
  * Citation format types supported by the application
  */
 export type CitationFormat =
-  | "MLA"
-  | "APA"
-  | "CHICAGO"
-  | "TURABIAN"
-  | "EVIDENCE_EXPLAINED";
+  "MLA" | "APA" | "CHICAGO" | "TURABIAN" | "EVIDENCE_EXPLAINED";
 
 /**
  * Generated citation result
