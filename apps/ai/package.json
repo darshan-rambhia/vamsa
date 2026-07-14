@@ -13,7 +13,7 @@
     "test:coverage": "LOG_LEVEL=silent bun --bun vitest run --coverage"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^3.0.26",
+    "@ai-sdk/openai": "^4.0.0",
     "@ai-sdk/openai-compatible": "^2.0.28",
     "@vamsa/lib": "workspace:*",
     "@vamsa/schemas": "workspace:*",
