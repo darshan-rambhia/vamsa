@@ -35,7 +35,10 @@ const dateSchema = z
 export const eventCreateSchema = z.object({
   personId: z.string().min(1, "Person is required"),
   type: eventTypeEnum,
-  date: dateSchema.optional().nullable(),
+  date: dateSchema
+    .optional()
+    .nullable()
+    .transform((val) => val ?? null),
   place: z.string().optional(),
   description: z.string().optional(),
 }) as z.ZodType<{
@@ -49,7 +52,10 @@ export const eventCreateSchema = z.object({
 export const eventUpdateSchema = z.object({
   id: z.string().min(1, "Event ID is required"),
   type: eventTypeEnum.optional(),
-  date: dateSchema.optional().nullable(),
+  date: dateSchema
+    .optional()
+    .nullable()
+    .transform((val) => val ?? null),
   place: z.string().optional(),
   description: z.string().optional(),
 }) as z.ZodType<{

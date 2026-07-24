@@ -26,8 +26,14 @@ export const relationshipCreateSchema = z
     personId: z.string().min(1, "Person is required"),
     relatedPersonId: z.string().min(1, "Related person is required"),
     type: relationshipTypeEnum,
-    marriageDate: dateSchema.optional().nullable(),
-    divorceDate: dateSchema.optional().nullable(),
+    marriageDate: dateSchema
+      .optional()
+      .nullable()
+      .transform((val) => val ?? null),
+    divorceDate: dateSchema
+      .optional()
+      .nullable()
+      .transform((val) => val ?? null),
     isActive: z.boolean().optional().default(true),
   })
   .openapi({

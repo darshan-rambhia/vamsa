@@ -50,8 +50,14 @@ export const personCreateSchema = z
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
     maidenName: z.string().optional(),
-    dateOfBirth: dateSchema.optional().nullable(),
-    dateOfPassing: dateSchema.optional().nullable(),
+    dateOfBirth: dateSchema
+      .optional()
+      .nullable()
+      .transform((val) => val ?? null),
+    dateOfPassing: dateSchema
+      .optional()
+      .nullable()
+      .transform((val) => val ?? null),
     birthPlace: z.string().optional(),
     nativePlace: z.string().optional(),
     gender: genderEnum.optional().nullable(),

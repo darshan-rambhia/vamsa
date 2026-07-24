@@ -252,6 +252,8 @@ describe("Person Handlers", () => {
       lastName: "Person",
       gender: "MALE" as const,
       isLiving: true,
+      dateOfBirth: null,
+      dateOfPassing: null,
     };
 
     it("rejects unauthenticated requests", async () => {
@@ -452,6 +454,8 @@ describe("Person Handlers", () => {
             lastName: "User",
             gender: "FEMALE" as const,
             isLiving: true,
+            dateOfBirth: null,
+            dateOfPassing: null,
           })
       );
 
