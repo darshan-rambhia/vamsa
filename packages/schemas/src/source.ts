@@ -61,7 +61,8 @@ export const sourceCreateSchema = z.object({
       if (val instanceof Date) return val;
       return new Date(val);
     })
-    .optional(),
+    .optional()
+    .transform((val) => val ?? null),
   confidence: confidenceEnum.optional(),
 });
 

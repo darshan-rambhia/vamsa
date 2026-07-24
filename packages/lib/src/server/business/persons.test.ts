@@ -571,6 +571,8 @@ describe("Persons Business Logic - Soft Deletes and Transactions", () => {
         firstName: "John",
         lastName: "Doe",
         isLiving: true,
+        dateOfBirth: null,
+        dateOfPassing: null,
       };
 
       let transactionCalled = false;
