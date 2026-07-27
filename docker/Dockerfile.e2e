@@ -66,7 +66,7 @@ RUN pnpm build
 # Stage 2: E2E Test Runner
 # =============================================================================
 # Use Playwright's official image which includes all browsers
-FROM mcr.microsoft.com/playwright:v1.61.1-noble AS runner
+FROM mcr.microsoft.com/playwright:v1.62.0-noble AS runner
 
 # Build arg to skip SSL verification (for corporate proxies)
 ARG SKIP_SSL_VERIFY
