@@ -4,12 +4,24 @@
   "timezone": "America/Los_Angeles",
   "schedule": ["on monday"],
   "prConcurrentLimit": 10,
-  "postUpdateOptions": ["bunDedupe"],
+  "prHourlyLimit": 5,
+  "postUpdateOptions": ["pnpmDedupe"],
   "semanticCommits": "enabled",
+  "minimumReleaseAge": "2 days",
+  "rebaseWhen": "behind-base-branch",
   "packageRules": [
     {
-      "description": "Major version updates — individual PRs for manual review",
+      "description": "Auto-merge digest/patch/minor once CI is green. The required-checks ruleset (Build, Code Quality, Unit Tests, Schema Drift Check) is what actually gates this — Renovate is allowed to bypass the review requirement but NOT the status checks, so a red PR can never auto-merge.",
+      "matchUpdateTypes": ["digest", "patch", "minor"],
+      "automerge": true,
+      "automergeType": "pr",
+      "automergeStrategy": "squash",
+      "platformAutomerge": true
+    },
+    {
+      "description": "Major version updates — individual PRs for manual review, never auto-merged. Majors carry breaking API changes that a green CI run does not rule out, and toolchain majors can break CI itself, which gates every other merge (eslint v10 and typescript v7 both did exactly this in July 2026).",
       "matchUpdateTypes": ["major"],
+      "automerge": false,
       "labels": ["dependencies", "major"],
       "semanticCommitType": "chore",
       "semanticCommitScope": "deps"
@@ -54,5 +66,14 @@
       "semanticCommitType": "chore",
       "semanticCommitScope": "ci"
     }
-  ]
+  ],
+  "vulnerabilityAlerts": {
+    "description": "Security fast-track: CVE-flagged updates skip the 2-day soak and the Monday schedule, and auto-merge on green CI. Regular updates keep the full minimumReleaseAge as supply-chain protection.",
+    "labels": ["security", "priority-high"],
+    "enabled": true,
+    "minimumReleaseAge": null,
+    "schedule": ["at any time"],
+    "automerge": true
+  },
+  "osvVulnerabilityAlerts": true
 }
