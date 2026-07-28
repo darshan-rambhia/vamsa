@@ -15,14 +15,12 @@ on:
   pull_request:
     branches: [main, develop]
     types: [opened, synchronize, reopened, labeled]
-    paths-ignore:
-      - "**/*.md"
-      - ".github/workflows/**"
-      - "docs/**"
-      - ".claude/**"
-      - ".vscode/**"
-      - "LICENSE"
-      - ".gitignore"
+    # Deliberately NO paths-ignore here. Build / Code Quality / Unit Tests /
+    # Schema Drift Check are required checks, and a required check that never
+    # reports blocks a PR forever rather than passing it. With paths-ignore, a
+    # docs-only or workflow-only PR skipped this whole workflow, so those checks
+    # never appeared and the PR could not be merged without an admin override.
+    # Path filtering and required checks do not mix; keep the filter on `push`.
   workflow_dispatch: # Always allow manual trigger
 
 # Explicit permissions following principle of least privilege
@@ -114,10 +112,10 @@ jobs:
     name: Integration Tests (${{ matrix.db-driver }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'area:backend')
+    # No label gate — see the note in e2e.yml. Labels land after this workflow is
+    # triggered and are applied with GITHUB_TOKEN, which cannot re-trigger it, so
+    # integration tests never ran on pull requests. That is how the postgres
+    # fileParallelism guard sat broken without anyone noticing (#238).
 
     strategy:
       fail-fast: false
