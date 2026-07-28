@@ -35,14 +35,11 @@ jobs:
     name: Build E2E Image
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'area:web') ||
-      contains(github.event.pull_request.labels.*.name, 'area:api') ||
-      contains(github.event.pull_request.labels.*.name, 'area:lib') ||
-      contains(github.event.pull_request.labels.*.name, 'area:schemas') ||
-      contains(github.event.pull_request.labels.*.name, 'area:docker')
+    # No label gate. Labels are applied by the labeler job AFTER this workflow is
+    # triggered, and it applies them with GITHUB_TOKEN — which GitHub refuses to
+    # let trigger further workflow runs. The `labeled` event therefore never
+    # fired, so E2E never ran on ANY pull request and only ever tested main,
+    # after merge. That is how a two-week E2E outage went unnoticed.
 
     steps:
       - name: Checkout code
@@ -239,8 +236,10 @@ jobs:
           echo "E2E test results: $RESULT"
 
           if [[ "$RESULT" == "skipped" ]]; then
-            echo "E2E tests skipped — no relevant area labels on this PR."
-            exit 0
+            echo "E2E tests did not run. They are no longer gated on labels, so"
+            echo "this means an upstream job (image build) failed or was cancelled."
+            echo "Failing rather than reporting a green check for tests that never ran."
+            exit 1
           fi
 
           if [[ "$RESULT" == "failure" ]]; then

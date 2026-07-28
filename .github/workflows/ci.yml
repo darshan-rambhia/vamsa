@@ -114,10 +114,10 @@ jobs:
     name: Integration Tests (${{ matrix.db-driver }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    if: |
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'area:backend')
+    # No label gate — see the note in e2e.yml. Labels land after this workflow is
+    # triggered and are applied with GITHUB_TOKEN, which cannot re-trigger it, so
+    # integration tests never ran on pull requests. That is how the postgres
+    # fileParallelism guard sat broken without anyone noticing (#238).
 
     strategy:
       fail-fast: false
