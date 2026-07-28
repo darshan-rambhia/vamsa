@@ -857,7 +857,16 @@ test.describe("Feature: Backup & Export", () => {
   });
 
   test.describe("GEDCOM Round-Trip", () => {
-    const tempDir = path.join(process.cwd(), "test-output", "gedcom-roundtrip");
+    // Scope the temp directory to the worker. These tests run under
+    // fullyParallel, so a single shared directory means one worker's afterAll
+    // deletes GEDCOM files another worker is still uploading — WebKit then
+    // fails the import with "The object can not be found here."
+    const tempDir = path.join(
+      process.cwd(),
+      "test-output",
+      "gedcom-roundtrip",
+      `worker-${process.env.TEST_PARALLEL_INDEX ?? "0"}`
+    );
 
     // Ensure temp directory exists before tests
     test.beforeAll(() => {
@@ -866,14 +875,10 @@ test.describe("Feature: Backup & Export", () => {
       }
     });
 
-    // Cleanup temp directory after tests
+    // Cleanup this worker's temp directory after tests
     test.afterAll(() => {
       try {
-        if (fs.existsSync(tempDir)) {
-          for (const file of fs.readdirSync(tempDir)) {
-            fs.unlinkSync(path.join(tempDir, file));
-          }
-        }
+        fs.rmSync(tempDir, { recursive: true, force: true });
       } catch {
         // Ignore cleanup errors
       }
