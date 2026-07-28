@@ -157,7 +157,13 @@ jobs:
         run: |
           # Run tests with the specified browser
           # Use the config's reporters (html, list, json) which output to test-output/e2e/
+          # --shm-size: Docker defaults /dev/shm to 64MB. Chromium keeps renderer
+          # shared memory there, and the multi-page journey tests exhaust it, which
+          # kills the browser mid-test ("Target page, context or browser has been
+          # closed"). Raising the test timeout does not help — it is a crash, not
+          # slowness. webkit/firefox are unaffected, which is why only chromium fails.
           docker run --rm \
+            --shm-size=1g \
             --network vamsa-e2e-network \
             -e IN_DOCKER=true \
             -e BASE_URL=http://vamsa-web:3000 \
