@@ -126,6 +126,15 @@ export default defineConfig({
       name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
+        // Playwright's default actionTimeout is 0 (wait forever). Without these,
+        // a single non-actionable element consumes the entire test budget and
+        // reports as "Test timeout of 90000ms exceeded" plus a teardown-induced
+        // "Target page, context or browser has been closed" — which reads like a
+        // browser crash but is not one. webkit and firefox already set these via
+        // EXTENDED_BROWSER_USE, which is why they failed fast and recovered while
+        // chromium hung.
+        actionTimeout: 15000,
+        navigationTimeout: 30000,
         // Disable HSTS/security features that redirect HTTP to HTTPS in Docker
         launchOptions: {
           args: [

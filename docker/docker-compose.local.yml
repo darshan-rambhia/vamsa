@@ -180,6 +180,10 @@ services:
     profiles: ["e2e"]
     <<: *e2e-image
     container_name: vamsa-e2e-runner
+    # Docker defaults /dev/shm to 64MB, which Chromium exhausts during the
+    # multi-page journey tests and crashes the browser. Keep in sync with the
+    # --shm-size flag in .github/workflows/e2e.yml.
+    shm_size: 1gb
     networks:
       - e2e
     depends_on:

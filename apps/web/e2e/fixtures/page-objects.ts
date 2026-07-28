@@ -324,10 +324,19 @@ export class Navigation {
       .catch(() => false);
 
     if (isMobileMode) {
-      // In mobile mode, we need to open the menu first
-      await this.mobileMenuButton.click();
-      // Wait for mobile menu animation
-      await this.page.waitForTimeout(300);
+      // Bound this click. isVisible() is a point-in-time check: on a desktop
+      // viewport the mobile button can read as visible for an instant before
+      // the responsive styles settle, and then never becomes actionable. An
+      // unbounded click there waits until the whole test times out. If it does
+      // not resolve quickly the button was an artifact, so fall through to the
+      // desktop link below.
+      try {
+        await this.mobileMenuButton.click({ timeout: 5000 });
+        // Wait for mobile menu animation
+        await this.page.waitForTimeout(300);
+      } catch {
+        // Not really mobile mode — continue to the direct link click.
+      }
     }
 
     // Find all elements with this testid and click the visible one
@@ -354,10 +363,16 @@ export class Navigation {
       .catch(() => false);
 
     if (isMobileMode) {
-      // In mobile mode, we need to open the menu first for sign-out button to exist in DOM
-      await this.mobileMenuButton.click();
-      // Wait for mobile menu animation
-      await this.page.waitForTimeout(300);
+      // Bounded for the same reason as _clickNavLinkByTestId: a point-in-time
+      // isVisible() can catch the mobile button before responsive styles settle.
+      try {
+        // In mobile mode, we need to open the menu first for sign-out button to exist in DOM
+        await this.mobileMenuButton.click({ timeout: 5000 });
+        // Wait for mobile menu animation
+        await this.page.waitForTimeout(300);
+      } catch {
+        // Not really mobile mode — fall through to the desktop sign-out button.
+      }
     }
 
     // Find any visible signout button and click it
