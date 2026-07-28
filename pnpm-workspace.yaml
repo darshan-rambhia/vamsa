@@ -2,6 +2,11 @@ packages:
   - "apps/*"
   - "packages/*"
 
+# Single source of truth for versions that must resolve to exactly one instance
+# across the whole workspace. Referenced with the "catalog:" protocol.
+catalog:
+  better-sqlite3: "13.0.1"
+
 # Disable pnpm 11's default minimum-release-age supply-chain gate. It rejects
 # packages published within the last day, which breaks installs of freshly
 # released dependencies (e.g. Renovate bumps to latest) and CI. The pre-pnpm
@@ -25,6 +30,13 @@ allowBuilds:
 # reads these from pnpm-workspace.yaml, not package.json).
 overrides:
   "@react-email/render": "^2.0.4"
+  # Force a single better-sqlite3 instance. better-auth peers an older major, so
+  # without this the tree resolves both 12.x and 13.x, which in turn produces two
+  # drizzle-orm@0.45.2 instances with different peer hashes. Identical version,
+  # but nominally distinct types: `SQL<unknown>` from one is not assignable to
+  # `SQL<unknown>` from the other ("separate declarations of a private property
+  # 'shouldInlineParams'"), which breaks typecheck in packages/lib.
+  better-sqlite3: "catalog:"
   drizzle-orm: "0.45.2"
   hono: ">=4.12.3"
   lodash: ">=4.17.23"
