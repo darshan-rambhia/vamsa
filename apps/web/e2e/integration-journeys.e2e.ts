@@ -226,67 +226,65 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
 
         // Look for add relationship button
         const addRelButton = page.getByTestId("add-relationship-button");
-        const hasAddRelButton = await addRelButton
-          .isVisible()
-          .catch(() => false);
+        // The Relationships panel is force-mounted but inert until its tab is
+        // selected, so this button is in the DOM from first paint. Select the tab
+        // first — otherwise the click waits forever on a hidden element.
+        await page.getByRole("tab", { name: /Relationships/ }).click();
+        await expect(addRelButton).toBeVisible({ timeout: 10000 });
 
-        if (hasAddRelButton) {
-          await addRelButton.click();
+        await addRelButton.click();
+        await page.waitForTimeout(300);
+
+        const dialog = page.getByTestId("add-relationship-dialog");
+        await expect(dialog).toBeVisible({ timeout: 5000 });
+
+        // Select relationship type (Child)
+        const typeSelect = page.getByTestId("add-relationship-type-select");
+        const hasTypeSelect = await typeSelect.isVisible().catch(() => false);
+
+        if (hasTypeSelect) {
+          await typeSelect.click();
           await page.waitForTimeout(300);
 
-          const dialog = page.getByTestId("add-relationship-dialog");
-          await expect(dialog).toBeVisible({ timeout: 5000 });
-
-          // Select relationship type (Child)
-          const typeSelect = page.getByTestId("add-relationship-type-select");
-          const hasTypeSelect = await typeSelect.isVisible().catch(() => false);
-
-          if (hasTypeSelect) {
-            await typeSelect.click();
-            await page.waitForTimeout(300);
-
-            const childOption = page.locator(`text="Child"`);
-            const hasChildOption = await childOption
-              .isVisible()
-              .catch(() => false);
-
-            if (hasChildOption) {
-              await childOption.click();
-              await page.waitForTimeout(300);
-            }
-          }
-
-          // Search for the second person
-          const searchInput = page.getByTestId("add-relationship-search-input");
-          const hasSearchInput = await searchInput
+          const childOption = page.locator(`text="Child"`);
+          const hasChildOption = await childOption
             .isVisible()
             .catch(() => false);
 
-          if (hasSearchInput) {
-            await searchInput.fill(firstName2);
-            await page.waitForTimeout(500);
+          if (hasChildOption) {
+            await childOption.click();
+            await page.waitForTimeout(300);
+          }
+        }
 
-            // Click first search result
-            const firstResult = page
-              .locator("[data-testid^='add-relationship-search-result-']")
-              .first();
-            const hasResult = await firstResult.isVisible().catch(() => false);
+        // Search for the second person
+        const searchInput = page.getByTestId("add-relationship-search-input");
+        const hasSearchInput = await searchInput.isVisible().catch(() => false);
 
-            if (hasResult) {
-              await firstResult.click();
-              await page.waitForTimeout(300);
+        if (hasSearchInput) {
+          await searchInput.fill(firstName2);
+          await page.waitForTimeout(500);
 
-              // Save relationship
-              const saveButton = page.getByTestId("add-relationship-save");
-              const hasSaveButton = await saveButton
-                .isVisible()
-                .catch(() => false);
+          // Click first search result
+          const firstResult = page
+            .locator("[data-testid^='add-relationship-search-result-']")
+            .first();
+          const hasResult = await firstResult.isVisible().catch(() => false);
 
-              if (hasSaveButton) {
-                await saveButton.click();
-                await page.waitForTimeout(1000);
-                await waitForDataSync();
-              }
+          if (hasResult) {
+            await firstResult.click();
+            await page.waitForTimeout(300);
+
+            // Save relationship
+            const saveButton = page.getByTestId("add-relationship-save");
+            const hasSaveButton = await saveButton
+              .isVisible()
+              .catch(() => false);
+
+            if (hasSaveButton) {
+              await saveButton.click();
+              await page.waitForTimeout(1000);
+              await waitForDataSync();
             }
           }
         }
