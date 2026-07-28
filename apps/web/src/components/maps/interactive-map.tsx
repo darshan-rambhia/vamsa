@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import maplibregl from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { MapPopup } from "./map-popup";
 import type { StyleSpecification } from "maplibre-gl";
@@ -95,7 +95,8 @@ export function InteractiveMap({
 
   // Update markers
   useEffect(() => {
-    if (!map.current) return;
+    const mapInstance = map.current;
+    if (!mapInstance) return;
 
     // Remove existing markers
     mapMarkers.current.forEach((marker) => marker.remove());
@@ -107,7 +108,7 @@ export function InteractiveMap({
 
       const marker = new maplibregl.Marker({ element: el })
         .setLngLat([markerData.longitude, markerData.latitude])
-        .addTo(map.current!);
+        .addTo(mapInstance);
 
       el.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -129,12 +130,12 @@ export function InteractiveMap({
     });
 
     // Fit map to markers if there are any
-    if (markers.length > 0 && map.current) {
+    if (markers.length > 0) {
       const bounds = new maplibregl.LngLatBounds();
       markers.forEach((marker) => {
         bounds.extend([marker.longitude, marker.latitude]);
       });
-      map.current.fitBounds(bounds, { padding: 50, maxZoom: 12 });
+      mapInstance.fitBounds(bounds, { padding: 50, maxZoom: 12 });
     }
   }, [markers, onMarkerClick]);
 
