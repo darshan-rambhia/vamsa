@@ -18,7 +18,7 @@
     "@vamsa/lib": "workspace:*",
     "@vamsa/schemas": "workspace:*",
     "ai": "^7.0.0",
-    "hono": "^4.11.7",
+    "hono": "^4.12.34",
     "zod": "^4.4.3"
   },
   "devDependencies": {
