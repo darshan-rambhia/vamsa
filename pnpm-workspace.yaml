@@ -5,7 +5,7 @@ packages:
 # Single source of truth for versions that must resolve to exactly one instance
 # across the whole workspace. Referenced with the "catalog:" protocol.
 catalog:
-  better-sqlite3: "13.0.1"
+  better-sqlite3: "13.0.2"
 
 # Disable pnpm 11's default minimum-release-age supply-chain gate. It rejects
 # packages published within the last day, which breaks installs of freshly
