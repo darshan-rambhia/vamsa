@@ -15,6 +15,13 @@
       "when": 1707528000000,
       "tag": "0001_grandfather_verified_users",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787971562732,
+      "tag": "0002_sad_power_pack",
+      "breakpoints": true
     }
   ]
 }

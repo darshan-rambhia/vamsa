@@ -101,8 +101,9 @@ async function main() {
   await db.insert(schema.accounts).values({
     id: crypto.randomUUID(),
     userId: adminUser.id,
-    accountId: normalizedEmail,
+    accountId: adminUser.id,
     providerId: "credential",
+    issuer: "local:credential",
     password: passwordHash,
     updatedAt: now,
   });

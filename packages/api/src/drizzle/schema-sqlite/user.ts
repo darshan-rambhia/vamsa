@@ -64,6 +64,9 @@ export const accounts = sqliteTable(
     userId: text("userId").notNull(),
     accountId: text("accountId").notNull(),
     providerId: text("providerId").notNull(),
+    // better-auth 1.7+: account identity namespace ("local:credential",
+    // "local:oauth:<provider>", or an OIDC issuer URL)
+    issuer: text("issuer").notNull().default("local:credential"),
     accessToken: text("accessToken"),
     refreshToken: text("refreshToken"),
     accessTokenExpiresAt: integer("accessTokenExpiresAt", {
