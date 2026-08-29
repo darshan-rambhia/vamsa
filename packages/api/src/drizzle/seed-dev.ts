@@ -150,8 +150,9 @@ async function ensureAdminUser(db: DrizzleDB, now: Date): Promise<void> {
     await db.insert(schema.accounts).values({
       id: crypto.randomUUID(),
       userId: newAdmin.id,
-      accountId: normalizedEmail,
+      accountId: newAdmin.id,
       providerId: "credential",
+      issuer: "local:credential",
       password: passwordHash,
       updatedAt: now,
     });
@@ -949,8 +950,9 @@ async function main() {
   await db.insert(schema.accounts).values({
     id: crypto.randomUUID(),
     userId: adminUser.id,
-    accountId: adminEmail.toLowerCase(),
+    accountId: adminUser.id,
     providerId: "credential",
+    issuer: "local:credential",
     password: passwordHash,
     updatedAt: now,
   });
@@ -1002,8 +1004,9 @@ async function main() {
     await db.insert(schema.accounts).values({
       id: crypto.randomUUID(),
       userId: createdUser.id,
-      accountId: user.email,
+      accountId: createdUser.id,
       providerId: "credential",
+      issuer: "local:credential",
       password: hash,
       updatedAt: now,
     });

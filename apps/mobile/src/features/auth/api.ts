@@ -1,4 +1,4 @@
-import { getAuthClient } from "@/src/lib/auth-client";
+import { getAuthClient, getClientCookie } from "@/src/lib/auth-client";
 
 export type AuthCookieSource = "none" | "env" | "client" | "manual";
 
@@ -46,15 +46,14 @@ export function subscribeAuthChange(listener: () => void): () => void {
 
 export function getAuthCookieSource(): AuthCookieSource {
   if (manualCookieOverride) return "manual";
-  const clientCookie = getAuthClient().getCookie();
+  const clientCookie = getClientCookie();
   if (clientCookie) return "client";
   if (envCookie) return "env";
   return "none";
 }
 
 export function getAuthCookie(): string | undefined {
-  const cookie =
-    manualCookieOverride || getAuthClient().getCookie() || envCookie;
+  const cookie = manualCookieOverride || getClientCookie() || envCookie;
   if (!cookie) {
     return undefined;
   }
