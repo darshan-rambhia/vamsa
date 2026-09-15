@@ -43,3 +43,9 @@ overrides:
   playwright-core: "1.63.0"
   react: "19.2.8"
   react-dom: "19.2.8"
+
+# packages/api and packages/lib depend on each other (workspace:*). pnpm >= 11.27
+# builds a task graph for `pnpm -r <script>` and refuses cyclic graphs
+# (ERR_PNPM_TASK_CYCLE). The cycle is deliberate; run those tasks in arbitrary
+# order instead of failing.
+ignoreWorkspaceCycles: true
