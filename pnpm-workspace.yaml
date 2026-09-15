@@ -41,8 +41,8 @@ overrides:
   hono: ">=4.12.3"
   lodash: ">=4.17.23"
   playwright-core: "1.63.0"
-  react: "19.2.8"
-  react-dom: "19.2.8"
+  react: "19.3.0"
+  react-dom: "19.3.0"
 
 # packages/api and packages/lib depend on each other (workspace:*). pnpm >= 11.27
 # builds a task graph for `pnpm -r <script>` and refuses cyclic graphs
