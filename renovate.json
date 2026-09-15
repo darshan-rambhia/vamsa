@@ -27,6 +27,17 @@
       "semanticCommitScope": "deps"
     },
     {
+      "description": "Playwright must move as one unit: @playwright/test, the playwright-core override in pnpm-workspace.yaml, and the mcr.microsoft.com/playwright E2E base image all pin browser builds. A lone playwright-core bump (#267, Sept 2026) left the test runner asking the v1.62 image for a v1.63 chromium and broke E2E on main.",
+      "matchPackageNames": [
+        "@playwright/test",
+        "playwright",
+        "playwright-core",
+        "mcr.microsoft.com/playwright"
+      ],
+      "groupName": "playwright",
+      "automerge": false
+    },
+    {
       "description": "Group production npm dependency updates",
       "matchManagers": ["npm"],
       "matchDepTypes": [
