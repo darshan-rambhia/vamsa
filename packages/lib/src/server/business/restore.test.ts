@@ -89,7 +89,7 @@ describe("restore business logic", () => {
         role: "MEMBER" as const,
       };
 
-      expect(validateBackupData(memberUser)).rejects.toThrow(
+      await expect(validateBackupData(memberUser)).rejects.toThrow(
         "Only administrators can validate backups"
       );
     });
@@ -102,7 +102,7 @@ describe("restore business logic", () => {
         role: "VIEWER" as const,
       };
 
-      expect(validateBackupData(viewerUser)).rejects.toThrow(
+      await expect(validateBackupData(viewerUser)).rejects.toThrow(
         "Only administrators can validate backups"
       );
     });
@@ -161,7 +161,7 @@ describe("restore business logic", () => {
         role: "MEMBER" as const,
       };
 
-      expect(
+      await expect(
         previewImportData(memberUser, mockDrizzleDb as any)
       ).rejects.toThrow("Only administrators can preview imports");
     });
@@ -249,7 +249,7 @@ describe("restore business logic", () => {
         role: "MEMBER" as const,
       };
 
-      expect(
+      await expect(
         importBackupData(memberUser, "skip", mockDrizzleDb as any)
       ).rejects.toThrow("Only administrators can import backups");
     });
@@ -351,7 +351,7 @@ describe("restore business logic", () => {
         role: "MEMBER" as const,
       };
 
-      expect(
+      await expect(
         getImportHistoryData(memberUser, mockDrizzleDb as any)
       ).rejects.toThrow("Only administrators can view import history");
     });
