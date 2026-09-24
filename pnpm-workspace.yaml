@@ -37,7 +37,7 @@ overrides:
   # `SQL<unknown>` from the other ("separate declarations of a private property
   # 'shouldInlineParams'"), which breaks typecheck in packages/lib.
   better-sqlite3: "catalog:"
-  drizzle-orm: "0.45.2"
+  drizzle-orm: "0.45.3"
   hono: ">=4.12.3"
   lodash: ">=4.17.23"
   playwright-core: "1.63.0"
