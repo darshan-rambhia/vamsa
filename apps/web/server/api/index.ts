@@ -1,7 +1,11 @@
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import { loggers } from "@vamsa/lib/logger";
-import { requireApiAuth } from "../middleware/require-api-auth";
+import {
+  requireApiAuth,
+  requireApiAuthForMethod,
+} from "../middleware/require-api-auth";
+import { rateLimitMiddleware } from "../../src/server/middleware/hono-rate-limiter";
 import authRouter from "./auth";
 import personsRouter from "./persons";
 import relationshipsRouter from "./relationships";
@@ -145,15 +149,21 @@ apiV1.get("/", (c) => {
  * - /docs, /openapi.json, / - Documentation and root
  *
  * Protected routes:
- * - /persons/* - Requires VIEWER role (default)
- * - /relationships/* - Requires VIEWER role (default)
+ * - /persons/* - VIEWER to read, MEMBER to create/update, ADMIN to delete
+ * - /relationships/* - VIEWER to read, MEMBER to create/update, ADMIN to delete
  * - /batch/* - Requires MEMBER role
  * - /metrics/* - Requires ADMIN role
  */
-apiV1.use("/persons/*", requireApiAuth("VIEWER"));
-apiV1.use("/relationships/*", requireApiAuth("VIEWER"));
+// Role follows the HTTP method: GET VIEWER, POST/PUT MEMBER, DELETE ADMIN
+apiV1.use("/persons/*", requireApiAuthForMethod());
+apiV1.use("/relationships/*", requireApiAuthForMethod());
+// Batch: MEMBER minimum; the batch handler additionally requires ADMIN when it contains deletes
 apiV1.use("/batch/*", requireApiAuth("MEMBER"));
 apiV1.use("/metrics/*", requireApiAuth("ADMIN"));
+
+// Rate limit the REST auth endpoints (brute-force and signup spam)
+apiV1.use("/auth/login", rateLimitMiddleware("login"));
+apiV1.use("/auth/register", rateLimitMiddleware("register"));
 
 // ============================================
 // Resource Routes
