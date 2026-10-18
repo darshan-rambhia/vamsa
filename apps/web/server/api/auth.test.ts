@@ -501,8 +501,8 @@ describe("Authentication API Routes", () => {
         }),
       });
 
-      // Should handle JSON without explicit Content-Type
-      expect([200, 400, 401]).toContain(res.status);
+      // @hono/zod-openapi rejects a JSON body that has no Content-Type
+      expect(res.status).toBe(415);
     });
 
     it("should handle empty request body", async () => {

@@ -23,6 +23,7 @@ import {
   getUnclaimedProfilesHandler,
   logoutHandler,
 } from "./auth.server";
+import type { MockAuthUser } from "@test/server-fn-fixtures";
 
 // =============================================================================
 // Mocks for Handler Tests
@@ -88,25 +89,26 @@ vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
   },
 }));
 
-// requireAuth reads the session through the stubbed auth-better-api above and
-// returns it without touching the database (the real helper loads the user row).
-vi.mock("./middleware/require-auth", async () => {
-  const { betterAuthGetSessionWithUserFromCookie } =
-    await import("@vamsa/lib/server/business/auth-better-api");
-  const rank: Record<string, number> = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
-  return {
-    requireAuth: async (requiredRole: string = "VIEWER") => {
-      const user = await betterAuthGetSessionWithUserFromCookie(undefined);
-      if (!user) {
-        throw new Error("errors:auth.notAuthenticated");
-      }
-      if (rank[user.role] < rank[requiredRole]) {
-        throw new Error(`Requires ${requiredRole} role or higher`);
-      }
-      return user;
-    },
-  };
-});
+// requireAuth runs for real: it reads the session through the stubbed
+// auth-better-api above, then loads the user row. The row comes from the
+// user set by withContext below.
+const { mockCurrentUser } = vi.hoisted(() => ({
+  mockCurrentUser: { value: null as MockAuthUser | null },
+}));
+
+vi.mock("@vamsa/lib/server/db", () => ({
+  drizzleDb: {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: async () =>
+            mockCurrentUser.value ? [mockCurrentUser.value] : [],
+        }),
+      }),
+    }),
+  },
+  drizzleSchema: { users: { id: "id" } },
+}));
 
 vi.mock("@vamsa/lib/server/business/auth", () => ({
   getUnclaimedProfilesData: mockGetUnclaimedProfilesData,
@@ -146,6 +148,8 @@ async function withContext<T>(
     if (pairs.length > 0) headers.set("cookie", pairs.join("; "));
     return headers;
   });
+
+  mockCurrentUser.value = context.user ?? null;
 
   // Simulate Better Auth: only resolve when a recognised session cookie is sent
   mockBetterAuthGetSessionWithUser.mockImplementation(
@@ -254,7 +258,7 @@ describe("Auth Handlers", () => {
       mockBetterAuthChangePassword.mockClear();
       await expect(
         withContext({}, () => changePasswordHandler(validPasswordData))
-      ).rejects.toThrow(/notAuthenticated|not authenticated/i);
+      ).rejects.toThrow("Please log in to continue");
       expect(mockBetterAuthChangePassword).not.toHaveBeenCalled();
     });
 

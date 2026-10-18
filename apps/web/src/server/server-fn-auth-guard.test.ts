@@ -32,6 +32,8 @@ const PUBLIC_BY_DESIGN: Record<string, string> = {
     "Session probe alias of checkAuth.",
   "server/auth.functions.ts#logout":
     "Signs out the current cookie. No data; must work when already logged out.",
+  "server/auth.functions.ts#getRegistrationStatus":
+    "Returns { selfSignupEnabled } only. Login page needs it before sign-in.",
   "server/auth.functions.ts#getAvailableProviders":
     "Lists which SSO/password providers are configured. Needed by the login page.",
   "server/auth.functions.ts#getUnclaimedProfiles":
