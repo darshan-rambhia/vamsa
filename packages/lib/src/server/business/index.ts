@@ -26,6 +26,8 @@
 export * from "./account-lockout";
 export * from "./auth";
 export * from "./auth-better";
+export * from "./auth-accounts";
+export * from "./auth-registration";
 export * from "./auth-better-api";
 
 // ============================================================================
