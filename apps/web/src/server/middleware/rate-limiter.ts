@@ -16,6 +16,7 @@
  * ```
  */
 
+import { getRequestHeader } from "@tanstack/react-start/server";
 import { loggers } from "@vamsa/lib/logger";
 import { MemoryRateLimitStore } from "./rate-limit-store";
 import type { RateLimitStore } from "./rate-limit-store";
@@ -198,24 +199,20 @@ export async function resetRateLimit(
 /**
  * Get client IP address from request headers
  *
- * IP resolution is now handled by the trusted-proxy middleware which:
+ * IP resolution is handled by the trusted-proxy middleware which:
  * 1. Validates that proxy headers come from trusted sources
  * 2. Sets x-vamsa-client-ip header with the resolved IP
  * 3. Prevents IP spoofing attacks
  *
+ * Must be called inside a server function / request context.
+ *
  * @returns IP address string or "unknown" if not determinable
  */
 export function getClientIP(): string {
-  // In TanStack Start server functions, we don't have direct access to headers
-  // We need to import getHeaders from @tanstack/react-start/server
-  // This will be called within the server function context
   try {
-    const { getHeaders } = require("@tanstack/react-start/server");
-    const headers = getHeaders();
-
-    // Get the resolved client IP from the middleware
-    return headers?.["x-vamsa-client-ip"] ?? "unknown";
+    return getRequestHeader("x-vamsa-client-ip") || "unknown";
   } catch {
+    // No request context (e.g. called outside a server function)
     return "unknown";
   }
 }

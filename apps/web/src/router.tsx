@@ -1,7 +1,17 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
+import { createIsomorphicFn } from "@tanstack/react-start";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { routeTree } from "./routeTree.gen";
+import { getCspNonce } from "./server/csp-nonce";
+
+/**
+ * Per-request CSP nonce for TanStack's inline hydration scripts and React's
+ * streaming scripts. On the server it reads Hono's nonce; the client has none.
+ */
+const getSsrNonce = createIsomorphicFn()
+  .server(() => getCspNonce())
+  .client(() => undefined);
 
 export function getRouter() {
   const queryClient = new QueryClient({
@@ -18,6 +28,7 @@ export function getRouter() {
     context: { queryClient },
     defaultPreload: "intent",
     scrollRestoration: true,
+    ssr: { nonce: getSsrNonce() },
   });
 
   setupRouterSsrQueryIntegration({ router, queryClient });

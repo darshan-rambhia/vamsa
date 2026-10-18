@@ -1,7 +1,9 @@
+import { requestHandler } from "@tanstack/react-start/server";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   RATE_LIMITS,
   checkRateLimit,
+  getClientIP,
   getRateLimitStatus,
   resetRateLimit,
 } from "./rate-limiter";
@@ -175,5 +177,62 @@ describe("Rate Limiter", () => {
       expect(RATE_LIMITS.api.limit).toBe(100);
       expect(RATE_LIMITS.api.windowMs).toBe(60 * 1000); // 1 minute
     });
+  });
+});
+
+describe("getClientIP (real request-header API)", () => {
+  /**
+   * Run `fn` inside a real TanStack request context with the given headers.
+   * `fn` returns a Response, which requestHandler hands back to the caller.
+   */
+  function inRequest(
+    headers: Record<string, string>,
+    fn: () => Promise<Response> | Response
+  ) {
+    const handler = requestHandler(fn);
+    return handler(new Request("http://localhost/api", { headers }), {});
+  }
+
+  it("reads the client IP set by the trusted-proxy middleware", async () => {
+    const res = await inRequest(
+      { "x-vamsa-client-ip": "203.0.113.7" },
+      () => new Response(getClientIP())
+    );
+
+    expect(await res.text()).toBe("203.0.113.7");
+  });
+
+  it("returns 'unknown' when the trusted-proxy header is absent", async () => {
+    const res = await inRequest({}, () => new Response(getClientIP()));
+
+    expect(await res.text()).toBe("unknown");
+  });
+
+  it("returns 'unknown' outside a request context instead of throwing", () => {
+    expect(getClientIP()).toBe("unknown");
+  });
+
+  it("gives each client IP its own rate-limit bucket", async () => {
+    const attempt = (ip: string) =>
+      inRequest({ "x-vamsa-client-ip": ip }, async () => {
+        try {
+          await checkRateLimit("login", getClientIP());
+          return new Response("ok", { status: 200 });
+        } catch {
+          return new Response("limited", { status: 429 });
+        }
+      });
+
+    const attackerIP = "198.51.100.10";
+    const otherIP = "198.51.100.11";
+
+    // Exhaust the login budget for one client
+    for (let i = 0; i < RATE_LIMITS.login.limit; i++) {
+      expect((await attempt(attackerIP)).status).toBe(200);
+    }
+    expect((await attempt(attackerIP)).status).toBe(429);
+
+    // A second client is unaffected
+    expect((await attempt(otherIP)).status).toBe(200);
   });
 });
