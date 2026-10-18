@@ -280,8 +280,9 @@ export const auth = betterAuth({
         : [],
     }),
 
-    // TanStack Start cookie handling (MUST be last plugin)
-    // Temporarily disabled to debug 500 error in dev server
+    // TanStack Start cookie plugin (would have to be last) stays off: /api/auth/*
+    // responses already carry Set-Cookie, and no active flow needs server-function
+    // cookie forwarding. Re-verify dev and prod before enabling.
     // tanstackStartCookies(),
   ],
 });
