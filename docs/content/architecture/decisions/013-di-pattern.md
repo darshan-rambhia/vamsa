@@ -1,5 +1,7 @@
 # Dependency Injection Pattern Refactoring
 
+> **Note (October 2026):** Historical record, kept as written. Unit tests now run with Vitest (`pnpm test`); `bun test` and `pnpm test:unit` are no longer the commands to use.
+
 ## Overview
 
 Successfully applied the Dependency Injection (DI) pattern to two server modules:

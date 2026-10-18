@@ -6,18 +6,20 @@ This file contains project-specific instructions for Claude Code.
 
 **Status: DISABLED**
 
-Do NOT automatically run the session close protocol (git status, add, commit, bd sync, push) at the end of tasks. Only run these commands when explicitly asked by the user.
+Do NOT automatically run the session close protocol (git status, add, commit, push) at the end of tasks. Only run these commands when explicitly asked by the user.
 
 ## Project Overview
 
 Vamsa is a family genealogy application built with:
 
-- **Frontend**: TanStack Start (React + Vite via Vinxi)
+- **Frontend**: TanStack Start (React 19 on Vite 8, via `@tanstack/react-start/plugin/vite`)
 - **Backend API**: TanStack React Start server functions
-- **Database**: PostgreSQL (via Drizzle ORM)
-- **Runtime**: Bun (non-negotiable)
-- **Package Manager**: pnpm
-- **Monorepo**: pnpm workspaces
+- **Auth**: better-auth
+- **Charts**: d3
+- **Database**: Drizzle ORM. SQLite by default; PostgreSQL with `DB_DRIVER=postgres` (`pnpm dev:pg`)
+- **Runtime**: Bun (non-negotiable). Runs the servers and `scripts/*.ts`
+- **Package Manager**: pnpm 12 (`packageManager` in root `package.json`)
+- **Monorepo**: pnpm workspaces (`pnpm-workspace.yaml`)
 
 ## Package Structure
 
@@ -27,13 +29,19 @@ apps/
     server/      # Production server entry point (Bun + Hono)
       index.ts   # HTTP server wrapper for TanStack Start
     dist/        # Build output
-      client/    # Static files (served by nginx in production)
+      client/    # Static files (served by the Hono server)
       server/    # Server bundle (TanStack Start fetch handler)
+  ai/            # AI sidecar service (Hono + ai-sdk), optional
+  mobile/        # Expo (React Native) app
 packages/
   api/           # Drizzle schema, migrations, and database utilities
+    drizzle/         # PostgreSQL migrations
+    drizzle-sqlite/  # SQLite migrations
   lib/           # Shared business logic (GEDCOM, genealogy utilities)
   schemas/       # Shared Zod schemas
   ui/            # Shared UI components (shadcn/ui based)
+  client/        # Typed API client (not currently used by any app)
+  query-hooks/   # TanStack Query hooks (not currently used by any app)
 ```
 
 ## Design System
@@ -49,8 +57,10 @@ Editorial + Earth Tones aesthetic:
 ### Development
 
 ```bash
-pnpm dev             # Start web development server (TanStack Start on port 3000+)
-pnpm dev:web-only    # Start only web app (skip API/UI builds)
+pnpm dev             # Start dev server on port 3000 (SQLite, auto-seeded)
+pnpm dev:pg          # Same, but against PostgreSQL in Docker
+pnpm dev:web-only    # Start only the web app (no DB setup or seeding)
+pnpm dev:ai          # Start the AI sidecar
 pnpm build           # Build all packages for production
 pnpm build:web       # Build web app only
 pnpm preview         # Preview production build locally
@@ -69,7 +79,7 @@ The production server (`apps/web/server/index.ts`) uses:
 
 - **Bun**: Fast JavaScript runtime with native TypeScript support
 - **Hono**: Ultrafast web framework for middleware and routing
-- **nginx**: Reverse proxy for static files and load balancing (Docker only)
+- Static assets from `dist/client` are served by the same Hono server (no nginx)
 
 ### Code Quality
 
@@ -80,18 +90,21 @@ pnpm lint:fix        # Fix ESLint issues
 pnpm format          # Format code with Prettier
 pnpm format:check    # Check formatting without modifying
 pnpm typecheck       # Run TypeScript type checks
-pnpm test            # Run all unit tests (Vitest)
-pnpm test:unit       # Run lib and ui unit tests
-pnpm test:coverage   # Run tests with coverage (Vitest)
+pnpm test            # Unit tests (Vitest): schemas, client, query-hooks, api, lib, ui
+pnpm --filter @vamsa/web test  # apps/web unit tests (not part of `pnpm test`)
+pnpm test --coverage # Run unit tests with coverage
+pnpm test:integration --db sqlite    # Integration tests (SQLite)
+pnpm test:integration --db postgres  # Integration tests (PostgreSQL)
 pnpm test:e2e        # Run E2E tests with Playwright
+pnpm test:ci         # Unit (with coverage) + both integration suites
 ```
 
 ### Database
 
 ```bash
-pnpm db:generate        # Generate Drizzle client
-pnpm db:migrate         # Run pending Drizzle migrations
-pnpm db:migrate:deploy  # Deploy migrations (production)
+pnpm db:generate        # Generate a Drizzle migration from schema changes
+pnpm db:migrate         # Apply pending Drizzle migrations (PostgreSQL)
+pnpm db:migrate:dry-run # Preview pending migrations
 pnpm db:push            # Push Drizzle schema to database
 pnpm db:seed            # Seed database with initial data
 pnpm db:studio          # Open Drizzle Studio GUI
@@ -100,7 +113,7 @@ pnpm db:studio          # Open Drizzle Studio GUI
 ### Docker
 
 ```bash
-pnpm docker          # Start all production services (PostgreSQL + app + nginx)
+pnpm docker          # Start production services (PostgreSQL + app; AI service is opt-in, see DOCKER.md)
 pnpm docker:down     # Stop all Docker services
 pnpm docker:logs     # View logs from all services
 pnpm docker:build    # Rebuild Docker images
@@ -112,8 +125,8 @@ See [DOCKER.md](./DOCKER.md) for complete Docker documentation.
 
 ```bash
 bd ready                # Show beads ready to work
-bd sync                 # Sync beads with git
-pnpm clean           # Remove all node_modules
+bd sync                 # Pull/push beads with the Dolt remote (bd 1.3+, embedded Dolt; no git sync branch)
+pnpm clean              # Remove all node_modules
 ```
 
 ## Skills

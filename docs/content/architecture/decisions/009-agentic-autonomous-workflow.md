@@ -1,5 +1,7 @@
 # Autonomous Multi-Agent Workflow: /techlead-loop
 
+> **Note (October 2026):** Historical record, kept as written. Some commands below no longer exist. Current equivalents: coverage is `pnpm test --coverage` (there is no `test:coverage` script); beads use bd 1.3 with embedded Dolt (no git sync branch, and "ready" is the `ready-for-review` label, not a status). Current agent definitions live in `.claude/agents/`.
+
 Your Vamsa project now has a **fully autonomous feature delivery system** powered by `/techlead-loop` command.
 
 ---

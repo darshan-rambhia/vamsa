@@ -1,15 +1,14 @@
 # Docs Site Build Pipeline
 
-**Status:** In Progress (vamsa-j5xt)
+**Status:** Complete (vamsa-j5xt)
 **Created:** 2025-01-21
-**Updated:** 2026-02-16
+**Updated:** 2026-10-18
 
 ## Context
 
 The docs/ folder has been audited and reorganized. Source documentation now lives in logical directories:
 
 - `docs/guides/` - How-to guides, runbooks, operational docs
-- `docs/adrs/` - Architecture Decision Records
 - `docs/agentic/` - Multi-agent development architecture
 
 ## Decisions Made
@@ -41,7 +40,6 @@ docs/
 │   ├── i18n.md
 │   ├── integration-testing.md
 │   └── quick-start-emails.md
-├── adrs/                    # Source: Architecture decisions (001-013)
 ├── agentic/                 # Source: Multi-agent dev architecture
 └── roadmap/                 # Internal proposals (this file)
 ```
@@ -53,14 +51,18 @@ docs/
 - [x] Consolidate scattered docs
 - [x] Fix ADR numbering
 - [x] Add .nojekyll for GitHub Pages
-- [ ] Set up mkdocs.yml configuration
-- [ ] Create MkDocs source directory structure
-- [ ] Build scripts (docs:dev, docs:build)
-- [ ] GitHub Actions workflow
-- [ ] Write user-facing documentation (17 pages)
-- [ ] Write developer/Claude Code documentation (8 pages)
-- [ ] Landing page (index.md)
-- [ ] Custom theme (earth tones)
+- [x] Set up mkdocs.yml configuration
+- [x] Create MkDocs source directory structure (`docs/content/`)
+- [x] Build scripts (`pnpm docs:dev`, `pnpm docs:build`)
+- [x] GitHub Actions workflow (`.github/workflows/site.yml`)
+- [x] Write user-facing documentation
+- [x] Write developer/Claude Code documentation
+- [x] Landing page (index.md)
+- [x] Custom theme (earth tones)
+
+## Outcome
+
+MkDocs builds from `docs/content/` (`docs_dir` in `mkdocs.yml`). ADRs live in `docs/content/architecture/decisions/`; the old `docs/adrs/` copy was removed. `scripts/docs-prebuild.sh` still copies a few guides from `docs/guides/` into `docs/content/` before each build.
 
 ## References
 

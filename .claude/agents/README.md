@@ -6,9 +6,7 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
 
 ### 1. **techlead.md** (Primary Agent)
 
-- **Model**: `claude-opus-4-5-20251101`
-- **Temperature**: 0.2
-- **Permission Mode**: `acceptEdits`
+- **Model**: `opus` (from the agent file frontmatter)
 - **Tools**: Read, Write, Edit, Bash, Glob, Grep, WebSearch, WebFetch, Task
 - **Role**: Central coordinator for all development work
 - **Responsibilities**:
@@ -21,13 +19,11 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
 
 ### 2. **backend.md** (Subagent)
 
-- **Model**: `claude-haiku-4-5-20251001`
-- **Temperature**: 0.2
-- **Permission Mode**: `acceptEdits`
+- **Model**: `haiku` (from the agent file frontmatter)
 - **Tools**: Read, Write, Edit, Bash, Glob, Grep
 - **Role**: Server-side implementation
 - **Responsibilities**:
-  - Implement server actions
+  - Implement server functions
   - Create Zod schemas
   - Handle database migrations
   - Write API logic
@@ -35,9 +31,7 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
 
 ### 3. **frontend.md** (Subagent)
 
-- **Model**: `claude-opus-4-5-20251101`
-- **Temperature**: 0.3
-- **Permission Mode**: `acceptEdits`
+- **Model**: `sonnet` (from the agent file frontmatter)
 - **Tools**: Read, Write, Edit, Bash, Glob, Grep
 - **Role**: Client-side implementation
 - **Responsibilities**:
@@ -49,13 +43,11 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
 
 ### 4. **tester.md** (Subagent)
 
-- **Model**: `claude-haiku-4-5-20251001`
-- **Temperature**: 0.2
-- **Permission Mode**: `acceptEdits`
+- **Model**: `sonnet` (from the agent file frontmatter)
 - **Tools**: Read, Write, Edit, Bash, Glob, Grep
 - **Role**: Test writing and coverage verification
 - **Responsibilities**:
-  - Write unit tests (Bun test)
+  - Write unit tests (Vitest)
   - Write E2E tests (Playwright)
   - Verify coverage thresholds
   - Report test results
@@ -63,9 +55,7 @@ This directory contains Claude Agent SDK configurations for the Vamsa Family Tre
 
 ### 5. **reviewer.md** (Subagent)
 
-- **Model**: `claude-opus-4-5-20251101`
-- **Temperature**: 0.1
-- **Permission Mode**: `bypassPermissions`
+- **Model**: `opus` (from the agent file frontmatter)
 - **Tools**: Read, Bash, Glob, Grep
 - **Role**: Quality gatekeeper (ONLY agent authorized to close beads)
 - **Responsibilities**:
@@ -122,13 +112,13 @@ bd show {bead-id}
 bd assign {bead-id} @agent
 
 # Mark as in progress
-bd status {bead-id} in_progress
+bd update {bead-id} --status in_progress
 
 # Work on the bead...
 
-# Report completion
-bd status {bead-id} ready
-bd comment {bead-id} --body "Work complete. Quality gates: [status]"
+# Report completion (bd has no "ready" status; use a label)
+bd update {bead-id} --add-label ready-for-review
+bd comment {bead-id} "Work complete. Quality gates: [status]"
 ```
 
 ## Quality Gates
@@ -153,9 +143,9 @@ pnpm build         # Production build succeeds
 ### Tester Agent
 
 ```bash
-pnpm test           # Unit tests pass
-pnpm test:coverage  # Coverage >= 90% statements, 85% branches
-pnpm test:e2e       # E2E tests pass
+pnpm test             # Unit tests pass
+pnpm test --coverage  # Coverage meets per-package thresholds (see each vitest.config.ts)
+pnpm test:e2e         # E2E tests pass
 ```
 
 ### Reviewer Agent
@@ -192,11 +182,12 @@ pnpm test:e2e       # E2E tests pass
 
 These agents work with:
 
-- **Framework**: Next.js 15
+- **Framework**: TanStack Start (React 19, Vite 8)
 - **Runtime**: Bun
-- **Database**: Drizzle (PostgreSQL)
-- **Auth**: NextAuth
+- **Package Manager**: pnpm 12
+- **Database**: Drizzle (SQLite default, PostgreSQL via `DB_DRIVER=postgres`)
+- **Auth**: better-auth
 - **State**: TanStack Query
-- **UI**: React Flow, shadcn/ui
-- **Testing**: Bun test, Playwright
+- **UI**: shadcn/ui, d3 (charts)
+- **Testing**: Vitest (unit, integration), Playwright (E2E)
 - **Code Quality**: TypeScript, ESLint, Prettier

@@ -19,22 +19,22 @@ docker run --rm -i grafana/k6 run - <tests/load/mixed.js
 Start the app first:
 
 ```bash
-bun run dev          # development server
+pnpm dev          # development server
 # or
-bun run build && cd apps/web && bun run start  # production build
+pnpm build && cd apps/web && pnpm start  # production build
 ```
 
 Then run load tests:
 
 ```bash
 # Mixed realistic scenario (recommended first run)
-bun run load-test
+pnpm load-test
 
 # Individual test scripts
-bun run load-test:auth      # Login/logout throughput
-bun run load-test:people    # Paginated people list
-bun run load-test:search    # Search queries
-bun run load-test:detail    # Person detail by ID
+pnpm load-test:auth      # Login/logout throughput
+pnpm load-test:people    # Paginated people list
+pnpm load-test:search    # Search queries
+pnpm load-test:detail    # Person detail by ID
 ```
 
 ## Configuration

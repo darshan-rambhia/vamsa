@@ -14,22 +14,22 @@ Keyboard navigation tests that were previously scattered across multiple spec fi
 
 The following spec files have been updated to use the new keyboard navigation helpers:
 
-1. **person-forms.spec.ts**
+1. **person-forms.e2e.ts**
    - Consolidated test: "form inputs are keyboard navigable"
    - Uses: `testTabNavigation()`
    - Tests tab order through firstName -> lastName -> submit button
 
-2. **calendar-subscription.spec.ts**
+2. **calendar-subscription.e2e.ts**
    - Consolidated test: "tabs support keyboard navigation"
    - Uses: `testArrowKeyTabNavigation()`
    - Tests arrow key navigation through calendar subscription instruction tabs
 
-3. **calendar-tokens.spec.ts**
+3. **calendar-tokens.e2e.ts**
    - Consolidated test: "create button responds to keyboard"
    - Uses: `testButtonKeyboardActivation()`
    - Tests button activation with Enter key for token creation
 
-4. **change-password.spec.ts**
+4. **change-password.e2e.ts**
    - New test: "form keyboard navigation"
    - Uses: `testFormKeyboardNavigation()`
    - Tests tab order and keyboard navigation through password form fields
@@ -418,13 +418,13 @@ test("form keyboard navigation", async ({ page }) => {
 
 Current keyboard navigation tests cover:
 
-| Test Type         | Spec Files                    | Count       | Helper Function              |
-| ----------------- | ----------------------------- | ----------- | ---------------------------- |
-| Tab Navigation    | person-forms.spec.ts          | 1           | testTabNavigation            |
-| Form Keyboard     | change-password.spec.ts       | 1           | testFormKeyboardNavigation   |
-| Button Activation | calendar-tokens.spec.ts       | 1           | testButtonKeyboardActivation |
-| Arrow Key Tabs    | calendar-subscription.spec.ts | 1           | testArrowKeyTabNavigation    |
-| **Total**         | **4 spec files**              | **4 tests** | **4 helpers**                |
+| Test Type         | Spec Files                   | Count       | Helper Function              |
+| ----------------- | ---------------------------- | ----------- | ---------------------------- |
+| Tab Navigation    | person-forms.e2e.ts          | 1           | testTabNavigation            |
+| Form Keyboard     | change-password.e2e.ts       | 1           | testFormKeyboardNavigation   |
+| Button Activation | calendar-tokens.e2e.ts       | 1           | testButtonKeyboardActivation |
+| Arrow Key Tabs    | calendar-subscription.e2e.ts | 1           | testArrowKeyTabNavigation    |
+| **Total**         | **4 spec files**             | **4 tests** | **4 helpers**                |
 
 ## Future Enhancements
 
@@ -448,11 +448,11 @@ This consolidation satisfies all bead requirements:
   - ✓ `testArrowKeyTabNavigation(page, config)`
   - ✓ `testSkipToMainContent(page, config)`
 - ✓ Existing spec files updated (4 files updated):
-  - ✓ auth.spec.ts - ready for keyboard tests
-  - ✓ person-forms.spec.ts - updated with `testTabNavigation`
-  - ✓ calendar-subscription.spec.ts - updated with `testArrowKeyTabNavigation`
-  - ✓ calendar-tokens.spec.ts - updated with `testButtonKeyboardActivation`
-  - ✓ change-password.spec.ts - updated with `testFormKeyboardNavigation`
+  - ✓ auth.e2e.ts - ready for keyboard tests
+  - ✓ person-forms.e2e.ts - updated with `testTabNavigation`
+  - ✓ calendar-subscription.e2e.ts - updated with `testArrowKeyTabNavigation`
+  - ✓ calendar-tokens.e2e.ts - updated with `testButtonKeyboardActivation`
+  - ✓ change-password.e2e.ts - updated with `testFormKeyboardNavigation`
 - ✓ Export from fixtures/index.ts configured
 - ✓ TypeScript compiles successfully
 - ✓ All 4 updated spec files demonstrate proper usage

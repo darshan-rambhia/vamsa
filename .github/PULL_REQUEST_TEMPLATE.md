@@ -8,10 +8,10 @@
 
 ## Testing
 
-- [ ] `bun run quality:ci`
-- [ ] `bun run test:ci`
-- [ ] `bun run test:focus --suite unit`
-- [ ] `bun run test:e2e`
+- [ ] `pnpm quality:ci`
+- [ ] `pnpm test:ci`
+- [ ] `pnpm test:focus --suite unit`
+- [ ] `pnpm test:e2e`
 - [ ] Other (describe):
 
 ## Screenshots (if UI changes)

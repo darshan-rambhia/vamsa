@@ -30,7 +30,7 @@ This is not autocomplete. It is a self-governing development team that:
 - Commits code only after all gates pass
 
 !!! info "Key Distinction"
-    Agents report **"ready"** status, never "complete." Only the Reviewer agent can close a task. This governance model prevents shortcuts and ensures every piece of code passes the full quality suite.
+    Agents report **"ready for review"** (a `ready-for-review` label), never "complete." Only the Reviewer agent can close a task. This governance model prevents shortcuts and ensures every piece of code passes the full quality suite.
 
 ## How It Differs from Copilot and Cursor
 
@@ -101,7 +101,7 @@ A typical feature goes through five phases:
 
 === "Phase 3: Testing"
 
-    Once both implementation agents report ready, the Tech Lead invokes the Tester agent. The tester writes unit tests and E2E tests, verifies coverage thresholds (90%+ statements, 85%+ branches), and reports ready.
+    Once both implementation agents report ready, the Tech Lead invokes the Tester agent. The tester writes unit tests and E2E tests, verifies per-package coverage thresholds, and reports ready.
 
 === "Phase 4: Review"
 
