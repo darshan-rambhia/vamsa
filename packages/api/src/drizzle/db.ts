@@ -18,12 +18,14 @@
 
 import * as fs from "node:fs";
 
+import { sql } from "drizzle-orm";
 import { drizzle as pgDrizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 import * as pgSchema from "./schema";
 import * as sqliteSchema from "./schema-sqlite";
 
+import type { SQL } from "drizzle-orm";
 import type { PoolConfig } from "pg";
 
 // Re-export PG schema for consumers (types remain dialect-agnostic)
@@ -258,6 +260,19 @@ export const closeDb = async (): Promise<void> => {
     sqliteInstance = null;
   }
   dbInstance = null;
+};
+
+/**
+ * Run a trivial query to verify the database connection.
+ * Dialect-aware: PostgreSQL clients expose execute(), SQLite clients run().
+ */
+export const pingDatabase = async (): Promise<void> => {
+  const query = sql`SELECT 1`;
+  if (getDbDriver() === "sqlite") {
+    (db as unknown as { run: (q: SQL) => unknown }).run(query);
+    return;
+  }
+  await db.execute(query);
 };
 
 /**
