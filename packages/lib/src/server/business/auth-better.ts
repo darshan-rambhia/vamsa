@@ -44,6 +44,61 @@ async function verifyPassword(
 }
 
 /**
+ * Vamsa-specific user fields exposed through Better Auth.
+ *
+ * `input: false` keeps these out of sign-up and update-user request bodies, so a
+ * client cannot set its own role, status, or linkage. Server code writes them
+ * through Drizzle (invites, claim, admin) or relies on DB defaults (OIDC create).
+ */
+export const userAdditionalFields = {
+  role: {
+    type: "string",
+    required: true,
+    defaultValue: "VIEWER",
+    input: false,
+  },
+  personId: {
+    type: "string",
+    required: false,
+    input: false,
+  },
+  mustChangePassword: {
+    type: "boolean",
+    defaultValue: false,
+    input: false,
+  },
+  profileClaimStatus: {
+    type: "string",
+    defaultValue: "PENDING",
+    input: false,
+  },
+  preferredLanguage: {
+    type: "string",
+    defaultValue: "en",
+  },
+  isActive: {
+    type: "boolean",
+    defaultValue: true,
+    input: false,
+  },
+  failedLoginAttempts: {
+    type: "number",
+    defaultValue: 0,
+    input: false,
+  },
+  lockedUntil: {
+    type: "date",
+    required: false,
+    input: false,
+  },
+  oidcProvider: {
+    type: "string",
+    required: false,
+    input: false,
+  },
+} as const;
+
+/**
  * Better Auth instance with Drizzle adapter
  *
  * This is the new authentication system being migrated to.
@@ -190,45 +245,7 @@ export const auth = betterAuth({
   // Extend user model with Vamsa-specific fields
   // These will be added to the user table by Better Auth migrations
   user: {
-    additionalFields: {
-      role: {
-        type: "string",
-        required: true,
-        defaultValue: "VIEWER",
-      },
-      personId: {
-        type: "string",
-        required: false,
-      },
-      mustChangePassword: {
-        type: "boolean",
-        defaultValue: false,
-      },
-      profileClaimStatus: {
-        type: "string",
-        defaultValue: "PENDING",
-      },
-      preferredLanguage: {
-        type: "string",
-        defaultValue: "en",
-      },
-      isActive: {
-        type: "boolean",
-        defaultValue: true,
-      },
-      failedLoginAttempts: {
-        type: "number",
-        defaultValue: 0,
-      },
-      lockedUntil: {
-        type: "date",
-        required: false,
-      },
-      oidcProvider: {
-        type: "string",
-        required: false,
-      },
-    },
+    additionalFields: userAdditionalFields,
   },
 
   plugins: [

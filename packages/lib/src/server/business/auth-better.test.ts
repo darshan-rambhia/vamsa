@@ -89,39 +89,35 @@ describe("auth-better configuration", () => {
   });
 
   describe("user additional fields", () => {
-    it("should define role field with VIEWER default", () => {
-      const defaultRole = "VIEWER";
-      expect(defaultRole).toBe("VIEWER");
+    const PRIVILEGED_FIELDS = [
+      "role",
+      "personId",
+      "mustChangePassword",
+      "profileClaimStatus",
+      "isActive",
+      "failedLoginAttempts",
+      "lockedUntil",
+      "oidcProvider",
+    ] as const;
+
+    it.each(PRIVILEGED_FIELDS)(
+      "marks %s as server-only (input: false) so sign-up and update-user ignore it",
+      async (field) => {
+        const { userAdditionalFields } = await import("./auth-better");
+        expect(userAdditionalFields[field].input).toBe(false);
+      }
+    );
+
+    it("keeps preferredLanguage client-settable", async () => {
+      const { userAdditionalFields } = await import("./auth-better");
+      expect(userAdditionalFields.preferredLanguage).not.toHaveProperty(
+        "input"
+      );
     });
 
-    it("should define personId field as optional", () => {
-      const required = false;
-      expect(required).toBe(false);
-    });
-
-    it("should define mustChangePassword field with false default", () => {
-      const defaultValue = false;
-      expect(defaultValue).toBe(false);
-    });
-
-    it("should define profileClaimStatus field with PENDING default", () => {
-      const defaultStatus = "PENDING";
-      expect(defaultStatus).toBe("PENDING");
-    });
-
-    it("should define preferredLanguage field with en default", () => {
-      const defaultLang = "en";
-      expect(defaultLang).toBe("en");
-    });
-
-    it("should define isActive field with true default", () => {
-      const defaultActive = true;
-      expect(defaultActive).toBe(true);
-    });
-
-    it("should define failedLoginAttempts field with 0 default", () => {
-      const defaultAttempts = 0;
-      expect(defaultAttempts).toBe(0);
+    it("defaults role to VIEWER", async () => {
+      const { userAdditionalFields } = await import("./auth-better");
+      expect(userAdditionalFields.role.defaultValue).toBe("VIEWER");
     });
   });
 
