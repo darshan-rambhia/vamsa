@@ -7,6 +7,7 @@
  */
 
 import * as fs from "node:fs";
+import { createRequire } from "node:module";
 import * as path from "node:path";
 
 import { getDbDriver, getSslConfig } from "./db";
@@ -71,7 +72,7 @@ async function migrateSqlite({
 }: RunMigrationsOptions): Promise<void> {
   // Bun-only: bun:sqlite is loaded at runtime, not at module import time
   // (keeps Vite/Vitest from resolving it statically). Same approach as db.ts.
-  const { Database } = require("bun:sqlite");
+  const { Database } = createRequire(import.meta.url)("bun:sqlite");
   const { drizzle } = await import("drizzle-orm/bun-sqlite");
   const { migrate } = await import("drizzle-orm/bun-sqlite/migrator");
 

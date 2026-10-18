@@ -17,6 +17,7 @@
  */
 
 import * as fs from "node:fs";
+import { createRequire } from "node:module";
 
 import { sql } from "drizzle-orm";
 import { drizzle as pgDrizzle } from "drizzle-orm/node-postgres";
@@ -189,13 +190,19 @@ const getPool = (): Pool => {
 let dbInstance: ReturnType<typeof pgDrizzle<typeof pgSchema>> | null = null;
 
 /**
+ * require() bound to this module. A bare `require` is not defined when Vite's
+ * module runner evaluates this file (dev server), so build it from import.meta.
+ * Loading bun:sqlite here also keeps Vite/Vitest from resolving it statically.
+ */
+const requireFromHere = createRequire(import.meta.url);
+
+/**
  * Initialize SQLite database connection.
- * Uses require() to avoid Vite/Vitest static analysis of bun:sqlite built-in.
  * This function is only called at runtime in Bun when DB_DRIVER=sqlite.
  */
 function initSqliteDb(dbPath: string): void {
-  const { Database } = require("bun:sqlite");
-  const { drizzle: sqliteDrizzle } = require("drizzle-orm/bun-sqlite");
+  const { Database } = requireFromHere("bun:sqlite");
+  const { drizzle: sqliteDrizzle } = requireFromHere("drizzle-orm/bun-sqlite");
 
   const sqlite = new Database(dbPath);
   sqlite.exec("PRAGMA journal_mode = WAL;");
