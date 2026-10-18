@@ -15,9 +15,11 @@
   "dependencies": {
     "@ai-sdk/openai": "^4.0.0",
     "@ai-sdk/openai-compatible": "^3.0.0",
+    "@vamsa/api": "workspace:*",
     "@vamsa/lib": "workspace:*",
     "@vamsa/schemas": "workspace:*",
     "ai": "^7.0.0",
+    "drizzle-orm": "0.45.2",
     "hono": "^4.11.7",
     "zod": "^4.4.3"
   },
