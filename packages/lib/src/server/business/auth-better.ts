@@ -98,6 +98,12 @@ export const userAdditionalFields = {
     required: false,
     input: false,
   },
+  // Set by invite acceptance; Better Auth drops columns it does not know
+  invitedById: {
+    type: "string",
+    required: false,
+    input: false,
+  },
 } as const;
 
 /**

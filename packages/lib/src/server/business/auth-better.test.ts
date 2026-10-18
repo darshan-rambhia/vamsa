@@ -98,6 +98,7 @@ describe("auth-better configuration", () => {
       "failedLoginAttempts",
       "lockedUntil",
       "oidcProvider",
+      "invitedById",
     ] as const;
 
     it.each(PRIVILEGED_FIELDS)(
