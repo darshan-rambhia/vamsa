@@ -13,11 +13,14 @@ import {
 } from "@vamsa/ui";
 import { AlertTriangle } from "lucide-react";
 import { ErrorBoundary, ErrorCard } from "~/components/error";
+import { isDevRoutesEnabled } from "~/server/dev-routes";
 
 export const Route = createFileRoute("/_authenticated/dev/errors")({
-  // Development only: production builds (import.meta.env.DEV === false) get a 404
-  beforeLoad: () => {
-    if (!import.meta.env.DEV) {
+  // Dev builds always serve this page. Production builds 404 unless the server
+  // sets VAMSA_ENABLE_DEV_ROUTES=true (E2E only, see server/dev-routes.ts).
+  beforeLoad: async () => {
+    if (import.meta.env.DEV) return;
+    if (!(await isDevRoutesEnabled())) {
       throw notFound();
     }
   },

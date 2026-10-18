@@ -58,6 +58,8 @@ const webServerConfig = isDocker
         // Match CI: server runs in test mode with rate limiting disabled
         NODE_ENV: "test",
         E2E_TESTING: "true",
+        // Re-enables /dev/errors (404 in prod builds). E2E only.
+        VAMSA_ENABLE_DEV_ROUTES: "true",
       },
     };
 

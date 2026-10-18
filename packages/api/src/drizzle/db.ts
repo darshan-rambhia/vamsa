@@ -190,17 +190,13 @@ const getPool = (): Pool => {
 let dbInstance: ReturnType<typeof pgDrizzle<typeof pgSchema>> | null = null;
 
 /**
- * require() bound to this module. A bare `require` is not defined when Vite's
- * module runner evaluates this file (dev server), so build it from import.meta.
- * Loading bun:sqlite here also keeps Vite/Vitest from resolving it statically.
- */
-const requireFromHere = createRequire(import.meta.url);
-
-/**
  * Initialize SQLite database connection.
  * This function is only called at runtime in Bun when DB_DRIVER=sqlite.
  */
 function initSqliteDb(dbPath: string): void {
+  // createRequire is called here, not at module load: this file is reachable
+  // from client bundles, where node:module is a stub and would throw on import.
+  const requireFromHere = createRequire(import.meta.url);
   const { Database } = requireFromHere("bun:sqlite");
   const { drizzle: sqliteDrizzle } = requireFromHere("drizzle-orm/bun-sqlite");
 

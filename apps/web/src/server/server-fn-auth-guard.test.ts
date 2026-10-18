@@ -96,6 +96,7 @@ const EXPECTED_ROLE: Record<string, Role> = {
   "server/claim.functions.ts#claimProfileOIDC": "VIEWER",
   "server/claim.functions.ts#skipProfileClaim": "VIEWER",
   "server/claim.functions.ts#getOIDCClaimStatus": "VIEWER",
+  "server/dev-routes.ts#isDevRoutesEnabled": "VIEWER",
   "server/dashboard-preferences.ts#getDashboardPreferences": "VIEWER",
   "server/dashboard-preferences.ts#saveDashboardPreferences": "VIEWER",
   "server/dashboard-preferences.ts#resetDashboardPreferences": "VIEWER",
