@@ -63,7 +63,8 @@ RUN pnpm build
 # the whole workspace. --legacy: required since pnpm 10 for non-injected
 # workspaces; --ignore-scripts: db:generate already ran above, skip husky.
 WORKDIR /app
-RUN pnpm --filter=@vamsa/web deploy --prod --legacy --ignore-scripts /prod
+RUN pnpm --filter=@vamsa/web deploy --prod --legacy --ignore-scripts /prod \
+    && rm -rf /prod/e2e /prod/tests
 
 # =============================================================================
 # Stage 2: Production runtime
