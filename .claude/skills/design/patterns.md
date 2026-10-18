@@ -38,7 +38,7 @@ Person cards are the atomic unit of Vamsa. They must feel substantial but not he
 - Deceased persons: add subtle muted background or "Deceased" badge
 - Current user: highlight with primary border + "You" badge
 
-### Family Tree Nodes (React Flow)
+### Family Tree Nodes (d3 charts, `apps/web/src/components/charts/`)
 
 Tree nodes have specific color coding:
 
@@ -143,7 +143,7 @@ Family events need chronological clarity:
 ### Button Variants
 
 ```tsx
-import { Button } from "@/components/ui/button";
+import { Button } from "@vamsa/ui";
 
 // Primary action - forest green
 <Button>Add Family Member</Button>

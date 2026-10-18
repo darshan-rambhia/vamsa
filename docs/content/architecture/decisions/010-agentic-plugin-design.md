@@ -1,5 +1,7 @@
 # Multi-Agent Workflow Plugin Design
 
+> **Note (October 2026):** Historical record, kept as written. Some commands below no longer exist. Current equivalents: coverage is `pnpm test --coverage` (there is no `test:coverage` script); beads use bd 1.3 with embedded Dolt (no git sync branch, and "ready" is the `ready-for-review` label, not a status). Current agent definitions live in `.claude/agents/`. The stack described here as Next.js, NextAuth, React Flow, Prisma, and Bun test is out of date: Vamsa uses TanStack Start, better-auth, d3, Drizzle, and Vitest.
+
 Can `/techlead-loop` be converted into a reusable Claude Code plugin for other repositories?
 
 **Short answer: YES, but with significant caveats.**

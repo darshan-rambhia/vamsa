@@ -2,9 +2,9 @@
 
 ## Overview
 
-Integration tests bridge the gap between unit tests (mocked database) and E2E tests (full browser). They test server functions and business logic against a real PostgreSQL database without browser overhead.
+Integration tests bridge the gap between unit tests (mocked database) and E2E tests (full browser). They test server functions and business logic against a real database (in-memory SQLite or PostgreSQL) without browser overhead.
 
-> **Note**: Integration tests intentionally use `bun:test` (not Vitest) because they run against a real database and benefit from Bun's native test runner performance. Unit tests use Vitest.
+> **Note**: Integration tests use Vitest, like unit tests, with a separate config (`apps/web/vitest.integration.config.ts`). Import test utilities from `"vitest"`, never `"bun:test"`.
 
 ### Testing Pyramid
 
@@ -16,32 +16,36 @@ Integration tests bridge the gap between unit tests (mocked database) and E2E te
 
 ## Quick Start
 
-### 1. Start Test Database
+### SQLite (no Docker)
 
 ```bash
-docker compose -f docker/docker-compose.local.yml --profile test up -d
+pnpm test:integration --db sqlite
 ```
 
-Verify it's healthy:
+Each run uses an in-memory SQLite database.
+
+### PostgreSQL
+
+#### 1. Start Test Database
 
 ```bash
-docker compose -f docker/docker-compose.local.yml --profile test logs postgres
+docker compose -f docker/docker-compose.local.yml --profile test up -d --wait
 ```
 
-### 2. Run Integration Tests
+#### 2. Run Integration Tests
 
 ```bash
-pnpm test:int
+pnpm test:integration --db postgres
 ```
 
-Or run specific test file:
+Or run a specific test file:
 
 ```bash
 cd apps/web
-bun test ./tests/integration/persons.int.ts
+DB_DRIVER=postgres bun --bun vitest run --config vitest.integration.config.ts tests/integration/persons.int.ts
 ```
 
-### 3. Stop Test Database
+#### 3. Stop Test Database
 
 ```bash
 docker compose -f docker/docker-compose.local.yml --profile test down -v
@@ -63,10 +67,11 @@ docker compose -f docker/docker-compose.local.yml --profile test down -v
 ```
 apps/web/tests/integration/
 ├── setup.ts                      # Database setup, utilities, helpers
+├── global-setup.ts               # Vitest global setup
 ├── persons.int.ts                # Person CRUD integration tests
-├── relationships.integration.test.ts  # Relationship tests (WIP)
-├── auth.integration.test.ts       # Authentication tests (WIP)
-└── README.md                      # Detailed documentation
+├── relationships.int.ts          # Relationship tests
+├── auth.int.ts                   # Authentication tests
+└── README.md                     # Detailed documentation
 ```
 
 ## Writing Integration Tests
@@ -134,7 +139,7 @@ import {
   beforeEach,
   afterAll,
   beforeAll,
-} from "bun:test";
+} from "vitest";
 import {
   testDb,
   cleanupTestData,
@@ -307,15 +312,14 @@ it("finds persons with multiple conditions", async () => {
 
 ### Optimization Tips
 
+Run from `apps/web` (add `DB_DRIVER=sqlite DATABASE_URL=:memory:` for SQLite, or `DB_DRIVER=postgres` for PostgreSQL):
+
 ```bash
 # Run only specific test file
-bun test tests/integration/persons.int.ts
+bun --bun vitest run --config vitest.integration.config.ts tests/integration/persons.int.ts
 
 # Run specific test by name
-bun test tests/integration/persons.int.ts -t "creates a person"
-
-# Parallel execution (Bun supports this natively)
-bun test tests/integration/**/*.int.ts
+bun --bun vitest run --config vitest.integration.config.ts tests/integration/persons.int.ts -t "creates a person"
 ```
 
 ## Troubleshooting
@@ -333,7 +337,7 @@ docker compose -f docker/docker-compose.local.yml --profile test up -d
 Database hasn't finished initializing. Wait and check:
 
 ```bash
-docker compose -f docker/docker-compose.local.yml --profile test logs postgres
+docker compose -f docker/docker-compose.local.yml --profile test logs test-db
 # Look for "database system is ready to accept connections"
 ```
 
@@ -372,14 +376,14 @@ See current coverage:
 
 ```bash
 cd apps/web
-bun test ./tests/integration/persons.int.ts --coverage
+DB_DRIVER=sqlite DATABASE_URL=:memory: bun --bun vitest run --config vitest.integration.config.ts --coverage
 ```
 
 ## Adding New Integration Tests
 
 ### Checklist
 
-- [ ] Create new file: `tests/integration/feature-name.integration.test.ts`
+- [ ] Create new file: `tests/integration/feature-name.int.ts`
 - [ ] Import helpers from `setup.ts`
 - [ ] Add `beforeAll()`, `beforeEach()`, `afterAll()` lifecycle
 - [ ] Use `randomUUID()` for all record IDs
@@ -398,7 +402,7 @@ import {
   beforeEach,
   afterAll,
   beforeAll,
-} from "bun:test";
+} from "vitest";
 import {
   testDb,
   cleanupTestData,
@@ -441,14 +445,13 @@ describe("Feature Integration Tests", () => {
 
 ## Current Status
 
-### Passing Test Suites
+### Test Suites
 
-- `persons.int.ts` - 15 tests, 100% passing
+- `persons.int.ts`
+- `relationships.int.ts`
+- `auth.int.ts`
 
-### In Progress
-
-- `relationships.integration.test.ts` - Structure complete, needs ID updates
-- `auth.integration.test.ts` - Structure complete, needs ID updates
+All three run in CI against both SQLite and PostgreSQL (`pnpm test:ci`).
 
 ### Not Yet Implemented
 

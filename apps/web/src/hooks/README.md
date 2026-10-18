@@ -167,10 +167,10 @@ interface UseTreeKeyboardNavReturn {
 
 ### Testing
 
-The hook is fully unit tested with Bun's test framework. See `useTreeKeyboardNav.test.ts` for examples.
+The hook is fully unit tested with Vitest. See `useTreeKeyboardNav.test.ts` for examples.
 
 ```bash
-bun test ./src/hooks/useTreeKeyboardNav.test.ts
+cd apps/web && pnpm test src/hooks/useTreeKeyboardNav.test.ts
 ```
 
 ### Related

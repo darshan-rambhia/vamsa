@@ -309,14 +309,18 @@ await expect(page.getByText("Success")).toBeVisible({ timeout: 3000 });
 
 ```bash
 # Unit tests (Vitest)
-pnpm test                # All unit tests (runs each package's vitest)
-pnpm test:unit           # lib and ui only
-pnpm exec vitest run     # Run from root workspace (all projects)
+pnpm test                # Unit tests for schemas, client, query-hooks, api, lib, ui
+pnpm test --coverage     # Same, with coverage
+pnpm exec vitest run     # Run from root workspace (all projects, incl. apps/web and apps/ai)
+
+# Integration tests (Vitest against a real database)
+pnpm test:integration --db sqlite     # In-memory SQLite
+pnpm test:integration --db postgres   # PostgreSQL
 
 # E2E tests (Playwright)
 pnpm test:e2e            # All E2E tests
 pnpm test:e2e --ui       # Interactive mode
-pnpm test:e2e auth.spec.ts  # Specific file
+pnpm test:e2e auth.e2e.ts   # Specific file
 pnpm test:e2e --grep "login"  # Pattern match
 
 # Specific package
@@ -378,5 +382,5 @@ Configured per-package in `vitest.config.ts` with native Vitest coverage thresho
 
 - `apps/web/playwright.config.ts` - Playwright configuration
 - `apps/web/e2e/fixtures/test-base.ts` - Custom fixtures
-- `apps/web/e2e/helpers/bdd-helpers.ts` - BDD step helpers
-- `apps/web/e2e/pages/` - Page Object classes
+- `apps/web/e2e/fixtures/bdd-helpers.ts` - BDD step helpers
+- `apps/web/e2e/fixtures/page-objects.ts` - Page Object classes

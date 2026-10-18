@@ -93,3 +93,10 @@ docs/site/
 # pnpm config is committed (some global gitignores exclude .npmrc); it holds
 # repo package-manager settings, not secrets.
 !.npmrc
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+*.db
+.beads-credential-key
+.beads/proxieddb/
+*.gate.lock*

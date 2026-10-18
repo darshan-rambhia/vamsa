@@ -105,7 +105,7 @@ After implementation agents report ready:
 
 Tester writes:
 
-- Unit tests (Bun test)
+- Unit tests (Vitest)
 - E2E tests (Playwright)
 - Verifies coverage thresholds
 

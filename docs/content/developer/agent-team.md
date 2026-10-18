@@ -199,12 +199,15 @@ The Tester agent writes comprehensive test suites and verifies coverage threshol
 
 ### Coverage Thresholds
 
-| Metric | Minimum |
-|---|---|
-| Statements | 90% |
-| Branches | 85% |
-| Functions | 90% |
-| Lines | 90% |
+Thresholds are set per package in each `vitest.config.ts` and checked by `pnpm test --coverage`:
+
+| Package | Lines | Branches |
+|---|---|---|
+| `@vamsa/schemas` | 90% | 85% |
+| `@vamsa/ui` | 95% | 95% |
+| `@vamsa/lib` | 80% | 80% |
+| `@vamsa/api` | 80% | 70% |
+| `@vamsa/web` | 55% | 65% |
 
 ### Restrictions
 
@@ -326,7 +329,7 @@ No other agent can execute `bd close`. This prevents premature closure and ensur
 
 ### 2. Agents Report "Ready," Not "Complete"
 
-Implementation agents (frontend, backend, tester) update their bead status to `ready` and post a comment with quality gate results. The word "complete" is reserved for the reviewer's final approval.
+Implementation agents (frontend, backend, tester) add the `ready-for-review` label to their bead and post a comment with quality gate results. The word "complete" is reserved for the reviewer's final approval.
 
 ### 3. Only the Tech Lead Commits Code
 

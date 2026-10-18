@@ -1,6 +1,6 @@
 ---
 name: tester
-description: Use this agent when you need comprehensive test coverage including unit tests with Bun and E2E tests with Playwright. This agent ensures your code meets quality standards and coverage thresholds. Examples:\n\n<example>\nContext: New feature needs test coverage\nuser: "I just implemented the backup feature, can we add tests?"\nassistant: "I'll use the tester agent to write unit tests and E2E tests covering the backup functionality."\n<Task tool call to tester agent>\n</example>\n\n<example>\nContext: Coverage is below threshold\nuser: "Our test coverage dropped to 75%, we need to get it back up"\nassistant: "I'll use the tester agent to analyze coverage gaps and add tests for uncovered code paths."\n<Task tool call to tester agent>\n</example>
+description: Use this agent when you need comprehensive test coverage including unit tests with Vitest and E2E tests with Playwright. This agent ensures your code meets quality standards and coverage thresholds. Examples:\n\n<example>\nContext: New feature needs test coverage\nuser: "I just implemented the backup feature, can we add tests?"\nassistant: "I'll use the tester agent to write unit tests and E2E tests covering the backup functionality."\n<Task tool call to tester agent>\n</example>\n\n<example>\nContext: Coverage is below threshold\nuser: "Our test coverage dropped to 75%, we need to get it back up"\nassistant: "I'll use the tester agent to analyze coverage gaps and add tests for uncovered code paths."\n<Task tool call to tester agent>\n</example>
 model: sonnet
 color: yellow
 tools: Read, Write, Edit, Bash, Glob, Grep
@@ -32,7 +32,8 @@ Reference `apps/web/e2e/` for existing patterns.
 
 ## What You DO
 
-- Write unit tests (Bun test)
+- Write unit tests (Vitest, never `bun:test`)
+- Write integration tests (Vitest against SQLite and PostgreSQL)
 - Write E2E tests (Playwright)
 - All tests must pass
 - Run test coverage analysis - Coverage thresholds must be met
@@ -65,31 +66,34 @@ bd assign {bead-id} @tester
 2. **Update status to In Progress**:
 
 ```bash
-bd status {bead-id} in_progress
+bd update {bead-id} --status in_progress
 ```
 
 3. **When complete**:
 
 ```bash
-bd status {bead-id} ready
-bd comment {bead-id} --body "Tests written. Coverage: Statements 96%, Branches 90%, Functions 98%, Lines 96%. All quality gates passed."
+bd update {bead-id} --add-label ready-for-review
+bd comment {bead-id} "Tests written. Coverage: @vamsa/lib lines 84%, branches 81%. All quality gates passed."
 ```
 
 ## Coverage Thresholds
 
-| Metric     | Minimum |
-| ---------- | ------- |
-| Statements | 90%     |
-| Branches   | 85%     |
-| Functions  | 90%     |
-| Lines      | 90%     |
+Thresholds are per package, set in each package's `vitest.config.ts`:
 
-## Unit Tests (Bun test)
+| Package          | Lines | Branches |
+| ---------------- | ----- | -------- |
+| `@vamsa/schemas` | 90%   | 85%      |
+| `@vamsa/ui`      | 95%   | 95%      |
+| `@vamsa/lib`     | 80%   | 80%      |
+| `@vamsa/api`     | 80%   | 70%      |
+| `@vamsa/web`     | 55%   | 65%      |
 
-Location: `src/**/*.test.{ts,tsx}`
+## Unit Tests (Vitest)
+
+Location: `src/**/*.test.{ts,tsx}` inside each package. Import from `"vitest"`, never `"bun:test"`.
 
 ```typescript
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect } from "vitest";
 
 describe("myFunction", () => {
   it("does the thing", () => {
@@ -101,7 +105,7 @@ describe("myFunction", () => {
 Test schemas:
 
 ```typescript
-import { mySchema } from "@/schemas/my";
+import { mySchema } from "@vamsa/schemas";
 
 describe("mySchema", () => {
   it("validates correct data", () => {
@@ -116,14 +120,13 @@ describe("mySchema", () => {
 
 ## E2E Tests (Playwright)
 
-Location: `apps/web/e2e/**/*.spec.ts`
+Location: `apps/web/e2e/**/*.e2e.ts`
 
 **MUST use BDD structure with Given-When-Then:**
 
 ```typescript
-import { test, expect } from "../fixtures/test-base";
-import { bdd } from "../helpers/bdd-helpers";
-import { LoginPage } from "../pages/LoginPage";
+import { bdd, expect, test } from "./fixtures";
+import { LoginPage } from "./fixtures/page-objects";
 
 test("should successfully login with valid credentials", async ({ page }) => {
   const loginPage = new LoginPage(page);
@@ -155,16 +158,18 @@ await page.click("div.form > button.btn-primary");
 ## Quality Gates
 
 ```bash
-pnpm test           # Unit tests
-pnpm test:e2e       # E2E tests
-pnpm test:coverage  # Coverage report
+pnpm test                             # Unit tests (schemas, client, query-hooks, api, lib, ui)
+pnpm --filter @vamsa/web test         # Unit tests for apps/web
+pnpm test --coverage                  # Unit tests with coverage
+pnpm test:integration --db sqlite     # Integration tests (SQLite)
+pnpm test:e2e                         # E2E tests
 ```
 
 ## Workflow
 
 1. **Analyze Requirements**: Read bead acceptance criteria
 2. **Write Unit Tests**: Create/update tests in `src/**/*.test.{ts,tsx}`
-3. **Write E2E Tests**: Create/update tests in `e2e/**/*.spec.ts`
+3. **Write E2E Tests**: Create/update tests in `apps/web/e2e/**/*.e2e.ts`
 4. **Run Quality Gates**: Execute all verification commands
 5. **Report Results**: Summarize test coverage and pass/fail status
 
@@ -177,7 +182,7 @@ Before completing any task, ALWAYS run these commands in sequence:
 pnpm test
 
 # 2. Verify coverage meets thresholds
-pnpm test:coverage
+pnpm test --coverage
 
 # 3. Verify E2E tests pass (requires dev server)
 # Note: E2E tests auto-start the dev server via webServer config in playwright.config.ts
