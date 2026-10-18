@@ -7,16 +7,14 @@
  * @fileoverview Server-only code - never import from client components
  */
 
-import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
+import { getRequestHeaders } from "@tanstack/react-start/server";
 import {
-  betterAuthGetSessionWithUserFromCookie,
+  betterAuthGetSessionWithUser,
   claimProfileForOIDCData,
   getClaimableProfilesData,
   getOIDCClaimStatusData,
   skipProfileClaimData,
 } from "@vamsa/lib/server/business";
-
-const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 
 // ============================================================================
 // Types
@@ -36,10 +34,7 @@ export interface ClaimProfileInput {
  * @throws Error if not authenticated or session expired
  */
 export async function getCurrentAuthenticatedUser() {
-  const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
-  const user = await betterAuthGetSessionWithUserFromCookie(
-    cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
-  );
+  const user = await betterAuthGetSessionWithUser(getRequestHeaders());
 
   if (!user) {
     throw new Error("Not authenticated");

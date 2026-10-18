@@ -20,22 +20,17 @@ import { CommandPaletteTrigger } from "~/components/search/command-palette-trigg
 import { AIProvider } from "~/contexts/ai-context";
 import { AIChatPanel } from "~/components/ai/chat-panel";
 
-const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
-
 // Inline server function to check authentication
 // This avoids the bundler circular dependency that occurs when importing from auth.functions.ts
 // Uses dynamic import to prevent server-only modules from leaking into client bundle
 const checkAuthInline = createServerFn({ method: "GET" }).handler(async () => {
   try {
     // Dynamic imports to keep server-only modules out of client bundle
-    const { betterAuthGetSessionWithUserFromCookie } =
+    const { betterAuthGetSessionWithUser } =
       await import("@vamsa/lib/server/business/auth-better-api");
-    const { getCookie } = await import("@tanstack/react-start/server");
+    const { getRequestHeaders } = await import("@tanstack/react-start/server");
 
-    const cookie = getCookie(BETTER_AUTH_COOKIE_NAME);
-    const user = await betterAuthGetSessionWithUserFromCookie(
-      cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
-    );
+    const user = await betterAuthGetSessionWithUser(getRequestHeaders());
 
     if (!user) {
       return { valid: false, user: null };

@@ -4,16 +4,14 @@
  * Centralizes session validation logic using Better Auth.
  */
 
-import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
+import { getRequestHeaders } from "@tanstack/react-start/server";
 // Import directly from specific modules to avoid pulling sharp into the bundle
-import { betterAuthGetSessionWithUserFromCookie } from "@vamsa/lib/server/business/auth-better-api";
+import { betterAuthGetSessionWithUser } from "@vamsa/lib/server/business/auth-better-api";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server/db";
 import { t } from "@vamsa/lib/server/i18n";
 import { eq } from "drizzle-orm";
 
 export type UserRole = "VIEWER" | "MEMBER" | "ADMIN";
-
-const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 
 /**
  * Require authentication for a server function
@@ -23,10 +21,9 @@ const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
  * @throws Error if not authenticated or insufficient role
  */
 export async function requireAuth(requiredRole: UserRole = "VIEWER") {
-  const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
-  const sessionUser = await betterAuthGetSessionWithUserFromCookie(
-    cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
-  );
+  // Pass all request headers so Better Auth resolves its own session cookie
+  // name (`better-auth.session_token`, or `__Secure-` prefixed over HTTPS).
+  const sessionUser = await betterAuthGetSessionWithUser(getRequestHeaders());
 
   if (!sessionUser) {
     throw new Error(await t("errors:auth.notAuthenticated"));

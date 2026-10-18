@@ -189,19 +189,15 @@ export async function betterAuthSignOut(headers: Headers) {
 }
 
 /**
- * Get current session with Vamsa user fields from cookie
+ * Get current session with Vamsa user fields from a raw cookie header
  *
- * Returns user data including Vamsa-specific fields (role, personId, etc.)
- * Returns null if no valid session is found.
+ * Thin wrapper over {@link betterAuthGetSessionWithUser}. Prefer passing real
+ * request headers: Better Auth owns the session cookie name, which is
+ * `__Secure-` prefixed over HTTPS, so hand-building `better-auth.session_token=`
+ * silently fails in production.
  *
- * @param cookieString - Cookie string (can be from headers or direct value)
+ * @param cookieString - Raw `Cookie` header value
  * @returns Session user data with Vamsa-specific fields, or null if no valid session
- *
- * @example
- * const user = await betterAuthGetSessionWithUserFromCookie(cookieValue);
- * if (user) {
- *   console.log(`Logged in as: ${user.email}, Role: ${user.role}`);
- * }
  */
 export async function betterAuthGetSessionWithUserFromCookie(
   cookieString?: string
@@ -210,30 +206,7 @@ export async function betterAuthGetSessionWithUserFromCookie(
     return null;
   }
 
-  // Create a Headers-like object with the cookie
-  const headers = new Headers({
-    cookie: cookieString,
-  });
-
-  const session = await auth.api.getSession({
-    headers: headersToObject(headers),
-  });
-
-  if (!session?.user) {
-    return null;
-  }
-
-  // Return user with Vamsa-specific fields
-  return {
-    id: session.user.id,
-    email: session.user.email,
-    name: session.user.name,
-    role: session.user.role || "VIEWER",
-    personId: session.user.personId || null,
-    mustChangePassword: session.user.mustChangePassword || false,
-    oidcProvider: session.user?.oidcProvider ?? null,
-    profileClaimStatus: session.user.profileClaimStatus || "PENDING",
-  };
+  return betterAuthGetSessionWithUser(new Headers({ cookie: cookieString }));
 }
 
 /**

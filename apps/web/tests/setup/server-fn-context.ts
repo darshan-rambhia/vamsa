@@ -106,7 +106,7 @@ export interface ServerContextStubs {
   /** Request cookies (read by getCookie) */
   cookies?: Record<string, string>;
 
-  /** Request headers (read by getHeaders) */
+  /** Request headers (read by getRequestHeaders / getRequestHeader) */
   headers?: Record<string, string>;
 
   /** Authenticated user (null = unauthenticated) */
@@ -205,60 +205,65 @@ const getStubbedSession = async (): Promise<MockAuthUser | null> => {
 };
 
 // ============================================================================
-// Module Stubs Installation
+// Module Stubs
 // ============================================================================
 
-let stubsInstalled = false;
+/**
+ * Build the request Headers the handler would see: stubbed headers plus a
+ * `cookie` header assembled from the stubbed cookies.
+ */
+const getStubbedRequestHeaders = (): Headers => {
+  const ctx = getCurrentContext();
+  const headers = new Headers(ctx?.stubs.headers ?? {});
+  const cookies = ctx?.stubs.cookies ?? {};
+  const pairs = Object.entries(cookies).map(([k, v]) => `${k}=${v}`);
+  if (pairs.length > 0) {
+    headers.set("cookie", pairs.join("; "));
+  }
+  return headers;
+};
 
 /**
- * Install module stubs (called automatically on first use)
- *
- * This replaces the real implementations with stubs that read from
- * the context stack. Only needs to run once per test process.
+ * Module stubs (top level so Vitest hoists them before handler modules load).
+ * They mirror the real `@tanstack/react-start/server` request-header API
+ * (`getRequestHeaders`, `getRequestHeader`, `getCookie`, ...) and read from the
+ * context stack instead of a live H3 event.
  */
-function ensureStubsInstalled(): void {
-  if (stubsInstalled) return;
-  stubsInstalled = true;
+vi.mock("@tanstack/react-start/server", () => ({
+  getCookie: getStubbedCookie,
+  setCookie: setStubbedCookie,
+  deleteCookie: deleteStubbedCookie,
+  getRequestHeaders: getStubbedRequestHeaders,
+  getRequestHeader: (name: string) =>
+    getStubbedRequestHeaders().get(name) ?? undefined,
+}));
 
-  // Stub @tanstack/react-start/server
-  vi.mock("@tanstack/react-start/server", () => ({
-    getCookie: getStubbedCookie,
-    setCookie: setStubbedCookie,
-    deleteCookie: deleteStubbedCookie,
-    getHeaders: getStubbedHeaders,
-  }));
-
-  // Stub auth function used by requireAuth
-  vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
-    betterAuthGetSessionWithUserFromCookie: getStubbedSession,
-    betterAuthLogin: async () => {
-      throw new Error("betterAuthLogin: Use vi.mock() in your test");
-    },
-    betterAuthRegister: async () => {
-      throw new Error("betterAuthRegister: Use vi.mock() in your test");
-    },
-    betterAuthGetSession: async () => {
-      throw new Error("betterAuthGetSession: Use vi.mock() in your test");
-    },
-    betterAuthChangePassword: async () => {
-      throw new Error("betterAuthChangePassword: Use vi.mock() in your test");
-    },
-    betterAuthSignOut: async () => {
-      throw new Error("betterAuthSignOut: Use vi.mock() in your test");
-    },
-    betterAuthGetSessionWithUser: async () => {
-      throw new Error(
-        "betterAuthGetSessionWithUser: Use vi.mock() in your test"
-      );
-    },
-    getBetterAuthProviders: () => ({
-      google: false,
-      github: false,
-      microsoft: false,
-      oidc: false,
-    }),
-  }));
-}
+// Stub the Better Auth session lookups used by requireAuth and handlers
+vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
+  betterAuthGetSessionWithUser: getStubbedSession,
+  betterAuthGetSessionWithUserFromCookie: getStubbedSession,
+  betterAuthLogin: async () => {
+    throw new Error("betterAuthLogin: Use vi.mock() in your test");
+  },
+  betterAuthRegister: async () => {
+    throw new Error("betterAuthRegister: Use vi.mock() in your test");
+  },
+  betterAuthGetSession: async () => {
+    throw new Error("betterAuthGetSession: Use vi.mock() in your test");
+  },
+  betterAuthChangePassword: async () => {
+    throw new Error("betterAuthChangePassword: Use vi.mock() in your test");
+  },
+  betterAuthSignOut: async () => {
+    throw new Error("betterAuthSignOut: Use vi.mock() in your test");
+  },
+  getBetterAuthProviders: () => ({
+    google: false,
+    github: false,
+    microsoft: false,
+    oidc: false,
+  }),
+}));
 
 // ============================================================================
 // Main API
@@ -298,8 +303,6 @@ export async function withStubbedServerContext<T>(
   stubs: ServerContextStubs,
   fn: () => T | Promise<T>
 ): Promise<StubbedServerContextResult<T>> {
-  ensureStubsInstalled();
-
   // Build complete stubs with defaults
   const completeStubs: Required<ServerContextStubs> = {
     cookies: { ...stubs.cookies },

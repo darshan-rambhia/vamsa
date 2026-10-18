@@ -89,6 +89,7 @@ vi.mock("@vamsa/lib/server/business", () => ({
   claimProfileForOIDCData: mockClaimProfileForOIDCData,
   skipProfileClaimData: mockSkipProfileClaimData,
   getOIDCClaimStatusData: mockGetOIDCClaimStatusData,
+  betterAuthGetSessionWithUser: getStubbedSession,
   betterAuthGetSessionWithUserFromCookie: getStubbedSession,
 }));
 
@@ -185,7 +186,7 @@ describe("OIDC Claim Handlers", () => {
     });
 
     it("throws error when not authenticated", async () => {
-      expect(
+      await expect(
         withStubbedServerContext({}, () => getOIDCClaimStatusHandler())
       ).rejects.toThrow("Not authenticated");
     });

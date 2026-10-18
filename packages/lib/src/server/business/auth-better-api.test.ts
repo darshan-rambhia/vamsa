@@ -818,6 +818,46 @@ describe("auth-better-api", () => {
     });
   });
 
+  describe("betterAuthGetSessionWithUser cookie name (HTTPS)", () => {
+    const sessionFixture = {
+      user: {
+        id: "user-secure",
+        email: "secure@example.com",
+        name: "Secure User",
+        role: "MEMBER",
+        personId: null,
+        mustChangePassword: false,
+        oidcProvider: null,
+        profileClaimStatus: "PENDING",
+        isActive: true,
+      },
+      session: {
+        id: "session-secure",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: "user-secure",
+        expiresAt: new Date(),
+        token: "tok",
+      },
+    };
+
+    it("resolves a session carried in the __Secure- prefixed cookie", async () => {
+      mockBetterAuthApi.getSession.mockResolvedValueOnce(sessionFixture);
+
+      const result = await betterAuthGetSessionWithUser(
+        new Headers({
+          cookie: "__Secure-better-auth.session_token=tok; theme=dark",
+        })
+      );
+
+      expect(result?.id).toBe("user-secure");
+      const callArgs = mockBetterAuthApi.getSession.mock.calls[0]?.[0];
+      expect(callArgs?.headers?.cookie).toContain(
+        "__Secure-better-auth.session_token=tok"
+      );
+    });
+  });
+
   describe("getBetterAuthProviders", () => {
     const originalEnv = process.env;
 
