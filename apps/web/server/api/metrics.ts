@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion */
 import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
-import { drizzleDb, getDrizzlePoolStats } from "@vamsa/api";
-import { sql } from "drizzle-orm";
+import { getDrizzlePoolStats, pingDatabase } from "@vamsa/api";
 import { loggers } from "@vamsa/lib/logger";
 import {
   SLOW_QUERY_LOG_THRESHOLD_MS,
@@ -332,7 +331,7 @@ metricsRouter.openapi(dbHealthRoute, async (c) => {
   const start = Date.now();
 
   try {
-    await drizzleDb.execute(sql`SELECT 1 as health_check`);
+    await pingDatabase();
     const latency = Date.now() - start;
 
     const poolStats = getDrizzlePoolStats();

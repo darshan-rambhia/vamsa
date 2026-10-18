@@ -269,7 +269,8 @@ export const closeDb = async (): Promise<void> => {
 export const pingDatabase = async (): Promise<void> => {
   const query = sql`SELECT 1`;
   if (getDbDriver() === "sqlite") {
-    (db as unknown as { run: (q: SQL) => unknown }).run(query);
+    // Drizzle's SQLite raw queries are lazy QueryPromises: they run on await.
+    await (db as unknown as { run: (q: SQL) => Promise<unknown> }).run(query);
     return;
   }
   await db.execute(query);
