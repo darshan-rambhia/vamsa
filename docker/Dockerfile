@@ -81,14 +81,37 @@ RUN addgroup --system --gid 1001 bunuser && \
 # with @vamsa/* workspace deps materialized). The app runs from source via bun.
 COPY --from=builder --chown=vamsa:bunuser /prod /app
 
-# Create uploads directory
-RUN mkdir -p /app/data/uploads && chown -R vamsa:bunuser /app/data
+# Drizzle migration sets, applied by the server on startup (see MIGRATIONS_DIR).
+# Copied explicitly so they do not depend on what `pnpm deploy` packs.
+COPY --from=builder --chown=vamsa:bunuser /app/packages/api/drizzle /app/migrations/postgres
+COPY --from=builder --chown=vamsa:bunuser /app/packages/api/drizzle-sqlite /app/migrations/sqlite
+
+# Persistent state lives under /app/data (mount a volume here):
+#   vamsa.db        SQLite database (+ -wal/-shm files)
+#   uploads/media   media uploads
+#   backups/        local database backups
+RUN mkdir -p /app/data/uploads/media /app/data/backups && \
+    chown -R vamsa:bunuser /app/data
+
+# Default is SQLite (no DB_DRIVER needed: a non-postgres DATABASE_URL selects it).
+# For PostgreSQL pass DATABASE_URL=postgresql://... (auto-detected) or DB_DRIVER=postgres.
+ENV NODE_ENV=production
+ENV PORT=3000
+ENV HOST=0.0.0.0
+ENV DATABASE_URL=/app/data/vamsa.db
+ENV MIGRATIONS_DIR=/app/migrations
+ENV MEDIA_STORAGE_PATH=/app/data/uploads/media
+ENV BACKUP_DIR=/app/data/backups
+# OpenTelemetry exports to localhost:4318 by default; off unless a collector is set
+ENV OTEL_ENABLED=false
+
+VOLUME ["/app/data"]
 
 USER vamsa
 EXPOSE 3000
 
-ENV NODE_ENV=production
-ENV PORT=3000
-ENV HOST=0.0.0.0
+# Uses bun (no curl/wget dependency). Exit 0 only on HTTP 2xx from /health.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
+  CMD ["bun", "-e", "fetch('http://127.0.0.1:' + (process.env.PORT || 3000) + '/health').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
 
 CMD ["bun", "run", "server/index.ts"]

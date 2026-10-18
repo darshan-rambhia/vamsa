@@ -66,6 +66,8 @@ services:
       HOST: 0.0.0.0
       DATABASE_URL: "postgresql://vamsa:vamsa@db:5432/vamsa"
       BETTER_AUTH_SECRET: "dev-secret-at-least-32-characters-long"
+      BETTER_AUTH_URL: "http://localhost:3000"
+      APP_URL: "http://localhost:3000"
     ports:
       - "3000:3000"
     healthcheck:

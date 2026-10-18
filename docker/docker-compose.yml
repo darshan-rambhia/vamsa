@@ -68,11 +68,18 @@ services:
       DATABASE_URL: "postgresql://${DB_USER:-vamsa}:${DB_PASSWORD:?DB_PASSWORD is required}@db:5432/${DB_NAME:-vamsa}"
       DB_SSL_MODE: disable
       BETTER_AUTH_SECRET: "${BETTER_AUTH_SECRET:?BETTER_AUTH_SECRET is required}"
-      TRUSTED_PROXIES: "docker"
+      BETTER_AUTH_URL: "${BETTER_AUTH_URL:?BETTER_AUTH_URL is required, e.g. https://vamsa.example.com}"
+      APP_URL: "${APP_URL:?APP_URL is required, e.g. https://vamsa.example.com}"
+      TRUSTED_PROXIES: "${TRUSTED_PROXIES:-docker}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-}"
+      OIDC_DISCOVERY_URL: "${OIDC_DISCOVERY_URL:-}"
+      OIDC_CLIENT_ID: "${OIDC_CLIENT_ID:-}"
+      OIDC_CLIENT_SECRET: "${OIDC_CLIENT_SECRET:-}"
     ports:
       - "${APP_PORT:-80}:3000"
     volumes:
-      - uploads_data:/app/data/uploads
+      # /app/data holds uploads (uploads/media) and local backups (backups/)
+      - uploads_data:/app/data
     healthcheck:
       test:
         [
