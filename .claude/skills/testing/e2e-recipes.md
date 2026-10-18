@@ -9,7 +9,7 @@ Domain-specific E2E testing patterns, fixtures, and Page Objects for Vamsa. Use 
 ### Available Test Users
 
 ```typescript
-import { TEST_USERS } from "../fixtures/test-base";
+import { TEST_USERS } from "./fixtures/test-base";
 
 export const TEST_USERS = {
   admin: {
@@ -36,8 +36,8 @@ export const TEST_USERS = {
 ### Pattern: Test as Different User Roles
 
 ```typescript
-import { test, expect } from "../fixtures/test-base";
-import { bdd } from "../fixtures/bdd-helpers";
+import { test, expect } from "./fixtures/test-base";
+import { bdd } from "./fixtures/bdd-helpers";
 
 // Default: runs as admin (via storage state)
 test("admin can access admin panel", async ({ page }) => {
@@ -69,7 +69,7 @@ test.describe("unauthenticated", () => {
 ### Pattern: Explicit Login Flow
 
 ```typescript
-import { test, expect, TEST_USERS } from "../fixtures/test-base";
+import { test, expect, TEST_USERS } from "./fixtures/test-base";
 
 test("should login successfully", async ({ page, login }) => {
   await bdd.given("user is on login page", async () => {
@@ -109,7 +109,7 @@ test("should handle session expiry", async ({ page, login, clearAuth }) => {
 ### LoginPage
 
 ```typescript
-import { LoginPage } from "../fixtures/page-objects";
+import { LoginPage } from "./fixtures/page-objects";
 
 test("login error handling", async ({ page }) => {
   const loginPage = new LoginPage(page);
@@ -132,7 +132,7 @@ test("login error handling", async ({ page }) => {
 ### Navigation
 
 ```typescript
-import { Navigation } from "../fixtures/page-objects";
+import { Navigation } from "./fixtures/page-objects";
 
 test("navigation works", async ({ page }) => {
   const nav = new Navigation(page);
@@ -167,7 +167,7 @@ test("mobile navigation", async ({ page }) => {
 ### PeopleListPage
 
 ```typescript
-import { PeopleListPage } from "../fixtures/page-objects";
+import { PeopleListPage } from "./fixtures/page-objects";
 
 test("search for people", async ({ page }) => {
   const peoplePage = new PeopleListPage(page);
@@ -191,7 +191,7 @@ test("search for people", async ({ page }) => {
 ### PersonFormPage
 
 ```typescript
-import { PersonFormPage } from "../fixtures/page-objects";
+import { PersonFormPage } from "./fixtures/page-objects";
 
 test("create new person", async ({ page }) => {
   const form = new PersonFormPage(page);
@@ -237,7 +237,7 @@ test("create person with all details", async ({ page }) => {
 ### AdminPage
 
 ```typescript
-import { AdminPage } from "../fixtures/page-objects";
+import { AdminPage } from "./fixtures/page-objects";
 
 test("navigate admin tabs", async ({ page }) => {
   const admin = new AdminPage(page);
@@ -263,7 +263,7 @@ test("navigate admin tabs", async ({ page }) => {
 ### Viewport Constants
 
 ```typescript
-import { VIEWPORTS, VIEWPORT_ARRAY } from "../fixtures/viewports";
+import { VIEWPORTS, VIEWPORT_ARRAY } from "./fixtures/viewports";
 
 // Standard viewports
 VIEWPORTS.mobile; // { width: 375, height: 667, name: "mobile" }
@@ -274,7 +274,7 @@ VIEWPORTS.desktop; // { width: 1920, height: 1080, name: "desktop" }
 ### Pattern: Test Across All Viewports
 
 ```typescript
-import { VIEWPORT_ARRAY } from "../fixtures/viewports";
+import { VIEWPORT_ARRAY } from "./fixtures/viewports";
 
 for (const viewport of VIEWPORT_ARRAY) {
   test(`navigation works on ${viewport.name}`, async ({ page }) => {
@@ -325,7 +325,7 @@ test.describe("Mobile Navigation", () => {
 ### Pattern: Using ResponsiveTestHelper
 
 ```typescript
-import { ResponsiveTestHelper } from "../fixtures/viewports";
+import { ResponsiveTestHelper } from "./fixtures/viewports";
 
 test("content adapts to viewport", async ({ page }) => {
   const responsive = new ResponsiveTestHelper(page);
@@ -352,7 +352,7 @@ test("content adapts to viewport", async ({ page }) => {
 ### Pattern: Test Empty Form Submission
 
 ```typescript
-import { formValidation } from "../fixtures/form-validation";
+import { formValidation } from "./fixtures/form-validation";
 
 test("prevents empty login submission", async ({ page }) => {
   await formValidation.testEmptySubmission(page, {
@@ -378,7 +378,7 @@ test("prevents empty login submission", async ({ page }) => {
 ### Pattern: Test Required Field
 
 ```typescript
-import { formValidation } from "../fixtures/form-validation";
+import { formValidation } from "./fixtures/form-validation";
 
 test("requires first name", async ({ page }) => {
   await formValidation.testRequiredField(
@@ -409,7 +409,7 @@ test("requires first name", async ({ page }) => {
 ### Pattern: Test Password Validation
 
 ```typescript
-import { formValidation } from "../fixtures/form-validation";
+import { formValidation } from "./fixtures/form-validation";
 
 test("rejects weak password", async ({ page }) => {
   await formValidation.testPasswordValidation(
@@ -488,7 +488,7 @@ test("rejects mismatched passwords", async ({ page }) => {
 ### Pattern: Test Email Validation
 
 ```typescript
-import { formValidation } from "../fixtures/form-validation";
+import { formValidation } from "./fixtures/form-validation";
 
 test("rejects invalid email", async ({ page }) => {
   await formValidation.testEmailValidation(
@@ -515,7 +515,7 @@ test("rejects invalid email", async ({ page }) => {
 ### Pattern: Test Keyboard Navigation
 
 ```typescript
-import { formValidation } from "../fixtures/form-validation";
+import { formValidation } from "./fixtures/form-validation";
 
 test("form is keyboard navigable", async ({ page }) => {
   await formValidation.testFormKeyboardNavigation(
@@ -539,8 +539,8 @@ test("form is keyboard navigable", async ({ page }) => {
 ### Pattern: Check Page Accessibility
 
 ```typescript
-import { test, expect } from "../fixtures/test-base";
-import { assertNoCriticalA11yViolations } from "../fixtures/accessibility";
+import { test, expect } from "./fixtures/test-base";
+import { assertNoCriticalA11yViolations } from "./fixtures/accessibility";
 
 test("people page is accessible", async ({ page, checkAccessibility }) => {
   await page.goto("/people");
@@ -587,7 +587,7 @@ test("dashboard accessibility (skip color-contrast)", async ({
 ### Pattern: Log Violations for Debugging
 
 ```typescript
-import { logA11yViolations, getA11ySummary } from "../fixtures/accessibility";
+import { logA11yViolations, getA11ySummary } from "./fixtures/accessibility";
 
 test("debug accessibility issues", async ({ page, checkAccessibility }) => {
   await page.goto("/visualize");
@@ -609,7 +609,7 @@ test("debug accessibility issues", async ({ page, checkAccessibility }) => {
 ### vamsaExpect Matchers
 
 ```typescript
-import { vamsaExpect } from "../fixtures/test-base";
+import { vamsaExpect } from "./fixtures/test-base";
 
 test("shows success toast", async ({ page }) => {
   // ... perform action ...
@@ -698,7 +698,7 @@ These specific locations use `networkidle` with documented justification:
 - **Impact**: Login is critical infrastructure - all authenticated tests depend on it working reliably.
 - **Future fix**: Add a deterministic React hydration detection (e.g., `data-hydrated` attribute, custom event).
 
-**2. Person creation form** (`relationships.spec.ts`, `person-forms.spec.ts`)
+**2. Person creation form** (`relationships.e2e.ts`, `person-forms.e2e.ts`)
 
 - **Why**: Same React hydration issue as login - form inputs appear ready but onChange handlers aren't attached yet.
 - **Impact**: Relationship tests and edit tests depend on successfully creating a person first.
@@ -731,13 +731,13 @@ apps/web/e2e/
 │   ├── form-validation.ts   # Form validation helpers
 │   ├── accessibility.ts     # A11y assertion helpers
 │   └── index.ts             # Barrel exports
-├── auth.spec.ts             # Authentication tests
-├── register.spec.ts         # Registration tests
-├── people.spec.ts           # People list tests
-├── person-forms.spec.ts     # Person CRUD tests
-├── relationships.spec.ts    # Relationship management
-├── tree.spec.ts             # Family tree visualization
-├── admin.spec.ts            # Admin panel tests
-├── backup.spec.ts           # GEDCOM import/export
+├── auth.e2e.ts             # Authentication tests
+├── register.e2e.ts         # Registration tests
+├── people.e2e.ts           # People list tests
+├── person-forms.e2e.ts     # Person CRUD tests
+├── relationships.e2e.ts    # Relationship management
+├── tree.e2e.ts             # Family tree visualization
+├── admin.e2e.ts            # Admin panel tests
+├── backup.e2e.ts           # GEDCOM import/export
 └── ...
 ```

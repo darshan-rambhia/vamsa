@@ -36,8 +36,8 @@ When user requests a feature:
 
 ```bash
 bd create "Epic: {Feature}" --type epic --priority 1
-bd create "Frontend: {Component}" --type frontend --priority 2 --parent {epic-id}
-bd create "Backend: {API}" --type backend --priority 2 --parent {epic-id}
+bd create "Frontend: {Component}" --type task --labels frontend --priority 2 --parent {epic-id} --acceptance "..."
+bd create "Backend: {API}" --type task --labels backend --priority 2 --parent {epic-id} --acceptance "..."
 ```
 
 Each bead needs:
@@ -60,7 +60,7 @@ Reply "approved" to proceed, or provide feedback.
 
 After approval, delegate to frontend and backend in parallel.
 
-Wait for both agents to report complete (check bead status).
+Wait for both agents to report complete (`bd show {bead-id}` shows the `ready-for-review` label; bd has no `ready` status).
 
 After both report ready, invoke tester agent.
 
@@ -224,13 +224,15 @@ When agents run in background:
 
 ## Project Context
 
-- Stack: TanStack Start, Bun, Drizzle, shadcn/ui
+- Stack: TanStack Start (Vite 8), Bun runtime, pnpm 12, Drizzle (SQLite default, PostgreSQL via `DB_DRIVER=postgres`), better-auth, d3 charts, shadcn/ui
 - Routes: `apps/web/src/routes/`
 - Server Functions: `apps/web/src/server/`
 - Business Logic: `packages/lib/src/server/business/`
-- Components: `packages/ui/src/`
+- App components: `apps/web/src/components/`
+- Shared UI components: `packages/ui/src/`
 - Schemas: `packages/schemas/src/`
-- Database: `packages/api/src/drizzle/schema/`
+- Database: `packages/api/src/drizzle/schema/` (PostgreSQL) and `packages/api/src/drizzle/schema-sqlite/` (SQLite)
+- Other apps: `apps/ai/` (optional AI sidecar), `apps/mobile/` (Expo)
 
 ## Rules
 

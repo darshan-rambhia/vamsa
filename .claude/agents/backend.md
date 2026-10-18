@@ -26,41 +26,42 @@ bd assign {bead-id} @backend
 2. **Update status to In Progress**:
 
 ```bash
-bd status {bead-id} in_progress
+bd update {bead-id} --status in_progress
 ```
 
 3. **When complete**:
 
 ```bash
-bd status {bead-id} ready
-bd comment {bead-id} --body "Backend implementation complete. Quality gates passed: typecheck ✓, lint ✓, build ✓"
+bd update {bead-id} --add-label ready-for-review
+bd comment {bead-id} "Backend implementation complete. Quality gates passed: typecheck ✓, lint ✓, build ✓"
 ```
 
 ## Implementation Patterns
 
-### Server Actions
+### Server Functions
 
-Location: `src/actions/{resource}.ts`
+Server code is split in two layers:
+
+- **Business logic**: `packages/lib/src/server/business/{resource}.ts`. Plain async functions that take the database as an injected parameter (see DI below). This is where unit tests focus.
+- **Server function wrappers**: `apps/web/src/server/{resource}.ts` (or `{resource}.functions.ts` + `{resource}.server.ts` when the client imports them). Thin `createServerFn` wrappers that validate input, check auth, and call the business function.
 
 ```typescript
-"use server";
-import { revalidatePath } from "next/cache";
-import { requireAuth } from "@/lib/auth";
-import { db } from "@/lib/db";
-import { schema } from "@/schemas/{resource}";
+import { createServerFn } from "@tanstack/react-start";
+import { thingCreateSchema } from "@vamsa/schemas";
+import { createThingData } from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
 
-export async function createThing(input: unknown) {
-  const session = await requireAuth(); // Always first
-  const data = schema.parse(input); // Validate
-  const result = await db.thing.create({ data });
-  revalidatePath("/things");
-  return result;
-}
+export const createThing = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => thingCreateSchema.parse(data))
+  .handler(async ({ data }) => {
+    await requireAuth("MEMBER"); // Always first: "VIEWER" | "MEMBER" | "ADMIN"
+    return createThingData(data);
+  });
 ```
 
 ### Zod Schemas
 
-Location: `src/schemas/{resource}.ts`
+Location: `packages/schemas/src/{resource}.ts`, imported as `@vamsa/schemas`
 
 ```typescript
 import { z } from "zod";
@@ -75,16 +76,25 @@ export type ThingInput = z.infer<typeof thingSchema>;
 
 ### Database Changes
 
+PostgreSQL and SQLite have separate schemas. Change both.
+
 ```bash
-# 1. Edit packages/api/src/drizzle/schema/*.ts
-# 2. Run migration
+# 1. Edit packages/api/src/drizzle/schema/*.ts (PostgreSQL)
+#    and packages/api/src/drizzle/schema-sqlite/*.ts (SQLite)
+# 2. Generate migrations
+pnpm db:generate                              # -> packages/api/drizzle/
+pnpm --filter @vamsa/api db:generate:sqlite   # -> packages/api/drizzle-sqlite/
+# 3. Apply (PostgreSQL); `pnpm dev` pushes the SQLite schema on startup
 pnpm db:migrate
 ```
 
 ### Auth Helpers
 
+Auth is better-auth. In server functions, use the role-aware helper:
+
 ```typescript
-import { requireAuth, requireAdmin, requireMember } from "@/lib/auth";
+import { requireAuth } from "./middleware/require-auth"; // apps/web/src/server/
+await requireAuth("ADMIN");
 ```
 
 ## Quality Gates
@@ -136,9 +146,9 @@ export async function getEmailNotificationPreferences(userId: string) {
 
 ## Rules
 
-- Auth check first in every action
+- Auth check first in every server function
 - Validate all input with Zod
 - No `as any`, `@ts-ignore`, `@ts-expect-error`
-- Call `revalidatePath()` after mutations
+- After mutations, the client invalidates TanStack Query keys or calls `router.invalidate()`
 - Use Dependency Injection for all external dependencies
 - Never mark beads complete (only reviewer can)

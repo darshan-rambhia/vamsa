@@ -8,11 +8,11 @@ This document outlines the consolidation of duplicate form validation tests acro
 
 Previously, form validation tests were duplicated across 5+ test files:
 
-- `auth.spec.ts` - Login form validation
-- `register.spec.ts` - Registration form validation
-- `change-password.spec.ts` - Password change form validation
-- `claim-profile.spec.ts` - Profile claiming form validation
-- `person-forms.spec.ts` - Person creation form validation
+- `auth.e2e.ts` - Login form validation
+- `register.e2e.ts` - Registration form validation
+- `change-password.e2e.ts` - Password change form validation
+- `claim-profile.e2e.ts` - Profile claiming form validation
+- `person-forms.e2e.ts` - Person creation form validation
 
 Each file had nearly identical test patterns for:
 
@@ -128,31 +128,31 @@ await formValidation.testFormKeyboardNavigation(
 
 ## Updated Test Files
 
-### 1. auth.spec.ts
+### 1. auth.e2e.ts
 
 - Replaced: `testEmptySubmission` with `formValidation.testEmptySubmission()`
 - Maintained: Invalid credentials test (unique to login)
 
-### 2. register.spec.ts
+### 2. register.e2e.ts
 
 - Replaced: `testEmptySubmission` → `formValidation.testEmptySubmission()`
 - Replaced: `testPasswordMismatch` → `formValidation.testPasswordMismatch()`
 - Replaced: `testPasswordValidation` → `formValidation.testPasswordValidation()`
 - Maintained: Duplicate email test (unique business logic)
 
-### 3. change-password.spec.ts
+### 3. change-password.e2e.ts
 
 - Replaced: `testEmptySubmission` → `formValidation.testEmptySubmission()`
 - Replaced: `testPasswordValidation` → `formValidation.testPasswordValidation()`
 - Maintained: Wrong current password test (unique validation)
 
-### 4. claim-profile.spec.ts
+### 4. claim-profile.e2e.ts
 
 - Replaced: `testEmptySubmission` → `formValidation.testEmptySubmission()`
 - Replaced: `testPasswordValidation` → `formValidation.testPasswordValidation()`
 - Maintained: Profile selection logic (unique to claiming)
 
-### 5. person-forms.spec.ts
+### 5. person-forms.e2e.ts
 
 - Replaced: `testEmptySubmission` → `formValidation.testEmptySubmission()`
 - Replaced: `testRequiredField` → `formValidation.testRequiredField()` (for firstName and lastName)
@@ -238,11 +238,11 @@ pnpm test:e2e
 Or test specific files:
 
 ```bash
-pnpm test:e2e auth.spec.ts
-pnpm test:e2e register.spec.ts
-pnpm test:e2e change-password.spec.ts
-pnpm test:e2e claim-profile.spec.ts
-pnpm test:e2e person-forms.spec.ts
+pnpm test:e2e auth.e2e.ts
+pnpm test:e2e register.e2e.ts
+pnpm test:e2e change-password.e2e.ts
+pnpm test:e2e claim-profile.e2e.ts
+pnpm test:e2e person-forms.e2e.ts
 ```
 
 ## Future Improvements

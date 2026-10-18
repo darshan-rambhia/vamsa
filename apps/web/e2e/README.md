@@ -16,7 +16,7 @@ Our E2E tests focus on **functional user workflows**, not fake benchmarks or vis
 ✅ **Authentication workflows** - Login, registration, password changes, OIDC
 ✅ **Profile management** - Creating, editing, claiming profiles
 ✅ **Relationship management** - Adding, editing family relationships
-✅ **Family tree visualization** - ReactFlow tree interactions
+✅ **Family tree visualization** - d3 tree interactions
 ✅ **Data import/export** - GEDCOM import, backup/restore
 ✅ **Internationalization** - Language switching, translated errors
 ✅ **Admin functions** - User management, suggestions, invites
@@ -76,46 +76,46 @@ test("should login with valid credentials", async ({ page }) => {
 
 ```bash
 # Install dependencies
-bun install
+pnpm install
 
 # Install Playwright browsers (one-time)
-bunx playwright install
+pnpm exec playwright install
 ```
 
 ### Run All Tests
 
 ```bash
 # Run all E2E tests
-bun run test:e2e
+pnpm test:e2e
 
 # Run with UI mode (interactive)
-bun run test:e2e --ui
+pnpm test:e2e --ui
 
 # Run specific test file
-bun run test:e2e auth.spec.ts
+pnpm test:e2e auth.e2e.ts
 
 # Run tests matching a title
-bun run test:e2e --grep "login"
+pnpm test:e2e --grep "login"
 ```
 
 ### Debug Mode
 
 ```bash
 # Run in debug mode with Playwright Inspector
-bun run test:e2e --debug
+pnpm test:e2e --debug
 
 # Run specific test in debug mode
-bun run test:e2e auth.spec.ts:12 --debug
+pnpm test:e2e auth.e2e.ts:12 --debug
 ```
 
 ### Generate Reports
 
 ```bash
 # Run tests and generate HTML report
-bun run test:e2e --reporter=html
+pnpm test:e2e --reporter=html
 
 # Open the report
-bunx playwright show-report
+pnpm exec playwright show-report
 ```
 
 ## Writing New Tests
@@ -124,18 +124,18 @@ bunx playwright show-report
 
 Organize tests by feature area:
 
-- **auth.spec.ts** - Login, logout, session management
-- **register.spec.ts** - User registration flows
-- **change-password.spec.ts** - Password management
-- **claim-profile.spec.ts** - Profile claiming workflows
-- **people.spec.ts** - Person list and search
-- **person-forms.spec.ts** - Creating and editing persons
-- **relationships.spec.ts** - Family relationship management
-- **tree.spec.ts** - Family tree visualization (ReactFlow)
-- **backup.spec.ts** - Data import/export, GEDCOM
-- **admin.spec.ts** - Admin-only functions
-- **dashboard.spec.ts** - Dashboard and overview pages
-- **i18n-language-switching.spec.ts** - Internationalization
+- **auth.e2e.ts** - Login, logout, session management
+- **register.e2e.ts** - User registration flows
+- **change-password.e2e.ts** - Password management
+- **claim-profile.e2e.ts** - Profile claiming workflows
+- **people.e2e.ts** - Person list and search
+- **person-forms.e2e.ts** - Creating and editing persons
+- **relationships.e2e.ts** - Family relationship management
+- **tree.e2e.ts** - Family tree visualization (d3)
+- **backup.e2e.ts** - Data import/export, GEDCOM
+- **admin.e2e.ts** - Admin-only functions
+- **dashboard.e2e.ts** - Dashboard and overview pages
+- **i18n-language-switching.e2e.ts** - Internationalization
 
 ### 2. Use Page Objects
 
@@ -315,7 +315,7 @@ Tests run automatically on every PR and push to main:
 ```yaml
 # .github/workflows/e2e.yml
 - name: Run E2E tests
-  run: bun run test:e2e --reporter=html,json
+  run: pnpm test:e2e --reporter=html,json
 
 - name: Upload test results
   uses: actions/upload-artifact@v3
@@ -358,13 +358,13 @@ test("should be accessible", async ({ page, makeAxeBuilder }) => {
 1. **Database state**: Ensure your local test database is clean
 
    ```bash
-   bun run db:reset:test
+   pnpm db:seed:e2e   # re-seed E2E data
    ```
 
 2. **Browser version**: Update Playwright browsers
 
    ```bash
-   bunx playwright install
+   pnpm exec playwright install
    ```
 
 3. **Port conflicts**: Make sure port 3000 is available
@@ -378,7 +378,7 @@ test("should be accessible", async ({ page, makeAxeBuilder }) => {
 1. **Run in parallel**: Playwright runs tests in parallel by default
 
    ```bash
-   bun run test:e2e --workers=4
+   pnpm test:e2e --workers=4
    ```
 
 2. **Use storageState**: Reuse authentication instead of logging in every test

@@ -10,8 +10,8 @@ Integration tests validate server functions and business logic against a real Po
 ### SQLite (fast, no Docker required)
 
 ```bash
-bun run test:int          # runs SQLite variant by default
-bun run test:int:sqlite   # explicit
+pnpm test:int          # runs SQLite variant by default
+pnpm test:int:sqlite   # explicit
 ```
 
 Each test file runs in its own process with an isolated in-memory SQLite database.
@@ -24,7 +24,7 @@ No setup required.
 docker compose -f docker/docker-compose.local.yml --profile test up -d --wait
 
 # 2. Run tests
-bun run test:int:postgres
+pnpm test:int:postgres
 
 # 3. Stop test database
 docker compose -f docker/docker-compose.local.yml --profile test down -v
@@ -289,7 +289,7 @@ Typical performance:
 
 To optimize:
 
-- Run only needed tests: `bun test persons.int.ts`
+- Run only needed tests: `bun --bun vitest run --config vitest.integration.config.ts tests/integration/persons.int.ts`
 - Use parallel test execution when available
 - Keep fixture data minimal
 

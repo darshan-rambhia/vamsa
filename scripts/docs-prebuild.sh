@@ -8,9 +8,7 @@ CONTENT="$REPO_ROOT/docs/content"
 
 echo "Copying source docs into MkDocs content directory..."
 
-# Copy ADRs → architecture/decisions/
-mkdir -p "$CONTENT/architecture/decisions"
-cp "$REPO_ROOT/docs/adrs/"*.md "$CONTENT/architecture/decisions/" 2>/dev/null || true
+# ADRs live directly in docs/content/architecture/decisions/ (no copy step).
 
 # Copy architecture guides
 cp "$REPO_ROOT/docs/guides/architecture.md" "$CONTENT/architecture/overview.md" 2>/dev/null || true

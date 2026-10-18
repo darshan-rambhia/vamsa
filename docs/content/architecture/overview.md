@@ -4,7 +4,7 @@
 
 Vamsa is a self-hosted family genealogy application for managing family trees, relationships, historical records, and media. It is designed as a private application -- all content is behind authentication and explicitly blocked from search engine indexing.
 
-The application is built as a pnpm monorepo (with Bun as the runtime) using TanStack Start (React + SSR) for the frontend, Hono as the production HTTP server, PostgreSQL via Drizzle ORM for persistence, and Better Auth for authentication.
+The application is built as a pnpm monorepo (with Bun as the runtime) using TanStack Start (React + SSR) for the frontend, Hono as the production HTTP server, Drizzle ORM for persistence (SQLite by default, PostgreSQL with `DB_DRIVER=postgres`), Better Auth for authentication, and d3 for charts.
 
 ## Package Structure
 
@@ -13,6 +13,7 @@ vamsa/
   apps/
     web/            # Main application (TanStack Start + Hono server)
     ai/             # Optional AI sidecar service
+    mobile/         # Expo (React Native) app
   packages/
     api/            # Database schema, migrations, queries (Drizzle ORM)
     client/         # API client for external consumers
@@ -26,10 +27,11 @@ vamsa/
 |---------|---------|
 | `@vamsa/web` | TanStack Start app with SSR, server functions, Hono production server, REST API, and all middleware |
 | `@vamsa/ai` | Optional AI sidecar that provides natural-language queries over family data via LLM tool calling |
+| `apps/mobile` | Expo (React Native) mobile app |
 | `@vamsa/api` | Drizzle ORM schema definitions, migrations, database connection pooling, seed scripts |
-| `@vamsa/client` | Typed API client for consuming the REST API from external apps or mobile clients |
+| `@vamsa/client` | Typed API client for consuming the REST API from external apps or mobile clients (not currently used by any app) |
 | `@vamsa/lib` | Core business logic: GEDCOM import/export, genealogy algorithms, chart calculations, logging (Pino), i18n, server-side auth helpers |
-| `@vamsa/query-hooks` | TanStack Query hooks that wrap server functions and REST calls with caching, invalidation, and optimistic updates |
+| `@vamsa/query-hooks` | TanStack Query hooks that wrap REST calls with caching, invalidation, and optimistic updates (not currently used by any app) |
 | `@vamsa/schemas` | Zod schemas shared between frontend validation and API request/response validation |
 | `@vamsa/ui` | Reusable React components built on shadcn/ui with the Vamsa design system (Fraunces + Source Sans 3 typography, earth tone palette) |
 
@@ -40,7 +42,7 @@ The following diagram shows how an HTTP request flows through the system in prod
 ```mermaid
 flowchart TD
     Client[Browser / Mobile Client]
-    Nginx[nginx reverse proxy]
+    Proxy[Reverse proxy - optional, your own]
     Hono[Hono HTTP Server]
     MW[Middleware Stack]
     Health[Health Endpoints]
@@ -49,11 +51,12 @@ flowchart TD
     TSS[TanStack Start SSR]
     SF[Server Functions]
     Drizzle[Drizzle ORM]
-    PG[(PostgreSQL)]
+    PG[(SQLite or PostgreSQL)]
     Redis[(Redis - optional)]
 
-    Client -->|HTTPS| Nginx
-    Nginx -->|HTTP :3000| Hono
+    Client -->|HTTPS| Proxy
+    Proxy -->|HTTP :3000| Hono
+    Client -.->|HTTP, no proxy| Hono
     Hono --> MW
 
     MW --> Health
@@ -157,13 +160,16 @@ Rate limit state is stored in memory by default. Set `REDIS_URL` for persistence
 
 | Technology | Role |
 |-----------|------|
-| **Bun** | JavaScript runtime, bundler |
+| **Bun** | JavaScript runtime (servers, scripts) |
 | **pnpm** | Package manager, workspace and script runner |
-| **TanStack Start** | Full-stack React framework with SSR and server functions |
+| **TanStack Start** | Full-stack React framework with SSR and server functions (Vite 8 plugin) |
+| **Vite** | Dev server and production bundler |
 | **Hono** | Production HTTP server, middleware, routing |
 | **React 19** | UI rendering |
 | **Drizzle ORM** | Type-safe SQL queries, schema migrations |
-| **PostgreSQL 18** | Primary database |
+| **SQLite** | Default database (dev, small installs) |
+| **PostgreSQL 18** | Production database (`DB_DRIVER=postgres`) |
+| **d3** | Family tree and chart rendering |
 | **Better Auth** | Authentication (sessions, OAuth, OIDC) |
 | **Zod** | Schema validation (shared between client and server) |
 | **TanStack Query** | Client-side data fetching, caching, optimistic updates |

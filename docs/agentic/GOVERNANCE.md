@@ -1,5 +1,7 @@
 # GOVERNANCE MODEL: Multi-Agent Development System
 
+> **Note (October 2026):** Historical record, kept as written. Some commands below no longer exist. Current equivalents: coverage is `pnpm test --coverage` (there is no `test:coverage` script); beads use bd 1.3 with embedded Dolt (no git sync branch, and "ready" is the `ready-for-review` label, not a status). Current agent definitions live in `.claude/agents/`.
+
 This document explains the governance constraints that ensure quality, prevent premature closure, and maintain a single point of approval.
 
 ---

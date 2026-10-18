@@ -50,7 +50,7 @@ pnpm dev &
 sleep 15
 curl -s http://localhost:3000 > /dev/null && echo "Dev server OK" || echo "Dev server FAILED"
 # Kill the dev server after check
-pkill -f "next dev" || true
+pkill -f "vite dev" || true
 # Expected: Server starts and responds
 
 # 7. Docker Build
@@ -96,12 +96,14 @@ pnpm lint
 ### 2. Tests
 
 ```bash
-pnpm test
+pnpm test --coverage
+pnpm --filter @vamsa/web test   # apps/web unit tests (not included in `pnpm test`)
+pnpm test:integration --db sqlite
 pnpm test:e2e  # If E2E tests exist for feature
 ```
 
 - [ ] All tests pass
-- [ ] Coverage >= 90% statements, 85% branches
+- [ ] Coverage meets each package's thresholds in its `vitest.config.ts` (e.g. lib 80/80, ui 95/95, schemas 90/85 lines/branches)
 - [ ] Each acceptance criterion has a test
 
 ### 3. Build Verification
@@ -120,7 +122,7 @@ pnpm build
 pnpm dev &
 sleep 15
 curl -s http://localhost:3000
-pkill -f "next dev" || pkill -f "vinxi" || true
+pkill -f "vite dev" || true
 ```
 
 - [ ] Dev server starts
@@ -170,7 +172,7 @@ When quality gates fail or acceptance criteria not met:
 5. **Request** tech lead to reassign
 
 ```bash
-bd comment {bead-id} --body "Review FAILED. Issues found:
+bd comment {bead-id} "Review FAILED. Issues found:
 
 ## Failed Gates
 - [ ] pnpm typecheck - 3 errors
@@ -228,8 +230,8 @@ bd close {bead-id} --reason "All criteria met. All 7 quality gates passed. Cover
 Do NOT close the bead. Document issues and request tech lead reassign:
 
 ```bash
-bd comment {bead-id} --body "[Issue details]"
-bd update {bead-id} --status open
+bd comment {bead-id} "[Issue details]"
+bd update {bead-id} --status open --remove-label ready-for-review
 ```
 
 ## Rules

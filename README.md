@@ -5,6 +5,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Bun](https://img.shields.io/badge/Bun-runtime-f9f1e1?logo=bun)](https://bun.sh/)
 [![Drizzle](https://img.shields.io/badge/Drizzle-ORM-C5F74F?logo=drizzle)](https://orm.drizzle.team/)
+[![SQLite](https://img.shields.io/badge/SQLite-default-003B57?logo=sqlite)](https://www.sqlite.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-336791?logo=postgresql)](https://www.postgresql.org/)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
@@ -14,7 +15,7 @@ A modern web application for managing family genealogy with server-side renderin
 
 ## Features
 
-- **Interactive Family Tree**: Server-computed hierarchical layout with React Flow (zoom, pan, click to navigate)
+- **Interactive Family Tree**: Server-computed chart data rendered with d3 (tree, ancestor, descendant, fan, hourglass, bowtie, timeline; zoom, pan, click to navigate)
 - **Person Profiles**: Store personal information, photos, relationships, birth/death dates
 - **Relationship Management**: Support for complex family structures (multiple parents, remarriages, divorced couples)
 - **GEDCOM Support**: Import/export genealogy data in GEDCOM format
@@ -26,14 +27,17 @@ A modern web application for managing family genealogy with server-side renderin
 
 ## Tech Stack
 
-- **Framework**: TanStack Start (React + Vite via Vinxi)
+- **Framework**: TanStack Start (React 19 + Vite 8)
 - **Backend API**: TanStack React Start server functions
-- **Database**: PostgreSQL 18 with Drizzle ORM
+- **Database**: Drizzle ORM. SQLite by default, PostgreSQL 18 with `DB_DRIVER=postgres`
+- **Auth**: better-auth
 - **Runtime**: Bun
-- **Package Manager**: pnpm
+- **Package Manager**: pnpm 12
 - **Monorepo**: pnpm workspaces
 - **UI**: Tailwind CSS + shadcn/ui components
-- **Tree Visualization**: React Flow
+- **Tree Visualization**: d3
+- **AI (optional)**: Hono sidecar using the Vercel AI SDK
+- **Mobile**: Expo (React Native)
 - **State Management**: TanStack Query
 - **Validation**: Zod
 - **Testing**: Playwright (E2E) + Vitest (Unit)
@@ -42,10 +46,9 @@ A modern web application for managing family genealogy with server-side renderin
 
 ### Prerequisites
 
-- **pnpm** 11+ ([install](https://pnpm.io/installation)) -- package manager
+- **pnpm** 11+ ([install](https://pnpm.io/installation)) -- package manager; the repo pins 12 via `packageManager`
 - **Bun** 1.0+ ([install](https://bun.sh/)) -- JavaScript runtime
-- **Docker & Docker Compose** (for PostgreSQL)
-- **Node.js** 18+ (optional, Bun is the runtime)
+- **Docker & Docker Compose** (optional; only for PostgreSQL or the production stack)
 
 ### With Docker Compose (Recommended)
 
@@ -57,11 +60,11 @@ cd vamsa
 # Configure environment
 cp .env.example .env
 
-# Start services (PostgreSQL + Web)
+# Start services (PostgreSQL + app)
 docker compose -f docker/docker-compose.yml up -d
 
-# Migrations and seeding run automatically
-# App available at http://localhost:5173
+# App available at http://localhost (APP_PORT, default 80)
+# See DOCKER.md for required secrets and the optional AI service
 ```
 
 ### Local Development
@@ -73,35 +76,25 @@ pnpm install
 # Configure environment
 cp .env.example .env
 
-# Start PostgreSQL 18 (if not using Docker Compose)
-docker run -d --name vamsa-postgres \
-  -e POSTGRES_USER=vamsa \
-  -e POSTGRES_PASSWORD=vamsa \
-  -e POSTGRES_DB=vamsa \
-  -p 5432:5432 \
-  postgres:18-alpine
-
-# Set DATABASE_URL in .env
-# DATABASE_URL="postgresql://vamsa:vamsa@localhost:5432/vamsa"
-
-# Run migrations
-pnpm db:migrate
-
-# Start development server
+# Start development server (SQLite, schema pushed and seeded automatically)
 pnpm dev
 
-# App available at http://localhost:5173
+# Or run against PostgreSQL 18 in Docker
+pnpm dev:pg
+
+# App available at http://localhost:3000
 ```
 
 ## Environment Variables
 
 See `.env.example` for complete list. Key variables:
 
-| Variable       | Description                          | Default |
-| -------------- | ------------------------------------ | ------- |
-| `DATABASE_URL` | PostgreSQL connection string         | -       |
-| `NODE_ENV`     | Environment (development/production) | -       |
-| `VITE_API_URL` | API endpoint for client              | -       |
+| Variable             | Description                                      | Default                                    |
+| -------------------- | ------------------------------------------------ | ------------------------------------------ |
+| `DB_DRIVER`          | `sqlite` or `postgres`                           | `sqlite` (auto-detects `postgres://` URLs) |
+| `DATABASE_URL`       | SQLite file path or PostgreSQL connection string | `./data/vamsa.db`                          |
+| `BETTER_AUTH_SECRET` | Auth signing secret (32+ chars)                  | -                                          |
+| `NODE_ENV`           | Environment (development/production)             | -                                          |
 
 ## Project Structure
 
@@ -110,21 +103,29 @@ apps/
   web/                    # TanStack Start application
     src/
       routes/            # Page routes
-      server/            # Server functions & tree layout
-      components/        # React components
+      server/            # Server function wrappers
+      components/        # React components (charts/ holds the d3 charts)
       lib/               # Client utilities
+    server/              # Production server (Bun + Hono)
     e2e/                 # Playwright E2E tests
+    tests/integration/   # Integration tests (SQLite and PostgreSQL)
     scripts/             # Build & utility scripts
+  ai/                     # Optional AI sidecar (Hono + AI SDK)
+  mobile/                 # Expo (React Native) app
 
 packages/
   api/                   # Database layer
-    src/drizzle/        # Schema & migrations
-    src/                # Database utilities
+    src/drizzle/        # Drizzle schemas (PostgreSQL and SQLite) and db client
+    drizzle/            # PostgreSQL migrations
+    drizzle-sqlite/     # SQLite migrations
   lib/                   # Shared business logic
     src/
+      server/business/  # Server-side business logic (charts, people, ...)
       gedcom/           # GEDCOM import/export
   schemas/               # Shared Zod validation schemas
   ui/                    # Shared shadcn/ui components
+  client/                # Typed API client (not currently used by any app)
+  query-hooks/           # TanStack Query hooks (not currently used by any app)
 ```
 
 ## Available Scripts
@@ -132,7 +133,8 @@ packages/
 ### Development
 
 ```bash
-pnpm dev              # Start dev server
+pnpm dev              # Start dev server (SQLite, port 3000)
+pnpm dev:pg           # Start dev server against PostgreSQL in Docker
 pnpm build            # Build for production
 pnpm preview          # Preview production build locally
 pnpm quality          # Local quality checks (fix/format + lint + typecheck + test)
@@ -153,11 +155,12 @@ pnpm db:seed         # Seed initial data
 
 ```bash
 pnpm test                          # Canonical unit test command
-pnpm test:integration              # Integration tests (SQLite default)
+pnpm test --coverage               # Unit tests with coverage
+pnpm test:integration              # Integration tests (SQLite default; --db postgres for PostgreSQL)
 pnpm test:e2e                      # E2E tests
 pnpm test:focus --suite visual     # Focused visual suite
 pnpm test:focus --suite perf       # Focused performance suite
-pnpm test:ci                       # CI test suite (unit+integration)
+pnpm test:ci                       # CI test suite (unit with coverage + SQLite and PostgreSQL integration)
 ```
 
 ### Command Center
@@ -177,20 +180,14 @@ See `docs/guides/command-architecture.md` for migration guidance and deprecated 
 ```bash
 bd ready                # Show beads ready to work
 bd list                 # List all beads
-bd sync                 # Sync beads with git
+bd sync                 # Pull/push beads with the Dolt remote
 ```
 
 ## Architecture Highlights
 
-### Server-Side Tree Layout
+### Server-Computed Chart Data
 
-The family tree layout is computed on the server ([`apps/web/src/server/tree-layout.ts`](apps/web/src/server/tree-layout.ts)) using a hierarchical layout algorithm that:
-
-- Groups people by generation relative to the focused person
-- Pairs spouses horizontally
-- Positions children directly below their parents
-- Supports complex family structures (multiple parents, remarriages)
-- Provides both "focused view" (±1 generation) and "full tree view" modes
+Chart data is computed on the server in [`packages/lib/src/server/business/charts.ts`](packages/lib/src/server/business/charts.ts) and exposed through thin server functions in [`apps/web/src/server/charts.ts`](apps/web/src/server/charts.ts). The server walks relationships, assigns generations relative to the focused person, and returns nodes and edges for each chart type. The client renders them with d3 in [`apps/web/src/components/charts/`](apps/web/src/components/charts/).
 
 This approach ensures:
 
@@ -203,7 +200,7 @@ This approach ensures:
 Using **pnpm workspaces** for:
 
 - Shared packages (`ui`, `schemas`, `lib`) usable across clients
-- Efficient builds with caching
+- Isolated `node_modules` per package, so undeclared dependencies fail fast
 - Dependency management
 
 ## Deployment
@@ -215,7 +212,7 @@ Using **pnpm workspaces** for:
 docker compose -f docker/docker-compose.yml up -d
 
 # View logs
-docker compose logs -f web
+docker compose -f docker/docker-compose.yml logs -f app
 ```
 
 ### Environment Setup
@@ -224,6 +221,7 @@ Ensure these are set before deploying:
 
 ```env
 DATABASE_URL=postgresql://user:password@host:5432/vamsa
+BETTER_AUTH_SECRET=<32+ random characters>
 NODE_ENV=production
 ```
 

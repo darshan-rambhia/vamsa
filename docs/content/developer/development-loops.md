@@ -124,7 +124,7 @@ The feature delivery loop takes a **new feature request** from idea to committed
 
     User: "commit"
 
-    Tech Lead: git add, commit, push, bd sync
+    Tech Lead: git add, commit, push (bd sync too, if a Dolt remote is configured)
     Tech Lead: <promise>FEATURE_COMPLETE</promise>
 
     Stop Hook: Promise found -> allows exit

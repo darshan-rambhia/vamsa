@@ -29,9 +29,9 @@ This project follows the [Contributor Covenant Code of Conduct](https://www.cont
 
 Before contributing, ensure you have the following installed:
 
-- **pnpm** 11 or higher ([installation guide](https://pnpm.io/installation)) -- package manager
+- **pnpm** 11 or higher ([installation guide](https://pnpm.io/installation)) -- package manager; the repo pins 12 via `packageManager`
 - **Bun** 1.0 or higher ([installation guide](https://bun.sh/)) -- JavaScript runtime
-- **Docker** and **Docker Compose** (for PostgreSQL and services)
+- **Docker** and **Docker Compose** (optional; needed for PostgreSQL, Docker E2E, and the production stack)
 - **Git** for version control
 
 ### Forking the Repository
@@ -49,7 +49,7 @@ Before contributing, ensure you have the following installed:
 
 ## Development Setup
 
-### Quick Start with Docker (Recommended)
+### Quick Start (SQLite, Recommended)
 
 ```bash
 # Install dependencies
@@ -58,41 +58,20 @@ pnpm install
 # Copy environment variables
 cp .env.example .env
 
-# Start PostgreSQL and the web app with Docker
-docker compose -f docker/docker-compose.yml up -d
-
-# App will be available at http://localhost:5173
-```
-
-### Manual Setup
-
-```bash
-# Install dependencies
-pnpm install
-
-# Copy and configure environment variables
-cp .env.example .env
-# Edit .env and set DATABASE_URL
-
-# Start PostgreSQL (if not using Docker)
-docker run -d --name vamsa-postgres \
-  -e POSTGRES_USER=vamsa \
-  -e POSTGRES_PASSWORD=vamsa \
-  -e POSTGRES_DB=vamsa \
-  -p 5432:5432 \
-  postgres:18-alpine
-
-# Run database migrations
-pnpm db:migrate
-
-# (Optional) Seed the database
-pnpm db:seed
-
-# Start development server
+# Start the dev server. Uses SQLite at data/vamsa-dev.db,
+# pushes the schema, and seeds dev data automatically.
 pnpm dev
 ```
 
-The application will be available at http://localhost:5173.
+### PostgreSQL
+
+```bash
+# Starts PostgreSQL 18 in Docker (docker/docker-compose.local.yml, profile "dev"),
+# then runs the dev server against it
+pnpm dev:pg
+```
+
+The application will be available at http://localhost:3000.
 
 ## Project Structure
 
@@ -101,25 +80,29 @@ Vamsa is a monorepo managed with **pnpm workspaces**:
 ```
 vamsa/
 ├── apps/
-│   └── web/              # Main TanStack Start application
-│       ├── src/          # Frontend source code
-│       ├── server/       # Backend server functions
-│       ├── e2e/          # End-to-end tests (Playwright)
-│       └── tests/        # Unit tests
+│   ├── web/              # Main TanStack Start application
+│   │   ├── src/          # Routes, components, server function wrappers
+│   │   ├── server/       # Production server (Bun + Hono)
+│   │   ├── e2e/          # End-to-end tests (Playwright)
+│   │   └── tests/        # Integration tests
+│   ├── ai/               # Optional AI sidecar (Hono + AI SDK)
+│   └── mobile/           # Expo (React Native) app
 ├── packages/
-│   ├── api/              # Drizzle schema, database client
+│   ├── api/              # Drizzle schemas, migrations, database client
 │   ├── lib/              # Shared business logic and utilities
 │   ├── schemas/          # Shared Zod schemas
-│   └── ui/               # Shared UI components (shadcn/ui)
+│   ├── ui/               # Shared UI components (shadcn/ui)
+│   ├── client/           # Typed API client (not currently used by any app)
+│   └── query-hooks/      # TanStack Query hooks (not currently used by any app)
 ├── docker/               # Docker configurations
-└── scripts/              # Build and development scripts
+└── scripts/              # Build and development scripts (run with Bun)
 ```
 
 ### Key Technologies
 
-- **Frontend**: React 19, TanStack Router, TanStack Query, React Flow
-- **Backend**: TanStack Start server functions, Hono (production server)
-- **Database**: PostgreSQL 18 with Drizzle ORM
+- **Frontend**: React 19, TanStack Start (Vite 8), TanStack Router, TanStack Query, d3 (charts)
+- **Backend**: TanStack Start server functions, Hono (production server), better-auth
+- **Database**: Drizzle ORM on SQLite (default) or PostgreSQL 18 (`DB_DRIVER=postgres`)
 - **Styling**: Tailwind CSS, shadcn/ui components
 - **Testing**: Playwright (E2E), Vitest (Unit), @axe-core/playwright (Accessibility)
 - **Observability**: OpenTelemetry, Prometheus, Grafana
@@ -169,14 +152,23 @@ Vamsa has comprehensive testing at multiple levels:
 
 ### Unit Tests
 
-Unit tests use **Vitest** and focus on `@vamsa/lib` and `@vamsa/ui` packages:
+Unit tests use **Vitest** (never `bun:test`) and cover the `schemas`, `client`, `query-hooks`, `api`, `lib`, and `ui` packages:
 
 ```bash
 # Run unit tests
-pnpm test:unit
+pnpm test
 
 # Run with coverage
-pnpm test:coverage
+pnpm test --coverage
+```
+
+### Integration Tests
+
+Integration tests run server code against a real database:
+
+```bash
+pnpm test:integration --db sqlite     # In-memory SQLite
+pnpm test:integration --db postgres   # PostgreSQL (needs a running database)
 ```
 
 ### End-to-End Tests
@@ -187,17 +179,13 @@ E2E tests use **Playwright** and test the full application:
 # Run E2E tests (headless)
 pnpm test:e2e
 
-# Run with UI
-pnpm test:e2e:ui
-
-# Run in headed mode (see browser)
-pnpm test:e2e:headed
-
-# Run in debug mode
-pnpm test:e2e:debug
+# Extra arguments are passed through to Playwright
+pnpm test:e2e --ui        # Interactive UI mode
+pnpm test:e2e --headed    # See the browser
+pnpm test:e2e --debug     # Debug mode
 
 # View test report
-pnpm test:e2e:report
+pnpm --filter @vamsa/web test:e2e:report
 ```
 
 ### Accessibility Testing
@@ -300,13 +288,13 @@ test(e2e): add tests for person profile editing
    ```bash
    pnpm lint
    pnpm typecheck
-   pnpm test:unit
+   pnpm test
    pnpm test:e2e
    ```
 
 2. **Update documentation** if needed:
    - Update README.md for user-facing changes
-   - Update API.md for API changes
+   - Update `docs/guides/api.md` for API changes
    - Add JSDoc comments for public functions
 
 3. **Ensure your branch is up-to-date**:
@@ -362,34 +350,38 @@ All PRs must pass:
 
 ### Working with Drizzle
 
-The database schema is in `packages/api/src/drizzle/schema/`.
+There are two schemas, one per driver, and both must stay in sync:
+
+- PostgreSQL: `packages/api/src/drizzle/schema/`
+- SQLite: `packages/api/src/drizzle/schema-sqlite/`
 
 ### Making Schema Changes
 
-1. **Edit the schema**:
+1. **Edit both schemas** (`schema/*.ts` and `schema-sqlite/*.ts`).
+
+2. **Generate migrations**:
 
    ```bash
-   # Edit packages/api/src/drizzle/schema/*.ts
+   pnpm db:generate                                # PostgreSQL -> packages/api/drizzle/
+   pnpm --filter @vamsa/api db:generate:sqlite     # SQLite -> packages/api/drizzle-sqlite/
    ```
 
-2. **Create a migration**:
+3. **Apply and preview**:
 
    ```bash
-   pnpm db:migrate
+   pnpm db:migrate:dry-run   # Show pending migrations
+   pnpm db:migrate           # Apply to the PostgreSQL database in DATABASE_URL
    ```
 
-   This will:
-   - Create a new migration file
-   - Apply the migration to your local database
-   - Regenerate the Drizzle client
+   `pnpm dev` pushes the SQLite schema automatically on startup.
 
-3. **Test your changes**:
+4. **Test your changes**:
    - Run the app and test functionality
-   - Run tests: `pnpm test:unit` and `pnpm test:e2e`
+   - Run tests: `pnpm test`, `pnpm test:integration --db sqlite`, `pnpm test:integration --db postgres`, and `pnpm test:e2e`
 
-4. **Commit the migration**:
+5. **Commit the migration**:
    - Include both the schema changes AND the migration files
-   - Migration files are in `packages/api/src/drizzle/migrations/`
+   - Migration files are in `packages/api/drizzle/` (PostgreSQL) and `packages/api/drizzle-sqlite/` (SQLite)
 
 ### Database Best Practices
 
@@ -408,6 +400,9 @@ The project provides several Docker Compose configurations:
 ```bash
 # Production (PostgreSQL + Web App)
 docker compose -f docker/docker-compose.yml up -d
+
+# Production plus the optional AI service
+docker compose -f docker/docker-compose.yml --profile ai up -d
 
 # Development (just PostgreSQL)
 docker compose -f docker/docker-compose.local.yml --profile dev up -d
@@ -437,8 +432,8 @@ docker compose -f docker/docker-compose.yml down -v
 
 ### Debugging with Docker
 
-- Access PostgreSQL: `docker exec -it vamsa-postgres psql -U vamsa -d vamsa`
-- View container logs: `docker logs vamsa-web -f`
+- Access PostgreSQL: `docker exec -it vamsa-db psql -U vamsa -d vamsa`
+- View container logs: `docker logs vamsa-app -f`
 - Inspect database: `pnpm db:studio` (opens Drizzle Studio)
 
 ## Observability

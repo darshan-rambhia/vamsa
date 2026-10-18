@@ -11,7 +11,6 @@ cp .env.example .env
 # 2. Generate secure credentials
 # On macOS/Linux:
 echo "DB_PASSWORD=$(openssl rand -base64 24)" >> .env
-echo "SESSION_SECRET=$(openssl rand -base64 32)" >> .env
 echo "BETTER_AUTH_SECRET=$(openssl rand -base64 32)" >> .env
 
 # 3. Start the application
@@ -45,7 +44,6 @@ The production `docker-compose.yml` requires these variables. The application wi
 | Variable             | Description            | How to Generate           |
 | -------------------- | ---------------------- | ------------------------- |
 | `DB_PASSWORD`        | PostgreSQL password    | `openssl rand -base64 24` |
-| `SESSION_SECRET`     | Session encryption key | `openssl rand -base64 32` |
 | `BETTER_AUTH_SECRET` | Auth token signing key | `openssl rand -base64 32` |
 
 ### Security Requirements
@@ -58,11 +56,21 @@ The production `docker-compose.yml` requires these variables. The application wi
 
 The production stack includes:
 
-| Service | Port            | Description            |
-| ------- | --------------- | ---------------------- |
-| `db`    | internal only   | PostgreSQL 18 database |
-| `app`   | 3000 (internal) | Vamsa application      |
-| `nginx` | 80              | Reverse proxy          |
+| Service | Port                                     | Description                                               |
+| ------- | ---------------------------------------- | --------------------------------------------------------- |
+| `db`    | internal only                            | PostgreSQL 18 database                                    |
+| `app`   | `${APP_PORT:-80}` on host, 3000 internal | Vamsa application (Bun + Hono, also serves static assets) |
+| `ai`    | 3100 (internal)                          | Optional AI sidecar, only started with `--profile ai`     |
+
+There is no separate reverse proxy container. Put your own proxy (Caddy, Traefik, nginx, a cloud load balancer) in front of `app` if you need TLS.
+
+To include the AI service:
+
+```bash
+docker compose -f docker/docker-compose.yml --profile ai up -d
+```
+
+It reads `LLM_PROVIDER`, `LLM_URL`, `LLM_MODEL`, and `LLM_API_KEY` from `.env` (defaults to a local Ollama at `host.docker.internal:11434`).
 
 ## Commands
 
@@ -103,7 +111,7 @@ docker compose -f docker/docker-compose.local.yml --profile dev-app up -d
 All services include health checks:
 
 - **App**: `GET /health` returns `{"status": "healthy"}`
-- **Nginx**: Proxies to app health check
+- **AI** (when enabled): `GET /healthz` on port 3100
 - **Database**: Uses `pg_isready`
 
 ## Volumes

@@ -24,7 +24,7 @@ Different agents run different checks during implementation. The reviewer runs a
 | `pnpm format:check` | | :material-check: | | :material-check: |
 | `pnpm build` | :material-check: | :material-check: | | :material-check: |
 | `pnpm test` | | | :material-check: | :material-check: |
-| `pnpm test:coverage` | | | :material-check: | :material-check: |
+| `pnpm test --coverage` | | | :material-check: | :material-check: |
 | `pnpm dev` (verify startup) | | | | :material-check: |
 | `docker build` | | | | :material-check: |
 | `docker run` (verify container) | | | | :material-check: |
@@ -57,13 +57,13 @@ pnpm build            # Production build succeeds
 
 # Test verification
 pnpm test             # All unit tests pass
-pnpm test:coverage    # Coverage meets thresholds
+pnpm test --coverage  # Coverage meets per-package thresholds
 
 # Runtime verification
 pnpm dev &            # Dev server starts
 sleep 15
 curl -s http://localhost:3000  # App responds
-pkill -f "vinxi" || true
+pkill -f "vite dev" || true
 
 # Container verification
 docker build -t vamsa-review -f docker/Dockerfile .
@@ -145,7 +145,7 @@ When the reviewer finds an issue, it identifies the responsible agent based on t
 The reviewer documents issues in bead comments with enough detail for the responsible agent to fix them without further investigation:
 
 ```bash
-bd comment {bead-id} --body "Review FAILED. Issues found:
+bd comment {bead-id} "Review FAILED. Issues found:
 
 ## Failed Gates
 - [ ] pnpm typecheck - 3 errors

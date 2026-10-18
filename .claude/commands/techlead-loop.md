@@ -91,7 +91,7 @@ Loop: Exits when <promise>FEATURE_COMPLETE</promise> found or max-iterations rea
 Tech Lead polls bead status using:
 
 ```bash
-bd show {bead-id}  # Check status field for: open, in_progress, ready, closed
+bd show {bead-id}  # Check status (open, in_progress, closed) and the ready-for-review label
 ```
 
 Polling strategy:
@@ -105,20 +105,20 @@ Polling strategy:
 If reviewer finds issues:
 
 ```
-Reviewer: bd comment {bead-id} --body "Issues found: ..."
+Reviewer: bd comment {bead-id} "Issues found: ..."
   ↓
 Tech Lead: Reads comments
   ↓
 Tech Lead: Identifies responsible agent:
   - UI/components/pages → @frontend
-  - Server actions/schemas/database → @backend
+  - Server functions/schemas/database → @backend
   - Tests/coverage → @tester
   ↓
 Tech Lead: bd assign {bead-id} @{agent-name}
   ↓
 Tech Lead: @{agent-name} - Issues found. See {bead-id} comments.
   ↓
-Agent: Fixes issues → bd status ready
+Agent: Fixes issues → bd update {bead-id} --add-label ready-for-review
   ↓
 Tech Lead: @reviewer review {bead-id}
   ↓
@@ -232,7 +232,7 @@ Tech Lead (Iteration 7+):
   Committing changes...
   git add .
   git commit -m "feat: add email notifications..."
-  bd sync
+  bd sync   # only if a Dolt remote is configured
   git push
 
   <promise>FEATURE_COMPLETE</promise>
@@ -319,7 +319,7 @@ Check:
 
 ### Agent is working but loop keeps polling
 
-This is normal! Loop continues until agent reports status `ready`.
+This is normal! Loop continues until the agent adds the `ready-for-review` label.
 
 - Agent typically reports within 1-2 hours for implementation
 - Loop keeps polling, Tech Lead is patient
@@ -329,7 +329,7 @@ This is normal! Loop continues until agent reports status `ready`.
 You can:
 
 1. Manually invoke any agent: `@agent-name do-something`
-2. Manually update bead status: `bd status {id} ready`
+2. Manually mark a bead ready: `bd update {id} --add-label ready-for-review`
 3. Tech Lead will see the change on next poll and continue
 
 ### Want to exit loop early

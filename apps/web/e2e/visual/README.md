@@ -23,7 +23,7 @@ The visual regression suite covers:
 On first run, tests will fail because baseline snapshots don't exist yet. Generate the baseline snapshots:
 
 ```bash
-bun run test:visual:update
+pnpm test:visual:update
 ```
 
 This creates baseline PNG files in `__snapshots__/` directory.
@@ -33,7 +33,7 @@ This creates baseline PNG files in `__snapshots__/` directory.
 After baseline exists, run tests to compare current screenshots against baseline:
 
 ```bash
-bun run test:visual
+pnpm test:visual
 ```
 
 Tests pass if differences are within the configured threshold (`maxDiffPixels: 100-200` depending on test).
@@ -47,7 +47,7 @@ When you make intentional visual changes:
 3. Update the baseline:
 
 ```bash
-bun run test:visual:update
+pnpm test:visual:update
 ```
 
 ## Test Configuration
@@ -100,7 +100,7 @@ In CI, visual tests run with the `--project=visual` flag to ensure consistency. 
 This indicates a visual change. Options:
 
 1. It's an unintended regression → Fix the code
-2. It's an intentional change → Update baseline with `bun run test:visual:update`
+2. It's an intentional change → Update baseline with `pnpm test:visual:update`
 
 ### False Positives with Dynamic Content
 
@@ -114,7 +114,7 @@ If tests are flaky due to animations or dynamic content:
 
 Ensure:
 
-1. Server is running (`bun run dev` or via webServer in playwright.config.ts)
+1. Server is running (`pnpm dev` or via webServer in playwright.config.ts)
 2. Pages exist and are accessible at URLs in tests
 3. Auth state is available (tests use admin.json by default)
 

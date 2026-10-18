@@ -7,13 +7,13 @@ Beads are Vamsa's local-first task management system -- like GitHub Issues, but 
 A bead is a unit of work with:
 
 - A **unique ID** (e.g., `vamsa-dc2`, `vamsa-8y0`)
-- A **type** (epic, task, frontend, backend)
+- A **type** (epic, task, feature, bug, chore, ...) and **labels** (e.g. `frontend`, `backend`) for the owning agent
 - A **status** that tracks progress through the agent pipeline
 - **Acceptance criteria** that define when the work is done
 - Optional **parent/child relationships** for hierarchical decomposition
 - Optional **dependencies** on other beads
 
-Beads live in the `.beads/` directory and are synced with git via `bd sync`. They are the contract between agents: the Tech Lead creates them, implementation agents work on them, the tester verifies them, and the reviewer closes them.
+Beads live in an embedded Dolt database under `.beads/` (bd 1.3+). There is no git sync branch; `bd sync` pulls from and pushes to a Dolt remote when one is configured. They are the contract between agents: the Tech Lead creates them, implementation agents work on them, the tester verifies them, and the reviewer closes them.
 
 ## The `bd` CLI Tool
 
@@ -29,8 +29,8 @@ bd create "Fix login validation error" -t task -p 2
 bd create "Epic: Email Notifications" --type epic --priority 1
 
 # Create a child bead under an epic
-bd create "Frontend: Notification Preferences UI" --type frontend --priority 2 --parent vamsa-abc
-bd create "Backend: Email Service" --type backend --priority 2 --parent vamsa-abc
+bd create "Frontend: Notification Preferences UI" --type task --labels frontend --priority 2 --parent vamsa-abc
+bd create "Backend: Email Service" --type task --labels backend --priority 2 --parent vamsa-abc
 ```
 
 ### Viewing Beads
@@ -44,7 +44,7 @@ bd ready
 
 # List all beads with a filter
 bd list --status=open
-bd list --filter "Port"
+bd list --title "Port"
 ```
 
 ### Updating Beads
@@ -53,46 +53,46 @@ bd list --filter "Port"
 # Mark a bead as in progress
 bd update vamsa-abc --status in_progress
 
-# Mark a bead as ready for review
-bd status vamsa-abc ready
+# Mark a bead as ready for review (bd has no "ready" status; use a label)
+bd update vamsa-abc --add-label ready-for-review
 
 # Assign a bead to an agent
 bd assign vamsa-abc @backend
 
 # Add a comment
-bd comment vamsa-abc --body "Backend implementation complete. Quality gates passed: typecheck, lint, build."
+bd comment vamsa-abc "Backend implementation complete. Quality gates passed: typecheck, lint, build."
 
 # Close a bead (reviewer only)
 bd close vamsa-abc --reason "All criteria met. All 7 quality gates passed."
 ```
 
-### Syncing with Git
+### Syncing
 
 ```bash
-# Sync bead state with git (updates .beads/ directory)
+# Pull from and push to the Dolt remote (only if one is configured)
 bd sync
 ```
 
 ## Bead Lifecycle
 
-Every bead moves through four states:
+Every bead moves through these stages. "Ready for review" is a label on an `in_progress` bead, not a status (run `bd statuses` for the built-in list).
 
 ```mermaid
 stateDiagram-v2
     [*] --> open: bd create
     open --> in_progress: Agent starts work
-    in_progress --> ready: Agent finishes & gates pass
-    ready --> in_progress: Reviewer finds issues
-    ready --> closed: Reviewer approves
+    in_progress --> ready_for_review: Agent finishes & gates pass (label)
+    ready_for_review --> in_progress: Reviewer finds issues
+    ready_for_review --> closed: Reviewer approves
     closed --> [*]
 ```
 
-| Status | Meaning | Who Sets It |
+| Stage | How it's recorded | Who Sets It |
 |---|---|---|
-| `open` | Created but not yet started | Tech Lead (via `bd create`) |
-| `in_progress` | An agent is actively working on it | Any implementation agent |
-| `ready` | Work is done, quality gates passed, awaiting review | Frontend, Backend, or Tester |
-| `closed` | Reviewer verified all gates pass | Reviewer only |
+| `open` | Status `open` | Tech Lead (via `bd create`) |
+| `in_progress` | Status `in_progress` | Any implementation agent |
+| Ready for review | Status `in_progress` + label `ready-for-review` | Frontend, Backend, or Tester |
+| `closed` | Status `closed` | Reviewer only |
 
 !!! warning "Only the Reviewer Closes Beads"
     The `closed` status is reserved for the Reviewer agent. No other agent should execute `bd close`. This is a governance rule that ensures every piece of work passes the full quality suite before being marked done.
@@ -110,10 +110,10 @@ bd create "Epic: Email Notifications" --type epic --priority 1
 
 # Step 2: Create child beads
 bd create "Frontend: Notification Preferences UI" \
-  --type frontend --priority 2 --parent vamsa-epic-123
+  --type task --labels frontend --priority 2 --parent vamsa-epic-123
 
 bd create "Backend: Email Service + Templates" \
-  --type backend --priority 2 --parent vamsa-epic-123
+  --type task --labels backend --priority 2 --parent vamsa-epic-123
 
 # Step 3: Enrich each bead with acceptance criteria
 bd update vamsa-frontend-124 --description "$(cat <<'EOF'
@@ -159,7 +159,7 @@ Beads can declare dependencies on other beads. A bead with unresolved dependenci
 ```bash
 # Create a bead that depends on another
 bd create "Frontend: Use new API endpoint" \
-  --type frontend --priority 2 --depends-on vamsa-backend-125
+  --type task --labels frontend --priority 2 --deps vamsa-backend-125
 ```
 
 The `bd ready` command filters out blocked beads, showing only those whose dependencies are all closed.
@@ -176,7 +176,7 @@ Implement notification preferences UI and email service.
 Closes: vamsa-epic-123, vamsa-frontend-124, vamsa-backend-125"
 ```
 
-After committing, `bd sync` updates the `.beads/` directory to reflect the current state of all beads, and this change is included in the git history.
+Bead state lives in the Dolt database, not in git history. If a Dolt remote is configured, run `bd sync` to publish it.
 
 ## Agent Bead Protocol
 
@@ -188,7 +188,7 @@ bd show vamsa-abc
 bd assign vamsa-abc @backend
 
 # 2. Mark as in progress
-bd status vamsa-abc in_progress
+bd update vamsa-abc --status in_progress
 
 # 3. Do the work...
 # (implement, test, or review)
@@ -199,8 +199,8 @@ pnpm lint
 pnpm build
 
 # 5. Report ready with results
-bd status vamsa-abc ready
-bd comment vamsa-abc --body "Implementation complete. Quality gates passed: typecheck, lint, build."
+bd update vamsa-abc --add-label ready-for-review
+bd comment vamsa-abc "Implementation complete. Quality gates passed: typecheck, lint, build."
 ```
 
 !!! tip "Bead Comments as Communication"
