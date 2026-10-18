@@ -70,6 +70,8 @@ const getUpcomingEvents = createServerFn({ method: "GET" })
   })
   .handler(async ({ data }) => {
     // Dynamic imports to keep server-only modules out of client bundle
+    const { requireAuth } = await import("~/server/middleware/require-auth");
+    await requireAuth("VIEWER");
     const { drizzleDb, drizzleSchema } = await import("@vamsa/api");
     const { eq } = await import("drizzle-orm");
 

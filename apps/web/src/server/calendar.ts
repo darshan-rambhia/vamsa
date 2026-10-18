@@ -46,7 +46,7 @@ export const generateCalendarToken = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => generateTokenSchema.parse(data))
   .handler(async ({ data }) => {
     try {
-      const user = await requireAuth();
+      const user = await requireAuth("MEMBER");
 
       return await generateCalendarTokenLogic(
         user.id,
@@ -80,7 +80,7 @@ export const revokeCalendarToken = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => revokeTokenSchema.parse(data))
   .handler(async ({ data }) => {
     try {
-      const user = await requireAuth();
+      const user = await requireAuth("MEMBER");
 
       return await revokeCalendarTokenLogic(data.token, user.id);
     } catch (error) {
@@ -95,7 +95,7 @@ export const revokeCalendarToken = createServerFn({ method: "POST" })
 export const listCalendarTokens = createServerFn({ method: "GET" }).handler(
   async () => {
     try {
-      const user = await requireAuth();
+      const user = await requireAuth("VIEWER");
 
       return await listCalendarTokensLogic(user.id);
     } catch (error) {
@@ -112,7 +112,7 @@ export const deleteCalendarToken = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => revokeTokenSchema.parse(data))
   .handler(async ({ data }) => {
     try {
-      const user = await requireAuth();
+      const user = await requireAuth("MEMBER");
 
       return await deleteCalendarTokenLogic(data.token, user.id);
     } catch (error) {

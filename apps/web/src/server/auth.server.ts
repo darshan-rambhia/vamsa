@@ -22,6 +22,7 @@ import {
 import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
 import { loggers } from "@vamsa/lib/logger";
 import { checkRateLimit, getClientIP } from "./middleware/rate-limiter";
+import { requireAuth } from "./middleware/require-auth";
 
 const log = loggers.auth;
 
@@ -72,6 +73,8 @@ export async function claimProfileHandler(input: ClaimProfileInput) {
  * Change user password after verifying current password
  */
 export async function changePasswordHandler(input: ChangePasswordInput) {
+  await requireAuth("VIEWER");
+
   // Validate input
   const data = changePasswordSchema.parse(input);
 

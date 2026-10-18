@@ -13,6 +13,7 @@ import {
   removeEventParticipantData,
   updateEventData,
 } from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
 import type { Event, EventParticipant } from "@vamsa/lib/server/business";
 
 /**
@@ -22,6 +23,7 @@ import type { Event, EventParticipant } from "@vamsa/lib/server/business";
 export const getPersonEvents = createServerFn({ method: "GET" })
   .inputValidator((data: { personId: string }) => data)
   .handler(async ({ data }): Promise<Array<Event>> => {
+    await requireAuth("VIEWER");
     return getPersonEventsData(data.personId);
   });
 
@@ -34,6 +36,7 @@ export const createEvent = createServerFn({ method: "POST" })
     return eventCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<Event> => {
+    await requireAuth("MEMBER");
     return createEventData(data);
   });
 
@@ -46,6 +49,7 @@ export const updateEvent = createServerFn({ method: "POST" })
     return eventUpdateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<Event> => {
+    await requireAuth("MEMBER");
     const { id, ...updates } = data;
     return updateEventData(id, updates);
   });
@@ -57,6 +61,7 @@ export const updateEvent = createServerFn({ method: "POST" })
 export const deleteEvent = createServerFn({ method: "POST" })
   .inputValidator((data: { eventId: string }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
+    await requireAuth("ADMIN");
     return deleteEventData(data.eventId);
   });
 
@@ -69,6 +74,7 @@ export const addEventParticipant = createServerFn({ method: "POST" })
     return eventParticipantCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<EventParticipant> => {
+    await requireAuth("MEMBER");
     return addEventParticipantData(data);
   });
 
@@ -81,5 +87,6 @@ export const removeEventParticipant = createServerFn({ method: "POST" })
     return eventParticipantRemoveSchema.parse(data);
   })
   .handler(async ({ data }): Promise<{ success: boolean }> => {
+    await requireAuth("MEMBER");
     return removeEventParticipantData(data);
   });
