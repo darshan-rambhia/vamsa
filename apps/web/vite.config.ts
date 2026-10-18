@@ -186,6 +186,9 @@ export default defineConfig({
       // sharp is a native image processing library that must not be bundled
       "sharp",
     ],
+    // Transitive deps of Better Auth. pnpm keeps them out of the deployed
+    // node_modules top level, so the Docker runtime cannot resolve them.
+    noExternal: ["nanostores", "@noble/hashes", "@noble/ciphers"],
     // Note: Do NOT add drizzle-orm/pg to ssr.external or @vamsa/* to noExternal.
     // drizzle-orm/pg must be bundled into the SSR output so the production server
     // doesn't need to resolve them from node_modules at runtime (which fails in Docker).

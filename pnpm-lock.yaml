@@ -521,9 +521,15 @@ importers:
       better-auth:
         specifier: ^1.6.29
         version: 1.7.8(@opentelemetry/api@1.9.1)(@tanstack/react-start@1.168.61(esbuild@0.28.2)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(rolldown@1.2.14)(rollup@4.62.2)(supports-color@8.1.1)(vite@8.3.4(@types/node@26.6.5)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)))(drizzle-kit@0.31.11)(drizzle-orm@0.45.4(@opentelemetry/api@1.9.1)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.0.3)(bun-types@1.4.3)(kysely@0.29.5)(pg@8.23.1))(pg@8.23.1)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(vitest@5.0.4)
+      cmdk:
+        specifier: 1.1.1
+        version: 1.1.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       d3:
         specifier: ^7.9.0
         version: 7.9.0
+      date-fns:
+        specifier: 4.4.0
+        version: 4.4.0
       dotenv:
         specifier: 18.0.7
         version: 18.0.7
@@ -590,6 +596,9 @@ importers:
       rss:
         specifier: 1.2.2
         version: 1.2.2
+      sharp:
+        specifier: ^0.35.0
+        version: 0.35.5(@types/node@26.6.5)
       svg2pdf.js:
         specifier: ^2.7.0
         version: 2.8.1(jspdf@4.2.1)
@@ -13558,8 +13567,7 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@img/colour@1.1.0':
-    optional: true
+  '@img/colour@1.1.0': {}
 
   '@img/sharp-darwin-arm64@0.35.5':
     optionalDependencies:
@@ -22875,7 +22883,6 @@ snapshots:
       '@img/sharp-win32-ia32': 0.35.5
       '@img/sharp-win32-x64': 0.35.5
       '@types/node': 26.6.5
-    optional: true
 
   shebang-command@2.0.0:
     dependencies:
