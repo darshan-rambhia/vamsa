@@ -18,6 +18,7 @@ const updateSettingsSchema = z.object({
   description: z.string().optional(),
   allowSelfRegistration: z.boolean(),
   requireApprovalForEdits: z.boolean(),
+  allowProfileClaiming: z.boolean().optional(),
   metricsDashboardUrl: z
     .string()
     .refine((val) => !val || /^https?:\/\//.test(val), "Invalid URL")

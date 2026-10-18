@@ -1,4 +1,9 @@
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  Link,
+  createFileRoute,
+  redirect,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -19,8 +24,16 @@ import {
 } from "@vamsa/ui";
 import { PasswordStrengthIndicator } from "@vamsa/ui/primitives";
 import { claimProfile, getUnclaimedProfiles } from "~/server/auth.functions";
+import { getProfileClaimingStatus } from "~/server/profile-claiming";
 
 export const Route = createFileRoute("/claim-profile")({
+  // Not reachable until an admin enables profile claiming (checked before render)
+  beforeLoad: async () => {
+    const { enabled } = await getProfileClaimingStatus();
+    if (!enabled) {
+      throw redirect({ to: "/login" });
+    }
+  },
   component: ClaimProfileComponent,
 });
 

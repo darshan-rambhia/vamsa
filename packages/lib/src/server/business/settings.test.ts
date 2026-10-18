@@ -72,6 +72,7 @@ describe("Settings Business Logic", () => {
         description: "",
         allowSelfRegistration: true,
         requireApprovalForEdits: true,
+        allowProfileClaiming: false,
         metricsDashboardUrl: null,
         metricsApiUrl: null,
       });

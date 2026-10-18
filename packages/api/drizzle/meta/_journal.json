@@ -22,6 +22,13 @@
       "when": 1787971562732,
       "tag": "0002_sad_power_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792355193678,
+      "tag": "0003_opposite_joshua_kane",
+      "breakpoints": true
     }
   ]
 }
