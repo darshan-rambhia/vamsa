@@ -39,12 +39,21 @@ export async function setProfileClaiming(
       "settings-allow-profile-claiming-checkbox"
     );
     await checkbox.waitFor();
+    // Wait for hydration. Before it, a click does nothing and the submit button
+    // falls back to a native GET that never saves the setting.
+    await page.waitForLoadState("networkidle");
 
-    const isOn = (await checkbox.getAttribute("data-state")) === "checked";
+    // Native checkbox input: read checked state, not Radix data-state
+    const isOn = await checkbox.isChecked();
     if (isOn !== enabled) {
       await checkbox.click();
+      await expect(checkbox).toBeChecked({ checked: enabled });
       await page.getByTestId("settings-submit-button").click();
-      await expect(page.getByTestId("settings-submit-button")).toBeEnabled();
+      // Wait for the save to finish. Closing the context while the request is
+      // in flight drops the update, so the button being enabled is not enough.
+      await expect(page.getByTestId("settings-success")).toBeVisible({
+        timeout: 10000,
+      });
     }
   } finally {
     await context.close();
