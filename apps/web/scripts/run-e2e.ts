@@ -29,7 +29,8 @@
 
 import { spawn } from "bun";
 import { resolve } from "path";
-import { rm } from "node:fs/promises";
+import { mkdir, rm } from "node:fs/promises";
+import { dirname } from "path";
 import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.api;
@@ -173,6 +174,7 @@ async function main() {
 
       // Step 1: Clean up old SQLite database
       log.info({}, "📦 Step 1/5: Preparing SQLite database...");
+      await mkdir(dirname(E2E_SQLITE_PATH), { recursive: true });
       try {
         await rm(E2E_SQLITE_PATH, { force: true });
         await rm(`${E2E_SQLITE_PATH}-wal`, { force: true });
