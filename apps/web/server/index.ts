@@ -5,10 +5,17 @@
  * The Hono app is created by the shared factory in ./app.ts.
  */
 
+import path from "node:path";
+
 // Initialize OpenTelemetry before other imports (must be first)
 import { loggers } from "@vamsa/lib/logger";
 import { initializeServerI18n } from "@vamsa/lib/server";
-import { closeDrizzleDb } from "@vamsa/api";
+import {
+  bootstrapAdminUser,
+  closeDrizzleDb,
+  getDbDriver,
+  runMigrations,
+} from "@vamsa/api";
 import { initializeRateLimitStore } from "../src/server/middleware/rate-limiter";
 import {
   closeRedisClient,
@@ -34,6 +41,40 @@ function validateSecurityCredentials() {
   const IS_PRODUCTION = process.env.NODE_ENV === "production";
   const warnings: Array<string> = [];
   const errors: Array<string> = [];
+
+  // Production-only requirements are errors; in development they are warnings
+  const requireInProduction = (msg: string) => {
+    if (IS_PRODUCTION) errors.push(msg);
+    else warnings.push(msg);
+  };
+
+  // Public URLs: Better Auth cookies/OIDC callbacks and CORS/CSRF depend on these.
+  // Unset values fall back to localhost / vamsa.app, which breaks behind a proxy.
+  for (const name of ["BETTER_AUTH_URL", "APP_URL"]) {
+    const value = process.env[name];
+    if (!value) {
+      requireInProduction(
+        `${name} is not set (public URL, e.g. https://vamsa.example.com)`
+      );
+      continue;
+    }
+    try {
+      new URL(value);
+    } catch {
+      requireInProduction(`${name} is not a valid absolute URL`);
+    }
+  }
+
+  // Generic OIDC: discovery URL needs client credentials
+  if (process.env.OIDC_DISCOVERY_URL) {
+    for (const name of ["OIDC_CLIENT_ID", "OIDC_CLIENT_SECRET"]) {
+      if (!process.env[name]) {
+        requireInProduction(
+          `${name} is required when OIDC_DISCOVERY_URL is set`
+        );
+      }
+    }
+  }
 
   // Check BETTER_AUTH_SECRET
   const authSecret = process.env.BETTER_AUTH_SECRET;
@@ -117,6 +158,51 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production";
 // Validate credentials before starting
 validateSecurityCredentials();
 
+/**
+ * Production database setup: apply pending migrations, then bootstrap the first admin.
+ * Runs before the HTTP server listens, so /health only reports up once this succeeds.
+ *
+ * - MIGRATIONS_DIR: folder with postgres/ and sqlite/ migration sets
+ *   (default: ./migrations relative to cwd; the Docker image sets /app/migrations)
+ * - MIGRATE_ON_START=false: skip migrations (schema managed externally)
+ * - ADMIN_EMAIL: if no ADMIN user exists, that email becomes ADMIN (see bootstrap-admin.ts)
+ */
+async function prepareDatabase(): Promise<void> {
+  const driver = getDbDriver();
+
+  if (process.env.MIGRATE_ON_START === "false") {
+    log.info({}, "MIGRATE_ON_START=false, skipping database migrations");
+  } else {
+    const migrationsRoot =
+      process.env.MIGRATIONS_DIR || path.resolve(process.cwd(), "migrations");
+    const migrationsFolder = path.join(migrationsRoot, driver);
+    try {
+      await runMigrations({
+        driver,
+        databaseUrl: process.env.DATABASE_URL ?? "",
+        migrationsFolder,
+      });
+    } catch (error) {
+      log.withErr(error).msg("Database migrations failed, refusing to start");
+      process.exit(1);
+    }
+    log.info({ driver, migrationsFolder }, "Database migrations applied");
+  }
+
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) {
+    log.info({}, "ADMIN_EMAIL not set, skipping first-admin bootstrap");
+    return;
+  }
+  try {
+    const result = await bootstrapAdminUser(adminEmail);
+    log.info({ action: result.action }, "First-admin bootstrap checked");
+  } catch (error) {
+    log.withErr(error).msg("First-admin bootstrap failed, refusing to start");
+    process.exit(1);
+  }
+}
+
 async function startServer() {
   const version = process.env.APP_VERSION || "dev";
   log.info(
@@ -129,6 +215,10 @@ async function startServer() {
     },
     "Vamsa server starting"
   );
+
+  if (IS_PRODUCTION) {
+    await prepareDatabase();
+  }
 
   // Initialize i18n for server functions
   try {

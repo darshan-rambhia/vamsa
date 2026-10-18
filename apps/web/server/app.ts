@@ -13,8 +13,7 @@ import { compress } from "hono/compress";
 import { NONCE, secureHeaders } from "hono/secure-headers";
 import { loggers } from "@vamsa/lib/logger";
 import { auth } from "@vamsa/lib/server/business";
-import { drizzleDb, getDrizzlePoolStats } from "@vamsa/api";
-import { sql } from "drizzle-orm";
+import { getDrizzlePoolStats, pingDatabase } from "@vamsa/api";
 import { rateLimitMiddleware } from "../src/server/middleware/hono-rate-limiter";
 import {
   initTrustedProxies,
@@ -259,7 +258,7 @@ export async function createHonoApp(
   // Performs actual database query to verify system is fully operational
   app.get("/readyz", async (c) => {
     try {
-      await drizzleDb.execute(sql`SELECT 1`);
+      await pingDatabase();
       return c.json({ status: "ready" });
     } catch (error) {
       return c.json(
