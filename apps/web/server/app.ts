@@ -16,6 +16,7 @@ import { auth } from "@vamsa/lib/server/business";
 import { drizzleDb, getDrizzlePoolStats } from "@vamsa/api";
 import { sql } from "drizzle-orm";
 import { rateLimitMiddleware } from "../src/server/middleware/hono-rate-limiter";
+import { accountLockoutMiddleware } from "../src/server/middleware/account-lockout";
 import {
   initTrustedProxies,
   trustedProxyMiddleware,
@@ -466,6 +467,9 @@ Disallow: /
 
   // Forget password: 3 attempts per hour
   app.use("/api/auth/forget-password/*", rateLimitMiddleware("passwordReset"));
+
+  // Per-account lockout after repeated failed sign-ins (only acts on sign-in/email)
+  app.use("/api/auth/sign-in/*", accountLockoutMiddleware);
 
   // Mount Better Auth SDK endpoints at /api/auth/*
   // This handles authentication flows from the Better Auth React client

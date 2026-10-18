@@ -135,7 +135,7 @@ export async function serveMedia(c: Context): Promise<Response> {
         status: 304,
         headers: {
           ETag: etag,
-          "Cache-Control": "public, max-age=31536000", // 1 year for immutable assets
+          "Cache-Control": "private, max-age=31536000", // per-user cache; media requires a session
         },
       });
     }
@@ -154,8 +154,9 @@ export async function serveMedia(c: Context): Promise<Response> {
     const headers: Record<string, string> = {
       "Content-Type": mimeType,
       ETag: etag,
-      // Cache headers: assets are immutable (content-addressed by filename)
-      "Cache-Control": "public, max-age=31536000, immutable",
+      // Cache headers: private because /media requires a session. Shared caches
+      // must not store it. Long max-age is safe because filenames are content-addressed.
+      "Cache-Control": "private, max-age=31536000, immutable",
       // Allow browsers to cache aggressively
       "Accept-Ranges": "bytes",
       // Prevent inline display for security
