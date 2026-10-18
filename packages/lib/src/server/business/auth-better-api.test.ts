@@ -818,6 +818,103 @@ describe("auth-better-api", () => {
     });
   });
 
+  describe("deactivated users", () => {
+    const deactivatedSession = {
+      user: {
+        id: "user-off",
+        email: "off@example.com",
+        name: "Deactivated",
+        role: "ADMIN",
+        personId: null,
+        mustChangePassword: false,
+        oidcProvider: "oidc",
+        profileClaimStatus: "PENDING",
+        isActive: false,
+      },
+      session: {
+        id: "session-off",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: "user-off",
+        expiresAt: new Date(),
+        token: "tok-off",
+      },
+    };
+
+    it("betterAuthGetSessionWithUser returns null for a deactivated user", async () => {
+      mockBetterAuthApi.getSession.mockResolvedValueOnce(deactivatedSession);
+
+      const result = await betterAuthGetSessionWithUser(
+        new Headers({ cookie: "better-auth.session_token=tok-off" })
+      );
+
+      expect(result).toBeNull();
+    });
+
+    it("betterAuthGetSessionWithUserFromCookie returns null for a deactivated user", async () => {
+      mockBetterAuthApi.getSession.mockResolvedValueOnce(deactivatedSession);
+
+      const result = await betterAuthGetSessionWithUserFromCookie(
+        "better-auth.session_token=tok-off"
+      );
+
+      expect(result).toBeNull();
+    });
+
+    it("still returns the user when isActive is true", async () => {
+      mockBetterAuthApi.getSession.mockResolvedValueOnce({
+        ...deactivatedSession,
+        user: { ...deactivatedSession.user, isActive: true },
+      });
+
+      const result = await betterAuthGetSessionWithUser(
+        new Headers({ cookie: "better-auth.session_token=tok-off" })
+      );
+
+      expect(result?.id).toBe("user-off");
+    });
+  });
+
+  describe("betterAuthGetSessionWithUser cookie name (HTTPS)", () => {
+    const sessionFixture = {
+      user: {
+        id: "user-secure",
+        email: "secure@example.com",
+        name: "Secure User",
+        role: "MEMBER",
+        personId: null,
+        mustChangePassword: false,
+        oidcProvider: null,
+        profileClaimStatus: "PENDING",
+        isActive: true,
+      },
+      session: {
+        id: "session-secure",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        userId: "user-secure",
+        expiresAt: new Date(),
+        token: "tok",
+      },
+    };
+
+    it("resolves a session carried in the __Secure- prefixed cookie", async () => {
+      mockBetterAuthApi.getSession.mockResolvedValueOnce(sessionFixture);
+
+      const result = await betterAuthGetSessionWithUser(
+        new Headers({
+          cookie: "__Secure-better-auth.session_token=tok; theme=dark",
+        })
+      );
+
+      expect(result?.id).toBe("user-secure");
+      const callArgs = mockBetterAuthApi.getSession.mock.calls[0]?.[0];
+      expect(callArgs?.headers?.cookie).toContain(
+        "__Secure-better-auth.session_token=tok"
+      );
+    });
+  });
+
   describe("getBetterAuthProviders", () => {
     const originalEnv = process.env;
 

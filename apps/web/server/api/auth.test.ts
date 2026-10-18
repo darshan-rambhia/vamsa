@@ -17,20 +17,26 @@ import authRouter from "./auth";
 // Mocks - Must be hoisted before importing the router
 // =============================================================================
 
-const { mockBetterAuthLogin, mockBetterAuthRegister, mockBetterAuthSignOut } =
-  vi.hoisted(() => ({
-    // Use `as unknown` to allow flexible return types in tests
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    mockBetterAuthLogin: vi.fn(async () => null as unknown),
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    mockBetterAuthRegister: vi.fn(async () => null as unknown),
-    mockBetterAuthSignOut: vi.fn(async () => undefined),
-  }));
+const {
+  mockBetterAuthLogin,
+  mockBetterAuthRegister,
+  mockBetterAuthSignOut,
+  mockIsSelfSignupEnabled,
+} = vi.hoisted(() => ({
+  mockIsSelfSignupEnabled: vi.fn((): boolean => true),
+  // Use `as unknown` to allow flexible return types in tests
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  mockBetterAuthLogin: vi.fn(async () => null as unknown),
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  mockBetterAuthRegister: vi.fn(async () => null as unknown),
+  mockBetterAuthSignOut: vi.fn(async () => undefined),
+}));
 
 vi.mock("@vamsa/lib/server/business", () => ({
   betterAuthLogin: mockBetterAuthLogin,
   betterAuthRegister: mockBetterAuthRegister,
   betterAuthSignOut: mockBetterAuthSignOut,
+  isSelfSignupEnabled: mockIsSelfSignupEnabled,
 }));
 
 describe("Authentication API Routes", () => {
@@ -163,6 +169,26 @@ describe("Authentication API Routes", () => {
   });
 
   describe("POST /register - Registration Endpoint", () => {
+    it("returns 403 invite-only and never calls Better Auth when self sign-up is off", async () => {
+      mockIsSelfSignupEnabled.mockReturnValueOnce(false);
+
+      const res = await authRouter.request("/register", {
+        method: "POST",
+        body: JSON.stringify({
+          email: "new@example.com",
+          name: "New",
+          password: "SecurePass1!",
+          confirmPassword: "SecurePass1!",
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(body.error).toBe("Registration is by invite only");
+      expect(mockBetterAuthRegister).not.toHaveBeenCalled();
+    });
+
     it("should return 400 when email is missing", async () => {
       const res = await authRouter.request("/register", {
         method: "POST",
@@ -475,8 +501,8 @@ describe("Authentication API Routes", () => {
         }),
       });
 
-      // Should handle JSON without explicit Content-Type
-      expect([200, 400, 401]).toContain(res.status);
+      // @hono/zod-openapi rejects a JSON body that has no Content-Type
+      expect(res.status).toBe(415);
     });
 
     it("should handle empty request body", async () => {

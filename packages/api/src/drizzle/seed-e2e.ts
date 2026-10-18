@@ -15,14 +15,11 @@ import path from "node:path";
 import { config } from "dotenv";
 
 import { loggers } from "@vamsa/lib/logger";
-import { createSeedConnection, getDbDriver } from "./db-factory";
+import { createSeedConnection } from "./db-factory";
 import { hashPassword } from "./password";
 
-const driver = getDbDriver();
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function dateVal(isoStr: string): any {
-  return driver === "sqlite" ? isoStr : new Date(isoStr);
+function dateVal(isoStr: string): Date {
+  return new Date(isoStr);
 }
 
 // Load .env from monorepo root

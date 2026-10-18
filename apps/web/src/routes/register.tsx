@@ -1,4 +1,9 @@
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import {
+  Link,
+  createFileRoute,
+  useLoaderData,
+  useNavigate,
+} from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -14,20 +19,29 @@ import {
 } from "@vamsa/ui";
 import { PasswordStrengthIndicator } from "@vamsa/ui/primitives";
 import { signUp } from "~/lib/auth-client";
+import { getRegistrationStatus } from "~/server/auth.functions";
 
 export const Route = createFileRoute("/register")({
   component: RegisterComponent,
+  loader: async () => ({
+    registration: await getRegistrationStatus(),
+  }),
 });
 
 function RegisterComponent() {
   const { t } = useTranslation(["auth", "common"]);
   const navigate = useNavigate();
+  const { registration } = useLoaderData({ from: "/register" });
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  if (!registration.selfSignupEnabled) {
+    return <InviteOnlyNotice />;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -199,6 +213,34 @@ function RegisterComponent() {
               </Link>
             </p>
           </form>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+/**
+ * Shown on invite-only instances instead of the sign-up form
+ */
+function InviteOnlyNotice() {
+  const { t } = useTranslation("auth");
+  return (
+    <div className="bg-background relative flex min-h-screen flex-col items-center justify-center px-4">
+      <Card
+        className="animate-fade-in relative w-full max-w-md"
+        id="main-content"
+      >
+        <CardHeader className="space-y-4 text-center">
+          <CardTitle>{t("inviteOnlyTitle")}</CardTitle>
+          <CardDescription>{t("inviteOnlyMessage")}</CardDescription>
+        </CardHeader>
+        <CardContent className="text-center">
+          <Link
+            to="/login"
+            className="text-primary font-medium hover:underline"
+          >
+            {t("signIn")}
+          </Link>
         </CardContent>
       </Card>
     </div>

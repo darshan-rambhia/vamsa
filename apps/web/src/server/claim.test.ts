@@ -84,11 +84,33 @@ const {
   ),
 }));
 
+// requireAuth loads the full user row after the session check. Resolve that row
+// from the stubbed session so the real requireAuth runs end to end.
+vi.mock("@vamsa/lib/server/db", async () => {
+  const { getStubbedSession } = await import("@test/server-fn-context");
+  return {
+    drizzleDb: {
+      select: () => ({
+        from: () => ({
+          where: () => ({
+            limit: async () => {
+              const user = await getStubbedSession();
+              return user ? [user] : [];
+            },
+          }),
+        }),
+      }),
+    },
+    drizzleSchema: { users: { id: "id" } },
+  };
+});
+
 vi.mock("@vamsa/lib/server/business", () => ({
   getClaimableProfilesData: mockGetClaimableProfilesData,
   claimProfileForOIDCData: mockClaimProfileForOIDCData,
   skipProfileClaimData: mockSkipProfileClaimData,
   getOIDCClaimStatusData: mockGetOIDCClaimStatusData,
+  betterAuthGetSessionWithUser: getStubbedSession,
   betterAuthGetSessionWithUserFromCookie: getStubbedSession,
 }));
 
@@ -121,7 +143,7 @@ describe("OIDC Claim Handlers", () => {
     it("throws error when not authenticated", async () => {
       await expect(
         withStubbedServerContext({}, () => getOIDCClaimableProfilesHandler())
-      ).rejects.toThrow("Not authenticated");
+      ).rejects.toThrow("Please log in to continue");
     });
   });
 
@@ -144,7 +166,7 @@ describe("OIDC Claim Handlers", () => {
         withStubbedServerContext({}, () =>
           claimProfileOIDCHandler({ personId: "person-1" })
         )
-      ).rejects.toThrow("Not authenticated");
+      ).rejects.toThrow("Please log in to continue");
     });
   });
 
@@ -164,7 +186,7 @@ describe("OIDC Claim Handlers", () => {
     it("throws error when not authenticated", async () => {
       await expect(
         withStubbedServerContext({}, () => skipProfileClaimHandler())
-      ).rejects.toThrow("Not authenticated");
+      ).rejects.toThrow("Please log in to continue");
     });
   });
 
@@ -185,9 +207,9 @@ describe("OIDC Claim Handlers", () => {
     });
 
     it("throws error when not authenticated", async () => {
-      expect(
+      await expect(
         withStubbedServerContext({}, () => getOIDCClaimStatusHandler())
-      ).rejects.toThrow("Not authenticated");
+      ).rejects.toThrow("Please log in to continue");
     });
 
     it("returns claimed status with person details", async () => {

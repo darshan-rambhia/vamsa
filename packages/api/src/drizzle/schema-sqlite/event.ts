@@ -5,6 +5,7 @@
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
 import { persons } from "./person";
+import { dateOnly } from "./column-types";
 
 export const events = sqliteTable(
   "Event",
@@ -12,7 +13,7 @@ export const events = sqliteTable(
     id: text("id").primaryKey(),
     personId: text("personId").notNull(),
     type: text("type").notNull(),
-    date: text("date"),
+    date: dateOnly("date"),
     place: text("place"),
     placeId: text("placeId"),
     description: text("description"),

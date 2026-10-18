@@ -1,0 +1,1 @@
+ALTER TABLE `FamilySettings` ADD `allowProfileClaiming` integer DEFAULT false NOT NULL;

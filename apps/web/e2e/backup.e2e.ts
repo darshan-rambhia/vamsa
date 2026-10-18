@@ -406,19 +406,20 @@ test.describe("Feature: Backup & Export", () => {
       });
 
       await bdd.then("Full Backup options should be visible", async () => {
-        // Check for media checkbox
+        // Media checkbox or Download Full Backup button. Polls so it waits for
+        // the tab panel to render (a single instant isVisible() raced it).
         const mediaCheckbox = page.getByLabel(/include photos|include.*media/i);
-        const isVisible = await mediaCheckbox.isVisible().catch(() => false);
-
-        // Check for Download Full Backup button
         const downloadButton = page.getByRole("button", {
           name: /download full backup|create.*backup/i,
         });
-        const buttonVisible = await downloadButton
-          .isVisible()
-          .catch(() => false);
-
-        expect(isVisible || buttonVisible).toBeTruthy();
+        await expect
+          .poll(
+            async () =>
+              (await mediaCheckbox.isVisible().catch(() => false)) ||
+              (await downloadButton.isVisible().catch(() => false)),
+            { timeout: 10000 }
+          )
+          .toBe(true);
       });
     });
   });

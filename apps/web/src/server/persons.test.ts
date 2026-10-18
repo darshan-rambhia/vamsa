@@ -77,6 +77,7 @@ vi.mock("@vamsa/lib/server/business", () => ({
   updatePersonData: mockUpdatePersonData,
   deletePersonData: mockDeletePersonData,
   searchPersonsData: mockSearchPersonsData,
+  betterAuthGetSessionWithUser: getStubbedSession,
   betterAuthGetSessionWithUserFromCookie: getStubbedSession,
 }));
 

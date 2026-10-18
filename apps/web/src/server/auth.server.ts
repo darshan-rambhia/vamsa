@@ -7,14 +7,15 @@
  * @fileoverview Server-only code - never import from client components
  */
 
-import { getCookie as getTanStackCookie } from "@tanstack/react-start/server";
+import { getRequestHeaders } from "@tanstack/react-start/server";
 // Import directly from specific modules to avoid pulling in media module (which imports sharp)
 import {
   betterAuthChangePassword,
-  betterAuthGetSessionWithUserFromCookie,
+  betterAuthGetSessionWithUser,
   betterAuthSignOut,
   getBetterAuthProviders,
 } from "@vamsa/lib/server/business/auth-better-api";
+import { isSelfSignupEnabled } from "@vamsa/lib/server/business/auth-registration";
 import {
   claimProfileData,
   getUnclaimedProfilesData,
@@ -22,10 +23,9 @@ import {
 import { changePasswordSchema, claimProfileSchema } from "@vamsa/schemas";
 import { loggers } from "@vamsa/lib/logger";
 import { checkRateLimit, getClientIP } from "./middleware/rate-limiter";
+import { requireAuth } from "./middleware/require-auth";
 
 const log = loggers.auth;
-
-const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 
 // ============================================================================
 // Types
@@ -72,6 +72,8 @@ export async function claimProfileHandler(input: ClaimProfileInput) {
  * Change user password after verifying current password
  */
 export async function changePasswordHandler(input: ChangePasswordInput) {
+  await requireAuth("VIEWER");
+
   // Validate input
   const data = changePasswordSchema.parse(input);
 
@@ -80,13 +82,10 @@ export async function changePasswordHandler(input: ChangePasswordInput) {
   await checkRateLimit("passwordReset", clientIP);
 
   try {
-    const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
     await betterAuthChangePassword(
       data.currentPassword,
       data.newPassword,
-      new Headers({
-        cookie: cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : "",
-      })
+      getRequestHeaders()
     );
 
     log.info({}, "Password changed successfully");
@@ -103,11 +102,7 @@ export async function changePasswordHandler(input: ChangePasswordInput) {
  */
 export async function getSessionHandler() {
   try {
-    const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
-    const user = await betterAuthGetSessionWithUserFromCookie(
-      cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
-    );
-    return user;
+    return await betterAuthGetSessionWithUser(getRequestHeaders());
   } catch (error) {
     log.withErr(error).msg("Failed to get session");
     return null;
@@ -119,10 +114,7 @@ export async function getSessionHandler() {
  */
 export async function checkAuthHandler() {
   try {
-    const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
-    const user = await betterAuthGetSessionWithUserFromCookie(
-      cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
-    );
+    const user = await betterAuthGetSessionWithUser(getRequestHeaders());
 
     if (!user) {
       return { valid: false, user: null };
@@ -143,12 +135,7 @@ export async function checkAuthHandler() {
  */
 export async function logoutHandler() {
   try {
-    const cookie = getTanStackCookie(BETTER_AUTH_COOKIE_NAME);
-    await betterAuthSignOut(
-      new Headers({
-        cookie: cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : "",
-      })
-    );
+    await betterAuthSignOut(getRequestHeaders());
     log.info({}, "Logout completed");
   } catch (error) {
     log.withErr(error).msg("Logout failed");
@@ -163,4 +150,11 @@ export async function logoutHandler() {
  */
 export async function getAvailableProvidersHandler() {
   return getBetterAuthProviders();
+}
+
+/**
+ * Whether public sign-up is enabled (false = invite-only)
+ */
+export async function getRegistrationStatusHandler() {
+  return { selfSignupEnabled: isSelfSignupEnabled() };
 }

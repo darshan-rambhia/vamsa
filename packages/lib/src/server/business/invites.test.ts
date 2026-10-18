@@ -686,6 +686,107 @@ describe("Invites Business Logic", () => {
     });
   });
 
+  describe("acceptInviteData account creation", () => {
+    const pendingInvite = {
+      id: "invite-1",
+      token: "token-123",
+      email: "invitee@example.com",
+      role: "MEMBER",
+      personId: "person-7",
+      invitedById: "admin-1",
+      status: "PENDING",
+      expiresAt: new Date("2999-01-01"),
+    };
+
+    /** Fake Drizzle: first select returns the invite, the rest return no users */
+    function makeDb(opts: { claimRows: Array<unknown> }) {
+      let selects = 0;
+      const update = vi.fn(() => ({
+        set: vi.fn(() => ({
+          where: vi.fn(() =>
+            Object.assign(Promise.resolve([]), {
+              returning: vi.fn(async () => opts.claimRows),
+            })
+          ),
+        })),
+      }));
+      const db = {
+        select: vi.fn(() => ({
+          from: vi.fn(() => ({
+            where: vi.fn(() => ({
+              limit: vi.fn(async () =>
+                selects++ === 0 ? [pendingInvite] : []
+              ),
+            })),
+          })),
+        })),
+        update,
+      };
+      return { db: db as any, update };
+    }
+
+    it("creates the account with a verified email and invite role", async () => {
+      const { db, update } = makeDb({ claimRows: [pendingInvite] });
+      const createAccount = vi.fn(async () => ({ userId: "new-user" }));
+
+      const result = await acceptInviteData(
+        "token-123",
+        "Invitee",
+        "pw-123456789",
+        db,
+        createAccount
+      );
+
+      expect(result).toEqual({ success: true, userId: "new-user" });
+      expect(createAccount).toHaveBeenCalledWith({
+        email: "invitee@example.com",
+        name: "Invitee",
+        password: "pw-123456789",
+        emailVerified: true,
+        role: "MEMBER",
+        personId: "person-7",
+        invitedById: "admin-1",
+      });
+      expect(update).toHaveBeenCalledTimes(1);
+    });
+
+    it("resets the invite to PENDING when account creation fails", async () => {
+      const { db, update } = makeDb({ claimRows: [pendingInvite] });
+      const createAccount = vi.fn(async () => {
+        throw new Error("boom");
+      });
+
+      await expect(
+        acceptInviteData(
+          "token-123",
+          "Invitee",
+          "pw-123456789",
+          db,
+          createAccount
+        )
+      ).rejects.toThrow("boom");
+
+      // claim (ACCEPTED) then rollback (PENDING)
+      expect(update).toHaveBeenCalledTimes(2);
+    });
+
+    it("refuses when another accept already claimed the invite", async () => {
+      const { db } = makeDb({ claimRows: [] });
+      const createAccount = vi.fn(async () => ({ userId: "x" }));
+
+      await expect(
+        acceptInviteData(
+          "token-123",
+          "Invitee",
+          "pw-123456789",
+          db,
+          createAccount
+        )
+      ).rejects.toThrow("no longer pending");
+      expect(createAccount).not.toHaveBeenCalled();
+    });
+  });
+
   describe("revokeInviteData", () => {
     it("should throw error for non-existent invite", async () => {
       const selectMock = vi.fn(() => ({

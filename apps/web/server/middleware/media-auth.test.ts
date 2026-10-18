@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * Unit tests for Media Authentication Middleware
  *
@@ -29,15 +30,14 @@ interface SessionUser {
 // Mocks
 // =============================================================================
 
-const { mockBetterAuthGetSessionWithUserFromCookie } = vi.hoisted(() => ({
-  mockBetterAuthGetSessionWithUserFromCookie: vi.fn<
-    (cookie?: string) => Promise<SessionUser | null>
-  >(async (_cookie?: string) => null),
+const { mockBetterAuthGetSessionWithUser } = vi.hoisted(() => ({
+  mockBetterAuthGetSessionWithUser: vi.fn<
+    (headers: Headers) => Promise<SessionUser | null>
+  >(async (_headers: Headers) => null),
 }));
 
 vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
-  betterAuthGetSessionWithUserFromCookie:
-    mockBetterAuthGetSessionWithUserFromCookie,
+  betterAuthGetSessionWithUser: mockBetterAuthGetSessionWithUser,
 }));
 
 describe("Media Authentication Middleware", () => {
@@ -45,11 +45,9 @@ describe("Media Authentication Middleware", () => {
 
   beforeEach(() => {
     app = new Hono();
-    mockBetterAuthGetSessionWithUserFromCookie.mockClear();
-    mockBetterAuthGetSessionWithUserFromCookie.mockReset();
-    mockBetterAuthGetSessionWithUserFromCookie.mockImplementation(
-      async () => null
-    );
+    mockBetterAuthGetSessionWithUser.mockClear();
+    mockBetterAuthGetSessionWithUser.mockReset();
+    mockBetterAuthGetSessionWithUser.mockImplementation(async () => null);
     app.use("/media/*", mediaAuthMiddleware);
     app.get("/media/*", (c) =>
       c.json({ status: "ok", message: "Media request authorized" })
@@ -93,7 +91,7 @@ describe("Media Authentication Middleware", () => {
   it("should return 401 when session validation fails (invalid token)", async () => {
     // Use a unique token that won't be cached
     const uniqueToken = `invalid-token-${Date.now()}`;
-    mockBetterAuthGetSessionWithUserFromCookie.mockResolvedValueOnce(null);
+    mockBetterAuthGetSessionWithUser.mockResolvedValueOnce(null);
 
     const res = await app.request("/media/test-invalid.jpg", {
       headers: { cookie: `better-auth.session_token=${uniqueToken}` },
@@ -102,6 +100,30 @@ describe("Media Authentication Middleware", () => {
     expect(res.status).toBe(401);
     const body = await res.json();
     expect(body.error).toBe("Unauthorized");
+  });
+
+  it("should accept the __Secure- prefixed session cookie used over HTTPS", async () => {
+    const token = `secure-token-${Date.now()}`;
+    mockBetterAuthGetSessionWithUser.mockResolvedValueOnce({
+      id: "user-secure",
+      email: "secure@example.com",
+      name: "Secure",
+      role: "VIEWER",
+      personId: null,
+      mustChangePassword: false,
+      profileClaimStatus: "PENDING",
+      oidcProvider: null,
+    });
+
+    const res = await app.request("/media/secure.jpg", {
+      headers: { cookie: `__Secure-better-auth.session_token=${token}` },
+    });
+
+    expect(res.status).toBe(200);
+    const passed = mockBetterAuthGetSessionWithUser.mock.calls[0]?.[0];
+    expect(passed?.get("cookie")).toContain(
+      `__Secure-better-auth.session_token=${token}`
+    );
   });
 
   it("should return JSON error response structure", async () => {

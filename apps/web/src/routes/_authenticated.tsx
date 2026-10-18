@@ -5,7 +5,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 // Note: Server-only modules are dynamically imported inside checkAuthInline
 // to prevent them from leaking into the client bundle (react-dom/server, i18next-fs-backend)
@@ -14,13 +14,12 @@ import type { ErrorComponentProps } from "@tanstack/react-router";
 import { signOut } from "~/lib/auth-client";
 import { LanguageSwitcher } from "~/components/layout/language-switcher";
 import { OIDCProfileClaimModal } from "~/components/auth/oidc-profile-claim-modal";
+import { getProfileClaimingStatus } from "~/server/profile-claiming";
 import { RouteError } from "~/components/error";
 import { CommandPalette } from "~/components/search/command-palette";
 import { CommandPaletteTrigger } from "~/components/search/command-palette-trigger";
 import { AIProvider } from "~/contexts/ai-context";
 import { AIChatPanel } from "~/components/ai/chat-panel";
-
-const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 
 // Inline server function to check authentication
 // This avoids the bundler circular dependency that occurs when importing from auth.functions.ts
@@ -28,14 +27,11 @@ const BETTER_AUTH_COOKIE_NAME = "better-auth.session_token";
 const checkAuthInline = createServerFn({ method: "GET" }).handler(async () => {
   try {
     // Dynamic imports to keep server-only modules out of client bundle
-    const { betterAuthGetSessionWithUserFromCookie } =
+    const { betterAuthGetSessionWithUser } =
       await import("@vamsa/lib/server/business/auth-better-api");
-    const { getCookie } = await import("@tanstack/react-start/server");
+    const { getRequestHeaders } = await import("@tanstack/react-start/server");
 
-    const cookie = getCookie(BETTER_AUTH_COOKIE_NAME);
-    const user = await betterAuthGetSessionWithUserFromCookie(
-      cookie ? `${BETTER_AUTH_COOKIE_NAME}=${cookie}` : undefined
-    );
+    const user = await betterAuthGetSessionWithUser(getRequestHeaders());
 
     if (!user) {
       return { valid: false, user: null };
@@ -204,9 +200,17 @@ function AuthenticatedLayout() {
     window.location.href = "/login";
   };
 
-  // Show profile claim modal for OIDC users with PENDING status
+  const { data: claimingStatus } = useQuery({
+    queryKey: ["profile-claiming-status"],
+    queryFn: () => getProfileClaimingStatus(),
+    enabled: !!user?.oidcProvider,
+  });
+
+  // Show profile claim modal for OIDC users with PENDING status (only when an admin enabled claiming)
   const showProfileClaimModal =
-    !!user?.oidcProvider && user?.profileClaimStatus === "PENDING";
+    !!user?.oidcProvider &&
+    user?.profileClaimStatus === "PENDING" &&
+    claimingStatus?.enabled === true;
 
   return (
     <AIProvider>

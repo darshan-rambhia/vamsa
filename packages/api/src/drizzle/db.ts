@@ -17,13 +17,16 @@
  */
 
 import * as fs from "node:fs";
+import { createRequire } from "node:module";
 
+import { sql } from "drizzle-orm";
 import { drizzle as pgDrizzle } from "drizzle-orm/node-postgres";
 import { Pool } from "pg";
 
 import * as pgSchema from "./schema";
 import * as sqliteSchema from "./schema-sqlite";
 
+import type { SQL } from "drizzle-orm";
 import type { PoolConfig } from "pg";
 
 // Re-export PG schema for consumers (types remain dialect-agnostic)
@@ -188,12 +191,14 @@ let dbInstance: ReturnType<typeof pgDrizzle<typeof pgSchema>> | null = null;
 
 /**
  * Initialize SQLite database connection.
- * Uses require() to avoid Vite/Vitest static analysis of bun:sqlite built-in.
  * This function is only called at runtime in Bun when DB_DRIVER=sqlite.
  */
 function initSqliteDb(dbPath: string): void {
-  const { Database } = require("bun:sqlite");
-  const { drizzle: sqliteDrizzle } = require("drizzle-orm/bun-sqlite");
+  // createRequire is called here, not at module load: this file is reachable
+  // from client bundles, where node:module is a stub and would throw on import.
+  const requireFromHere = createRequire(import.meta.url);
+  const { Database } = requireFromHere("bun:sqlite");
+  const { drizzle: sqliteDrizzle } = requireFromHere("drizzle-orm/bun-sqlite");
 
   const sqlite = new Database(dbPath);
   sqlite.exec("PRAGMA journal_mode = WAL;");
@@ -258,6 +263,20 @@ export const closeDb = async (): Promise<void> => {
     sqliteInstance = null;
   }
   dbInstance = null;
+};
+
+/**
+ * Run a trivial query to verify the database connection.
+ * Dialect-aware: PostgreSQL clients expose execute(), SQLite clients run().
+ */
+export const pingDatabase = async (): Promise<void> => {
+  const query = sql`SELECT 1`;
+  if (getDbDriver() === "sqlite") {
+    // Drizzle's SQLite raw queries are lazy QueryPromises: they run on await.
+    await (db as unknown as { run: (q: SQL) => Promise<unknown> }).run(query);
+    return;
+  }
+  await db.execute(query);
 };
 
 /**

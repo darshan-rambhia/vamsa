@@ -20,11 +20,13 @@ function normalizeCookie(value: string): string {
   const trimmed = value.trim();
   if (!trimmed) return "";
 
+  // Keep the `__Secure-` prefix: Better Auth uses it over HTTPS, and the server
+  // only recognises the exact cookie name it issued.
   const sessionTokenMatch = trimmed.match(
-    /better-auth\.session_token=([^;\s,]+)/
+    /((?:__Secure-)?better-auth\.session_token)=([^;\s,]+)/
   );
   if (sessionTokenMatch) {
-    return `better-auth.session_token=${sessionTokenMatch[1]}`;
+    return `${sessionTokenMatch[1]}=${sessionTokenMatch[2]}`;
   }
 
   const simpleCookieMatch = trimmed.match(/^([^=\s]+)=([^;\s,]+)/);

@@ -66,6 +66,8 @@ services:
       HOST: 0.0.0.0
       DATABASE_URL: "postgresql://vamsa:vamsa@db:5432/vamsa"
       BETTER_AUTH_SECRET: "dev-secret-at-least-32-characters-long"
+      BETTER_AUTH_URL: "http://localhost:3000"
+      APP_URL: "http://localhost:3000"
     ports:
       - "3000:3000"
     healthcheck:
@@ -137,6 +139,8 @@ services:
       BETTER_AUTH_URL: http://vamsa-web:3000
       APP_URL: http://vamsa-web:3000
       E2E_TESTING: "true"
+      # Re-enables /dev/errors (404 in prod builds). E2E only, never in prod compose.
+      VAMSA_ENABLE_DEV_ROUTES: "true"
     command: ["bun", "run", "server/index.ts"]
     healthcheck:
       test:

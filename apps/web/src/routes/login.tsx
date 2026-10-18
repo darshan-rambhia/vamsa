@@ -1,6 +1,7 @@
 import {
   Link,
   createFileRoute,
+  useLoaderData,
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
@@ -18,6 +19,7 @@ import {
   Input,
   ThemeToggle,
 } from "@vamsa/ui";
+import { getRegistrationStatus } from "~/server/auth.functions";
 import { signIn } from "~/lib/auth-client";
 import { SSOButtons } from "~/components/auth/sso-buttons";
 
@@ -32,11 +34,15 @@ const searchSchema = z.object({
 export const Route = createFileRoute("/login")({
   component: LoginComponent,
   validateSearch: searchSchema,
+  loader: async () => ({
+    registration: await getRegistrationStatus(),
+  }),
 });
 
 function LoginComponent() {
   const { t } = useTranslation(["auth", "common"]);
   const navigate = useNavigate();
+  const { registration } = useLoaderData({ from: "/login" });
   const { registered, claimed, invited, verify, reset } = useSearch({
     from: "/login",
   });
@@ -239,17 +245,19 @@ function LoginComponent() {
             {/* SSO Buttons */}
             <SSOButtons redirectTo="/people" disabled={isLoading} />
 
-            <div className="text-center text-sm">
-              <span className="text-muted-foreground">
-                {t("dontHaveAccount")}{" "}
-              </span>
-              <Link
-                to="/register"
-                className="text-primary font-medium hover:underline"
-              >
-                {t("createOne")}
-              </Link>
-            </div>
+            {registration.selfSignupEnabled && (
+              <div className="text-center text-sm">
+                <span className="text-muted-foreground">
+                  {t("dontHaveAccount")}{" "}
+                </span>
+                <Link
+                  to="/register"
+                  className="text-primary font-medium hover:underline"
+                >
+                  {t("createOne")}
+                </Link>
+              </div>
+            )}
           </form>
         </CardContent>
       </Card>

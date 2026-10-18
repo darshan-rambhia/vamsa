@@ -345,11 +345,11 @@ export async function countRelationships(): Promise<number> {
 }
 
 /**
- * Convert a date string to the correct type for the current database driver.
- * Postgres date columns (mode: "date") require Date objects; SQLite text columns accept strings.
+ * Date value for a date-only column. Both drivers take a Date: the SQLite
+ * schema maps date-only columns to Date (see schema-sqlite/column-types.ts).
  */
-export function toDateValue(dateStr: string): Date | string {
-  return driver === "postgres" ? new Date(dateStr) : dateStr;
+export function toDateValue(dateStr: string): Date {
+  return new Date(dateStr);
 }
 
 export { eq, sql, randomUUID };

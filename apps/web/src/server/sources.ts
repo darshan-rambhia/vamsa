@@ -21,6 +21,7 @@ import {
   updateResearchNoteData,
   updateSourceData,
 } from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
 import type {
   EventSourceResult,
   GeneratedCitation,
@@ -42,6 +43,7 @@ import type {
 export const getSource = createServerFn({ method: "GET" })
   .inputValidator((data: { sourceId: string }) => data)
   .handler(async ({ data }): Promise<SourceDetail> => {
+    await requireAuth("VIEWER");
     return getSourceData(data.sourceId);
   });
 
@@ -52,6 +54,7 @@ export const getSource = createServerFn({ method: "GET" })
 export const listSources = createServerFn({ method: "GET" })
   .inputValidator((data: { type?: string; personId?: string } = {}) => data)
   .handler(async ({ data }): Promise<SourceListResult> => {
+    await requireAuth("VIEWER");
     return listSourcesData(data.type, data.personId);
   });
 
@@ -64,6 +67,7 @@ export const createSource = createServerFn({ method: "POST" })
     return sourceCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<SourceCreateResult> => {
+    await requireAuth("MEMBER");
     return createSourceData(data as Parameters<typeof createSourceData>[0]);
   });
 
@@ -77,6 +81,7 @@ export const updateSource = createServerFn({ method: "POST" })
     return sourceUpdateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<SourceUpdateResult> => {
+    await requireAuth("MEMBER");
     const { id, ...updates } = data;
     return updateSourceData(
       id,
@@ -92,6 +97,7 @@ export const updateSource = createServerFn({ method: "POST" })
 export const deleteSource = createServerFn({ method: "POST" })
   .inputValidator((data: { sourceId: string }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
+    await requireAuth("ADMIN");
     return deleteSourceData(data.sourceId);
   });
 
@@ -105,6 +111,7 @@ export const createResearchNote = createServerFn({ method: "POST" })
     return researchNoteCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<ResearchNoteResult> => {
+    await requireAuth("MEMBER");
     return createResearchNoteData(
       data as Parameters<typeof createResearchNoteData>[0]
     );
@@ -120,6 +127,7 @@ export const updateResearchNote = createServerFn({ method: "POST" })
     return researchNoteUpdateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<ResearchNoteResult> => {
+    await requireAuth("MEMBER");
     const { id, ...updates } = data;
     return updateResearchNoteData(
       id,
@@ -135,6 +143,7 @@ export const updateResearchNote = createServerFn({ method: "POST" })
 export const deleteResearchNote = createServerFn({ method: "POST" })
   .inputValidator((data: { noteId: string }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
+    await requireAuth("ADMIN");
     return deleteResearchNoteData(data.noteId);
   });
 
@@ -148,6 +157,7 @@ export const linkSourceToEvent = createServerFn({ method: "POST" })
     return linkSourceToEventSchema.parse(data);
   })
   .handler(async ({ data }): Promise<EventSourceResult> => {
+    await requireAuth("MEMBER");
     return linkSourceToEventData(data);
   });
 
@@ -159,6 +169,7 @@ export const linkSourceToEvent = createServerFn({ method: "POST" })
 export const getResearchNotes = createServerFn({ method: "GET" })
   .inputValidator((data: { personId: string }) => data)
   .handler(async ({ data }): Promise<ResearchNotesGrouped> => {
+    await requireAuth("VIEWER");
     return getResearchNotesData(data.personId);
   });
 
@@ -172,6 +183,7 @@ export const generateCitation = createServerFn({ method: "POST" })
     return citationGenerateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<GeneratedCitation> => {
+    await requireAuth("VIEWER");
     return generateCitationData(data.sourceId, data.format);
   });
 
@@ -182,6 +194,7 @@ export const generateCitation = createServerFn({ method: "POST" })
 export const getPersonSources = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<PersonSourcesResponse> => {
+    await requireAuth("VIEWER");
     return getPersonSourcesData(data.id);
   });
 

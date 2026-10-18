@@ -4,6 +4,7 @@
 
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
+import { dateOnly } from "./column-types";
 import { users } from "./user";
 import { relationships } from "./relationship";
 
@@ -14,8 +15,8 @@ export const persons = sqliteTable(
     firstName: text("firstName").notNull(),
     lastName: text("lastName").notNull(),
     maidenName: text("maidenName"),
-    dateOfBirth: text("dateOfBirth"),
-    dateOfPassing: text("dateOfPassing"),
+    dateOfBirth: dateOnly("dateOfBirth"),
+    dateOfPassing: dateOnly("dateOfPassing"),
     birthPlace: text("birthPlace"),
     nativePlace: text("nativePlace"),
     gender: text("gender"),

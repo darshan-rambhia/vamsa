@@ -9,8 +9,15 @@
  * 4. Error responses follow a consistent format
  */
 
-import { describe, expect, test, vi } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
+import { resetRateLimit } from "../../src/server/middleware/rate-limiter";
 import apiV1 from "./index";
+
+// Login/register are IP rate limited; start each test with a clean counter
+beforeEach(async () => {
+  await resetRateLimit("login", "unknown");
+  await resetRateLimit("register", "unknown");
+});
 
 // Mock authentication to provide authenticated user for protected endpoints
 const { mockBetterAuthGetSessionWithUser } = vi.hoisted(() => ({

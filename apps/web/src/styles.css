@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Build output is not a style source. Without .gitignore (Docker build context)
+   the scanner would read dist/ and the SSR and client CSS hashes would differ. */
+@source not "../dist";
+
 /* Use legacy config file for proper content path scanning */
 @config "../tailwind.config.ts";
 

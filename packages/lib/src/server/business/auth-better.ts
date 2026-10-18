@@ -3,6 +3,8 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer, genericOAuth } from "better-auth/plugins";
 // import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { drizzleDb, drizzleSchema, getDbDriver } from "@vamsa/api";
+import { assertUserCanStartSession } from "./auth-session-policy";
+import { isSelfSignupEnabled } from "./auth-registration";
 
 // Cross-runtime password hashing that works in both Node.js (Vite dev) and Bun
 const isBunRuntime = typeof globalThis.Bun !== "undefined";
@@ -44,6 +46,67 @@ async function verifyPassword(
 }
 
 /**
+ * Vamsa-specific user fields exposed through Better Auth.
+ *
+ * `input: false` keeps these out of sign-up and update-user request bodies, so a
+ * client cannot set its own role, status, or linkage. Server code writes them
+ * through Drizzle (invites, claim, admin) or relies on DB defaults (OIDC create).
+ */
+export const userAdditionalFields = {
+  role: {
+    type: "string",
+    required: true,
+    defaultValue: "VIEWER",
+    input: false,
+  },
+  personId: {
+    type: "string",
+    required: false,
+    input: false,
+  },
+  mustChangePassword: {
+    type: "boolean",
+    defaultValue: false,
+    input: false,
+  },
+  profileClaimStatus: {
+    type: "string",
+    defaultValue: "PENDING",
+    input: false,
+  },
+  preferredLanguage: {
+    type: "string",
+    defaultValue: "en",
+  },
+  isActive: {
+    type: "boolean",
+    defaultValue: true,
+    input: false,
+  },
+  failedLoginAttempts: {
+    type: "number",
+    defaultValue: 0,
+    input: false,
+  },
+  lockedUntil: {
+    type: "date",
+    required: false,
+    input: false,
+  },
+  oidcProvider: {
+    type: "string",
+    required: false,
+    input: false,
+  },
+  // Set by invite acceptance; Better Auth drops columns it does not know
+  invitedById: {
+    type: "string",
+    required: false,
+    input: false,
+  },
+} as const;
+
+/**
  * Better Auth instance with Drizzle adapter
  *
  * This is the new authentication system being migrated to.
@@ -68,6 +131,9 @@ export const auth = betterAuth({
   // Email and password authentication
   emailAndPassword: {
     enabled: true,
+    // Invite-only unless ALLOW_SELF_SIGNUP=true. Blocks /sign-up/email only;
+    // genericOAuth implicit sign-up uses its own provider options.
+    disableSignUp: !isSelfSignupEnabled(),
     minPasswordLength: 12,
     requireEmailVerification: process.env.NODE_ENV !== "test",
     // Cross-runtime password hashing (works in both Node.js/Vite and Bun)
@@ -75,6 +141,17 @@ export const auth = betterAuth({
       hash: hashPassword,
       verify: async (data: { password: string; hash: string }) => {
         return verifyPassword(data.password, data.hash);
+      },
+    },
+  },
+
+  // Deactivated users cannot obtain a session (covers email/password and OIDC)
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => {
+          await assertUserCanStartSession(session.userId);
+        },
       },
     },
   },
@@ -190,45 +267,7 @@ export const auth = betterAuth({
   // Extend user model with Vamsa-specific fields
   // These will be added to the user table by Better Auth migrations
   user: {
-    additionalFields: {
-      role: {
-        type: "string",
-        required: true,
-        defaultValue: "VIEWER",
-      },
-      personId: {
-        type: "string",
-        required: false,
-      },
-      mustChangePassword: {
-        type: "boolean",
-        defaultValue: false,
-      },
-      profileClaimStatus: {
-        type: "string",
-        defaultValue: "PENDING",
-      },
-      preferredLanguage: {
-        type: "string",
-        defaultValue: "en",
-      },
-      isActive: {
-        type: "boolean",
-        defaultValue: true,
-      },
-      failedLoginAttempts: {
-        type: "number",
-        defaultValue: 0,
-      },
-      lockedUntil: {
-        type: "date",
-        required: false,
-      },
-      oidcProvider: {
-        type: "string",
-        required: false,
-      },
-    },
+    additionalFields: userAdditionalFields,
   },
 
   plugins: [
@@ -251,8 +290,9 @@ export const auth = betterAuth({
         : [],
     }),
 
-    // TanStack Start cookie handling (MUST be last plugin)
-    // Temporarily disabled to debug 500 error in dev server
+    // TanStack Start cookie plugin (would have to be last) stays off: /api/auth/*
+    // responses already carry Set-Cookie, and no active flow needs server-function
+    // cookie forwarding. Re-verify dev and prod before enabling.
     // tanstackStartCookies(),
   ],
 });

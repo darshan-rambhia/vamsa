@@ -11,6 +11,7 @@
  */
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
 import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 
 // Dynamic import ensures module loads AFTER preload mocks are applied
@@ -42,6 +43,11 @@ describe("auth business logic", () => {
       // Second call (else branch): get living persons - returns empty
       let selectCallCount = 0;
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => {
@@ -74,6 +80,11 @@ describe("auth business logic", () => {
       // Second call (else branch) returns all living persons
       let selectCallCount = 0;
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => {
@@ -114,6 +125,11 @@ describe("auth business logic", () => {
       // Second call (if branch): living persons, followed by .then() filter
       let selectCallCount = 0;
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => {
@@ -156,6 +172,11 @@ describe("auth business logic", () => {
       // Second call (if branch): living persons with .then() filter
       let selectCallCount = 0;
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => {
@@ -187,6 +208,11 @@ describe("auth business logic", () => {
   describe("claimProfileData", () => {
     it("should reject non-existent person", async () => {
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => ({
@@ -223,6 +249,11 @@ describe("auth business logic", () => {
       };
 
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => ({
@@ -262,6 +293,11 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => ({
@@ -307,6 +343,11 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => ({
@@ -354,6 +395,11 @@ describe("auth business logic", () => {
       let selectCallCount = 0;
 
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => {
@@ -410,6 +456,11 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => ({
@@ -458,6 +509,11 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => ({
@@ -504,6 +560,11 @@ describe("auth business logic", () => {
       let capturedSetData: unknown = null;
 
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => ({
@@ -556,6 +617,11 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => ({
@@ -610,6 +676,11 @@ describe("auth business logic", () => {
 
       let selectCallCount = 0;
       const mockDb = {
+        query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
+        },
         select: vi.fn(() => ({
           from: vi.fn(() => ({
             where: vi.fn(() => ({

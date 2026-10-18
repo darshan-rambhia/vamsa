@@ -18,8 +18,9 @@ import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 import { t } from "../i18n";
-import { betterAuthRegister } from "./auth-better-api";
+import { createCredentialAccount } from "./auth-accounts";
 import { notifyNewMemberJoined } from "./notifications";
+import { isProfileClaimingEnabledData } from "./settings";
 
 const log = loggers.auth;
 
@@ -60,6 +61,11 @@ export interface ClaimProfileResult {
 export async function getUnclaimedProfilesData(
   db: AuthDb = drizzleDb
 ): Promise<Array<UnclaimedProfile>> {
+  if (!(await isProfileClaimingEnabledData(db))) {
+    log.info({}, "Profile claiming disabled; no unclaimed profiles returned");
+    return [];
+  }
+
   log.info({}, "Fetching unclaimed profiles");
 
   // Get all personIds that already have users
@@ -116,7 +122,7 @@ export async function getUnclaimedProfilesData(
  * @param personId - ID of the Person profile to claim
  * @param password - User password (min 8 chars)
  * @param db - Drizzle database instance (defaults to drizzleDb)
- * @param register - Better Auth register function (defaults to betterAuthRegister)
+ * @param register - Creates the account (defaults to createCredentialAccount)
  * @param notify - Notification function (defaults to notifyNewMemberJoined)
  * @param translate - Translation function (defaults to t)
  * @returns Success status and new user ID
@@ -129,15 +135,34 @@ export async function getUnclaimedProfilesData(
  *   "password123"
  * );
  */
+type RegisterFn = (
+  email: string,
+  name: string,
+  password: string
+) => Promise<{ user: { id: string } } | null>;
+
+/**
+ * Account creation for profile claims. Does not go through public sign-up,
+ * so it works while self sign-up is disabled.
+ */
+const registerClaimedUser: RegisterFn = async (email, name, password) => {
+  const { userId } = await createCredentialAccount({ email, name, password });
+  return { user: { id: userId } };
+};
+
 export async function claimProfileData(
   email: string,
   personId: string,
   password: string,
   db: AuthDb = drizzleDb,
-  register: typeof betterAuthRegister = betterAuthRegister,
+  register: RegisterFn = registerClaimedUser,
   notify: typeof notifyNewMemberJoined = notifyNewMemberJoined,
   translate: typeof t = t
 ): Promise<ClaimProfileResult> {
+  if (!(await isProfileClaimingEnabledData(db))) {
+    throw new Error("Profile claiming is disabled");
+  }
+
   try {
     // Validate person exists and is living
     const [person] = await db

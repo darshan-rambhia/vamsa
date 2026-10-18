@@ -12,15 +12,16 @@ import { csrf } from "hono/csrf";
 import { compress } from "hono/compress";
 import { NONCE, secureHeaders } from "hono/secure-headers";
 import { loggers } from "@vamsa/lib/logger";
-import { auth } from "@vamsa/lib/server/business";
-import { drizzleDb, getDrizzlePoolStats } from "@vamsa/api";
-import { sql } from "drizzle-orm";
+import { auth, isSelfSignupEnabled } from "@vamsa/lib/server/business";
+import { getDrizzlePoolStats, pingDatabase } from "@vamsa/api";
 import { rateLimitMiddleware } from "../src/server/middleware/hono-rate-limiter";
+import { accountLockoutMiddleware } from "../src/server/middleware/account-lockout";
 import {
   initTrustedProxies,
   trustedProxyMiddleware,
 } from "../src/server/middleware/trusted-proxy";
 import { etagMiddleware, getETagMetrics } from "./middleware/etag";
+import { withPublicOrigin } from "./middleware/public-origin";
 import { telemetryMiddleware } from "./middleware/telemetry";
 import { serveMedia } from "./middleware/media-server";
 import { mediaAuthMiddleware } from "./middleware/media-auth";
@@ -259,7 +260,7 @@ export async function createHonoApp(
   // Performs actual database query to verify system is fully operational
   app.get("/readyz", async (c) => {
     try {
-      await drizzleDb.execute(sql`SELECT 1`);
+      await pingDatabase();
       return c.json({ status: "ready" });
     } catch (error) {
       return c.json(
@@ -461,11 +462,28 @@ Disallow: /
   // Sign in: 5 attempts per minute
   app.use("/api/auth/sign-in/*", rateLimitMiddleware("login"));
 
+  // Invite-only instances: refuse public sign-up before any work is done
+  app.use("/api/auth/sign-up/*", async (c, next) => {
+    if (!isSelfSignupEnabled()) {
+      return c.json(
+        {
+          code: "REGISTRATION_INVITE_ONLY",
+          message: "Registration is by invite only",
+        },
+        403
+      );
+    }
+    await next();
+  });
+
   // Sign up: 3 attempts per hour
   app.use("/api/auth/sign-up/*", rateLimitMiddleware("register"));
 
   // Forget password: 3 attempts per hour
   app.use("/api/auth/forget-password/*", rateLimitMiddleware("passwordReset"));
+
+  // Per-account lockout after repeated failed sign-ins (only acts on sign-in/email)
+  app.use("/api/auth/sign-in/*", accountLockoutMiddleware);
 
   // Mount Better Auth SDK endpoints at /api/auth/*
   // This handles authentication flows from the Better Auth React client
@@ -554,7 +572,9 @@ Disallow: /
         headers.set("x-csp-nonce", nonce);
       }
 
-      const modifiedRequest = new Request(c.req.raw, { headers });
+      const modifiedRequest = withPublicOrigin(
+        new Request(c.req.raw, { headers })
+      );
 
       // Call TanStack Start's fetch handler
       const response = await tanstackFetch(modifiedRequest);

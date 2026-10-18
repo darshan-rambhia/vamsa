@@ -14,6 +14,7 @@ import {
 } from "@vamsa/ui";
 import { validateSession } from "~/server/auth.functions";
 import { getOIDCClaimStatus } from "~/server/claim.functions";
+import { getProfileClaimingStatus } from "~/server/profile-claiming";
 import { OIDCProfileClaimModal } from "~/components/auth/oidc-profile-claim-modal";
 
 export const Route = createFileRoute("/_authenticated/settings/profile")({
@@ -39,7 +40,15 @@ function ProfileSettingsPage() {
     enabled: !!user?.oidcProvider,
   });
 
+  // Claiming is off unless an admin enables it; hide the section otherwise
+  const { data: claimingStatus } = useQuery({
+    queryKey: ["profile-claiming-status"],
+    queryFn: () => getProfileClaimingStatus(),
+    enabled: !!user?.oidcProvider,
+  });
+
   const isOIDCUser = !!user?.oidcProvider;
+  const claimingEnabled = claimingStatus?.enabled === true;
   const hasClaimedProfile = !!claimStatus?.personId;
 
   return (
@@ -91,8 +100,8 @@ function ProfileSettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Profile Link Section - Only for OIDC users */}
-          {isOIDCUser && (
+          {/* Profile Link Section - Only for OIDC users when claiming is enabled */}
+          {isOIDCUser && claimingEnabled && (
             <Card>
               <CardHeader>
                 <CardTitle>{t("familyTreeProfile")}</CardTitle>
@@ -165,10 +174,12 @@ function ProfileSettingsPage() {
       </Container>
 
       {/* Profile Claim Modal */}
-      <OIDCProfileClaimModal
-        open={showClaimModal}
-        onOpenChange={setShowClaimModal}
-      />
+      {claimingEnabled && (
+        <OIDCProfileClaimModal
+          open={showClaimModal}
+          onOpenChange={setShowClaimModal}
+        />
+      )}
     </>
   );
 }

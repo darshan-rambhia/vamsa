@@ -15,6 +15,7 @@ export {
   db as drizzleDb,
   closeDb as closeDrizzleDb,
   getPoolStats as getDrizzlePoolStats,
+  pingDatabase,
   getDbDriver,
   type DbDriver,
   type DrizzleDB,

@@ -16,19 +16,15 @@ import { config } from "dotenv";
 
 import { eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
-import { createSeedConnection, getDbDriver } from "./db-factory";
+import { createSeedConnection } from "./db-factory";
 import { hashPassword } from "./password";
 import type { DrizzleDB } from "./db";
 
-const driver = getDbDriver();
-
 /**
- * Convert a Date to the appropriate format for date-only columns.
- * SQLite uses text columns (ISO string), PG uses date columns (Date object).
+ * Date-only values. Both drivers take a Date (SQLite via dateOnly column type).
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function dateVal(isoStr: string): any {
-  return driver === "sqlite" ? isoStr : new Date(isoStr);
+function dateVal(isoStr: string): Date {
+  return new Date(isoStr);
 }
 
 // Load .env from monorepo root

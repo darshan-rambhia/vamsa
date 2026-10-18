@@ -297,6 +297,13 @@ export async function updateUserData(
 
   const updated = result[0];
 
+  // Deactivation must take effect immediately: drop existing sessions
+  if (data.isActive === false) {
+    await db
+      .delete(drizzleSchema.sessions)
+      .where(eq(drizzleSchema.sessions.userId, userId));
+  }
+
   log.info(
     {
       targetUserId: userId,

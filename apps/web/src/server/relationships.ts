@@ -41,6 +41,7 @@ export const listRelationships = createServerFn({ method: "GET" })
     return schema.parse(data);
   })
   .handler(async ({ data }) => {
+    await requireAuth("VIEWER");
     try {
       const relationships = await listRelationshipsData(
         data.personId,
@@ -73,6 +74,7 @@ export const getRelationship = createServerFn({ method: "GET" })
     return schema.parse(data);
   })
   .handler(async ({ data }) => {
+    await requireAuth("VIEWER");
     try {
       const relationship = await getRelationshipData(data.id);
       return relationship;
@@ -186,7 +188,7 @@ export const deleteRelationship = createServerFn({ method: "POST" })
     return schema.parse(data);
   })
   .handler(async ({ data }) => {
-    const user = await requireAuth("MEMBER");
+    const user = await requireAuth("ADMIN");
 
     try {
       const result = await deleteRelationshipData(data.id);
@@ -217,6 +219,7 @@ export const deleteRelationship = createServerFn({ method: "POST" })
  */
 export const getFamilyTree = createServerFn({ method: "GET" }).handler(
   async () => {
+    await requireAuth("VIEWER");
     try {
       const [persons, relationships] = await Promise.all([
         drizzleDb.select().from(drizzleSchema.persons),

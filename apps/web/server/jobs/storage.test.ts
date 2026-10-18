@@ -6,7 +6,15 @@
  * - deleteFromStorage: Delete backup from cloud storage
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import { deleteFromStorage, uploadToStorage } from "./storage";
 import type { StorageProvider } from "./storage";
 
@@ -14,14 +22,25 @@ import type { StorageProvider } from "./storage";
 const mockS3Write = vi.fn(async () => undefined);
 const mockS3Unlink = vi.fn(async () => undefined);
 
-// Define Bun global for Vitest (not available outside Bun runtime)
-(globalThis as any).Bun = (globalThis as any).Bun || {};
-(globalThis as any).Bun.S3Client = class MockS3Client {
+// Bun runs these tests (`bun --bun vitest`). globalThis.Bun is non-configurable,
+// but Bun.S3Client is writable, so swap the client class for the suite only.
+class MockS3Client {
   write = mockS3Write;
   unlink = mockS3Unlink;
-};
+}
+const bunRuntime = globalThis as unknown as { Bun: { S3Client: unknown } };
+let originalS3Client: unknown;
 
 describe("Cloud Storage Integration", () => {
+  beforeAll(() => {
+    originalS3Client = bunRuntime.Bun.S3Client;
+    bunRuntime.Bun.S3Client = MockS3Client;
+  });
+
+  afterAll(() => {
+    bunRuntime.Bun.S3Client = originalS3Client;
+  });
+
   beforeEach(() => {
     mockS3Write.mockClear();
     mockS3Unlink.mockClear();

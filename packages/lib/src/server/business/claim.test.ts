@@ -35,6 +35,9 @@ const mockReturning = vi.fn(() => Promise.resolve([] as Array<any>));
 
 const mockDrizzleDb = {
   query: {
+    familySettings: {
+      findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+    },
     users: {
       findFirst: vi.fn(() => Promise.resolve(null)),
       findMany: vi.fn(() => Promise.resolve([])),
@@ -819,6 +822,9 @@ describe("Claim Server Business Logic", () => {
       // Create inline mock db for this test
       const inlineDb = {
         query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
           users: {
             findFirst: vi.fn(() => Promise.resolve(mockUser)),
             findMany: vi.fn(() => Promise.resolve([])),
@@ -868,6 +874,9 @@ describe("Claim Server Business Logic", () => {
       // Create inline mock db with proper fluent API
       const inlineDb = {
         query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
           users: {
             findFirst: vi
               .fn()
@@ -910,6 +919,9 @@ describe("Claim Server Business Logic", () => {
 
       const inlineDb = {
         query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
           users: {
             findFirst: vi.fn(() => Promise.resolve(mockUser)),
           },
@@ -940,6 +952,9 @@ describe("Claim Server Business Logic", () => {
 
       const inlineDb = {
         query: {
+          familySettings: {
+            findFirst: vi.fn(async () => ({ allowProfileClaiming: true })),
+          },
           users: {
             findFirst: vi.fn(() => Promise.resolve(mockUser)),
           },

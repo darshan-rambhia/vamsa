@@ -1,5 +1,5 @@
 import { createMiddleware } from "hono/factory";
-import { betterAuthGetSessionWithUserFromCookie } from "@vamsa/lib/server/business/auth-better-api";
+import { betterAuthGetSessionWithUser } from "@vamsa/lib/server/business/auth-better-api";
 import { loggers } from "@vamsa/lib/logger";
 
 const log = loggers.api;
@@ -81,8 +81,11 @@ export const mediaAuthMiddleware = createMiddleware(async (c, next) => {
     );
   }
 
-  // Extract session token from cookie for cache key
-  const tokenMatch = cookieHeader.match(/better-auth\.session_token=([^;]+)/);
+  // Extract session token from cookie for cache key.
+  // Over HTTPS Better Auth prefixes the cookie name with `__Secure-`.
+  const tokenMatch = cookieHeader.match(
+    /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=([^;]+)/
+  );
   const sessionToken = tokenMatch?.[1];
 
   if (!sessionToken) {
@@ -104,7 +107,7 @@ export const mediaAuthMiddleware = createMiddleware(async (c, next) => {
   }
 
   // Validate session against DB
-  const user = await betterAuthGetSessionWithUserFromCookie(cookieHeader);
+  const user = await betterAuthGetSessionWithUser(c.req.raw.headers);
 
   if (!user) {
     log.warn({ path: c.req.path }, "Media auth failed: invalid session");

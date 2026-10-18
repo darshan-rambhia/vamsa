@@ -15,6 +15,7 @@ import {
   checkAuthHandler,
   claimProfileHandler,
   getAvailableProvidersHandler,
+  getRegistrationStatusHandler,
   getSessionHandler,
   getUnclaimedProfilesHandler,
   logoutHandler,
@@ -138,6 +139,16 @@ export const logout = createServerFn({ method: "POST" }).handler(logoutHandler);
  */
 export const getAvailableProviders = createServerFn({ method: "GET" }).handler(
   getAvailableProvidersHandler
+);
+
+/**
+ * Whether public sign-up is open. Invite-only instances return false.
+ *
+ * @example
+ * const { selfSignupEnabled } = await getRegistrationStatus();
+ */
+export const getRegistrationStatus = createServerFn({ method: "GET" }).handler(
+  getRegistrationStatusHandler
 );
 
 // Create separate server functions for aliases to avoid bundler initialization issues

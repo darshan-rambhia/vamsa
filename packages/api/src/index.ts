@@ -7,6 +7,7 @@ export {
   drizzleDb,
   closeDrizzleDb,
   getDrizzlePoolStats,
+  pingDatabase,
   drizzleSchema,
   getDbDriver,
   type DbDriver,
@@ -41,3 +42,10 @@ export {
   createPasswordResetEmail,
 } from "./email";
 export type { NotificationPreferences, EmailTemplate } from "./email";
+
+// Production startup: migrations and first-admin bootstrap
+export { runMigrations, type RunMigrationsOptions } from "./drizzle/migrate";
+export {
+  bootstrapAdminUser,
+  type BootstrapAdminResult,
+} from "./drizzle/bootstrap-admin";

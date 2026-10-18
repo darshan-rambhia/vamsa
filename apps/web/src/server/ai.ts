@@ -8,6 +8,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { getAIClient, isAIEnabled } from "@vamsa/lib/ai";
+import { requireAuth } from "./middleware/require-auth";
 import type { AIAvailability, StoryResult, SuggestResult } from "@vamsa/lib/ai";
 
 /**
@@ -23,6 +24,7 @@ import type { AIAvailability, StoryResult, SuggestResult } from "@vamsa/lib/ai";
  */
 export const getAIAvailabilityFn = createServerFn({ method: "GET" }).handler(
   async (): Promise<AIAvailability> => {
+    await requireAuth("VIEWER");
     if (!isAIEnabled()) {
       return { available: false, reason: "AI features are disabled" };
     }
@@ -52,6 +54,7 @@ interface StoryInput {
 export const generateStoryFn = createServerFn({ method: "POST" })
   .inputValidator((data: StoryInput) => data)
   .handler(async ({ data }): Promise<StoryResult> => {
+    await requireAuth("MEMBER");
     if (!isAIEnabled()) {
       throw new Error("AI features are disabled");
     }
@@ -78,6 +81,7 @@ interface SuggestInput {
 export const suggestFieldsFn = createServerFn({ method: "POST" })
   .inputValidator((data: SuggestInput) => data)
   .handler(async ({ data }): Promise<SuggestResult> => {
+    await requireAuth("MEMBER");
     if (!isAIEnabled()) {
       throw new Error("AI features are disabled");
     }

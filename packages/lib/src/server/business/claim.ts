@@ -15,6 +15,7 @@ import { and, asc, eq, isNotNull, notInArray } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 import { findSuggestedMatches } from "@vamsa/lib";
 import { notifyNewMemberJoined } from "./notifications";
+import { isProfileClaimingEnabledData } from "./settings";
 import type { ClaimableProfile, ClaimingUser, ProfileMatch } from "@vamsa/lib";
 
 const log = loggers.auth;
@@ -40,6 +41,10 @@ export async function getClaimableProfilesData(
   userId: string,
   db: ClaimDb = drizzleDb
 ) {
+  if (!(await isProfileClaimingEnabledData(db))) {
+    throw new Error("Profile claiming is disabled");
+  }
+
   const user = await db.query.users.findFirst({
     where: eq(drizzleSchema.users.id, userId),
   });
@@ -143,6 +148,10 @@ export async function claimProfileForOIDCData(
   db: ClaimDb = drizzleDb,
   notify: typeof notifyNewMemberJoined = notifyNewMemberJoined
 ) {
+  if (!(await isProfileClaimingEnabledData(db))) {
+    throw new Error("Profile claiming is disabled");
+  }
+
   // Fetch user with current state
   const user = await db.query.users.findFirst({
     where: eq(drizzleSchema.users.id, userId),

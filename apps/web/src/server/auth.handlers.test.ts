@@ -18,10 +18,12 @@ import {
   checkAuthHandler,
   claimProfileHandler,
   getAvailableProvidersHandler,
+  getRegistrationStatusHandler,
   getSessionHandler,
   getUnclaimedProfilesHandler,
   logoutHandler,
 } from "./auth.server";
+import type { MockAuthUser } from "@test/server-fn-fixtures";
 
 // =============================================================================
 // Mocks for Handler Tests
@@ -34,11 +36,8 @@ const {
   mockBetterAuthChangePassword,
   mockBetterAuthSignOut,
   mockGetBetterAuthProviders,
-  mockBetterAuthGetSessionWithUserFromCookie,
-  mockGetCookie,
-  mockSetCookie,
-  mockDeleteCookie,
-  mockGetHeaders,
+  mockBetterAuthGetSessionWithUser,
+  mockGetRequestHeaders,
 } = vi.hoisted(() => ({
   mockGetUnclaimedProfilesData: vi.fn(async () => [
     { id: "person-1", firstName: "John", lastName: "Doe" },
@@ -56,24 +55,18 @@ const {
     microsoft: false,
     oidc: true,
   })),
-  mockBetterAuthGetSessionWithUserFromCookie: vi.fn(
-    async (_cookie: string | undefined) => {
-      return null as any;
-    }
+  mockBetterAuthGetSessionWithUser: vi.fn(
+    async (_headers: Headers): Promise<any> => null
   ),
-  // TanStack Start server mocks
-  mockGetCookie: vi.fn((_name: string): string | undefined => undefined),
-  mockSetCookie: vi.fn(),
-  mockDeleteCookie: vi.fn(),
-  mockGetHeaders: vi.fn(() => ({})),
+  // Mirrors the real request-header API; cookies are read from the test context
+  mockGetRequestHeaders: vi.fn((): Headers => new Headers()),
 }));
 
 // Mock TanStack Start server functions
 vi.mock("@tanstack/react-start/server", () => ({
-  getCookie: mockGetCookie,
-  setCookie: mockSetCookie,
-  deleteCookie: mockDeleteCookie,
-  getHeaders: mockGetHeaders,
+  getRequestHeaders: mockGetRequestHeaders,
+  getRequestHeader: (name: string) =>
+    mockGetRequestHeaders().get(name) ?? undefined,
 }));
 
 // Mock the business logic modules
@@ -83,8 +76,7 @@ vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
   betterAuthChangePassword: mockBetterAuthChangePassword,
   betterAuthSignOut: mockBetterAuthSignOut,
   getBetterAuthProviders: mockGetBetterAuthProviders,
-  betterAuthGetSessionWithUserFromCookie:
-    mockBetterAuthGetSessionWithUserFromCookie,
+  betterAuthGetSessionWithUser: mockBetterAuthGetSessionWithUser,
   // Stubs for functions not used in these tests
   betterAuthLogin: async () => {
     throw new Error("betterAuthLogin: Not implemented in test");
@@ -95,9 +87,27 @@ vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
   betterAuthGetSession: async () => {
     throw new Error("betterAuthGetSession: Not implemented in test");
   },
-  betterAuthGetSessionWithUser: async () => {
-    throw new Error("betterAuthGetSessionWithUser: Not implemented in test");
+}));
+
+// requireAuth runs for real: it reads the session through the stubbed
+// auth-better-api above, then loads the user row. The row comes from the
+// user set by withContext below.
+const { mockCurrentUser } = vi.hoisted(() => ({
+  mockCurrentUser: { value: null as MockAuthUser | null },
+}));
+
+vi.mock("@vamsa/lib/server/db", () => ({
+  drizzleDb: {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: async () =>
+            mockCurrentUser.value ? [mockCurrentUser.value] : [],
+        }),
+      }),
+    }),
   },
+  drizzleSchema: { users: { id: "id" } },
 }));
 
 vi.mock("@vamsa/lib/server/business/auth", () => ({
@@ -115,32 +125,43 @@ vi.mock("@vamsa/lib/server/business/auth", () => ({
 interface TestContext {
   user?: (typeof testUsers)[keyof typeof testUsers] | null;
   cookies?: Record<string, string>;
+  /** Session cookie name to send (defaults to the plain HTTP name) */
+  sessionCookieName?: string;
 }
 
 async function withContext<T>(
   context: TestContext,
   fn: () => T | Promise<T>
 ): Promise<T> {
-  // Setup mocks for this context
-  mockGetCookie.mockImplementation((name: string): string | undefined => {
-    if (context.cookies && name in context.cookies) {
-      return context.cookies[name];
+  // Request headers carry the session cookie under the name Better Auth uses.
+  // Over HTTPS that is the `__Secure-` prefixed variant.
+  mockGetRequestHeaders.mockImplementation(() => {
+    const headers = new Headers();
+    const pairs = Object.entries(context.cookies ?? {}).map(
+      ([k, v]) => `${k}=${v}`
+    );
+    if (context.user) {
+      pairs.push(
+        `${context.sessionCookieName ?? "better-auth.session_token"}=stub-session-${context.user.id}`
+      );
     }
-    if (context.user && name === "better-auth.session_token") {
-      return `stub-session-${context.user.id}`;
-    }
-    return undefined;
+    if (pairs.length > 0) headers.set("cookie", pairs.join("; "));
+    return headers;
   });
 
-  mockBetterAuthGetSessionWithUserFromCookie.mockImplementation(
-    async () => (context.user ?? null) as any
+  mockCurrentUser.value = context.user ?? null;
+
+  // Simulate Better Auth: only resolve when a recognised session cookie is sent
+  mockBetterAuthGetSessionWithUser.mockImplementation(
+    async (headers: Headers) => {
+      const cookie = headers.get("cookie") ?? "";
+      const hasSession =
+        /(?:^|;\s*)(?:__Secure-)?better-auth\.session_token=/.test(cookie);
+      return hasSession ? (context.user ?? null) : null;
+    }
   );
 
-  try {
-    return await fn();
-  } finally {
-    // Cleanup is handled by beforeEach/afterEach
-  }
+  return await fn();
 }
 
 // =============================================================================
@@ -233,6 +254,14 @@ describe("Auth Handlers", () => {
       confirmPassword: "NewPassword1!",
     };
 
+    it("rejects unauthenticated callers before touching the password", async () => {
+      mockBetterAuthChangePassword.mockClear();
+      await expect(
+        withContext({}, () => changePasswordHandler(validPasswordData))
+      ).rejects.toThrow("Please log in to continue");
+      expect(mockBetterAuthChangePassword).not.toHaveBeenCalled();
+    });
+
     it("changes password for authenticated user", async () => {
       const result = await withContext({ user: testUsers.member }, () =>
         changePasswordHandler(validPasswordData)
@@ -257,6 +286,22 @@ describe("Auth Handlers", () => {
       const result = await withContext({}, () => getSessionHandler());
 
       expect(result).toBeNull();
+    });
+
+    it("resolves the session from the __Secure- prefixed cookie (HTTPS)", async () => {
+      const result = await withContext(
+        {
+          user: testUsers.viewer,
+          sessionCookieName: "__Secure-better-auth.session_token",
+        },
+        () => getSessionHandler()
+      );
+
+      expect(result?.email).toBe(testUsers.viewer.email);
+      const passed = mockBetterAuthGetSessionWithUser.mock.calls[0]?.[0];
+      expect(passed?.get("cookie")).toContain(
+        "__Secure-better-auth.session_token="
+      );
     });
   });
 
@@ -293,6 +338,28 @@ describe("Auth Handlers", () => {
       const result = await withContext({}, () => logoutHandler());
 
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe("getRegistrationStatusHandler", () => {
+    const original = process.env.ALLOW_SELF_SIGNUP;
+    afterEach(() => {
+      if (original === undefined) delete process.env.ALLOW_SELF_SIGNUP;
+      else process.env.ALLOW_SELF_SIGNUP = original;
+    });
+
+    it("reports invite-only when ALLOW_SELF_SIGNUP=false", async () => {
+      process.env.ALLOW_SELF_SIGNUP = "false";
+      expect(await getRegistrationStatusHandler()).toEqual({
+        selfSignupEnabled: false,
+      });
+    });
+
+    it("reports open when ALLOW_SELF_SIGNUP=true", async () => {
+      process.env.ALLOW_SELF_SIGNUP = "true";
+      expect(await getRegistrationStatusHandler()).toEqual({
+        selfSignupEnabled: true,
+      });
     });
   });
 

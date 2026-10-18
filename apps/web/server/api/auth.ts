@@ -9,6 +9,7 @@ import {
   betterAuthLogin,
   betterAuthRegister,
   betterAuthSignOut,
+  isSelfSignupEnabled,
 } from "@vamsa/lib/server/business";
 import { loggers } from "@vamsa/lib/logger";
 
@@ -199,6 +200,14 @@ const registerRoute = createRoute({
         },
       },
     },
+    403: {
+      description: "Self sign-up is disabled (invite-only instance)",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
     409: {
       description: "Email already in use",
       content: {
@@ -219,6 +228,10 @@ const registerRoute = createRoute({
 });
 
 authRouter.openapi(registerRoute, async (c) => {
+  if (!isSelfSignupEnabled()) {
+    return c.json({ error: "Registration is by invite only" }, { status: 403 });
+  }
+
   try {
     const {
       email,
@@ -305,25 +318,38 @@ const logoutRoute = createRoute({
   },
 });
 
+/**
+ * Expire the Better Auth session cookie in both naming forms.
+ * Over HTTPS Better Auth uses the `__Secure-` prefix, so clearing only the
+ * plain name leaves the real cookie in the browser.
+ */
+function clearSessionCookies(c: {
+  header: (name: string, value: string, options?: { append?: boolean }) => void;
+}) {
+  c.header(
+    "Set-Cookie",
+    "better-auth.session_token=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0",
+    { append: true }
+  );
+  c.header(
+    "Set-Cookie",
+    "__Secure-better-auth.session_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0",
+    { append: true }
+  );
+}
+
 authRouter.openapi(logoutRoute, async (c) => {
   try {
     // Use Better Auth for logout
     await betterAuthSignOut(c.req.raw.headers);
 
-    // Clear the Better Auth session cookie
-    c.header(
-      "Set-Cookie",
-      "better-auth.session_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0"
-    );
+    clearSessionCookies(c);
 
     return c.json({ success: true as const }, { status: 200 });
   } catch (error) {
     log.withErr(error).msg("Logout error");
-    // Still clear cookie even if signOut fails (user may already be logged out)
-    c.header(
-      "Set-Cookie",
-      "better-auth.session_token=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0"
-    );
+    // Still clear cookies even if signOut fails (user may already be logged out)
+    clearSessionCookies(c);
     return c.json({ success: true as const }, { status: 200 });
   }
 });

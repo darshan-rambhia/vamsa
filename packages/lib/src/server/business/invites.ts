@@ -27,6 +27,7 @@ import { createPaginationMeta } from "@vamsa/schemas";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
+import { createCredentialAccount } from "./auth-accounts";
 import type { SQLWrapper } from "drizzle-orm";
 
 const log = loggers.auth;
@@ -362,21 +363,26 @@ export async function getInviteByTokenData(
  * - Invite has not expired
  * - Email is not already taken
  *
- * Creates user and updates invite status in a transaction to ensure atomicity.
- * Hashes password using Bun.password (argon2id algorithm).
+ * The invite is marked ACCEPTED first (conditional on PENDING, so two
+ * concurrent accepts cannot both succeed). If account creation fails the
+ * invite is reset to PENDING. The account is created through Better Auth's
+ * internal adapter, so it gets a credential Account row and can log in.
+ * Invite acceptance does not depend on public sign-up being enabled.
  *
  * @param token - Invite token
  * @param name - New user's name
  * @param password - New user's password
  * @param db - Drizzle database instance
+ * @param createAccount - Creates the user + credential account (injected for tests)
  * @returns Success response with new user ID
- * @throws Error if validation fails or transaction fails
+ * @throws Error if validation fails or account creation fails
  */
 export async function acceptInviteData(
   token: string,
   name: string,
   password: string,
-  db: InvitesDb = drizzleDb
+  db: InvitesDb = drizzleDb,
+  createAccount: typeof createCredentialAccount = createCredentialAccount
 ) {
   const inviteResult = await db
     .select()
@@ -413,49 +419,45 @@ export async function acceptInviteData(
     throw new Error("An account already exists with this email");
   }
 
-  // Hash password using Bun's native password hashing (argon2id by default)
-  const passwordHash = await Bun.password.hash(password);
+  // Claim the invite atomically: only one concurrent accept can flip PENDING
+  const claimed = await db
+    .update(drizzleSchema.invites)
+    .set({ status: "ACCEPTED", acceptedAt: new Date() })
+    .where(
+      and(
+        eq(drizzleSchema.invites.id, invite.id),
+        eq(drizzleSchema.invites.status, "PENDING")
+      )
+    )
+    .returning();
 
-  // Create user and update invite in transaction for atomicity
-  const newUser = await db.transaction(async (tx) => {
-    // Create user
-    const now = new Date();
-    const userResult = await tx
-      .insert(drizzleSchema.users)
-      .values({
-        id: crypto.randomUUID(),
-        email: invite.email,
-        name,
-        passwordHash,
-        role: invite.role,
-        personId: invite.personId,
-        invitedById: invite.invitedById,
-        isActive: true,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .returning();
+  if (claimed.length === 0) {
+    throw new Error("Invite is no longer pending, cannot accept");
+  }
 
-    const createdUser = userResult[0];
-
-    // Update invite status
-    await tx
+  let userId: string;
+  try {
+    // The invite token was sent to this email, so the address is verified
+    ({ userId } = await createAccount({
+      email: invite.email,
+      name,
+      password,
+      emailVerified: true,
+      role: invite.role,
+      personId: invite.personId,
+      invitedById: invite.invitedById,
+    }));
+  } catch (error) {
+    await db
       .update(drizzleSchema.invites)
-      .set({
-        status: "ACCEPTED",
-        acceptedAt: new Date(),
-      })
+      .set({ status: "PENDING", acceptedAt: null })
       .where(eq(drizzleSchema.invites.id, invite.id));
+    throw error;
+  }
 
-    return createdUser;
-  });
+  log.info({ inviteId: invite.id, userId }, "Invite accepted, user created");
 
-  log.info(
-    { inviteId: invite.id, userId: newUser.id },
-    "Invite accepted, user created"
-  );
-
-  return { success: true, userId: newUser.id };
+  return { success: true, userId };
 }
 
 /**

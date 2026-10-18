@@ -12,11 +12,18 @@ config({
   path: path.resolve(__dirname, "../../.env"),
   quiet: true,
 });
+// run-e2e.ts --sqlite sets DB_DRIVER and a SQLite DATABASE_URL. .env.test
+// (PostgreSQL URL) must not replace that, or the web server opens a
+// postgres:// string as a SQLite file.
+const runnerDatabaseUrl = process.env.DATABASE_URL;
 config({
   path: path.resolve(__dirname, "../../.env.test"),
   override: true,
   quiet: true,
 });
+if (process.env.DB_DRIVER === "sqlite" && runnerDatabaseUrl) {
+  process.env.DATABASE_URL = runnerDatabaseUrl;
+}
 
 // In Docker, IN_DOCKER=true is set by docker-compose
 // Locally, we start the server ourselves on localhost
@@ -51,6 +58,8 @@ const webServerConfig = isDocker
         // Match CI: server runs in test mode with rate limiting disabled
         NODE_ENV: "test",
         E2E_TESTING: "true",
+        // Re-enables /dev/errors (404 in prod builds). E2E only.
+        VAMSA_ENABLE_DEV_ROUTES: "true",
       },
     };
 
