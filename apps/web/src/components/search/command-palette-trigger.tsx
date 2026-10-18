@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 
 /**
@@ -9,10 +10,12 @@ import { Search } from "lucide-react";
  * Dispatches a custom event to open the CommandPalette.
  */
 export function CommandPaletteTrigger() {
-  // Detect OS for keyboard shortcut display
-  const isMac =
-    typeof window !== "undefined" &&
-    navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+  // Detect OS after mount. Reading navigator during render made the SSR text
+  // ("Ctrl") differ from the Mac client text ("⌘") and broke hydration.
+  const [isMac, setIsMac] = useState(false);
+  useEffect(() => {
+    setIsMac(navigator.platform.toUpperCase().indexOf("MAC") >= 0);
+  }, []);
 
   const handleClick = () => {
     document.dispatchEvent(new CustomEvent("open-command-palette"));
