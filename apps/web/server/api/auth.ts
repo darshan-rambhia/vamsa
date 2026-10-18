@@ -9,6 +9,7 @@ import {
   betterAuthLogin,
   betterAuthRegister,
   betterAuthSignOut,
+  isSelfSignupEnabled,
 } from "@vamsa/lib/server/business";
 import { loggers } from "@vamsa/lib/logger";
 
@@ -199,6 +200,14 @@ const registerRoute = createRoute({
         },
       },
     },
+    403: {
+      description: "Self sign-up is disabled (invite-only instance)",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
     409: {
       description: "Email already in use",
       content: {
@@ -219,6 +228,10 @@ const registerRoute = createRoute({
 });
 
 authRouter.openapi(registerRoute, async (c) => {
+  if (!isSelfSignupEnabled()) {
+    return c.json({ error: "Registration is by invite only" }, { status: 403 });
+  }
+
   try {
     const {
       email,

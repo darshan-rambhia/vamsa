@@ -12,7 +12,7 @@ import { csrf } from "hono/csrf";
 import { compress } from "hono/compress";
 import { NONCE, secureHeaders } from "hono/secure-headers";
 import { loggers } from "@vamsa/lib/logger";
-import { auth } from "@vamsa/lib/server/business";
+import { auth, isSelfSignupEnabled } from "@vamsa/lib/server/business";
 import { drizzleDb, getDrizzlePoolStats } from "@vamsa/api";
 import { sql } from "drizzle-orm";
 import { rateLimitMiddleware } from "../src/server/middleware/hono-rate-limiter";
@@ -460,6 +460,20 @@ Disallow: /
   // Apply rate limiting to specific Better Auth routes
   // Sign in: 5 attempts per minute
   app.use("/api/auth/sign-in/*", rateLimitMiddleware("login"));
+
+  // Invite-only instances: refuse public sign-up before any work is done
+  app.use("/api/auth/sign-up/*", async (c, next) => {
+    if (!isSelfSignupEnabled()) {
+      return c.json(
+        {
+          code: "REGISTRATION_INVITE_ONLY",
+          message: "Registration is by invite only",
+        },
+        403
+      );
+    }
+    await next();
+  });
 
   // Sign up: 3 attempts per hour
   app.use("/api/auth/sign-up/*", rateLimitMiddleware("register"));

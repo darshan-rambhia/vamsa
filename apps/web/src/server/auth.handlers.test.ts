@@ -18,6 +18,7 @@ import {
   checkAuthHandler,
   claimProfileHandler,
   getAvailableProvidersHandler,
+  getRegistrationStatusHandler,
   getSessionHandler,
   getUnclaimedProfilesHandler,
   logoutHandler,
@@ -305,6 +306,28 @@ describe("Auth Handlers", () => {
       const result = await withContext({}, () => logoutHandler());
 
       expect(result.success).toBe(true);
+    });
+  });
+
+  describe("getRegistrationStatusHandler", () => {
+    const original = process.env.ALLOW_SELF_SIGNUP;
+    afterEach(() => {
+      if (original === undefined) delete process.env.ALLOW_SELF_SIGNUP;
+      else process.env.ALLOW_SELF_SIGNUP = original;
+    });
+
+    it("reports invite-only when ALLOW_SELF_SIGNUP=false", async () => {
+      process.env.ALLOW_SELF_SIGNUP = "false";
+      expect(await getRegistrationStatusHandler()).toEqual({
+        selfSignupEnabled: false,
+      });
+    });
+
+    it("reports open when ALLOW_SELF_SIGNUP=true", async () => {
+      process.env.ALLOW_SELF_SIGNUP = "true";
+      expect(await getRegistrationStatusHandler()).toEqual({
+        selfSignupEnabled: true,
+      });
     });
   });
 

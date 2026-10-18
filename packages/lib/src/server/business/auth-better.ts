@@ -4,6 +4,7 @@ import { bearer, genericOAuth } from "better-auth/plugins";
 // import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { drizzleDb, drizzleSchema, getDbDriver } from "@vamsa/api";
 import { assertUserCanStartSession } from "./auth-session-policy";
+import { isSelfSignupEnabled } from "./auth-registration";
 
 // Cross-runtime password hashing that works in both Node.js (Vite dev) and Bun
 const isBunRuntime = typeof globalThis.Bun !== "undefined";
@@ -124,6 +125,9 @@ export const auth = betterAuth({
   // Email and password authentication
   emailAndPassword: {
     enabled: true,
+    // Invite-only unless ALLOW_SELF_SIGNUP=true. Blocks /sign-up/email only;
+    // genericOAuth implicit sign-up uses its own provider options.
+    disableSignUp: !isSelfSignupEnabled(),
     minPasswordLength: 12,
     requireEmailVerification: process.env.NODE_ENV !== "test",
     // Cross-runtime password hashing (works in both Node.js/Vite and Bun)

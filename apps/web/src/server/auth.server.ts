@@ -15,6 +15,7 @@ import {
   betterAuthSignOut,
   getBetterAuthProviders,
 } from "@vamsa/lib/server/business/auth-better-api";
+import { isSelfSignupEnabled } from "@vamsa/lib/server/business/auth-registration";
 import {
   claimProfileData,
   getUnclaimedProfilesData,
@@ -146,4 +147,11 @@ export async function logoutHandler() {
  */
 export async function getAvailableProvidersHandler() {
   return getBetterAuthProviders();
+}
+
+/**
+ * Whether public sign-up is enabled (false = invite-only)
+ */
+export async function getRegistrationStatusHandler() {
+  return { selfSignupEnabled: isSelfSignupEnabled() };
 }
