@@ -18,6 +18,7 @@ export interface FamilySettingsData {
   description: string;
   allowSelfRegistration: boolean;
   requireApprovalForEdits: boolean;
+  allowProfileClaiming: boolean;
   metricsDashboardUrl: string | null;
   metricsApiUrl: string | null;
 }
@@ -31,6 +32,7 @@ export interface UpdateFamilySettingsInput {
   description?: string;
   allowSelfRegistration: boolean;
   requireApprovalForEdits: boolean;
+  allowProfileClaiming?: boolean;
   metricsDashboardUrl?: string | null;
   metricsApiUrl?: string | null;
 }
@@ -56,6 +58,7 @@ export async function getFamilySettingsData(
       description: "",
       allowSelfRegistration: true,
       requireApprovalForEdits: true,
+      allowProfileClaiming: false,
       metricsDashboardUrl: null,
       metricsApiUrl: null,
     };
@@ -67,6 +70,7 @@ export async function getFamilySettingsData(
     description: settings.description ?? "",
     allowSelfRegistration: settings.allowSelfRegistration,
     requireApprovalForEdits: settings.requireApprovalForEdits,
+    allowProfileClaiming: settings.allowProfileClaiming,
     metricsDashboardUrl: settings.metricsDashboardUrl ?? null,
     metricsApiUrl: settings.metricsApiUrl ?? null,
   };
@@ -108,6 +112,10 @@ export async function updateFamilySettingsData(
         description: data.description ?? null,
         allowSelfRegistration: data.allowSelfRegistration,
         requireApprovalForEdits: data.requireApprovalForEdits,
+        // Undefined leaves the stored value unchanged
+        ...(data.allowProfileClaiming !== undefined && {
+          allowProfileClaiming: data.allowProfileClaiming,
+        }),
         metricsDashboardUrl: data.metricsDashboardUrl ?? null,
         metricsApiUrl: data.metricsApiUrl ?? null,
         updatedAt: new Date(),
@@ -128,6 +136,7 @@ export async function updateFamilySettingsData(
         description: data.description ?? null,
         allowSelfRegistration: data.allowSelfRegistration,
         requireApprovalForEdits: data.requireApprovalForEdits,
+        allowProfileClaiming: data.allowProfileClaiming ?? false,
         metricsDashboardUrl: data.metricsDashboardUrl ?? null,
         metricsApiUrl: data.metricsApiUrl ?? null,
         updatedAt: new Date(),
@@ -144,9 +153,26 @@ export async function updateFamilySettingsData(
     description: settings.description ?? "",
     allowSelfRegistration: settings.allowSelfRegistration,
     requireApprovalForEdits: settings.requireApprovalForEdits,
+    allowProfileClaiming: settings.allowProfileClaiming,
     metricsDashboardUrl: settings.metricsDashboardUrl ?? null,
     metricsApiUrl: settings.metricsApiUrl ?? null,
   };
+}
+
+/**
+ * Whether profile claiming (linking an account to an existing family profile)
+ * is enabled by an admin. Off by default; off means the claim endpoints refuse.
+ *
+ * @param db - Database instance (defaults to drizzleDb for production)
+ * @returns {Promise<boolean>} True only when an admin has enabled claiming
+ */
+export async function isProfileClaimingEnabledData(
+  db: SettingsDb = drizzleDb
+): Promise<boolean> {
+  const settings = await db.query.familySettings.findFirst({
+    columns: { allowProfileClaiming: true },
+  });
+  return settings?.allowProfileClaiming ?? false;
 }
 
 /**

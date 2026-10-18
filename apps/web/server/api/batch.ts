@@ -259,6 +259,15 @@ const batchRoute = createRoute({
         },
       },
     },
+    403: {
+      description:
+        "Forbidden (batch contains delete operations and caller is not ADMIN)",
+      content: {
+        "application/json": {
+          schema: errorResponseSchema,
+        },
+      },
+    },
     429: {
       description: "Rate limit exceeded (100 requests per minute)",
       content: {
@@ -298,6 +307,17 @@ batchRouter.openapi(batchRoute, async (c) => {
 
     // Parse and validate request
     const { operations, transaction } = c.req.valid("json");
+
+    // Deletes are destructive: ADMIN only. The route-level guard is MEMBER.
+    if (
+      operations.some((op) => op.type === "delete") &&
+      c.get("user").role !== "ADMIN"
+    ) {
+      return c.json(
+        { error: "Forbidden", message: "Insufficient permissions" },
+        403
+      );
+    }
 
     // Log batch operation
     log.info(

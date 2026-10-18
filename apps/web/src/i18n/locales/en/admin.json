@@ -15,6 +15,8 @@
   "settingsLanguage": "Language Preference",
   "settingsSelectLanguage": "Select your preferred language",
   "settingsAllowSelfRegistration": "Allow Self Registration",
+  "settingsAllowProfileClaiming": "Allow Profile Claiming",
+  "settingsAllowProfileClaimingHelp": "Let signed-in users link their account to an existing family profile. Off by default.",
   "settingsRequireApproval": "Require Approval for Edits",
   "settingsSave": "Save Settings",
   "settingsSaved": "Settings saved successfully",

@@ -15,6 +15,8 @@
   "settingsLanguage": "भाषा की प्राथमिकता",
   "settingsSelectLanguage": "अपनी पसंदीदा भाषा चुनें",
   "settingsAllowSelfRegistration": "स्व-पंजीकरण की अनुमति दें",
+  "settingsAllowProfileClaiming": "प्रोफ़ाइल दावा करने की अनुमति दें",
+  "settingsAllowProfileClaimingHelp": "साइन-इन उपयोगकर्ताओं को अपना खाता मौजूदा परिवार प्रोफ़ाइल से जोड़ने दें। डिफ़ॉल्ट रूप से बंद।",
   "settingsRequireApproval": "संपादन के लिए अनुमोदन आवश्यक",
   "settingsSave": "सेटिंग्स सहेजें",
   "settingsSaved": "सेटिंग्स सफलतापूर्वक सहेजी गईं",

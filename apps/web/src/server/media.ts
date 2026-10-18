@@ -29,6 +29,7 @@ import {
   updateMediaMetadataLogic,
   uploadMediaLogic,
 } from "@vamsa/lib/server/business/media";
+import { requireAuth } from "./middleware/require-auth";
 
 /**
  * Get all media for a person
@@ -39,6 +40,7 @@ import {
 export const getPersonMedia = createServerFn({ method: "GET" })
   .inputValidator((data: { personId: string }) => data)
   .handler(async ({ data }) => {
+    await requireAuth("VIEWER");
     const { personId } = data;
     return getPersonMediaLogic(personId);
   });
@@ -52,6 +54,7 @@ export const getPersonMedia = createServerFn({ method: "GET" })
 export const getMediaObject = createServerFn({ method: "GET" })
   .inputValidator((data: { mediaId: string }) => data)
   .handler(async ({ data }) => {
+    await requireAuth("VIEWER");
     const { mediaId } = data;
     return getMediaObjectLogic(mediaId);
   });
@@ -65,6 +68,7 @@ export const getMediaObject = createServerFn({ method: "GET" })
 export const deleteMedia = createServerFn({ method: "POST" })
   .inputValidator((data: { mediaId: string }) => data)
   .handler(async ({ data }) => {
+    await requireAuth("ADMIN");
     const { mediaId } = data;
     return deleteMediaLogic(mediaId);
   });
@@ -77,6 +81,7 @@ export const deleteMedia = createServerFn({ method: "POST" })
 export const updateMediaMetadata = createServerFn({ method: "POST" })
   .inputValidator((data) => mediaMetadataSchema.parse(data))
   .handler(async ({ data }) => {
+    await requireAuth("MEMBER");
     const { mediaId, title, description, caption, source } = data;
     return updateMediaMetadataLogic(
       mediaId,
@@ -96,6 +101,7 @@ export const updateMediaMetadata = createServerFn({ method: "POST" })
 export const setPrimaryPhoto = createServerFn({ method: "POST" })
   .inputValidator((data) => setPrimaryPhotoSchema.parse(data))
   .handler(async ({ data }) => {
+    await requireAuth("MEMBER");
     const { personId, mediaId } = data;
     return setPrimaryPhotoLogic(personId, mediaId);
   });
@@ -108,6 +114,7 @@ export const setPrimaryPhoto = createServerFn({ method: "POST" })
 export const reorderMedia = createServerFn({ method: "POST" })
   .inputValidator((data) => mediaReorderSchema.parse(data))
   .handler(async ({ data }) => {
+    await requireAuth("MEMBER");
     const { personId, ordering } = data;
     return reorderMediaLogic(personId, ordering);
   });
@@ -121,6 +128,7 @@ export const reorderMedia = createServerFn({ method: "POST" })
 export const linkMediaToEvent = createServerFn({ method: "POST" })
   .inputValidator((data) => linkMediaToEventSchema.parse(data))
   .handler(async ({ data }) => {
+    await requireAuth("MEMBER");
     const { mediaId, eventId } = data;
     return linkMediaToEventLogic(mediaId, eventId);
   });
@@ -147,6 +155,7 @@ export const uploadMedia = createServerFn({ method: "POST" })
     }) => data
   )
   .handler(async ({ data }) => {
+    await requireAuth("MEMBER");
     const {
       personId,
       fileName,

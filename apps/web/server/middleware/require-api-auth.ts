@@ -1,6 +1,7 @@
 import { createMiddleware } from "hono/factory";
 import { betterAuthGetSessionWithUser } from "@vamsa/lib/server/business/auth-better-api";
 import { loggers } from "@vamsa/lib/logger";
+import type { MiddlewareHandler } from "hono";
 
 const log = loggers.api;
 
@@ -32,6 +33,37 @@ const ROLE_HIERARCHY: Record<string, number> = {
   MEMBER: 1,
   ADMIN: 2,
 };
+
+/**
+ * Minimum role for an HTTP method: reads VIEWER, writes MEMBER, deletes ADMIN.
+ * Matches the server-function role rules.
+ */
+export function requiredRoleForMethod(
+  method: string
+): "VIEWER" | "MEMBER" | "ADMIN" {
+  switch (method.toUpperCase()) {
+    case "DELETE":
+      return "ADMIN";
+    case "POST":
+    case "PUT":
+    case "PATCH":
+      return "MEMBER";
+    default:
+      return "VIEWER";
+  }
+}
+
+/**
+ * Method-aware API auth: picks the minimum role from the request method.
+ * Use for resource mounts where reads and writes share a prefix.
+ *
+ * @example
+ * apiV1.use("/persons/*", requireApiAuthForMethod());
+ */
+export function requireApiAuthForMethod(): MiddlewareHandler {
+  return async (c, next) =>
+    requireApiAuth(requiredRoleForMethod(c.req.method))(c, next);
+}
 
 /**
  * Hono middleware for API authentication

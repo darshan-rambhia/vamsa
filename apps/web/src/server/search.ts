@@ -9,6 +9,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireAuth } from "./middleware/require-auth";
 import type { SearchResults } from "@vamsa/lib";
 
 /**
@@ -63,6 +64,7 @@ export const searchPeople = createServerFn({ method: "GET" })
     return searchPeopleInputSchema.parse(data);
   })
   .handler(async ({ data }): Promise<SearchResults<PersonSearchResultItem>> => {
+    await requireAuth("VIEWER");
     // Dynamic import keeps server-only dependencies out of the client bundle
     const { searchPeopleHandler } = await import("./search-handler");
     return searchPeopleHandler(data);

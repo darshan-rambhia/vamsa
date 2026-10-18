@@ -7,6 +7,7 @@ import {
   getPlacesByTimeRangeData,
   getPlacesForMapData,
 } from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
 import type {
   FamilyLocationMarker,
   GetPlaceClusterOptions,
@@ -57,6 +58,7 @@ export const getPlacesForMap = createServerFn({ method: "GET" })
   .inputValidator((data) => getPlacesForMapSchema.parse(data))
   .handler(
     async ({ data }): Promise<{ markers: Array<MapMarker>; total: number }> => {
+      await requireAuth("VIEWER");
       const options: GetPlacesForMapOptions = {
         includeEmpty: data.includeEmpty,
       };
@@ -83,6 +85,7 @@ export const getPersonLocations = createServerFn({ method: "GET" })
         lastName: string;
       };
     }> => {
+      await requireAuth("VIEWER");
       return getPersonLocationsData(data.personId);
     }
   );
@@ -99,6 +102,7 @@ export const getFamilyLocations = createServerFn({ method: "GET" })
       total: number;
       familySize: number;
     }> => {
+      await requireAuth("VIEWER");
       return getFamilyLocationsData();
     }
   );
@@ -120,6 +124,7 @@ export const getPlacesByTimeRange = createServerFn({ method: "GET" })
         endYear: number;
       };
     }> => {
+      await requireAuth("VIEWER");
       const options: GetPlacesByTimeRangeOptions = {
         startYear: data.startYear,
         endYear: data.endYear,
@@ -143,6 +148,7 @@ export const getPlaceClusters = createServerFn({ method: "GET" })
       totalClusters: number;
       totalPlaces: number;
     }> => {
+      await requireAuth("VIEWER");
       const options: GetPlaceClusterOptions = {
         bounds: data.bounds,
         clusterSize: data.clusterSize,

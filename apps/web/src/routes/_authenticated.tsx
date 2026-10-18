@@ -5,7 +5,7 @@ import {
   useLocation,
 } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 // Note: Server-only modules are dynamically imported inside checkAuthInline
 // to prevent them from leaking into the client bundle (react-dom/server, i18next-fs-backend)
@@ -14,6 +14,7 @@ import type { ErrorComponentProps } from "@tanstack/react-router";
 import { signOut } from "~/lib/auth-client";
 import { LanguageSwitcher } from "~/components/layout/language-switcher";
 import { OIDCProfileClaimModal } from "~/components/auth/oidc-profile-claim-modal";
+import { getProfileClaimingStatus } from "~/server/profile-claiming";
 import { RouteError } from "~/components/error";
 import { CommandPalette } from "~/components/search/command-palette";
 import { CommandPaletteTrigger } from "~/components/search/command-palette-trigger";
@@ -199,9 +200,17 @@ function AuthenticatedLayout() {
     window.location.href = "/login";
   };
 
-  // Show profile claim modal for OIDC users with PENDING status
+  const { data: claimingStatus } = useQuery({
+    queryKey: ["profile-claiming-status"],
+    queryFn: () => getProfileClaimingStatus(),
+    enabled: !!user?.oidcProvider,
+  });
+
+  // Show profile claim modal for OIDC users with PENDING status (only when an admin enabled claiming)
   const showProfileClaimModal =
-    !!user?.oidcProvider && user?.profileClaimStatus === "PENDING";
+    !!user?.oidcProvider &&
+    user?.profileClaimStatus === "PENDING" &&
+    claimingStatus?.enabled === true;
 
   return (
     <AIProvider>

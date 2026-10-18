@@ -42,6 +42,9 @@ export const familySettings = pgTable("FamilySettings", {
   requireApprovalForEdits: boolean("requireApprovalForEdits")
     .notNull()
     .default(true),
+  allowProfileClaiming: boolean("allowProfileClaiming")
+    .notNull()
+    .default(false),
   metricsDashboardUrl: text("metricsDashboardUrl"),
   metricsApiUrl: text("metricsApiUrl"),
   createdAt: timestamp("createdAt", { mode: "date" }).notNull().defaultNow(),

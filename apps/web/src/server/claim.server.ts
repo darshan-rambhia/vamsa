@@ -7,14 +7,13 @@
  * @fileoverview Server-only code - never import from client components
  */
 
-import { getRequestHeaders } from "@tanstack/react-start/server";
 import {
-  betterAuthGetSessionWithUser,
   claimProfileForOIDCData,
   getClaimableProfilesData,
   getOIDCClaimStatusData,
   skipProfileClaimData,
 } from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
 
 // ============================================================================
 // Types
@@ -34,13 +33,7 @@ export interface ClaimProfileInput {
  * @throws Error if not authenticated or session expired
  */
 export async function getCurrentAuthenticatedUser() {
-  const user = await betterAuthGetSessionWithUser(getRequestHeaders());
-
-  if (!user) {
-    throw new Error("Not authenticated");
-  }
-
-  return user;
+  return requireAuth("VIEWER");
 }
 
 // ============================================================================

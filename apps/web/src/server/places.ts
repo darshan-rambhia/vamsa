@@ -18,6 +18,7 @@ import {
   updatePlaceData,
   updatePlacePersonLinkData,
 } from "@vamsa/lib/server/business";
+import { requireAuth } from "./middleware/require-auth";
 import type {
   PersonPlace,
   PlaceHierarchyItem,
@@ -34,6 +35,7 @@ import type { PersonPlaceType } from "@vamsa/api";
 export const getPlace = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<PlaceWithChildren> => {
+    await requireAuth("VIEWER");
     return getPlaceData(data.id);
   });
 
@@ -54,6 +56,7 @@ export const searchPlaces = createServerFn({ method: "GET" })
         }
       >
     > => {
+      await requireAuth("VIEWER");
       return searchPlacesData(data.query);
     }
   );
@@ -66,6 +69,7 @@ export const searchPlaces = createServerFn({ method: "GET" })
 export const getPlaceHierarchy = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<Array<PlaceHierarchyItem>> => {
+    await requireAuth("VIEWER");
     return getPlaceHierarchyData(data.id);
   });
 
@@ -77,6 +81,7 @@ export const getPlaceHierarchy = createServerFn({ method: "GET" })
 export const getPersonPlaces = createServerFn({ method: "GET" })
   .inputValidator((data: { personId: string }) => data)
   .handler(async ({ data }): Promise<Array<PersonPlace>> => {
+    await requireAuth("VIEWER");
     return getPersonPlacesData(data.personId);
   });
 
@@ -90,6 +95,7 @@ export const createPlace = createServerFn({ method: "POST" })
     return placeCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<PlaceResponse> => {
+    await requireAuth("MEMBER");
     return createPlaceData(data);
   });
 
@@ -103,6 +109,7 @@ export const updatePlace = createServerFn({ method: "POST" })
     return placeUpdateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<PlaceResponse> => {
+    await requireAuth("MEMBER");
     const { id, ...updates } = data;
     return updatePlaceData(id, updates);
   });
@@ -116,6 +123,7 @@ export const updatePlace = createServerFn({ method: "POST" })
 export const deletePlace = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<{ success: true }> => {
+    await requireAuth("ADMIN");
     return deletePlaceData(data.id);
   });
 
@@ -139,6 +147,7 @@ export const linkPersonToPlace = createServerFn({ method: "POST" })
       type: PersonPlaceType | null;
       createdAt: string;
     }> => {
+      await requireAuth("MEMBER");
       return linkPersonToPlaceData(data);
     }
   );
@@ -152,6 +161,7 @@ export const linkPersonToPlace = createServerFn({ method: "POST" })
 export const getPlaceHierarchyPath = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<string> => {
+    await requireAuth("VIEWER");
     return getPlaceHierarchyPathData(data.id);
   });
 
@@ -163,6 +173,7 @@ export const getPlaceHierarchyPath = createServerFn({ method: "GET" })
 export const getPlaceChildren = createServerFn({ method: "GET" })
   .inputValidator((data: { parentId: string }) => data)
   .handler(async ({ data }): Promise<Array<PlaceResponse>> => {
+    await requireAuth("VIEWER");
     return getPlaceChildrenData(data.parentId);
   });
 
@@ -191,6 +202,7 @@ export const updatePlacePersonLink = createServerFn({ method: "POST" })
       toYear: number | null;
       type: PersonPlaceType | null;
     }> => {
+      await requireAuth("MEMBER");
       const { linkId, ...updates } = data;
       return updatePlacePersonLinkData(linkId, updates);
     }
@@ -204,5 +216,6 @@ export const updatePlacePersonLink = createServerFn({ method: "POST" })
 export const unlinkPersonFromPlace = createServerFn({ method: "POST" })
   .inputValidator((data: { linkId: string }) => data)
   .handler(async ({ data }): Promise<{ success: true }> => {
+    await requireAuth("MEMBER");
     return unlinkPersonFromPlaceData(data.linkId);
   });

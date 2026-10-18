@@ -88,6 +88,26 @@ vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
   },
 }));
 
+// requireAuth reads the session through the stubbed auth-better-api above and
+// returns it without touching the database (the real helper loads the user row).
+vi.mock("./middleware/require-auth", async () => {
+  const { betterAuthGetSessionWithUserFromCookie } =
+    await import("@vamsa/lib/server/business/auth-better-api");
+  const rank: Record<string, number> = { VIEWER: 0, MEMBER: 1, ADMIN: 2 };
+  return {
+    requireAuth: async (requiredRole: string = "VIEWER") => {
+      const user = await betterAuthGetSessionWithUserFromCookie(undefined);
+      if (!user) {
+        throw new Error("errors:auth.notAuthenticated");
+      }
+      if (rank[user.role] < rank[requiredRole]) {
+        throw new Error(`Requires ${requiredRole} role or higher`);
+      }
+      return user;
+    },
+  };
+});
+
 vi.mock("@vamsa/lib/server/business/auth", () => ({
   getUnclaimedProfilesData: mockGetUnclaimedProfilesData,
   claimProfileData: mockClaimProfileData,
@@ -229,6 +249,14 @@ describe("Auth Handlers", () => {
       newPassword: "NewPassword1!",
       confirmPassword: "NewPassword1!",
     };
+
+    it("rejects unauthenticated callers before touching the password", async () => {
+      mockBetterAuthChangePassword.mockClear();
+      await expect(
+        withContext({}, () => changePasswordHandler(validPasswordData))
+      ).rejects.toThrow(/notAuthenticated|not authenticated/i);
+      expect(mockBetterAuthChangePassword).not.toHaveBeenCalled();
+    });
 
     it("changes password for authenticated user", async () => {
       const result = await withContext({ user: testUsers.member }, () =>

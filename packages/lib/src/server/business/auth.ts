@@ -20,6 +20,7 @@ import { loggers } from "@vamsa/lib/logger";
 import { t } from "../i18n";
 import { createCredentialAccount } from "./auth-accounts";
 import { notifyNewMemberJoined } from "./notifications";
+import { isProfileClaimingEnabledData } from "./settings";
 
 const log = loggers.auth;
 
@@ -60,6 +61,11 @@ export interface ClaimProfileResult {
 export async function getUnclaimedProfilesData(
   db: AuthDb = drizzleDb
 ): Promise<Array<UnclaimedProfile>> {
+  if (!(await isProfileClaimingEnabledData(db))) {
+    log.info({}, "Profile claiming disabled; no unclaimed profiles returned");
+    return [];
+  }
+
   log.info({}, "Fetching unclaimed profiles");
 
   // Get all personIds that already have users
@@ -153,6 +159,10 @@ export async function claimProfileData(
   notify: typeof notifyNewMemberJoined = notifyNewMemberJoined,
   translate: typeof t = t
 ): Promise<ClaimProfileResult> {
+  if (!(await isProfileClaimingEnabledData(db))) {
+    throw new Error("Profile claiming is disabled");
+  }
+
   try {
     // Validate person exists and is living
     const [person] = await db

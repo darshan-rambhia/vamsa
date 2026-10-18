@@ -3,6 +3,7 @@
  * Tests profile claiming functionality with validation and error handling
  */
 import { bdd, expect, formValidation, test } from "./fixtures";
+import { setProfileClaiming } from "./fixtures/profile-claiming";
 import type { Page } from "@playwright/test";
 
 class ClaimProfilePage {
@@ -37,6 +38,11 @@ class ClaimProfilePage {
     return null;
   }
 }
+
+// Claiming is off by default; these specs need it on
+test.beforeAll(async ({ browser }) => {
+  await setProfileClaiming(browser, true);
+});
 
 test.describe("Feature: Profile Claiming", () => {
   test.describe("Unauthenticated tests", () => {

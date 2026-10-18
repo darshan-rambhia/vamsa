@@ -21,6 +21,7 @@ interface SettingsFormData {
   description: string;
   allowSelfRegistration: boolean;
   requireApprovalForEdits: boolean;
+  allowProfileClaiming: boolean;
   metricsDashboardUrl: string;
   metricsApiUrl: string;
 }
@@ -32,6 +33,7 @@ interface SettingsFormProps {
     description: string;
     allowSelfRegistration: boolean;
     requireApprovalForEdits: boolean;
+    allowProfileClaiming: boolean;
     metricsDashboardUrl: string | null;
     metricsApiUrl: string | null;
   };
@@ -55,6 +57,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
       description: settings.description,
       allowSelfRegistration: settings.allowSelfRegistration,
       requireApprovalForEdits: settings.requireApprovalForEdits,
+      allowProfileClaiming: settings.allowProfileClaiming,
       metricsDashboardUrl: settings.metricsDashboardUrl ?? "",
       metricsApiUrl: settings.metricsApiUrl ?? "",
     },
@@ -175,6 +178,32 @@ export function SettingsForm({ settings }: SettingsFormProps) {
               </Label>
               <p className="text-muted-foreground text-sm">
                 {t("admin:settingsAllowSelfRegistration")}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <Controller
+              name="allowProfileClaiming"
+              control={control}
+              render={({ field }) => (
+                <Checkbox
+                  id="allowProfileClaiming"
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                  data-testid="settings-allow-profile-claiming-checkbox"
+                />
+              )}
+            />
+            <div className="space-y-1">
+              <Label
+                htmlFor="allowProfileClaiming"
+                className="text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+              >
+                {t("admin:settingsAllowProfileClaiming")}
+              </Label>
+              <p className="text-muted-foreground text-sm">
+                {t("admin:settingsAllowProfileClaimingHelp")}
               </p>
             </div>
           </div>

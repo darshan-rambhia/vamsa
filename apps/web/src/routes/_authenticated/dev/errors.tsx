@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Badge,
@@ -15,6 +15,12 @@ import { AlertTriangle } from "lucide-react";
 import { ErrorBoundary, ErrorCard } from "~/components/error";
 
 export const Route = createFileRoute("/_authenticated/dev/errors")({
+  // Development only: production builds (import.meta.env.DEV === false) get a 404
+  beforeLoad: () => {
+    if (!import.meta.env.DEV) {
+      throw notFound();
+    }
+  },
   component: ErrorShowcase,
 });
 

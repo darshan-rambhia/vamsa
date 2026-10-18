@@ -24,6 +24,9 @@ export const familySettings = sqliteTable("FamilySettings", {
   })
     .notNull()
     .default(true),
+  allowProfileClaiming: integer("allowProfileClaiming", { mode: "boolean" })
+    .notNull()
+    .default(false),
   metricsDashboardUrl: text("metricsDashboardUrl"),
   metricsApiUrl: text("metricsApiUrl"),
   createdAt: integer("createdAt", { mode: "timestamp" })
