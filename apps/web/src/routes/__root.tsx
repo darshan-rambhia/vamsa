@@ -322,6 +322,11 @@ function RootComponent() {
   );
 }
 
+// Runs before any module script. Zod reads this global config when its first
+// schema is built, so JIT is off before route code constructs schemas. Without
+// it, zod's eval probe breaks the strict CSP (no 'unsafe-eval').
+const ZOD_CONFIG_SCRIPT = `globalThis.__zod_globalConfig=Object.assign(globalThis.__zod_globalConfig||{},{jitless:true});`;
+
 // Static dark mode initialization script - safe hardcoded string, no XSS risk
 const DARK_MODE_SCRIPT = `(function(){var s=localStorage.getItem('theme');var p=window.matchMedia('(prefers-color-scheme:dark)').matches;if(s==='dark'||(!s&&p)){document.documentElement.classList.add('dark')}})()`;
 
@@ -345,6 +350,10 @@ function RootDocument({
         <HeadContent />
         {/* Prevent dark mode flash - inline script with CSP nonce for security */}
         {/* Content is a hardcoded static string, no XSS risk */}
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: ZOD_CONFIG_SCRIPT }}
+        />
         <script
           nonce={nonce}
           dangerouslySetInnerHTML={{ __html: DARK_MODE_SCRIPT }}
