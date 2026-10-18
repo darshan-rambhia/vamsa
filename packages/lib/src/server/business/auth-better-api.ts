@@ -233,6 +233,12 @@ export async function betterAuthGetSessionWithUser(headers: Headers) {
     return null;
   }
 
+  // Deactivated accounts keep no access, even with a still-valid session row
+  if (session.user.isActive === false) {
+    log.warn({ userId: session.user.id }, "Rejected session: user deactivated");
+    return null;
+  }
+
   // Return user with Vamsa-specific fields
   return {
     id: session.user.id,

@@ -317,6 +317,82 @@ describe("Users Business Logic", () => {
       expect(mockLogger.info).toHaveBeenCalled();
     });
 
+    it("deletes the user's sessions when deactivating", async () => {
+      const existingUser = {
+        id: "user-2",
+        email: "user2@example.com",
+        name: "User Two",
+        role: "VIEWER" as const,
+        isActive: true,
+        personId: null,
+      };
+      const deleteWhere = vi.fn(() => Promise.resolve());
+      const deleteFn = vi.fn(() => ({ where: deleteWhere }));
+
+      const mockDb = {
+        query: {
+          users: {
+            findFirst: vi.fn(() => Promise.resolve(existingUser)),
+          },
+        },
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn(() => ({
+              returning: vi.fn(() =>
+                Promise.resolve([{ ...existingUser, isActive: false }])
+              ),
+            })),
+          })),
+        })),
+        delete: deleteFn,
+      } as any;
+
+      const result = await updateUserData(
+        "user-2",
+        { isActive: false },
+        "admin-1",
+        mockDb
+      );
+
+      expect(result.isActive).toBe(false);
+      expect(deleteFn).toHaveBeenCalledTimes(1);
+      expect(deleteWhere).toHaveBeenCalledTimes(1);
+    });
+
+    it("keeps sessions when a user is reactivated", async () => {
+      const existingUser = {
+        id: "user-2",
+        email: "user2@example.com",
+        name: "User Two",
+        role: "VIEWER" as const,
+        isActive: false,
+        personId: null,
+      };
+      const deleteFn = vi.fn();
+
+      const mockDb = {
+        query: {
+          users: {
+            findFirst: vi.fn(() => Promise.resolve(existingUser)),
+          },
+        },
+        update: vi.fn(() => ({
+          set: vi.fn(() => ({
+            where: vi.fn(() => ({
+              returning: vi.fn(() =>
+                Promise.resolve([{ ...existingUser, isActive: true }])
+              ),
+            })),
+          })),
+        })),
+        delete: deleteFn,
+      } as any;
+
+      await updateUserData("user-2", { isActive: true }, "admin-1", mockDb);
+
+      expect(deleteFn).not.toHaveBeenCalled();
+    });
+
     it("should prevent self-demotion", async () => {
       const existingUser = {
         id: "admin-1",

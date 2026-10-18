@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { bearer, genericOAuth } from "better-auth/plugins";
 // import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { drizzleDb, drizzleSchema, getDbDriver } from "@vamsa/api";
+import { assertUserCanStartSession } from "./auth-session-policy";
 
 // Cross-runtime password hashing that works in both Node.js (Vite dev) and Bun
 const isBunRuntime = typeof globalThis.Bun !== "undefined";
@@ -130,6 +131,17 @@ export const auth = betterAuth({
       hash: hashPassword,
       verify: async (data: { password: string; hash: string }) => {
         return verifyPassword(data.password, data.hash);
+      },
+    },
+  },
+
+  // Deactivated users cannot obtain a session (covers email/password and OIDC)
+  databaseHooks: {
+    session: {
+      create: {
+        before: async (session) => {
+          await assertUserCanStartSession(session.userId);
+        },
       },
     },
   },
