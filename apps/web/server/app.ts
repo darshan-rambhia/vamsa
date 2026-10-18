@@ -21,6 +21,7 @@ import {
   trustedProxyMiddleware,
 } from "../src/server/middleware/trusted-proxy";
 import { etagMiddleware, getETagMetrics } from "./middleware/etag";
+import { withPublicOrigin } from "./middleware/public-origin";
 import { telemetryMiddleware } from "./middleware/telemetry";
 import { serveMedia } from "./middleware/media-server";
 import { mediaAuthMiddleware } from "./middleware/media-auth";
@@ -571,7 +572,9 @@ Disallow: /
         headers.set("x-csp-nonce", nonce);
       }
 
-      const modifiedRequest = new Request(c.req.raw, { headers });
+      const modifiedRequest = withPublicOrigin(
+        new Request(c.req.raw, { headers })
+      );
 
       // Call TanStack Start's fetch handler
       const response = await tanstackFetch(modifiedRequest);
