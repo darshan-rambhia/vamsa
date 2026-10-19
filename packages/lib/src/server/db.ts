@@ -1,4 +1,6 @@
-import { ilike } from "drizzle-orm";
+import { sql } from "drizzle-orm";
+import { getDbDriver } from "@vamsa/api";
+import type { DbDriver } from "@vamsa/api";
 import type { Column, SQL } from "drizzle-orm";
 
 // Re-export Drizzle ORM client and schema from @vamsa/api
@@ -14,16 +16,25 @@ export function escapeLike(value: string): string {
 }
 
 /**
- * Case-insensitive LIKE comparison.
+ * Case-insensitive LIKE comparison, dialect-aware.
  *
- * Currently uses PostgreSQL's native `ILIKE` operator. When SQLite support
- * is added, this will dispatch to `LIKE` with `COLLATE NOCASE` or
- * `lower()` wrapping based on the active dialect.
+ * - PostgreSQL: native `ILIKE`.
+ * - SQLite: has no `ILIKE`. Emits `lower(col) LIKE lower(pattern) ESCAPE '\'`.
+ *   The explicit ESCAPE is needed so `escapeLike()` backslashes take effect
+ *   (SQLite LIKE has no default escape character).
  *
  * @param column - The Drizzle column to compare
  * @param value - The pattern to match (should already include % wildcards)
+ * @param driver - Database driver; defaults to the configured driver
  * @returns A Drizzle SQL condition
  */
-export function caseInsensitiveLike(column: Column, value: string): SQL {
-  return ilike(column, value);
+export function caseInsensitiveLike(
+  column: Column,
+  value: string,
+  driver: DbDriver = getDbDriver()
+): SQL {
+  if (driver === "sqlite") {
+    return sql`lower(${column}) LIKE lower(${value}) ESCAPE '\\'`;
+  }
+  return sql`${column} ILIKE ${value}`;
 }
