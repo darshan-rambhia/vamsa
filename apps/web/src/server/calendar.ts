@@ -43,7 +43,7 @@ const revokeTokenSchema = z.object({
  * Generate a calendar token for authenticated calendar access
  */
 export const generateCalendarToken = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => generateTokenSchema.parse(data))
+  .validator((data: unknown) => generateTokenSchema.parse(data))
   .handler(async ({ data }) => {
     try {
       const user = await requireAuth("MEMBER");
@@ -63,7 +63,7 @@ export const generateCalendarToken = createServerFn({ method: "POST" })
  * Validate a calendar token
  */
 export const validateCalendarToken = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => validateTokenSchema.parse(data))
+  .validator((data: unknown) => validateTokenSchema.parse(data))
   .handler(async ({ data }) => {
     try {
       return await validateCalendarTokenLogic(data.token);
@@ -77,7 +77,7 @@ export const validateCalendarToken = createServerFn({ method: "POST" })
  * Revoke a calendar token by ID
  */
 export const revokeCalendarToken = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => revokeTokenSchema.parse(data))
+  .validator((data: unknown) => revokeTokenSchema.parse(data))
   .handler(async ({ data }) => {
     try {
       const user = await requireAuth("MEMBER");
@@ -109,7 +109,7 @@ export const listCalendarTokens = createServerFn({ method: "GET" }).handler(
  * Delete a calendar token permanently (only allowed for revoked tokens)
  */
 export const deleteCalendarToken = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => revokeTokenSchema.parse(data))
+  .validator((data: unknown) => revokeTokenSchema.parse(data))
   .handler(async ({ data }) => {
     try {
       const user = await requireAuth("MEMBER");

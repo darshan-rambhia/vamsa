@@ -52,7 +52,7 @@ import { createThingData } from "@vamsa/lib/server/business";
 import { requireAuth } from "./middleware/require-auth";
 
 export const createThing = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => thingCreateSchema.parse(data))
+  .validator((data: unknown) => thingCreateSchema.parse(data))
   .handler(async ({ data }) => {
     await requireAuth("MEMBER"); // Always first: "VIEWER" | "MEMBER" | "ADMIN"
     return createThingData(data);

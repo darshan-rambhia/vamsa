@@ -1,4 +1,4 @@
-import { requestHandler } from "@tanstack/react-start/server";
+import { createServerEntry } from "@tanstack/react-start/server";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
   RATE_LIMITS,
@@ -183,13 +183,13 @@ describe("Rate Limiter", () => {
 describe("getClientIP (real request-header API)", () => {
   /**
    * Run `fn` inside a real TanStack request context with the given headers.
-   * `fn` returns a Response, which requestHandler hands back to the caller.
+   * `fn` returns a Response, which the server entry hands back to the caller.
    */
   function inRequest(
     headers: Record<string, string>,
     fn: () => Promise<Response> | Response
   ) {
-    const handler = requestHandler(fn);
+    const handler = createServerEntry({ fetch: fn }).fetch;
     return handler(new Request("http://localhost/api", { headers }), {});
   }
 

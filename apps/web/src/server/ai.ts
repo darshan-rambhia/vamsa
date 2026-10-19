@@ -52,7 +52,7 @@ interface StoryInput {
 }
 
 export const generateStoryFn = createServerFn({ method: "POST" })
-  .inputValidator((data: StoryInput) => data)
+  .validator((data: StoryInput) => data)
   .handler(async ({ data }): Promise<StoryResult> => {
     await requireAuth("MEMBER");
     if (!isAIEnabled()) {
@@ -79,7 +79,7 @@ interface SuggestInput {
 }
 
 export const suggestFieldsFn = createServerFn({ method: "POST" })
-  .inputValidator((data: SuggestInput) => data)
+  .validator((data: SuggestInput) => data)
   .handler(async ({ data }): Promise<SuggestResult> => {
     await requireAuth("MEMBER");
     if (!isAIEnabled()) {

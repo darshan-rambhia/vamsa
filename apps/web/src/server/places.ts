@@ -33,7 +33,7 @@ import type { PersonPlaceType } from "@vamsa/api";
  * @requires GET method
  */
 export const getPlace = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<PlaceWithChildren> => {
     await requireAuth("VIEWER");
     return getPlaceData(data.id);
@@ -45,7 +45,7 @@ export const getPlace = createServerFn({ method: "GET" })
  * @requires GET method
  */
 export const searchPlaces = createServerFn({ method: "GET" })
-  .inputValidator((data: { query: string }) => data)
+  .validator((data: { query: string }) => data)
   .handler(
     async ({
       data,
@@ -67,7 +67,7 @@ export const searchPlaces = createServerFn({ method: "GET" })
  * @requires GET method
  */
 export const getPlaceHierarchy = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<Array<PlaceHierarchyItem>> => {
     await requireAuth("VIEWER");
     return getPlaceHierarchyData(data.id);
@@ -79,7 +79,7 @@ export const getPlaceHierarchy = createServerFn({ method: "GET" })
  * @requires GET method
  */
 export const getPersonPlaces = createServerFn({ method: "GET" })
-  .inputValidator((data: { personId: string }) => data)
+  .validator((data: { personId: string }) => data)
   .handler(async ({ data }): Promise<Array<PersonPlace>> => {
     await requireAuth("VIEWER");
     return getPersonPlacesData(data.personId);
@@ -91,7 +91,7 @@ export const getPersonPlaces = createServerFn({ method: "GET" })
  * @requires POST method
  */
 export const createPlace = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return placeCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<PlaceResponse> => {
@@ -105,7 +105,7 @@ export const createPlace = createServerFn({ method: "POST" })
  * @requires POST method
  */
 export const updatePlace = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return placeUpdateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<PlaceResponse> => {
@@ -121,7 +121,7 @@ export const updatePlace = createServerFn({ method: "POST" })
  * @throws Error if place not found or is still in use
  */
 export const deletePlace = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<{ success: true }> => {
     await requireAuth("ADMIN");
     return deletePlaceData(data.id);
@@ -133,7 +133,7 @@ export const deletePlace = createServerFn({ method: "POST" })
  * @requires POST method
  */
 export const linkPersonToPlace = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return placePersonLinkCreateSchema.parse(data);
   })
   .handler(
@@ -159,7 +159,7 @@ export const linkPersonToPlace = createServerFn({ method: "POST" })
  * @requires GET method
  */
 export const getPlaceHierarchyPath = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<string> => {
     await requireAuth("VIEWER");
     return getPlaceHierarchyPathData(data.id);
@@ -171,7 +171,7 @@ export const getPlaceHierarchyPath = createServerFn({ method: "GET" })
  * @requires GET method
  */
 export const getPlaceChildren = createServerFn({ method: "GET" })
-  .inputValidator((data: { parentId: string }) => data)
+  .validator((data: { parentId: string }) => data)
   .handler(async ({ data }): Promise<Array<PlaceResponse>> => {
     await requireAuth("VIEWER");
     return getPlaceChildrenData(data.parentId);
@@ -183,7 +183,7 @@ export const getPlaceChildren = createServerFn({ method: "GET" })
  * @requires POST method
  */
 export const updatePlacePersonLink = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     (data: {
       linkId: string;
       fromYear?: number | null;
@@ -214,7 +214,7 @@ export const updatePlacePersonLink = createServerFn({ method: "POST" })
  * @requires POST method
  */
 export const unlinkPersonFromPlace = createServerFn({ method: "POST" })
-  .inputValidator((data: { linkId: string }) => data)
+  .validator((data: { linkId: string }) => data)
   .handler(async ({ data }): Promise<{ success: true }> => {
     await requireAuth("MEMBER");
     return unlinkPersonFromPlaceData(data.linkId);

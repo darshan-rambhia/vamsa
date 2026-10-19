@@ -2,11 +2,11 @@
 /**
  * Tests for the CSP nonce reader
  *
- * Runs against the real TanStack request-header API: requestHandler() sets up
- * the same H3 request context that server functions and SSR render inside.
+ * Runs against the real TanStack request-header API: createServerEntry() sets up
+ * the same request context that server functions and SSR render inside.
  */
 
-import { requestHandler } from "@tanstack/react-start/server";
+import { createServerEntry } from "@tanstack/react-start/server";
 import { describe, expect, it } from "vitest";
 import { getCspNonce } from "./csp-nonce";
 
@@ -14,9 +14,9 @@ async function runInRequest(
   headers: Record<string, string>,
   fn: () => string | undefined
 ): Promise<string> {
-  const handler = requestHandler(async () => {
-    return new Response(fn() ?? "<undefined>");
-  });
+  const handler = createServerEntry({
+    fetch: async () => new Response(fn() ?? "<undefined>"),
+  }).fetch;
   const response = await handler(
     new Request("http://localhost/", { headers }),
     {}

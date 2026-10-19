@@ -52,7 +52,7 @@
  * }
  *
  * export const listPersons = createServerFn({ method: "GET" })
- *   .inputValidator((data) => personListInputSchema.parse(data))
+ *   .validator((data) => personListInputSchema.parse(data))
  *   .handler(({ data }) => _listPersonsHandler(data));
  * ```
  *

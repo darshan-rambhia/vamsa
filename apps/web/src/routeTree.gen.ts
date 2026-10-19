@@ -9,55 +9,44 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as RegisterRouteImport } from './routes/register'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as ClaimProfileRouteImport } from './routes/claim-profile'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as InviteTokenRouteImport } from './routes/invite.$token'
-import { Route as AuthenticatedVisualizeRouteImport } from './routes/_authenticated/visualize'
-import { Route as AuthenticatedSubscribeRouteImport } from './routes/_authenticated/subscribe'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
-import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as ClaimProfileRouteImport } from './routes/claim-profile'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AuthenticatedActivityRouteImport } from './routes/_authenticated/activity'
-import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
-import { Route as AuthenticatedMapsIndexRouteImport } from './routes/_authenticated/maps/index'
-import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
-import { Route as AuthenticatedSettingsCalendarTokensRouteImport } from './routes/_authenticated/settings/calendar-tokens'
-import { Route as AuthenticatedPeopleNewRouteImport } from './routes/_authenticated/people/new'
-import { Route as AuthenticatedPeoplePersonIdRouteImport } from './routes/_authenticated/people/$personId'
-import { Route as AuthenticatedDevErrorsRouteImport } from './routes/_authenticated/dev/errors'
-import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
-import { Route as AuthenticatedAdminTokensRouteImport } from './routes/_authenticated/admin/tokens'
-import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin/suggestions'
-import { Route as AuthenticatedAdminSourcesRouteImport } from './routes/_authenticated/admin/sources'
-import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
-import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authenticated/admin/metrics'
-import { Route as AuthenticatedAdminInvitesRouteImport } from './routes/_authenticated/admin/invites'
+import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedChangePasswordRouteImport } from './routes/_authenticated/change-password'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedSubscribeRouteImport } from './routes/_authenticated/subscribe'
+import { Route as AuthenticatedVisualizeRouteImport } from './routes/_authenticated/visualize'
+import { Route as InviteTokenRouteImport } from './routes/invite.$token'
 import { Route as AuthenticatedAdminBackupRouteImport } from './routes/_authenticated/admin/backup'
+import { Route as AuthenticatedAdminInvitesRouteImport } from './routes/_authenticated/admin/invites'
+import { Route as AuthenticatedAdminMetricsRouteImport } from './routes/_authenticated/admin/metrics'
+import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin/settings'
+import { Route as AuthenticatedAdminSourcesRouteImport } from './routes/_authenticated/admin/sources'
+import { Route as AuthenticatedAdminSuggestionsRouteImport } from './routes/_authenticated/admin/suggestions'
+import { Route as AuthenticatedAdminTokensRouteImport } from './routes/_authenticated/admin/tokens'
+import { Route as AuthenticatedAdminUsersRouteImport } from './routes/_authenticated/admin/users'
+import { Route as AuthenticatedDevErrorsRouteImport } from './routes/_authenticated/dev/errors'
+import { Route as AuthenticatedMapsIndexRouteImport } from './routes/_authenticated/maps/index'
+import { Route as AuthenticatedPeopleIndexRouteImport } from './routes/_authenticated/people/index'
+import { Route as AuthenticatedPeoplePersonIdRouteImport } from './routes/_authenticated/people/$personId'
+import { Route as AuthenticatedPeopleNewRouteImport } from './routes/_authenticated/people/new'
+import { Route as AuthenticatedSettingsCalendarTokensRouteImport } from './routes/_authenticated/settings/calendar-tokens'
+import { Route as AuthenticatedSettingsProfileRouteImport } from './routes/_authenticated/settings/profile'
 import { Route as AuthenticatedPeoplePersonIdEditRouteImport } from './routes/_authenticated/people/$personId_.edit'
 
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RegisterRoute = RegisterRouteImport.update({
-  id: '/register',
-  path: '/register',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClaimProfileRoute = ClaimProfileRouteImport.update({
@@ -65,33 +54,34 @@ const ClaimProfileRoute = ClaimProfileRouteImport.update({
   path: '/claim-profile',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InviteTokenRoute = InviteTokenRouteImport.update({
-  id: '/invite/$token',
-  path: '/invite/$token',
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedVisualizeRoute = AuthenticatedVisualizeRouteImport.update({
-  id: '/visualize',
-  path: '/visualize',
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedSubscribeRoute = AuthenticatedSubscribeRouteImport.update({
-  id: '/subscribe',
-  path: '/subscribe',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedChangePasswordRoute =
@@ -100,88 +90,30 @@ const AuthenticatedChangePasswordRoute =
     path: '/change-password',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedActivityRoute = AuthenticatedActivityRouteImport.update({
-  id: '/activity',
-  path: '/activity',
+const AuthenticatedSubscribeRoute = AuthenticatedSubscribeRouteImport.update({
+  id: '/subscribe',
+  path: '/subscribe',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedPeopleIndexRoute =
-  AuthenticatedPeopleIndexRouteImport.update({
-    id: '/people/',
-    path: '/people/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedMapsIndexRoute = AuthenticatedMapsIndexRouteImport.update({
-  id: '/maps/',
-  path: '/maps/',
+const AuthenticatedVisualizeRoute = AuthenticatedVisualizeRouteImport.update({
+  id: '/visualize',
+  path: '/visualize',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedSettingsProfileRoute =
-  AuthenticatedSettingsProfileRouteImport.update({
-    id: '/settings/profile',
-    path: '/settings/profile',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedSettingsCalendarTokensRoute =
-  AuthenticatedSettingsCalendarTokensRouteImport.update({
-    id: '/settings/calendar-tokens',
-    path: '/settings/calendar-tokens',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedPeopleNewRoute = AuthenticatedPeopleNewRouteImport.update({
-  id: '/people/new',
-  path: '/people/new',
-  getParentRoute: () => AuthenticatedRoute,
+const InviteTokenRoute = InviteTokenRouteImport.update({
+  id: '/invite/$token',
+  path: '/invite/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedPeoplePersonIdRoute =
-  AuthenticatedPeoplePersonIdRouteImport.update({
-    id: '/people/$personId',
-    path: '/people/$personId',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
-const AuthenticatedDevErrorsRoute = AuthenticatedDevErrorsRouteImport.update({
-  id: '/dev/errors',
-  path: '/dev/errors',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
-const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => AuthenticatedAdminRoute,
-} as any)
-const AuthenticatedAdminTokensRoute =
-  AuthenticatedAdminTokensRouteImport.update({
-    id: '/tokens',
-    path: '/tokens',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminSuggestionsRoute =
-  AuthenticatedAdminSuggestionsRouteImport.update({
-    id: '/suggestions',
-    path: '/suggestions',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminSourcesRoute =
-  AuthenticatedAdminSourcesRouteImport.update({
-    id: '/sources',
-    path: '/sources',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminSettingsRoute =
-  AuthenticatedAdminSettingsRouteImport.update({
-    id: '/settings',
-    path: '/settings',
-    getParentRoute: () => AuthenticatedAdminRoute,
-  } as any)
-const AuthenticatedAdminMetricsRoute =
-  AuthenticatedAdminMetricsRouteImport.update({
-    id: '/metrics',
-    path: '/metrics',
+const AuthenticatedAdminBackupRoute =
+  AuthenticatedAdminBackupRouteImport.update({
+    id: '/backup',
+    path: '/backup',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
 const AuthenticatedAdminInvitesRoute =
@@ -190,11 +122,79 @@ const AuthenticatedAdminInvitesRoute =
     path: '/invites',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
-const AuthenticatedAdminBackupRoute =
-  AuthenticatedAdminBackupRouteImport.update({
-    id: '/backup',
-    path: '/backup',
+const AuthenticatedAdminMetricsRoute =
+  AuthenticatedAdminMetricsRouteImport.update({
+    id: '/metrics',
+    path: '/metrics',
     getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSettingsRoute =
+  AuthenticatedAdminSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSourcesRoute =
+  AuthenticatedAdminSourcesRouteImport.update({
+    id: '/sources',
+    path: '/sources',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminSuggestionsRoute =
+  AuthenticatedAdminSuggestionsRouteImport.update({
+    id: '/suggestions',
+    path: '/suggestions',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminTokensRoute =
+  AuthenticatedAdminTokensRouteImport.update({
+    id: '/tokens',
+    path: '/tokens',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
+const AuthenticatedAdminUsersRoute = AuthenticatedAdminUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => AuthenticatedAdminRoute,
+} as any)
+const AuthenticatedDevErrorsRoute = AuthenticatedDevErrorsRouteImport.update({
+  id: '/dev/errors',
+  path: '/dev/errors',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedMapsIndexRoute = AuthenticatedMapsIndexRouteImport.update({
+  id: '/maps/',
+  path: '/maps/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedPeopleIndexRoute =
+  AuthenticatedPeopleIndexRouteImport.update({
+    id: '/people/',
+    path: '/people/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPeoplePersonIdRoute =
+  AuthenticatedPeoplePersonIdRouteImport.update({
+    id: '/people/$personId',
+    path: '/people/$personId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedPeopleNewRoute = AuthenticatedPeopleNewRouteImport.update({
+  id: '/people/new',
+  path: '/people/new',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSettingsCalendarTokensRoute =
+  AuthenticatedSettingsCalendarTokensRouteImport.update({
+    id: '/settings/calendar-tokens',
+    path: '/settings/calendar-tokens',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedSettingsProfileRoute =
+  AuthenticatedSettingsProfileRouteImport.update({
+    id: '/settings/profile',
+    path: '/settings/profile',
+    getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedPeoplePersonIdEditRoute =
   AuthenticatedPeoplePersonIdEditRouteImport.update({
@@ -408,39 +408,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/register': {
-      id: '/register'
-      path: '/register'
-      fullPath: '/register'
-      preLoaderRoute: typeof RegisterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/claim-profile': {
-      id: '/claim-profile'
-      path: '/claim-profile'
-      fullPath: '/claim-profile'
-      preLoaderRoute: typeof ClaimProfileRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -450,46 +422,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/claim-profile': {
+      id: '/claim-profile'
+      path: '/claim-profile'
+      fullPath: '/claim-profile'
+      preLoaderRoute: typeof ClaimProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/invite/$token': {
-      id: '/invite/$token'
-      path: '/invite/$token'
-      fullPath: '/invite/$token'
-      preLoaderRoute: typeof InviteTokenRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/visualize': {
-      id: '/_authenticated/visualize'
-      path: '/visualize'
-      fullPath: '/visualize'
-      preLoaderRoute: typeof AuthenticatedVisualizeRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/subscribe': {
-      id: '/_authenticated/subscribe'
-      path: '/subscribe'
-      fullPath: '/subscribe'
-      preLoaderRoute: typeof AuthenticatedSubscribeRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/change-password': {
-      id: '/_authenticated/change-password'
-      path: '/change-password'
-      fullPath: '/change-password'
-      preLoaderRoute: typeof AuthenticatedChangePasswordRouteImport
+    '/_authenticated/activity': {
+      id: '/_authenticated/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof AuthenticatedActivityRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/admin': {
@@ -499,102 +471,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/activity': {
-      id: '/_authenticated/activity'
-      path: '/activity'
-      fullPath: '/activity'
-      preLoaderRoute: typeof AuthenticatedActivityRouteImport
+    '/_authenticated/change-password': {
+      id: '/_authenticated/change-password'
+      path: '/change-password'
+      fullPath: '/change-password'
+      preLoaderRoute: typeof AuthenticatedChangePasswordRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/people/': {
-      id: '/_authenticated/people/'
-      path: '/people'
-      fullPath: '/people/'
-      preLoaderRoute: typeof AuthenticatedPeopleIndexRouteImport
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/maps/': {
-      id: '/_authenticated/maps/'
-      path: '/maps'
-      fullPath: '/maps/'
-      preLoaderRoute: typeof AuthenticatedMapsIndexRouteImport
+    '/_authenticated/subscribe': {
+      id: '/_authenticated/subscribe'
+      path: '/subscribe'
+      fullPath: '/subscribe'
+      preLoaderRoute: typeof AuthenticatedSubscribeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/settings/profile': {
-      id: '/_authenticated/settings/profile'
-      path: '/settings/profile'
-      fullPath: '/settings/profile'
-      preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
+    '/_authenticated/visualize': {
+      id: '/_authenticated/visualize'
+      path: '/visualize'
+      fullPath: '/visualize'
+      preLoaderRoute: typeof AuthenticatedVisualizeRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/settings/calendar-tokens': {
-      id: '/_authenticated/settings/calendar-tokens'
-      path: '/settings/calendar-tokens'
-      fullPath: '/settings/calendar-tokens'
-      preLoaderRoute: typeof AuthenticatedSettingsCalendarTokensRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/invite/$token': {
+      id: '/invite/$token'
+      path: '/invite/$token'
+      fullPath: '/invite/$token'
+      preLoaderRoute: typeof InviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/people/new': {
-      id: '/_authenticated/people/new'
-      path: '/people/new'
-      fullPath: '/people/new'
-      preLoaderRoute: typeof AuthenticatedPeopleNewRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/people/$personId': {
-      id: '/_authenticated/people/$personId'
-      path: '/people/$personId'
-      fullPath: '/people/$personId'
-      preLoaderRoute: typeof AuthenticatedPeoplePersonIdRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dev/errors': {
-      id: '/_authenticated/dev/errors'
-      path: '/dev/errors'
-      fullPath: '/dev/errors'
-      preLoaderRoute: typeof AuthenticatedDevErrorsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/admin/users': {
-      id: '/_authenticated/admin/users'
-      path: '/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/tokens': {
-      id: '/_authenticated/admin/tokens'
-      path: '/tokens'
-      fullPath: '/admin/tokens'
-      preLoaderRoute: typeof AuthenticatedAdminTokensRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/suggestions': {
-      id: '/_authenticated/admin/suggestions'
-      path: '/suggestions'
-      fullPath: '/admin/suggestions'
-      preLoaderRoute: typeof AuthenticatedAdminSuggestionsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/sources': {
-      id: '/_authenticated/admin/sources'
-      path: '/sources'
-      fullPath: '/admin/sources'
-      preLoaderRoute: typeof AuthenticatedAdminSourcesRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/settings': {
-      id: '/_authenticated/admin/settings'
-      path: '/settings'
-      fullPath: '/admin/settings'
-      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
-      parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/admin/metrics': {
-      id: '/_authenticated/admin/metrics'
-      path: '/metrics'
-      fullPath: '/admin/metrics'
-      preLoaderRoute: typeof AuthenticatedAdminMetricsRouteImport
+    '/_authenticated/admin/backup': {
+      id: '/_authenticated/admin/backup'
+      path: '/backup'
+      fullPath: '/admin/backup'
+      preLoaderRoute: typeof AuthenticatedAdminBackupRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
     '/_authenticated/admin/invites': {
@@ -604,12 +520,96 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminInvitesRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
-    '/_authenticated/admin/backup': {
-      id: '/_authenticated/admin/backup'
-      path: '/backup'
-      fullPath: '/admin/backup'
-      preLoaderRoute: typeof AuthenticatedAdminBackupRouteImport
+    '/_authenticated/admin/metrics': {
+      id: '/_authenticated/admin/metrics'
+      path: '/metrics'
+      fullPath: '/admin/metrics'
+      preLoaderRoute: typeof AuthenticatedAdminMetricsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/settings': {
+      id: '/_authenticated/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/sources': {
+      id: '/_authenticated/admin/sources'
+      path: '/sources'
+      fullPath: '/admin/sources'
+      preLoaderRoute: typeof AuthenticatedAdminSourcesRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/suggestions': {
+      id: '/_authenticated/admin/suggestions'
+      path: '/suggestions'
+      fullPath: '/admin/suggestions'
+      preLoaderRoute: typeof AuthenticatedAdminSuggestionsRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/tokens': {
+      id: '/_authenticated/admin/tokens'
+      path: '/tokens'
+      fullPath: '/admin/tokens'
+      preLoaderRoute: typeof AuthenticatedAdminTokensRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/admin/users': {
+      id: '/_authenticated/admin/users'
+      path: '/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AuthenticatedAdminUsersRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
+    '/_authenticated/dev/errors': {
+      id: '/_authenticated/dev/errors'
+      path: '/dev/errors'
+      fullPath: '/dev/errors'
+      preLoaderRoute: typeof AuthenticatedDevErrorsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/maps/': {
+      id: '/_authenticated/maps/'
+      path: '/maps'
+      fullPath: '/maps/'
+      preLoaderRoute: typeof AuthenticatedMapsIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/people/': {
+      id: '/_authenticated/people/'
+      path: '/people'
+      fullPath: '/people/'
+      preLoaderRoute: typeof AuthenticatedPeopleIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/people/$personId': {
+      id: '/_authenticated/people/$personId'
+      path: '/people/$personId'
+      fullPath: '/people/$personId'
+      preLoaderRoute: typeof AuthenticatedPeoplePersonIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/people/new': {
+      id: '/_authenticated/people/new'
+      path: '/people/new'
+      fullPath: '/people/new'
+      preLoaderRoute: typeof AuthenticatedPeopleNewRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/calendar-tokens': {
+      id: '/_authenticated/settings/calendar-tokens'
+      path: '/settings/calendar-tokens'
+      fullPath: '/settings/calendar-tokens'
+      preLoaderRoute: typeof AuthenticatedSettingsCalendarTokensRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/settings/profile': {
+      id: '/_authenticated/settings/profile'
+      path: '/settings/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AuthenticatedSettingsProfileRouteImport
+      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/people/$personId_/edit': {
       id: '/_authenticated/people/$personId_/edit'

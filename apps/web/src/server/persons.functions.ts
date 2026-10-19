@@ -56,7 +56,7 @@ const personListInputSchema = z.object({
  * @requires VIEWER role or higher
  */
 export const listPersons = createServerFn({ method: "GET" })
-  .inputValidator((data: Partial<PersonListInput>) => {
+  .validator((data: Partial<PersonListInput>) => {
     return personListInputSchema.parse(data);
   })
   .handler(async ({ data }): Promise<PersonListResult> => {
@@ -70,7 +70,7 @@ export const listPersons = createServerFn({ method: "GET" })
  * @throws Error if person not found
  */
 export const getPerson = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<PersonDetail> => {
     return getPersonHandler(data);
   });
@@ -81,7 +81,7 @@ export const getPerson = createServerFn({ method: "GET" })
  * @requires MEMBER role or higher
  */
 export const createPerson = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => {
+  .validator((data: unknown) => {
     return personCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<PersonCreateResult> => {
@@ -95,7 +95,7 @@ export const createPerson = createServerFn({ method: "POST" })
  * @throws Error if person not found or user lacks permission
  */
 export const updatePerson = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => {
+  .validator((data: unknown) => {
     return personUpdateSchema.extend({ id: z.string() }).parse(data);
   })
   .handler(async ({ data }): Promise<PersonUpdateResult> => {
@@ -109,7 +109,7 @@ export const updatePerson = createServerFn({ method: "POST" })
  * @throws Error if person not found
  */
 export const deletePerson = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<PersonDeleteResult> => {
     return deletePersonHandler(data);
   });
@@ -120,7 +120,7 @@ export const deletePerson = createServerFn({ method: "POST" })
  * @requires VIEWER role or higher
  */
 export const searchPersons = createServerFn({ method: "GET" })
-  .inputValidator((data: { query: string; excludeId?: string }) => data)
+  .validator((data: { query: string; excludeId?: string }) => data)
   .handler(async ({ data }): Promise<Array<PersonSearchResult>> => {
     return searchPersonsHandler(data);
   });

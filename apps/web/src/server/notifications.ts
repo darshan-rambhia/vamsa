@@ -34,7 +34,7 @@ export const getEmailNotificationPreferences = createServerFn({
 export const updateEmailNotificationPreferences = createServerFn({
   method: "POST",
 })
-  .inputValidator(
+  .validator(
     (data: {
       suggestionsCreated?: boolean;
       suggestionsUpdated?: boolean;

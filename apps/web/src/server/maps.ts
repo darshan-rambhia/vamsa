@@ -55,7 +55,7 @@ const getPlaceClusterSchema = z.object({
  * @requires No special auth (public data)
  */
 export const getPlacesForMap = createServerFn({ method: "GET" })
-  .inputValidator((data) => getPlacesForMapSchema.parse(data))
+  .validator((data) => getPlacesForMapSchema.parse(data))
   .handler(
     async ({ data }): Promise<{ markers: Array<MapMarker>; total: number }> => {
       await requireAuth("VIEWER");
@@ -72,7 +72,7 @@ export const getPlacesForMap = createServerFn({ method: "GET" })
  * @throws Error if person not found
  */
 export const getPersonLocations = createServerFn({ method: "GET" })
-  .inputValidator((data) => getPersonLocationsSchema.parse(data))
+  .validator((data) => getPersonLocationsSchema.parse(data))
   .handler(
     async ({
       data,
@@ -95,7 +95,7 @@ export const getPersonLocations = createServerFn({ method: "GET" })
  * @requires No special auth (public data)
  */
 export const getFamilyLocations = createServerFn({ method: "GET" })
-  .inputValidator((data) => getFamilyLocationsSchema.parse(data))
+  .validator((data) => getFamilyLocationsSchema.parse(data))
   .handler(
     async (): Promise<{
       markers: Array<FamilyLocationMarker>;
@@ -112,7 +112,7 @@ export const getFamilyLocations = createServerFn({ method: "GET" })
  * @requires No special auth (public data)
  */
 export const getPlacesByTimeRange = createServerFn({ method: "GET" })
-  .inputValidator((data) => getPlacesByTimeRangeSchema.parse(data))
+  .validator((data) => getPlacesByTimeRangeSchema.parse(data))
   .handler(
     async ({
       data,
@@ -139,7 +139,7 @@ export const getPlacesByTimeRange = createServerFn({ method: "GET" })
  * @requires No special auth (public data)
  */
 export const getPlaceClusters = createServerFn({ method: "GET" })
-  .inputValidator((data) => getPlaceClusterSchema.parse(data))
+  .validator((data) => getPlaceClusterSchema.parse(data))
   .handler(
     async ({
       data,

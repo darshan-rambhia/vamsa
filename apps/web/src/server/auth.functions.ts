@@ -53,7 +53,7 @@ export const getUnclaimedProfiles = createServerFn({ method: "GET" }).handler(
  * });
  */
 export const claimProfile = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     (data: { email: string; personId: string; password: string }) => data
   )
   .handler(async ({ data }) => claimProfileHandler(data));
@@ -75,7 +75,7 @@ export const claimProfile = createServerFn({ method: "POST" })
  * });
  */
 export const changePassword = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     (data: {
       currentPassword: string;
       newPassword: string;

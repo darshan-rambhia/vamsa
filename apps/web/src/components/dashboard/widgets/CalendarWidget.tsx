@@ -59,7 +59,7 @@ interface UpcomingEvent {
  * Server function to fetch upcoming events (birthdays, anniversaries, death anniversaries)
  */
 const getUpcomingEvents = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => {
+  .validator((data: unknown) => {
     const schema = z.object({
       showBirthdays: z.boolean(),
       showAnniversaries: z.boolean(),

@@ -57,7 +57,7 @@ export const previewImport = createServerFn({ method: "POST" }).handler(
  * @requires ADMIN role
  */
 export const importBackup = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => {
+  .validator((data: unknown) => {
     return importOptionsSchema.parse(data);
   })
   .handler(async ({ data }): Promise<ImportResult> => {

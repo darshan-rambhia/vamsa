@@ -33,7 +33,7 @@ export const getCalendarTokens = createServerFn({ method: "GET" }).handler(
  * @requires MEMBER role or higher
  */
 export const createCalendarToken = createServerFn({ method: "POST" })
-  .inputValidator((data: { name?: string; rotationPolicy?: string }) => data)
+  .validator((data: { name?: string; rotationPolicy?: string }) => data)
   .handler(async ({ data }) => {
     const user = await requireAuth("MEMBER");
     const input: CreateCalendarTokenInput = {
@@ -49,7 +49,7 @@ export const createCalendarToken = createServerFn({ method: "POST" })
  * @requires MEMBER role or higher
  */
 export const rotateCalendarToken = createServerFn({ method: "POST" })
-  .inputValidator((data: { tokenId: string }) => data)
+  .validator((data: { tokenId: string }) => data)
   .handler(async ({ data }) => {
     const user = await requireAuth("MEMBER");
     return rotateCalendarTokenData(data.tokenId, user.id);
@@ -61,7 +61,7 @@ export const rotateCalendarToken = createServerFn({ method: "POST" })
  * @requires MEMBER role or higher
  */
 export const revokeCalendarToken = createServerFn({ method: "POST" })
-  .inputValidator((data: { tokenId: string }) => data)
+  .validator((data: { tokenId: string }) => data)
   .handler(async ({ data }) => {
     const user = await requireAuth("MEMBER");
     return revokeCalendarTokenData(data.tokenId, user.id);
@@ -73,7 +73,7 @@ export const revokeCalendarToken = createServerFn({ method: "POST" })
  * @requires MEMBER role or higher
  */
 export const updateTokenName = createServerFn({ method: "POST" })
-  .inputValidator((data: { tokenId: string; name: string }) => data)
+  .validator((data: { tokenId: string; name: string }) => data)
   .handler(async ({ data }): Promise<UpdateTokenNameResult> => {
     const user = await requireAuth("MEMBER");
     return updateTokenNameData(data.tokenId, data.name, user.id);
@@ -86,7 +86,7 @@ export const updateTokenName = createServerFn({ method: "POST" })
  * @requires MEMBER role or higher
  */
 export const deleteCalendarToken = createServerFn({ method: "POST" })
-  .inputValidator((data: { tokenId: string }) => data)
+  .validator((data: { tokenId: string }) => data)
   .handler(async ({ data }): Promise<DeleteCalendarTokenResult> => {
     const user = await requireAuth("MEMBER");
     return deleteCalendarTokenData(data.tokenId, user.id);

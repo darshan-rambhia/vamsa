@@ -48,7 +48,7 @@ export const getOIDCClaimableProfiles = createServerFn({
  * @throws Error if profile not found, already claimed, or user lacks permission
  */
 export const claimProfileOIDC = createServerFn({ method: "POST" })
-  .inputValidator((data) => oidcClaimProfileSchema.parse(data))
+  .validator((data) => oidcClaimProfileSchema.parse(data))
   .handler(async ({ data }) => claimProfileOIDCHandler(data));
 
 /**

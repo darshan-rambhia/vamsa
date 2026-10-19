@@ -121,7 +121,7 @@ const exportChartSchema = z.object({
  * Get ancestor chart - ancestors going back N generations
  */
 export const getAncestorChart = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof ancestorChartSchema>) => {
+  .validator((data: z.infer<typeof ancestorChartSchema>) => {
     return ancestorChartSchema.parse(data);
   })
   .handler(async ({ data }): Promise<ChartLayoutResult> => {
@@ -135,7 +135,7 @@ export const getAncestorChart = createServerFn({ method: "POST" })
  * Get descendant chart - descendants going forward N generations
  */
 export const getDescendantChart = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof descendantChartSchema>) => {
+  .validator((data: z.infer<typeof descendantChartSchema>) => {
     return descendantChartSchema.parse(data);
   })
   .handler(async ({ data }): Promise<ChartLayoutResult> => {
@@ -149,7 +149,7 @@ export const getDescendantChart = createServerFn({ method: "POST" })
  * Get hourglass chart - both ancestors and descendants combined
  */
 export const getHourglassChart = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof hourglassChartSchema>) => {
+  .validator((data: z.infer<typeof hourglassChartSchema>) => {
     return hourglassChartSchema.parse(data);
   })
   .handler(async ({ data }): Promise<ChartLayoutResult> => {
@@ -167,7 +167,7 @@ export const getHourglassChart = createServerFn({ method: "POST" })
  * Get fan chart - ancestors in radial/fan layout pattern
  */
 export const getFanChart = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof fanChartSchema>) => {
+  .validator((data: z.infer<typeof fanChartSchema>) => {
     return fanChartSchema.parse(data);
   })
   .handler(async ({ data }): Promise<ChartLayoutResult> => {
@@ -181,7 +181,7 @@ export const getFanChart = createServerFn({ method: "POST" })
  * Get timeline chart - horizontal timeline showing lifespans
  */
 export const getTimelineChart = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof timelineChartSchema>) => {
+  .validator((data: z.infer<typeof timelineChartSchema>) => {
     return timelineChartSchema.parse(data);
   })
   .handler(async ({ data }): Promise<TimelineChartResult> => {
@@ -195,7 +195,7 @@ export const getTimelineChart = createServerFn({ method: "POST" })
  * Get relationship matrix - grid showing relationships between people
  */
 export const getRelationshipMatrix = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof relationshipMatrixSchema>) => {
+  .validator((data: z.infer<typeof relationshipMatrixSchema>) => {
     return relationshipMatrixSchema.parse(data);
   })
   .handler(async ({ data }): Promise<RelationshipMatrixResult> => {
@@ -209,7 +209,7 @@ export const getRelationshipMatrix = createServerFn({ method: "POST" })
  * Get bowtie chart - dual ancestry showing paternal and maternal lines
  */
 export const getBowtieChart = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof bowtieChartSchema>) => {
+  .validator((data: z.infer<typeof bowtieChartSchema>) => {
     return bowtieChartSchema.parse(data);
   })
   .handler(async ({ data }): Promise<BowtieChartResult> => {
@@ -223,7 +223,7 @@ export const getBowtieChart = createServerFn({ method: "POST" })
  * Get compact tree - hierarchical tree structure for collapsible view
  */
 export const getCompactTree = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof compactTreeSchema>) => {
+  .validator((data: z.infer<typeof compactTreeSchema>) => {
     return compactTreeSchema.parse(data);
   })
   .handler(async ({ data }): Promise<CompactTreeResult> => {
@@ -237,7 +237,7 @@ export const getCompactTree = createServerFn({ method: "POST" })
  * Get statistics - aggregated demographic data for charts
  */
 export const getStatistics = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof statisticsSchema>) => {
+  .validator((data: z.infer<typeof statisticsSchema>) => {
     return statisticsSchema.parse(data);
   })
   .handler(async ({ data }): Promise<StatisticsResult> => {
@@ -251,7 +251,7 @@ export const getStatistics = createServerFn({ method: "POST" })
  * Get tree chart - full family tree with both ancestors and descendants
  */
 export const getTreeChart = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof treeChartSchema>) => {
+  .validator((data: z.infer<typeof treeChartSchema>) => {
     return treeChartSchema.parse(data);
   })
   .handler(async ({ data }): Promise<ChartLayoutResult> => {
@@ -269,7 +269,7 @@ export const getTreeChart = createServerFn({ method: "POST" })
  * Export chart as PDF
  */
 export const exportChartPDF = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof exportChartSchema>) => {
+  .validator((data: z.infer<typeof exportChartSchema>) => {
     return exportChartSchema.parse(data);
   })
   .handler(async ({ data }): Promise<Buffer> => {
@@ -283,7 +283,7 @@ export const exportChartPDF = createServerFn({ method: "POST" })
  * Export chart as SVG
  */
 export const exportChartSVG = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof exportChartSchema>) => {
+  .validator((data: z.infer<typeof exportChartSchema>) => {
     return exportChartSchema.parse(data);
   })
   .handler(async ({ data }): Promise<string> => {
