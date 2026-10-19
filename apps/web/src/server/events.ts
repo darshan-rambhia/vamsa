@@ -21,7 +21,7 @@ import type { Event, EventParticipant } from "@vamsa/lib/server/business";
  * @returns Array of events with participants
  */
 export const getPersonEvents = createServerFn({ method: "GET" })
-  .inputValidator((data: { personId: string }) => data)
+  .validator((data: { personId: string }) => data)
   .handler(async ({ data }): Promise<Array<Event>> => {
     await requireAuth("VIEWER");
     return getPersonEventsData(data.personId);
@@ -32,7 +32,7 @@ export const getPersonEvents = createServerFn({ method: "GET" })
  * @returns Created event
  */
 export const createEvent = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return eventCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<Event> => {
@@ -45,7 +45,7 @@ export const createEvent = createServerFn({ method: "POST" })
  * @returns Updated event
  */
 export const updateEvent = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return eventUpdateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<Event> => {
@@ -59,7 +59,7 @@ export const updateEvent = createServerFn({ method: "POST" })
  * @returns Success status
  */
 export const deleteEvent = createServerFn({ method: "POST" })
-  .inputValidator((data: { eventId: string }) => data)
+  .validator((data: { eventId: string }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
     await requireAuth("ADMIN");
     return deleteEventData(data.eventId);
@@ -70,7 +70,7 @@ export const deleteEvent = createServerFn({ method: "POST" })
  * @returns Created participant
  */
 export const addEventParticipant = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return eventParticipantCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<EventParticipant> => {
@@ -83,7 +83,7 @@ export const addEventParticipant = createServerFn({ method: "POST" })
  * @returns Success status
  */
 export const removeEventParticipant = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return eventParticipantRemoveSchema.parse(data);
   })
   .handler(async ({ data }): Promise<{ success: boolean }> => {

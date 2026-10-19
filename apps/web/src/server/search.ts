@@ -60,7 +60,7 @@ export type SearchPeopleInput = z.infer<typeof searchPeopleInputSchema>;
  * @throws Error if database query fails
  */
 export const searchPeople = createServerFn({ method: "GET" })
-  .inputValidator((data: unknown) => {
+  .validator((data: unknown) => {
     return searchPeopleInputSchema.parse(data);
   })
   .handler(async ({ data }): Promise<SearchResults<PersonSearchResultItem>> => {

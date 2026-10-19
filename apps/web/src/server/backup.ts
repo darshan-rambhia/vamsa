@@ -62,7 +62,7 @@ export type ExportBackupResult = {
  * Admin-only endpoint.
  */
 export const exportBackup = createServerFn({ method: "POST" })
-  .inputValidator((data: BackupExportInput) => backupExportSchema.parse(data))
+  .validator((data: BackupExportInput) => backupExportSchema.parse(data))
   .handler(
     async ({
       data,
@@ -147,9 +147,7 @@ export const exportBackup = createServerFn({ method: "POST" })
  * Admin-only endpoint.
  */
 export const listBackups = createServerFn({ method: "POST" })
-  .inputValidator((data: ListBackupsInput) =>
-    listBackupsInputSchema.parse(data)
-  )
+  .validator((data: ListBackupsInput) => listBackupsInputSchema.parse(data))
   .handler(async ({ data }) => {
     await requireAuth("ADMIN");
 
@@ -200,7 +198,7 @@ export const listBackups = createServerFn({ method: "POST" })
  * Admin-only endpoint.
  */
 export const downloadBackup = createServerFn({ method: "POST" })
-  .inputValidator((data: { backupId: string }) => data)
+  .validator((data: { backupId: string }) => data)
   .handler(async ({ data }) => {
     await requireAuth("ADMIN");
 
@@ -238,7 +236,7 @@ export const downloadBackup = createServerFn({ method: "POST" })
  * Admin-only endpoint.
  */
 export const verifyBackup = createServerFn({ method: "POST" })
-  .inputValidator((data: { backupId: string }) => data)
+  .validator((data: { backupId: string }) => data)
   .handler(async ({ data }) => {
     await requireAuth("ADMIN");
 
@@ -274,7 +272,7 @@ export const verifyBackup = createServerFn({ method: "POST" })
  * Admin-only endpoint.
  */
 export const deleteBackup = createServerFn({ method: "POST" })
-  .inputValidator((data: { backupId: string }) => data)
+  .validator((data: { backupId: string }) => data)
   .handler(async ({ data }) => {
     const user = await requireAuth("ADMIN");
 
@@ -331,7 +329,7 @@ export const deleteBackup = createServerFn({ method: "POST" })
  * Admin-only endpoint.
  */
 export const importBackup = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     (data: {
       backupData: string;
       options: z.infer<typeof backupSettingsSchema>;
@@ -456,7 +454,7 @@ export const getBackupSettings = createServerFn({ method: "GET" }).handler(
  * Admin-only endpoint.
  */
 export const scheduleBackup = createServerFn({ method: "POST" })
-  .inputValidator((data: BackupSettings) => backupSettingsSchema.parse(data))
+  .validator((data: BackupSettings) => backupSettingsSchema.parse(data))
   .handler(async ({ data }) => {
     const user = await requireAuth("ADMIN");
 

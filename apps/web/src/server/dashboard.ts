@@ -79,7 +79,7 @@ export const getDashboardStats = createServerFn({ method: "GET" }).handler(
  * })
  */
 export const getRecentActivity = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof activityFiltersSchema>) => {
+  .validator((data: z.infer<typeof activityFiltersSchema>) => {
     return activityFiltersSchema.parse(data);
   })
   .handler(async ({ data }): Promise<Array<ActivityLog>> => {

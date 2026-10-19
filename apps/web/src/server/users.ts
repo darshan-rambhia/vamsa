@@ -70,7 +70,7 @@ type UserListInput = z.infer<typeof userListInputSchema>;
  * @requires ADMIN role
  */
 export const getUsers = createServerFn({ method: "GET" })
-  .inputValidator((data: Partial<UserListInput>) => {
+  .validator((data: Partial<UserListInput>) => {
     return userListInputSchema.parse(data);
   })
   .handler(async ({ data }): Promise<UserListResult> => {
@@ -97,7 +97,7 @@ export const getUsers = createServerFn({ method: "GET" })
  * @throws Error if user not found
  */
 export const getUser = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<UserDetail> => {
     await requireAuth("ADMIN");
     return getUserData(data.id);
@@ -118,7 +118,7 @@ export const getUser = createServerFn({ method: "GET" })
  * @throws Error if validation fails, user not found, or permission violation
  */
 export const updateUser = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => {
+  .validator((data: unknown) => {
     return z
       .intersection(userUpdateSchema, z.object({ id: z.string() }))
       .parse(data);
@@ -139,7 +139,7 @@ export const updateUser = createServerFn({ method: "POST" })
  * @throws Error if user not found or self-deletion attempted
  */
 export const deleteUser = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<UserDeleteResult> => {
     const user = await requireAuth("ADMIN");
     return deleteUserData(data.id, user.id);
@@ -155,7 +155,7 @@ export const deleteUser = createServerFn({ method: "POST" })
  * @requires ADMIN role
  */
 export const searchAvailablePersons = createServerFn({ method: "GET" })
-  .inputValidator((data: { search?: string }) => data)
+  .validator((data: { search?: string }) => data)
   .handler(async ({ data }): Promise<Array<AvailablePerson>> => {
     await requireAuth("ADMIN");
     return searchAvailablePersonsData(data.search);
@@ -172,7 +172,7 @@ export const searchAvailablePersons = createServerFn({ method: "GET" })
  * @throws Error if user not found
  */
 export const unlockAccount = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<UnlockAccountResult> => {
     const user = await requireAuth("ADMIN");
     return unlockUserAccountData(data.id, user.id);
@@ -199,9 +199,7 @@ type UpdateUserRoleInput = z.infer<typeof updateUserRoleSchema>;
  * @throws Error if user not found or self-demotion attempted
  */
 export const updateUserRole = createServerFn({ method: "POST" })
-  .inputValidator((data: UpdateUserRoleInput) =>
-    updateUserRoleSchema.parse(data)
-  )
+  .validator((data: UpdateUserRoleInput) => updateUserRoleSchema.parse(data))
   .handler(async ({ data }): Promise<{ id: string; role: string }> => {
     const user = await requireAuth("ADMIN");
     const result = await updateUserData(
@@ -223,7 +221,7 @@ export const updateUserRole = createServerFn({ method: "POST" })
  * @throws Error if user not found or self-deactivation attempted
  */
 export const toggleUserActive = createServerFn({ method: "POST" })
-  .inputValidator((data: { userId: string; isActive: boolean }) => data)
+  .validator((data: { userId: string; isActive: boolean }) => data)
   .handler(async ({ data }): Promise<{ id: string; isActive: boolean }> => {
     const user = await requireAuth("ADMIN");
     const result = await updateUserData(
@@ -246,7 +244,7 @@ export const toggleUserActive = createServerFn({ method: "POST" })
  * @throws Error if user/person not found or person already linked
  */
 export const linkUserToPerson = createServerFn({ method: "POST" })
-  .inputValidator((data: { userId: string; personId: string | null }) => data)
+  .validator((data: { userId: string; personId: string | null }) => data)
   .handler(
     async ({
       data,

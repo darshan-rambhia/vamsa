@@ -41,7 +41,7 @@ import type {
  * @throws Error if source not found
  */
 export const getSource = createServerFn({ method: "GET" })
-  .inputValidator((data: { sourceId: string }) => data)
+  .validator((data: { sourceId: string }) => data)
   .handler(async ({ data }): Promise<SourceDetail> => {
     await requireAuth("VIEWER");
     return getSourceData(data.sourceId);
@@ -52,7 +52,7 @@ export const getSource = createServerFn({ method: "GET" })
  * @returns List of sources matching filters
  */
 export const listSources = createServerFn({ method: "GET" })
-  .inputValidator((data: { type?: string; personId?: string } = {}) => data)
+  .validator((data: { type?: string; personId?: string } = {}) => data)
   .handler(async ({ data }): Promise<SourceListResult> => {
     await requireAuth("VIEWER");
     return listSourcesData(data.type, data.personId);
@@ -63,7 +63,7 @@ export const listSources = createServerFn({ method: "GET" })
  * @returns Created source
  */
 export const createSource = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return sourceCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<SourceCreateResult> => {
@@ -77,7 +77,7 @@ export const createSource = createServerFn({ method: "POST" })
  * @throws Error if source not found
  */
 export const updateSource = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return sourceUpdateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<SourceUpdateResult> => {
@@ -95,7 +95,7 @@ export const updateSource = createServerFn({ method: "POST" })
  * @throws Error if source not found
  */
 export const deleteSource = createServerFn({ method: "POST" })
-  .inputValidator((data: { sourceId: string }) => data)
+  .validator((data: { sourceId: string }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
     await requireAuth("ADMIN");
     return deleteSourceData(data.sourceId);
@@ -107,7 +107,7 @@ export const deleteSource = createServerFn({ method: "POST" })
  * @throws Error if source or person not found
  */
 export const createResearchNote = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return researchNoteCreateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<ResearchNoteResult> => {
@@ -123,7 +123,7 @@ export const createResearchNote = createServerFn({ method: "POST" })
  * @throws Error if research note not found
  */
 export const updateResearchNote = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return researchNoteUpdateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<ResearchNoteResult> => {
@@ -141,7 +141,7 @@ export const updateResearchNote = createServerFn({ method: "POST" })
  * @throws Error if research note not found
  */
 export const deleteResearchNote = createServerFn({ method: "POST" })
-  .inputValidator((data: { noteId: string }) => data)
+  .validator((data: { noteId: string }) => data)
   .handler(async ({ data }): Promise<{ success: boolean }> => {
     await requireAuth("ADMIN");
     return deleteResearchNoteData(data.noteId);
@@ -153,7 +153,7 @@ export const deleteResearchNote = createServerFn({ method: "POST" })
  * @throws Error if source or person not found
  */
 export const linkSourceToEvent = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return linkSourceToEventSchema.parse(data);
   })
   .handler(async ({ data }): Promise<EventSourceResult> => {
@@ -167,7 +167,7 @@ export const linkSourceToEvent = createServerFn({ method: "POST" })
  * @throws Error if person not found
  */
 export const getResearchNotes = createServerFn({ method: "GET" })
-  .inputValidator((data: { personId: string }) => data)
+  .validator((data: { personId: string }) => data)
   .handler(async ({ data }): Promise<ResearchNotesGrouped> => {
     await requireAuth("VIEWER");
     return getResearchNotesData(data.personId);
@@ -179,7 +179,7 @@ export const getResearchNotes = createServerFn({ method: "GET" })
  * @throws Error if source not found
  */
 export const generateCitation = createServerFn({ method: "POST" })
-  .inputValidator((data) => {
+  .validator((data) => {
     return citationGenerateSchema.parse(data);
   })
   .handler(async ({ data }): Promise<GeneratedCitation> => {
@@ -192,7 +192,7 @@ export const generateCitation = createServerFn({ method: "POST" })
  * @returns Sources grouped by event type
  */
 export const getPersonSources = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<PersonSourcesResponse> => {
     await requireAuth("VIEWER");
     return getPersonSourcesData(data.id);

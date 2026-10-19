@@ -39,7 +39,7 @@ type SuggestionListInput = z.infer<typeof suggestionListInputSchema>;
  * @requires VIEWER role or higher
  */
 export const getSuggestions = createServerFn({ method: "GET" })
-  .inputValidator((data: Partial<SuggestionListInput>) => {
+  .validator((data: Partial<SuggestionListInput>) => {
     return suggestionListInputSchema.parse(data);
   })
   .handler(async ({ data }): Promise<SuggestionListResult> => {
@@ -73,7 +73,7 @@ export const getPendingSuggestionsCount = createServerFn({
  * @requires MEMBER role or higher
  */
 export const createSuggestion = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     (data: {
       type: "CREATE" | "UPDATE" | "DELETE" | "ADD_RELATIONSHIP";
       targetPersonId?: string | null;
@@ -106,7 +106,7 @@ export const createSuggestion = createServerFn({ method: "POST" })
  * @throws Error if suggestion not found or already reviewed
  */
 export const reviewSuggestion = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     (data: {
       suggestionId: string;
       status: "APPROVED" | "REJECTED";

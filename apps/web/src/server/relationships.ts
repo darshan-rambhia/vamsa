@@ -33,7 +33,7 @@ const log = loggers.db;
  * Output: Array of relationships with related person information
  */
 export const listRelationships = createServerFn({ method: "GET" })
-  .inputValidator((data: { personId: string; type?: string }) => {
+  .validator((data: { personId: string; type?: string }) => {
     const schema = z.object({
       personId: z.string().min(1),
       type: relationshipTypeEnum.optional(),
@@ -67,7 +67,7 @@ export const listRelationships = createServerFn({ method: "GET" })
  * Output: Relationship with related person information
  */
 export const getRelationship = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string }) => {
+  .validator((data: { id: string }) => {
     const schema = z.object({
       id: z.string().min(1),
     });
@@ -100,7 +100,7 @@ export const getRelationship = createServerFn({ method: "GET" })
  * Output: { id: string }
  */
 export const createRelationship = createServerFn({ method: "POST" })
-  .inputValidator((data: RelationshipCreateInput) => {
+  .validator((data: RelationshipCreateInput) => {
     return relationshipCreateSchema.parse(data);
   })
   .handler(async ({ data }) => {
@@ -137,7 +137,7 @@ export const createRelationship = createServerFn({ method: "POST" })
  * Output: { id: string }
  */
 export const updateRelationship = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: string } & RelationshipUpdateInput) => {
+  .validator((data: { id: string } & RelationshipUpdateInput) => {
     const schema = z
       .object({
         id: z.string().min(1),
@@ -181,7 +181,7 @@ export const updateRelationship = createServerFn({ method: "POST" })
  * Output: { success: boolean }
  */
 export const deleteRelationship = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: string }) => {
+  .validator((data: { id: string }) => {
     const schema = z.object({
       id: z.string().min(1),
     });

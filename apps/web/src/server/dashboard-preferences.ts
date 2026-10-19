@@ -99,7 +99,7 @@ export const getDashboardPreferences = createServerFn({
  * });
  */
 export const saveDashboardPreferences = createServerFn({ method: "POST" })
-  .inputValidator((data: SaveDashboardPreferencesInput) => {
+  .validator((data: SaveDashboardPreferencesInput) => {
     return saveDashboardPreferencesSchema.parse(data);
   })
   .handler(async ({ data }) => {

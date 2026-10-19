@@ -54,7 +54,7 @@ export type { ImportResult, ExportResult, ExportZipResult };
  * }
  */
 export const validateGedcom = createServerFn({ method: "POST" })
-  .inputValidator((data: { fileName: string; fileContent: string }) => data)
+  .validator((data: { fileName: string; fileContent: string }) => data)
   .handler(async ({ data }): Promise<ValidateGedcomResult> => {
     await requireAuth("ADMIN");
 
@@ -91,7 +91,7 @@ export const validateGedcom = createServerFn({ method: "POST" })
  * }
  */
 export const importGedcom = createServerFn({ method: "POST" })
-  .inputValidator((data: { fileName: string; fileContent: string }) => data)
+  .validator((data: { fileName: string; fileContent: string }) => data)
   .handler(async ({ data }): Promise<ImportResult> => {
     const user = await requireAuth("ADMIN");
 
@@ -138,7 +138,7 @@ export const exportGedcom = createServerFn({ method: "GET" }).handler(
  * }
  */
 export const exportGedZip = createServerFn({ method: "GET" })
-  .inputValidator((data: { includeMedia?: boolean }) => data)
+  .validator((data: { includeMedia?: boolean }) => data)
   .handler(async ({ data }): Promise<ExportZipResult> => {
     const user = await requireAuth("ADMIN");
 

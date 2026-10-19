@@ -38,7 +38,7 @@ import { requireAuth } from "./middleware/require-auth";
  * ordered by primary status, display order, and creation date.
  */
 export const getPersonMedia = createServerFn({ method: "GET" })
-  .inputValidator((data: { personId: string }) => data)
+  .validator((data: { personId: string }) => data)
   .handler(async ({ data }) => {
     await requireAuth("VIEWER");
     const { personId } = data;
@@ -52,7 +52,7 @@ export const getPersonMedia = createServerFn({ method: "GET" })
  * (events and person links).
  */
 export const getMediaObject = createServerFn({ method: "GET" })
-  .inputValidator((data: { mediaId: string }) => data)
+  .validator((data: { mediaId: string }) => data)
   .handler(async ({ data }) => {
     await requireAuth("VIEWER");
     const { mediaId } = data;
@@ -66,7 +66,7 @@ export const getMediaObject = createServerFn({ method: "GET" })
  * Also cleans up processed image files from disk.
  */
 export const deleteMedia = createServerFn({ method: "POST" })
-  .inputValidator((data: { mediaId: string }) => data)
+  .validator((data: { mediaId: string }) => data)
   .handler(async ({ data }) => {
     await requireAuth("ADMIN");
     const { mediaId } = data;
@@ -79,7 +79,7 @@ export const deleteMedia = createServerFn({ method: "POST" })
  * Updates title, description, caption, and source fields.
  */
 export const updateMediaMetadata = createServerFn({ method: "POST" })
-  .inputValidator((data) => mediaMetadataSchema.parse(data))
+  .validator((data) => mediaMetadataSchema.parse(data))
   .handler(async ({ data }) => {
     await requireAuth("MEMBER");
     const { mediaId, title, description, caption, source } = data;
@@ -99,7 +99,7 @@ export const updateMediaMetadata = createServerFn({ method: "POST" })
  * unsetting any previously primary photo.
  */
 export const setPrimaryPhoto = createServerFn({ method: "POST" })
-  .inputValidator((data) => setPrimaryPhotoSchema.parse(data))
+  .validator((data) => setPrimaryPhotoSchema.parse(data))
   .handler(async ({ data }) => {
     await requireAuth("MEMBER");
     const { personId, mediaId } = data;
@@ -112,7 +112,7 @@ export const setPrimaryPhoto = createServerFn({ method: "POST" })
  * Updates the display order of media for a person.
  */
 export const reorderMedia = createServerFn({ method: "POST" })
-  .inputValidator((data) => mediaReorderSchema.parse(data))
+  .validator((data) => mediaReorderSchema.parse(data))
   .handler(async ({ data }) => {
     await requireAuth("MEMBER");
     const { personId, ordering } = data;
@@ -126,7 +126,7 @@ export const reorderMedia = createServerFn({ method: "POST" })
  * Prevents duplicate links for the same event-person-type combination.
  */
 export const linkMediaToEvent = createServerFn({ method: "POST" })
-  .inputValidator((data) => linkMediaToEventSchema.parse(data))
+  .validator((data) => linkMediaToEventSchema.parse(data))
   .handler(async ({ data }) => {
     await requireAuth("MEMBER");
     const { mediaId, eventId } = data;
@@ -141,7 +141,7 @@ export const linkMediaToEvent = createServerFn({ method: "POST" })
  * Sets the first upload as the primary photo.
  */
 export const uploadMedia = createServerFn({ method: "POST" })
-  .inputValidator(
+  .validator(
     (data: {
       personId: string;
       fileName: string;

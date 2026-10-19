@@ -77,7 +77,7 @@ export const getFamilySettings = createServerFn({ method: "GET" }).handler(
  * });
  */
 export const updateFamilySettings = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof updateSettingsSchema>) => {
+  .validator((data: z.infer<typeof updateSettingsSchema>) => {
     return updateSettingsSchema.parse(data);
   })
   .handler(async ({ data }) => {
@@ -128,7 +128,7 @@ export const getUserLanguagePreference = createServerFn({
 export const setUserLanguagePreference = createServerFn({
   method: "POST",
 })
-  .inputValidator((data: z.infer<typeof languagePreferenceSchema>) => {
+  .validator((data: z.infer<typeof languagePreferenceSchema>) => {
     return languagePreferenceSchema.parse(data);
   })
   .handler(async ({ data }) => {

@@ -59,7 +59,7 @@ const tokenSchema = z.object({
  * Retrieves a paginated list of invites with optional status filtering.
  */
 export const getInvites = createServerFn({ method: "GET" })
-  .inputValidator((data: Partial<z.infer<typeof inviteListInputSchema>>) => {
+  .validator((data: Partial<z.infer<typeof inviteListInputSchema>>) => {
     return inviteListInputSchema.parse(data);
   })
   .handler(async ({ data }) => {
@@ -77,7 +77,7 @@ export const getInvites = createServerFn({ method: "GET" })
  * Email must not already have an active invite or user account.
  */
 export const createInvite = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof createInviteSchema>) => {
+  .validator((data: z.infer<typeof createInviteSchema>) => {
     return createInviteSchema.parse(data);
   })
   .handler(async ({ data }) => {
@@ -98,7 +98,7 @@ export const createInvite = createServerFn({ method: "POST" })
  * No authentication required.
  */
 export const getInviteByToken = createServerFn({ method: "GET" })
-  .inputValidator((data: z.infer<typeof tokenSchema>) => {
+  .validator((data: z.infer<typeof tokenSchema>) => {
     return tokenSchema.parse(data);
   })
   .handler(async ({ data }) => {
@@ -112,7 +112,7 @@ export const getInviteByToken = createServerFn({ method: "GET" })
  * No authentication required.
  */
 export const acceptInvite = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof acceptInviteSchema>) => {
+  .validator((data: z.infer<typeof acceptInviteSchema>) => {
     return acceptInviteSchema.parse(data);
   })
   .handler(async ({ data }) => {
@@ -125,7 +125,7 @@ export const acceptInvite = createServerFn({ method: "POST" })
  * Changes a pending invite status to REVOKED, preventing further acceptance.
  */
 export const revokeInvite = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof inviteIdSchema>) => {
+  .validator((data: z.infer<typeof inviteIdSchema>) => {
     return inviteIdSchema.parse(data);
   })
   .handler(async ({ data }) => {
@@ -140,7 +140,7 @@ export const revokeInvite = createServerFn({ method: "POST" })
  * Permanently deletes a revoked invite record.
  */
 export const deleteInvite = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof inviteIdSchema>) => {
+  .validator((data: z.infer<typeof inviteIdSchema>) => {
     return inviteIdSchema.parse(data);
   })
   .handler(async ({ data }) => {
@@ -155,7 +155,7 @@ export const deleteInvite = createServerFn({ method: "POST" })
  * Generates a new token and extends expiration to 7 days from now.
  */
 export const resendInvite = createServerFn({ method: "POST" })
-  .inputValidator((data: z.infer<typeof inviteIdSchema>) => {
+  .validator((data: z.infer<typeof inviteIdSchema>) => {
     return inviteIdSchema.parse(data);
   })
   .handler(async ({ data }) => {
