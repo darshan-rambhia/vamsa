@@ -28,7 +28,10 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  E2E_IMAGE: ghcr.io/${{ github.repository }}/e2e:latest
+  # Tag per commit so overlapping runs (PRs and main) never test each other's code.
+  # :latest is only a layer cache, refreshed from main.
+  E2E_IMAGE: ghcr.io/${{ github.repository }}/e2e:${{ github.sha }}
+  E2E_CACHE_IMAGE: ghcr.io/${{ github.repository }}/e2e:latest
 
 jobs:
   build-image:
@@ -54,15 +57,19 @@ jobs:
 
       - name: Build and push E2E image
         run: |
-          # Pull existing image for Docker layer cache reuse
-          docker pull $E2E_IMAGE 2>/dev/null || true
-          # Build with cache from pulled image
+          # Pull main's image for Docker layer cache reuse
+          docker pull $E2E_CACHE_IMAGE 2>/dev/null || true
           docker build \
-            --cache-from $E2E_IMAGE \
+            --cache-from $E2E_CACHE_IMAGE \
             -t $E2E_IMAGE \
             -f docker/Dockerfile.e2e .
-          # Push updated image for test jobs and future runs
+          # Push the commit-tagged image for this run's test jobs
           docker push $E2E_IMAGE
+          # Only main refreshes the shared cache tag
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then
+            docker tag $E2E_IMAGE $E2E_CACHE_IMAGE
+            docker push $E2E_CACHE_IMAGE
+          fi
 
   e2e-tests:
     name: E2E Tests (${{ matrix.browser }})
