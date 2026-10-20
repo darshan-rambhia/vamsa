@@ -3,7 +3,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 import { Suspense, lazy, useCallback, useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -108,12 +108,26 @@ interface VisualizeSearchParams {
   sortBy?: "birth" | "death" | "name";
 }
 
+const visualizationPersonsQuery = queryOptions({
+  queryKey: ["persons", "visualize"],
+  queryFn: async () => {
+    const firstPage = await listPersons({ data: { page: 1, limit: 100 } });
+    const remainingPages = await Promise.all(
+      Array.from(
+        { length: Math.max(0, firstPage.pagination.totalPages - 1) },
+        (_, index) => listPersons({ data: { page: index + 2, limit: 100 } })
+      )
+    );
+    return [
+      ...firstPage.items,
+      ...remainingPages.flatMap((page) => page.items),
+    ];
+  },
+});
+
 export const Route = createFileRoute("/_authenticated/visualize")({
   loader: async ({ context }) => {
-    await context.queryClient.prefetchQuery({
-      queryKey: ["persons"],
-      queryFn: () => listPersons({ data: {} }),
-    });
+    await context.queryClient.prefetchQuery(visualizationPersonsQuery);
   },
   component: VisualizeComponent,
   errorComponent: CompactRouteError,
@@ -164,10 +178,9 @@ function VisualizeComponent() {
   });
 
   // Fetch all persons for chart person selection
-  const { data: personsData, isLoading: isLoadingPersons } = useQuery({
-    queryKey: ["persons"],
-    queryFn: () => listPersons({ data: {} }),
-  });
+  const { data: persons, isLoading: isLoadingPersons } = useQuery(
+    visualizationPersonsQuery
+  );
 
   // Selected person - default to current user's personId for charts
   const selectedPersonId =
@@ -385,7 +398,7 @@ function VisualizeComponent() {
         {showPersonSelector && (
           <div className="shrink-0">
             <PersonSelector
-              persons={personsData?.items || []}
+              persons={persons || []}
               selectedPersonId={selectedPersonId}
               onPersonChange={handlePersonChange}
               isLoading={isLoadingPersons}
