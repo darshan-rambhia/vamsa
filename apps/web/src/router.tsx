@@ -3,6 +3,7 @@ import { createRouter } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { routeTree } from "./routeTree.gen";
+import { DefaultRouteError } from "./components/module-load-error";
 import { getCspNonce } from "./server/csp-nonce";
 
 /**
@@ -27,6 +28,7 @@ export function getRouter() {
     routeTree,
     context: { queryClient },
     defaultPreload: "intent",
+    defaultErrorComponent: DefaultRouteError,
     scrollRestoration: true,
     ssr: { nonce: getSsrNonce() },
   });

@@ -25,6 +25,12 @@ import appCss from "~/styles.css?url";
 import printCss from "~/styles/print.css?url";
 import i18n from "~/i18n/config";
 import { getCspNonce } from "~/server/csp-nonce";
+import { ModuleLoadError } from "~/components/module-load-error";
+import { isModuleLoadError } from "~/lib/module-load-recovery";
+import {
+  FALLBACK_ID,
+  MODULE_FALLBACK_SCRIPT,
+} from "~/lib/module-load-fallback";
 
 /**
  * Server function to get the CSP nonce for the current request
@@ -110,7 +116,12 @@ function NotFound() {
  * Root error component - shown when an unhandled error occurs.
  * This is the last resort error page when errors bubble up to the root.
  */
-function RootErrorComponent({ error, reset }: ErrorComponentProps) {
+function RootErrorComponent(props: ErrorComponentProps) {
+  if (isModuleLoadError(props.error)) return <ModuleLoadError />;
+  return <RootErrorInner {...props} />;
+}
+
+function RootErrorInner({ error, reset }: ErrorComponentProps) {
   const { t } = useTranslation("common");
   const [showDetails, setShowDetails] = useState(false);
   const router = useRouter();
@@ -358,6 +369,11 @@ function RootDocument({
           nonce={nonce}
           dangerouslySetInnerHTML={{ __html: DARK_MODE_SCRIPT }}
         />
+        {/* Module-load recovery: works even if React never hydrates */}
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: MODULE_FALLBACK_SCRIPT }}
+        />
       </head>
       <body className="font-body antialiased">
         {/* Skip to main content link for keyboard navigation */}
@@ -370,6 +386,56 @@ function RootDocument({
         <QueryClientProvider client={queryClient}>
           <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
         </QueryClientProvider>
+        {/* Static fallback, revealed by the inline script (no React needed) */}
+        <div
+          id={FALLBACK_ID}
+          role="alert"
+          hidden
+          suppressHydrationWarning
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1rem",
+            textAlign: "center",
+            background: "var(--color-background, oklch(0.98 0.01 80))",
+            color: "var(--color-foreground, oklch(0.22 0.05 145))",
+            fontFamily: "'Source Sans 3', system-ui, sans-serif",
+          }}
+        >
+          <h1
+            style={{
+              fontFamily: "Fraunces, Georgia, serif",
+              fontSize: "1.5rem",
+              fontWeight: 600,
+              margin: 0,
+            }}
+          >
+            Vamsa couldn&apos;t finish loading
+          </h1>
+          <p style={{ margin: "0.5rem 0 1.5rem", maxWidth: "24rem" }}>
+            Part of the page failed to load. Check your connection and reload.
+          </p>
+          <button
+            id={`${FALLBACK_ID}-btn`}
+            type="button"
+            style={{
+              background: "var(--color-primary, oklch(0.38 0.12 145))",
+              color: "var(--color-primary-foreground, oklch(0.98 0.01 80))",
+              border: 0,
+              borderRadius: "0.375rem",
+              padding: "0.625rem 1.25rem",
+              fontSize: "0.875rem",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            Reload
+          </button>
+        </div>
         <Scripts />
       </body>
     </html>
