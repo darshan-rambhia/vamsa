@@ -20,6 +20,7 @@ import {
   getBowtieChartData,
   getCompactTreeData,
   getDescendantChartData,
+  getFamilyTreeData,
   getFanChartData,
   getHourglassChartData,
   getRelationshipMatrixData,
@@ -259,6 +260,24 @@ export const getTreeChart = createServerFn({ method: "POST" })
 
     const { personId, ancestorGenerations, descendantGenerations } = data;
     return getTreeChartData(
+      personId,
+      ancestorGenerations,
+      descendantGenerations
+    );
+  });
+
+/**
+ * Get family tree - direct line plus collateral relatives for the tree layout
+ */
+export const getFamilyTree = createServerFn({ method: "POST" })
+  .validator((data: z.infer<typeof treeChartSchema>) => {
+    return treeChartSchema.parse(data);
+  })
+  .handler(async ({ data }): Promise<ChartLayoutResult> => {
+    await requireAuth("VIEWER");
+
+    const { personId, ancestorGenerations, descendantGenerations } = data;
+    return getFamilyTreeData(
       personId,
       ancestorGenerations,
       descendantGenerations

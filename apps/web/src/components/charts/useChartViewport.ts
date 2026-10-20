@@ -28,6 +28,13 @@ export interface ChartViewportOptions {
   resetSignal?: number;
 }
 
+export interface FitOptions {
+  /** If fitting everything needs a smaller scale, use this scale instead */
+  minFitScale?: number;
+  /** Content point to center on when the minimum fit scale is applied */
+  focusPoint?: { x: number; y: number };
+}
+
 export interface ViewportBounds {
   x: number;
   y: number;
@@ -60,9 +67,11 @@ export interface ChartViewportResult {
     zoomOut: () => void;
     reset: () => void;
     panTo: (x: number, y: number) => void;
+    /** Pan by a screen-space offset */
+    panBy: (dx: number, dy: number) => void;
   };
   /** Calculate and set initial transform based on content bounds */
-  fitContent: (bounds: ContentBounds) => void;
+  fitContent: (bounds: ContentBounds, options?: FitOptions) => void;
   /** Current scale for display (e.g., "100%") */
   scalePercent: number;
   /** Get current viewport bounds in tree/content coordinates */
@@ -103,6 +112,63 @@ const DEFAULT_MARGIN = { top: 40, right: 40, bottom: 40, left: 40 };
  * );
  * ```
  */
+/**
+ * Pure fit math. Fits all content (never above 1:1). If that would drop below
+ * `minFitScale`, uses that scale instead: each axis that fits is centered on
+ * the content, an axis that doesn't fit is centered on the focus point, with
+ * top padding of at least margin.top and the focus kept on screen.
+ */
+export function computeFitTransform(
+  bounds: ContentBounds,
+  dimensions: { width: number; height: number },
+  margin: { top: number; right: number; bottom: number; left: number },
+  minScale: number,
+  fitOptions?: FitOptions
+): Transform {
+  const contentWidth = bounds.maxX - bounds.minX + margin.left + margin.right;
+  const contentHeight = bounds.maxY - bounds.minY + margin.top + margin.bottom;
+
+  const scaleX = (dimensions.width * 0.95) / contentWidth;
+  const scaleY = (dimensions.height * 0.95) / contentHeight;
+  const fitScale = Math.min(scaleX, scaleY, 1);
+  const contentCenterX = (bounds.minX + bounds.maxX) / 2;
+  const contentCenterY = (bounds.minY + bounds.maxY) / 2;
+
+  if (
+    fitOptions?.minFitScale &&
+    fitOptions.focusPoint &&
+    fitScale < fitOptions.minFitScale
+  ) {
+    const scale = fitOptions.minFitScale;
+    const focus = fitOptions.focusPoint;
+
+    const fitsX = contentWidth * scale <= dimensions.width;
+    const x = fitsX
+      ? dimensions.width / 2 - contentCenterX * scale
+      : dimensions.width / 2 - focus.x * scale;
+
+    const fitsY = contentHeight * scale <= dimensions.height;
+    let y: number;
+    if (fitsY) {
+      y = dimensions.height / 2 - contentCenterY * scale;
+    } else {
+      y = dimensions.height / 2 - focus.y * scale;
+      // keep top padding...
+      y = Math.max(y, margin.top - bounds.minY * scale);
+      // ...but never push the focus row off the bottom
+      const focusMaxY = dimensions.height - margin.bottom;
+      y = Math.min(y, focusMaxY - focus.y * scale);
+    }
+    return { x, y, scale };
+  }
+
+  return {
+    x: dimensions.width / 2 - contentCenterX * fitScale,
+    y: dimensions.height / 2 - contentCenterY * fitScale,
+    scale: Math.max(fitScale, minScale),
+  };
+}
+
 export function useChartViewport(
   options: ChartViewportOptions = {}
 ): ChartViewportResult {
@@ -128,42 +194,24 @@ export function useChartViewport(
 
   // Store the last content bounds for reset functionality
   const lastBoundsRef = useRef<ContentBounds | null>(null);
+  const lastFitOptionsRef = useRef<FitOptions | undefined>(undefined);
 
   // Track if we've received initial dimensions
   const hasInitialDimensions = dimensions.width > 0 && dimensions.height > 0;
 
   // Calculate initial transform based on content bounds
   const calculateInitialTransform = useCallback(
-    (bounds: ContentBounds): Transform => {
-      const contentWidth =
-        bounds.maxX - bounds.minX + margin.left + margin.right;
-      const contentHeight =
-        bounds.maxY - bounds.minY + margin.top + margin.bottom;
-
-      // Calculate scale to fit content with some padding (95% of viewport)
-      const scaleX = (dimensions.width * 0.95) / contentWidth;
-      const scaleY = (dimensions.height * 0.95) / contentHeight;
-      const scale = Math.min(scaleX, scaleY, 1); // Don't zoom in beyond 1:1
-
-      // Calculate content center
-      const contentCenterX = (bounds.minX + bounds.maxX) / 2;
-      const contentCenterY = (bounds.minY + bounds.maxY) / 2;
-
-      // Center the content in the viewport
-      return {
-        x: dimensions.width / 2 - contentCenterX * scale,
-        y: dimensions.height / 2 - contentCenterY * scale,
-        scale: Math.max(scale, minScale),
-      };
-    },
+    (bounds: ContentBounds, fitOptions?: FitOptions): Transform =>
+      computeFitTransform(bounds, dimensions, margin, minScale, fitOptions),
     [dimensions, margin, minScale]
   );
 
   // Fit content to viewport
   const fitContent = useCallback(
-    (bounds: ContentBounds) => {
+    (bounds: ContentBounds, fitOptions?: FitOptions) => {
       lastBoundsRef.current = bounds;
-      setTransform(calculateInitialTransform(bounds));
+      lastFitOptionsRef.current = fitOptions;
+      setTransform(calculateInitialTransform(bounds, fitOptions));
     },
     [calculateInitialTransform]
   );
@@ -189,14 +237,24 @@ export function useChartViewport(
   // Re-fit content when dimensions change
   useEffect(() => {
     if (lastBoundsRef.current) {
-      setTransform(calculateInitialTransform(lastBoundsRef.current));
+      setTransform(
+        calculateInitialTransform(
+          lastBoundsRef.current,
+          lastFitOptionsRef.current
+        )
+      );
     }
   }, [dimensions, calculateInitialTransform]);
 
   // Reset view when resetSignal changes
   useEffect(() => {
     if (resetSignal !== undefined && lastBoundsRef.current) {
-      setTransform(calculateInitialTransform(lastBoundsRef.current));
+      setTransform(
+        calculateInitialTransform(
+          lastBoundsRef.current,
+          lastFitOptionsRef.current
+        )
+      );
     }
   }, [resetSignal, calculateInitialTransform]);
 
@@ -293,7 +351,12 @@ export function useChartViewport(
   // Reset to initial view
   const reset = useCallback(() => {
     if (lastBoundsRef.current) {
-      setTransform(calculateInitialTransform(lastBoundsRef.current));
+      setTransform(
+        calculateInitialTransform(
+          lastBoundsRef.current,
+          lastFitOptionsRef.current
+        )
+      );
     }
   }, [calculateInitialTransform]);
 
@@ -310,6 +373,10 @@ export function useChartViewport(
     },
     [transform, dimensions]
   );
+
+  const panBy = useCallback((dx: number, dy: number) => {
+    setTransform((prev) => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
+  }, []);
 
   // Compute viewport bounds in tree/content coordinates
   // This converts screen-space viewport to the coordinate system used by nodes
@@ -349,6 +416,7 @@ export function useChartViewport(
       zoomOut,
       reset,
       panTo,
+      panBy,
     },
     fitContent,
     scalePercent: Math.round(transform.scale * 100),

@@ -1682,6 +1682,147 @@ export async function getTreeChartData(
 }
 
 /**
+ * Family tree data for the interactive tree layout
+ *
+ * Starts from getTreeChartData (direct line: ancestors, focus, spouses,
+ * descendants) and adds the collateral relatives the layout can reveal on
+ * demand: the siblings of the focus and of every ancestor, plus their spouses.
+ * Edges are rebuilt from the full relationship set so every included
+ * parent/child and spouse pair is connected.
+ */
+export async function getFamilyTreeData(
+  personId: string,
+  ancestorGenerations: number,
+  descendantGenerations: number,
+  db: ChartsDb = drizzleDb
+): Promise<ChartLayoutResult> {
+  const base = await getTreeChartData(
+    personId,
+    ancestorGenerations,
+    descendantGenerations,
+    db
+  );
+
+  const persons = await db.query.persons.findMany();
+  const relationships = await db.query.relationships.findMany();
+  const personMap = new Map(
+    persons.map((p) => [p.id, p as unknown as PersonData])
+  );
+  const { childToParents, parentToChildren, spouseMap } =
+    buildRelationshipMaps(relationships);
+
+  const generations = new Map<string, number>();
+  base.nodes.forEach((n) => generations.set(n.id, n.generation ?? 0));
+
+  // Blood line upward from the focus (focus included)
+  const bloodLine = new Set<string>([personId]);
+  const queue = [personId];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    childToParents.get(current)?.forEach((parentId) => {
+      if (generations.has(parentId) && !bloodLine.has(parentId)) {
+        bloodLine.add(parentId);
+        queue.push(parentId);
+      }
+    });
+  }
+
+  const included = new Set(generations.keys());
+  const addPerson = (id: string, generation: number) => {
+    if (included.has(id) || !personMap.has(id)) return;
+    included.add(id);
+    generations.set(id, generation);
+  };
+
+  // Collect siblings' descendants (and spouses) down to the descendant limit.
+  // Generations are absolute: the focus is 0, so a sibling at generation g
+  // contributes children at g + 1 while g + 1 <= descendantGenerations.
+  const collateralState: CollectionState = {
+    nodeIds: included,
+    edges: new Map(),
+    generations,
+  };
+
+  bloodLine.forEach((lineId) => {
+    const gen = generations.get(lineId) ?? 0;
+    childToParents.get(lineId)?.forEach((parentId) => {
+      parentToChildren.get(parentId)?.forEach((siblingId) => {
+        if (siblingId === lineId) return;
+        addPerson(siblingId, gen);
+        spouseMap.get(siblingId)?.forEach((s) => addPerson(s, gen));
+        if (gen + 1 > descendantGenerations) return;
+        const personsToWalk = [siblingId, ...(spouseMap.get(siblingId) ?? [])];
+        personsToWalk.forEach((walkId) => {
+          parentToChildren.get(walkId)?.forEach((childId) => {
+            if (!personMap.has(childId) || bloodLine.has(childId)) return;
+            collectTreeDescendants(
+              childId,
+              gen + 1,
+              descendantGenerations,
+              parentToChildren,
+              personMap,
+              spouseMap,
+              collateralState
+            );
+          });
+        });
+      });
+    });
+  });
+
+  const nodes: Array<ChartNode> = [];
+  included.forEach((id) => {
+    const person = personMap.get(id);
+    if (!person) return;
+    nodes.push({
+      id: person.id,
+      firstName: person.firstName,
+      lastName: person.lastName,
+      dateOfBirth: dateToISOString(person.dateOfBirth),
+      dateOfPassing: dateToISOString(person.dateOfPassing),
+      isLiving: person.isLiving,
+      photoUrl: person.photoUrl,
+      gender: person.gender,
+      generation: generations.get(id) ?? 0,
+    });
+  });
+
+  const edges: Array<ChartEdge> = [];
+  const seen = new Set<string>();
+  childToParents.forEach((parents, childId) => {
+    if (!included.has(childId)) return;
+    parents.forEach((parentId) => {
+      if (!included.has(parentId)) return;
+      const key = `${parentId}-${childId}`;
+      if (seen.has(key)) return;
+      seen.add(key);
+      edges.push({
+        id: key,
+        source: parentId,
+        target: childId,
+        type: "parent-child",
+      });
+    });
+  });
+  spouseMap.forEach((spouses, id) => {
+    if (!included.has(id)) return;
+    spouses.forEach((spouseId) => {
+      if (!included.has(spouseId)) return;
+      const key = [id, spouseId].sort().join("-");
+      if (seen.has(key)) return;
+      seen.add(key);
+      edges.push({ id: key, source: id, target: spouseId, type: "spouse" });
+    });
+  });
+
+  return {
+    nodes,
+    edges,
+    metadata: { ...base.metadata, totalPeople: nodes.length },
+  };
+}
+
+/**
  * Exports chart as PDF
  *
  * Placeholder for PDF export orchestration logic

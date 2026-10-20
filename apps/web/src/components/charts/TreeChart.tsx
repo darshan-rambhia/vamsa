@@ -1,151 +1,119 @@
-"use client";
-
-import { memo, useCallback, useEffect, useMemo, useState } from "react";
-import { G, Svg } from "react-native-svg";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { ParentChildEdge, RectNode, SpouseEdge } from "./ChartElements";
-import { ChartTooltip } from "./ChartTooltip";
+import { Button } from "@vamsa/ui";
 import { ChartSkeleton } from "./ChartSkeleton";
+import { TreeExportSvg } from "./TreeExportSvg";
 import { ZoomControls } from "./ZoomControls";
-import {
-  calculateBoundsFromPositions,
-  useChartViewport,
-} from "./useChartViewport";
-import type { Position } from "~/lib/d3-utils";
+import { useChartViewport } from "./useChartViewport";
+import type { LayoutCard, TextMeasurer } from "~/lib/tree-layout";
 import type { ChartEdge, ChartNode } from "~/server/charts";
-import {
-  useChartLoadingState,
-  usePerformanceMonitor,
-  useVisibleEdges,
-  useVisibleNodes,
-} from "~/lib/chart-performance";
+import { computeTreeLayout } from "~/lib/tree-layout";
+import { useChartLoadingState } from "~/lib/chart-performance";
 
 interface TreeChartProps {
   nodes: Array<ChartNode>;
   edges: Array<ChartEdge>;
+  /** Called when the user asks to re-center the tree on a person */
   onNodeClick?: (nodeId: string) => void;
   rootPersonId?: string;
   resetSignal?: number;
+  /** "full" expands every collapsed relative; "focused" shows the direct line */
+  view?: "focused" | "full";
+  /** Comma-separated person ids whose siblings are expanded (URL-backed) */
+  expandedParam?: string;
+  onExpandedChange?: (ids: Array<string>) => void;
 }
 
-// Layout constants
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 60;
-const HORIZONTAL_SPACING = 40;
-const SPOUSE_SPACING = 200;
-const VERTICAL_SPACING = 120;
-const MARGIN = { top: 60, right: 60, bottom: 60, left: 60 };
+const MARGIN = { top: 40, right: 40, bottom: 40, left: 40 };
+const LINE_COLOR =
+  "color-mix(in oklch, var(--color-muted-foreground) 55%, var(--color-background))";
+const DRAG_THRESHOLD = 5;
+const MIN_FIT_SCALE = 0.85;
+const DRAWER_WIDTH = 320;
+const DRAWER_MARGIN = 24;
+const GUTTER_SCREEN_WIDTH = 136;
+const FONT_STACK = '"Source Sans 3", system-ui, sans-serif';
 
-/**
- * Groups nodes by generation and sorts siblings by birth date
- */
-function groupAndSortByGeneration(
-  nodes: Array<ChartNode>
-): Map<number, Array<ChartNode>> {
-  const generations = new Map<number, Array<ChartNode>>();
+const parseExpanded = (param?: string): ReadonlySet<string> =>
+  new Set((param ?? "").split(",").filter(Boolean));
 
-  nodes.forEach((node) => {
-    const gen = node.generation ?? 0;
-    if (!generations.has(gen)) {
-      generations.set(gen, []);
-    }
-    generations.get(gen)!.push(node);
-  });
-
-  // Sort each generation by birth date
-  generations.forEach((genNodes) => {
-    genNodes.sort((a, b) => {
-      if (!a.dateOfBirth && !b.dateOfBirth) return 0;
-      if (!a.dateOfBirth) return 1;
-      if (!b.dateOfBirth) return -1;
-      return a.dateOfBirth.localeCompare(b.dateOfBirth);
+/** Canvas-based text measurement using the card fonts, once fonts are ready */
+function useTextMeasurer(): TextMeasurer | undefined {
+  const [measurer, setMeasurer] = useState<TextMeasurer>();
+  useEffect(() => {
+    let cancelled = false;
+    const ctx = document.createElement("canvas").getContext("2d");
+    if (!ctx) return;
+    const fonts = {
+      name: `600 14px ${FONT_STACK}`,
+      subtitle: `400 12px ${FONT_STACK}`,
+    };
+    const cache = new Map<string, number>();
+    const measure: TextMeasurer = (text, kind) => {
+      const key = `${kind}|${text}`;
+      let width = cache.get(key);
+      if (width === undefined) {
+        ctx.font = fonts[kind];
+        width = ctx.measureText(text).width;
+        cache.set(key, width);
+      }
+      return width;
+    };
+    const ready = Promise.all([
+      document.fonts.load(fonts.name),
+      document.fonts.load(fonts.subtitle),
+    ])
+      .then(() => document.fonts.ready)
+      .catch(() => undefined);
+    void ready.then(() => {
+      if (!cancelled) setMeasurer(() => measure);
     });
-  });
-
-  return generations;
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return measurer;
 }
 
-/**
- * Calculates positions for all nodes in a tree layout
- * Generation 0 is centered, negative generations above, positive below
- */
-function calculateTreeLayout(
-  nodes: Array<ChartNode>,
-  edges: Array<ChartEdge>
-): Map<string, Position> {
-  const positions = new Map<string, Position>();
-  const generations = groupAndSortByGeneration(nodes);
-
-  // Build spouse map for couple positioning
-  const spouseEdges = edges.filter((e) => e.type === "spouse");
-  const spouseMap = new Map<string, string>();
-  spouseEdges.forEach((e) => {
-    spouseMap.set(e.source, e.target);
-    spouseMap.set(e.target, e.source);
+function formatDate(value: string | null | undefined): string {
+  if (!value) return "Unknown";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    timeZone: "UTC",
   });
+}
 
-  // Sort generation keys (negative to positive)
-  const sortedGens = Array.from(generations.keys()).sort((a, b) => a - b);
-
-  // Find the middle generation (typically 0)
-  const midGen =
-    sortedGens.find((g) => g === 0) ??
-    sortedGens[Math.floor(sortedGens.length / 2)];
-
-  sortedGens.forEach((gen) => {
-    const genNodes = generations.get(gen)!;
-    const yPos = (gen - midGen) * VERTICAL_SPACING;
-
-    // Group nodes into couples and singles
-    const couples: Array<{ primary: ChartNode; spouse: ChartNode | null }> = [];
-    const processed = new Set<string>();
-
-    genNodes.forEach((node) => {
-      if (processed.has(node.id)) return;
-      processed.add(node.id);
-
-      const spouseId = spouseMap.get(node.id);
-      const spouseNode = spouseId
-        ? genNodes.find((n) => n.id === spouseId)
-        : null;
-
-      if (spouseNode && !processed.has(spouseNode.id)) {
-        processed.add(spouseNode.id);
-        couples.push({ primary: node, spouse: spouseNode });
-      } else {
-        couples.push({ primary: node, spouse: null });
-      }
-    });
-
-    // Calculate widths
-    const coupleWidths = couples.map((c) =>
-      c.spouse ? NODE_WIDTH * 2 + SPOUSE_SPACING : NODE_WIDTH
-    );
-    const totalWidth =
-      coupleWidths.reduce((sum, w) => sum + w, 0) +
-      (couples.length - 1) * HORIZONTAL_SPACING;
-
-    // Center the generation
-    let x = -totalWidth / 2;
-
-    couples.forEach((couple, i) => {
-      const width = coupleWidths[i];
-      if (couple.spouse) {
-        // Position couple side by side
-        positions.set(couple.primary.id, { x: x + NODE_WIDTH / 2, y: yPos });
-        positions.set(couple.spouse.id, {
-          x: x + NODE_WIDTH / 2 + NODE_WIDTH + SPOUSE_SPACING - NODE_WIDTH,
-          y: yPos,
-        });
-      } else {
-        // Single person
-        positions.set(couple.primary.id, { x: x + width / 2, y: yPos });
-      }
-      x += width + HORIZONTAL_SPACING;
-    });
-  });
-
-  return positions;
+function Avatar({
+  initials,
+  deceased,
+  filled,
+  size,
+}: {
+  initials: string;
+  deceased: boolean;
+  filled?: boolean;
+  size: number;
+}) {
+  const tone = filled
+    ? "bg-primary-foreground/20 text-primary-foreground"
+    : deceased
+      ? "bg-muted text-muted-foreground border border-border"
+      : "bg-primary/15 text-primary";
+  return (
+    <span
+      aria-hidden="true"
+      className={`font-display flex shrink-0 items-center justify-center rounded-full font-semibold ${tone} ${
+        deceased && !filled ? "opacity-70" : ""
+      }`}
+      style={{ width: size, height: size, fontSize: size * 0.38 }}
+    >
+      {initials}
+    </span>
+  );
 }
 
 function TreeChartComponent({
@@ -154,124 +122,153 @@ function TreeChartComponent({
   onNodeClick,
   rootPersonId,
   resetSignal,
+  view = "focused",
+  expandedParam,
+  onExpandedChange,
 }: TreeChartProps) {
   const navigate = useNavigate();
-
-  // Use the standardized chart viewport hook
   const viewport = useChartViewport({
     margin: MARGIN,
     resetSignal,
+    minHeight: 200,
   });
-
-  // Tooltip state
-  const [tooltip, setTooltip] = useState<{
-    node: ChartNode;
-    position: { x: number; y: number };
-  } | null>(null);
-
-  // Performance monitoring
-  usePerformanceMonitor("TreeChart", false);
-
-  // Loading state for large datasets
   const loadingState = useChartLoadingState(nodes.length);
 
-  // Calculate layout positions
-  const nodePositions = useMemo(() => {
-    if (nodes.length === 0) return new Map<string, Position>();
-    const startTime = performance.now();
-    const positions = calculateTreeLayout(nodes, edges);
-    const endTime = performance.now();
-    if (process.env.NODE_ENV === "development") {
-      // eslint-disable-next-line no-console
-      console.log(
-        `[Performance] TreeChart layout calculated in ${(endTime - startTime).toFixed(2)}ms`
-      );
-    }
-    return positions;
-  }, [nodes, edges]);
-
-  // Virtual rendering: only render visible nodes for large datasets
-  const visibleNodes = useVisibleNodes(
-    nodes,
-    nodePositions,
-    viewport.viewportBounds
+  const focusId = rootPersonId || nodes[0]?.id || "";
+  const measureText = useTextMeasurer();
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(() =>
+    parseExpanded(expandedParam)
   );
-  const visibleNodeIds = useMemo(
-    () => new Set(visibleNodes.map((n) => n.id)),
-    [visibleNodes]
-  );
-  const visibleEdges = useVisibleEdges(edges, visibleNodeIds);
-  const isVirtualized =
-    nodes.length >= 500 && visibleNodes.length < nodes.length;
-
-  // Fit content to viewport when layout changes
+  // Follow the URL (reload, back/forward, shared links)
   useEffect(() => {
-    if (nodePositions.size > 0) {
-      const bounds = calculateBoundsFromPositions(
-        nodePositions,
-        NODE_WIDTH,
-        NODE_HEIGHT
-      );
-      viewport.fitContent(bounds);
-    }
-  }, [nodePositions, viewport]);
+    setExpanded(parseExpanded(expandedParam));
+  }, [expandedParam]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [drawerCardId, setDrawerCardId] = useState<string | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const dragOrigin = useRef<{ x: number; y: number } | null>(null);
+  const dragMoved = useRef(false);
 
-  // Handle node interactions
-  const handleNodeMouseEnter = useCallback(
-    (node: ChartNode) => {
-      const rect = viewport.containerRef.current?.getBoundingClientRect();
-      const pos = nodePositions.get(node.id);
-      if (rect && pos) {
-        setTooltip({
-          node,
-          position: {
-            x:
-              rect.left +
-              viewport.transform.x +
-              pos.x * viewport.transform.scale,
-            y:
-              rect.top +
-              viewport.transform.y +
-              pos.y * viewport.transform.scale,
-          },
-        });
-      }
-    },
-    [nodePositions, viewport.transform, viewport.containerRef]
+  // Clear the selection when the tree is re-centered
+  useEffect(() => {
+    setSelectedId(null);
+  }, [focusId]);
+
+  const layout = useMemo(
+    () =>
+      computeTreeLayout({
+        people: nodes,
+        relations: edges,
+        focusId,
+        expanded,
+        expandAll: view === "full",
+        measureText,
+      }),
+    [nodes, edges, focusId, expanded, view, measureText]
   );
 
-  const handleNodeMouseLeave = useCallback(() => {
-    setTooltip(null);
+  const nodeById = useMemo(() => new Map(nodes.map((n) => [n.id, n])), [nodes]);
+
+  // Fit content whenever the layout changes. Below the minimum readable scale
+  // we center the focus card instead and let the user pan.
+  const { fitContent } = viewport;
+  useEffect(() => {
+    if (layout.cards.length === 0) return;
+    const focus = layout.cards.find((c) => c.isFocus);
+    fitContent(layout.bounds, {
+      minFitScale: MIN_FIT_SCALE,
+      focusPoint: focus && {
+        x: focus.x + focus.width / 2,
+        y: focus.y + focus.height / 2,
+      },
+    });
+  }, [layout, fitContent]);
+
+  // Pan smoothly when the drawer would cover the selected card
+  const transformRef = useRef(viewport.transform);
+  transformRef.current = viewport.transform;
+  const containerWidthRef = useRef(0);
+  containerWidthRef.current = viewport.dimensions.width;
+  const [panning, setPanning] = useState(false);
+  const { panBy } = viewport.controls;
+  useEffect(() => {
+    if (!selectedId) return;
+    const card = layout.cards.find((c) => c.id === selectedId);
+    if (!card) return;
+    const t = transformRef.current;
+    const drawerLeft = containerWidthRef.current - DRAWER_WIDTH - DRAWER_MARGIN;
+    const left = card.x * t.scale + t.x;
+    const right = (card.x + card.width) * t.scale + t.x;
+    let dx = 0;
+    if (right > drawerLeft) dx = drawerLeft - right;
+    const minLeft = GUTTER_SCREEN_WIDTH + DRAWER_MARGIN;
+    if (left + dx < minLeft) dx = minLeft - left;
+    if (dx === 0) return;
+    setPanning(true);
+    panBy(dx, 0);
+    const timer = window.setTimeout(() => setPanning(false), 350);
+    return () => window.clearTimeout(timer);
+    // only when the selection changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId]);
+
+  const closeDrawer = useCallback(() => setSelectedId(null), []);
+
+  useEffect(() => {
+    if (!selectedId) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closeDrawer();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    closeButtonRef.current?.focus();
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [selectedId, closeDrawer]);
+
+  const toggleExpanded = useCallback(
+    (key: string) => {
+      const next = new Set(expanded);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      setExpanded(next);
+      onExpandedChange?.(Array.from(next).sort());
+    },
+    [expanded, onExpandedChange]
+  );
+
+  const openCard = useCallback((card: LayoutCard) => {
+    if (dragMoved.current) return;
+    setSelectedId(card.id);
+    setDrawerCardId(card.id);
   }, []);
 
-  const handleNodeClick = useCallback(
-    (node: ChartNode) => {
-      onNodeClick?.(node.id);
-    },
-    [onNodeClick]
-  );
+  const inDrawer = (e: React.SyntheticEvent) =>
+    e.target instanceof Element && e.target.closest("[data-no-pan]") !== null;
 
-  // Handle tooltip actions
-  const handleViewProfile = useCallback(
-    (nodeId: string) => {
-      navigate({ to: "/people/$personId", params: { personId: nodeId } });
-      setTooltip(null);
-    },
-    [navigate]
-  );
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    if (!inDrawer(e)) viewport.handlers.onWheel(e);
+  };
 
-  const handleSetAsCenter = useCallback(
-    (nodeId: string) => {
-      onNodeClick?.(nodeId);
-      setTooltip(null);
-    },
-    [onNodeClick]
-  );
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (inDrawer(e)) return;
+    dragOrigin.current = { x: e.clientX, y: e.clientY };
+    dragMoved.current = false;
+    viewport.handlers.onMouseDown(e);
+  };
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const origin = dragOrigin.current;
+    if (
+      origin &&
+      Math.hypot(e.clientX - origin.x, e.clientY - origin.y) > DRAG_THRESHOLD
+    ) {
+      dragMoved.current = true;
+    }
+    viewport.handlers.onMouseMove(e);
+  };
 
-  // Use provided root or first node
-  const effectiveRootId = rootPersonId || nodes[0]?.id;
+  const drawerCard = layout.cards.find((c) => c.id === drawerCardId) ?? null;
+  const drawerNode = drawerCardId ? nodeById.get(drawerCardId) : undefined;
+  const drawerOpen = selectedId !== null && drawerCard !== null;
 
-  // Show loading skeleton for large datasets
   if (loadingState.isLoading) {
     return (
       <ChartSkeleton
@@ -289,16 +286,14 @@ function TreeChartComponent({
     );
   }
 
-  // Always render the container so ResizeObserver can measure it
-  // Only render SVG content once we have valid dimensions
   return (
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       ref={viewport.containerRef}
-      className="bg-card relative h-full w-full overflow-hidden rounded-lg border"
-      onWheel={viewport.handlers.onWheel}
-      onMouseDown={viewport.handlers.onMouseDown}
-      onMouseMove={viewport.handlers.onMouseMove}
+      className="bg-background relative h-full w-full overflow-hidden rounded-lg border"
+      onWheel={handleWheel}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
       onMouseUp={viewport.handlers.onMouseUp}
       onMouseLeave={viewport.handlers.onMouseLeave}
       style={{ cursor: viewport.isDragging ? "grabbing" : "grab" }}
@@ -309,100 +304,253 @@ function TreeChartComponent({
         </div>
       ) : (
         <>
-          <Svg
-            width={viewport.dimensions.width}
-            height={viewport.dimensions.height}
-            data-chart-svg="true"
+          <div
+            data-testid="tree-canvas"
+            className="absolute top-0 left-0"
+            style={{
+              transform: `translate(${viewport.transform.x}px, ${viewport.transform.y}px) scale(${viewport.transform.scale})`,
+              transformOrigin: "0 0",
+              transition: panning ? "transform 300ms ease-out" : undefined,
+              width: 1,
+              height: 1,
+            }}
           >
-            <G
-              transform={`translate(${viewport.transform.x}, ${viewport.transform.y}) scale(${viewport.transform.scale})`}
+            <svg
+              width={1}
+              height={1}
+              className="absolute top-0 left-0"
+              style={{ overflow: "visible" }}
+              aria-hidden="true"
             >
-              {/* Render edges first (behind nodes) */}
-              {visibleEdges.map((edge, i) => {
-                const source = nodePositions.get(edge.source);
-                const target = nodePositions.get(edge.target);
+              {layout.connectors.map((c) => (
+                <path
+                  key={c.id}
+                  d={c.d}
+                  fill="none"
+                  strokeWidth={1.5}
+                  strokeDasharray={c.dashed ? "5 4" : undefined}
+                  style={{ stroke: LINE_COLOR }}
+                />
+              ))}
+            </svg>
 
-                if (!source || !target) return null;
-
-                if (edge.type === "parent-child") {
-                  return (
-                    <ParentChildEdge
-                      key={`edge-${i}-${edge.source}-${edge.target}`}
-                      sourceX={source.x}
-                      sourceY={source.y}
-                      targetX={target.x}
-                      targetY={target.y}
-                      nodeHeight={NODE_HEIGHT}
-                    />
-                  );
-                } else if (edge.type === "spouse") {
-                  return (
-                    <SpouseEdge
-                      key={`edge-${i}-${edge.source}-${edge.target}`}
-                      sourceX={source.x}
-                      sourceY={source.y}
-                      targetX={target.x}
-                      targetY={target.y}
-                      nodeWidth={NODE_WIDTH}
-                    />
-                  );
-                }
-                return null;
-              })}
-
-              {/* Render nodes */}
-              {visibleNodes.map((node) => {
-                const pos = nodePositions.get(node.id);
-                if (!pos) return null;
-
-                const isRoot = node.id === rootPersonId;
-
-                return (
-                  <RectNode
-                    key={node.id}
-                    node={node}
-                    x={pos.x - NODE_WIDTH / 2}
-                    y={pos.y - NODE_HEIGHT / 2}
-                    width={NODE_WIDTH}
-                    height={NODE_HEIGHT}
-                    isRoot={isRoot}
-                    onMouseEnter={handleNodeMouseEnter}
-                    onMouseLeave={handleNodeMouseLeave}
-                    onClick={handleNodeClick}
+            {layout.cards.map((card) => {
+              const selected = card.id === selectedId;
+              // Inline: a global button rule overrides border-color utilities
+              const borderColor = selected
+                ? "var(--color-muted-foreground)"
+                : card.blood
+                  ? "var(--color-primary)"
+                  : "var(--color-border)";
+              const fill = "bg-card text-card-foreground";
+              return (
+                <button
+                  key={card.id}
+                  type="button"
+                  data-testid={`tree-card-${card.id}`}
+                  aria-label={`${card.name}, ${card.relation}`}
+                  aria-pressed={selected}
+                  onClick={() => openCard(card)}
+                  className={`focus-visible:ring-ring absolute flex items-start gap-2.5 rounded-lg border-2 p-3 text-left transition-shadow duration-200 hover:shadow-md focus-visible:ring-2 ${fill}`}
+                  style={{
+                    left: card.x,
+                    top: card.y,
+                    width: card.width,
+                    height: card.height,
+                    borderColor,
+                    borderWidth: card.isFocus ? 3 : 2,
+                    padding: card.isFocus ? 11 : 12,
+                    backgroundColor: card.isFocus
+                      ? "color-mix(in oklch, var(--color-primary) 14%, var(--color-card))"
+                      : undefined,
+                    boxShadow: selected
+                      ? "0 0 0 4px color-mix(in oklch, var(--color-muted-foreground) 30%, transparent)"
+                      : undefined,
+                  }}
+                >
+                  <Avatar
+                    initials={card.initials}
+                    deceased={card.deceased}
+                    size={36}
                   />
-                );
-              })}
-            </G>
-          </Svg>
+                  <span className="min-w-0 flex-1">
+                    {card.nameLines.map((line, i) => (
+                      <span
+                        key={i}
+                        className="block text-sm leading-[18px] font-semibold whitespace-nowrap"
+                      >
+                        {line}
+                      </span>
+                    ))}
+                    {card.subtitleLines.map((line, i) => (
+                      <span
+                        key={i}
+                        className={`block text-xs leading-[15px] whitespace-nowrap ${"text-muted-foreground"}`}
+                      >
+                        {line}
+                      </span>
+                    ))}
+                  </span>
+                </button>
+              );
+            })}
 
-          {/* Tooltip */}
-          {tooltip && effectiveRootId && (
-            <ChartTooltip
-              node={tooltip.node}
-              position={tooltip.position}
-              rootPersonId={effectiveRootId}
-              onSetAsCenter={handleSetAsCenter}
-              onViewProfile={handleViewProfile}
-              relationshipLabel={
-                tooltip.node.generation !== undefined
-                  ? tooltip.node.generation === 0
-                    ? "Center"
-                    : tooltip.node.generation < 0
-                      ? `${Math.abs(tooltip.node.generation)} generation${Math.abs(tooltip.node.generation) > 1 ? "s" : ""} up`
-                      : `${tooltip.node.generation} generation${tooltip.node.generation > 1 ? "s" : ""} down`
-                  : undefined
-              }
-            />
-          )}
+            {layout.pills.map((pill) => (
+              <button
+                key={`pill-${pill.key}`}
+                type="button"
+                data-testid={`tree-pill-${pill.key}`}
+                aria-expanded={pill.expanded}
+                aria-label={
+                  pill.expanded
+                    ? "Hide additional relatives"
+                    : `Show ${pill.label.replace("+", "")}`
+                }
+                onClick={() => {
+                  if (!dragMoved.current) toggleExpanded(pill.key);
+                }}
+                className="bg-card text-muted-foreground border-border hover:border-muted-foreground hover:text-foreground focus-visible:ring-ring absolute rounded-full border text-xs font-medium transition-colors duration-200 focus-visible:ring-2"
+                style={{
+                  left: pill.x,
+                  top: pill.y,
+                  width: pill.width,
+                  height: pill.height,
+                }}
+              >
+                {pill.label}
+              </button>
+            ))}
+          </div>
 
-          {/* Node count indicator for virtualized rendering */}
-          {isVirtualized && (
-            <div className="text-muted-foreground absolute bottom-2 left-2 rounded bg-black/5 px-2 py-1 text-xs backdrop-blur-sm">
-              Rendering {visibleNodes.length} of {nodes.length} nodes
-            </div>
-          )}
+          {/* Click-to-open drawer, slides over the tree from the right */}
+          <aside
+            role="dialog"
+            aria-label="Person details"
+            aria-hidden={!drawerOpen}
+            inert={!drawerOpen}
+            data-testid="tree-drawer"
+            data-no-pan="true"
+            className={`bg-popover text-popover-foreground border-border absolute top-0 right-0 z-20 flex h-full w-80 max-w-full cursor-default flex-col border-l shadow-xl transition-transform duration-300 ease-out ${
+              drawerOpen ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
+            {drawerCard && (
+              <>
+                <div className="flex items-start justify-between p-4 pb-2">
+                  <Avatar
+                    initials={drawerCard.initials}
+                    deceased={drawerCard.deceased}
+                    size={56}
+                  />
+                  <button
+                    ref={closeButtonRef}
+                    type="button"
+                    onClick={closeDrawer}
+                    aria-label="Close details"
+                    className="text-muted-foreground hover:text-foreground focus-visible:ring-ring rounded-md p-1 focus-visible:ring-2"
+                  >
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div className="px-4">
+                  <h2
+                    className="font-display leading-tight font-medium break-words"
+                    style={{ fontSize: "1.25rem" }}
+                  >
+                    {drawerCard.name}
+                    {drawerCard.deceased ? " †" : ""}
+                  </h2>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {drawerCard.relation}
+                  </p>
+                </div>
+                <dl className="mt-4 space-y-3 px-4 text-sm">
+                  <div>
+                    <dt className="text-muted-foreground text-xs tracking-wide uppercase">
+                      Born
+                    </dt>
+                    <dd>{formatDate(drawerNode?.dateOfBirth)}</dd>
+                  </div>
+                  {drawerCard.deceased && (
+                    <div>
+                      <dt className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Died
+                      </dt>
+                      <dd>{formatDate(drawerNode?.dateOfPassing)}</dd>
+                    </div>
+                  )}
+                  <div>
+                    <dt className="text-muted-foreground text-xs tracking-wide uppercase">
+                      Status
+                    </dt>
+                    <dd>{drawerCard.deceased ? "Deceased" : "Living"}</dd>
+                  </div>
+                </dl>
+                <div className="mt-auto flex flex-col gap-2 p-4">
+                  <Button
+                    onClick={() =>
+                      navigate({
+                        to: "/people/$personId",
+                        params: { personId: drawerCard.id },
+                      })
+                    }
+                  >
+                    View profile
+                  </Button>
+                  <Button
+                    variant="outline"
+                    disabled={drawerCard.isFocus}
+                    onClick={() => {
+                      onNodeClick?.(drawerCard.id);
+                      closeDrawer();
+                    }}
+                  >
+                    Center tree here
+                  </Button>
+                </div>
+              </>
+            )}
+          </aside>
 
-          {/* Zoom controls */}
+          {/* Generation labels: pinned to the left edge, y follows pan/zoom */}
+          <div
+            data-testid="tree-gutter"
+            aria-hidden="true"
+            className="bg-background/90 border-border absolute top-0 bottom-0 left-0 z-10 border-r backdrop-blur-sm select-none"
+            style={{ width: GUTTER_SCREEN_WIDTH }}
+          >
+            {layout.rows.map((row) => (
+              <div
+                key={`label-${row.row}`}
+                className="text-muted-foreground absolute right-3 left-3 flex h-8 items-center text-xs leading-4 font-semibold tracking-wider"
+                style={{
+                  top:
+                    (row.y + row.height / 2) * viewport.transform.scale +
+                    viewport.transform.y -
+                    16,
+                  transition: panning ? "top 300ms ease-out" : undefined,
+                }}
+              >
+                {row.label}
+              </div>
+            ))}
+          </div>
+
+          <TreeExportSvg layout={layout} />
+
           <ZoomControls
             scale={viewport.transform.scale}
             onZoomIn={viewport.controls.zoomIn}
@@ -415,5 +563,4 @@ function TreeChartComponent({
   );
 }
 
-// Export memoized version to prevent unnecessary re-renders
 export const TreeChart = memo(TreeChartComponent);

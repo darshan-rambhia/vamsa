@@ -24,6 +24,7 @@ import {
   getBowtieChart,
   getCompactTreeData,
   getDescendantChart,
+  getFamilyTree,
   getFanChart,
   getHourglassChart,
   getRelationshipMatrix,
@@ -209,6 +210,7 @@ function VisualizeComponent() {
         search: {
           ...search,
           personId,
+          expanded: undefined,
         },
         replace: true,
       });
@@ -363,7 +365,7 @@ function VisualizeComponent() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col gap-2 p-2">
+    <div className="flex h-[calc(100dvh-8.125rem)] flex-col gap-2 p-2 max-sm:h-[calc(100dvh-7.125rem)]">
       {/* Top toolbar - all controls in one row */}
       <div className="bg-card flex flex-wrap items-end gap-4 rounded-lg border p-3">
         {/* Chart Type Selector */}
@@ -633,6 +635,13 @@ function ChartVisualization({
 
       switch (chartType) {
         case "tree":
+          return await getFamilyTree({
+            data: {
+              personId: selectedPersonId,
+              ancestorGenerations,
+              descendantGenerations,
+            },
+          });
         case "list":
           return await getTreeChart({
             data: {
@@ -680,12 +689,24 @@ function ChartVisualization({
       !!selectedPersonId,
   });
 
+  const handleExpandedChange = (ids: Array<string>) => {
+    navigate({
+      to: "/visualize",
+      search: {
+        ...search,
+        expanded: ids.length > 0 ? ids.join(",") : undefined,
+      },
+      replace: true,
+    });
+  };
+
   const handleNodeClick = (nodeId: string) => {
     navigate({
       to: "/visualize",
       search: {
         ...search,
         personId: nodeId,
+        expanded: undefined,
       },
       replace: true,
     });
@@ -699,7 +720,7 @@ function ChartVisualization({
     !selectedPersonId
   ) {
     return (
-      <ChartContainer className="chart-container flex-1" fillHeight>
+      <ChartContainer className="chart-container min-h-0 flex-1" fillHeight>
         <div className="flex h-full items-center justify-center">
           <div className="max-w-md p-6 text-center">
             <div className="bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
@@ -732,7 +753,7 @@ function ChartVisualization({
   // Loading state
   if (isLoadingChart) {
     return (
-      <ChartContainer className="chart-container flex-1" fillHeight>
+      <ChartContainer className="chart-container min-h-0 flex-1" fillHeight>
         <div className="flex h-full items-center justify-center">
           <div className="text-center">
             <div className="bg-primary/20 mx-auto mb-4 h-12 w-12 animate-pulse rounded-full" />
@@ -748,7 +769,7 @@ function ChartVisualization({
   // Error state
   if (error) {
     return (
-      <ChartContainer className="chart-container flex-1" fillHeight>
+      <ChartContainer className="chart-container min-h-0 flex-1" fillHeight>
         <div className="flex h-full items-center justify-center">
           <div className="max-w-md p-6 text-center">
             <div className="bg-destructive/10 text-destructive mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
@@ -812,7 +833,7 @@ function ChartVisualization({
 
   if (isDataEmpty) {
     return (
-      <ChartContainer className="chart-container flex-1" fillHeight>
+      <ChartContainer className="chart-container min-h-0 flex-1" fillHeight>
         <div className="flex h-full items-center justify-center">
           <div className="max-w-md p-6 text-center">
             <div className="bg-muted mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
@@ -862,7 +883,7 @@ function ChartVisualization({
 
   // Render chart with floating info panel
   return (
-    <ChartContainer className="chart-container flex-1" fillHeight>
+    <ChartContainer className="chart-container min-h-0 flex-1" fillHeight>
       {/* Floating Info Panel - bottom right */}
       <FloatingInfoPanel chartType={chartType} metadata={chartData?.metadata} />
 
@@ -875,6 +896,9 @@ function ChartVisualization({
             rootPersonId={selectedPersonId}
             onNodeClick={handleNodeClick}
             resetSignal={resetToken}
+            view={search.view}
+            expandedParam={search.expanded}
+            onExpandedChange={handleExpandedChange}
           />
         )}
         {chartType === "list" && "nodes" in chartData && selectedPersonId && (
