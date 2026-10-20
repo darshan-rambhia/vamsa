@@ -25,6 +25,13 @@ import appCss from "~/styles.css?url";
 import printCss from "~/styles/print.css?url";
 import i18n from "~/i18n/config";
 import { getCspNonce } from "~/server/csp-nonce";
+import { ModuleLoadError } from "~/components/module-load-error";
+import { isModuleLoadError } from "~/lib/module-load-recovery";
+import {
+  FALLBACK_HTML,
+  FALLBACK_ID,
+  MODULE_FALLBACK_SCRIPT,
+} from "~/lib/module-load-fallback";
 
 /**
  * Server function to get the CSP nonce for the current request
@@ -110,7 +117,12 @@ function NotFound() {
  * Root error component - shown when an unhandled error occurs.
  * This is the last resort error page when errors bubble up to the root.
  */
-function RootErrorComponent({ error, reset }: ErrorComponentProps) {
+function RootErrorComponent(props: ErrorComponentProps) {
+  if (isModuleLoadError(props.error)) return <ModuleLoadError />;
+  return <RootErrorInner {...props} />;
+}
+
+function RootErrorInner({ error, reset }: ErrorComponentProps) {
   const { t } = useTranslation("common");
   const [showDetails, setShowDetails] = useState(false);
   const router = useRouter();
@@ -358,6 +370,11 @@ function RootDocument({
           nonce={nonce}
           dangerouslySetInnerHTML={{ __html: DARK_MODE_SCRIPT }}
         />
+        {/* Module-load recovery: works even if React never hydrates */}
+        <script
+          nonce={nonce}
+          dangerouslySetInnerHTML={{ __html: MODULE_FALLBACK_SCRIPT }}
+        />
       </head>
       <body className="font-body antialiased">
         {/* Skip to main content link for keyboard navigation */}
@@ -370,6 +387,11 @@ function RootDocument({
         <QueryClientProvider client={queryClient}>
           <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
         </QueryClientProvider>
+        {/* Fallback lives in a <template> so it is not in the live DOM until the inline script mounts it */}
+        <template
+          id={FALLBACK_ID}
+          dangerouslySetInnerHTML={{ __html: FALLBACK_HTML }}
+        />
         <Scripts />
       </body>
     </html>
