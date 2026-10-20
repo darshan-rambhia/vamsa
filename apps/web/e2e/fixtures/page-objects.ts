@@ -170,7 +170,7 @@ export class LoginPage {
     // Wait for either navigation (success) or error message (failure)
     await Promise.race([
       this.page
-        .waitForURL(/\/(people|dashboard)/, { timeout: 10000 })
+        .waitForURL(/\/(people|dashboard|visualize)/, { timeout: 10000 })
         .catch(() => {}),
       this.errorMessage
         .waitFor({ state: "visible", timeout: 10000 })

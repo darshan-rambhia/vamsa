@@ -25,7 +25,7 @@ import { test } from "@playwright/test";
  *   });
  *
  *   await bdd.then('user is redirected to dashboard', async () => {
- *     await expect(page).toHaveURL(/\/(people|dashboard)/);
+ *     await expect(page).toHaveURL(/\/(people|dashboard|visualize)/);
  *   });
  * });
  * ```

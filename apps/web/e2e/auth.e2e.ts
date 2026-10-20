@@ -150,7 +150,7 @@ test.describe("Feature: User Authentication", () => {
       });
 
       await bdd.then("user is authenticated and redirected", async () => {
-        await expect(page).toHaveURL(/\/(people|dashboard)/);
+        await expect(page).toHaveURL(/\/(people|dashboard|visualize)/);
         await vamsaExpect.toBeLoggedIn(page);
       });
     });
@@ -193,7 +193,7 @@ test.describe("Feature: User Authentication", () => {
     test("should maintain session on page refresh", async ({ page, login }) => {
       await bdd.given("user is logged in", async () => {
         await login(TEST_USERS.admin);
-        await expect(page).toHaveURL(/\/(people|dashboard)/);
+        await expect(page).toHaveURL(/\/(people|dashboard|visualize)/);
       });
 
       await bdd.when("user refreshes page", async () => {

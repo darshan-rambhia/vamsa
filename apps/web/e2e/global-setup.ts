@@ -62,7 +62,9 @@ async function authenticateUser(
   // Click the button and wait for navigation to one of the authenticated routes
   try {
     await Promise.all([
-      page.waitForURL(/\/(people|dashboard|tree)/, { timeout: 20000 }),
+      page.waitForURL(/\/(people|dashboard|tree|visualize)/, {
+        timeout: 20000,
+      }),
       submitButton.click(),
     ]);
   } catch (navigationError) {

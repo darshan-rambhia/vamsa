@@ -499,7 +499,7 @@ test.describe("Feature: Error Recovery", () => {
         await loginPage.goto(); // Wait for form to be ready
         await loginPage.login("admin@test.vamsa.local", "TestAdmin123!");
         // Should redirect to authenticated page
-        await expect(page).toHaveURL(/\/(people|dashboard)/);
+        await expect(page).toHaveURL(/\/(people|dashboard|visualize)/);
       });
     });
 
