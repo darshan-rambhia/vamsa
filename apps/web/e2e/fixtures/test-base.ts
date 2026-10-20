@@ -279,6 +279,20 @@ export const test = base.extend<TestFixtures>({
         .locator("nav")
         .first()
         .waitFor({ state: "visible", timeout: 5000 });
+      // Landing on /visualize renders the (heavy) tree right after the URL
+      // commits. A page.goto issued while WebKit is busy with that render is
+      // reported as "interrupted by another navigation", so wait for the tree.
+      if (new URL(page.url()).pathname === "/visualize") {
+        await page
+          .getByTestId("chart-type-select")
+          .waitFor({ state: "visible", timeout: 10000 });
+        if (page.url().includes("personId=")) {
+          await page
+            .getByTestId("tree-canvas")
+            .waitFor({ state: "visible", timeout: 15000 });
+        }
+      }
+      await waitForHydration(page, 10000);
       console.log(`[Login] Navigation visible, login successful`);
     };
 

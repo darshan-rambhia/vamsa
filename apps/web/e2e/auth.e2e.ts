@@ -10,7 +10,11 @@ import {
   test,
   vamsaExpect,
 } from "./fixtures";
-import { LoginPage, gotoWithRetry } from "./fixtures/page-objects";
+import {
+  LoginPage,
+  gotoWithRetry,
+  waitForAppSettled,
+} from "./fixtures/page-objects";
 
 test.describe("Feature: User Authentication", () => {
   test.describe("Unauthenticated tests", () => {
@@ -218,12 +222,15 @@ test.describe("Feature: User Authentication", () => {
         // Use waitUntil: 'domcontentloaded' for Firefox compatibility
         // Firefox can throw NS_BINDING_ABORTED during rapid navigation
         await page.goto("/dashboard", { waitUntil: "domcontentloaded" });
+        await waitForAppSettled(page);
         await expect(page).toHaveURL("/dashboard");
 
         await page.goto("/people", { waitUntil: "domcontentloaded" });
+        await waitForAppSettled(page);
         await expect(page).toHaveURL("/people");
 
         await page.goto("/visualize", { waitUntil: "domcontentloaded" });
+        await waitForAppSettled(page);
         await expect(page).toHaveURL(/\/visualize/);
       });
 

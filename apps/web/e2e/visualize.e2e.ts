@@ -11,6 +11,7 @@
 
 import { expect, test } from "@playwright/test";
 import { VIEWPORT_ARRAY } from "./fixtures/viewports";
+import { waitForAppSettled } from "./fixtures/page-objects";
 
 test.describe("Visualization Page", () => {
   test.beforeEach(async ({ page }) => {
@@ -18,6 +19,8 @@ test.describe("Visualization Page", () => {
     await page
       .getByTestId("chart-type-select")
       .waitFor({ state: "visible", timeout: 10000 });
+    // The router rewrites the URL on mount; wait for hydration so later gotos aren't interrupted
+    await waitForAppSettled(page);
   });
 
   test.describe("Default View", () => {
@@ -159,7 +162,6 @@ test.describe("Visualization Page", () => {
       await page.waitForLoadState("domcontentloaded");
 
       // Should still render the page (may redirect to default type)
-      await page.waitForTimeout(500);
       await expect(page.locator("main")).toBeVisible();
     });
   });

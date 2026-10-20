@@ -9,7 +9,7 @@
  */
 
 import { VIEWPORT_ARRAY, expect, test } from "./fixtures";
-import { Navigation } from "./fixtures/page-objects";
+import { Navigation, waitForAppSettled } from "./fixtures/page-objects";
 
 test.describe("Family Tree Visualization", () => {
   // Tree visualization is memory-intensive (D3 charts) - use slower timeout
@@ -136,6 +136,7 @@ test.describe("Family Tree Visualization", () => {
       .first()
       .waitFor({ state: "visible", timeout: 10000 });
 
+    await waitForAppSettled(page);
     await expect(page).toHaveURL(/type=timeline/);
 
     // Reload page

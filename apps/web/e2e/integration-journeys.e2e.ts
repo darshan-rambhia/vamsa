@@ -626,10 +626,11 @@ test.describe("Integration Journey: Data Persistence Across Navigation", () => {
       await page.waitForLoadState("domcontentloaded");
       await gotoWithRetry(page, `/people/${personId}`);
       await page.reload();
-      await page.waitForTimeout(500);
+      await waitForHydration(page);
 
       const detailPage = new PersonDetailPage(page);
-      await detailPage.nameHeading.waitFor({ state: "visible", timeout: 5000 });
+      // Heading renders once the person query resolves; wait on content, not a fixed delay
+      await expect(detailPage.nameHeading).toHaveText(/\S/, { timeout: 10000 });
       const name = await detailPage.getName();
 
       expect(name).toBeTruthy();
