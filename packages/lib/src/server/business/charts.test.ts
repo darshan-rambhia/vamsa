@@ -20,6 +20,7 @@ import {
   getBowtieChartData,
   getCompactTreeData,
   getDescendantChartData,
+  getFamilyTreeData,
   getFanChartData,
   getHourglassChartData,
   getRelationshipMatrixData,
@@ -763,6 +764,92 @@ describe("charts business logic", () => {
       expect(result.metadata.chartType).toBe("tree");
       expect(result.nodes).toBeDefined();
       expect(result.edges).toBeDefined();
+    });
+  });
+
+  describe("getFamilyTreeData", () => {
+    const mk = (id: string, gender = "MALE") => ({
+      id,
+      firstName: id,
+      lastName: "Test",
+      dateOfBirth: new Date("1980-01-01"),
+      dateOfPassing: null,
+      isLiving: true,
+      photoUrl: null,
+      gender,
+    });
+    const parent = (child: string, par: string) => ({
+      id: `${par}-${child}`,
+      type: "PARENT",
+      personId: child,
+      relatedPersonId: par,
+    });
+
+    it("adds siblings of ancestors with their children and spouses", async () => {
+      const persons = [
+        mk("gp"),
+        mk("dad"),
+        mk("uncle"),
+        mk("cousin"),
+        mk("cousinSpouse", "FEMALE"),
+        mk("focus"),
+      ];
+      const relationships = [
+        parent("dad", "gp"),
+        parent("uncle", "gp"),
+        parent("focus", "dad"),
+        parent("cousin", "uncle"),
+        {
+          id: "s1",
+          type: "SPOUSE",
+          personId: "cousin",
+          relatedPersonId: "cousinSpouse",
+        },
+      ];
+      const mockDb = createMockDb({
+        rootPerson: persons[5],
+        persons,
+        relationships,
+      });
+
+      const result = await getFamilyTreeData("focus", 2, 2, mockDb);
+      const ids = result.nodes.map((n) => n.id).sort();
+      expect(ids).toEqual(
+        ["cousin", "cousinSpouse", "dad", "focus", "gp", "uncle"].sort()
+      );
+      const cousin = result.nodes.find((n) => n.id === "cousin");
+      expect(cousin?.generation).toBe(0);
+      expect(
+        result.edges.some(
+          (e) =>
+            e.type === "parent-child" &&
+            e.source === "uncle" &&
+            e.target === "cousin"
+        )
+      ).toBe(true);
+    });
+
+    it("keeps collateral children at generation 0 with a descendant limit of 1", async () => {
+      const persons = [
+        mk("gp"),
+        mk("dad"),
+        mk("uncle"),
+        mk("cousin"),
+        mk("focus"),
+      ];
+      const relationships = [
+        parent("dad", "gp"),
+        parent("uncle", "gp"),
+        parent("focus", "dad"),
+        parent("cousin", "uncle"),
+      ];
+      const mockDb = createMockDb({
+        rootPerson: persons[4],
+        persons,
+        relationships,
+      });
+      const result = await getFamilyTreeData("focus", 2, 1, mockDb);
+      expect(result.nodes.map((n) => n.id)).toContain("cousin");
     });
   });
 

@@ -90,6 +90,7 @@ const EXPECTED_ROLE: Record<string, Role> = {
   "server/charts.ts#getCompactTree": "VIEWER",
   "server/charts.ts#getStatistics": "VIEWER",
   "server/charts.ts#getTreeChart": "VIEWER",
+  "server/charts.ts#getFamilyTree": "VIEWER",
   "server/charts.ts#exportChartPDF": "VIEWER",
   "server/charts.ts#exportChartSVG": "VIEWER",
   "server/claim.functions.ts#getOIDCClaimableProfiles": "VIEWER",

@@ -3,7 +3,7 @@
  * Development Database Seed Script
  *
  * Creates comprehensive test data for local development:
- * - 30 people across 5 generations
+ * - 32 people across 5 generations
  * - Family relationships (spouse, parent-child, sibling)
  * - Test users (admin, member, viewer)
  *
@@ -435,6 +435,39 @@ async function main() {
     })
     .returning();
 
+  // Sunita's parents, so both of Rahul's parents have ancestors
+  const [ggGrandpaRamesh] = await db
+    .insert(schema.persons)
+    .values({
+      id: crypto.randomUUID(),
+      firstName: "Ramesh",
+      lastName: "Kapoor",
+      gender: "MALE",
+      dateOfBirth: dateVal("1940-06-02"),
+      birthPlace: "Delhi",
+      nativePlace: "Delhi",
+      profession: "Civil Engineer",
+      isLiving: true,
+      updatedAt: now,
+    })
+    .returning();
+
+  const [ggGrandmaShanti] = await db
+    .insert(schema.persons)
+    .values({
+      id: crypto.randomUUID(),
+      firstName: "Shanti",
+      lastName: "Kapoor",
+      gender: "FEMALE",
+      dateOfBirth: dateVal("1944-11-19"),
+      birthPlace: "Delhi",
+      nativePlace: "Delhi",
+      profession: "Teacher",
+      isLiving: true,
+      updatedAt: now,
+    })
+    .returning();
+
   const [grandpaSanjay] = await db
     .insert(schema.persons)
     .values({
@@ -743,7 +776,7 @@ async function main() {
     })
     .returning();
 
-  log.info({ count: 30, generations: 5 }, "Created family members");
+  log.info({ count: 32, generations: 5 }, "Created family members");
 
   // ========== CREATE RELATIONSHIPS ==========
   log.info({ entity: "relationships" }, "Creating family relationships");
@@ -857,6 +890,15 @@ async function main() {
   // Generation 2 siblings
   await createSiblings(grandpaVikram.id, grandpaAjay.id);
   await createSiblings(grandmaPriya.id, grandpaSanjay.id);
+
+  // Sunita's parents
+  await createSpouse(
+    ggGrandpaRamesh.id,
+    ggGrandmaShanti.id,
+    dateVal("1964-01-10")
+  );
+  await createParentChild(ggGrandpaRamesh.id, grandmaSunita.id);
+  await createParentChild(ggGrandmaShanti.id, grandmaSunita.id);
 
   // Generation 3 spouses
   await createSpouse(grandpaVikram.id, grandmaPriya.id, dateVal("1985-12-15"));
@@ -1021,7 +1063,7 @@ async function main() {
         "member@test.vamsa.local",
         "viewer@test.vamsa.local",
       ],
-      familyTree: { persons: 30, generations: 5 },
+      familyTree: { persons: 32, generations: 5 },
     },
     "DEV SEED COMPLETED SUCCESSFULLY"
   );

@@ -126,15 +126,14 @@ test.describe("Calendar Token Management", () => {
       // Find and click the manage tokens link
       const manageLink = page.getByRole("link", { name: /manage tokens/i });
       await expect(manageLink).toBeVisible({ timeout: 10000 });
-      await manageLink.click();
 
-      // Wait for navigation to complete (WebKit may need more time)
-      await page.waitForLoadState("domcontentloaded");
-
-      // Should navigate to calendar tokens page
-      await expect(page).toHaveURL(/settings.*calendar-tokens/i, {
-        timeout: 15000,
-      });
+      // WebKit re-renders the link during hydration, detaching it mid-click; retry until navigation lands
+      await expect(async () => {
+        await manageLink.click({ timeout: 3000 });
+        await expect(page).toHaveURL(/settings.*calendar-tokens/i, {
+          timeout: 3000,
+        });
+      }).toPass({ timeout: 20000 });
       await expect(
         page.getByRole("heading", { name: /calendar access tokens/i })
       ).toBeVisible({ timeout: 10000 });

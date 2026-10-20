@@ -19,9 +19,12 @@ import {
   Input,
   ThemeToggle,
 } from "@vamsa/ui";
-import { getRegistrationStatus } from "~/server/auth.functions";
+import { getCurrentUser, getRegistrationStatus } from "~/server/auth.functions";
 import { signIn } from "~/lib/auth-client";
 import { SSOButtons } from "~/components/auth/sso-buttons";
+
+// SSO cannot know the person up front; /visualize defaults to the user's own person
+const POST_LOGIN_PATH = "/visualize?type=tree&view=focused";
 
 const searchSchema = z.object({
   registered: z.boolean().optional(),
@@ -63,7 +66,16 @@ function LoginComponent() {
         setIsLoading(false);
         return;
       }
-      navigate({ to: "/people" });
+      // Land on the tree centered on the user's own person; fall back to /people
+      const user = await getCurrentUser().catch(() => null);
+      if (user?.personId) {
+        navigate({
+          to: "/visualize",
+          search: { type: "tree", view: "focused", personId: user.personId },
+        });
+      } else {
+        navigate({ to: "/people" });
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Login failed";
       setError(errorMessage);
@@ -243,7 +255,7 @@ function LoginComponent() {
             </Button>
 
             {/* SSO Buttons */}
-            <SSOButtons redirectTo="/people" disabled={isLoading} />
+            <SSOButtons redirectTo={POST_LOGIN_PATH} disabled={isLoading} />
 
             {registration.selfSignupEnabled && (
               <div className="text-center text-sm">
