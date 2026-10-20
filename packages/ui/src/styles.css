@@ -252,11 +252,4 @@
   .section-padding {
     @apply py-12 sm:py-16 lg:py-20;
   }
-
-  /* Pull quote styling */
-  .pull-quote {
-    font-family: var(--font-display);
-    @apply text-muted-foreground text-2xl italic sm:text-3xl;
-    @apply border-primary my-8 border-l-4 pl-6;
-  }
 }
