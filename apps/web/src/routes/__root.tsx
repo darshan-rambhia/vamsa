@@ -28,6 +28,7 @@ import { getCspNonce } from "~/server/csp-nonce";
 import { ModuleLoadError } from "~/components/module-load-error";
 import { isModuleLoadError } from "~/lib/module-load-recovery";
 import {
+  FALLBACK_HTML,
   FALLBACK_ID,
   MODULE_FALLBACK_SCRIPT,
 } from "~/lib/module-load-fallback";
@@ -386,56 +387,11 @@ function RootDocument({
         <QueryClientProvider client={queryClient}>
           <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
         </QueryClientProvider>
-        {/* Static fallback, revealed by the inline script (no React needed) */}
-        <div
+        {/* Fallback lives in a <template> so it is not in the live DOM until the inline script mounts it */}
+        <template
           id={FALLBACK_ID}
-          role="alert"
-          hidden
-          suppressHydrationWarning
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 9999,
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "1rem",
-            textAlign: "center",
-            background: "var(--color-background, oklch(0.98 0.01 80))",
-            color: "var(--color-foreground, oklch(0.22 0.05 145))",
-            fontFamily: "'Source Sans 3', system-ui, sans-serif",
-          }}
-        >
-          <h1
-            style={{
-              fontFamily: "Fraunces, Georgia, serif",
-              fontSize: "1.5rem",
-              fontWeight: 600,
-              margin: 0,
-            }}
-          >
-            Vamsa couldn&apos;t finish loading
-          </h1>
-          <p style={{ margin: "0.5rem 0 1.5rem", maxWidth: "24rem" }}>
-            Part of the page failed to load. Check your connection and reload.
-          </p>
-          <button
-            id={`${FALLBACK_ID}-btn`}
-            type="button"
-            style={{
-              background: "var(--color-primary, oklch(0.38 0.12 145))",
-              color: "var(--color-primary-foreground, oklch(0.98 0.01 80))",
-              border: 0,
-              borderRadius: "0.375rem",
-              padding: "0.625rem 1.25rem",
-              fontSize: "0.875rem",
-              fontWeight: 500,
-              cursor: "pointer",
-            }}
-          >
-            Reload
-          </button>
-        </div>
+          dangerouslySetInnerHTML={{ __html: FALLBACK_HTML }}
+        />
         <Scripts />
       </body>
     </html>

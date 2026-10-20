@@ -19,7 +19,8 @@ test.describe("Module load fallback", () => {
     await expect(page.locator("html[data-hydrated]")).toHaveCount(1, {
       timeout: 15000,
     });
-    await expect(page.locator("#vamsa-load-fallback")).toBeHidden();
+    await expect(page.locator("#vamsa-load-fallback-root")).toHaveCount(0);
+    await expect(page.getByText(/couldn.t finish loading/i)).toHaveCount(0);
     expect(errors).toEqual([]);
   });
 
@@ -32,7 +33,7 @@ test.describe("Module load fallback", () => {
 
     await page.goto("/login", { waitUntil: "domcontentloaded" });
 
-    const fallback = page.locator("#vamsa-load-fallback");
+    const fallback = page.locator("#vamsa-load-fallback-root");
     await expect(fallback).toBeVisible({ timeout: 15000 });
     await expect(
       fallback.getByRole("heading", { name: /couldn.t finish loading/i })
