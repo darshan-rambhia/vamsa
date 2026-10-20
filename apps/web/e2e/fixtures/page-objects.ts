@@ -7,6 +7,20 @@ import { waitForHydration } from "./test-base";
 import type { Locator, Page } from "@playwright/test";
 
 /**
+ * Wait until the app has hydrated. The router performs a same-document
+ * history.replace on mount (e.g. /visualize canonical search params); WebKit
+ * reports a page.goto issued during that window as "interrupted by another
+ * navigation". The root sets data-hydrated after that settles.
+ */
+export async function waitForAppSettled(page: Page): Promise<void> {
+  await page.waitForFunction(
+    () => document.documentElement.dataset.hydrated === "true",
+    undefined,
+    { timeout: 10000 }
+  );
+}
+
+/**
  * Firefox-resilient navigation helper.
  * Retries on NS_BINDING_ABORTED which occurs in Firefox when navigation
  * is interrupted by a redirect.
@@ -30,6 +44,7 @@ export async function gotoWithRetry(
       });
       // Verify we reached the target URL
       if (page.url().includes(targetPath)) {
+        if (options?.waitUntil !== "commit") await waitForAppSettled(page);
         return;
       }
     } catch (error) {
@@ -230,10 +245,12 @@ export class Navigation {
   async goToTree() {
     // Tree is now part of the consolidated visualizations page
     await this._navigateWithFallback("nav-visualize", "/visualize");
+    await waitForAppSettled(this.page);
   }
 
   async goToVisualize() {
     await this._navigateWithFallback("nav-visualize", "/visualize");
+    await waitForAppSettled(this.page);
   }
 
   async goToMaps() {

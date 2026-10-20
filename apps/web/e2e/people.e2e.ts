@@ -506,11 +506,13 @@ test.describe("People - Data Integrity", () => {
 
       // Should stay on same URL
       await page.waitForURL(currentUrl, { timeout: 5000 });
+      await waitForHydration(page);
     });
 
     await bdd.then("person data persists after reload", async () => {
       const detailPage = new PersonDetailPage(page);
-      await expect(detailPage.nameHeading).not.toBeEmpty();
+      // Retry until the heading has real text (it can be empty/absent until the person loads)
+      await expect(detailPage.nameHeading).toHaveText(/\S/, { timeout: 10000 });
     });
   });
 });
