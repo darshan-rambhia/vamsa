@@ -11,7 +11,14 @@ test.describe("Module load fallback", () => {
   }) => {
     const errors: Array<string> = [];
     page.on("console", (m) => {
-      if (m.type() === "error") errors.push(m.text());
+      // CI serves over plain http on a non-localhost host, so Chromium warns that COOP was ignored
+      if (
+        m.type() === "error" &&
+        !m
+          .text()
+          .startsWith("The Cross-Origin-Opener-Policy header has been ignored")
+      )
+        errors.push(m.text());
     });
     page.on("pageerror", (e) => errors.push(e.message));
 
