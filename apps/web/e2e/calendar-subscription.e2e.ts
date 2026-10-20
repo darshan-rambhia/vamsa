@@ -10,6 +10,7 @@
 
 import { expect, test } from "@playwright/test";
 import { VIEWPORT_ARRAY } from "./fixtures/viewports";
+import { waitForAppSettled } from "./fixtures/page-objects";
 
 test.describe("Calendar Subscription", () => {
   test.beforeEach(async ({ page }) => {
@@ -17,6 +18,10 @@ test.describe("Calendar Subscription", () => {
     await page
       .getByRole("heading", { name: /calendar subscriptions/i })
       .waitFor({ state: "visible", timeout: 10000 });
+    // Wait for hydration: navigating away while WebKit is still loading module
+    // chunks cancels them, and the next document's import of those chunks fails
+    // ("Importing a module script failed"), leaving a blank, unhydrated page.
+    await waitForAppSettled(page);
   });
 
   test.describe("Page Load", () => {
@@ -214,12 +219,6 @@ test.describe("Calendar Subscription", () => {
 
   test.describe("Keyboard Navigation", () => {
     test("tabs support keyboard navigation", async ({ page }) => {
-      // First, navigate to subscribe and wait for tabs to be loaded
-      await page.goto("/subscribe", { waitUntil: "domcontentloaded" });
-      await page
-        .getByRole("heading", { name: /calendar subscriptions/i })
-        .waitFor({ state: "visible", timeout: 10000 });
-
       // Test keyboard navigation on the instruction tabs using role selectors
       const googleTab = page.getByRole("tab", { name: /google calendar/i });
       await expect(googleTab).toBeVisible();

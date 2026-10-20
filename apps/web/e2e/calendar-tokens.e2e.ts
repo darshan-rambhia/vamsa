@@ -10,6 +10,7 @@
 
 import { expect, test } from "@playwright/test";
 import { VIEWPORT_ARRAY } from "./fixtures/viewports";
+import { waitForAppSettled } from "./fixtures/page-objects";
 
 test.describe("Calendar Token Management", () => {
   test.beforeEach(async ({ page }) => {
@@ -19,6 +20,10 @@ test.describe("Calendar Token Management", () => {
     await page
       .getByRole("heading", { name: /calendar access tokens/i })
       .waitFor({ state: "visible", timeout: 10000 });
+    // Wait for hydration: navigating away while WebKit is still loading module
+    // chunks cancels them, and the next document's import of those chunks fails
+    // ("Importing a module script failed"), leaving a blank, unhydrated page.
+    await waitForAppSettled(page);
   });
 
   test.describe("Page Display", () => {
@@ -121,19 +126,13 @@ test.describe("Calendar Token Management", () => {
     test("user can navigate from subscribe page", async ({ page }) => {
       // Navigate to subscribe page first
       await page.goto("/subscribe", { waitUntil: "domcontentloaded" });
-      await page.waitForLoadState("domcontentloaded");
+      await waitForAppSettled(page);
 
       // Find and click the manage tokens link
       const manageLink = page.getByRole("link", { name: /manage tokens/i });
       await expect(manageLink).toBeVisible({ timeout: 10000 });
-
-      // WebKit re-renders the link during hydration, detaching it mid-click; retry until navigation lands
-      await expect(async () => {
-        await manageLink.click({ timeout: 3000 });
-        await expect(page).toHaveURL(/settings.*calendar-tokens/i, {
-          timeout: 3000,
-        });
-      }).toPass({ timeout: 20000 });
+      await manageLink.click();
+      await expect(page).toHaveURL(/settings.*calendar-tokens/i);
       await expect(
         page.getByRole("heading", { name: /calendar access tokens/i })
       ).toBeVisible({ timeout: 10000 });
