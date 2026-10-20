@@ -1,0 +1,67 @@
+name: GHCR Cleanup
+
+# E2E images are tagged per commit (e2e:<sha>), so they pile up. Delete any
+# e2e image version older than RETENTION_DAYS, except the :latest layer cache.
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "List versions that would be deleted without deleting"
+        type: boolean
+        default: false
+
+permissions:
+  packages: write
+
+concurrency:
+  group: ghcr-cleanup
+  cancel-in-progress: false
+
+env:
+  PACKAGE: e2e
+  RETENTION_DAYS: "7"
+
+jobs:
+  cleanup:
+    name: Delete old E2E images
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Delete stale e2e image versions
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY#*/}"
+          pkg=$(printf '%s/%s' "$repo" "$PACKAGE" | jq -sRr @uri)
+          owner="$GITHUB_REPOSITORY_OWNER"
+          owner_type=$(gh api "/users/$owner" -q .type)
+          if [ "$owner_type" = "Organization" ]; then
+            base="/orgs/$owner/packages/container/$pkg/versions"
+          else
+            base="/users/$owner/packages/container/$pkg/versions"
+          fi
+          cutoff=$(date -u -d "-${RETENTION_DAYS} days" +%Y-%m-%dT%H:%M:%SZ)
+
+          ids=$(gh api --paginate "$base?per_page=100" \
+            -q ".[] | select(.created_at < \"$cutoff\")
+                    | select((.metadata.container.tags | index(\"latest\")) | not)
+                    | .id")
+
+          count=$(printf '%s\n' "$ids" | grep -c . || true)
+          echo "Versions older than $cutoff (excluding :latest): $count"
+          [ "$count" -eq 0 ] && exit 0
+
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Dry run, not deleting."
+            exit 0
+          fi
+
+          for id in $ids; do
+            gh api -X DELETE "$base/$id" --silent || echo "::warning::Failed to delete version $id"
+          done
+          echo "Deleted $count versions."
