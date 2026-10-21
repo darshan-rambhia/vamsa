@@ -13,7 +13,7 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
-import { count, desc, eq, ne } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import {
   backupExportSchema,
   backupSettingsSchema,
@@ -21,9 +21,10 @@ import {
 } from "@vamsa/schemas";
 import { loggers } from "@vamsa/lib/logger";
 import {
-  createBackupArchive,
+  createBackupExportData,
   extractBackupData,
-  gatherBackupData,
+  listBackupsData,
+  recordAuditLogData,
   restoreFromBackup,
   scheduleBackupJob,
   validateBackupFile,
@@ -74,65 +75,16 @@ export const exportBackup = createServerFn({ method: "POST" })
       metadata?: BackupMetadata;
     }> => {
       const user = await requireAuth("ADMIN");
-
-      // Gather backup data
-      const backupData = await gatherBackupData(data);
-
-      // Create metadata
-      const metadata: BackupMetadata = {
-        version: "1.0.0",
-        exportedAt: new Date().toISOString(),
-        exportedBy: {
-          id: user.id,
-          email: user.email,
-          name: user.name || null,
-        },
-        statistics: {
-          totalPeople: backupData.people.length,
-          totalRelationships: backupData.relationships.length,
-          totalUsers: backupData.users.length,
-          totalSuggestions: backupData.suggestions.length,
-          totalPhotos: backupData.mediaObjects.length,
-          auditLogDays: data.auditLogDays,
-          totalAuditLogs: backupData.auditLogs.length,
-        },
-        dataFiles: [
-          "data/people.json",
-          "data/relationships.json",
-          "data/users.json",
-          "data/suggestions.json",
-          "data/settings.json",
-          ...(data.includeAuditLogs ? ["data/audit-logs.json"] : []),
-        ],
-        photoDirectories: backupData.mediaObjects.map((m) => `photos/${m.id}/`),
-      };
-
-      // Create ZIP archive
-      const zipBase64 = await createBackupArchive(backupData, metadata);
-
-      // Log audit trail
-      try {
-        await drizzleDb.insert(drizzleSchema.auditLogs).values({
-          id: crypto.randomUUID(),
-          userId: user.id,
-          action: "CREATE",
-          entityType: "BACKUP_EXPORT",
-          entityId: null,
-          newData: {
-            timestamp: new Date().toISOString(),
-            statistics: metadata.statistics,
-          },
-        });
-      } catch (err) {
-        // Log audit error but don't fail the export
-        log.withErr(err).msg("Failed to create audit log for backup export");
-      }
+      const { zipBase64, filename, metadata } = await createBackupExportData(
+        data,
+        { id: user.id, email: user.email, name: user.name || null }
+      );
 
       return {
         success: true,
         message: "Backup exported successfully",
         zipBase64,
-        filename: `vamsa-backup-${new Date().toISOString().split("T")[0]}.zip`,
+        filename,
         metadata,
       };
     }
@@ -151,41 +103,13 @@ export const listBackups = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await requireAuth("ADMIN");
 
-    const [backups, totalResult] = await Promise.all([
-      drizzleDb
-        .select()
-        .from(drizzleSchema.backups)
-        .where(ne(drizzleSchema.backups.status, "DELETED"))
-        .orderBy(desc(drizzleSchema.backups.createdAt))
-        .limit(data.limit)
-        .offset(data.offset),
-      drizzleDb
-        .select({ count: count() })
-        .from(drizzleSchema.backups)
-        .where(ne(drizzleSchema.backups.status, "DELETED")),
-    ]);
-
-    const total = totalResult[0]?.count ?? 0;
-
+    const result = await listBackupsData(data);
     return {
-      items: backups.map((b) => ({
-        id: b.id,
-        filename: b.filename,
-        type: b.type,
-        status: b.status,
+      ...result,
+      items: result.items.map((b) => ({
+        ...b,
         size: b.size ? BigInt(b.size) : null,
-        location: b.location,
-        personCount: b.personCount,
-        relationshipCount: b.relationshipCount,
-        eventCount: b.eventCount,
-        mediaCount: b.mediaCount,
-        duration: b.duration,
-        error: b.error,
-        createdAt: b.createdAt,
-        deletedAt: b.deletedAt,
       })),
-      total,
-      hasMore: data.offset + data.limit < total,
     };
   });
 
@@ -295,22 +219,13 @@ export const deleteBackup = createServerFn({ method: "POST" })
       })
       .where(eq(drizzleSchema.backups.id, data.backupId));
 
-    // Log the deletion
-    try {
-      await drizzleDb.insert(drizzleSchema.auditLogs).values({
-        id: crypto.randomUUID(),
-        userId: user.id,
-        action: "DELETE",
-        entityType: "BACKUP",
-        entityId: data.backupId,
-        previousData: {
-          filename: backup.filename,
-          type: backup.type,
-        },
-      });
-    } catch (err) {
-      log.withErr(err).msg("Failed to create audit log for backup deletion");
-    }
+    await recordAuditLogData({
+      userId: user.id,
+      action: "DELETE",
+      entityType: "BACKUP",
+      entityId: data.backupId,
+      previousData: { filename: backup.filename, type: backup.type },
+    });
 
     return {
       success: true,

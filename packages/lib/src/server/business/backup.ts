@@ -21,9 +21,12 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { ZipArchive } from "archiver";
+import { strFromU8, unzipSync } from "fflate";
+import { backupMetadataSchema } from "@vamsa/schemas";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
-import { gte } from "drizzle-orm";
+import { count, desc, ne } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
+import { listAuditLogsData, recordAuditLogData } from "./audit-logs";
 import type {
   BackupExportInput,
   BackupImportOptions,
@@ -34,6 +37,24 @@ import type {
 } from "@vamsa/schemas";
 
 const log = loggers.db;
+
+/** Metadata placeholder for archives whose metadata.json can't be read. */
+const UNKNOWN_METADATA: BackupMetadata = {
+  version: "unknown",
+  exportedAt: "",
+  exportedBy: { id: "", email: "", name: null },
+  statistics: {
+    totalPeople: 0,
+    totalRelationships: 0,
+    totalUsers: 0,
+    totalSuggestions: 0,
+    totalPhotos: 0,
+    auditLogDays: 0,
+    totalAuditLogs: 0,
+  },
+  dataFiles: [],
+  photoDirectories: [],
+};
 
 /**
  * Type for the database client used by backup functions.
@@ -119,13 +140,11 @@ export async function gatherBackupData(
     // Family settings
     db.select().from(drizzleSchema.familySettings).limit(1),
 
-    // Audit logs (filtered by date if requested)
+    // Audit logs since the cutoff, oldest first (filtered by date if requested)
     options.includeAuditLogs
-      ? db
-          .select()
-          .from(drizzleSchema.auditLogs)
-          .where(gte(drizzleSchema.auditLogs.createdAt, auditLogCutoff))
-          .orderBy(drizzleSchema.auditLogs.createdAt)
+      ? listAuditLogsData({ since: auditLogCutoff, order: "asc" }, db).then(
+          (r) => r.items
+        )
       : Promise.resolve([]),
 
     // Media objects for photo collection
@@ -272,46 +291,83 @@ export async function createBackupArchive(
 export async function validateBackupFile(
   archiveBuffer: Buffer
 ): Promise<ValidationResult> {
-  // TODO: Implement archive extraction and validation
-  // - Extract ZIP
-  // - Parse metadata.json
-  // - Validate schemas
-  // - Check for conflicts
-  // - Return ValidationResult
-
   log.info({ size: archiveBuffer.length }, "Validating backup file");
 
-  return {
-    isValid: true,
-    metadata: {
-      version: "1.0.0",
-      exportedAt: new Date().toISOString(),
-      exportedBy: {
-        id: "system",
-        email: "system@vamsa.local",
-        name: null,
-      },
-      statistics: {
-        totalPeople: 0,
-        totalRelationships: 0,
-        totalUsers: 0,
-        totalSuggestions: 0,
-        totalPhotos: 0,
-        auditLogDays: 90,
-        totalAuditLogs: 0,
-      },
-      dataFiles: [],
-      photoDirectories: [],
-    },
+  const errors: Array<string> = [];
+  const warnings: Array<string> = [];
+  const emptyResult = (metadata: BackupMetadata): ValidationResult => ({
+    isValid: errors.length === 0,
+    metadata,
     conflicts: [],
     statistics: {
       totalConflicts: 0,
       conflictsByType: {},
       conflictsBySeverity: {},
     },
-    errors: [],
-    warnings: [],
+    errors,
+    warnings,
+  });
+
+  let files: Record<string, Uint8Array>;
+  try {
+    files = unzipSync(new Uint8Array(archiveBuffer));
+  } catch {
+    errors.push("Not a valid ZIP archive");
+    return emptyResult(UNKNOWN_METADATA);
+  }
+
+  const readJson = (name: string): unknown => {
+    const bytes = files[name] as Uint8Array | undefined;
+    if (!bytes) return undefined;
+    try {
+      return JSON.parse(strFromU8(bytes));
+    } catch {
+      errors.push(`${name} is not valid JSON`);
+      return null;
+    }
   };
+
+  const rawMetadata = readJson("metadata.json");
+  if (rawMetadata === undefined) {
+    errors.push("metadata.json is missing");
+    return emptyResult(UNKNOWN_METADATA);
+  }
+  const parsed = backupMetadataSchema.safeParse(rawMetadata);
+  if (!parsed.success) {
+    errors.push(
+      `metadata.json is invalid: ${parsed.error.issues[0]?.message ?? "bad shape"}`
+    );
+    return emptyResult(UNKNOWN_METADATA);
+  }
+  const metadata = parsed.data;
+
+  // Every listed data file must exist and parse; record counts should match
+  const expected: Record<string, number | undefined> = {
+    "data/people.json": metadata.statistics.totalPeople,
+    "data/relationships.json": metadata.statistics.totalRelationships,
+    "data/users.json": metadata.statistics.totalUsers,
+    "data/suggestions.json": metadata.statistics.totalSuggestions,
+    "data/audit-logs.json": metadata.statistics.totalAuditLogs,
+  };
+  for (const name of metadata.dataFiles) {
+    const content = readJson(name);
+    if (content === undefined) {
+      errors.push(`${name} is listed in metadata but missing`);
+      continue;
+    }
+    const want = expected[name];
+    if (
+      want !== undefined &&
+      Array.isArray(content) &&
+      content.length !== want
+    ) {
+      warnings.push(
+        `${name} has ${content.length} records, metadata says ${want}`
+      );
+    }
+  }
+
+  return emptyResult(metadata);
 }
 
 /**
@@ -509,5 +565,114 @@ export async function scheduleBackupJob(
   return {
     success: true,
     scheduleInfo,
+  };
+}
+
+/** Who requested a backup export (recorded in the backup's metadata). */
+export interface BackupRequester {
+  id: string;
+  email: string;
+  name: string | null;
+}
+
+/**
+ * Build a full backup export: gather data, write metadata, zip it and record
+ * the export in the audit log. Used by the web server function and REST API.
+ */
+export async function createBackupExportData(
+  options: BackupExportInput,
+  user: BackupRequester,
+  db: BackupDb = drizzleDb
+): Promise<{
+  zipBase64: string;
+  filename: string;
+  metadata: BackupMetadata;
+}> {
+  const backupData = await gatherBackupData(options, db);
+
+  const metadata: BackupMetadata = {
+    version: "1.0.0",
+    exportedAt: new Date().toISOString(),
+    exportedBy: { id: user.id, email: user.email, name: user.name || null },
+    statistics: {
+      totalPeople: backupData.people.length,
+      totalRelationships: backupData.relationships.length,
+      totalUsers: backupData.users.length,
+      totalSuggestions: backupData.suggestions.length,
+      totalPhotos: backupData.mediaObjects.length,
+      auditLogDays: options.auditLogDays,
+      totalAuditLogs: backupData.auditLogs.length,
+    },
+    dataFiles: [
+      "data/people.json",
+      "data/relationships.json",
+      "data/users.json",
+      "data/suggestions.json",
+      "data/settings.json",
+      // createBackupArchive only writes the file when there are entries
+      ...(backupData.auditLogs.length > 0 ? ["data/audit-logs.json"] : []),
+    ],
+    photoDirectories: backupData.mediaObjects.map((m) => `photos/${m.id}/`),
+  };
+
+  const zipBase64 = await createBackupArchive(backupData, metadata);
+
+  await recordAuditLogData(
+    {
+      userId: user.id,
+      action: "CREATE",
+      entityType: "BACKUP_EXPORT",
+      newData: {
+        timestamp: new Date().toISOString(),
+        statistics: metadata.statistics,
+      },
+    },
+    db
+  );
+
+  return {
+    zipBase64,
+    filename: `vamsa-backup-${new Date().toISOString().split("T")[0]}.zip`,
+    metadata,
+  };
+}
+
+/** List stored backups (newest first), excluding soft-deleted ones. */
+export async function listBackupsData(
+  options: { limit: number; offset: number },
+  db: BackupDb = drizzleDb
+) {
+  const notDeleted = ne(drizzleSchema.backups.status, "DELETED");
+  const [backups, totalResult] = await Promise.all([
+    db
+      .select()
+      .from(drizzleSchema.backups)
+      .where(notDeleted)
+      .orderBy(desc(drizzleSchema.backups.createdAt))
+      .limit(options.limit)
+      .offset(options.offset),
+    db.select({ count: count() }).from(drizzleSchema.backups).where(notDeleted),
+  ]);
+  const total = Number(totalResult[0]?.count ?? 0);
+
+  return {
+    items: backups.map((b) => ({
+      id: b.id,
+      filename: b.filename,
+      type: b.type,
+      status: b.status,
+      size: b.size ?? null,
+      location: b.location,
+      personCount: b.personCount,
+      relationshipCount: b.relationshipCount,
+      eventCount: b.eventCount,
+      mediaCount: b.mediaCount,
+      duration: b.duration,
+      error: b.error,
+      createdAt: b.createdAt,
+      deletedAt: b.deletedAt,
+    })),
+    total,
+    hasMore: options.offset + options.limit < total,
   };
 }

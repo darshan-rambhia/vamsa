@@ -434,58 +434,66 @@ describe("backup business logic", () => {
   });
 
   describe("validateBackupFile", () => {
-    it("should return validation result for buffer", async () => {
-      const buffer = Buffer.from("test data");
-
-      const result = await validateBackupFile(buffer);
-
-      expect(result.isValid).toBeDefined();
-      expect(result.metadata).toBeDefined();
-      expect(result.conflicts).toBeDefined();
-      expect(result.errors).toBeDefined();
-      expect(result.warnings).toBeDefined();
-    });
-
-    it("should include metadata in validation result", async () => {
-      const buffer = Buffer.from("test data");
-
-      const result = await validateBackupFile(buffer);
-
-      expect(result.metadata.version).toBe("1.0.0");
-      expect(result.metadata.exportedAt).toBeDefined();
-      expect(result.metadata.exportedBy).toBeDefined();
-      expect(result.metadata.statistics).toBeDefined();
-    });
-
-    it("should return empty conflicts array", async () => {
-      const buffer = Buffer.from("test data");
-
-      const result = await validateBackupFile(buffer);
-
-      expect(Array.isArray(result.conflicts)).toBe(true);
-      expect(result.conflicts.length).toBe(0);
-    });
-
-    it("should include statistics in validation result", async () => {
-      const buffer = Buffer.from("test data");
-
-      const result = await validateBackupFile(buffer);
-
-      expect(result.statistics).toBeDefined();
-      expect(result.statistics.totalConflicts).toBe(0);
-      expect(typeof result.statistics.conflictsByType).toBe("object");
-      expect(typeof result.statistics.conflictsBySeverity).toBe("object");
-    });
-
-    it("should log validation with buffer size", async () => {
-      const buffer = Buffer.from("test data");
-
-      await validateBackupFile(buffer);
-
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.objectContaining({ size: buffer.length }),
-        expect.any(String)
+    const archiveWith = async (
+      metadataOverrides: Record<string, unknown> = {},
+      people: Array<unknown> = [{ id: "p1" }]
+    ) => {
+      const metadata = {
+        ...createDefaultMetadata(),
+        statistics: { ...createDefaultMetadata().statistics, totalPeople: 1 },
+        dataFiles: ["data/people.json", "data/relationships.json"],
+        ...metadataOverrides,
+      };
+      const zip = await createBackupArchive(
+        {
+          people,
+          relationships: [],
+          users: [],
+          suggestions: [],
+          settings: null,
+          auditLogs: [],
+          mediaObjects: [],
+        } as unknown as Awaited<ReturnType<typeof gatherBackupData>>,
+        metadata
       );
+      return Buffer.from(zip, "base64");
+    };
+
+    it("rejects data that is not a ZIP", async () => {
+      const result = await validateBackupFile(Buffer.from("test data"));
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toEqual(["Not a valid ZIP archive"]);
+      expect(result.metadata.version).toBe("unknown");
+      expect(result.conflicts).toEqual([]);
+    });
+
+    it("accepts an archive made by createBackupArchive", async () => {
+      const result = await validateBackupFile(await archiveWith());
+      expect(result.errors).toEqual([]);
+      expect(result.isValid).toBe(true);
+      expect(result.metadata.statistics.totalPeople).toBe(1);
+    });
+
+    it("warns when record counts disagree with the metadata", async () => {
+      const result = await validateBackupFile(
+        await archiveWith({}, [{ id: "p1" }, { id: "p2" }])
+      );
+      expect(result.isValid).toBe(true);
+      expect(result.warnings).toEqual([
+        "data/people.json has 2 records, metadata says 1",
+      ]);
+    });
+
+    it("errors when a listed data file is missing", async () => {
+      const result = await validateBackupFile(
+        await archiveWith({
+          dataFiles: ["data/people.json", "data/not-there.json"],
+        })
+      );
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toEqual([
+        "data/not-there.json is listed in metadata but missing",
+      ]);
     });
   });
 

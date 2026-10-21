@@ -768,6 +768,9 @@ importers:
       drizzle-orm:
         specifier: 0.45.4
         version: 0.45.4(@opentelemetry/api@1.9.1)(@types/better-sqlite3@9.6.0)(@types/pg@8.23.1)(better-sqlite3@13.0.3)(bun-types@1.4.3)(kysely@0.29.5)(pg@8.23.1)
+      fflate:
+        specifier: 0.8.3
+        version: 0.8.3
       i18next:
         specifier: ^26.0.0
         version: 26.4.7(typescript@5.9.3)

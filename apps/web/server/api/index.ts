@@ -18,6 +18,7 @@ import placesRouter from "./places";
 import sourcesRouter from "./sources";
 import gedcomRouter, { GEDCOM_MAX_BYTES } from "./gedcom";
 import adminRouter from "./admin";
+import adminBackupsRouter from "./admin-backups";
 import batchRouter from "./batch";
 
 const log = loggers.api;
@@ -136,6 +137,14 @@ if (ENABLE_DOCS) {
       {
         name: "Admin: Settings",
         description: "Family settings (requires ADMIN)",
+      },
+      {
+        name: "Admin: Backups",
+        description: "Backup export, validation and history (requires ADMIN)",
+      },
+      {
+        name: "Admin: Audit",
+        description: "Audit log search (requires ADMIN)",
       },
       {
         name: "Tokens",
@@ -269,6 +278,7 @@ apiV1.route("/places", placesRouter);
 apiV1.route("/sources", sourcesRouter);
 apiV1.route("/gedcom", gedcomRouter);
 apiV1.route("/admin", adminRouter);
+apiV1.route("/admin", adminBackupsRouter);
 
 // ============================================
 // Error Handling

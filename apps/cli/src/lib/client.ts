@@ -42,6 +42,9 @@ export interface RequestOptions {
   query?: Record<string, string | number | boolean | undefined>;
   body?: unknown;
   headers?: Record<string, string>;
+  /** Raw request body (file upload); sent as-is with `contentType` */
+  raw?: Uint8Array;
+  contentType?: string;
   /**
    * Return { status: 404 } instead of throwing (idempotent deletes), but only
    * when the 404 body's `error` is exactly this message. A 404 for any other
@@ -60,6 +63,7 @@ export interface Download {
   contentType: string;
   /** File name from Content-Disposition, if the server sent one */
   fileName?: string;
+  headers?: Headers;
 }
 
 export interface ApiClient {
@@ -69,6 +73,12 @@ export interface ApiClient {
   download: (
     path: string,
     query?: RequestOptions["query"]
+  ) => Promise<Download>;
+  /** Any method, binary response (e.g. POST that returns a ZIP). */
+  fetchBytes: (
+    method: string,
+    path: string,
+    opts?: RequestOptions
   ) => Promise<Download>;
   request: <T = unknown>(
     method: string,
@@ -91,14 +101,19 @@ export function createClient(opts: ClientOptions): ApiClient {
       ...ro.headers,
     };
     if (opts.token) headers.Authorization = `Bearer ${opts.token}`;
-    if (ro.body !== undefined) headers["Content-Type"] = "application/json";
+    if (ro.raw)
+      headers["Content-Type"] = ro.contentType ?? "application/octet-stream";
+    else if (ro.body !== undefined)
+      headers["Content-Type"] = "application/json";
     opts.debug(`-> ${method} ${url}`);
     let res: Response;
     try {
       res = await opts.fetch(url, {
         method,
         headers,
-        body: ro.body === undefined ? undefined : JSON.stringify(ro.body),
+        body:
+          ro.raw ??
+          (ro.body === undefined ? undefined : JSON.stringify(ro.body)),
       });
     } catch (err) {
       throw new CliError(
@@ -124,12 +139,12 @@ export function createClient(opts: ClientOptions): ApiClient {
   return {
     url: opts.url,
     hasToken: Boolean(opts.token),
-    async download(path, query) {
-      const res = await send("GET", path, {
-        query,
-        headers: { Accept: "*/*" },
+    async fetchBytes(method, path, ro = {}) {
+      const res = await send(method, path, {
+        ...ro,
+        headers: { Accept: "*/*", ...ro.headers },
       });
-      if (!res.ok) throw httpError(res.status, await parse(res), "GET", path);
+      if (!res.ok) throw httpError(res.status, await parse(res), method, path);
       const disposition = res.headers.get("content-disposition") ?? "";
       const name = /filename="?([^";]+)"?/.exec(disposition)?.[1];
       return {
@@ -137,7 +152,11 @@ export function createClient(opts: ClientOptions): ApiClient {
         contentType: res.headers.get("content-type") ?? "",
         // Never trust a server-chosen path: plain file name or nothing
         fileName: safeFileName(name),
+        headers: res.headers,
       };
+    },
+    download(path, query) {
+      return this.fetchBytes("GET", path, { query });
     },
     async request<T>(method: string, path: string, ro: RequestOptions = {}) {
       const res = await send(method, path, ro);

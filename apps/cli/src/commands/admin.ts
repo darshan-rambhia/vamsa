@@ -12,6 +12,7 @@ import {
   requireChanges,
   requireFlags,
 } from "../lib/resource";
+import { audit, backup } from "./admin-backup";
 import type { Ctx } from "../lib/context";
 import type { Row } from "../lib/resource";
 
@@ -582,5 +583,5 @@ const settings = group({
 export const admin = group({
   name: "admin",
   description: "Administration (requires ADMIN)",
-  subCommands: { user, invite, settings },
+  subCommands: { user, invite, settings, backup, audit },
 });

@@ -84,6 +84,14 @@ export function httpError(
         EXIT_ERROR,
         status
       );
+    case 501:
+      return new CliError(
+        "not_implemented",
+        detail ?? "The server does not support this yet",
+        undefined,
+        EXIT_ERROR,
+        status
+      );
     default:
       return new CliError(
         "server_error",
