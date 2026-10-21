@@ -213,7 +213,7 @@ test.describe("Feature: Backup & Export", () => {
           expect(fs.existsSync(metadataPath)).toBe(true);
 
           const metadata = JSON.parse(fs.readFileSync(metadataPath, "utf-8"));
-          expect(metadata.version).toBe("1.0.0");
+          expect(metadata.version).toBe("1.1.0");
           expect(metadata.exportedAt).toBeDefined();
           expect(metadata.exportedBy).toBeDefined();
           expect(metadata.exportedBy.email).toBeDefined();
