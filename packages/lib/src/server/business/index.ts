@@ -34,6 +34,7 @@ export * from "./auth-better-api";
 // Backup & Restore
 // ============================================================================
 export * from "./backup";
+export * from "./audit-logs";
 export * from "./restore";
 
 // ============================================================================
