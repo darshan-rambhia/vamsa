@@ -18,7 +18,10 @@ const runtime: Runtime = {
   stdinIsTTY: Boolean(process.stdin.isTTY),
   readStdin,
   fetch: (input, init) => fetch(input, init),
-  execPath: process.argv[1] ?? "vamsa",
+  // Compiled binaries report a virtual /$bunfs path in argv[1]
+  execPath: process.argv[1]?.startsWith("/$bunfs")
+    ? process.execPath
+    : (process.argv[1] ?? "vamsa"),
 };
 
 process.exitCode = await run(process.argv.slice(2), runtime);

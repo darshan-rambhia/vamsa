@@ -21,7 +21,7 @@ export async function homeView(ctx: Ctx): Promise<void> {
   const { target, rt } = ctx;
   const view: Record<string, unknown> = {
     about:
-      "vamsa is the command-line client for a Vamsa family tree: people, relationships and API tokens.",
+      "vamsa is the command-line client for a Vamsa family tree: people, relationships, events, places, sources, GEDCOM and admin.",
     bin: tildify(rt.execPath, rt.env.HOME),
     profile: target.profileName,
     url: target.url,

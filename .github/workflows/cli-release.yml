@@ -1,0 +1,150 @@
+name: CLI Release
+run-name: "CLI release · ${{ github.ref_name }}"
+
+# Build standalone `vamsa` binaries and attach them to a GitHub release.
+# Trigger: push a tag like cli-v0.2.0 (the version must match apps/cli/package.json).
+
+on:
+  push:
+    tags: ["cli-v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing cli-v* tag to (re)build and attach"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: CLI tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.14.0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check tag matches package version
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          version=$(node -p "require('./apps/cli/package.json').version")
+          if [ "${TAG#cli-v}" != "$version" ]; then
+            echo "::error::tag $TAG does not match apps/cli/package.json version $version"
+            exit 1
+          fi
+
+      - name: Typecheck and test
+        run: |
+          pnpm --filter @vamsa/cli typecheck
+          pnpm --filter @vamsa/cli test
+
+  build:
+    name: Build ${{ matrix.target }}
+    needs: test
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - target: darwin-arm64
+            os: macos-latest
+          - target: linux-x64
+            os: ubuntu-latest
+          - target: linux-arm64
+            os: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.14.0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --filter @vamsa/cli...
+
+      - name: Build binary
+        working-directory: apps/cli
+        run: bun scripts/build.ts ${{ matrix.target }}
+
+      # Each runner matches its target, so the binary can be smoke-tested
+      - name: Smoke test
+        working-directory: apps/cli
+        run: |
+          ./dist/vamsa-${{ matrix.target }} --version
+          ./dist/vamsa-${{ matrix.target }} --help > /dev/null
+          set +e
+          ./dist/vamsa-${{ matrix.target }} --no-such-flag > /dev/null
+          code=$?
+          set -e
+          test "$code" -eq 2
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: vamsa-${{ matrix.target }}
+          path: apps/cli/dist/vamsa-${{ matrix.target }}
+          if-no-files-found: error
+
+  release:
+    name: Attach to release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: bin
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: bin
+        run: sha256sum vamsa-* > SHA256SUMS && cat SHA256SUMS
+
+      - name: Create or update release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
+            gh release upload "$TAG" bin/* --clobber --repo "$GITHUB_REPOSITORY"
+          else
+            gh release create "$TAG" bin/* --repo "$GITHUB_REPOSITORY" \
+              --title "vamsa CLI ${TAG#cli-v}" \
+              --notes "Standalone \`vamsa\` binaries. Download the one for your platform, \`chmod +x\` it and put it on your PATH. Verify with SHA256SUMS."
+          fi

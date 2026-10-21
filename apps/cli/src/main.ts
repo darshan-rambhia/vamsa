@@ -12,6 +12,7 @@ import { buildCtx } from "./lib/context";
 import { EXIT_OK, EXIT_USAGE, toCliError, usageError } from "./lib/errors";
 import { formatError } from "./lib/output";
 import { rootCommand } from "./commands";
+import { VERSION } from "./lib/version";
 import type { ArgDef, ArgsDef } from "citty";
 import type { AnyCommand } from "./lib/command";
 import type { Runtime } from "./lib/context";
@@ -211,6 +212,7 @@ export function renderHelp(cmd: AnyCommand, path: Array<string>): string {
     });
   }
   lines.push("global: --json --verbose --profile <name> --url <url> --help");
+  if (!path.length) lines.push(`version: ${VERSION} (vamsa --version)`);
   return lines.join("\n") + "\n";
 }
 
