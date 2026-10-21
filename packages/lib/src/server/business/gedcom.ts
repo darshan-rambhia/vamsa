@@ -124,7 +124,7 @@ export async function validateGedcomImport(
   const start = Date.now();
 
   // Validate file format
-  if (!fileName.endsWith(".ged")) {
+  if (!fileName.toLowerCase().endsWith(".ged")) {
     recordGedcomValidation(false, 1, Date.now() - start);
     return {
       valid: false,
@@ -211,7 +211,7 @@ export async function importGedcomData(
   const start = Date.now();
 
   // Validate file format
-  if (!fileName.endsWith(".ged")) {
+  if (!fileName.toLowerCase().endsWith(".ged")) {
     return {
       success: false,
       message: "File must be .ged format",

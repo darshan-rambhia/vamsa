@@ -10,6 +10,27 @@ import { CliError, httpError } from "./errors";
 
 export type FetchFn = (input: string, init?: RequestInit) => Promise<Response>;
 
+/**
+ * Accept a server-provided download name only if it is a plain file name:
+ * no directory parts, no "..", no leading dot, no control characters.
+ * Returns undefined otherwise so callers fall back to their default.
+ */
+export function safeFileName(name: string | undefined): string | undefined {
+  if (!name) return undefined;
+  const trimmed = name.trim();
+  if (
+    trimmed === "" ||
+    trimmed.length > 200 ||
+    trimmed.startsWith(".") ||
+    trimmed.includes("..") ||
+    /[/\\:]/.test(trimmed) ||
+    [...trimmed].some((ch) => ch.charCodeAt(0) < 0x20 || ch === "\u007f")
+  ) {
+    return undefined;
+  }
+  return trimmed;
+}
+
 export interface ClientOptions {
   url: string;
   token?: string;
@@ -114,7 +135,8 @@ export function createClient(opts: ClientOptions): ApiClient {
       return {
         bytes: new Uint8Array(await res.arrayBuffer()),
         contentType: res.headers.get("content-type") ?? "",
-        fileName: name,
+        // Never trust a server-chosen path: plain file name or nothing
+        fileName: safeFileName(name),
       };
     },
     async request<T>(method: string, path: string, ro: RequestOptions = {}) {

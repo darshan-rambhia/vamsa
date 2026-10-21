@@ -16,7 +16,7 @@ beforeEach(() => {
     {
       current: "default",
       profiles: {
-        default: { url: "http://v.test", token: "t", tokenType: "session" },
+        default: { url: "https://v.test", token: "t", tokenType: "session" },
       },
     },
     { HOME: home }
@@ -163,7 +163,7 @@ describe("gedcom", () => {
     expect(r.code).toBe(0);
     expect(r.stdout).toBe("PK");
     expect(String(fetch.mock.calls[0][0])).toBe(
-      "http://v.test/api/v1/gedcom/export.zip?media=false"
+      "https://v.test/api/v1/gedcom/export.zip?media=false"
     );
   });
 });
@@ -222,10 +222,10 @@ describe("bulk add", () => {
       lastName: "Rao",
       isLiving: false,
     });
-    const out = decode(r.stdout.split("\nerror:")[0]) as Record<
-      string,
-      unknown
-    >;
+    // One output block: the error carries the summary and failures
+    expect(r.stdout.match(/^bulk:/gm)).toBeNull();
+    const out = (decode(r.stdout) as { error: Record<string, unknown> }).error;
+    expect(out.code).toBe("partial_failure");
     expect(out.bulk).toMatchObject({
       rows: 5,
       created: 1,
@@ -237,7 +237,6 @@ describe("bulk add", () => {
       { row: 5, error: "Invalid date" },
     ]);
     expect(r.code).toBe(1);
-    expect(r.stdout).toContain("partial_failure");
   });
 
   it("--dry-run makes no batch request", async () => {
@@ -325,5 +324,140 @@ describe("bulk add", () => {
   it("requires --type", async () => {
     const j = file("p.json", "[]");
     expect((await runCli(["bulk", "add", j], { home })).code).toBe(2);
+  });
+});
+
+describe("review fixes", () => {
+  it("safeFileName keeps plain names and rejects paths", async () => {
+    const { safeFileName } = await import("../lib/client");
+    expect(safeFileName("vamsa-2026-01-01.ged")).toBe("vamsa-2026-01-01.ged");
+    for (const bad of [
+      "../../.bashrc",
+      "/etc/passwd",
+      "dir/file.ged",
+      "C:\\x.ged",
+      ".hidden",
+      "a\u0000b",
+      "",
+      undefined,
+    ]) {
+      expect(safeFileName(bad)).toBeUndefined();
+    }
+  });
+
+  it("export ignores a malicious server file name and uses the default", async () => {
+    const fetch = api(
+      () =>
+        new Response("0 HEAD\n", {
+          headers: {
+            "Content-Disposition": 'attachment; filename="../../evil.ged"',
+          },
+        })
+    );
+    const r = await runCli(["gedcom", "export"], { home, fetch });
+    expect(r.code).toBe(0);
+    expect(readFileSync(join(home, "vamsa.ged"), "utf8")).toBe("0 HEAD\n");
+  });
+
+  it("validate of an invalid file exits 1 with the errors", async () => {
+    const ged = file("bad.ged", "x");
+    const fetch = api(() =>
+      json({
+        valid: false,
+        message: "Invalid GEDCOM",
+        preview: {
+          peopleCount: 0,
+          familiesCount: 0,
+          errors: [{ message: "no HEAD" }],
+        },
+      })
+    );
+    const r = await runCli(["gedcom", "validate", ged], { home, fetch });
+    expect(r.code).toBe(1);
+    expect(decode(r.stdout)).toMatchObject({
+      error: { code: "invalid_gedcom", errorCount: 1 },
+    });
+    const dry = await runCli(["gedcom", "import", ged, "--dry-run"], {
+      home,
+      fetch,
+    });
+    expect(dry.code).toBe(1);
+  });
+
+  it("accepts .GED in upper case", async () => {
+    const ged = file("TREE.GED", "0 HEAD\n0 TRLR\n");
+    const fetch = api(() =>
+      json({
+        valid: true,
+        message: "ok",
+        preview: { peopleCount: 1, familiesCount: 0, errors: [] },
+      })
+    );
+    expect(
+      (await runCli(["gedcom", "validate", ged], { home, fetch })).code
+    ).toBe(0);
+  });
+
+  it("bulk --dry-run with invalid rows exits 1 and sends nothing", async () => {
+    const j = file("p.json", JSON.stringify([{ lastName: "NoFirst" }]));
+    const fetch = api(() =>
+      json({ items: [], nextCursor: null, hasMore: false })
+    );
+    const r = await runCli(
+      ["bulk", "add", j, "--type", "person", "--dry-run"],
+      {
+        home,
+        fetch,
+      }
+    );
+    expect(r.code).toBe(1);
+    expect(decode(r.stdout)).toMatchObject({
+      error: {
+        code: "invalid_rows",
+        failures: [{ row: 1, error: "missing firstName" }],
+      },
+    });
+    expect(fetch).toHaveBeenCalledTimes(1); // only the existing-persons lookup
+  });
+
+  it("dates are normalized before dedupe; non-ISO dates fail the row", async () => {
+    const existing = {
+      items: [
+        {
+          id: "p0",
+          firstName: "Asha",
+          lastName: "Rao",
+          dateOfBirth: "1990-01-01",
+        },
+      ],
+      nextCursor: null,
+      hasMore: false,
+    };
+    const j = file(
+      "p.json",
+      JSON.stringify([
+        {
+          firstName: "Asha",
+          lastName: "Rao",
+          dateOfBirth: "1990-01-01T00:00:00Z",
+        },
+        { firstName: "Ravi", lastName: "Rao", dateOfBirth: "01/02/1992" },
+        { firstName: "Mira", lastName: "Rao", dateOfBirth: "1992-02-30" },
+      ])
+    );
+    const fetch = api(() => json(existing));
+    const r = await runCli(
+      ["bulk", "add", j, "--type", "person", "--dry-run"],
+      {
+        home,
+        fetch,
+      }
+    );
+    const err = (decode(r.stdout) as { error: Record<string, unknown> }).error;
+    expect(err.bulk).toMatchObject({ skipped: 1, failed: 2, wouldCreate: 0 });
+    expect(err.failures).toEqual([
+      { row: 2, error: "dateOfBirth must be an ISO date (YYYY-MM-DD)" },
+      { row: 3, error: "dateOfBirth must be an ISO date (YYYY-MM-DD)" },
+    ]);
   });
 });

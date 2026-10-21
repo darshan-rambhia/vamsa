@@ -9,6 +9,9 @@ import {
 import { jsonBody, jsonRoute, respond } from "./route-helpers";
 
 const TAG = "GEDCOM";
+
+/** Largest accepted GEDCOM upload (JSON body, after base text encoding). */
+export const GEDCOM_MAX_BYTES = 50 * 1024 * 1024;
 const gedcomRouter = new OpenAPIHono();
 
 /** GEDCOM upload: the file name (must end in .ged) and its text content. */

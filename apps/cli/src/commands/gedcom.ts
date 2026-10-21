@@ -66,18 +66,26 @@ const validate = leaf({
         body: { fileName: f.name, content: f.text },
       }
     );
+    if (!data.valid) {
+      throw new CliError(
+        "invalid_gedcom",
+        data.message,
+        "fix the errors, then re-run vamsa gedcom validate <file>",
+        EXIT_ERROR,
+        undefined,
+        { file: f.name, ...errorRows(data.preview?.errors) }
+      );
+    }
     ctx.print({
       validation: {
         file: f.name,
-        valid: data.valid,
+        valid: true,
         message: data.message,
         people: data.preview?.peopleCount ?? 0,
         families: data.preview?.familiesCount ?? 0,
       },
       ...errorRows(data.preview?.errors),
-      help: data.valid
-        ? [`vamsa gedcom import ${args.file}`]
-        : ["fix the errors, then re-run vamsa gedcom validate <file>"],
+      help: [`vamsa gedcom import ${args.file}`],
     });
   },
 });
@@ -102,10 +110,20 @@ const importCmd = leaf({
         "/gedcom/validate",
         { body: { fileName: f.name, content: f.text } }
       );
+      if (!data.valid) {
+        throw new CliError(
+          "invalid_gedcom",
+          data.message,
+          "fix the errors, then re-run with --dry-run",
+          EXIT_ERROR,
+          undefined,
+          { file: f.name, dryRun: true, ...errorRows(data.preview?.errors) }
+        );
+      }
       ctx.print({
         dryRun: {
           file: f.name,
-          valid: data.valid,
+          valid: true,
           wouldImport: {
             people: data.preview?.peopleCount ?? 0,
             families: data.preview?.familiesCount ?? 0,
@@ -113,9 +131,7 @@ const importCmd = leaf({
           message: data.message,
         },
         ...errorRows(data.preview?.errors),
-        help: data.valid
-          ? [`vamsa gedcom import ${args.file}`]
-          : ["fix the errors, then re-run with --dry-run"],
+        help: [`vamsa gedcom import ${args.file}`],
       });
       return;
     }

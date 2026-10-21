@@ -1,3 +1,4 @@
+import { bodyLimit } from "hono/body-limit";
 import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import { loggers } from "@vamsa/lib/logger";
@@ -15,7 +16,7 @@ import tokensRouter from "./tokens";
 import eventsRouter from "./events";
 import placesRouter from "./places";
 import sourcesRouter from "./sources";
-import gedcomRouter from "./gedcom";
+import gedcomRouter, { GEDCOM_MAX_BYTES } from "./gedcom";
 import batchRouter from "./batch";
 
 const log = loggers.api;
@@ -208,6 +209,21 @@ apiV1.use(
 apiV1.use("/sources/*", requireApiAuthForMethod());
 // Same as the web GEDCOM server functions: whole-tree import/export is ADMIN
 apiV1.use("/gedcom/*", requireApiAuth("ADMIN"));
+// GEDCOM uploads arrive as JSON text; cap them before parsing
+apiV1.use(
+  "/gedcom/*",
+  bodyLimit({
+    maxSize: GEDCOM_MAX_BYTES,
+    onError: (c) =>
+      c.json(
+        {
+          error: "Payload too large",
+          details: `GEDCOM uploads are limited to ${GEDCOM_MAX_BYTES / 1024 / 1024} MB`,
+        },
+        413
+      ),
+  })
+);
 // Batch: MEMBER minimum; the batch handler additionally requires ADMIN when it contains deletes
 apiV1.use("/batch/*", requireApiAuth("MEMBER"));
 apiV1.use("/metrics/*", requireApiAuth("ADMIN"));

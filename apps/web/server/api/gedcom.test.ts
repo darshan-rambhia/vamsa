@@ -143,3 +143,21 @@ describe("GEDCOM routes (ADMIN)", () => {
     expect(await res.json()).toEqual({ error: "Export failed" });
   });
 });
+
+describe("GEDCOM upload size", () => {
+  test("bodies over the limit get 413 before parsing", async () => {
+    signIn("ADMIN");
+    const { GEDCOM_MAX_BYTES } = await import("./gedcom");
+    const big = "x".repeat(GEDCOM_MAX_BYTES + 1);
+    const res = await apiV1.request("/gedcom/validate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Content-Length": String(big.length + 40),
+      },
+      body: JSON.stringify({ fileName: "big.ged", content: big }),
+    });
+    expect(res.status).toBe(413);
+    expect(m.validateGedcomImport).not.toHaveBeenCalled();
+  });
+});

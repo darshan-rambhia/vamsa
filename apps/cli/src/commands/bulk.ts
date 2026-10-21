@@ -9,7 +9,7 @@
 
 import { group, leaf } from "../lib/command";
 import { intFlag, str } from "../lib/context";
-import { CliError, usageError } from "../lib/errors";
+import { CliError, EXIT_ERROR, usageError } from "../lib/errors";
 import { parseCsv } from "../lib/csv";
 import { readTextFile } from "../lib/files";
 import { truncate } from "../lib/output";
@@ -73,7 +73,43 @@ export function normalize(row: Row): Row {
   }
   if (typeof out.type === "string") out.type = out.type.toUpperCase();
   if (typeof out.gender === "string") out.gender = out.gender.toUpperCase();
+  for (const field of DATE_FIELDS) {
+    if (typeof out[field] === "string") out[field] = isoDate(out[field]);
+  }
   return out;
+}
+
+/** Date columns: must be ISO, normalized to YYYY-MM-DD before dedupe. */
+const DATE_FIELDS = [
+  "dateOfBirth",
+  "dateOfPassing",
+  "marriageDate",
+  "divorceDate",
+] as const;
+
+/** Marker for a date that is not ISO; reported as a row failure. */
+const BAD_DATE = Symbol("bad-date");
+
+/**
+ * "1990-04-12" or "1990-04-12T00:00:00Z" -> "1990-04-12". Anything else
+ * (12/04/1990, April 1990) is ambiguous and rejected, because the dedupe key
+ * and the server would otherwise read it differently.
+ */
+export function isoDate(v: string): string | typeof BAD_DATE {
+  const m =
+    /^(\d{4})-(\d{2})-(\d{2})(?:T[\d:.]+(?:Z|[+-]\d{2}:?\d{2})?)?$/.exec(
+      v.trim()
+    );
+  if (!m) return BAD_DATE;
+  const [, y, mo, d] = m;
+  const date = new Date(Date.UTC(Number(y), Number(mo) - 1, Number(d)));
+  if (
+    date.getUTCMonth() !== Number(mo) - 1 ||
+    date.getUTCDate() !== Number(d)
+  ) {
+    return BAD_DATE;
+  }
+  return `${y}-${mo}-${d}`;
 }
 
 const personKey = (r: Row) =>
@@ -83,6 +119,10 @@ const personKey = (r: Row) =>
 const relKey = (r: Row) => [r.personId, r.relatedPersonId, r.type].join("|");
 
 function invalidReason(kind: Kind, r: Row): string | undefined {
+  const badDates = DATE_FIELDS.filter((f) => r[f] === BAD_DATE);
+  if (badDates.length) {
+    return `${badDates.join(", ")} must be an ISO date (YYYY-MM-DD)`;
+  }
   const need =
     kind === "person"
       ? ["firstName", "lastName"]
@@ -240,33 +280,43 @@ const add = leaf({
     };
     if (args["dry-run"]) summary.dryRun = true;
 
-    ctx.print({
-      bulk: summary,
-      ...(failed.length
-        ? {
-            failures: failed.slice(0, MAX_FAILURES_SHOWN).map((x) => ({
-              row: x.row,
-              error: truncate(String(x.error), false),
-            })),
-          }
-        : {}),
-      help: args["dry-run"]
-        ? [`vamsa bulk add ${args.file} --type ${kind}`]
-        : failed.length
-          ? ["fix the failed rows and re-run; existing rows are skipped"]
-          : [
-              kind === "person"
-                ? "vamsa person list"
-                : "vamsa relationship list --person <id>",
-            ],
-    });
-    if (failed.length && !args["dry-run"]) {
+    const failures = failed.slice(0, MAX_FAILURES_SHOWN).map((x) => ({
+      row: x.row,
+      error: truncate(String(x.error), false),
+    }));
+
+    // Any failed row: one structured error carrying the summary (exit 1)
+    if (failed.length) {
       throw new CliError(
-        "partial_failure",
-        `${failed.length} of ${rows.length} rows failed`,
-        "see failures above; re-running skips rows already created"
+        args["dry-run"] ? "invalid_rows" : "partial_failure",
+        `${failed.length} of ${rows.length} rows ${args["dry-run"] ? "would fail" : "failed"}`,
+        args["dry-run"]
+          ? "fix the listed rows, then re-run with --dry-run"
+          : "fix the listed rows and re-run; rows already created are skipped",
+        EXIT_ERROR,
+        undefined,
+        {
+          bulk: summary,
+          failures,
+          ...(failed.length > MAX_FAILURES_SHOWN
+            ? {
+                note: `showing first ${MAX_FAILURES_SHOWN} of ${failed.length} failures`,
+              }
+            : {}),
+        }
       );
     }
+
+    ctx.print({
+      bulk: summary,
+      help: args["dry-run"]
+        ? [`vamsa bulk add ${args.file} --type ${kind}`]
+        : [
+            kind === "person"
+              ? "vamsa person list"
+              : "vamsa relationship list --person <id>",
+          ],
+    });
   },
 });
 
