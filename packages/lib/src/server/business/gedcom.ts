@@ -124,7 +124,7 @@ export async function validateGedcomImport(
   const start = Date.now();
 
   // Validate file format
-  if (!fileName.endsWith(".ged")) {
+  if (!fileName.toLowerCase().endsWith(".ged")) {
     recordGedcomValidation(false, 1, Date.now() - start);
     return {
       valid: false,
@@ -211,7 +211,7 @@ export async function importGedcomData(
   const start = Date.now();
 
   // Validate file format
-  if (!fileName.endsWith(".ged")) {
+  if (!fileName.toLowerCase().endsWith(".ged")) {
     return {
       success: false,
       message: "File must be .ged format",
@@ -547,14 +547,16 @@ export async function exportGedcomDataZip(
     );
     archive.append(manifestContent, { name: "manifest.json" });
 
-    // Finalize the archive
-    await archive.finalize();
-
-    // Wait for all chunks to be collected
-    await new Promise<void>((resolve, reject) => {
+    // Listen for the end before finalizing: finalize() resolves after the
+    // stream has already ended, so a listener attached afterwards never fires
+    // and the export hangs.
+    const collected = new Promise<void>((resolve, reject) => {
       archive.on("end", resolve);
       archive.on("error", reject);
     });
+
+    await archive.finalize();
+    await collected;
 
     const zipBuffer = Buffer.concat(chunks);
     const zipBase64 = zipBuffer.toString("base64");

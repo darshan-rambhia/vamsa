@@ -11,6 +11,8 @@ async function readStdin(): Promise<string> {
 const runtime: Runtime = {
   env: process.env,
   stdout: (s) => process.stdout.write(s),
+  stdoutBytes: (b) => process.stdout.write(b),
+  cwd: process.cwd(),
   stderr: (s) => process.stderr.write(s),
   interactive: Boolean(process.stdin.isTTY && process.stdout.isTTY),
   stdinIsTTY: Boolean(process.stdin.isTTY),

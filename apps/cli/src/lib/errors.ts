@@ -14,7 +14,9 @@ export class CliError extends Error {
     message: string,
     public readonly hint?: string,
     public readonly exitCode: number = EXIT_ERROR,
-    public readonly status?: number
+    public readonly status?: number,
+    /** Extra structured fields printed inside the error block */
+    public readonly details?: Record<string, unknown>
   ) {
     super(message);
     this.name = "CliError";

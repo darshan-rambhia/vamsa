@@ -35,6 +35,7 @@ export async function runCli(
     stdin?: string;
     interactive?: boolean;
     stdinIsTTY?: boolean;
+    cwd?: string;
   }
 ): Promise<FakeRun> {
   let stdout = "";
@@ -44,6 +45,10 @@ export async function runCli(
     stdout: (s) => {
       stdout += s;
     },
+    stdoutBytes: (b) => {
+      stdout += Buffer.from(b).toString("latin1");
+    },
+    cwd: opts.cwd ?? opts.home,
     stderr: (s) => {
       stderr += s;
     },
