@@ -159,7 +159,7 @@ export const resendInvite = createServerFn({ method: "POST" })
     return inviteIdSchema.parse(data);
   })
   .handler(async ({ data }) => {
-    await requireAuth("ADMIN");
+    const user = await requireAuth("ADMIN");
 
-    return resendInviteData(data.inviteId);
+    return resendInviteData(data.inviteId, user.id);
   });

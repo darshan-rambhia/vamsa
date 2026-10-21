@@ -27,6 +27,7 @@ import { createPaginationMeta } from "@vamsa/schemas";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
+import { ConflictError } from "./errors";
 import { createCredentialAccount } from "./auth-accounts";
 import type { SQLWrapper } from "drizzle-orm";
 
@@ -556,6 +557,8 @@ export async function deleteInviteData(
  */
 export async function resendInviteData(
   inviteId: string,
+  /** Who resent it, for the log trail */
+  actorId?: string,
   db: InvitesDb = drizzleDb
 ) {
   const inviteResult = await db
@@ -574,6 +577,13 @@ export async function resendInviteData(
     throw new Error("Cannot resend an accepted invite");
   }
 
+  // Revoking is a deliberate decision; resending would silently undo it
+  if (invite.status === "REVOKED") {
+    throw new ConflictError(
+      "Cannot resend a revoked invite; create a new invite instead"
+    );
+  }
+
   // Generate new token
   const newToken = randomBytes(32).toString("hex");
   const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -588,7 +598,7 @@ export async function resendInviteData(
     .where(eq(drizzleSchema.invites.id, inviteId))
     .returning();
 
-  log.info({ inviteId }, "Resent invite");
+  log.info({ inviteId, actorId }, "Resent invite");
 
   return {
     success: true,

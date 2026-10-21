@@ -13,11 +13,11 @@ import {
   getInvitesData,
   getUserData,
   getUsersData,
+  patchFamilySettingsData,
   resendInviteData,
   revokeInviteData,
   searchAvailablePersonsData,
   unlockUserAccountData,
-  updateFamilySettingsData,
   updateUserData,
 } from "@vamsa/lib/server/business";
 import { idParam, jsonBody, jsonRoute, respond } from "./route-helpers";
@@ -239,7 +239,10 @@ adminRouter.openapi(
     operationId: "adminResendInvite",
     request: { params: idParam() },
   }),
-  (c) => respond(c, () => resendInviteData(c.req.valid("param").id))
+  (c) =>
+    respond(c, () =>
+      resendInviteData(c.req.valid("param").id, c.get("user").id)
+    )
 );
 
 adminRouter.openapi(
@@ -259,6 +262,15 @@ adminRouter.openapi(
 
 // ---------------------------------------------------------------- settings
 
+/** http(s) only: these URLs are rendered as links in the admin UI. */
+const webUrl = z
+  .string()
+  .url()
+  .refine((u) => /^https?:$/.test(new URL(u).protocol), {
+    message: "Must be an http or https URL",
+  })
+  .nullable();
+
 const settingsBody = z
   .object({
     familyName: z.string().min(1).max(200),
@@ -266,8 +278,8 @@ const settingsBody = z
     allowSelfRegistration: z.boolean(),
     requireApprovalForEdits: z.boolean(),
     allowProfileClaiming: z.boolean(),
-    metricsDashboardUrl: z.string().url().nullable(),
-    metricsApiUrl: z.string().url().nullable(),
+    metricsDashboardUrl: webUrl,
+    metricsApiUrl: webUrl,
   })
   .partial()
   .strict()
@@ -291,17 +303,16 @@ adminRouter.openapi(
     tag: SETTINGS,
     summary: "Update family settings",
     description:
-      "Send only the keys to change; they are merged over the current settings. Unknown keys are rejected.",
+      "Send only the keys to change; only those columns are written. Unknown keys are rejected.",
     operationId: "adminUpdateSettings",
     request: { body: jsonBody(settingsBody) },
   }),
   (c) =>
-    respond(c, async () => {
-      const current = await getFamilySettingsData();
+    respond(c, () => {
       const user = c.get("user");
-      const { id: _id, ...base } = current;
-      return updateFamilySettingsData(
-        { ...base, ...c.req.valid("json") },
+      // One UPDATE of only the supplied columns (no read-merge-write race)
+      return patchFamilySettingsData(
+        c.req.valid("json"),
         user.role as UserRole,
         user.id
       );

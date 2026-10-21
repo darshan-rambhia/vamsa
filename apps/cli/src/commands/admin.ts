@@ -43,9 +43,11 @@ function pageQuery(args: Record<string, unknown>) {
 async function idempotent(
   ctx: Ctx,
   method: string,
-  path: string
+  path: string,
+  /** The resource's own not-found message; other 404s are errors */
+  notFound: string
 ): Promise<boolean> {
-  const res = await ctx.api.request(method, path, { allowNotFound: true });
+  const res = await ctx.api.request(method, path, { allowNotFound: notFound });
   return res.status !== 404;
 }
 
@@ -192,7 +194,8 @@ const userDelete = leaf({
     const existed = await idempotent(
       ctx,
       "DELETE",
-      `/admin/users/${enc(args.id)}`
+      `/admin/users/${enc(args.id)}`,
+      "User not found"
     );
     ctx.print({
       deleted: existed
@@ -287,6 +290,11 @@ const user = group({
 
 // ---------------------------------------------------------------- invites
 
+/** Link the invitee opens to accept (web route /invite/$token). */
+function acceptUrl(ctx: Ctx, token: string): string {
+  return `${ctx.target.url}/invite/${encodeURIComponent(token)}`;
+}
+
 const inviteList = leaf({
   name: "list",
   description: "List invites",
@@ -348,11 +356,16 @@ const inviteCreate = leaf({
       },
     });
     ctx.print({
-      invite: Object.fromEntries(
-        ["id", "email", "role", "status", "token", "expiresAt"]
-          .filter((k) => data[k] !== null && data[k] !== undefined)
-          .map((k) => [k, data[k]])
-      ),
+      invite: {
+        ...Object.fromEntries(
+          ["id", "email", "role", "status", "token", "expiresAt"]
+            .filter((k) => data[k] !== null && data[k] !== undefined)
+            .map((k) => [k, data[k]])
+        ),
+        ...(data.token
+          ? { acceptUrl: acceptUrl(ctx, String(data.token)) }
+          : {}),
+      },
       help: [
         `vamsa admin invite resend ${String(data.id)}`,
         "vamsa admin invite list",
@@ -379,7 +392,8 @@ const inviteRevoke = leaf({
       const existed = await idempotent(
         ctx,
         "POST",
-        `/admin/invites/${enc(args.id)}/revoke`
+        `/admin/invites/${enc(args.id)}/revoke`,
+        "Invite not found"
       );
       ctx.print({
         revoked: existed
@@ -390,7 +404,7 @@ const inviteRevoke = leaf({
     } catch (err) {
       if (
         err instanceof CliError &&
-        err.status === 400 &&
+        err.status === 409 &&
         /pending/i.test(err.message)
       ) {
         ctx.print({
@@ -419,10 +433,16 @@ const inviteResend = leaf({
     ctx.print({
       resent: {
         id: args.id,
-        expiresAt:
-          (data.invite as Row | undefined)?.expiresAt ?? data.expiresAt ?? null,
+        token: data.token ?? null,
+        ...(data.token
+          ? { acceptUrl: acceptUrl(ctx, String(data.token)) }
+          : {}),
+        expiresAt: data.expiresAt ?? null,
       },
-      help: ["vamsa admin invite list --status PENDING"],
+      help: [
+        "send the acceptUrl to the invitee",
+        "vamsa admin invite list --status PENDING",
+      ],
     });
   },
 });
@@ -444,7 +464,8 @@ const inviteDelete = leaf({
     const existed = await idempotent(
       ctx,
       "DELETE",
-      `/admin/invites/${enc(args.id)}`
+      `/admin/invites/${enc(args.id)}`,
+      "Invite not found"
     );
     ctx.print({
       deleted: existed

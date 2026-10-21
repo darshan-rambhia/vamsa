@@ -159,6 +159,58 @@ export async function updateFamilySettingsData(
   };
 }
 
+/** Columns an admin may patch through the API. */
+export type FamilySettingsPatch = Partial<{
+  familyName: string;
+  description: string;
+  allowSelfRegistration: boolean;
+  requireApprovalForEdits: boolean;
+  allowProfileClaiming: boolean;
+  metricsDashboardUrl: string | null;
+  metricsApiUrl: string | null;
+}>;
+
+/**
+ * Update only the supplied settings columns in a single UPDATE, so two
+ * concurrent patches to different keys cannot overwrite each other (no
+ * read-merge-write). Creates the row with defaults if none exists yet.
+ */
+export async function patchFamilySettingsData(
+  patch: FamilySettingsPatch,
+  userRole: UserRole,
+  userId: string,
+  db: SettingsDb = drizzleDb
+): Promise<FamilySettingsData> {
+  log.info(
+    { userId, userRole, updates: Object.keys(patch) },
+    "Patching family settings"
+  );
+  const columns = Object.fromEntries(
+    Object.entries(patch).filter(([, v]) => v !== undefined)
+  );
+
+  const existing = await db.query.familySettings.findFirst({
+    columns: { id: true },
+  });
+
+  if (existing) {
+    await db
+      .update(drizzleSchema.familySettings)
+      .set({ ...columns, updatedAt: new Date() })
+      .where(eq(drizzleSchema.familySettings.id, existing.id));
+  } else {
+    const defaults = await getFamilySettingsData(db);
+    const { id: _id, ...base } = defaults;
+    await db.insert(drizzleSchema.familySettings).values({
+      id: crypto.randomUUID(),
+      ...base,
+      ...columns,
+      updatedAt: new Date(),
+    });
+  }
+  return getFamilySettingsData(db);
+}
+
 /**
  * Whether profile claiming (linking an account to an existing family profile)
  * is enabled by an admin. Off by default; off means the claim endpoints refuse.

@@ -569,7 +569,11 @@ describe("Users Business Logic", () => {
       const mockDb = {
         query: {
           users: {
-            findFirst: vi.fn(() => Promise.resolve(existingUser)),
+            // First lookup: the user; second: email collision check (none)
+            findFirst: vi
+              .fn()
+              .mockResolvedValueOnce(existingUser)
+              .mockResolvedValueOnce(undefined),
           },
         },
         update: vi.fn(() => ({

@@ -13,7 +13,7 @@ beforeEach(() => {
     {
       current: "default",
       profiles: {
-        default: { url: "http://v.test", token: "t", tokenType: "session" },
+        default: { url: "https://v.test", token: "t", tokenType: "session" },
       },
     },
     { HOME: home }
@@ -111,7 +111,7 @@ describe("admin user/invite", () => {
       { home, fetch }
     );
     expect(String(fetch.mock.calls[0][0])).toBe(
-      "http://v.test/api/v1/admin/users?page=1&limit=1&role=ADMIN&active=true"
+      "https://v.test/api/v1/admin/users?page=1&limit=1&role=ADMIN&active=true"
     );
     const out = decode(r.stdout) as { total: number; help: Array<string> };
     expect(out.total).toBe(7);
@@ -120,7 +120,7 @@ describe("admin user/invite", () => {
 
   it("revoking a non-pending invite is a no-op success", async () => {
     const fetch = api(() =>
-      json({ error: "Can only revoke pending invites" }, 400)
+      json({ error: "Can only revoke pending invites" }, 409)
     );
     const r = await runCli(["admin", "invite", "revoke", "i1", "--yes"], {
       home,
@@ -192,5 +192,61 @@ describe("admin settings set", () => {
 
   it("set with no pairs is a usage error", async () => {
     expect((await runCli(["admin", "settings", "set"], { home })).code).toBe(2);
+  });
+});
+
+describe("invite links", () => {
+  it("resend prints the new token and the accept URL", async () => {
+    const fetch = api(() =>
+      json({
+        success: true,
+        token: "tok123",
+        expiresAt: "2026-01-08T00:00:00.000Z",
+      })
+    );
+    const r = await runCli(["admin", "invite", "resend", "i1"], {
+      home,
+      fetch,
+    });
+    expect(decode(r.stdout)).toMatchObject({
+      resent: {
+        id: "i1",
+        token: "tok123",
+        acceptUrl: "https://v.test/invite/tok123",
+      },
+    });
+  });
+
+  it("resend of a revoked invite surfaces the conflict", async () => {
+    const fetch = api(() =>
+      json(
+        {
+          error: "Cannot resend a revoked invite; create a new invite instead",
+        },
+        409
+      )
+    );
+    const r = await runCli(["admin", "invite", "resend", "i1"], {
+      home,
+      fetch,
+    });
+    expect(r.code).toBe(1);
+    expect(decode(r.stdout)).toMatchObject({ error: { code: "conflict" } });
+  });
+
+  it("create prints the accept URL", async () => {
+    const fetch = api(() =>
+      json({ id: "i2", email: "n@x.com", role: "MEMBER", token: "t2" }, 201)
+    );
+    const r = await runCli(
+      ["admin", "invite", "create", "--email", "n@x.com"],
+      {
+        home,
+        fetch,
+      }
+    );
+    expect(decode(r.stdout)).toMatchObject({
+      invite: { acceptUrl: "https://v.test/invite/t2" },
+    });
   });
 });

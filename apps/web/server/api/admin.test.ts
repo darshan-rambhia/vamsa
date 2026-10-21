@@ -35,7 +35,7 @@ const m = vi.hoisted(() => {
     resendInviteData: ok({ success: true }),
     deleteInviteData: ok({ success: true }),
     getFamilySettingsData: vi.fn(async () => ({})),
-    updateFamilySettingsData: vi.fn(async (d: unknown) => d),
+    patchFamilySettingsData: vi.fn(async (d: unknown) => d),
   };
 });
 
@@ -88,7 +88,7 @@ describe("admin access", () => {
       (await send("PUT", "/admin/settings", { familyName: "X" })).status
     ).toBe(403);
     expect(m.getUsersData).not.toHaveBeenCalled();
-    expect(m.updateFamilySettingsData).not.toHaveBeenCalled();
+    expect(m.patchFamilySettingsData).not.toHaveBeenCalled();
   });
 });
 
@@ -166,7 +166,7 @@ describe("admin invites", () => {
     );
   });
 
-  test("duplicate invite is 409, wrong-state revoke is 400", async () => {
+  test("duplicate invite is 409, wrong-state revoke is 409", async () => {
     m.createInviteData.mockRejectedValueOnce(
       new Error("An active invite already exists for this email")
     );
@@ -176,14 +176,15 @@ describe("admin invites", () => {
     m.revokeInviteData.mockRejectedValueOnce(
       new Error("Can only revoke pending invites")
     );
-    expect((await send("POST", "/admin/invites/i1/revoke")).status).toBe(400);
+    expect((await send("POST", "/admin/invites/i1/revoke")).status).toBe(409);
   });
 
   test("list, resend and delete", async () => {
     await send("GET", "/admin/invites?status=PENDING&page=2");
     expect(m.getInvitesData).toHaveBeenCalledWith(2, 20, "desc", "PENDING");
     await send("POST", "/admin/invites/i1/resend");
-    expect(m.resendInviteData).toHaveBeenCalledWith("i1");
+    // The acting admin is passed for the audit trail
+    expect(m.resendInviteData).toHaveBeenCalledWith("i1", "admin-1");
     await send("DELETE", "/admin/invites/i1");
     expect(m.deleteInviteData).toHaveBeenCalledWith("i1", "admin-1");
   });
@@ -192,18 +193,42 @@ describe("admin invites", () => {
 describe("admin settings", () => {
   beforeEach(() => signIn("ADMIN"));
 
-  test("PUT merges the given keys over current settings", async () => {
+  test("PUT patches only the supplied keys (no read-merge-write)", async () => {
     const res = await send("PUT", "/admin/settings", {
       familyName: "Kapoor-Iyer",
       allowProfileClaiming: true,
     });
     expect(res.status).toBe(200);
-    const { id: _id, ...base } = SETTINGS;
-    expect(m.updateFamilySettingsData).toHaveBeenCalledWith(
-      { ...base, familyName: "Kapoor-Iyer", allowProfileClaiming: true },
+    expect(m.patchFamilySettingsData).toHaveBeenCalledWith(
+      { familyName: "Kapoor-Iyer", allowProfileClaiming: true },
       "ADMIN",
       "admin-1"
     );
+    expect(m.getFamilySettingsData).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    "javascript:alert(1)",
+    "ftp://metrics.example",
+    "data:text/html,x",
+  ])("metrics URLs must be http(s): %s is rejected", async (url) => {
+    const res = await send("PUT", "/admin/settings", {
+      metricsDashboardUrl: url,
+    });
+    expect(res.status).toBe(400);
+  });
+
+  test("metrics URL https and null are accepted", async () => {
+    expect(
+      (
+        await send("PUT", "/admin/settings", {
+          metricsDashboardUrl: "https://grafana.example/d/1",
+        })
+      ).status
+    ).toBe(200);
+    expect(
+      (await send("PUT", "/admin/settings", { metricsApiUrl: null })).status
+    ).toBe(200);
   });
 
   test("unknown keys and wrong types are rejected", async () => {
@@ -214,6 +239,40 @@ describe("admin settings", () => {
       (await send("PUT", "/admin/settings", { allowSelfRegistration: "yes" }))
         .status
     ).toBe(400);
-    expect(m.updateFamilySettingsData).not.toHaveBeenCalled();
+    expect(m.patchFamilySettingsData).not.toHaveBeenCalled();
+  });
+});
+
+describe("admin response shapes", () => {
+  beforeEach(() => signIn("ADMIN"));
+
+  test("user PATCH and PUT /person return exactly the business DTO", async () => {
+    const dto = {
+      id: "u2",
+      email: "b@example.com",
+      name: "B",
+      role: "MEMBER",
+      isActive: true,
+      personId: null,
+    };
+    m.updateUserData.mockResolvedValue(dto);
+    for (const [method, path, body] of [
+      ["PATCH", "/admin/users/u2", { name: "B" }],
+      ["PUT", "/admin/users/u2/person", { personId: null }],
+    ] as const) {
+      const json = await (await send(method, path, body)).json();
+      expect(json).toEqual(dto);
+      expect(json).not.toHaveProperty("passwordHash");
+    }
+  });
+
+  test("email conflict from the business layer is a 409", async () => {
+    m.updateUserData.mockRejectedValueOnce(
+      new Error("A user already exists with this email")
+    );
+    const res = await send("PATCH", "/admin/users/u2", {
+      email: "taken@x.com",
+    });
+    expect(res.status).toBe(409);
   });
 });
