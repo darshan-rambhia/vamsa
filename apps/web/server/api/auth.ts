@@ -145,6 +145,9 @@ authRouter.openapi(loginRoute, async (c) => {
     }
 
     // Better Auth handles session cookies automatically
+    const token = tokenForClient(c.req.header(CLIENT_HEADER), result);
+    // A response carrying a bearer credential must never be cached
+    if (token) c.header("Cache-Control", "no-store");
     return c.json(
       {
         user: {
@@ -155,7 +158,7 @@ authRouter.openapi(loginRoute, async (c) => {
             ((result.user as Record<string, unknown>).role as string) ||
             "VIEWER",
         },
-        token: tokenForClient(c.req.header(CLIENT_HEADER), result),
+        token,
       },
       { status: 200 }
     );
@@ -275,6 +278,9 @@ authRouter.openapi(registerRoute, async (c) => {
     }
 
     // Better Auth handles session cookies automatically
+    const token = tokenForClient(c.req.header(CLIENT_HEADER), result);
+    // A response carrying a bearer credential must never be cached
+    if (token) c.header("Cache-Control", "no-store");
     return c.json(
       {
         user: {
@@ -285,7 +291,7 @@ authRouter.openapi(registerRoute, async (c) => {
             ((result.user as Record<string, unknown>).role as string) ||
             "VIEWER",
         },
-        token: tokenForClient(c.req.header(CLIENT_HEADER), result),
+        token,
       },
       { status: 201 }
     );

@@ -83,6 +83,12 @@ describe("CLI login token", () => {
     const res = await login();
     expect(res.status).toBe(200);
     expect((await res.json()).token).toBe("");
+    expect(res.headers.get("cache-control")).toBeNull();
+  });
+
+  test("a response carrying a token is marked no-store", async () => {
+    const res = await login({ "X-Vamsa-Client": "cli" });
+    expect(res.headers.get("cache-control")).toBe("no-store");
   });
 
   test("returned token works as a Bearer token on a protected route", async () => {
