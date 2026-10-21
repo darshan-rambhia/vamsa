@@ -21,8 +21,12 @@ export interface RequestOptions {
   query?: Record<string, string | number | boolean | undefined>;
   body?: unknown;
   headers?: Record<string, string>;
-  /** Return { status: 404 } instead of throwing (idempotent deletes) */
-  allowNotFound?: boolean;
+  /**
+   * Return { status: 404 } instead of throwing (idempotent deletes), but only
+   * when the 404 body's `error` is exactly this message. A 404 for any other
+   * reason (wrong route, wrong server) still throws.
+   */
+  allowNotFound?: string;
 }
 
 export interface ApiResponse<T> {
@@ -87,7 +91,11 @@ export function createClient(opts: ClientOptions): ApiClient {
         }
       }
 
-      if (res.status === 404 && ro.allowNotFound) {
+      if (
+        res.status === 404 &&
+        ro.allowNotFound !== undefined &&
+        (data as { error?: unknown } | undefined)?.error === ro.allowNotFound
+      ) {
         return { status: 404, data: data as T };
       }
       if (!res.ok) throw httpError(res.status, data, method, path);

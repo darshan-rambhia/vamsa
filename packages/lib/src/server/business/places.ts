@@ -2,6 +2,7 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { and, asc, count, eq } from "drizzle-orm";
 import { caseInsensitiveLike, escapeLike } from "../db";
+import { ConflictError, NotFoundError, ValidationError } from "./errors";
 
 /** Type for the database instance (for DI) */
 export type PlacesDb = typeof drizzleDb;
@@ -138,7 +139,7 @@ export async function getPlaceData(
   });
 
   if (!place) {
-    throw new Error("Place not found");
+    throw new NotFoundError("Place not found");
   }
 
   // Get child count
@@ -230,7 +231,7 @@ export async function getPlaceHierarchyData(
   });
 
   if (!place) {
-    throw new Error("Place not found");
+    throw new NotFoundError("Place not found");
   }
 
   // Build hierarchy from child to parent
@@ -281,7 +282,7 @@ export async function getPersonPlacesData(
   });
 
   if (!person) {
-    throw new Error("Person not found");
+    throw new NotFoundError("Person not found");
   }
 
   const placeLinks = await db.query.placePersonLinks.findMany({
@@ -332,7 +333,7 @@ export async function createPlaceData(
     });
 
     if (!parentPlace) {
-      throw new Error("Parent place not found");
+      throw new NotFoundError("Parent place not found");
     }
   }
 
@@ -387,7 +388,7 @@ export async function updatePlaceData(
   });
 
   if (!existingPlace) {
-    throw new Error("Place not found");
+    throw new NotFoundError("Place not found");
   }
 
   // Verify parent place exists if parentId is being updated
@@ -397,12 +398,12 @@ export async function updatePlaceData(
     });
 
     if (!parentPlace) {
-      throw new Error("Parent place not found");
+      throw new NotFoundError("Parent place not found");
     }
 
     // Prevent circular hierarchy
     if (updates.parentId === id) {
-      throw new Error("A place cannot be its own parent");
+      throw new ValidationError("A place cannot be its own parent");
     }
   }
 
@@ -450,7 +451,7 @@ export async function deletePlaceData(
   });
 
   if (!place) {
-    throw new Error("Place not found");
+    throw new NotFoundError("Place not found");
   }
 
   // Check for child places
@@ -460,7 +461,7 @@ export async function deletePlaceData(
     .where(eq(drizzleSchema.places.parentId, id));
 
   if ((childCount[0]?.count || 0) > 0) {
-    throw new Error(
+    throw new ConflictError(
       `Cannot delete place: ${childCount[0]?.count} child places exist under this place`
     );
   }
@@ -472,7 +473,7 @@ export async function deletePlaceData(
     .where(eq(drizzleSchema.events.placeId, id));
 
   if ((eventCount[0]?.count || 0) > 0) {
-    throw new Error(
+    throw new ConflictError(
       `Cannot delete place: ${eventCount[0]?.count} events are linked to this place`
     );
   }
@@ -484,7 +485,7 @@ export async function deletePlaceData(
     .where(eq(drizzleSchema.placePersonLinks.placeId, id));
 
   if ((personLinkCount[0]?.count || 0) > 0) {
-    throw new Error(
+    throw new ConflictError(
       `Cannot delete place: ${personLinkCount[0]?.count} people are linked to this place`
     );
   }
@@ -524,7 +525,7 @@ export async function linkPersonToPlaceData(
   });
 
   if (!person) {
-    throw new Error("Person not found");
+    throw new NotFoundError("Person not found");
   }
 
   // Verify place exists
@@ -533,7 +534,7 @@ export async function linkPersonToPlaceData(
   });
 
   if (!place) {
-    throw new Error("Place not found");
+    throw new NotFoundError("Place not found");
   }
 
   // Check if link already exists with the same type
@@ -547,7 +548,7 @@ export async function linkPersonToPlaceData(
     });
 
     if (existingLink) {
-      throw new Error(
+      throw new ConflictError(
         "This person is already linked to this place with this type"
       );
     }
@@ -610,7 +611,7 @@ export async function getPlaceHierarchyPathData(
   });
 
   if (!place) {
-    throw new Error("Place not found");
+    throw new NotFoundError("Place not found");
   }
 
   const pathParts: Array<string> = [place.name];
@@ -675,7 +676,7 @@ export async function updatePlacePersonLinkData(
   });
 
   if (!link) {
-    throw new Error("Place-person link not found");
+    throw new NotFoundError("Place-person link not found");
   }
 
   const updateData: Record<string, unknown> = {};
@@ -730,7 +731,7 @@ export async function unlinkPersonFromPlaceData(
   });
 
   if (!link) {
-    throw new Error("Place-person link not found");
+    throw new NotFoundError("Place-person link not found");
   }
 
   await db

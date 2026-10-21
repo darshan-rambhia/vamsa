@@ -267,7 +267,7 @@ const remove = leaf({
     const res = await ctx.api.request(
       "DELETE",
       `/persons/${encodeURIComponent(args.id)}`,
-      { allowNotFound: true }
+      { allowNotFound: "Person not found" }
     );
     ctx.print({
       deleted:

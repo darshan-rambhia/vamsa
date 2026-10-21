@@ -1,5 +1,6 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { and, eq } from "drizzle-orm";
+import { ConflictError, NotFoundError } from "./errors";
 import type {
   EventCreateOutput,
   EventParticipantCreateInput,
@@ -105,7 +106,7 @@ export async function getPersonEventsData(
   });
 
   if (!person) {
-    throw new Error("Person not found");
+    throw new NotFoundError("Person not found");
   }
 
   const events = await db.query.events.findMany({
@@ -155,7 +156,7 @@ export async function createEventData(
   });
 
   if (!person) {
-    throw new Error("Person not found");
+    throw new NotFoundError("Person not found");
   }
 
   const result = await db
@@ -226,7 +227,7 @@ export async function updateEventData(
   });
 
   if (!event) {
-    throw new Error("Event not found");
+    throw new NotFoundError("Event not found");
   }
 
   const updateData: Record<string, unknown> = {
@@ -299,7 +300,7 @@ export async function deleteEventData(
   });
 
   if (!event) {
-    throw new Error("Event not found");
+    throw new NotFoundError("Event not found");
   }
 
   await db
@@ -325,7 +326,7 @@ export async function addEventParticipantData(
   });
 
   if (!event) {
-    throw new Error("Event not found");
+    throw new NotFoundError("Event not found");
   }
 
   const person = await db.query.persons.findFirst({
@@ -333,7 +334,7 @@ export async function addEventParticipantData(
   });
 
   if (!person) {
-    throw new Error("Person not found");
+    throw new NotFoundError("Person not found");
   }
 
   const existingParticipant = await db.query.eventParticipants.findFirst({
@@ -344,7 +345,9 @@ export async function addEventParticipantData(
   });
 
   if (existingParticipant) {
-    throw new Error("This person is already a participant in this event");
+    throw new ConflictError(
+      "This person is already a participant in this event"
+    );
   }
 
   const result = await db
@@ -405,7 +408,7 @@ export async function removeEventParticipantData(
   });
 
   if (!participant) {
-    throw new Error("Participant not found in this event");
+    throw new NotFoundError("Participant not found in this event");
   }
 
   await db

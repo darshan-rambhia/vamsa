@@ -131,7 +131,7 @@ export function intFlag(
   { min = 1, max = Number.MAX_SAFE_INTEGER } = {}
 ): number | undefined {
   if (v === undefined || v === "") return undefined;
-  const n = Number(v);
+  const n = /^\d+$/.test(String(v)) ? Number(v) : NaN;
   if (!Number.isInteger(n) || n < min || n > max) {
     throw usageError(`--${name} must be an integer between ${min} and ${max}`);
   }
