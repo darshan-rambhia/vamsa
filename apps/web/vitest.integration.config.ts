@@ -21,6 +21,8 @@ export default defineConfig({
     environment: "node",
     include: ["tests/integration/**/*.int.ts"],
     testTimeout: 30000,
+    // API token hashing needs a server secret (see api-tokens.ts)
+    env: { API_TOKEN_SECRET: "integration-test-api-token-secret-32ch" },
     // Runs migrations once before any forks start (postgres only).
     // Prevents race conditions when parallel workers all try to migrate the same DB.
     globalSetup: ["./tests/integration/global-setup.ts"],
