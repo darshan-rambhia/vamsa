@@ -195,7 +195,7 @@ const remove = leaf({
     const res = await ctx.api.request(
       "DELETE",
       `/relationships/${encodeURIComponent(args.id)}`,
-      { allowNotFound: true }
+      { allowNotFound: "Relationship not found" }
     );
     ctx.print({
       deleted:

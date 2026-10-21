@@ -12,7 +12,7 @@ beforeEach(() => {
     {
       current: "default",
       profiles: {
-        default: { url: "http://v.test", token: "t", tokenType: "session" },
+        default: { url: "https://v.test", token: "t", tokenType: "session" },
       },
     },
     { HOME: home }
@@ -56,7 +56,7 @@ describe("event", () => {
       { home, fetch }
     );
     expect(String(fetch.mock.calls[0][0])).toBe(
-      "http://v.test/api/v1/events?personId=p1"
+      "https://v.test/api/v1/events?personId=p1"
     );
     expect(decode(r.stdout)).toMatchObject({
       events: [{ id: "e1", participants: 1 }],
@@ -227,5 +227,59 @@ describe("source", () => {
     const r = await runCli(["source", "delete", "nope"], { home, fetch });
     expect(r.code).toBe(0);
     expect(r.stdout).toContain("nothing to delete");
+  });
+});
+
+describe("review fixes", () => {
+  it("a 404 that is not the resource's own not-found is an error, not a silent success", async () => {
+    const fetch = api(() => new Response("404 Not Found", { status: 404 }));
+    const r = await runCli(["event", "delete", "e1"], { home, fetch });
+    expect(r.code).toBe(1);
+    expect(r.stdout).toContain("not_found");
+    expect(r.stdout).not.toContain("nothing to delete");
+  });
+
+  it("a 404 with a different resource's message is an error too", async () => {
+    const fetch = api(() => json({ error: "Person not found" }, 404));
+    const r = await runCli(["source", "delete", "s1"], { home, fetch });
+    expect(r.code).toBe(1);
+  });
+
+  it.each(["0x10", "1e2", " 5", "Infinity", "18.", ".5"])(
+    "rejects non-decimal number %j",
+    async (value) => {
+      const fetch = api(() => json({}));
+      const r = await runCli(
+        ["place", "create", "--name", "X", "--type", "CITY", "--lat", value],
+        { home, fetch }
+      );
+      expect(r.code).toBe(2);
+      expect(fetch).not.toHaveBeenCalled();
+    }
+  );
+
+  it("accepts plain decimals and negatives", async () => {
+    const fetch = api(() => json({ id: "p" }, 201));
+    await runCli(
+      [
+        "place",
+        "create",
+        "--name",
+        "X",
+        "--type",
+        "CITY",
+        "--lat",
+        "-18.52",
+        "--lng",
+        "73",
+      ],
+      { home, fetch }
+    );
+    expect(body(fetch)).toMatchObject({ latitude: -18.52, longitude: 73 });
+  });
+
+  it.each(["1e1", "0x5", "+3"])("--limit %j is rejected", async (value) => {
+    const r = await runCli(["person", "list", "--limit", value], { home });
+    expect(r.code).toBe(2);
   });
 });

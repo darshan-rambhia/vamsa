@@ -176,9 +176,13 @@ const remove = leaf({
   },
   handler: async (ctx, args) => {
     ctx.requireAuth();
-    await deleteIdempotent(ctx, `/sources/${enc(args.id)}`, args.id, [
-      "vamsa source list",
-    ]);
+    await deleteIdempotent(
+      ctx,
+      `/sources/${enc(args.id)}`,
+      args.id,
+      ["vamsa source list"],
+      "Source not found"
+    );
   },
 });
 

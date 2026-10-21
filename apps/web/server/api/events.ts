@@ -8,7 +8,13 @@ import {
   removeEventParticipantData,
   updateEventData,
 } from "@vamsa/lib/server/business";
-import { idParam, jsonBody, jsonRoute, respond } from "./route-helpers";
+import {
+  idParam,
+  jsonBody,
+  jsonRoute,
+  onlyProvided,
+  respond,
+} from "./route-helpers";
 
 const TAG = "Events";
 const eventsRouter = new OpenAPIHono();
@@ -58,11 +64,10 @@ eventsRouter.openapi(
   (c) =>
     respond(c, () => {
       const id = c.req.valid("param").id;
-      const { id: _id, ...data } = eventUpdateSchema.parse({
-        ...c.req.valid("json"),
-        id,
-      });
-      return updateEventData(id, data);
+      const raw = c.req.valid("json");
+      const { id: _id, ...parsed } = eventUpdateSchema.parse({ ...raw, id });
+      // Only fields the client sent; the schema turns an absent date into null
+      return updateEventData(id, onlyProvided(parsed, raw));
     })
 );
 

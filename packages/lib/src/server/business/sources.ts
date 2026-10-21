@@ -1,6 +1,7 @@
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { and, asc, desc, eq } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
+import { NotFoundError } from "./errors";
 
 const log = loggers.db;
 
@@ -214,7 +215,7 @@ export async function getSourceData(
   });
 
   if (!source) {
-    throw new Error("Source not found");
+    throw new NotFoundError("Source not found");
   }
 
   // Fetch related data
@@ -430,7 +431,7 @@ export async function updateSourceData(
   });
 
   if (!source) {
-    throw new Error("Source not found");
+    throw new NotFoundError("Source not found");
   }
 
   const updateData: Record<string, unknown> = {
@@ -477,7 +478,7 @@ export async function deleteSourceData(
   });
 
   if (!source) {
-    throw new Error("Source not found");
+    throw new NotFoundError("Source not found");
   }
 
   await db
@@ -513,7 +514,7 @@ export async function createResearchNoteData(
   });
 
   if (!source) {
-    throw new Error("Source not found");
+    throw new NotFoundError("Source not found");
   }
 
   // Verify person exists
@@ -522,7 +523,7 @@ export async function createResearchNoteData(
   });
 
   if (!person) {
-    throw new Error("Person not found");
+    throw new NotFoundError("Person not found");
   }
 
   const noteId = crypto.randomUUID();
@@ -594,7 +595,7 @@ export async function updateResearchNoteData(
   });
 
   if (!researchNote) {
-    throw new Error("Research note not found");
+    throw new NotFoundError("Research note not found");
   }
 
   const updateData: Record<string, unknown> = {
@@ -651,7 +652,7 @@ export async function deleteResearchNoteData(
   });
 
   if (!researchNote) {
-    throw new Error("Research note not found");
+    throw new NotFoundError("Research note not found");
   }
 
   await db
@@ -684,7 +685,7 @@ export async function linkSourceToEventData(
   });
 
   if (!source) {
-    throw new Error("Source not found");
+    throw new NotFoundError("Source not found");
   }
 
   // Verify person exists
@@ -693,7 +694,7 @@ export async function linkSourceToEventData(
   });
 
   if (!person) {
-    throw new Error("Person not found");
+    throw new NotFoundError("Person not found");
   }
 
   // Check if link already exists
@@ -767,7 +768,7 @@ export async function getResearchNotesData(
   });
 
   if (!person) {
-    throw new Error("Person not found");
+    throw new NotFoundError("Person not found");
   }
 
   const researchNotes = await db.query.researchNotes.findMany({
@@ -907,7 +908,7 @@ export async function generateCitationData(
     });
 
     if (!source) {
-      throw new Error("Source not found");
+      throw new NotFoundError("Source not found");
     }
 
     // Generate citation based on format

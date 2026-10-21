@@ -226,9 +226,13 @@ const remove = leaf({
   args: { id: { type: "positional", required: true, description: "Place id" } },
   handler: async (ctx, args) => {
     ctx.requireAuth();
-    await deleteIdempotent(ctx, `/places/${enc(args.id)}`, args.id, [
-      "vamsa place list --q <name>",
-    ]);
+    await deleteIdempotent(
+      ctx,
+      `/places/${enc(args.id)}`,
+      args.id,
+      ["vamsa place list --q <name>"],
+      "Place not found"
+    );
   },
 });
 
@@ -278,9 +282,13 @@ const unlink = leaf({
   args: { id: { type: "positional", required: true, description: "Link id" } },
   handler: async (ctx, args) => {
     ctx.requireAuth();
-    await deleteIdempotent(ctx, `/places/links/${enc(args.id)}`, args.id, [
-      "vamsa place list --person <id>",
-    ]);
+    await deleteIdempotent(
+      ctx,
+      `/places/links/${enc(args.id)}`,
+      args.id,
+      ["vamsa place list --person <id>"],
+      "Place-person link not found"
+    );
   },
 });
 

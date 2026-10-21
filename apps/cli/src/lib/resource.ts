@@ -66,9 +66,13 @@ export async function deleteIdempotent(
   ctx: Ctx,
   path: string,
   id: string,
-  help: Array<string>
+  help: Array<string>,
+  /** The resource's own not-found message; any other 404 is an error */
+  notFound: string
 ): Promise<void> {
-  const res = await ctx.api.request("DELETE", path, { allowNotFound: true });
+  const res = await ctx.api.request("DELETE", path, {
+    allowNotFound: notFound,
+  });
   ctx.print({
     deleted:
       res.status === 404
@@ -77,6 +81,10 @@ export async function deleteIdempotent(
     help,
   });
 }
+
+/** Plain decimal notation only: no hex, exponents, Infinity or blanks. */
+export const INT_RE = /^-?\d+$/;
+export const DECIMAL_RE = /^-?\d+(\.\d+)?$/;
 
 export type FieldKind = "string" | "int" | "number" | "list" | "upper";
 
@@ -94,16 +102,17 @@ export function bodyFromFlags(
     if (raw === undefined) continue;
     switch (kind) {
       case "int": {
-        const n = Number(raw);
-        if (!Number.isInteger(n))
-          throw usageError(`--${flag} must be an integer`);
-        body[field] = n;
+        if (!INT_RE.test(raw)) {
+          throw usageError(`--${flag} must be a whole number, e.g. 1990`);
+        }
+        body[field] = Number(raw);
         break;
       }
       case "number": {
-        const n = Number(raw);
-        if (!Number.isFinite(n)) throw usageError(`--${flag} must be a number`);
-        body[field] = n;
+        if (!DECIMAL_RE.test(raw)) {
+          throw usageError(`--${flag} must be a decimal number, e.g. 18.52`);
+        }
+        body[field] = Number(raw);
         break;
       }
       case "list":

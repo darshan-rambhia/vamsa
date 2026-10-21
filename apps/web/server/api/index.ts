@@ -182,8 +182,24 @@ apiV1.get("/", (c) => {
 // Role follows the HTTP method: GET VIEWER, POST/PUT MEMBER, DELETE ADMIN
 apiV1.use("/persons/*", requireApiAuthForMethod());
 apiV1.use("/relationships/*", requireApiAuthForMethod());
-apiV1.use("/events/*", requireApiAuthForMethod());
-apiV1.use("/places/*", requireApiAuthForMethod());
+// Removing a participant or a person-place link is an edit, not a delete of
+// a record: MEMBER, as in the web server functions
+apiV1.use(
+  "/events/*",
+  requireApiAuthForMethod((method, path) =>
+    method === "DELETE" && /\/participants\/[^/]+$/.test(path)
+      ? "MEMBER"
+      : undefined
+  )
+);
+apiV1.use(
+  "/places/*",
+  requireApiAuthForMethod((method, path) =>
+    method === "DELETE" && /\/places\/links\/[^/]+$/.test(path)
+      ? "MEMBER"
+      : undefined
+  )
+);
 apiV1.use("/sources/*", requireApiAuthForMethod());
 // Batch: MEMBER minimum; the batch handler additionally requires ADMIN when it contains deletes
 apiV1.use("/batch/*", requireApiAuth("MEMBER"));

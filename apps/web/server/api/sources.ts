@@ -20,11 +20,15 @@ const TAG = "Sources";
 
 // The shared schema's accessDate union (with z.undefined) can't be rendered
 // to OpenAPI; accept an ISO date string instead, which the business layer takes.
-const accessDate = z.string().nullable().optional().openapi({
-  type: "string",
-  format: "date",
-  example: "2024-05-01",
-});
+const accessDate = z
+  .union([z.string().date(), z.string().datetime({ offset: true })])
+  .nullable()
+  .optional()
+  .openapi({
+    type: "string",
+    description: "ISO date (YYYY-MM-DD) or ISO date-time",
+    example: "2024-05-01",
+  });
 const createBody = sourceCreateSchema.extend({ accessDate });
 const updateBody = sourceUpdateSchema.omit({ id: true }).extend({ accessDate });
 

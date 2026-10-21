@@ -9,6 +9,11 @@
  */
 
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  ConflictError,
+  NotFoundError,
+  ValidationError,
+} from "@vamsa/lib/server/business/errors";
 import { initializeRateLimitStore } from "../../src/server/middleware/rate-limiter";
 import { MemoryRateLimitStore } from "../../src/server/middleware/rate-limit-store";
 import { statusForError } from "./route-helpers";
@@ -105,13 +110,12 @@ const writes: Array<[string, string, unknown]> = [
   ["POST", "/sources/s1/events", { personId: "p1", eventType: "BIRTH" }],
 ];
 
-const deletes = [
-  "/events/e1",
-  "/events/e1/participants/p2",
-  "/places/pl1",
-  "/places/links/link1",
-  "/sources/s1",
-];
+// Record deletes: ADMIN
+const deletes = ["/events/e1", "/places/pl1", "/sources/s1"];
+
+// Unlinking (participant, person-place link) is an edit: MEMBER, as in the
+// web server functions
+const unlinks = ["/events/e1/participants/p2", "/places/links/link1"];
 
 describe("role matrix", () => {
   test.each(reads)("signed out %s %s -> 401", async (method, path) => {
@@ -136,6 +140,16 @@ describe("role matrix", () => {
 
   test.each(deletes)("MEMBER DELETE %s -> 403", async (path) => {
     signIn("MEMBER");
+    expect((await req("DELETE", path)).status).toBe(403);
+  });
+
+  test.each(unlinks)("MEMBER DELETE %s -> 200", async (path) => {
+    signIn("MEMBER");
+    expect((await req("DELETE", path)).status).toBe(200);
+  });
+
+  test.each(unlinks)("VIEWER DELETE %s -> 403", async (path) => {
+    signIn("VIEWER");
     expect((await req("DELETE", path)).status).toBe(403);
   });
 
@@ -213,7 +227,7 @@ describe("error mapping", () => {
   beforeEach(() => signIn("ADMIN"));
 
   test("business 'not found' becomes 404 with the message", async () => {
-    m.getPlaceData.mockRejectedValueOnce(new Error("Place not found"));
+    m.getPlaceData.mockRejectedValueOnce(new NotFoundError("Place not found"));
     const res = await req("GET", "/places/nope");
     expect(res.status).toBe(404);
     expect(await res.json()).toEqual({ error: "Place not found" });
@@ -221,7 +235,7 @@ describe("error mapping", () => {
 
   test("duplicates become 409", async () => {
     m.addEventParticipantData.mockRejectedValueOnce(
-      new Error("This person is already a participant in this event")
+      new ConflictError("This person is already a participant in this event")
     );
     const res = await req("POST", "/events/e1/participants", {
       personId: "p2",
@@ -236,11 +250,77 @@ describe("error mapping", () => {
     expect(JSON.stringify(await res.json())).not.toContain("secret");
   });
 
-  test("statusForError classifies messages", () => {
-    expect(statusForError(new Error("Event not found"))).toBe(404);
-    expect(statusForError(new Error("Cannot delete place with children"))).toBe(
-      400
+  test("statusForError maps typed errors and exact known phrases only", () => {
+    expect(statusForError(new NotFoundError("Event not found"))).toBe(404);
+    expect(statusForError(new ConflictError("x"))).toBe(409);
+    expect(statusForError(new ValidationError("x"))).toBe(400);
+    expect(statusForError(new Error("User not found"))).toBe(404);
+    expect(statusForError(new Error("Can only revoke pending invites"))).toBe(
+      409
     );
+    // Untyped messages that merely contain a keyword are internal errors
+    expect(statusForError(new Error("config file not found on disk"))).toBe(
+      500
+    );
+    expect(statusForError(new Error("column must not be null"))).toBe(500);
     expect(statusForError(new Error("boom"))).toBe(500);
+  });
+
+  test("place delete blocked by child places is 409", async () => {
+    m.deletePlaceData.mockRejectedValueOnce(
+      new ConflictError(
+        "Cannot delete place: 2 child places exist under this place"
+      )
+    );
+    const res = await req("DELETE", "/places/pl1");
+    expect(res.status).toBe(409);
+  });
+
+  test("an untyped 'not found' from deep code is a 500, not a leaked 404", async () => {
+    m.getSourceData.mockRejectedValueOnce(
+      new Error("relation sources not found")
+    );
+    const res = await req("GET", "/sources/s1");
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: "Internal server error" });
+  });
+});
+
+describe("partial updates keep unsent fields", () => {
+  beforeEach(() => signIn("MEMBER"));
+
+  test("event PUT without date does not send date", async () => {
+    await req("PUT", "/events/e1", { place: "Pune" });
+    const [, data] = m.updateEventData.mock.calls[0] as [string, object];
+    expect(data).toEqual({ place: "Pune" });
+  });
+
+  test("event PUT with date: null clears it explicitly", async () => {
+    await req("PUT", "/events/e1", { date: null });
+    const [, data] = m.updateEventData.mock.calls[0] as [string, object];
+    expect(data).toEqual({ date: null });
+  });
+
+  test("place PUT sends only given fields", async () => {
+    await req("PUT", "/places/pl1", { name: "Poona" });
+    expect(m.updatePlaceData.mock.calls[0][1]).toEqual({ name: "Poona" });
+  });
+
+  test("source accessDate must be an ISO date", async () => {
+    expect(
+      (await req("POST", "/sources", { title: "T", accessDate: "last week" }))
+        .status
+    ).toBe(400);
+    expect(
+      (await req("POST", "/sources", { title: "T", accessDate: "2024-05-01" }))
+        .status
+    ).toBe(201);
+    expect(
+      (
+        await req("PUT", "/sources/s1", {
+          accessDate: "2024-05-01T10:00:00Z",
+        })
+      ).status
+    ).toBe(200);
   });
 });

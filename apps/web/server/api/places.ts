@@ -16,7 +16,13 @@ import {
   unlinkPersonFromPlaceData,
   updatePlaceData,
 } from "@vamsa/lib/server/business";
-import { idParam, jsonBody, jsonRoute, respond } from "./route-helpers";
+import {
+  idParam,
+  jsonBody,
+  jsonRoute,
+  onlyProvided,
+  respond,
+} from "./route-helpers";
 
 const TAG = "Places";
 const placesRouter = new OpenAPIHono();
@@ -120,11 +126,9 @@ placesRouter.openapi(
   (c) =>
     respond(c, () => {
       const id = c.req.valid("param").id;
-      const { id: _id, ...updates } = placeUpdateSchema.parse({
-        ...c.req.valid("json"),
-        id,
-      });
-      return updatePlaceData(id, updates);
+      const raw = c.req.valid("json");
+      const { id: _id, ...parsed } = placeUpdateSchema.parse({ ...raw, id });
+      return updatePlaceData(id, onlyProvided(parsed, raw));
     })
 );
 

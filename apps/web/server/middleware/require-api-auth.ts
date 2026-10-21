@@ -111,9 +111,16 @@ export function requiredRoleForMethod(
  * @example
  * apiV1.use("/persons/*", requireApiAuthForMethod());
  */
-export function requireApiAuthForMethod(): MiddlewareHandler {
-  return async (c, next) =>
-    requireApiAuth(requiredRoleForMethod(c.req.method))(c, next);
+export function requireApiAuthForMethod(
+  /** Per-route exceptions: return a role to use instead of the method default */
+  override?: (method: string, path: string) => Role | undefined
+): MiddlewareHandler {
+  return async (c, next) => {
+    const role =
+      override?.(c.req.method.toUpperCase(), c.req.path) ??
+      requiredRoleForMethod(c.req.method);
+    return requireApiAuth(role)(c, next);
+  };
 }
 
 /**

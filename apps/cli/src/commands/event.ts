@@ -132,9 +132,13 @@ const remove = leaf({
   args: { id: { type: "positional", required: true, description: "Event id" } },
   handler: async (ctx, args) => {
     ctx.requireAuth();
-    await deleteIdempotent(ctx, `/events/${enc(args.id)}`, args.id, [
-      "vamsa event list --person <id>",
-    ]);
+    await deleteIdempotent(
+      ctx,
+      `/events/${enc(args.id)}`,
+      args.id,
+      ["vamsa event list --person <id>"],
+      "Event not found"
+    );
   },
 });
 
@@ -187,7 +191,7 @@ const participantRemove = leaf({
     const res = await ctx.api.request(
       "DELETE",
       `/events/${enc(args.id)}/participants/${enc(person)}`,
-      { allowNotFound: true }
+      { allowNotFound: "Participant not found in this event" }
     );
     ctx.print({
       removed:
