@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHmac, randomBytes } from "node:crypto";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { and, desc, eq, isNull } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
@@ -62,8 +62,30 @@ export interface VerifiedApiToken {
   };
 }
 
-export function hashApiToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
+/**
+ * Server secret that keys token hashes. API_TOKEN_SECRET wins; otherwise
+ * BETTER_AUTH_SECRET. Rotating it invalidates every existing token.
+ */
+export function getApiTokenSecret(): string {
+  const secret = process.env.API_TOKEN_SECRET || process.env.BETTER_AUTH_SECRET;
+  if (!secret) {
+    throw new Error(
+      "API_TOKEN_SECRET or BETTER_AUTH_SECRET must be set to hash API tokens"
+    );
+  }
+  return secret;
+}
+
+/**
+ * HMAC-SHA256 of the token keyed with the server secret. Tokens carry 256
+ * bits of randomness, so a slow password hash isn't needed; the key means a
+ * leaked database alone can't be used to check guesses.
+ */
+export function hashApiToken(
+  token: string,
+  secret: string = getApiTokenSecret()
+): string {
+  return createHmac("sha256", secret).update(token).digest("hex");
 }
 
 export function generateApiToken(): string {
@@ -87,7 +109,7 @@ function toSummary(row: ApiTokenRow): ApiTokenSummary {
 
 /**
  * Create a personal access token. The plaintext is returned once; only its
- * sha256 hash is stored.
+ * HMAC-SHA256 hash is stored.
  */
 export async function createApiTokenData(
   userId: string,

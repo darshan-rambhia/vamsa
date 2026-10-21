@@ -5,11 +5,13 @@
  * controls exactly what the queries return and can inspect what was written.
  */
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createHmac } from "node:crypto";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   API_TOKEN_PREFIX,
   LAST_USED_WRITE_INTERVAL_MS,
   createApiTokenData,
+  getApiTokenSecret,
   hashApiToken,
   listApiTokensData,
   revokeAllUserApiTokensData,
@@ -91,10 +93,54 @@ let fake: ReturnType<typeof createFakeDb>;
 
 beforeEach(() => {
   fake = createFakeDb();
+  vi.stubEnv("API_TOKEN_SECRET", "unit-test-api-token-secret-32-chars!");
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
+describe("hashApiToken", () => {
+  it("is HMAC-SHA256 keyed with the secret, deterministic per token+secret", () => {
+    const a = hashApiToken("vms_abc", "secret-one");
+    expect(a).toBe(hashApiToken("vms_abc", "secret-one"));
+    expect(a).toBe(
+      createHmac("sha256", "secret-one").update("vms_abc").digest("hex")
+    );
+  });
+
+  it("differs when the secret differs", () => {
+    expect(hashApiToken("vms_abc", "secret-one")).not.toBe(
+      hashApiToken("vms_abc", "secret-two")
+    );
+  });
+
+  it("prefers API_TOKEN_SECRET over BETTER_AUTH_SECRET", () => {
+    vi.stubEnv("API_TOKEN_SECRET", "token-secret");
+    vi.stubEnv("BETTER_AUTH_SECRET", "auth-secret");
+    expect(getApiTokenSecret()).toBe("token-secret");
+    expect(hashApiToken("vms_abc")).toBe(
+      hashApiToken("vms_abc", "token-secret")
+    );
+  });
+
+  it("falls back to BETTER_AUTH_SECRET when API_TOKEN_SECRET is unset", () => {
+    vi.stubEnv("API_TOKEN_SECRET", "");
+    vi.stubEnv("BETTER_AUTH_SECRET", "auth-secret");
+    expect(hashApiToken("vms_abc")).toBe(
+      hashApiToken("vms_abc", "auth-secret")
+    );
+  });
+
+  it("throws when neither secret is set", () => {
+    vi.stubEnv("API_TOKEN_SECRET", "");
+    vi.stubEnv("BETTER_AUTH_SECRET", "");
+    expect(() => hashApiToken("vms_abc")).toThrow(/API_TOKEN_SECRET/);
+  });
 });
 
 describe("createApiTokenData", () => {
-  it("returns a vms_ plaintext once and stores only its sha256 hash", async () => {
+  it("returns a vms_ plaintext once and stores only its HMAC hash", async () => {
     const created = await createApiTokenData(
       "user-1",
       { name: "laptop", scope: "write" },
