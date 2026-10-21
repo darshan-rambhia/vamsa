@@ -16,6 +16,10 @@ import type { ArgsDef } from "citty";
 export interface Runtime {
   env: Env;
   stdout: (s: string) => void;
+  /** Raw bytes to stdout (file downloads with -o -) */
+  stdoutBytes: (b: Uint8Array) => void;
+  /** Current directory, for relative file paths */
+  cwd: string;
   stderr: (s: string) => void;
   /** True only when both stdin and stdout are TTYs; gates all prompts */
   interactive: boolean;

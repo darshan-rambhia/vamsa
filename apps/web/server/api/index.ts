@@ -15,6 +15,7 @@ import tokensRouter from "./tokens";
 import eventsRouter from "./events";
 import placesRouter from "./places";
 import sourcesRouter from "./sources";
+import gedcomRouter from "./gedcom";
 import batchRouter from "./batch";
 
 const log = loggers.api;
@@ -119,6 +120,10 @@ if (ENABLE_DOCS) {
           "Sources, citations and event links (requires authentication)",
       },
       {
+        name: "GEDCOM",
+        description: "GEDCOM validate, import and export (requires ADMIN)",
+      },
+      {
         name: "Tokens",
         description:
           "Personal access tokens for the CLI and scripts (requires authentication)",
@@ -201,6 +206,8 @@ apiV1.use(
   )
 );
 apiV1.use("/sources/*", requireApiAuthForMethod());
+// Same as the web GEDCOM server functions: whole-tree import/export is ADMIN
+apiV1.use("/gedcom/*", requireApiAuth("ADMIN"));
 // Batch: MEMBER minimum; the batch handler additionally requires ADMIN when it contains deletes
 apiV1.use("/batch/*", requireApiAuth("MEMBER"));
 apiV1.use("/metrics/*", requireApiAuth("ADMIN"));
@@ -230,6 +237,7 @@ apiV1.route("/tokens", tokensRouter);
 apiV1.route("/events", eventsRouter);
 apiV1.route("/places", placesRouter);
 apiV1.route("/sources", sourcesRouter);
+apiV1.route("/gedcom", gedcomRouter);
 
 // ============================================
 // Error Handling

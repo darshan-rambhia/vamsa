@@ -33,6 +33,7 @@ export function formatError(err: CliError, fmt: Format): string {
   };
   if (err.status !== undefined) error.status = err.status;
   if (err.hint) error.hint = err.hint;
+  if (err.details) Object.assign(error, err.details);
   return format({ error }, fmt);
 }
 
