@@ -100,6 +100,9 @@ export function validateArgs(
   const positionals = Object.entries(args).filter(
     ([, d]) => d.type === "positional"
   );
+  // A last positional with valueHint "variadic" accepts any number of values
+  const last = positionals.at(-1)?.[1];
+  const variadic = last?.valueHint === "variadic";
   let seenPositional = 0;
   let flagsDone = false;
 
@@ -111,7 +114,7 @@ export function validateArgs(
     }
     if (flagsDone || !t.startsWith("-") || t === "-") {
       seenPositional++;
-      if (seenPositional > positionals.length) {
+      if (seenPositional > positionals.length && !variadic) {
         throw usageError(
           `Unexpected argument "${t}" for "${where}"`,
           `${where} --help`
@@ -170,7 +173,11 @@ export function renderHelp(cmd: AnyCommand, path: Array<string>): string {
 
   const positionals = Object.entries(args)
     .filter(([, d]) => d.type === "positional")
-    .map(([k]) => `<${k}>`);
+    .map(([k, d]) =>
+      (d as { valueHint?: string }).valueHint === "variadic"
+        ? `<${k}...>`
+        : `<${k}>`
+    );
   const own = Object.entries(args).filter(
     ([k, d]) => d.type !== "positional" && !GLOBAL_KEYS.has(k)
   );

@@ -1,6 +1,7 @@
 import { defineCommand } from "citty";
 import { GLOBAL_ARGS } from "../lib/context";
 import { login, logout, whoami } from "./auth";
+import { admin } from "./admin";
 import { bulk } from "./bulk";
 import { event } from "./event";
 import { gedcom } from "./gedcom";
@@ -32,6 +33,7 @@ export const rootCommand = defineCommand({
     source,
     gedcom,
     bulk,
+    admin,
   },
   run: async (c) => homeView(c.data as Ctx),
 });
