@@ -1,4 +1,4 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import {
   errorResponseSchema,
   loginSchema,
@@ -12,10 +12,11 @@ import {
   isSelfSignupEnabled,
 } from "@vamsa/lib/server/business";
 import { loggers } from "@vamsa/lib/logger";
+import { createRouter, validationErrorBody } from "./route-helpers";
 
 const log = loggers.auth;
 
-const authRouter = new OpenAPIHono();
+const authRouter = createRouter();
 
 /** Header a non-browser client sends to receive the session token in the body. */
 export const CLIENT_HEADER = "X-Vamsa-Client";
@@ -164,13 +165,7 @@ authRouter.openapi(loginRoute, async (c) => {
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return c.json(
-        {
-          error: "Validation error",
-          details: error.issues[0]?.message,
-        },
-        { status: 400 }
-      );
+      return c.json(validationErrorBody(error), { status: 400 });
     }
 
     log.withErr(error).msg("Login error");
@@ -297,13 +292,7 @@ authRouter.openapi(registerRoute, async (c) => {
     );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return c.json(
-        {
-          error: "Validation error",
-          details: error.issues[0]?.message,
-        },
-        { status: 400 }
-      );
+      return c.json(validationErrorBody(error), { status: 400 });
     }
 
     if (error instanceof Error && error.message.includes("already exists")) {

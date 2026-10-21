@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion */
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
 import { getDrizzlePoolStats, pingDatabase } from "@vamsa/api";
 import { loggers } from "@vamsa/lib/logger";
@@ -9,10 +9,11 @@ import {
   getSlowQueries,
   getSlowQueryStats,
 } from "../metrics/slow-query-logger";
+import { createRouter } from "./route-helpers";
 
 const log = loggers.api;
 
-const metricsRouter = new OpenAPIHono();
+const metricsRouter = createRouter();
 
 // Response schemas for metrics
 const slowQuerySchema = z

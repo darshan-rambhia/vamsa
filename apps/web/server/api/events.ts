@@ -1,4 +1,4 @@
-import { OpenAPIHono, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import { eventCreateSchema, eventUpdateSchema } from "@vamsa/schemas";
 import {
   addEventParticipantData,
@@ -9,6 +9,7 @@ import {
   updateEventData,
 } from "@vamsa/lib/server/business";
 import {
+  createRouter,
   idParam,
   jsonBody,
   jsonRoute,
@@ -17,7 +18,7 @@ import {
 } from "./route-helpers";
 
 const TAG = "Events";
-const eventsRouter = new OpenAPIHono();
+const eventsRouter = createRouter();
 
 eventsRouter.openapi(
   jsonRoute({
