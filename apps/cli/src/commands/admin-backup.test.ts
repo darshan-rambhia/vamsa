@@ -15,7 +15,7 @@ beforeEach(() => {
     {
       current: "default",
       profiles: {
-        default: { url: "http://v.test", token: "t", tokenType: "session" },
+        default: { url: "https://v.test", token: "t", tokenType: "session" },
       },
     },
     { HOME: home }
@@ -79,33 +79,46 @@ describe("admin backup", () => {
       "application/zip"
     );
     expect([...(init?.body as Uint8Array)]).toEqual([1, 2, 3]);
+    expect(r.code).toBe(1);
     expect(decode(r.stdout)).toMatchObject({
-      validation: { valid: false },
-      errors: ["Not a valid ZIP archive"],
+      error: { code: "invalid_backup", errors: ["Not a valid ZIP archive"] },
     });
   });
 
-  it("restore needs --yes off a TTY and reports 501 as a structured error", async () => {
+  it("restore fails fast with not_implemented: no prompt, no upload", async () => {
     writeFileSync(join(home, "b.zip"), Buffer.from([1]));
-    const fetch = api(() =>
-      json({ error: "Restore is not implemented yet", details: "valid" }, 501)
-    );
-    const refused = await runCli(
-      ["admin", "backup", "restore", "b.zip", "--strategy", "replace"],
-      { home, fetch }
-    );
-    expect(refused.code).toBe(2);
-    expect(refused.stdout).toContain("overwrites existing data");
-    expect(fetch).not.toHaveBeenCalled();
-
+    const fetch = api(() => json({}));
     const r = await runCli(
-      ["admin", "backup", "restore", "b.zip", "--strategy", "merge", "--yes"],
+      ["admin", "backup", "restore", "b.zip", "--strategy", "replace"],
+      { home, fetch, interactive: true }
+    );
+    expect(r.code).toBe(1);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(decode(r.stdout)).toMatchObject({
+      error: { code: "not_implemented" },
+    });
+    // A bad strategy is still a usage error
+    const bad = await runCli(
+      ["admin", "backup", "restore", "b.zip", "--strategy", "nuke"],
       { home, fetch }
     );
-    expect(String(fetch.mock.calls[0][0])).toContain("strategy=merge");
-    expect(r.code).toBe(1);
+    expect(bad.code).toBe(2);
+  });
+
+  it("create never writes outside the working directory", async () => {
+    const fetch = api(
+      () =>
+        new Response(new Uint8Array([0x50, 0x4b]), {
+          headers: {
+            "Content-Type": "application/zip",
+            "Content-Disposition": 'attachment; filename="../escape.zip"',
+          },
+        })
+    );
+    const r = await runCli(["admin", "backup", "create"], { home, fetch });
+    expect(r.code).toBe(0);
     expect(decode(r.stdout)).toMatchObject({
-      error: { code: "not_implemented", status: 501 },
+      backup: { file: join(home, "vamsa-backup.zip") },
     });
   });
 });
@@ -119,11 +132,9 @@ describe("admin audit", () => {
     expect(() => parseSince("last week", now)).toThrow(/Cannot read/);
   });
 
-  it("resolves --user email to an id and shows compact rows", async () => {
-    const fetch = api((url) => {
-      if (url.pathname.endsWith("/admin/users"))
-        return json({ items: [{ id: "u9", email: "Asha@x.com" }] });
-      return json({
+  it("--user email is sent as an exact userEmail filter", async () => {
+    const fetch = api(() =>
+      json({
         items: [
           {
             id: "a1",
@@ -136,14 +147,14 @@ describe("admin audit", () => {
           },
         ],
         total: 51,
-      });
-    });
+      })
+    );
     const r = await runCli(
       [
         "admin",
         "audit",
         "--user",
-        "asha@x.com",
+        "Asha@x.com",
         "--action",
         "delete",
         "--limit",
@@ -151,8 +162,10 @@ describe("admin audit", () => {
       ],
       { home, fetch }
     );
-    const auditUrl = new URL(String(fetch.mock.calls[1][0]));
-    expect(auditUrl.searchParams.get("userId")).toBe("u9");
+    expect(fetch).toHaveBeenCalledTimes(1);
+    const auditUrl = new URL(String(fetch.mock.calls[0][0]));
+    expect(auditUrl.searchParams.get("userEmail")).toBe("Asha@x.com");
+    expect(auditUrl.searchParams.get("userId")).toBeNull();
     expect(auditUrl.searchParams.get("action")).toBe("DELETE");
     const out = decode(r.stdout) as {
       audit: Array<Record<string, unknown>>;
@@ -169,13 +182,14 @@ describe("admin audit", () => {
     expect(out.help[0]).toBe("vamsa admin audit --page 2");
   });
 
-  it("unknown email is a not_found error", async () => {
-    const fetch = api(() => json({ items: [] }));
-    const r = await runCli(["admin", "audit", "--user", "nobody@x.com"], {
-      home,
-      fetch,
+  it("--user without @ is a user id", async () => {
+    const fetch = api(() => json({ items: [], total: 0 }));
+    const r = await runCli(["admin", "audit", "--user", "u9"], { home, fetch });
+    expect(
+      new URL(String(fetch.mock.calls[0][0])).searchParams.get("userId")
+    ).toBe("u9");
+    expect(decode(r.stdout)).toMatchObject({
+      message: "No audit entries match.",
     });
-    expect(r.code).toBe(1);
-    expect(r.stdout).toContain("not_found");
   });
 });

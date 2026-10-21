@@ -38,6 +38,21 @@ import type {
 
 const log = loggers.db;
 
+/** Files every backup must contain. */
+const CORE_DATA_FILES = [
+  "data/people.json",
+  "data/relationships.json",
+  "data/users.json",
+];
+
+/** Cap on the uncompressed size of the entries validation reads. */
+export const MAX_UNCOMPRESSED_BYTES = 500 * 1024 * 1024;
+
+/** Only metadata.json and top-level data/*.json are read during validation. */
+function isValidatedEntry(name: string): boolean {
+  return name === "metadata.json" || /^data\/[^/]+\.json$/.test(name);
+}
+
 /** Metadata placeholder for archives whose metadata.json can't be read. */
 const UNKNOWN_METADATA: BackupMetadata = {
   version: "unknown",
@@ -289,7 +304,8 @@ export async function createBackupArchive(
  * @returns Validation result with detected conflicts and errors
  */
 export async function validateBackupFile(
-  archiveBuffer: Buffer
+  archiveBuffer: Buffer,
+  { maxUncompressedBytes = MAX_UNCOMPRESSED_BYTES } = {}
 ): Promise<ValidationResult> {
   log.info({ size: archiveBuffer.length }, "Validating backup file");
 
@@ -308,11 +324,29 @@ export async function validateBackupFile(
     warnings,
   });
 
+  // Only extract what validation reads, and refuse zip bombs: the sum of
+  // declared uncompressed sizes is capped before anything is inflated
   let files: Record<string, Uint8Array>;
+  let declared = 0;
+  let tooLarge = false;
   try {
-    files = unzipSync(new Uint8Array(archiveBuffer));
+    files = unzipSync(new Uint8Array(archiveBuffer), {
+      filter: (file) => {
+        if (!isValidatedEntry(file.name)) return false;
+        declared += file.originalSize;
+        if (declared > maxUncompressedBytes) tooLarge = true;
+        return !tooLarge;
+      },
+    });
   } catch {
     errors.push("Not a valid ZIP archive");
+    return emptyResult(UNKNOWN_METADATA);
+  }
+  const inflated = Object.values(files).reduce((n, f) => n + f.length, 0);
+  if (tooLarge || inflated > maxUncompressedBytes) {
+    errors.push(
+      `Backup data is larger than ${Math.round(maxUncompressedBytes / 1024 / 1024)} MB uncompressed`
+    );
     return emptyResult(UNKNOWN_METADATA);
   }
 
@@ -349,9 +383,25 @@ export async function validateBackupFile(
     "data/suggestions.json": metadata.statistics.totalSuggestions,
     "data/audit-logs.json": metadata.statistics.totalAuditLogs,
   };
+  // Core data must be present whatever the metadata lists
+  for (const name of CORE_DATA_FILES) {
+    if (!(name in files)) errors.push(`${name} is missing`);
+  }
   for (const name of metadata.dataFiles) {
     const content = readJson(name);
     if (content === undefined) {
+      if (CORE_DATA_FILES.includes(name)) continue; // reported above
+      // Older exports listed audit-logs.json even when no entries were
+      // written; with a count of 0 that is harmless
+      if (
+        name === "data/audit-logs.json" &&
+        metadata.statistics.totalAuditLogs === 0
+      ) {
+        warnings.push(
+          `${name} is listed but absent (no audit entries exported)`
+        );
+        continue;
+      }
       errors.push(`${name} is listed in metadata but missing`);
       continue;
     }

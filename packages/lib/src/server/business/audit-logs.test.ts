@@ -106,3 +106,27 @@ describe("recordAuditLogData", () => {
     ).resolves.toBeUndefined();
   });
 });
+
+describe("listAuditLogsData userEmail", () => {
+  it("unknown email returns nothing and never runs an unfiltered query", async () => {
+    const f = fakeDb([[]]); // user lookup finds no one
+    const res = await listAuditLogsData(
+      { userEmail: "Nobody@Example.com", limit: 10 },
+      f.db
+    );
+    expect(res).toEqual({ items: [], total: 0 });
+    expect(f.select).toHaveBeenCalledTimes(1);
+  });
+
+  it("known email filters by that user's id", async () => {
+    const f = fakeDb([
+      [{ id: "u7" }], // user lookup
+      [row("a", "u7")],
+      [{ count: 1 }],
+      [{ id: "u7", email: "x@y.z" }],
+    ]);
+    const res = await listAuditLogsData({ userEmail: "x@y.z", limit: 5 }, f.db);
+    expect(res.total).toBe(1);
+    expect(res.items[0].userEmail).toBe("x@y.z");
+  });
+});

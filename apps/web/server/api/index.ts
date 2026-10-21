@@ -18,7 +18,7 @@ import placesRouter from "./places";
 import sourcesRouter from "./sources";
 import gedcomRouter, { GEDCOM_MAX_BYTES } from "./gedcom";
 import adminRouter from "./admin";
-import adminBackupsRouter from "./admin-backups";
+import adminBackupsRouter, { MAX_BACKUP_BYTES } from "./admin-backups";
 import batchRouter from "./batch";
 
 const log = loggers.api;
@@ -247,6 +247,21 @@ apiV1.use(
   })
 );
 apiV1.use("/admin/*", requireApiAuth("ADMIN"));
+// Backup uploads: reject oversized bodies while streaming, before buffering
+apiV1.use(
+  "/admin/backups/*",
+  bodyLimit({
+    maxSize: MAX_BACKUP_BYTES,
+    onError: (c) =>
+      c.json(
+        {
+          error: "Payload too large",
+          details: `Backup uploads are limited to ${MAX_BACKUP_BYTES / 1024 / 1024} MB`,
+        },
+        413
+      ),
+  })
+);
 // Batch: MEMBER minimum; the batch handler additionally requires ADMIN when it contains deletes
 apiV1.use("/batch/*", requireApiAuth("MEMBER"));
 apiV1.use("/metrics/*", requireApiAuth("ADMIN"));

@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { group, leaf } from "../lib/command";
-import { YES_FLAG, confirmDestructive } from "../lib/confirm";
+import { YES_FLAG } from "../lib/confirm";
 import { intFlag, str } from "../lib/context";
-import { CliError, usageError } from "../lib/errors";
+import { CliError, EXIT_ERROR, usageError } from "../lib/errors";
 import { resolvePath, size, writeOutput } from "../lib/files";
 import { LIST_FLAGS, enumFlag, printList } from "../lib/resource";
 import type { Ctx } from "../lib/context";
@@ -164,22 +164,32 @@ const validate = leaf({
       contentType: "application/zip",
     });
     const stats = data.metadata.statistics ?? {};
+    if (!data.isValid) {
+      // Same contract as gedcom validate: an unusable file is exit 1
+      throw new CliError(
+        "invalid_backup",
+        `${args.file} is not a usable Vamsa backup`,
+        "create a fresh one: vamsa admin backup create -o backup.zip",
+        EXIT_ERROR,
+        undefined,
+        {
+          file: args.file,
+          errors: data.errors,
+          ...(data.warnings.length ? { warnings: data.warnings } : {}),
+        }
+      );
+    }
     ctx.print({
       validation: {
         file: args.file,
-        valid: data.isValid,
+        valid: true,
         exportedAt: data.metadata.exportedAt || null,
         people: stats.totalPeople ?? 0,
         relationships: stats.totalRelationships ?? 0,
         users: stats.totalUsers ?? 0,
       },
-      ...(data.errors.length ? { errors: data.errors } : {}),
       ...(data.warnings.length ? { warnings: data.warnings } : {}),
-      help: data.isValid
-        ? ["vamsa admin backup preview"]
-        : [
-            "the file is not a usable Vamsa backup; create a new one: vamsa admin backup create",
-          ],
+      help: ["vamsa admin backup preview"],
     });
   },
 });
@@ -212,27 +222,16 @@ const restore = leaf({
     },
     ...YES_FLAG,
   },
-  handler: async (ctx, args) => {
-    ctx.requireAuth();
-    const strategy = (
-      enumFlag(args, "strategy", STRATEGIES) ?? "SKIP"
-    ).toLowerCase();
-    const bytes = readZipFile(ctx, args.file);
-    await confirmDestructive(
-      ctx,
-      `Restore ${args.file} with strategy ${strategy}${strategy === "replace" ? " (overwrites existing data)" : ""}`,
-      `vamsa admin backup restore ${args.file} --strategy ${strategy}`
+  handler: async (_ctx, args) => {
+    // The server validates uploads and then answers 501: the restore
+    // pipeline is not implemented. Fail here instead of prompting and
+    // uploading a large file just to be told that.
+    enumFlag(args, "strategy", STRATEGIES);
+    throw new CliError(
+      "not_implemented",
+      "Restoring a backup is not available through the API yet",
+      `vamsa admin backup validate ${args.file}  (checks the file without restoring)`
     );
-    const { data } = await ctx.api.request<Row>(
-      "POST",
-      "/admin/backups/restore",
-      {
-        query: { strategy },
-        raw: bytes,
-        contentType: "application/zip",
-      }
-    );
-    ctx.print({ restored: data, help: ["vamsa admin backup imports"] });
   },
 });
 
@@ -296,27 +295,11 @@ export const audit = leaf({
     ctx.requireAuth();
     const limit = intFlag(args.limit, "limit", { max: 200 }) ?? 50;
     const page = intFlag(args.page, "page") ?? 1;
-    let userId = str(args.user);
-    if (userId?.includes("@")) {
-      const { data } = await ctx.api.request<{ items: Array<Row> }>(
-        "GET",
-        "/admin/users",
-        {
-          query: { search: userId, limit: 5 },
-        }
-      );
-      const match = data.items.find(
-        (u) => String(u.email).toLowerCase() === userId?.toLowerCase()
-      );
-      if (!match) {
-        throw new CliError(
-          "not_found",
-          `No user with email ${userId}`,
-          "vamsa admin user list --q <text>"
-        );
-      }
-      userId = String(match.id);
-    }
+    const user = str(args.user);
+    // Emails are matched exactly on the server; anything else is a user id
+    const userFilter = user?.includes("@")
+      ? { userEmail: user }
+      : { userId: user };
     const since = str(args.since);
     const until = str(args.until);
     const { data } = await ctx.api.request<{
@@ -326,7 +309,7 @@ export const audit = leaf({
       query: {
         since: since ? parseSince(since) : undefined,
         until: until ? parseSince(until) : undefined,
-        userId,
+        ...userFilter,
         action: enumFlag(args, "action", ACTIONS),
         entityType: str(args.entity)?.toUpperCase(),
         limit,

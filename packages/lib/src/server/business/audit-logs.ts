@@ -29,6 +29,8 @@ export interface AuditLogFilters {
   /** Only entries at or before this time */
   until?: Date;
   userId?: string;
+  /** Exact (case-insensitive) email of the acting user */
+  userEmail?: string;
   action?: AuditActionValue;
   entityType?: string;
   /** Page size. Omit to return every match (used by backup export). */
@@ -68,6 +70,18 @@ export async function listAuditLogsData(
   db: AuditLogsDb = drizzleDb
 ): Promise<AuditLogListResult> {
   const t = drizzleSchema.auditLogs;
+  if (filters.userEmail !== undefined) {
+    const [match] = await db
+      .select({ id: drizzleSchema.users.id })
+      .from(drizzleSchema.users)
+      .where(
+        eq(drizzleSchema.users.email, filters.userEmail.trim().toLowerCase())
+      )
+      .limit(1);
+    // No such user: no entries (never fall back to an unfiltered list)
+    if (!match) return { items: [], total: 0 };
+    filters = { ...filters, userId: match.id };
+  }
   const where = whereFor(filters);
   const paged = filters.limit !== undefined;
   const order = filters.order ?? (paged ? "desc" : "asc");

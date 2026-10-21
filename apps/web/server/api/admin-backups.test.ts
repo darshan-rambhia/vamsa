@@ -186,3 +186,38 @@ describe("audit", () => {
     );
   });
 });
+
+describe("upload limits and audit email filter", () => {
+  test("backup uploads over the limit get 413 before the handler", async () => {
+    const { MAX_BACKUP_BYTES } = await import("./admin-backups");
+    // Stream one chunk more than the limit; no Content-Length, so the limit
+    // must be enforced while reading
+    const chunk = new Uint8Array(1024 * 1024);
+    let sent = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (sent > MAX_BACKUP_BYTES) return controller.close();
+        sent += chunk.length;
+        controller.enqueue(chunk);
+      },
+    });
+    const res = await apiV1.request("/admin/backups/validate", {
+      method: "POST",
+      headers: { "Content-Type": "application/zip" },
+      body,
+      duplex: "half",
+    } as RequestInit);
+    expect(res.status).toBe(413);
+    expect(m.validateBackupFile).not.toHaveBeenCalled();
+  });
+
+  test("userEmail is passed through as an exact filter", async () => {
+    await apiV1.request("/admin/audit?userEmail=a%40example.com");
+    expect(m.listAuditLogsData).toHaveBeenCalledWith(
+      expect.objectContaining({ userEmail: "a@example.com" })
+    );
+    expect(
+      (await apiV1.request("/admin/audit?userEmail=not-an-email")).status
+    ).toBe(400);
+  });
+});

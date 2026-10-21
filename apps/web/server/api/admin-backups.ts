@@ -22,7 +22,8 @@ import type { Context } from "hono";
 
 const BACKUPS = "Admin: Backups";
 const AUDIT = "Admin: Audit";
-const MAX_BACKUP_BYTES = 200 * 1024 * 1024;
+/** Largest accepted backup upload (validate/restore). */
+export const MAX_BACKUP_BYTES = 200 * 1024 * 1024;
 
 const router = new OpenAPIHono();
 
@@ -245,6 +246,9 @@ router.openapi(
         }),
         until: z.string().datetime({ offset: true }).optional(),
         userId: z.string().optional(),
+        userEmail: z.string().email().optional().openapi({
+          description: "Exact email of the acting user",
+        }),
         action: z.enum(AUDIT_ACTIONS).optional(),
         entityType: z.string().optional(),
         limit: z.coerce.number().int().min(1).max(200).default(50),
