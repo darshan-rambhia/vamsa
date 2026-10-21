@@ -213,9 +213,18 @@ function wantsHelp(tokens: Array<string>): boolean {
   return flags.includes("--help") || flags.includes("-h");
 }
 
+/** --json, --json=true (not --json=false), before any `--` */
+export function wantsJson(argv: Array<string>): boolean {
+  const end = argv.indexOf("--");
+  const flags = end === -1 ? argv : argv.slice(0, end);
+  return flags.some(
+    (a) => a === "--json" || (a.startsWith("--json=") && a !== "--json=false")
+  );
+}
+
 /** Run the CLI. Returns the process exit code. */
 export async function run(argv: Array<string>, rt: Runtime): Promise<number> {
-  const fmt = argv.includes("--json") ? "json" : "toon";
+  const fmt = wantsJson(argv) ? "json" : "toon";
   try {
     const { cmd, path, rest } = resolve(argv);
 

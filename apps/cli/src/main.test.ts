@@ -16,7 +16,7 @@ function loggedIn(token = "sess-tok") {
     {
       current: "default",
       profiles: {
-        default: { url: "http://vamsa.test", token, tokenType: "session" },
+        default: { url: "https://vamsa.test", token, tokenType: "session" },
       },
     },
     { HOME: home }
@@ -152,7 +152,7 @@ describe("person list (mocked API)", () => {
 
     expect(r.code).toBe(0);
     const [url, init] = fetch.mock.calls[0];
-    expect(url).toBe("http://vamsa.test/api/v1/persons?search=asha&limit=20");
+    expect(url).toBe("https://vamsa.test/api/v1/persons?search=asha&limit=20");
     expect((init?.headers as Record<string, string>).Authorization).toBe(
       "Bearer sess-tok"
     );
@@ -262,7 +262,7 @@ describe("login", () => {
     );
     expect(r.code).toBe(0);
     const [url, init] = fetch.mock.calls[0];
-    expect(url).toBe("http://vamsa.test/api/v1/auth/login");
+    expect(url).toBe("https://vamsa.test/api/v1/auth/login");
     expect((init?.headers as Record<string, string>)["X-Vamsa-Client"]).toBe(
       "cli"
     );
@@ -274,7 +274,7 @@ describe("login", () => {
     const path = configPath({ HOME: home });
     expect(statSync(path).mode & 0o777).toBe(0o600);
     expect(JSON.parse(readFileSync(path, "utf8")).profiles.default).toEqual({
-      url: "http://vamsa.test",
+      url: "https://vamsa.test",
       token: "sess-new",
       tokenType: "session",
       email: "a@x",
@@ -297,7 +297,7 @@ describe("login", () => {
         "--profile",
         "ci",
         "--url",
-        "http://vamsa.test",
+        "https://vamsa.test",
         "--token",
         "vms_abc",
       ],
@@ -325,7 +325,106 @@ describe("debug logging", () => {
       json({ items: [], nextCursor: null, hasMore: false, total: 0 })
     );
     const r = await runCli(["person", "list", "--verbose"], { home, fetch });
-    expect(r.stderr).toContain("-> GET http://vamsa.test/api/v1/persons");
+    expect(r.stderr).toContain("-> GET https://vamsa.test/api/v1/persons");
     expect(r.stdout).not.toContain("[vamsa]");
+  });
+});
+
+describe("review fixes", () => {
+  it("--url to another server does not send the saved token", async () => {
+    loggedIn("secret-session");
+    const fetch = fetchMock(() => json({}));
+    const r = await runCli(
+      ["person", "list", "--url", "https://evil.example"],
+      { home, fetch }
+    );
+    expect(r.code).toBe(1);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(decode(r.stdout)).toMatchObject({
+      error: { code: "token_url_mismatch" },
+    });
+  });
+
+  it("plain http to a remote host is a usage error", async () => {
+    const r = await runCli(
+      ["login", "--url", "http://vamsa.example", "--token", "vms_x"],
+      {
+        home,
+      }
+    );
+    expect(r.code).toBe(2);
+    expect(r.stdout).toContain("plain http");
+  });
+
+  it("--password-stdin with a terminal on stdin is a usage error", async () => {
+    const fetch = fetchMock(() => json({}));
+    const r = await runCli(
+      [
+        "login",
+        "--url",
+        "https://vamsa.test",
+        "--email",
+        "a@x",
+        "--password-stdin",
+      ],
+      { home, fetch, stdinIsTTY: true }
+    );
+    expect(r.code).toBe(2);
+    expect(r.stdout).toContain("stdin is a terminal");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("re-login over a session profile ends the old session first", async () => {
+    loggedIn("old-session");
+    const fetch = fetchMock((url) =>
+      url.pathname.endsWith("/auth/logout")
+        ? json({ success: true })
+        : json({
+            user: { email: "a@x", role: "MEMBER", name: "A" },
+            token: "new-session",
+          })
+    );
+    const r = await runCli(
+      [
+        "login",
+        "--url",
+        "https://vamsa.test",
+        "--email",
+        "a@x",
+        "--password-stdin",
+      ],
+      { home, fetch, stdin: "pw\n" }
+    );
+    expect(r.code).toBe(0);
+    const logout = fetch.mock.calls.find(([u]) =>
+      String(u).endsWith("/auth/logout")
+    );
+    expect((logout?.[1]?.headers as Record<string, string>).Authorization).toBe(
+      "Bearer old-session"
+    );
+  });
+
+  it("profile remove ends a saved session (best effort)", async () => {
+    loggedIn("old-session");
+    const fetch = fetchMock(() => {
+      throw new Error("offline");
+    });
+    const r = await runCli(["profile", "remove", "default"], { home, fetch });
+    expect(r.code).toBe(0);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(r.stdout).toContain("server unreachable");
+  });
+
+  it("--page is capped at 100", async () => {
+    loggedIn();
+    const r = await runCli(["person", "list", "--page", "101"], { home });
+    expect(r.code).toBe(2);
+  });
+
+  it("--json=true formats errors as JSON too", async () => {
+    const r = await runCli(["person", "list", "--json=true", "--bogus"], {
+      home,
+    });
+    expect(JSON.parse(r.stdout).error.code).toBe("usage");
   });
 });

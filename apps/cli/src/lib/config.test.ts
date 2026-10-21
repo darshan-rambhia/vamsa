@@ -71,11 +71,11 @@ describe("resolveTarget", () => {
     current: "a",
     profiles: {
       a: {
-        url: "http://a.test",
+        url: "https://a.test",
         token: "tok-a",
         tokenType: "session" as const,
       },
-      b: { url: "http://b.test", token: "vms_b", tokenType: "pat" as const },
+      b: { url: "https://b.test", token: "vms_b", tokenType: "pat" as const },
     },
   };
 
@@ -83,7 +83,7 @@ describe("resolveTarget", () => {
     const t = resolveTarget(config, {}, {});
     expect(t).toMatchObject({
       profileName: "a",
-      url: "http://a.test",
+      url: "https://a.test",
       token: "tok-a",
       tokenSource: "profile",
     });
@@ -102,17 +102,18 @@ describe("resolveTarget", () => {
     const t = resolveTarget(
       config,
       {},
-      { VAMSA_URL: "http://env.test/", VAMSA_TOKEN: "vms_env" }
+      { VAMSA_URL: "https://env.test/", VAMSA_TOKEN: "vms_env" }
     );
     expect(t).toMatchObject({
-      url: "http://env.test",
+      url: "https://env.test",
       token: "vms_env",
       tokenType: "pat",
       tokenSource: "env",
     });
     expect(
-      resolveTarget(config, { url: "flag.test" }, { VAMSA_URL: "http://e" }).url
-    ).toBe("http://flag.test");
+      resolveTarget(config, { url: "flag.test" }, { VAMSA_URL: "https://e" })
+        .url
+    ).toBe("https://flag.test");
   });
 
   it("falls back to localhost with no credential for unknown profiles", () => {
@@ -124,8 +125,58 @@ describe("resolveTarget", () => {
     });
   });
 
-  it("normalizes URLs", () => {
-    expect(normalizeUrl("example.org/")).toBe("http://example.org");
+  it("normalizes URLs: https by default, no trailing slash", () => {
+    expect(normalizeUrl("example.org/")).toBe("https://example.org");
     expect(normalizeUrl("https://x.org//")).toBe("https://x.org");
+    expect(normalizeUrl("https://x.org/vamsa/")).toBe("https://x.org/vamsa");
+  });
+
+  it("allows plain http only for loopback", () => {
+    expect(normalizeUrl("localhost:3000")).toBe("http://localhost:3000");
+    expect(normalizeUrl("http://127.0.0.1:8080")).toBe("http://127.0.0.1:8080");
+    expect(normalizeUrl("http://[::1]:3000")).toBe("http://[::1]:3000");
+    expect(() => normalizeUrl("http://vamsa.example")).toThrow(/plain http/);
+    expect(() => normalizeUrl("ftp://vamsa.example")).toThrow(/scheme/);
+    expect(() => normalizeUrl("https://")).toThrow(/valid URL/);
+  });
+
+  it("withholds the profile token when --url points at another server", () => {
+    const t = resolveTarget(config, { url: "https://evil.example" }, {});
+    expect(t.token).toBeUndefined();
+    expect(t.tokenSource).toBe("none");
+    expect(t.withheldFor).toBe("https://a.test");
+  });
+
+  it("keeps the token when --url is the same origin (path or slash differences)", () => {
+    const t = resolveTarget(config, { url: "https://a.test/" }, {});
+    expect(t.token).toBe("tok-a");
+  });
+
+  it("VAMSA_URL to another origin also withholds the profile token", () => {
+    const t = resolveTarget(config, {}, { VAMSA_URL: "https://other.example" });
+    expect(t.token).toBeUndefined();
+  });
+});
+
+describe("atomic config writes", () => {
+  it("replaces the file via rename and leaves no temp files", async () => {
+    const { readdirSync } = await import("node:fs");
+    const env = { HOME: home };
+    saveConfig({ current: "a", profiles: {} }, env);
+    saveConfig({ current: "b", profiles: {} }, env);
+    const dir = join(home, ".config", "vamsa");
+    expect(readdirSync(dir)).toEqual(["config.json"]);
+    expect(loadConfig(env).current).toBe("b");
+    expect(statSync(dir).mode & 0o777).toBe(0o700);
+  });
+
+  it("tightens an existing world-readable config directory to 0700", async () => {
+    const { chmodSync } = await import("node:fs");
+    const env = { HOME: home };
+    const dir = join(home, ".config", "vamsa");
+    mkdirSync(dir, { recursive: true });
+    chmodSync(dir, 0o755);
+    saveConfig({ current: "a", profiles: {} }, env);
+    expect(statSync(dir).mode & 0o777).toBe(0o700);
   });
 });

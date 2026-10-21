@@ -4,8 +4,8 @@ import { leaf } from "../lib/command";
 import { normalizeUrl, saveConfig } from "../lib/config";
 import { requireValue, str } from "../lib/context";
 import { CliError, usageError } from "../lib/errors";
+import type { Profile, TokenType } from "../lib/config";
 import type { Ctx } from "../lib/context";
-import type { TokenType } from "../lib/config";
 
 interface Me {
   id: string;
@@ -22,14 +22,49 @@ async function ask(
   return isCancel(v) ? undefined : (v as string);
 }
 
-function storeCredential(
+/**
+ * End a saved session server-side before its token is dropped. Best effort:
+ * an unreachable server or an already-expired session is fine.
+ */
+export async function endSavedSession(
+  ctx: Ctx,
+  profile: Profile | undefined
+): Promise<"ended" | "skipped" | "unreachable"> {
+  if (!profile?.token || profile.tokenType !== "session") return "skipped";
+  let url: string;
+  try {
+    url = normalizeUrl(profile.url);
+  } catch {
+    return "skipped";
+  }
+  const client = createClient({
+    url,
+    token: profile.token,
+    fetch: ctx.rt.fetch,
+    debug: ctx.debug,
+  });
+  try {
+    await client.request("POST", "/auth/logout");
+    return "ended";
+  } catch {
+    ctx.debug("could not end the previous session; it will expire on its own");
+    return "unreachable";
+  }
+}
+
+async function storeCredential(
   ctx: Ctx,
   url: string,
   token: string,
   tokenType: TokenType,
   email: string
-): string {
+): Promise<string> {
   const name = ctx.target.profileName;
+  // Replacing a session login: end the old session instead of orphaning it
+  const previous = ctx.config.profiles[name] as Profile | undefined;
+  if (previous?.token && previous.token !== token) {
+    await endSavedSession(ctx, previous);
+  }
   ctx.config.profiles[name] = { url, token, tokenType, email };
   ctx.config.current = name;
   return saveConfig(ctx.config, ctx.rt.env);
@@ -79,7 +114,7 @@ export const login = leaf({
         debug: ctx.debug,
       });
       const me = (await client.request<Me>("GET", "/auth/me")).data;
-      const path = storeCredential(ctx, url, pat, "pat", me.email);
+      const path = await storeCredential(ctx, url, pat, "pat", me.email);
       ctx.print({
         loggedIn: {
           profile: ctx.target.profileName,
@@ -101,6 +136,12 @@ export const login = leaf({
 
     let pass: string | undefined;
     if (args["password-stdin"]) {
+      if (ctx.rt.stdinIsTTY) {
+        throw usageError(
+          "--password-stdin needs the password piped in, but stdin is a terminal",
+          'echo "$PASSWORD" | vamsa login --email <email> --password-stdin  (or drop --password-stdin to be prompted)'
+        );
+      }
       pass = (await ctx.rt.readStdin()).replace(/\r?\n$/, "");
     } else if (ctx.rt.interactive) {
       pass = await ask(() => promptPassword({ message: "Password" }));
@@ -128,7 +169,13 @@ export const login = leaf({
       );
     }
 
-    const path = storeCredential(ctx, url, res.data.token, "session", email);
+    const path = await storeCredential(
+      ctx,
+      url,
+      res.data.token,
+      "session",
+      email
+    );
     ctx.print({
       loggedIn: {
         profile: ctx.target.profileName,

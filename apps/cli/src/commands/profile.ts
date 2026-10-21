@@ -2,6 +2,7 @@ import { group, leaf } from "../lib/command";
 import { configPath, saveConfig } from "../lib/config";
 import { CliError } from "../lib/errors";
 import { listView } from "../lib/output";
+import { endSavedSession } from "./auth";
 
 const list = leaf({
   name: "list",
@@ -68,11 +69,19 @@ const remove = leaf({
       });
       return;
     }
+    // End a saved session server-side before forgetting its token
+    const session = await endSavedSession(ctx, ctx.config.profiles[name]);
     const { [name]: _gone, ...others } = ctx.config.profiles;
     ctx.config.profiles = others;
     saveConfig(ctx.config, ctx.rt.env);
     ctx.print({
-      removed: { profile: name },
+      removed: {
+        profile: name,
+        ...(session === "ended" ? { session: "ended on server" } : {}),
+        ...(session === "unreachable"
+          ? { session: "server unreachable; it expires on its own" }
+          : {}),
+      },
       help: ["vamsa profile list"],
     });
   },

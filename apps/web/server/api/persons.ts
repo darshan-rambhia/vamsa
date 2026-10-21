@@ -204,7 +204,11 @@ personsRouter.openapi(listPersonsRoute, async (c) => {
       (item) => item.id
     );
 
-    return c.json(paginated, { status: 200 });
+    // The prefetch is capped, so report the database's count, not its length
+    return c.json(
+      { ...paginated, total: allPersons.pagination.total },
+      { status: 200 }
+    );
   } catch (error) {
     log.withErr(error).msg("Error listing persons");
     return c.json({ error: "Failed to list persons" }, { status: 500 });

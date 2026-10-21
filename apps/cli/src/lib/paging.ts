@@ -1,5 +1,8 @@
 import type { ApiClient } from "./client";
 
+/** --page limit: page N costs N requests, since the API only has cursors. */
+export const MAX_PAGE = 100;
+
 export interface CursorPage<T> {
   items: Array<T>;
   nextCursor: string | null;

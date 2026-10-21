@@ -34,6 +34,7 @@ export async function runCli(
     fetch?: FetchMock;
     stdin?: string;
     interactive?: boolean;
+    stdinIsTTY?: boolean;
   }
 ): Promise<FakeRun> {
   let stdout = "";
@@ -47,6 +48,7 @@ export async function runCli(
       stderr += s;
     },
     interactive: opts.interactive ?? false,
+    stdinIsTTY: opts.stdinIsTTY ?? opts.interactive ?? false,
     readStdin: async () => opts.stdin ?? "",
     fetch:
       opts.fetch ??

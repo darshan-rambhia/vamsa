@@ -13,6 +13,7 @@ const runtime: Runtime = {
   stdout: (s) => process.stdout.write(s),
   stderr: (s) => process.stderr.write(s),
   interactive: Boolean(process.stdin.isTTY && process.stdout.isTTY),
+  stdinIsTTY: Boolean(process.stdin.isTTY),
   readStdin,
   fetch: (input, init) => fetch(input, init),
   execPath: process.argv[1] ?? "vamsa",

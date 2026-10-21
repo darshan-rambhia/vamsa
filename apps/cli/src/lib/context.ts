@@ -19,6 +19,8 @@ export interface Runtime {
   stderr: (s: string) => void;
   /** True only when both stdin and stdout are TTYs; gates all prompts */
   interactive: boolean;
+  /** stdin is a terminal (so --password-stdin would block on the keyboard) */
+  stdinIsTTY: boolean;
   readStdin: () => Promise<string>;
   fetch: FetchFn;
   /** Path of the running executable, for the home view */
@@ -100,6 +102,13 @@ export function buildCtx(
     debug,
     print: (data) => rt.stdout(format(data, fmt) + "\n"),
     requireAuth: () => {
+      if (!target.token && target.withheldFor) {
+        throw new CliError(
+          "token_url_mismatch",
+          `Profile "${target.profileName}" is logged in to ${target.withheldFor}, not ${target.url}; its token was not sent`,
+          `vamsa login --url ${target.url} --profile <name>  (or drop --url / VAMSA_URL)`
+        );
+      }
       if (!target.token) {
         throw new CliError(
           "not_logged_in",

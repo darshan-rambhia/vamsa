@@ -2,7 +2,7 @@ import { group, leaf } from "../lib/command";
 import { intFlag, str } from "../lib/context";
 import { usageError } from "../lib/errors";
 import { listView, parseFields, pick } from "../lib/output";
-import { fetchPage } from "../lib/paging";
+import { MAX_PAGE, fetchPage } from "../lib/paging";
 
 type Person = Record<string, unknown> & {
   id: string;
@@ -43,7 +43,8 @@ const list = leaf({
   handler: async (ctx, args) => {
     ctx.requireAuth();
     const limit = intFlag(args.limit, "limit", { max: 100 }) ?? 20;
-    const page = intFlag(args.page, "page") ?? 1;
+    // Pages are reached by following cursors; cap the walk
+    const page = intFlag(args.page, "page", { max: MAX_PAGE }) ?? 1;
     const q = str(args.q);
     const data = await fetchPage<Person>(
       ctx.api,

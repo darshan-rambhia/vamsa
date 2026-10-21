@@ -113,6 +113,23 @@ describe("Persons REST role enforcement", () => {
     expect(res.status).toBe(200);
   });
 
+  test("/persons total is the database count, not the prefetched length", async () => {
+    signedInAs("VIEWER");
+    mockListPersons.mockResolvedValueOnce({
+      items: [{ id: "p1" }] as never,
+      pagination: {
+        total: 12345,
+        page: 1,
+        limit: 10000,
+        totalPages: 2,
+        hasNext: true,
+        hasPrev: false,
+      },
+    });
+    const res = await apiV1.request("/persons?limit=1");
+    expect((await res.json()).total).toBe(12345);
+  });
+
   test("VIEWER cannot create a person (POST) and nothing is written", async () => {
     signedInAs("VIEWER");
     const res = await apiV1.request("/persons", {
