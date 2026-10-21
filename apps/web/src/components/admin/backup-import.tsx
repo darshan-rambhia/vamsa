@@ -10,6 +10,16 @@ import { previewImport, validateBackup } from "~/server/restore";
 
 type ImportStep = "upload" | "validation" | "preview";
 
+/** Base64 of a File, for the server functions (they take JSON). */
+async function fileToBase64(file: File): Promise<string> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  let binary = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(binary);
+}
+
 export function BackupImport() {
   const { t } = useTranslation(["admin", "common"]);
   const [step, setStep] = useState<ImportStep>("upload");
@@ -18,19 +28,29 @@ export function BackupImport() {
     null
   );
   const [error, setError] = useState<string | null>(null);
+  const [backupData, setBackupData] = useState<string | null>(null);
 
   // Validation mutation
   const validationMutation = useMutation({
-    mutationFn: async (_file: File) => {
-      // For now, the server function doesn't accept file uploads
-      // This is a placeholder - in production this would send the file
-      return validateBackup();
+    mutationFn: async (file: File) => {
+      const encoded = await fileToBase64(file);
+      setBackupData(encoded);
+      return {
+        result: await validateBackup({ data: { backupData: encoded } }),
+        encoded,
+      };
     },
-    onSuccess: (data: ValidationResult) => {
+    onSuccess: ({
+      result: data,
+      encoded,
+    }: {
+      result: ValidationResult;
+      encoded: string;
+    }) => {
       if (data.isValid) {
         setError(null);
         // Automatically proceed to preview
-        previewMutation.mutate();
+        previewMutation.mutate(encoded);
       } else {
         setError(
           data.errors.length > 0
@@ -46,8 +66,8 @@ export function BackupImport() {
 
   // Preview mutation
   const previewMutation = useMutation({
-    mutationFn: async () => {
-      return previewImport();
+    mutationFn: async (encoded: string) => {
+      return previewImport({ data: { backupData: encoded } });
     },
     onSuccess: (data: ImportPreview) => {
       setImportPreview(data);
@@ -84,15 +104,17 @@ export function BackupImport() {
     setStep("upload");
     setBackupFile(null);
     setImportPreview(null);
+    setBackupData(null);
     setError(null);
   };
 
   // Show import preview if available
-  if (step === "preview" && importPreview && backupFile) {
+  if (step === "preview" && importPreview && backupFile && backupData) {
     return (
       <ImportPreviewComponent
         preview={importPreview}
         file={backupFile}
+        backupData={backupData}
         onReset={handleReset}
       />
     );

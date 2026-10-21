@@ -64,255 +64,80 @@ describe("restore business logic", () => {
     clearAllMocks();
   });
 
+  const admin = {
+    id: "admin-1",
+    email: "admin@test.com",
+    name: "Admin User",
+    role: "ADMIN" as const,
+  };
+  const member = { ...admin, id: "member-1", role: "MEMBER" as const };
+  const notAZip = Buffer.from("not a zip");
+
   describe("validateBackupData", () => {
-    it("should validate backup as admin", async () => {
-      const adminUser = {
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "Admin User",
-        role: "ADMIN" as const,
-      };
-
-      const result = await validateBackupData(adminUser);
-
-      expect(result.isValid).toBe(true);
-      expect(result.metadata).toBeDefined();
-      expect(result.metadata.version).toBe("1.0.0");
-      expect(result.metadata.exportedBy.email).toBe("admin@test.com");
+    it("reports a non-ZIP upload as invalid", async () => {
+      const result = await validateBackupData(admin, notAZip);
+      expect(result.isValid).toBe(false);
+      expect(result.errors).toContain("Not a valid ZIP archive");
     });
 
-    it("should reject validation for non-admin user", async () => {
-      const memberUser = {
-        id: "member-1",
-        email: "member@test.com",
-        name: "Member User",
-        role: "MEMBER" as const,
-      };
-
-      await expect(validateBackupData(memberUser)).rejects.toThrow(
+    it("rejects non-admins", async () => {
+      await expect(validateBackupData(member, notAZip)).rejects.toThrow(
         "Only administrators can validate backups"
       );
-    });
-
-    it("should reject validation for viewer user", async () => {
-      const viewerUser = {
-        id: "viewer-1",
-        email: "viewer@test.com",
-        name: "Viewer User",
-        role: "VIEWER" as const,
-      };
-
-      await expect(validateBackupData(viewerUser)).rejects.toThrow(
-        "Only administrators can validate backups"
-      );
-    });
-
-    it("should include metadata with user info", async () => {
-      const adminUser = {
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "John Admin",
-        role: "ADMIN" as const,
-      };
-
-      const result = await validateBackupData(adminUser);
-
-      expect(result.metadata.exportedBy).toEqual({
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "John Admin",
-      });
-    });
-
-    it("should handle null user name", async () => {
-      const adminUser = {
-        id: "admin-1",
-        email: "admin@test.com",
-        name: null,
-        role: "ADMIN" as const,
-      };
-
-      const result = await validateBackupData(adminUser);
-
-      expect(result.metadata.exportedBy.name).toBeNull();
     });
   });
 
   describe("previewImportData", () => {
-    it("should return preview with existing data counts as admin", async () => {
-      const adminUser = {
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "Admin User",
-        role: "ADMIN" as const,
+    it("counts existing data when no archive is given", async () => {
+      const db = {
+        select: vi.fn(() => ({
+          from: vi.fn(() => Promise.resolve([{ n: 7 }])),
+        })),
       };
-
-      const result = await previewImportData(adminUser, mockDrizzleDb as any);
-
-      expect(result.statistics).toBeDefined();
-      expect(result.statistics.existingItems).toBeDefined();
+      const result = await previewImportData(admin, undefined, db as never);
+      expect(result.statistics.existingItems).toEqual({
+        people: 7,
+        relationships: 7,
+        users: 7,
+        suggestions: 7,
+      });
+      expect(result.statistics.newItems.people).toBe(0);
     });
 
-    it("should reject preview for non-admin user", async () => {
-      const memberUser = {
-        id: "member-1",
-        email: "member@test.com",
-        name: "Member User",
-        role: "MEMBER" as const,
-      };
-
+    it("fails on an unusable archive", async () => {
       await expect(
-        previewImportData(memberUser, mockDrizzleDb as any)
-      ).rejects.toThrow("Only administrators can preview imports");
+        previewImportData(admin, notAZip, mockDrizzleDb as never)
+      ).rejects.toThrow("Preview failed: Invalid backup: Not a valid ZIP");
     });
 
-    it("should return estimated duration", async () => {
-      const adminUser = {
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "Admin User",
-        role: "ADMIN" as const,
-      };
-
-      const result = await previewImportData(adminUser, mockDrizzleDb as any);
-
-      expect(result.estimatedDuration).toBeDefined();
-      expect(result.estimatedDuration.minSeconds).toBe(5);
-      expect(result.estimatedDuration.maxSeconds).toBe(30);
+    it("rejects non-admins", async () => {
+      await expect(
+        previewImportData(member, undefined, mockDrizzleDb as never)
+      ).rejects.toThrow("Only administrators can preview imports");
     });
   });
 
   describe("importBackupData", () => {
-    it("should import backup with skip strategy as admin", async () => {
-      const adminUser = {
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "Admin User",
-        role: "ADMIN" as const,
-      };
-
-      const result = await importBackupData(
-        adminUser,
-        "skip",
-        mockDrizzleDb as any
-      );
-
-      expect(result.success).toBe(true);
-      expect(result.strategy).toBe("skip");
-      expect(result.importedBy).toEqual({
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "Admin User",
-      });
-    });
-
-    it("should import backup with replace strategy", async () => {
-      const adminUser = {
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "Admin User",
-        role: "ADMIN" as const,
-      };
-
-      const result = await importBackupData(
-        adminUser,
-        "replace",
-        mockDrizzleDb as any
-      );
-
-      expect(result.success).toBe(true);
-      expect(result.strategy).toBe("replace");
-    });
-
-    it("should use skip strategy by default", async () => {
-      const adminUser = {
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "Admin User",
-        role: "ADMIN" as const,
-      };
-
-      const result = await importBackupData(
-        adminUser,
-        undefined,
-        mockDrizzleDb as any
-      );
-
-      expect(result.strategy).toBe("skip");
-    });
-
-    it("should reject import for non-admin user", async () => {
-      const memberUser = {
-        id: "member-1",
-        email: "member@test.com",
-        name: "Member User",
-        role: "MEMBER" as const,
-      };
-
+    it("fails on an unusable archive and records the failure", async () => {
+      const values = vi.fn(() => Promise.resolve());
+      const db = { insert: vi.fn(() => ({ values })) };
       await expect(
-        importBackupData(memberUser, "skip", mockDrizzleDb as any)
+        importBackupData(admin, notAZip, { strategy: "replace" }, db as never)
+      ).rejects.toThrow("Import failed: Invalid backup");
+      expect(values).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: "admin-1",
+          entityType: "BACKUP_IMPORT_FAILED",
+        })
+      );
+    });
+
+    it("rejects non-admins before reading the archive", async () => {
+      const db = { insert: vi.fn() };
+      await expect(
+        importBackupData(member, notAZip, {}, db as never)
       ).rejects.toThrow("Only administrators can import backups");
-    });
-
-    it("should include import statistics", async () => {
-      const adminUser = {
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "Admin User",
-        role: "ADMIN" as const,
-      };
-
-      const result = await importBackupData(
-        adminUser,
-        "skip",
-        mockDrizzleDb as any
-      );
-
-      expect(result.statistics).toMatchObject({
-        peopleImported: 0,
-        relationshipsImported: 0,
-        usersImported: 0,
-        suggestionsImported: 0,
-        photosImported: 0,
-      });
-    });
-
-    it("should create audit log for failed import", async () => {
-      const adminUser = {
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "Admin User",
-        role: "ADMIN" as const,
-      };
-
-      // Create a function that will use the mock
-      // Note: We can't easily replace drizzleDb after mock.module
-      // So we test error logging through the catch block
-      try {
-        await importBackupData(adminUser, "skip", mockDrizzleDb as any);
-      } catch (error) {
-        // Expected to throw
-        expect(error).toBeDefined();
-      }
-    });
-
-    it("should return importedAt timestamp", async () => {
-      const adminUser = {
-        id: "admin-1",
-        email: "admin@test.com",
-        name: "Admin User",
-        role: "ADMIN" as const,
-      };
-
-      const result = await importBackupData(
-        adminUser,
-        "skip",
-        mockDrizzleDb as any
-      );
-
-      expect(result.importedAt).toBeDefined();
-      // Should be ISO string
-      expect(typeof result.importedAt).toBe("string");
+      expect(db.insert).not.toHaveBeenCalled();
     });
   });
 

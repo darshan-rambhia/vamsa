@@ -1,22 +1,21 @@
 /**
  * /api/v1/admin backups and audit log. Mounted under the ADMIN guard.
- *
- * Restore is exposed but answers 501: restoreFromBackup/extractBackupData in
- * the business layer are still placeholders that report success without
- * writing anything, and a REST client must not be told a restore worked.
  */
 
 import { createRoute, z } from "@hono/zod-openapi";
 import { backupExportSchema, errorResponseSchema } from "@vamsa/schemas";
 import {
   AUDIT_ACTIONS,
+  BackupRestoreError,
   createBackupExportData,
   getImportHistoryData,
   listAuditLogsData,
   listBackupsData,
   previewImportData,
+  restoreBackupArchive,
   validateBackupFile,
 } from "@vamsa/lib/server/business";
+import { loggers } from "@vamsa/lib/logger";
 import {
   createRouter,
   jsonRoute,
@@ -30,6 +29,7 @@ const AUDIT = "Admin: Audit";
 /** Largest accepted backup upload (validate/restore). */
 export const MAX_BACKUP_BYTES = 200 * 1024 * 1024;
 
+const log = loggers.api;
 const router = createRouter();
 
 const err = (description: string) => ({
@@ -194,41 +194,104 @@ router.openapi(
 router.openapi(
   createRoute({
     method: "post",
-    path: "/backups/restore",
+    path: "/backups/preview",
     tags: [BACKUPS],
-    summary: "Restore from a backup ZIP (not implemented yet)",
-    description:
-      "Validates the upload, then answers 501: the restore pipeline in the business layer is a placeholder.",
-    operationId: "adminRestoreBackup",
-    request: {
-      query: z.object({
-        strategy: z.enum(["skip", "replace", "merge"]).default("skip"),
-      }),
-      body: zipUpload,
-    },
+    summary: "Preview restoring a backup ZIP (new/existing/changed per table)",
+    operationId: "adminPreviewRestoreFile",
+    request: { body: zipUpload },
     responses: {
+      200: {
+        description: "Import preview",
+        content: {
+          "application/json": { schema: z.record(z.string(), z.unknown()) },
+        },
+      },
       400: err("Invalid backup"),
       413: err("Too large"),
-      501: err("Restore not implemented"),
     },
   }),
   async (c) => {
     const zip = await readZip(c);
     if (zip instanceof Response) return zip as never;
-    const validation = await validateBackupFile(zip);
-    if (!validation.isValid) {
+    try {
+      return c.json(await previewImportData(restoreUser(c), zip), 200);
+    } catch (e) {
       return c.json(
-        { error: "Invalid backup", details: validation.errors.join("; ") },
+        { error: "Invalid backup", details: (e as Error).message },
         400
       );
     }
-    return c.json(
-      {
-        error: "Restore is not implemented yet",
-        details: `The backup is valid (strategy ${c.req.valid("query").strategy}); restoring data is not available through the API.`,
+  }
+);
+
+const flag = z
+  .enum(["true", "false"])
+  .optional()
+  .transform((v) => (v === undefined ? undefined : v === "true"));
+
+router.openapi(
+  createRoute({
+    method: "post",
+    path: "/backups/restore",
+    tags: [BACKUPS],
+    summary: "Restore from a backup ZIP",
+    description:
+      "skip inserts new rows only; merge also overwrites existing rows by id; replace wipes the genealogy tables in the backup and family settings first. Users are never overwritten. One transaction: on any error nothing changes. merge and replace write a safety backup first unless preBackup=false.",
+    operationId: "adminRestoreBackup",
+    request: {
+      query: z.object({
+        strategy: z.enum(["skip", "replace", "merge"]).default("skip"),
+        preBackup: flag.openapi({ description: "Safety backup first (true)" }),
+        photos: flag.openapi({ description: "Restore media files (true)" }),
+        auditLogs: flag.openapi({ description: "Import audit logs (false)" }),
+      }),
+      body: zipUpload,
+    },
+    responses: {
+      200: {
+        description: "Import result",
+        content: {
+          "application/json": { schema: z.record(z.string(), z.unknown()) },
+        },
       },
-      501
-    );
+      400: err("Invalid backup"),
+      413: err("Too large"),
+      500: err("Restore failed; nothing was changed"),
+    },
+  }),
+  async (c) => {
+    const zip = await readZip(c);
+    if (zip instanceof Response) return zip as never;
+    const q = c.req.valid("query");
+    try {
+      const result = await restoreBackupArchive(
+        zip,
+        {
+          strategy: q.strategy,
+          createBackupBeforeImport: q.preBackup ?? true,
+          importPhotos: q.photos ?? true,
+          importAuditLogs: q.auditLogs ?? false,
+        },
+        {
+          id: c.get("user").id,
+          email: c.get("user").email,
+          name: c.get("user").name ?? null,
+        }
+      );
+      return c.json(result, 200);
+    } catch (e) {
+      if (e instanceof BackupRestoreError) {
+        return c.json({ error: "Invalid backup", details: e.message }, 400);
+      }
+      log.withErr(e).msg("Backup restore failed");
+      return c.json(
+        {
+          error: "Restore failed; nothing was changed",
+          details: (e as Error).message,
+        },
+        500
+      );
+    }
   }
 );
 

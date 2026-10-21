@@ -80,7 +80,21 @@ export const importResultSchema = z.object({
     conflictsResolved: z.number(),
     skippedItems: z.number(),
   }),
+  /** Per-table inserted/updated/skipped/deleted counts. */
+  tables: z
+    .record(
+      z.string(),
+      z.object({
+        inserted: z.number(),
+        updated: z.number(),
+        skipped: z.number(),
+        deleted: z.number(),
+      })
+    )
+    .optional(),
+  /** Path of the safety backup written before the restore. */
   backupCreated: z.string().optional(),
+  backupCreatedId: z.string().optional(),
   errors: z.array(z.string()),
   warnings: z.array(z.string()),
 });
@@ -130,6 +144,18 @@ export const importPreviewSchema = z.object({
       suggestions: z.number(),
     }),
   }),
+  /** Per-table counts: rows in the backup, new ids, existing ids, changed. */
+  tables: z
+    .record(
+      z.string(),
+      z.object({
+        inBackup: z.number(),
+        new: z.number(),
+        existing: z.number(),
+        conflicts: z.number(),
+      })
+    )
+    .optional(),
   estimatedDuration: z.object({
     minSeconds: z.number(),
     maxSeconds: z.number(),

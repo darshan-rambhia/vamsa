@@ -22,28 +22,10 @@ import { clearAllMocks, mockLogger } from "../../testing/shared-mocks";
 // Import functions to test
 import {
   createBackupArchive,
-  extractBackupData,
   gatherBackupData,
-  restoreFromBackup,
   scheduleBackupJob,
   validateBackupFile,
 } from "./backup";
-
-// Default test objects - tests can customize specific fields via spread
-const createDefaultImportOptions = (
-  overrides: Partial<{
-    strategy: "skip" | "replace" | "merge";
-    createBackupBeforeImport: boolean;
-    importPhotos: boolean;
-    importAuditLogs: boolean;
-  }> = {}
-) => ({
-  strategy: "skip" as const,
-  createBackupBeforeImport: true,
-  importPhotos: true,
-  importAuditLogs: false,
-  ...overrides,
-});
 
 const createDefaultScheduleSettings = (
   overrides: Partial<{
@@ -86,35 +68,6 @@ const createDefaultScheduleSettings = (
   notifyOnSuccess: false,
   notifyOnFailure: true,
   ...overrides,
-});
-
-// Use the actual function return type for type safety
-type ExtractedBackupData = Awaited<ReturnType<typeof extractBackupData>>;
-
-const createDefaultExtractedData = (): ExtractedBackupData => ({
-  metadata: {
-    version: "1.0.0",
-    exportedAt: new Date().toISOString(),
-    exportedBy: { id: "user1", email: "user@example.com", name: null },
-    statistics: {
-      totalPeople: 0,
-      totalRelationships: 0,
-      totalUsers: 0,
-      totalSuggestions: 0,
-      totalPhotos: 0,
-      auditLogDays: 90,
-      totalAuditLogs: 0,
-    },
-    dataFiles: [],
-    photoDirectories: [],
-  },
-  people: [],
-  relationships: [],
-  users: [],
-  suggestions: [],
-  settings: null,
-  auditLogs: [],
-  mediaFiles: [],
 });
 
 const createDefaultMetadata = () => ({
@@ -347,6 +300,7 @@ describe("backup business logic", () => {
         settings: null,
         auditLogs: [],
         mediaObjects: [],
+        genealogy: {},
         ...overrides,
       }) as Awaited<ReturnType<typeof gatherBackupData>>;
 
@@ -494,156 +448,6 @@ describe("backup business logic", () => {
       expect(result.errors).toEqual([
         "data/not-there.json is listed in metadata but missing",
       ]);
-    });
-  });
-
-  describe("extractBackupData", () => {
-    it("should extract backup data from archive buffer", async () => {
-      const buffer = Buffer.from("test archive data");
-
-      const result = await extractBackupData(buffer);
-
-      expect(result.metadata).toBeDefined();
-      expect(result.people).toBeDefined();
-      expect(result.relationships).toBeDefined();
-      expect(result.users).toBeDefined();
-      expect(result.suggestions).toBeDefined();
-      expect(result.settings).toBeDefined();
-      expect(result.auditLogs).toBeDefined();
-      expect(result.mediaFiles).toBeDefined();
-    });
-
-    it("should return arrays for all data types", async () => {
-      const buffer = Buffer.from("test data");
-
-      const result = await extractBackupData(buffer);
-
-      expect(Array.isArray(result.people)).toBe(true);
-      expect(Array.isArray(result.relationships)).toBe(true);
-      expect(Array.isArray(result.users)).toBe(true);
-      expect(Array.isArray(result.suggestions)).toBe(true);
-      expect(Array.isArray(result.auditLogs)).toBe(true);
-      expect(Array.isArray(result.mediaFiles)).toBe(true);
-    });
-
-    it("should include metadata in extracted data", async () => {
-      const buffer = Buffer.from("test data");
-
-      const result = await extractBackupData(buffer);
-
-      expect(result.metadata.version).toBe("1.0.0");
-      expect(result.metadata.exportedAt).toBeDefined();
-      expect(result.metadata.exportedBy).toBeDefined();
-      expect(result.metadata.statistics).toBeDefined();
-    });
-
-    it("should allow null settings", async () => {
-      const buffer = Buffer.from("test data");
-
-      const result = await extractBackupData(buffer);
-
-      expect(result.settings).toBeNull();
-    });
-
-    it("should log extraction with buffer size", async () => {
-      const buffer = Buffer.from("test data");
-
-      await extractBackupData(buffer);
-
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.objectContaining({ size: buffer.length }),
-        expect.any(String)
-      );
-    });
-  });
-
-  describe("restoreFromBackup", () => {
-    it("should return successful restore result", async () => {
-      const extractedData = createDefaultExtractedData();
-      const mockDb = {} as any;
-
-      const result = await restoreFromBackup(
-        extractedData,
-        createDefaultImportOptions(),
-        "user123",
-        mockDb
-      );
-
-      expect(result.success).toBe(true);
-      expect(result.importedAt).toBeDefined();
-      expect(result.importedBy).toBeDefined();
-      expect(result.strategy).toBe("skip");
-      expect(result.statistics).toBeDefined();
-    });
-
-    it("should include import statistics", async () => {
-      const extractedData = createDefaultExtractedData();
-      const mockDb = {} as any;
-
-      const result = await restoreFromBackup(
-        extractedData,
-        createDefaultImportOptions(),
-        "user123",
-        mockDb
-      );
-
-      expect(result.statistics.peopleImported).toBeGreaterThanOrEqual(0);
-      expect(result.statistics.relationshipsImported).toBeGreaterThanOrEqual(0);
-      expect(result.statistics.usersImported).toBeGreaterThanOrEqual(0);
-      expect(result.statistics.suggestionsImported).toBeGreaterThanOrEqual(0);
-      expect(result.statistics.photosImported).toBeGreaterThanOrEqual(0);
-      expect(result.statistics.auditLogsImported).toBeGreaterThanOrEqual(0);
-      expect(result.statistics.conflictsResolved).toBeGreaterThanOrEqual(0);
-      expect(result.statistics.skippedItems).toBeGreaterThanOrEqual(0);
-    });
-
-    it("should accept different conflict resolution strategies", async () => {
-      const extractedData = createDefaultExtractedData();
-      const mockDb = {} as any;
-
-      for (const strategy of ["skip", "replace", "merge"] as const) {
-        const result = await restoreFromBackup(
-          extractedData,
-          createDefaultImportOptions({ strategy }),
-          "user123",
-          mockDb
-        );
-
-        expect(result.strategy).toBe(strategy);
-        expect(result.success).toBe(true);
-      }
-    });
-
-    it("should record userId in import log", async () => {
-      const extractedData = createDefaultExtractedData();
-      const mockDb = {} as any;
-
-      await restoreFromBackup(
-        extractedData,
-        createDefaultImportOptions(),
-        "user456",
-        mockDb
-      );
-
-      expect(mockLogger.info).toHaveBeenCalledWith(
-        expect.objectContaining({ userId: "user456" }),
-        expect.any(String)
-      );
-    });
-
-    it("should include error and warning arrays", async () => {
-      const extractedData = createDefaultExtractedData();
-      const mockDb = {} as any;
-
-      const result = await restoreFromBackup(
-        extractedData,
-        createDefaultImportOptions(),
-        "user123",
-        mockDb
-      );
-
-      expect(Array.isArray(result.errors)).toBe(true);
-      expect(Array.isArray(result.warnings)).toBe(true);
     });
   });
 

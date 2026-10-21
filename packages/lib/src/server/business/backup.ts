@@ -22,11 +22,24 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { ZipArchive } from "archiver";
 import { strFromU8, unzipSync } from "fflate";
-import { backupMetadataSchema } from "@vamsa/schemas";
+import {
+  backupImportOptionsSchema,
+  backupMetadataSchema,
+} from "@vamsa/schemas";
 import { drizzleDb, drizzleSchema } from "@vamsa/api";
 import { count, desc, ne } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
+import { getMediaDir } from "@vamsa/lib/media/processor";
 import { listAuditLogsData, recordAuditLogData } from "./audit-logs";
+import {
+  BackupRestoreError,
+  applyRestore,
+  extractBackupArchive,
+  runAtomically,
+  toImportResult,
+  writeMediaFiles,
+} from "./backup-restore";
+import type { ExtractedBackup, RestoreActor } from "./backup-restore";
 import type {
   BackupExportInput,
   BackupImportOptions,
@@ -37,6 +50,9 @@ import type {
 } from "@vamsa/schemas";
 
 const log = loggers.db;
+
+/** Backup format written by this code (1.1.0 adds the genealogy tables). */
+export const BACKUP_FORMAT_VERSION = "1.1.0";
 
 /** Files every backup must contain. */
 const CORE_DATA_FILES = [
@@ -113,6 +129,7 @@ export async function gatherBackupData(
     settings,
     auditLogs,
     mediaObjects,
+    genealogy,
   ] = await Promise.all([
     // People ordered by name for consistency
     db
@@ -169,6 +186,9 @@ export async function gatherBackupData(
           .from(drizzleSchema.mediaObjects)
           .orderBy(drizzleSchema.mediaObjects.uploadedAt)
       : Promise.resolve([]),
+
+    // Remaining genealogy tables (events, places, sources, media rows, links)
+    gatherGenealogyTables(db),
   ]);
 
   return {
@@ -179,7 +199,63 @@ export async function gatherBackupData(
     settings: settings.length > 0 ? settings[0] : null,
     auditLogs,
     mediaObjects,
+    genealogy,
   };
+}
+
+/** Tables beyond people/relationships/suggestions, keyed by backup file. */
+async function gatherGenealogyTables(
+  db: BackupDb
+): Promise<Record<string, Array<unknown>>> {
+  const s = drizzleSchema;
+  const [
+    places,
+    sources,
+    events,
+    eventParticipants,
+    eventSources,
+    placePersonLinks,
+    researchNotes,
+    mediaObjects,
+    personMedia,
+    eventMedia,
+  ] = await Promise.all([
+    db.select().from(s.places).orderBy(s.places.createdAt),
+    db.select().from(s.sources).orderBy(s.sources.createdAt),
+    db.select().from(s.events).orderBy(s.events.createdAt),
+    db
+      .select()
+      .from(s.eventParticipants)
+      .orderBy(s.eventParticipants.createdAt),
+    db.select().from(s.eventSources).orderBy(s.eventSources.id),
+    db.select().from(s.placePersonLinks).orderBy(s.placePersonLinks.createdAt),
+    db.select().from(s.researchNotes).orderBy(s.researchNotes.createdAt),
+    db.select().from(s.mediaObjects).orderBy(s.mediaObjects.uploadedAt),
+    db.select().from(s.personMedias).orderBy(s.personMedias.createdAt),
+    db.select().from(s.eventMedias).orderBy(s.eventMedias.id),
+  ]);
+  return {
+    "data/places.json": places,
+    "data/sources.json": sources,
+    "data/events.json": events,
+    "data/event-participants.json": eventParticipants,
+    "data/event-sources.json": eventSources,
+    "data/place-person-links.json": placePersonLinks,
+    "data/research-notes.json": researchNotes,
+    "data/media-objects.json": mediaObjects,
+    "data/person-media.json": personMedia,
+    "data/event-media.json": eventMedia,
+  };
+}
+
+/**
+ * Media rows store web paths like /data/uploads/media/<file>; the file lives
+ * in the media directory. Falls back to the stored path as given.
+ */
+export function resolveMediaFile(filePath: string): string | null {
+  const inMediaDir = path.join(getMediaDir(), path.basename(filePath));
+  if (fs.existsSync(inMediaDir)) return inMediaDir;
+  return fs.existsSync(filePath) ? filePath : null;
 }
 
 /**
@@ -241,6 +317,11 @@ export async function createBackupArchive(
     name: "data/settings.json",
   });
 
+  // Remaining genealogy tables (format 1.1.0+)
+  for (const [name, rows] of Object.entries(data.genealogy ?? {})) {
+    archive.append(JSON.stringify(rows, null, 2), { name });
+  }
+
   // Add audit logs if present
   if (data.auditLogs.length > 0) {
     archive.append(JSON.stringify(data.auditLogs, null, 2), {
@@ -251,8 +332,8 @@ export async function createBackupArchive(
   // Add photos if requested
   if (data.mediaObjects.length > 0) {
     for (const media of data.mediaObjects) {
-      const filePath = media.filePath;
-      if (fs.existsSync(filePath)) {
+      const filePath = resolveMediaFile(media.filePath);
+      if (filePath) {
         const fileName = path.basename(filePath);
         try {
           archive.file(filePath, { name: `photos/${media.id}/${fileName}` });
@@ -421,128 +502,172 @@ export async function validateBackupFile(
 }
 
 /**
- * Extract and deserialize data from uploaded backup archive
- *
- * Extracts backup data from ZIP archive:
- * - Reads and parses metadata.json
- * - Reads and deserializes data JSON files
- * - Extracts photos to temporary storage
- * - Validates all extracted data
- * - Returns structured backup data for import
- *
- * @param archiveBuffer Raw backup file data
- * @returns Structured backup data ready for import
- * @throws Error if extraction or parsing fails
+ * Extract and parse a backup archive for restore (see extractBackupArchive).
+ * Rejects unsafe entry names and oversized archives.
  */
-export async function extractBackupData(archiveBuffer: Buffer) {
-  // TODO: Implement archive extraction
-  // - Extract ZIP file
-  // - Parse metadata.json
-  // - Parse data/*.json files
-  // - Extract photos to temp directory
-  // - Return extracted data object
-
+export async function extractBackupData(
+  archiveBuffer: Buffer
+): Promise<ExtractedBackup> {
   log.info({ size: archiveBuffer.length }, "Extracting backup data");
+  return extractBackupArchive(archiveBuffer);
+}
 
-  return {
-    metadata: {
-      version: "1.0.0",
-      exportedAt: new Date().toISOString(),
-      exportedBy: {
-        id: "imported",
-        email: "imported@vamsa.local",
-        name: null,
-      },
-      statistics: {
-        totalPeople: 0,
-        totalRelationships: 0,
-        totalUsers: 0,
-        totalSuggestions: 0,
-        totalPhotos: 0,
-        auditLogDays: 90,
-        totalAuditLogs: 0,
-      },
-      dataFiles: [],
-      photoDirectories: [],
-    },
-    people: [],
-    relationships: [],
-    users: [],
-    suggestions: [],
-    settings: null,
-    auditLogs: [],
-    mediaFiles: [],
-  };
+/** Where pre-restore safety backups are written. */
+export function getBackupDir(): string {
+  return (
+    process.env.BACKUP_STORAGE_PATH ??
+    path.join(process.cwd(), "data", "backups")
+  );
 }
 
 /**
- * Orchestrate restore process with conflict resolution and DB writes
+ * Export the current database to a ZIP on disk and record it in the Backup
+ * table. Used as a safety net before restores that change existing rows.
+ */
+export async function createSafetyBackup(
+  actor: RestoreActor,
+  db: BackupDb = drizzleDb
+): Promise<{ id: string; path: string }> {
+  const started = Date.now();
+  const { zipBase64, metadata } = await createBackupExportData(
+    { includePhotos: true, includeAuditLogs: false, auditLogDays: 1 },
+    actor,
+    db
+  );
+  const bytes = Buffer.from(zipBase64, "base64");
+  const dir = getBackupDir();
+  await fs.promises.mkdir(dir, { recursive: true });
+  const filename = `pre-restore-${new Date().toISOString().replace(/[:.]/g, "-")}.zip`;
+  const filePath = path.join(dir, filename);
+  await fs.promises.writeFile(filePath, bytes);
+  const id = crypto.randomUUID();
+  await db.insert(drizzleSchema.backups).values({
+    id,
+    filename,
+    type: "MANUAL",
+    status: "COMPLETED",
+    size: bytes.length,
+    location: "LOCAL",
+    personCount: metadata.statistics.totalPeople,
+    relationshipCount: metadata.statistics.totalRelationships,
+    mediaCount: metadata.statistics.totalPhotos,
+    duration: Date.now() - started,
+  });
+  log.info({ id, filePath }, "Pre-restore safety backup written");
+  return { id, path: filePath };
+}
+
+/**
+ * Restore extracted backup data.
  *
- * Manages the complete backup restoration workflow:
- * - Validates extracted backup data
- * - Applies conflict resolution strategy (skip, replace, merge)
- * - Creates pre-import backup if requested
- * - Transactions for data consistency:
- *   - Deletes existing data (if replace strategy)
- *   - Imports people records
- *   - Imports relationships
- *   - Imports users
- *   - Imports suggestions
- *   - Imports settings
- *   - Imports photos
- *   - Imports audit logs
- * - Records restore audit trail
- * - Generates statistics and warnings
+ * - Safety backup first when requested (merge/replace; skip never changes
+ *   existing rows)
+ * - One transaction for every database write, including the BACKUP_IMPORT
+ *   audit entry; any error rolls everything back
+ * - Media files are written after the commit
  *
- * @param extractedData Data extracted from backup archive
- * @param options Import options including conflict strategy
- * @param userId ID of user performing restore
- * @param db Optional database client (defaults to drizzle)
- * @returns Import result with statistics and any errors
- * @throws Error if restore transaction fails
+ * @throws Error if the restore fails (no rows are written)
  */
 export async function restoreFromBackup(
-  extractedData: Awaited<ReturnType<typeof extractBackupData>>,
-  options: BackupImportOptions,
-  userId: string,
-  _db: BackupDb = drizzleDb
+  extractedData: ExtractedBackup,
+  options: Partial<BackupImportOptions> & Pick<BackupImportOptions, "strategy">,
+  actor: RestoreActor,
+  db: BackupDb = drizzleDb
 ): Promise<ImportResult> {
-  // TODO: Implement restore logic
-  // - Validate extracted data
-  // - Handle conflict resolution strategy
-  // - Create pre-import backup if needed
-  // - Use transaction for consistency
-  // - Import all data
-  // - Handle photos
-  // - Record audit trail
-  // - Return ImportResult
-  // Note: _db parameter will be used when implementing the actual restore logic
+  const opts = backupImportOptionsSchema.parse(options);
+  log.info(
+    { userId: actor.id, strategy: opts.strategy },
+    "Starting backup restore"
+  );
 
-  log.info({ userId, strategy: options.strategy }, "Starting backup restore");
+  const backupCreated =
+    opts.createBackupBeforeImport && opts.strategy !== "skip"
+      ? await createSafetyBackup(actor, db)
+      : undefined;
 
-  return {
-    success: true,
-    importedAt: new Date().toISOString(),
-    importedBy: {
-      id: userId,
-      email: "user@vamsa.local",
-      name: null,
-    },
-    strategy: options.strategy,
-    statistics: {
-      peopleImported: 0,
-      relationshipsImported: 0,
-      usersImported: 0,
-      suggestionsImported: 0,
-      photosImported: 0,
-      auditLogsImported: 0,
-      conflictsResolved: 0,
-      skippedItems: 0,
-    },
-    backupCreated: undefined,
-    errors: [],
-    warnings: [],
-  };
+  const { outcome, mediaToWrite } = await runAtomically(db, async (tx) => {
+    const applied = await applyRestore(tx, extractedData, opts);
+    const planned = toImportResult(
+      actor,
+      opts.strategy,
+      { ...applied.outcome, photosImported: applied.mediaToWrite.length },
+      [],
+      backupCreated
+    );
+    // Import history entry; rolls back with the data if anything fails
+    await tx.insert(drizzleSchema.auditLogs).values({
+      id: crypto.randomUUID(),
+      userId: actor.id,
+      action: "CREATE",
+      entityType: "BACKUP_IMPORT",
+      entityId: backupCreated?.id ?? null,
+      newData: {
+        timestamp: new Date().toISOString(),
+        strategy: opts.strategy,
+        backupVersion: extractedData.metadata.version,
+        backupExportedAt: extractedData.metadata.exportedAt,
+        statistics: planned.statistics,
+        tables: planned.tables,
+        safetyBackup: backupCreated ?? null,
+      },
+    });
+    return applied;
+  });
+
+  const media = await writeMediaFiles(mediaToWrite, opts.strategy);
+  outcome.photosImported = media.written;
+
+  const result = toImportResult(
+    actor,
+    opts.strategy,
+    outcome,
+    [...extractedData.warnings, ...media.warnings],
+    backupCreated
+  );
+  log.info(
+    { userId: actor.id, strategy: opts.strategy, ...result.statistics },
+    "Backup restore complete"
+  );
+  return result;
+}
+
+/**
+ * Validate, extract and restore a backup ZIP. Failures (invalid archive,
+ * database errors) are recorded as BACKUP_IMPORT_FAILED and rethrown.
+ */
+export async function restoreBackupArchive(
+  archive: Buffer,
+  options: Partial<BackupImportOptions> & Pick<BackupImportOptions, "strategy">,
+  actor: RestoreActor,
+  db: BackupDb = drizzleDb
+): Promise<ImportResult> {
+  const opts = backupImportOptionsSchema.parse(options);
+  try {
+    const validation = await validateBackupFile(archive);
+    if (!validation.isValid) {
+      throw new BackupRestoreError(
+        `Invalid backup: ${validation.errors.join("; ")}`
+      );
+    }
+    const data = await extractBackupData(archive);
+    return await restoreFromBackup(data, opts, actor, db);
+  } catch (error) {
+    log.withErr(error).msg("Backup restore failed");
+    await recordAuditLogData(
+      {
+        userId: actor.id,
+        action: "CREATE",
+        entityType: "BACKUP_IMPORT_FAILED",
+        newData: {
+          timestamp: new Date().toISOString(),
+          strategy: opts.strategy,
+          error: error instanceof Error ? error.message : "Unknown error",
+        },
+      },
+      db
+    );
+    throw error;
+  }
 }
 
 /**
@@ -641,7 +766,7 @@ export async function createBackupExportData(
   const backupData = await gatherBackupData(options, db);
 
   const metadata: BackupMetadata = {
-    version: "1.0.0",
+    version: BACKUP_FORMAT_VERSION,
     exportedAt: new Date().toISOString(),
     exportedBy: { id: user.id, email: user.email, name: user.name || null },
     statistics: {
@@ -659,6 +784,7 @@ export async function createBackupExportData(
       "data/users.json",
       "data/suggestions.json",
       "data/settings.json",
+      ...Object.keys(backupData.genealogy),
       // createBackupArchive only writes the file when there are entries
       ...(backupData.auditLogs.length > 0 ? ["data/audit-logs.json"] : []),
     ],

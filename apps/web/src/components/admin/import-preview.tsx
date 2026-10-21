@@ -27,26 +27,33 @@ import { importBackup } from "~/server/restore";
 interface ImportPreviewProps {
   preview: ImportPreview;
   file: File;
+  /** The backup ZIP as base64 (already validated). */
+  backupData: string;
   onReset: () => void;
 }
 
-export function ImportPreview({ preview, file, onReset }: ImportPreviewProps) {
+export function ImportPreview({
+  preview,
+  file,
+  backupData,
+  onReset,
+}: ImportPreviewProps) {
   const [strategy, setStrategy] = useState<ConflictResolutionStrategy>("skip");
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
+  const [importError, setImportError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: async () => {
-      // For now, the server function doesn't accept parameters
-      // This is a placeholder - in production this would send the file and strategy
-      return importBackup();
+      return importBackup({ data: { backupData, strategy } });
     },
     onSuccess: (data: ImportResult) => {
       setImportResult(data);
+      setImportError(null);
       setIsImporting(false);
     },
     onError: (err: Error) => {
-      console.error("Import error:", err);
+      setImportError(err.message);
       setIsImporting(false);
     },
   });
@@ -82,6 +89,14 @@ export function ImportPreview({ preview, file, onReset }: ImportPreviewProps) {
               <p className="mt-1 text-sm text-green-700 dark:text-green-300">
                 Your data has been imported successfully.
               </p>
+              {importResult.backupCreated && (
+                <p className="mt-1 text-sm text-green-700 dark:text-green-300">
+                  Safety backup of the previous data:{" "}
+                  <span className="font-mono">
+                    {importResult.backupCreated}
+                  </span>
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -251,133 +266,134 @@ export function ImportPreview({ preview, file, onReset }: ImportPreviewProps) {
         </div>
       )}
 
-      {/* Conflict Resolution Strategy */}
-      {hasConflicts && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Conflict Resolution</CardTitle>
-            <CardDescription>
-              Choose how to handle data that already exists
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label
-                htmlFor="conflict-strategy"
-                className="text-sm font-medium"
-              >
-                Conflict Strategy
-              </label>
-              <Select
-                value={strategy}
-                onValueChange={(value) =>
-                  setStrategy(value as ConflictResolutionStrategy)
-                }
-              >
-                <SelectTrigger id="conflict-strategy">
-                  <SelectValue placeholder="Select a strategy" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="skip">Skip Conflicting Data</SelectItem>
-                  <SelectItem value="replace">Replace Existing Data</SelectItem>
-                  <SelectItem value="merge">Merge Existing Data</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+      {/* Restore strategy: always shown, replace matters without conflicts */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Restore Strategy</CardTitle>
+          <CardDescription>Choose how the backup is applied</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="conflict-strategy" className="text-sm font-medium">
+              Strategy
+            </label>
+            <Select
+              value={strategy}
+              onValueChange={(value) =>
+                setStrategy(value as ConflictResolutionStrategy)
+              }
+            >
+              <SelectTrigger id="conflict-strategy">
+                <SelectValue placeholder="Select a strategy" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="skip">Skip Conflicting Data</SelectItem>
+                <SelectItem value="replace">Replace Existing Data</SelectItem>
+                <SelectItem value="merge">Merge Existing Data</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="bg-muted/50 space-y-2 rounded-md p-4 text-sm">
-              <p>
-                <span className="font-semibold">Skip:</span> Keep existing data,
-                ignore conflicting items from the backup. Safest option.
-              </p>
-              <p>
-                <span className="font-semibold">Replace:</span> Overwrite
-                existing data with data from the backup. Use when the backup has
-                more recent information.
-              </p>
-              <p>
-                <span className="font-semibold">Merge:</span> Combine existing
-                and backup data. New fields are added, existing fields are
-                updated. Best for reconciling partial backups.
-              </p>
-            </div>
+          <div className="bg-muted/50 space-y-2 rounded-md p-4 text-sm">
+            <p>
+              <span className="font-semibold">Skip:</span> Add records that are
+              not in the database yet and keep existing ones as they are. Safest
+              option.
+            </p>
+            <p>
+              <span className="font-semibold">Replace:</span> Delete the family
+              tree (people, relationships, events, places, sources, media) and
+              family settings, then restore them from the backup. User accounts
+              are kept. A safety backup is saved first.
+            </p>
+            <p>
+              <span className="font-semibold">Merge:</span> Add new records and
+              overwrite existing ones with the backup&apos;s version. Nothing is
+              deleted. A safety backup is saved first.
+            </p>
+          </div>
 
-            {/* Conflicts by Type */}
-            {preview.conflicts.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium">
-                  Conflicts by Type ({preview.conflicts.length})
-                </h4>
-                <div className="space-y-2">
-                  {Object.entries(preview.statistics.conflictsByType).map(
-                    ([type, count]) => (
+          {/* Conflicts by Type */}
+          {preview.conflicts.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">
+                Conflicts by Type ({preview.conflicts.length})
+              </h4>
+              <div className="space-y-2">
+                {Object.entries(preview.statistics.conflictsByType).map(
+                  ([type, count]) => (
+                    <div
+                      key={type}
+                      className="flex items-center justify-between rounded-md border p-3"
+                    >
+                      <span className="text-sm capitalize">{type}</span>
+                      <Badge variant="secondary">{count}</Badge>
+                    </div>
+                  )
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Conflicts by Severity */}
+          {Object.keys(preview.statistics.conflictsBySeverity).length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">Conflicts by Severity</h4>
+              <div className="space-y-2">
+                {Object.entries(preview.statistics.conflictsBySeverity).map(
+                  ([severity, count]) => {
+                    const severityColors = {
+                      low: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
+                      medium:
+                        "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
+                      high: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
+                    };
+                    return (
                       <div
-                        key={type}
+                        key={severity}
                         className="flex items-center justify-between rounded-md border p-3"
                       >
-                        <span className="text-sm capitalize">{type}</span>
-                        <Badge variant="secondary">{count}</Badge>
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Conflicts by Severity */}
-            {Object.keys(preview.statistics.conflictsBySeverity).length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium">Conflicts by Severity</h4>
-                <div className="space-y-2">
-                  {Object.entries(preview.statistics.conflictsBySeverity).map(
-                    ([severity, count]) => {
-                      const severityColors = {
-                        low: "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
-                        medium:
-                          "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
-                        high: "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-200",
-                      };
-                      return (
-                        <div
-                          key={severity}
-                          className="flex items-center justify-between rounded-md border p-3"
+                        <span className="text-sm capitalize">{severity}</span>
+                        <span
+                          className={`rounded-full px-2 py-1 text-xs font-medium ${
+                            severityColors[
+                              severity as keyof typeof severityColors
+                            ]
+                          }`}
                         >
-                          <span className="text-sm capitalize">{severity}</span>
-                          <span
-                            className={`rounded-full px-2 py-1 text-xs font-medium ${
-                              severityColors[
-                                severity as keyof typeof severityColors
-                              ]
-                            }`}
-                          >
-                            {count}
-                          </span>
-                        </div>
-                      );
-                    }
-                  )}
-                </div>
+                          {count}
+                        </span>
+                      </div>
+                    );
+                  }
+                )}
               </div>
-            )}
+            </div>
+          )}
 
-            {/* Sample Conflicts */}
-            {preview.conflicts.length > 0 && (
-              <div className="space-y-3">
-                <h4 className="text-sm font-medium">Sample Conflicts</h4>
-                <div className="bg-muted/30 max-h-60 space-y-2 overflow-auto rounded-md p-3">
-                  {preview.conflicts.slice(0, 10).map((conflict, i) => (
-                    <ConflictItem key={i} conflict={conflict} />
-                  ))}
-                  {preview.conflicts.length > 10 && (
-                    <p className="text-muted-foreground text-xs italic">
-                      ... and {preview.conflicts.length - 10} more
-                    </p>
-                  )}
-                </div>
+          {/* Sample Conflicts */}
+          {preview.conflicts.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">Sample Conflicts</h4>
+              <div className="bg-muted/30 max-h-60 space-y-2 overflow-auto rounded-md p-3">
+                {preview.conflicts.slice(0, 10).map((conflict, i) => (
+                  <ConflictItem key={i} conflict={conflict} />
+                ))}
+                {preview.conflicts.length > 10 && (
+                  <p className="text-muted-foreground text-xs italic">
+                    ... and {preview.conflicts.length - 10} more
+                  </p>
+                )}
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {importError && (
+        <div className="bg-destructive/10 text-destructive rounded-md p-3 text-sm">
+          Import failed; nothing was changed. {importError}
+        </div>
       )}
 
       {/* Action Buttons */}
