@@ -15,6 +15,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@vamsa/api", () => ({
   drizzleDb: {},
   drizzleSchema: {},
+  getDbDriver: () => "sqlite",
   emailService: {
     sendEmail: vi.fn(),
   },
@@ -46,6 +47,84 @@ vi.mock("better-auth/plugins", () => ({
   bearer: vi.fn(() => ({ id: "bearer" })),
   genericOAuth: vi.fn(() => ({ id: "genericOAuth" })),
 }));
+
+const { mockRevokeAllSafe } = vi.hoisted(() => ({
+  mockRevokeAllSafe: vi.fn(async () => {}),
+}));
+
+vi.mock("./api-tokens", () => ({
+  revokeAllUserApiTokensSafe: mockRevokeAllSafe,
+  revokeTokensOnPasswordWrite: vi.fn(async () => false),
+}));
+
+type ResetOptions = {
+  sendResetPassword: (data: {
+    user: { id: string; email: string };
+    url: string;
+    token: string;
+  }) => Promise<void>;
+  onPasswordReset: (data: { user: { id: string } }) => Promise<void>;
+  resetPasswordTokenExpiresIn: number;
+  revokeSessionsOnPasswordReset: boolean;
+};
+
+describe("password reset configuration", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  async function getOptions() {
+    vi.resetModules();
+    const { auth } = await import("./auth-better");
+    return auth as unknown as {
+      emailAndPassword: ResetOptions;
+      forgetPassword?: unknown;
+      rateLimit: { customRules: Record<string, { max: number }> };
+    };
+  }
+
+  it("lives under emailAndPassword, where Better Auth reads it", async () => {
+    const options = await getOptions();
+    expect(options.forgetPassword).toBeUndefined();
+    expect(typeof options.emailAndPassword.sendResetPassword).toBe("function");
+    expect(options.emailAndPassword.resetPasswordTokenExpiresIn).toBe(3600);
+    expect(options.emailAndPassword.revokeSessionsOnPasswordReset).toBe(true);
+  });
+
+  it("sends the reset email through the email service", async () => {
+    const options = await getOptions();
+    const { emailService, createPasswordResetEmail } =
+      await import("@vamsa/api");
+    const url = "http://localhost:3000/api/auth/reset-password/abc";
+
+    await options.emailAndPassword.sendResetPassword({
+      user: { id: "user-1", email: "a@example.com" },
+      url,
+      token: "abc",
+    });
+
+    expect(createPasswordResetEmail).toHaveBeenCalledWith(url);
+    expect(emailService.sendEmail).toHaveBeenCalledWith(
+      "a@example.com",
+      expect.objectContaining({ subject: "Reset Password" }),
+      "password_reset",
+      "user-1"
+    );
+  });
+
+  it("revokes the user's API tokens after a reset", async () => {
+    const options = await getOptions();
+    await options.emailAndPassword.onPasswordReset({ user: { id: "user-1" } });
+    expect(mockRevokeAllSafe).toHaveBeenCalledWith("user-1", "password reset");
+  });
+
+  it("rate limits the forgot-password endpoint", async () => {
+    const options = await getOptions();
+    expect(
+      options.rateLimit.customRules["/request-password-reset"].max
+    ).toBeLessThanOrEqual(3);
+  });
+});
 
 describe("auth-better configuration", () => {
   beforeEach(() => {
