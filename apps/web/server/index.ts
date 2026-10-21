@@ -93,6 +93,14 @@ function validateSecurityCredentials() {
     else warnings.push(msg);
   }
 
+  // API_TOKEN_SECRET keys PAT hashes; falls back to BETTER_AUTH_SECRET
+  const apiTokenSecret = process.env.API_TOKEN_SECRET;
+  if (apiTokenSecret && apiTokenSecret.length < 32) {
+    requireInProduction(
+      `API_TOKEN_SECRET is too short (${apiTokenSecret.length} chars, need 32+)`
+    );
+  }
+
   // Check DATABASE_URL has non-default password
   const dbUrl = process.env.DATABASE_URL;
   if (dbUrl) {
