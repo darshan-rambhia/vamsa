@@ -479,8 +479,11 @@ Disallow: /
   // Sign up: 3 attempts per hour
   app.use("/api/auth/sign-up/*", rateLimitMiddleware("register"));
 
-  // Forget password: 3 attempts per hour
-  app.use("/api/auth/forget-password/*", rateLimitMiddleware("passwordReset"));
+  // Forgot password (request reset email): 3 attempts per hour
+  app.use(
+    "/api/auth/request-password-reset",
+    rateLimitMiddleware("passwordReset")
+  );
 
   // Per-account lockout after repeated failed sign-ins (only acts on sign-in/email)
   app.use("/api/auth/sign-in/*", accountLockoutMiddleware);

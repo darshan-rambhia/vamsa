@@ -30,8 +30,8 @@ function ForgotPasswordComponent() {
     setIsLoading(true);
 
     try {
-      // Call Better Auth forget-password endpoint directly
-      const response = await fetch("/api/auth/forget-password", {
+      // Better Auth request-password-reset endpoint
+      const response = await fetch("/api/auth/request-password-reset", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

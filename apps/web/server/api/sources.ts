@@ -1,4 +1,4 @@
-import { OpenAPIHono, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import {
   citationFormatEnum,
   confidenceEnum,
@@ -14,7 +14,13 @@ import {
   listSourcesData,
   updateSourceData,
 } from "@vamsa/lib/server/business";
-import { idParam, jsonBody, jsonRoute, respond } from "./route-helpers";
+import {
+  createRouter,
+  idParam,
+  jsonBody,
+  jsonRoute,
+  respond,
+} from "./route-helpers";
 
 const TAG = "Sources";
 
@@ -32,7 +38,7 @@ const accessDate = z
 const createBody = sourceCreateSchema.extend({ accessDate });
 const updateBody = sourceUpdateSchema.omit({ id: true }).extend({ accessDate });
 
-const sourcesRouter = new OpenAPIHono();
+const sourcesRouter = createRouter();
 
 sourcesRouter.openapi(
   jsonRoute({

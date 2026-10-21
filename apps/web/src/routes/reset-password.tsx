@@ -46,7 +46,7 @@ function ResetPasswordComponent() {
     setIsLoading(true);
 
     // Client-side validation
-    if (newPassword.length < 8) {
+    if (newPassword.length < 12) {
       setError(t("passwordMinLength"));
       setIsLoading(false);
       return;
@@ -179,7 +179,7 @@ function ResetPasswordComponent() {
                         type="password"
                         autoComplete="new-password"
                         required
-                        minLength={8}
+                        minLength={12}
                         value={newPassword}
                         onChange={(e) => setNewPassword(e.target.value)}
                         placeholder="Enter new password"

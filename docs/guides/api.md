@@ -597,7 +597,7 @@ The API implements comprehensive rate limiting to protect against abuse and ensu
 |----------|---------------|----------------|-------|
 | `POST /api/auth/sign-in/*` | 5 attempts | 60 seconds | Per IP address |
 | `POST /api/auth/sign-up/*` | 3 attempts | 1 hour | Per IP address |
-| `POST /api/auth/forget-password/*` | 3 attempts | 1 hour | Per IP address |
+| `POST /api/auth/request-password-reset` | 3 attempts | 1 hour | Per IP address |
 | `GET /api/v1/*` (search) | 30 requests | 60 seconds | Per user/IP |
 | `GET /api/v1/*` (general) | 100 requests | 60 seconds | Per user/IP |
 | All `/api/v1/*` routes | 100 requests | 60 seconds | Per authenticated user or IP |

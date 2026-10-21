@@ -140,6 +140,34 @@ export const auth = betterAuth({
     disableSignUp: !isSelfSignupEnabled(),
     minPasswordLength: 12,
     requireEmailVerification: process.env.NODE_ENV !== "test",
+    // Forgot-password flow: POST /request-password-reset, then
+    // POST /reset-password. Better Auth only reads these from emailAndPassword.
+    // Unknown emails get the same response as known ones (no enumeration).
+    sendResetPassword: async ({ user, url }) => {
+      const { emailService, createPasswordResetEmail } =
+        await import("@vamsa/api");
+
+      // Log reset URL in development for easy testing
+      if (process.env.NODE_ENV === "development") {
+        const { loggers } = await import("@vamsa/lib/logger");
+        loggers.api.info(
+          { url, email: user.email },
+          "Password reset URL (dev mode)"
+        );
+      }
+
+      // Fire-and-forget to prevent timing attacks. The URL is not stored in
+      // email_logs metadata because it carries a live token.
+      void emailService.sendEmail(
+        user.email,
+        createPasswordResetEmail(url),
+        "password_reset",
+        user.id
+      );
+    },
+    resetPasswordTokenExpiresIn: 60 * 60, // 1 hour
+    // Sign the user out everywhere once the password is reset
+    revokeSessionsOnPasswordReset: true,
     // Forgot-password reset updates accounts in bulk (the account hook below
     // gets no user id there), so revoke personal access tokens here
     onPasswordReset: async ({ user }: { user: { id: string } }) => {
@@ -170,6 +198,15 @@ export const auth = betterAuth({
           await revokeTokensOnPasswordWrite(account, context?.path);
         },
       },
+    },
+  },
+
+  // Better Auth's own limiter (on in production by default). The Hono app also
+  // limits /api/auth/request-password-reset per IP.
+  rateLimit: {
+    customRules: {
+      "/request-password-reset": { window: 60 * 60, max: 3 },
+      "/reset-password": { window: 60, max: 5 },
     },
   },
 
@@ -206,39 +243,6 @@ export const auth = betterAuth({
         user.email,
         template,
         "email_verification",
-        user.id
-      );
-    },
-  },
-
-  // Password reset configuration
-  forgetPassword: {
-    sendResetPassword: async ({
-      user,
-      url,
-    }: {
-      user: { id: string; email: string; name?: string };
-      url: string;
-    }) => {
-      const { emailService, createPasswordResetEmail } =
-        await import("@vamsa/api");
-
-      const template = createPasswordResetEmail(url);
-
-      // Log reset URL in development for easy testing
-      if (process.env.NODE_ENV === "development") {
-        const { loggers } = await import("@vamsa/lib/logger");
-        loggers.api.info(
-          { url, email: user.email },
-          "Password reset URL (dev mode)"
-        );
-      }
-
-      // Fire-and-forget to prevent timing attacks
-      void emailService.sendEmail(
-        user.email,
-        template,
-        "password_reset",
         user.id
       );
     },

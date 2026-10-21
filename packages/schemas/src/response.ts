@@ -8,6 +8,16 @@ export const errorResponseSchema = z
   .object({
     error: z.string(),
     details: z.string().optional(),
+    /** Per-field problems, present on request validation failures */
+    issues: z
+      .array(
+        z.object({
+          path: z.string(),
+          message: z.string(),
+          code: z.string(),
+        })
+      )
+      .optional(),
   })
   .openapi({
     description: "Error response",

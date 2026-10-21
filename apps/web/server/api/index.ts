@@ -1,5 +1,4 @@
 import { bodyLimit } from "hono/body-limit";
-import { OpenAPIHono } from "@hono/zod-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
 import { loggers } from "@vamsa/lib/logger";
 import {
@@ -7,6 +6,7 @@ import {
   requireApiAuthForMethod,
 } from "../middleware/require-api-auth";
 import { rateLimitMiddleware } from "../../src/server/middleware/hono-rate-limiter";
+import { createRouter } from "./route-helpers";
 import authRouter from "./auth";
 import personsRouter from "./persons";
 import relationshipsRouter from "./relationships";
@@ -39,7 +39,7 @@ const ENABLE_DOCS = process.env.ENABLE_API_DOCS === "true" || !IS_PRODUCTION;
  * - Metrics and monitoring
  */
 
-const apiV1 = new OpenAPIHono();
+const apiV1 = createRouter();
 
 // ============================================
 // Documentation Routes (disabled in production by default)

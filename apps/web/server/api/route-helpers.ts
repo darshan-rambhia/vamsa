@@ -5,7 +5,7 @@
  * `respond` turns those into HTTP statuses so each handler stays one line.
  */
 
-import { createRoute, z } from "@hono/zod-openapi";
+import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
 import { loggers } from "@vamsa/lib/logger";
 import {
@@ -14,7 +14,7 @@ import {
   ValidationError,
 } from "@vamsa/lib/server/business/errors";
 import type { RouteConfig } from "@hono/zod-openapi";
-import type { Context } from "hono";
+import type { Context, Env } from "hono";
 import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 const log = loggers.api;
@@ -149,10 +149,46 @@ export async function respond(
       log.withErr(err).msg(`Unhandled error in ${c.req.method} ${c.req.path}`);
       return c.json({ error: "Internal server error" }, 500) as never;
     }
-    const message =
-      err instanceof z.ZodError
-        ? (err.issues[0]?.message ?? "Validation error")
-        : (err as Error).message;
-    return c.json({ error: message }, code) as never;
+    if (err instanceof z.ZodError) {
+      return c.json(validationErrorBody(err), 400) as never;
+    }
+    return c.json({ error: (err as Error).message }, code) as never;
   }
+}
+
+/**
+ * 400 body for a zod failure. Only path/message/code per issue so no input
+ * values or schema internals reach the client.
+ */
+export function validationErrorBody(err: z.ZodError) {
+  const issues = err.issues.map((i) => ({
+    path: i.path.map(String).join("."),
+    message: i.message,
+    code: String(i.code),
+  }));
+  return {
+    error: "Validation error",
+    details: issues[0]?.message ?? "Invalid request",
+    issues,
+  };
+}
+
+/** defaultHook: request validation failures -> 400 validationErrorBody. */
+export function validationHook(
+  result: { success: true } | { success: false; error: z.ZodError },
+  c: Context
+) {
+  if (!result.success) {
+    return c.json(validationErrorBody(result.error), 400);
+  }
+  return undefined;
+}
+
+/**
+ * OpenAPIHono with the shared validation hook. defaultHook is per instance
+ * (a parent's hook does not reach routes on a mounted sub-router), so every
+ * router must be created through this.
+ */
+export function createRouter<TEnv extends Env = Env>() {
+  return new OpenAPIHono<TEnv>({ defaultHook: validationHook });
 }

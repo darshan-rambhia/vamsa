@@ -2,7 +2,7 @@
  * /api/v1/admin backups and audit log. Mounted under the ADMIN guard.
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import { backupExportSchema, errorResponseSchema } from "@vamsa/schemas";
 import {
   AUDIT_ACTIONS,
@@ -16,7 +16,12 @@ import {
   validateBackupFile,
 } from "@vamsa/lib/server/business";
 import { loggers } from "@vamsa/lib/logger";
-import { jsonRoute, respond } from "./route-helpers";
+import {
+  createRouter,
+  jsonRoute,
+  respond,
+  validationErrorBody,
+} from "./route-helpers";
 import type { Context } from "hono";
 
 const BACKUPS = "Admin: Backups";
@@ -25,7 +30,7 @@ const AUDIT = "Admin: Audit";
 export const MAX_BACKUP_BYTES = 200 * 1024 * 1024;
 
 const log = loggers.api;
-const router = new OpenAPIHono();
+const router = createRouter();
 
 const err = (description: string) => ({
   description,
@@ -102,10 +107,7 @@ router.openapi(
     }
     const parsed = backupExportSchema.safeParse(body);
     if (!parsed.success) {
-      return c.json(
-        { error: parsed.error.issues[0]?.message ?? "Validation error" },
-        400
-      );
+      return c.json(validationErrorBody(parsed.error), 400);
     }
     const user = c.get("user");
     const { zipBase64, filename, metadata } = await createBackupExportData(

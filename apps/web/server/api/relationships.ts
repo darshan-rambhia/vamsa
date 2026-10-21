@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unnecessary-type-assertion */
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import {
   cursorPaginatedResponseSchema,
   errorResponseSchema,
@@ -13,10 +13,11 @@ import {
 } from "@vamsa/lib/server/business";
 import { loggers } from "@vamsa/lib/logger";
 import { paginateQuery } from "@vamsa/lib/server";
+import { createRouter, validationErrorBody } from "./route-helpers";
 
 const log = loggers.api;
 
-const relationshipsRouter = new OpenAPIHono();
+const relationshipsRouter = createRouter();
 
 // Response schema for relationship
 const relationshipSchema = z
@@ -249,13 +250,7 @@ relationshipsRouter.openapi(createRelationshipRoute, async (c) => {
     return c.json(result, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return c.json(
-        {
-          error: "Validation error",
-          details: error.issues[0]?.message,
-        },
-        { status: 400 }
-      ) as any;
+      return c.json(validationErrorBody(error), { status: 400 }) as any;
     }
 
     if (error instanceof Error) {
@@ -479,13 +474,7 @@ relationshipsRouter.openapi(updateRelationshipRoute, async (c) => {
     return c.json(result, { status: 200 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return c.json(
-        {
-          error: "Validation error",
-          details: error.issues[0]?.message,
-        },
-        { status: 400 }
-      ) as any;
+      return c.json(validationErrorBody(error), { status: 400 }) as any;
     }
 
     if (error instanceof Error && error.message.includes("not found")) {
