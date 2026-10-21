@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { group, leaf } from "../lib/command";
-import { YES_FLAG } from "../lib/confirm";
+import { YES_FLAG, confirmDestructive } from "../lib/confirm";
 import { intFlag, str } from "../lib/context";
 import { CliError, EXIT_ERROR, usageError } from "../lib/errors";
 import { resolvePath, size, writeOutput } from "../lib/files";
@@ -196,16 +196,42 @@ const validate = leaf({
 
 const preview = leaf({
   name: "preview",
-  description: "Show existing data a restore would affect",
-  handler: async (ctx) => {
+  description:
+    "Show what restoring a backup would change (or existing counts without a file)",
+  args: {
+    file: { type: "positional", required: false, description: "Backup .zip" },
+  },
+  handler: async (ctx, args) => {
     ctx.requireAuth();
-    const { data } = await ctx.api.request<{ statistics?: Row }>(
-      "GET",
-      "/admin/backups/preview"
-    );
+    const file = str(args.file);
+    if (!file) {
+      const { data } = await ctx.api.request<{ statistics?: Row }>(
+        "GET",
+        "/admin/backups/preview"
+      );
+      ctx.print({
+        existing: (data.statistics?.existingItems as Row | undefined) ?? {},
+        help: ["vamsa admin backup preview <file>"],
+      });
+      return;
+    }
+    const { data } = await ctx.api.request<{
+      tables?: Record<string, Row>;
+      statistics?: Row;
+    }>("POST", "/admin/backups/preview", {
+      raw: readZipFile(ctx, file),
+      contentType: "application/zip",
+    });
+    const tables = Object.entries(data.tables ?? {}).map(([table, c]) => ({
+      table,
+      ...c,
+    }));
     ctx.print({
-      existing: (data.statistics?.existingItems as Row | undefined) ?? {},
-      help: ["vamsa admin backup restore <file> --strategy skip"],
+      preview: tables,
+      help: [
+        `vamsa admin backup restore ${file} --strategy skip`,
+        `vamsa admin backup restore ${file} --strategy replace`,
+      ],
     });
   },
 });
@@ -217,21 +243,71 @@ const restore = leaf({
     file: { type: "positional", required: true, description: "Backup .zip" },
     strategy: {
       type: "string",
-      description: "On conflict: skip (default), replace or merge",
+      description:
+        "skip (add new rows), merge (also overwrite existing), replace (wipe tree first)",
       valueHint: "skip|replace|merge",
+    },
+    "pre-backup": {
+      type: "boolean",
+      description:
+        "Save a server-side safety backup first for merge/replace (--no-pre-backup to skip)",
+    },
+    photos: {
+      type: "boolean",
+      description: "Restore media files (--no-photos to skip)",
+    },
+    audit: {
+      type: "boolean",
+      description: "Also import the backup's audit log entries",
     },
     ...YES_FLAG,
   },
-  handler: async (_ctx, args) => {
-    // The server validates uploads and then answers 501: the restore
-    // pipeline is not implemented. Fail here instead of prompting and
-    // uploading a large file just to be told that.
-    enumFlag(args, "strategy", STRATEGIES);
-    throw new CliError(
-      "not_implemented",
-      "Restoring a backup is not available through the API yet",
-      `vamsa admin backup validate ${args.file}  (checks the file without restoring)`
-    );
+  handler: async (ctx, args) => {
+    ctx.requireAuth();
+    const strategy = (
+      enumFlag(args, "strategy", STRATEGIES) ?? "SKIP"
+    ).toLowerCase();
+    const bytes = readZipFile(ctx, args.file);
+    const retry = `vamsa admin backup restore ${args.file} --strategy ${strategy}`;
+    if (strategy !== "skip") {
+      await confirmDestructive(
+        ctx,
+        strategy === "replace"
+          ? `Replace the family tree with ${args.file}`
+          : `Overwrite existing records from ${args.file}`,
+        retry
+      );
+    }
+    const { data } = await ctx.api.request<{
+      statistics: Row;
+      tables?: Record<string, Row>;
+      backupCreated?: string;
+      backupCreatedId?: string;
+      warnings: Array<string>;
+    }>("POST", "/admin/backups/restore", {
+      raw: bytes,
+      contentType: "application/zip",
+      query: {
+        strategy,
+        preBackup: args["pre-backup"] === false ? "false" : undefined,
+        photos: args.photos === false ? "false" : undefined,
+        auditLogs: args.audit ? "true" : undefined,
+      },
+    });
+    ctx.print({
+      restore: {
+        file: args.file,
+        strategy,
+        safetyBackup: data.backupCreated ?? null,
+        photos: data.statistics.photosImported ?? 0,
+      },
+      tables: Object.entries(data.tables ?? {}).map(([table, c]) => ({
+        table,
+        ...c,
+      })),
+      ...(data.warnings.length ? { warnings: data.warnings } : {}),
+      help: ["vamsa admin backup imports", "vamsa person list"],
+    });
   },
 });
 

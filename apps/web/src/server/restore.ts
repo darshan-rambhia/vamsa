@@ -8,7 +8,6 @@ import {
 } from "@vamsa/lib/server/business";
 import { requireAuth } from "./middleware/require-auth";
 import type {
-  ConflictResolutionStrategy,
   ImportPreview,
   ImportResult,
   ValidationResult,
@@ -17,52 +16,59 @@ import type {
 // Re-export types for use by components
 export type { ValidationResult, ImportResult, ImportPreview };
 
-// Input validation schemas
-const conflictStrategySchema = z.enum(["skip", "merge", "replace"] as const);
+/** Largest accepted backup upload, matching the REST API. */
+const MAX_BACKUP_BYTES = 200 * 1024 * 1024;
 
-const importOptionsSchema = z.object({
-  strategy: conflictStrategySchema
-    .optional()
-    .default("skip" as ConflictResolutionStrategy),
+/** The backup ZIP, base64-encoded by the browser. */
+const archiveSchema = z.object({
+  backupData: z
+    .string()
+    .min(1, "Choose a backup file")
+    .max(Math.ceil((MAX_BACKUP_BYTES * 4) / 3) + 4, "Backup file too large"),
 });
+
+const importOptionsSchema = archiveSchema.extend({
+  strategy: z.enum(["skip", "merge", "replace"]).default("skip"),
+  createBackupBeforeImport: z.boolean().default(true),
+});
+
+const toBuffer = (b64: string) => Buffer.from(b64, "base64");
 
 /**
  * Server function: Validate a backup ZIP file without importing
- * @returns Validation result with metadata about the backup
  * @requires ADMIN role
  */
-export const validateBackup = createServerFn({ method: "POST" }).handler(
-  async (): Promise<ValidationResult> => {
+export const validateBackup = createServerFn({ method: "POST" })
+  .validator((data: unknown) => archiveSchema.parse(data))
+  .handler(async ({ data }): Promise<ValidationResult> => {
     const user = await requireAuth("ADMIN");
-    return validateBackupData(user);
-  }
-);
+    return validateBackupData(user, toBuffer(data.backupData));
+  });
 
 /**
- * Server function: Preview what would be imported from a backup
- * @returns Import preview with existing data counts
+ * Server function: Preview what restoring a backup would do (per-table new,
+ * existing and changed rows)
  * @requires ADMIN role
  */
-export const previewImport = createServerFn({ method: "POST" }).handler(
-  async (): Promise<ImportPreview> => {
+export const previewImport = createServerFn({ method: "POST" })
+  .validator((data: unknown) => archiveSchema.parse(data))
+  .handler(async ({ data }): Promise<ImportPreview> => {
     const user = await requireAuth("ADMIN");
-    return previewImportData(user);
-  }
-);
+    return previewImportData(user, toBuffer(data.backupData));
+  });
 
 /**
- * Server function: Execute import with conflict resolution
- * @param strategy - Conflict resolution strategy (skip, merge, replace)
- * @returns Import result with statistics
+ * Server function: Restore a backup with the chosen strategy
  * @requires ADMIN role
  */
 export const importBackup = createServerFn({ method: "POST" })
-  .validator((data: unknown) => {
-    return importOptionsSchema.parse(data);
-  })
+  .validator((data: unknown) => importOptionsSchema.parse(data))
   .handler(async ({ data }): Promise<ImportResult> => {
     const user = await requireAuth("ADMIN");
-    return importBackupData(user, data.strategy);
+    return importBackupData(user, toBuffer(data.backupData), {
+      strategy: data.strategy,
+      createBackupBeforeImport: data.createBackupBeforeImport,
+    });
   });
 
 /**

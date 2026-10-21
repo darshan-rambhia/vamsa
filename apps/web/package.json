@@ -94,6 +94,7 @@
     "@types/rss": "^0.0.32",
     "@vitejs/plugin-react": "^6.0.0",
     "axe-core": "4.14.0",
+    "fflate": "0.8.3",
     "rollup-plugin-visualizer": "7.1.1",
     "tailwindcss": "^4.1.18",
     "tailwindcss-animate": "^1.0.7",

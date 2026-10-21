@@ -85,19 +85,51 @@ describe("admin backup", () => {
     });
   });
 
-  it("restore fails fast with not_implemented: no prompt, no upload", async () => {
+  it("restore uploads the ZIP and prints per-table counts", async () => {
     writeFileSync(join(home, "b.zip"), Buffer.from([1]));
-    const fetch = api(() => json({}));
-    const r = await runCli(
-      ["admin", "backup", "restore", "b.zip", "--strategy", "replace"],
-      { home, fetch, interactive: true }
+    const fetch = api(() =>
+      json({
+        statistics: { photosImported: 2 },
+        tables: { people: { inserted: 3, updated: 0, skipped: 1, deleted: 4 } },
+        backupCreated: "/srv/data/backups/pre-restore-x.zip",
+        warnings: [],
+      })
     );
-    expect(r.code).toBe(1);
+    const r = await runCli(
+      ["admin", "backup", "restore", "b.zip", "--strategy", "replace", "--yes"],
+      { home, fetch }
+    );
+    expect(r.code).toBe(0);
+    const url = new URL(String(fetch.mock.calls[0][0]));
+    expect(url.pathname).toBe("/api/v1/admin/backups/restore");
+    expect(url.searchParams.get("strategy")).toBe("replace");
+    expect(decode(r.stdout)).toMatchObject({
+      restore: {
+        strategy: "replace",
+        safetyBackup: "/srv/data/backups/pre-restore-x.zip",
+        photos: 2,
+      },
+      tables: [{ table: "people", inserted: 3, deleted: 4 }],
+    });
+  });
+
+  it("restore replace/merge needs --yes off a TTY; skip does not", async () => {
+    writeFileSync(join(home, "b.zip"), Buffer.from([1]));
+    const fetch = api(() => json({ statistics: {}, warnings: [] }));
+    const r = await runCli(
+      ["admin", "backup", "restore", "b.zip", "--strategy", "merge"],
+      { home, fetch }
+    );
+    expect(r.code).toBe(2);
     expect(fetch).not.toHaveBeenCalled();
     expect(decode(r.stdout)).toMatchObject({
-      error: { code: "not_implemented" },
+      error: { code: "confirmation_required" },
     });
-    // A bad strategy is still a usage error
+    const skip = await runCli(["admin", "backup", "restore", "b.zip"], {
+      home,
+      fetch,
+    });
+    expect(skip.code).toBe(0);
     const bad = await runCli(
       ["admin", "backup", "restore", "b.zip", "--strategy", "nuke"],
       { home, fetch }

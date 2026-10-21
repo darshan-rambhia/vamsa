@@ -25,6 +25,12 @@ const m = vi.hoisted(() => ({
     })
   ),
   listAuditLogsData: vi.fn(async () => ({ items: [], total: 0 })),
+  restoreBackupArchive: vi.fn(
+    async (..._a: Array<unknown>): Promise<Record<string, unknown>> => ({
+      success: true,
+      strategy: "merge",
+    })
+  ),
 }));
 
 vi.mock("@vamsa/lib/server/business/auth-better-api", () => ({
@@ -130,27 +136,51 @@ describe("backups", () => {
     ).toBe(400);
   });
 
-  test("restore validates, then answers 501 (pipeline not implemented)", async () => {
+  test("restore passes strategy and flags, returns the import result", async () => {
     const res = await apiV1.request(
-      "/admin/backups/restore?strategy=merge",
+      "/admin/backups/restore?strategy=merge&preBackup=false&auditLogs=true",
       zipBody(new Uint8Array([1]))
     );
-    expect(res.status).toBe(501);
-    expect((await res.json()).details).toContain("strategy merge");
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      success: true,
+      strategy: "merge",
+    });
+    expect(m.restoreBackupArchive).toHaveBeenCalledWith(
+      expect.any(Buffer),
+      {
+        strategy: "merge",
+        createBackupBeforeImport: false,
+        importPhotos: true,
+        importAuditLogs: true,
+      },
+      { id: "admin-1", email: "a@example.com", name: "A" }
+    );
   });
 
   test("restore of an invalid backup is 400 with the reasons", async () => {
-    m.validateBackupFile.mockResolvedValueOnce({
-      isValid: false,
-      errors: ["Not a valid ZIP archive"],
-      warnings: [],
-    });
+    const { BackupRestoreError } = await import("@vamsa/lib/server/business");
+    m.restoreBackupArchive.mockRejectedValueOnce(
+      new BackupRestoreError("Backup contains unsafe file paths: ../x")
+    );
     const res = await apiV1.request(
       "/admin/backups/restore",
       zipBody(new Uint8Array([1]))
     );
     expect(res.status).toBe(400);
-    expect((await res.json()).details).toBe("Not a valid ZIP archive");
+    expect((await res.json()).details).toContain("unsafe file paths");
+  });
+
+  test("restore database failure is 500, nothing changed", async () => {
+    m.restoreBackupArchive.mockRejectedValueOnce(new Error("disk full"));
+    const res = await apiV1.request(
+      "/admin/backups/restore?strategy=replace",
+      zipBody(new Uint8Array([1]))
+    );
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toBe(
+      "Restore failed; nothing was changed"
+    );
   });
 
   test("list and import history", async () => {

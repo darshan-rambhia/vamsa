@@ -240,6 +240,8 @@ const mockDrizzleSchema = {
   placePersonLinks: createMockTable(),
   eventSources: createMockTable(),
   eventParticipants: createMockTable(),
+  personMedias: createMockTable(),
+  eventMedias: createMockTable(),
 };
 
 // Mock @vamsa/api to prevent real database initialization

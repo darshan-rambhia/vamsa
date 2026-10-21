@@ -16,27 +16,27 @@ import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
 import { eq } from "drizzle-orm";
 import {
   backupExportSchema,
+  backupImportOptionsSchema,
   backupSettingsSchema,
   listBackupsInputSchema,
 } from "@vamsa/schemas";
 import { loggers } from "@vamsa/lib/logger";
 import {
   createBackupExportData,
-  extractBackupData,
   listBackupsData,
   recordAuditLogData,
-  restoreFromBackup,
+  restoreBackupArchive,
   scheduleBackupJob,
-  validateBackupFile,
 } from "@vamsa/lib/server/business";
+import { z } from "zod";
 import { requireAuth } from "./middleware/require-auth";
 import type {
   BackupExportInput,
+  BackupImportOptions,
   BackupMetadata,
   BackupSettings,
   ListBackupsInput,
 } from "@vamsa/schemas";
-import type { z } from "zod";
 
 const log = loggers.db;
 
@@ -236,49 +236,23 @@ export const deleteBackup = createServerFn({ method: "POST" })
 /**
  * Import backup server function
  *
- * Imports backup data into the database.
- * Validates backup file and applies conflict resolution strategy.
- * Creates pre-import backup if requested.
- * Records restore audit trail.
+ * Validates and restores a base64 backup ZIP in one transaction (see
+ * restoreBackupArchive). Creates a safety backup first if requested.
  *
  * Admin-only endpoint.
  */
 export const importBackup = createServerFn({ method: "POST" })
-  .validator(
-    (data: {
-      backupData: string;
-      options: z.infer<typeof backupSettingsSchema>;
-    }) => data
-  )
+  .validator((data: { backupData: string; options: BackupImportOptions }) => ({
+    backupData: z.string().min(1).parse(data.backupData),
+    options: backupImportOptionsSchema.parse(data.options),
+  }))
   .handler(async ({ data }) => {
     const user = await requireAuth("ADMIN");
-
-    // Convert base64 to buffer
-    const backupBuffer = Buffer.from(data.backupData, "base64");
-
-    // Validate backup file
-    const validationResult = await validateBackupFile(backupBuffer);
-
-    if (!validationResult.isValid) {
-      throw new Error("Backup file validation failed");
-    }
-
-    // Extract backup data
-    const extractedData = await extractBackupData(backupBuffer);
-
-    // Restore from backup
-    const importResult = await restoreFromBackup(
-      extractedData,
-      {
-        strategy: "replace",
-        createBackupBeforeImport: true,
-        importPhotos: true,
-        importAuditLogs: false,
-      },
-      user.id
+    return restoreBackupArchive(
+      Buffer.from(data.backupData, "base64"),
+      data.options,
+      { id: user.id, email: user.email, name: user.name || null }
     );
-
-    return importResult;
   });
 
 /**
