@@ -169,6 +169,7 @@ apiV1.use("/batch/*", requireApiAuth("MEMBER"));
 apiV1.use("/metrics/*", requireApiAuth("ADMIN"));
 // Own tokens only; the create handler caps the scope at the caller's role
 apiV1.use("/tokens/*", requireApiAuth("VIEWER"));
+apiV1.use("/auth/me", requireApiAuth("VIEWER"));
 
 // Rate limit the REST auth endpoints (brute-force and signup spam)
 apiV1.use("/auth/login", rateLimitMiddleware("login"));

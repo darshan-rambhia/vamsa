@@ -28,12 +28,18 @@ export const cursorPaginatedResponseSchema = <T extends z.ZodType>(
     items: z.array(itemSchema),
     nextCursor: z.string().nullable(),
     hasMore: z.boolean(),
+    total: z
+      .number()
+      .int()
+      .optional()
+      .describe("Total matching items across all pages"),
   });
 
 export type CursorPaginatedResponse<T> = {
   items: Array<T>;
   nextCursor: string | null;
   hasMore: boolean;
+  total?: number;
 };
 
 /**

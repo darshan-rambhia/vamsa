@@ -131,6 +131,8 @@ function unitVitestCommand(coverage: boolean, passthrough: string[]): string[] {
     "lib",
     "--project",
     "ui",
+    "--project",
+    "cli",
   ];
 
   if (coverage) base.push("--coverage");

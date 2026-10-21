@@ -165,6 +165,7 @@ relationshipsRouter.openapi(listRelationshipsRoute, async (c) => {
         items: [],
         nextCursor: null,
         hasMore: false,
+        total: 0,
       },
       { status: 200 as const }
     );

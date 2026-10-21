@@ -318,3 +318,29 @@ describe("PAT authorization (role capped by scope)", () => {
     expect(mockVerify).not.toHaveBeenCalled();
   });
 });
+
+describe("GET /auth/me", () => {
+  test("returns 401 without credentials", async () => {
+    expect((await apiV1.request("/auth/me")).status).toBe(401);
+  });
+
+  test("reports the scope-capped role for a PAT", async () => {
+    withToken("ADMIN", "read");
+    const res = await apiV1.request("/auth/me", { headers: patHeaders });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({
+      id: "user-admin",
+      role: "VIEWER",
+      tokenScope: "read",
+    });
+  });
+
+  test("reports session users with tokenScope null", async () => {
+    mockSession.mockResolvedValue(user("MEMBER"));
+    const res = await apiV1.request("/auth/me");
+    expect(await res.json()).toMatchObject({
+      role: "MEMBER",
+      tokenScope: null,
+    });
+  });
+});
