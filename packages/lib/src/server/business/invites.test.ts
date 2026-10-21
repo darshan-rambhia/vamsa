@@ -947,9 +947,9 @@ describe("Invites Business Logic", () => {
 
       mockDrizzleDb.select = selectMock;
 
-      await expect(resendInviteData("invite-1", mockDrizzleDb)).rejects.toThrow(
-        "Invite not found"
-      );
+      await expect(
+        resendInviteData("invite-1", "admin-1", mockDrizzleDb)
+      ).rejects.toThrow("Invite not found");
     });
 
     it("should throw error for accepted invite", async () => {
@@ -970,9 +970,9 @@ describe("Invites Business Logic", () => {
 
       mockDrizzleDb.select = selectMock;
 
-      await expect(resendInviteData("invite-1", mockDrizzleDb)).rejects.toThrow(
-        "Cannot resend an accepted invite"
-      );
+      await expect(
+        resendInviteData("invite-1", "admin-1", mockDrizzleDb)
+      ).rejects.toThrow("Cannot resend an accepted invite");
     });
 
     it("should resend expired invite successfully", async () => {
@@ -1014,7 +1014,11 @@ describe("Invites Business Logic", () => {
       mockDrizzleDb.select = selectMock;
       mockDrizzleDb.update = updateMock;
 
-      const result = await resendInviteData("invite-1", mockDrizzleDb);
+      const result = await resendInviteData(
+        "invite-1",
+        "admin-1",
+        mockDrizzleDb
+      );
 
       expect(result.success).toBe(true);
       expect(result.token).toBe("new-token-456");

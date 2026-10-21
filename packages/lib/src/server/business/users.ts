@@ -19,6 +19,7 @@ import { and, asc, count, desc, eq, isNull, like, ne, or } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 import { escapeLike } from "../db";
 import { revokeAllUserApiTokensSafe } from "./api-tokens";
+import { ConflictError } from "./errors";
 import type { UserRole, UserUpdateInput } from "@vamsa/schemas";
 import type { SQL } from "drizzle-orm";
 
@@ -282,21 +283,52 @@ export async function updateUserData(
     }
   }
 
+  // Emails are stored lowercase; a change must not collide with another user
+  const email =
+    data.email !== undefined ? data.email.trim().toLowerCase() : undefined;
+  if (email !== undefined && email !== existing.email.toLowerCase()) {
+    const taken = await db.query.users.findFirst({
+      where: and(
+        eq(drizzleSchema.users.email, email),
+        ne(drizzleSchema.users.id, userId)
+      ),
+    });
+    if (taken) throw new ConflictError("A user already exists with this email");
+  }
+
   // Build update data
   const updateData: Record<string, unknown> = {};
   if (data.name !== undefined) updateData.name = data.name;
-  if (data.email !== undefined) updateData.email = data.email;
+  if (email !== undefined) updateData.email = email;
   if (data.role !== undefined) updateData.role = data.role;
   if (data.isActive !== undefined) updateData.isActive = data.isActive;
   if (data.personId !== undefined) updateData.personId = data.personId ?? null;
 
-  const result = await db
-    .update(drizzleSchema.users)
-    .set(updateData)
-    .where(eq(drizzleSchema.users.id, userId))
-    .returning();
+  let result;
+  try {
+    result = await db
+      .update(drizzleSchema.users)
+      .set(updateData)
+      .where(eq(drizzleSchema.users.id, userId))
+      .returning();
+  } catch (err) {
+    // A concurrent change can still hit the unique index (pg 23505 / SQLite)
+    if (isUniqueViolation(err)) {
+      throw new ConflictError("A user already exists with this email");
+    }
+    throw err;
+  }
 
-  const updated = result[0];
+  const row = result[0];
+  // Only safe fields: never hand back passwordHash, lockout state or tokens
+  const updated: UserUpdateResult = {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    role: row.role,
+    isActive: row.isActive,
+    personId: row.personId ?? null,
+  };
 
   // Deactivation must take effect immediately: drop existing sessions
   if (data.isActive === false) {
@@ -316,6 +348,17 @@ export async function updateUserData(
   );
 
   return updated;
+}
+
+/** True for a unique-constraint violation on PostgreSQL or SQLite. */
+export function isUniqueViolation(err: unknown): boolean {
+  const e = err as { code?: unknown; message?: unknown; cause?: unknown };
+  if (e?.code === "23505") return true;
+  const msg = String(e?.message ?? "");
+  if (/UNIQUE constraint failed|duplicate key value/i.test(msg)) return true;
+  return (
+    e?.cause !== undefined && e.cause !== err && isUniqueViolation(e.cause)
+  );
 }
 
 /**
