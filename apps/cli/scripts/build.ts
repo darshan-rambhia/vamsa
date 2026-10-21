@@ -13,7 +13,12 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { $ } from "bun";
 
-export const TARGETS = ["darwin-arm64", "linux-x64", "linux-arm64"] as const;
+export const TARGETS = [
+  "darwin-arm64",
+  "darwin-x64",
+  "linux-x64",
+  "linux-arm64",
+] as const;
 
 const root = join(import.meta.dirname, "..");
 const dist = join(root, "dist");

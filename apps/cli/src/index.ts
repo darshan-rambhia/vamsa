@@ -8,6 +8,15 @@ async function readStdin(): Promise<string> {
   return Buffer.concat(chunks).toString("utf8");
 }
 
+const compiled = process.argv[1]?.startsWith("/$bunfs") ?? false;
+
+/** Quote a path for a POSIX shell command line. */
+function shellQuote(s: string): string {
+  return /^[A-Za-z0-9_./@%+=:,-]+$/.test(s)
+    ? s
+    : `'${s.replace(/'/g, "'\\''")}'`;
+}
+
 const runtime: Runtime = {
   env: process.env,
   stdout: (s) => process.stdout.write(s),
@@ -19,9 +28,12 @@ const runtime: Runtime = {
   readStdin,
   fetch: (input, init) => fetch(input, init),
   // Compiled binaries report a virtual /$bunfs path in argv[1]
-  execPath: process.argv[1]?.startsWith("/$bunfs")
-    ? process.execPath
-    : (process.argv[1] ?? "vamsa"),
+  execPath: compiled ? process.execPath : (process.argv[1] ?? "vamsa"),
+  // How to run this exact CLI again from a shell (hooks, completions)
+  selfCommand: compiled
+    ? shellQuote(process.execPath)
+    : `${shellQuote(process.execPath)} ${shellQuote(process.argv[1] ?? "")}`,
+  which: (name) => Bun.which(name) ?? undefined,
 };
 
 process.exitCode = await run(process.argv.slice(2), runtime);

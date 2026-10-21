@@ -29,6 +29,10 @@ export interface Runtime {
   fetch: FetchFn;
   /** Path of the running executable, for the home view */
   execPath: string;
+  /** Shell command that runs this same CLI (binary, or bun + script) */
+  selfCommand: string;
+  /** Resolve a command on PATH (like `which`) */
+  which: (name: string) => string | undefined;
 }
 
 /** Flags accepted by every command. */
@@ -49,6 +53,7 @@ export const GLOBAL_ARGS = {
     valueHint: "url",
   },
   help: { type: "boolean", alias: "h", description: "Show help" },
+  version: { type: "boolean", alias: "v", description: "Show the version" },
 } as const satisfies ArgsDef;
 
 export interface Ctx {

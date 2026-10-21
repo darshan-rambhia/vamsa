@@ -4,7 +4,7 @@
 
 ## Install
 
-**Binary.** Download `vamsa-<platform>` from a [`cli-v*` release](../../releases) (darwin-arm64, linux-x64, linux-arm64), check it against `SHA256SUMS`, then:
+**Binary.** Download `vamsa-<platform>` from a [`cli-v*` release](../../releases) (darwin-arm64, darwin-x64, linux-x64, linux-arm64), check it against `SHA256SUMS`, then:
 
 ```bash
 chmod +x vamsa-darwin-arm64 && mv vamsa-darwin-arm64 ~/.local/bin/vamsa
@@ -40,6 +40,8 @@ Every prompt has a flag or env var that replaces it:
 | `VAMSA_PROFILE` | `--profile` | Profile name                               |
 | `VAMSA_DEBUG=1` | `--verbose` | Request logs on stderr                     |
 
+URLs without a scheme default to `https://`. Plain `http://` is refused except for `localhost`, `127.0.0.1` and `[::1]`. A profile's saved token is only sent to the server it was issued for: pointing `--url` or `VAMSA_URL` at another server gives a `token_url_mismatch` error instead.
+
 Profiles live in `$XDG_CONFIG_HOME/vamsa/config.json` (default `~/.config/vamsa/config.json`), with file mode 0600.
 
 ## Commands
@@ -59,9 +61,10 @@ vamsa bulk add <file.json|csv> --type person|relationship [--dry-run]
 vamsa admin user list|get|update|delete|unlock|link|available
 vamsa admin invite list|create|revoke|resend|delete
 vamsa admin settings get | set key=value ...
-vamsa admin backup create|list|imports|validate|preview|restore
+vamsa admin backup create|list|imports|validate|preview   (restore: not available yet)
 vamsa admin audit [--since 7d] [--user <email>] [--action DELETE] [--entity PERSON]
 vamsa setup [--dir] [--hook]            install the agent skill
+vamsa --version                         version (any position; honours --json)
 vamsa completion zsh|bash               shell completion script
 ```
 
@@ -82,7 +85,8 @@ Every command takes `--help`.
 ## For agents
 
 ```bash
-vamsa setup          # writes ~/.claude/skills/vamsa/SKILL.md, generated from the command tree
+vamsa setup          # writes ~/.claude/skills/vamsa/SKILL.md, generated from the command tree;
+                     # re-running updates it, unless you edited it (then it needs --force)
 vamsa setup --hook   # also prints a Claude Code SessionStart hook that shows the `vamsa` dashboard
 ```
 
@@ -106,4 +110,4 @@ The code is split into `src/index.ts` (entry), `src/main.ts` (dispatch, strict f
 
 The CLI uses a small `fetch` wrapper instead of `packages/client`, because that client's Hono RPC types pull in the whole web server's module graph. Enum values are mirrored in `src/lib/enums.ts`, so the binary doesn't bundle zod.
 
-Releases: bump `version` in `apps/cli/package.json`, then push a tag `cli-v<version>`. `.github/workflows/cli-release.yml` tests the CLI, builds the three binaries, smoke-tests each one on a matching runner, and attaches them with `SHA256SUMS` to the release.
+Releases: bump `version` in `apps/cli/package.json`, then push a tag `cli-v<version>`. `.github/workflows/cli-release.yml` tests the CLI, builds the four binaries, smoke-tests each one on a matching runner, and attaches them with `SHA256SUMS` to the release.

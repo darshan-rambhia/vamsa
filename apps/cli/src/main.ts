@@ -10,7 +10,7 @@
 import { parseArgs } from "citty";
 import { buildCtx } from "./lib/context";
 import { EXIT_OK, EXIT_USAGE, toCliError, usageError } from "./lib/errors";
-import { formatError } from "./lib/output";
+import { format, formatError } from "./lib/output";
 import { rootCommand } from "./commands";
 import { VERSION } from "./lib/version";
 import type { ArgDef, ArgsDef } from "citty";
@@ -162,7 +162,14 @@ function flagUsage(key: string, def: ArgDef): string {
   return `--${key} <${hint}>`;
 }
 
-const GLOBAL_KEYS = new Set(["json", "verbose", "profile", "url", "help"]);
+const GLOBAL_KEYS = new Set([
+  "json",
+  "verbose",
+  "profile",
+  "url",
+  "help",
+  "version",
+]);
 
 /** Concise help: usage line, description, own flags, one line of globals. */
 export function renderHelp(cmd: AnyCommand, path: Array<string>): string {
@@ -211,8 +218,10 @@ export function renderHelp(cmd: AnyCommand, path: Array<string>): string {
       );
     });
   }
-  lines.push("global: --json --verbose --profile <name> --url <url> --help");
-  if (!path.length) lines.push(`version: ${VERSION} (vamsa --version)`);
+  lines.push(
+    "global: --json --verbose --profile <name> --url <url> --help --version"
+  );
+  if (!path.length) lines.push(`version: ${VERSION}`);
   return lines.join("\n") + "\n";
 }
 
@@ -234,6 +243,14 @@ export function wantsJson(argv: Array<string>): boolean {
 /** Run the CLI. Returns the process exit code. */
 export async function run(argv: Array<string>, rt: Runtime): Promise<number> {
   const fmt = wantsJson(argv) ? "json" : "toon";
+  // --version is a global flag: any position, any command, honours --json
+  const flagsPart = argv.includes("--")
+    ? argv.slice(0, argv.indexOf("--"))
+    : argv;
+  if (flagsPart.includes("--version") || flagsPart.includes("-v")) {
+    rt.stdout(format({ version: VERSION }, fmt) + "\n");
+    return EXIT_OK;
+  }
   try {
     const { cmd, path, rest } = resolve(argv);
 

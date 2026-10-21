@@ -16,39 +16,62 @@ on:
 permissions:
   contents: read
 
+# One release run per tag, whether triggered by the push or by dispatch
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ inputs.tag || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
+  resolve:
+    name: Resolve tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - name: Validate tag
+        id: tag
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! [[ "$TAG" =~ ^cli-v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::'$TAG' is not a cli-vX.Y.Z tag"
+            exit 1
+          fi
+          # Must be an existing tag, not a branch with the same name
+          gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" > /dev/null
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
   test:
     name: CLI tests
+    needs: resolve
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: refs/tags/${{ needs.resolve.outputs.tag }}
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
           version: 12.14.0
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 24
           cache: pnpm
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: latest
+          bun-version: 1.4.3
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
       - name: Check tag matches package version
         env:
-          TAG: ${{ inputs.tag || github.ref_name }}
+          TAG: ${{ needs.resolve.outputs.tag }}
         run: |
           version=$(node -p "require('./apps/cli/package.json').version")
           if [ "${TAG#cli-v}" != "$version" ]; then
@@ -63,7 +86,7 @@ jobs:
 
   build:
     name: Build ${{ matrix.target }}
-    needs: test
+    needs: [resolve, test]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     strategy:
@@ -72,27 +95,29 @@ jobs:
         include:
           - target: darwin-arm64
             os: macos-latest
+          - target: darwin-x64
+            os: macos-15-intel
           - target: linux-x64
             os: ubuntu-latest
           - target: linux-arm64
             os: ubuntu-24.04-arm
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.tag || github.ref }}
+          ref: refs/tags/${{ needs.resolve.outputs.tag }}
 
-      - uses: pnpm/action-setup@v6
+      - uses: pnpm/action-setup@0977fd99725f1db4007ccb2928dbb4e90d06cc86 # v6
         with:
           version: 12.14.0
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
           node-version: 24
           cache: pnpm
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
-          bun-version: latest
+          bun-version: 1.4.3
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --filter @vamsa/cli...
@@ -113,7 +138,7 @@ jobs:
           set -e
           test "$code" -eq 2
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
           name: vamsa-${{ matrix.target }}
           path: apps/cli/dist/vamsa-${{ matrix.target }}
@@ -121,13 +146,13 @@ jobs:
 
   release:
     name: Attach to release
-    needs: build
+    needs: [resolve, build]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v7
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
         with:
           path: bin
           merge-multiple: true
@@ -139,7 +164,7 @@ jobs:
       - name: Create or update release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ inputs.tag || github.ref_name }}
+          TAG: ${{ needs.resolve.outputs.tag }}
         run: |
           if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" > /dev/null 2>&1; then
             gh release upload "$TAG" bin/* --clobber --repo "$GITHUB_REPOSITORY"

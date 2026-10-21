@@ -21,7 +21,14 @@ export interface CommandInfo {
   subcommands: Array<string>;
 }
 
-const GLOBAL = new Set(["json", "verbose", "profile", "url", "help"]);
+const GLOBAL = new Set([
+  "json",
+  "verbose",
+  "profile",
+  "url",
+  "help",
+  "version",
+]);
 
 type ArgDefLike = {
   type?: string;

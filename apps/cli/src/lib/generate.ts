@@ -7,7 +7,14 @@ import { leaves, walk } from "./tree";
 import type { AnyCommand } from "./command";
 import type { CommandInfo } from "./tree";
 
-const GLOBAL_FLAGS = ["--json", "--verbose", "--profile", "--url", "--help"];
+const GLOBAL_FLAGS = [
+  "--json",
+  "--verbose",
+  "--profile",
+  "--url",
+  "--help",
+  "--version",
+];
 
 function flagWords(c: CommandInfo): Array<string> {
   return [
