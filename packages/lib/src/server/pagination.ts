@@ -76,6 +76,8 @@ export function paginateQuery<T>(
   items: Array<T>;
   nextCursor: string | null;
   hasMore: boolean;
+  /** Total matching items across all pages */
+  total: number;
 } {
   if (!Array.isArray(items)) {
     throw new Error("Items must be an array");
@@ -125,5 +127,6 @@ export function paginateQuery<T>(
     items: itemsToReturn,
     nextCursor,
     hasMore,
+    total: items.length,
   };
 }

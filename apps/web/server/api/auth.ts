@@ -382,4 +382,57 @@ authRouter.openapi(logoutRoute, async (c) => {
   }
 });
 
+/**
+ * GET /api/v1/auth/me
+ * Current caller (session or personal access token). Auth is enforced by
+ * requireApiAuth mounted on /auth/me in index.ts.
+ */
+const meRoute = createRoute({
+  method: "get",
+  path: "/me",
+  tags: ["Authentication"],
+  summary: "Get the current user",
+  description:
+    "Returns the authenticated user. For personal access tokens, role is the effective (scope-capped) role and tokenScope is set.",
+  operationId: "getCurrentUser",
+  responses: {
+    200: {
+      description: "Current user",
+      content: {
+        "application/json": {
+          schema: z
+            .object({
+              id: z.string(),
+              email: z.string(),
+              name: z.string().nullable(),
+              role: z.string(),
+              personId: z.string().nullable(),
+              tokenScope: z.string().nullable(),
+            })
+            .openapi("CurrentUser"),
+        },
+      },
+    },
+    401: {
+      description: "Not authenticated",
+      content: { "application/json": { schema: errorResponseSchema } },
+    },
+  },
+});
+
+authRouter.openapi(meRoute, (c) => {
+  const user = c.get("user");
+  return c.json(
+    {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      personId: user.personId,
+      tokenScope: c.get("apiTokenScope") ?? null,
+    },
+    { status: 200 }
+  );
+});
+
 export default authRouter;

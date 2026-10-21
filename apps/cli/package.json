@@ -1,0 +1,26 @@
+{
+  "name": "@vamsa/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Command-line client for the Vamsa REST API",
+  "bin": {
+    "vamsa": "./src/index.ts"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun --bun vitest run"
+  },
+  "dependencies": {
+    "@clack/prompts": "1.8.1",
+    "@toon-format/toon": "4.4.0",
+    "citty": "0.2.2"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.3",
+    "@types/node": "^26.6.5",
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.5"
+  }
+}

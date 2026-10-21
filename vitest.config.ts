@@ -14,6 +14,7 @@ export default defineConfig({
       "./packages/ui",
       "./apps/web",
       "./apps/ai",
+      "./apps/cli",
     ],
   },
 });

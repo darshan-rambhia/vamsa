@@ -32,6 +32,7 @@ apps/
       client/    # Static files (served by the Hono server)
       server/    # Server bundle (TanStack Start fetch handler)
   ai/            # AI sidecar service (Hono + ai-sdk), optional
+  cli/           # `vamsa` command-line client (Bun + citty), talks to /api/v1
   mobile/        # Expo (React Native) app
 packages/
   api/           # Drizzle schema, migrations, and database utilities
@@ -90,7 +91,7 @@ pnpm lint:fix        # Fix ESLint issues
 pnpm format          # Format code with Prettier
 pnpm format:check    # Check formatting without modifying
 pnpm typecheck       # Run TypeScript type checks
-pnpm test            # Unit tests (Vitest): schemas, client, query-hooks, api, lib, ui
+pnpm test            # Unit tests (Vitest): schemas, client, query-hooks, api, lib, ui, cli
 pnpm --filter @vamsa/web test  # apps/web unit tests (not part of `pnpm test`)
 pnpm test --coverage # Run unit tests with coverage
 pnpm test:integration --db sqlite    # Integration tests (SQLite)
