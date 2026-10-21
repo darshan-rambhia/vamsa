@@ -1,4 +1,4 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
 import {
   API_TOKEN_SCOPES,
@@ -11,11 +11,12 @@ import {
   SCOPE_ROLE_CEILING,
   roleAtLeast,
 } from "../middleware/require-api-auth";
+import { createRouter } from "./route-helpers";
 import type { ApiTokenSummary } from "@vamsa/lib/server/business";
 
 const log = loggers.api;
 
-const tokensRouter = new OpenAPIHono();
+const tokensRouter = createRouter();
 
 /**
  * Creating and revoking tokens needs a real login. A leaked token must not be

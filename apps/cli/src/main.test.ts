@@ -221,6 +221,108 @@ describe("person list (mocked API)", () => {
     expect(String(out.error.hint)).toMatch(/^vamsa login/);
   });
 
+  const validation400 = () =>
+    json(
+      {
+        error: "Validation error",
+        details: "Must be an http or https URL",
+        issues: [
+          {
+            path: "metricsDashboardUrl",
+            message: "Must be an http or https URL",
+            code: "custom",
+          },
+          { path: "familyName", message: "Too small", code: "too_small" },
+        ],
+      },
+      400
+    );
+
+  it("maps a 400 validation body to invalid_request with field issues (TOON)", async () => {
+    loggedIn();
+    const fetch = fetchMock(validation400);
+    const r = await runCli(
+      ["admin", "settings", "set", "metricsDashboardUrl=javascript:alert(1)"],
+      { home, fetch }
+    );
+    expect(r.code).toBe(1);
+    expect(r.stdout).toContain("issues[2]{path,message,code}:");
+    expect(r.stdout).toContain("help[1]:\n  - vamsa admin settings set --help");
+    expect(decode(r.stdout)).toEqual({
+      error: {
+        code: "invalid_request",
+        message: "Must be an http or https URL",
+        status: 400,
+        issues: [
+          {
+            path: "metricsDashboardUrl",
+            message: "Must be an http or https URL",
+            code: "custom",
+          },
+          { path: "familyName", message: "Too small", code: "too_small" },
+        ],
+      },
+      help: ["vamsa admin settings set --help"],
+    });
+  });
+
+  it("renders the same invalid_request error exactly with --json", async () => {
+    loggedIn();
+    const fetch = fetchMock(validation400);
+    const r = await runCli(
+      ["admin", "settings", "set", "metricsDashboardUrl=x", "--json"],
+      { home, fetch }
+    );
+    expect(r.code).toBe(1);
+    expect(JSON.parse(r.stdout)).toEqual({
+      error: {
+        code: "invalid_request",
+        message: "Must be an http or https URL",
+        status: 400,
+        issues: [
+          {
+            path: "metricsDashboardUrl",
+            message: "Must be an http or https URL",
+            code: "custom",
+          },
+          { path: "familyName", message: "Too small", code: "too_small" },
+        ],
+      },
+      help: ["vamsa admin settings set --help"],
+    });
+  });
+
+  it("a bad enum flag is a usage error without ANSI codes", async () => {
+    loggedIn();
+    const r = await runCli(
+      ["token", "create", "--name", "x", "--scope", "root"],
+      {
+        home,
+      }
+    );
+    expect(r.code).toBe(2);
+    const out = decode(r.stdout) as { error: Record<string, unknown> };
+    expect(out.error.code).toBe("usage");
+    expect(String(out.error.message)).not.toContain("\u001b");
+  });
+
+  it("a plain 400 without issues keeps the server message", async () => {
+    loggedIn();
+    const fetch = fetchMock(() =>
+      json({ error: "Cannot demote yourself" }, 400)
+    );
+    const r = await runCli(["person", "list"], { home, fetch });
+    expect(r.code).toBe(1);
+    expect(decode(r.stdout)).toEqual({
+      error: {
+        code: "invalid_request",
+        message: "Cannot demote yourself",
+        status: 400,
+      },
+      help: ["vamsa person list --help"],
+    });
+  });
+
   it("requires a credential before calling the API", async () => {
     const fetch = fetchMock(() => json({}));
     const r = await runCli(["person", "list"], { home, fetch });

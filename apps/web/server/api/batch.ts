@@ -15,7 +15,7 @@
  * - Comprehensive error handling
  */
 
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import {
   errorResponseSchema,
   personCreateSchema,
@@ -31,10 +31,11 @@ import {
 } from "@vamsa/lib/server/business";
 import { loggers } from "@vamsa/lib/logger";
 import { db } from "../db";
+import { createRouter, validationErrorBody } from "./route-helpers";
 
 const log = loggers.api;
 
-const batchRouter = new OpenAPIHono();
+const batchRouter = createRouter();
 
 // ============================================
 // Batch Operation Schemas
@@ -559,13 +560,7 @@ batchRouter.openapi(batchRoute, async (c) => {
         "Batch request validation error"
       );
 
-      return c.json(
-        {
-          error: "Validation error",
-          details: error.issues[0]?.message,
-        },
-        { status: 400 }
-      );
+      return c.json(validationErrorBody(error), { status: 400 });
     }
 
     log.error(
@@ -594,13 +589,7 @@ batchRouter.onError((err, c) => {
       "Batch request validation error (from middleware)"
     );
 
-    return c.json(
-      {
-        error: "Validation error",
-        details: err.issues[0]?.message,
-      },
-      { status: 400 }
-    );
+    return c.json(validationErrorBody(err), { status: 400 });
   }
 
   // Let other errors pass through

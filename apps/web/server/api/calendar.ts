@@ -1,15 +1,16 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
 import { drizzleDb, drizzleSchema } from "@vamsa/lib/server";
 import { and, eq, inArray, isNotNull } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 import ical, { ICalEventRepeatingFreq } from "ical-generator";
 import RSS from "rss";
+import { createRouter } from "./route-helpers";
 import type { Context } from "hono";
 
 const log = loggers.api;
 
-const calendarRouter = new OpenAPIHono();
+const calendarRouter = createRouter();
 
 /**
  * Validates a calendar token and updates its last used timestamp.

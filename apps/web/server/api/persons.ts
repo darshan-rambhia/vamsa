@@ -1,4 +1,4 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import {
   cursorPaginatedResponseSchema,
   errorResponseSchema,
@@ -13,10 +13,11 @@ import {
 } from "@vamsa/lib/server/business";
 import { loggers } from "@vamsa/lib/logger";
 import { paginateQuery } from "@vamsa/lib/server";
+import { createRouter, validationErrorBody } from "./route-helpers";
 
 const log = loggers.api;
 
-const personsRouter = new OpenAPIHono();
+const personsRouter = createRouter();
 
 // Response schema for person
 const personSchema = z
@@ -289,13 +290,7 @@ personsRouter.openapi(createPersonRoute, async (c) => {
     return c.json(result, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return c.json(
-        {
-          error: "Validation error",
-          details: error.issues[0]?.message,
-        },
-        { status: 400 }
-      );
+      return c.json(validationErrorBody(error), { status: 400 });
     }
 
     if (error instanceof Error && error.message.includes("Unauthorized")) {
@@ -491,13 +486,7 @@ personsRouter.openapi(updatePersonRoute, async (c) => {
     return c.json(result, { status: 200 });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return c.json(
-        {
-          error: "Validation error",
-          details: error.issues[0]?.message,
-        },
-        { status: 400 }
-      );
+      return c.json(validationErrorBody(error), { status: 400 });
     }
 
     if (error instanceof Error && error.message.includes("not found")) {

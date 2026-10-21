@@ -251,6 +251,7 @@ export async function run(argv: Array<string>, rt: Runtime): Promise<number> {
     rt.stdout(format({ version: VERSION }, fmt) + "\n");
     return EXIT_OK;
   }
+  let where: string | undefined;
   try {
     const { cmd, path, rest } = resolve(argv);
 
@@ -265,7 +266,7 @@ export async function run(argv: Array<string>, rt: Runtime): Promise<number> {
       return EXIT_OK;
     }
 
-    const where = [BIN, ...path].join(" ");
+    where = [BIN, ...path].join(" ");
     validateArgs(rest, argsOf(cmd), where);
     const args = parseArgs(rest, argsOf(cmd)) as Record<string, unknown>;
     const ctx = buildCtx(rt, args, rest);
@@ -283,7 +284,10 @@ export async function run(argv: Array<string>, rt: Runtime): Promise<number> {
         rt.stderr(err.stack + "\n");
       }
     }
-    rt.stdout(formatError(e, fmt) + "\n");
+    // Server rejected the input: point at the command's accepted flags
+    const help =
+      e.code === "invalid_request" && where ? [`${where} --help`] : undefined;
+    rt.stdout(formatError(e, fmt, help) + "\n");
     return e.exitCode === EXIT_USAGE ? EXIT_USAGE : e.exitCode;
   }
 }

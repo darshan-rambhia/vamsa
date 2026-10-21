@@ -36,14 +36,24 @@ export function httpError(
 ): CliError {
   const detail = extractMessage(body);
   switch (status) {
-    case 400:
+    case 400: {
+      // Validation failures carry `details` (first problem) and `issues`
+      // (every field); show the readable message, not "Validation error: ..."
+      const issues = extractIssues(body);
+      const b = body as Record<string, unknown>;
+      const message =
+        issues.length && typeof b.details === "string" && b.details
+          ? b.details
+          : detail;
       return new CliError(
         "invalid_request",
-        detail ?? "Request was rejected by the server",
-        "check the flag values; run with --help to see accepted flags",
+        message ?? "Request was rejected by the server",
+        undefined,
         EXIT_ERROR,
-        status
+        status,
+        issues.length ? { issues } : undefined
       );
+    }
     case 401:
       return new CliError(
         "unauthorized",
@@ -112,9 +122,37 @@ function extractMessage(body: unknown): string | undefined {
   return parts.length ? [...new Set(parts)].join(": ") : undefined;
 }
 
+export interface FieldIssue {
+  path: string;
+  message: string;
+  code: string;
+}
+
+/** Per-field problems from the server's 400 `{ issues: [...] }` body. */
+function extractIssues(body: unknown): Array<FieldIssue> {
+  if (!body || typeof body !== "object") return [];
+  const raw = (body as Record<string, unknown>).issues;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((i): i is Record<string, unknown> => !!i && typeof i === "object")
+    .map((i) => ({
+      path: typeof i.path === "string" && i.path ? i.path : "(body)",
+      message: typeof i.message === "string" ? i.message : "",
+      code: typeof i.code === "string" ? i.code : "",
+    }));
+}
+
 /** Normalize anything thrown into a CliError. */
 export function toCliError(err: unknown): CliError {
   if (err instanceof CliError) return err;
-  const message = err instanceof Error ? err.message : String(err);
+  const message = (err instanceof Error ? err.message : String(err)).replace(
+    // eslint-disable-next-line no-control-regex
+    /\u001b\[[0-9;]*m/g,
+    ""
+  );
+  // citty's enum check throws a plain Error; it is a usage problem
+  if (message.startsWith("Invalid value for argument")) {
+    return usageError(message, "run the command with --help");
+  }
   return new CliError("internal", message, "retry with --verbose for details");
 }

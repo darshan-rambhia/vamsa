@@ -3,7 +3,7 @@
  * Mounted behind requireApiAuth("ADMIN") in index.ts.
  */
 
-import { OpenAPIHono, z } from "@hono/zod-openapi";
+import { z } from "@hono/zod-openapi";
 import { userRoleEnum, userUpdateSchema } from "@vamsa/schemas";
 import {
   createInviteData,
@@ -20,14 +20,20 @@ import {
   unlockUserAccountData,
   updateUserData,
 } from "@vamsa/lib/server/business";
-import { idParam, jsonBody, jsonRoute, respond } from "./route-helpers";
+import {
+  createRouter,
+  idParam,
+  jsonBody,
+  jsonRoute,
+  respond,
+} from "./route-helpers";
 import type { UserRole } from "@vamsa/schemas";
 
 const USERS = "Admin: Users";
 const INVITES = "Admin: Invites";
 const SETTINGS = "Admin: Settings";
 
-const adminRouter = new OpenAPIHono();
+const adminRouter = createRouter();
 
 const pageQuery = {
   page: z.coerce.number().int().min(1).default(1),

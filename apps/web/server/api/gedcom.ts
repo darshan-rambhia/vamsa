@@ -1,4 +1,4 @@
-import { OpenAPIHono, createRoute, z } from "@hono/zod-openapi";
+import { createRoute, z } from "@hono/zod-openapi";
 import { errorResponseSchema } from "@vamsa/schemas";
 import {
   exportGedcomData,
@@ -6,13 +6,13 @@ import {
   importGedcomData,
   validateGedcomImport,
 } from "@vamsa/lib/server/business";
-import { jsonBody, jsonRoute, respond } from "./route-helpers";
+import { createRouter, jsonBody, jsonRoute, respond } from "./route-helpers";
 
 const TAG = "GEDCOM";
 
 /** Largest accepted GEDCOM upload (JSON body, after base text encoding). */
 export const GEDCOM_MAX_BYTES = 50 * 1024 * 1024;
-const gedcomRouter = new OpenAPIHono();
+const gedcomRouter = createRouter();
 
 /** GEDCOM upload: the file name (must end in .ged) and its text content. */
 const fileBody = z

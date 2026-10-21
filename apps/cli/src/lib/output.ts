@@ -26,7 +26,11 @@ export function format(data: unknown, fmt: Format): string {
   return `${body}\nhelp[${help.length}]:\n${lines.join("\n")}`;
 }
 
-export function formatError(err: CliError, fmt: Format): string {
+export function formatError(
+  err: CliError,
+  fmt: Format,
+  help?: Array<string>
+): string {
   const error: Record<string, unknown> = {
     code: err.code,
     message: err.message,
@@ -34,7 +38,7 @@ export function formatError(err: CliError, fmt: Format): string {
   if (err.status !== undefined) error.status = err.status;
   if (err.hint) error.hint = err.hint;
   if (err.details) Object.assign(error, err.details);
-  return format({ error }, fmt);
+  return format(help?.length ? { error, help } : { error }, fmt);
 }
 
 /** Truncate long strings with a size hint so the reader knows what was cut. */
