@@ -1,0 +1,58 @@
+name: CodeQL
+
+# Advanced setup (replaces GitHub's default setup) so results can be filtered
+# before upload. See the "Filter SARIF" step for the single exclusion.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "27 4 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [actions, javascript-typescript]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: github/codeql-action/init@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+
+      - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          category: /language:${{ matrix.language }}
+          upload: false
+          output: sarif-results
+
+      # js/insufficient-password-hash is a false positive for api-tokens.ts:
+      # API tokens are 256-bit random values (not passwords) hashed with
+      # HMAC-SHA256 keyed by a server secret, so a slow KDF adds nothing.
+      # Dropped for that file only; the rule stays active everywhere else.
+      # https://github.com/darshan-rambhia/vamsa/pull/323
+      - name: Filter SARIF
+        uses: advanced-security/filter-sarif@2da736ff05ef065cb2894ac6892e47b5eac2c3c0 # v1.1
+        with:
+          patterns: |
+            -packages/lib/src/server/business/api-tokens.ts:js/insufficient-password-hash
+          input: sarif-results/${{ matrix.language == 'actions' && 'actions' || 'javascript' }}.sarif
+          output: sarif-results/${{ matrix.language == 'actions' && 'actions' || 'javascript' }}.sarif
+
+      - uses: github/codeql-action/upload-sarif@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
+        with:
+          sarif_file: sarif-results/${{ matrix.language == 'actions' && 'actions' || 'javascript' }}.sarif
+          category: /language:${{ matrix.language }}
