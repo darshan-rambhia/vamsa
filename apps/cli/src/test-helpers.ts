@@ -36,6 +36,9 @@ export async function runCli(
     interactive?: boolean;
     stdinIsTTY?: boolean;
     cwd?: string;
+    /** Fake PATH lookup: command name -> resolved path */
+    path?: Record<string, string>;
+    selfCommand?: string;
   }
 ): Promise<FakeRun> {
   let stdout = "";
@@ -61,6 +64,8 @@ export async function runCli(
         throw new Error("unexpected fetch");
       }),
     execPath: join(opts.home, ".local/bin/vamsa"),
+    selfCommand: opts.selfCommand ?? join(opts.home, ".local/bin/vamsa"),
+    which: (name) => opts.path?.[name],
   };
   const code = await run(argv, rt);
   return { code, stdout, stderr };
