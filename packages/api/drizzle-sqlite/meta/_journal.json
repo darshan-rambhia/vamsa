@@ -29,6 +29,13 @@
       "when": 1792368000000,
       "tag": "0003_grandfather_verified_users",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1792551881199,
+      "tag": "0004_api_tokens",
+      "breakpoints": true
     }
   ]
 }

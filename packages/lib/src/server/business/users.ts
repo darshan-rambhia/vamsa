@@ -18,6 +18,7 @@ import { createPaginationMeta } from "@vamsa/schemas";
 import { and, asc, count, desc, eq, isNull, like, ne, or } from "drizzle-orm";
 import { loggers } from "@vamsa/lib/logger";
 import { escapeLike } from "../db";
+import { revokeAllUserApiTokensSafe } from "./api-tokens";
 import type { UserRole, UserUpdateInput } from "@vamsa/schemas";
 import type { SQL } from "drizzle-orm";
 
@@ -302,6 +303,7 @@ export async function updateUserData(
     await db
       .delete(drizzleSchema.sessions)
       .where(eq(drizzleSchema.sessions.userId, userId));
+    await revokeAllUserApiTokensSafe(userId, "user deactivated", db);
   }
 
   log.info(

@@ -1,6 +1,11 @@
 import { createMiddleware } from "hono/factory";
 import { betterAuthGetSessionWithUser } from "@vamsa/lib/server/business/auth-better-api";
+import {
+  API_TOKEN_PREFIX,
+  verifyApiTokenData,
+} from "@vamsa/lib/server/business/api-tokens";
 import { loggers } from "@vamsa/lib/logger";
+import type { ApiTokenScope } from "@vamsa/lib/server/business/api-tokens";
 import type { MiddlewareHandler } from "hono";
 
 const log = loggers.api;
@@ -25,6 +30,8 @@ export type ApiSessionUser = {
 declare module "hono" {
   interface ContextVariableMap {
     user: ApiSessionUser;
+    /** Set when the request authenticated with a personal access token */
+    apiTokenScope?: ApiTokenScope;
   }
 }
 
@@ -33,6 +40,50 @@ const ROLE_HIERARCHY: Record<string, number> = {
   MEMBER: 1,
   ADMIN: 2,
 };
+
+type Role = "VIEWER" | "MEMBER" | "ADMIN";
+
+/** Highest role a personal access token scope can act as. */
+export const SCOPE_ROLE_CEILING: Record<ApiTokenScope, Role> = {
+  read: "VIEWER",
+  write: "MEMBER",
+  admin: "ADMIN",
+};
+
+/** Lower of two roles. Unknown roles count as VIEWER. */
+export function lowerRole(a: string, b: Role): Role {
+  return (ROLE_HIERARCHY[a] ?? 0) <= ROLE_HIERARCHY[b] ? (a as Role) : b;
+}
+
+/** True when `role` is at least `required`. */
+export function roleAtLeast(role: string, required: Role): boolean {
+  return (ROLE_HIERARCHY[role] ?? 0) >= ROLE_HIERARCHY[required];
+}
+
+/**
+ * Resolve the caller from either a personal access token (`Bearer vms_...`)
+ * or a Better Auth session (cookie or session bearer token). For tokens the
+ * role is capped by the token scope.
+ */
+async function resolveApiUser(
+  headers: Headers
+): Promise<{ user: ApiSessionUser; scope?: ApiTokenScope } | null> {
+  const authz = headers.get("authorization");
+  const bearer = authz?.startsWith("Bearer ") ? authz.slice(7).trim() : null;
+
+  if (bearer?.startsWith(API_TOKEN_PREFIX)) {
+    const verified = await verifyApiTokenData(bearer);
+    if (!verified) return null;
+    const role = lowerRole(
+      verified.user.role,
+      SCOPE_ROLE_CEILING[verified.scope]
+    );
+    return { user: { ...verified.user, role }, scope: verified.scope };
+  }
+
+  const user = await betterAuthGetSessionWithUser(headers);
+  return user ? { user } : null;
+}
 
 /**
  * Minimum role for an HTTP method: reads VIEWER, writes MEMBER, deletes ADMIN.
@@ -90,9 +141,9 @@ export function requireApiAuth(
   minRole: "VIEWER" | "MEMBER" | "ADMIN" = "VIEWER"
 ) {
   return createMiddleware(async (c, next) => {
-    const user = await betterAuthGetSessionWithUser(c.req.raw.headers);
+    const resolved = await resolveApiUser(c.req.raw.headers);
 
-    if (!user) {
+    if (!resolved) {
       log.warn(
         { path: c.req.path, method: c.req.method },
         "API auth failed: no valid session"
@@ -103,16 +154,16 @@ export function requireApiAuth(
       );
     }
 
-    const userLevel = ROLE_HIERARCHY[user.role] ?? 0;
-    const requiredLevel = ROLE_HIERARCHY[minRole] ?? 0;
+    const { user, scope } = resolved;
 
-    if (userLevel < requiredLevel) {
+    if (!roleAtLeast(user.role, minRole)) {
       log.warn(
         {
           path: c.req.path,
           method: c.req.method,
           role: user.role,
           required: minRole,
+          tokenScope: scope,
           userId: user.id,
         },
         "API auth failed: insufficient role"
@@ -124,6 +175,7 @@ export function requireApiAuth(
     }
 
     c.set("user", user);
+    if (scope) c.set("apiTokenScope", scope);
     await next();
   });
 }

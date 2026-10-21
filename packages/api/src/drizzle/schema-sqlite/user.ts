@@ -213,6 +213,7 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     relationName: "EmailLogCreator",
   }),
   calendarTokens: many(calendarTokens),
+  apiTokens: many(apiTokens),
 }));
 
 /**
@@ -245,5 +246,39 @@ export const calendarTokensRelations = relations(calendarTokens, ({ one }) => ({
     fields: [calendarTokens.userId],
     references: [users.id],
     relationName: "CalendarTokens",
+  }),
+}));
+
+/**
+ * ApiToken table - personal access tokens for the REST API and CLI.
+ * Only the sha256 hash of the token is stored; the plaintext is shown once.
+ */
+export const apiTokens = sqliteTable(
+  "ApiToken",
+  {
+    id: text("id").primaryKey(),
+    userId: text("userId")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    tokenHash: text("tokenHash").notNull().unique(),
+    prefix: text("prefix").notNull(),
+    // Permission ceiling: "read" | "write" | "admin"
+    scope: text("scope").notNull().default("read"),
+    expiresAt: integer("expiresAt", { mode: "timestamp" }),
+    lastUsedAt: integer("lastUsedAt", { mode: "timestamp" }),
+    revokedAt: integer("revokedAt", { mode: "timestamp" }),
+    createdAt: integer("createdAt", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("idx_apiToken_userId").on(table.userId)]
+);
+
+export const apiTokensRelations = relations(apiTokens, ({ one }) => ({
+  user: one(users, {
+    fields: [apiTokens.userId],
+    references: [users.id],
+    relationName: "ApiTokens",
   }),
 }));

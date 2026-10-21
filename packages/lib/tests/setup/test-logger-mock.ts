@@ -79,7 +79,12 @@ const createMockInsertChain = () => ({
 // Create mock update chain
 const createMockUpdateChain = () => ({
   set: vi.fn(() => ({
-    where: vi.fn(() => Promise.resolve()),
+    // Awaitable directly, or chained with .returning() (resolves to [])
+    where: vi.fn(() =>
+      Object.assign(Promise.resolve(), {
+        returning: vi.fn(() => Promise.resolve([])),
+      })
+    ),
   })),
 });
 
@@ -131,6 +136,7 @@ const mockDrizzleDb = {
     // Additional entities
     suggestions: createQueryNamespace(),
     calendarTokens: createQueryNamespace(),
+    apiTokens: createQueryNamespace(),
     auditLogs: createQueryNamespace(),
     familySettings: createQueryNamespace(),
     sources: createQueryNamespace(),
@@ -168,6 +174,7 @@ const mockDrizzleDb = {
       "places",
       "suggestions",
       "calendarTokens",
+      "apiTokens",
       "auditLogs",
       "familySettings",
       "sources",
@@ -222,6 +229,7 @@ const mockDrizzleSchema = {
   auditLogs: createMockTable(),
   suggestions: createMockTable(),
   calendarTokens: createMockTable(),
+  apiTokens: createMockTable(),
   sources: createMockTable(),
   researchNotes: createMockTable(),
   accounts: createMockTable(),
