@@ -58,7 +58,7 @@ export function httpError(
       return new CliError(
         "unauthorized",
         detail ?? "Not logged in or token expired",
-        "vamsa login --email <email> --password-stdin",
+        "vamsa login",
         EXIT_ERROR,
         status
       );

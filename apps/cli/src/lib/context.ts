@@ -33,6 +33,20 @@ export interface Runtime {
   selfCommand: string;
   /** Resolve a command on PATH (like `which`) */
   which: (name: string) => string | undefined;
+  /** Wait (device-login polling) */
+  sleep: (ms: number) => Promise<void>;
+  now: () => number;
+  /** Open a URL in the default browser. False if it could not. */
+  openUrl: (url: string) => Promise<boolean>;
+  hostname: string;
+  platform: string;
+  /** TTY progress indicator (clack spinner) */
+  spinner: () => Spinner;
+}
+
+export interface Spinner {
+  start: (msg: string) => void;
+  stop: (msg: string) => void;
 }
 
 /** Flags accepted by every command. */
@@ -122,7 +136,7 @@ export function buildCtx(
         throw new CliError(
           "not_logged_in",
           `No credential for profile "${target.profileName}"`,
-          "vamsa login --email <email> --password-stdin  (or --token vms_...)"
+          "vamsa login  (browser), or vamsa login --token vms_..."
         );
       }
     },

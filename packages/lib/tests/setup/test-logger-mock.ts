@@ -230,6 +230,7 @@ const mockDrizzleSchema = {
   suggestions: createMockTable(),
   calendarTokens: createMockTable(),
   apiTokens: createMockTable(),
+  deviceCodes: createMockTable(),
   sources: createMockTable(),
   researchNotes: createMockTable(),
   accounts: createMockTable(),
@@ -286,6 +287,12 @@ vi.mock("better-auth", () => ({
 vi.mock("better-auth/plugins", () => ({
   bearer: vi.fn(() => ({})),
   genericOAuth: vi.fn(() => ({})),
+  deviceAuthorization: vi.fn(() => ({})),
+}));
+
+vi.mock("better-auth/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("better-auth/api")>()),
+  createAuthMiddleware: vi.fn((fn: unknown) => fn),
 }));
 
 // Mock better-auth adapters

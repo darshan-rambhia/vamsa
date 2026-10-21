@@ -1,6 +1,7 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { bearer, genericOAuth } from "better-auth/plugins";
+import { bearer, deviceAuthorization, genericOAuth } from "better-auth/plugins";
+import { createAuthMiddleware } from "better-auth/api";
 // import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { drizzleDb, drizzleSchema, getDbDriver } from "@vamsa/api";
 import { assertUserCanStartSession } from "./auth-session-policy";
@@ -9,6 +10,15 @@ import {
   revokeAllUserApiTokensSafe,
   revokeTokensOnPasswordWrite,
 } from "./api-tokens";
+import {
+  DEVICE_CODE_EXPIRES_IN,
+  DEVICE_POLL_INTERVAL,
+  DEVICE_RATE_LIMITS,
+  USER_CODE_LENGTH,
+  deviceVerificationUri,
+  isDeviceClient,
+  recordDeviceUserAgent,
+} from "./device-auth";
 
 // Cross-runtime password hashing that works in both Node.js (Vite dev) and Bun
 const isBunRuntime = typeof globalThis.Bun !== "undefined";
@@ -207,7 +217,22 @@ export const auth = betterAuth({
     customRules: {
       "/request-password-reset": { window: 60 * 60, max: 3 },
       "/reset-password": { window: 60, max: 5 },
+      ...DEVICE_RATE_LIMITS,
     },
+  },
+
+  // Device login: keep the requesting client's User-Agent for the /device page
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== "/device/code") return;
+      const returned = ctx.context.returned as
+        { device_code?: unknown } | undefined;
+      if (typeof returned?.device_code !== "string") return;
+      await recordDeviceUserAgent(
+        returned.device_code,
+        ctx.headers?.get("user-agent")
+      );
+    }),
   },
 
   // Session configuration
@@ -309,6 +334,16 @@ export const auth = betterAuth({
             },
           ]
         : [],
+    }),
+
+    // OAuth 2.0 device authorization grant (RFC 8628) for `vamsa login`.
+    // Approval happens in the browser, so it works with any sign-in method.
+    deviceAuthorization({
+      expiresIn: DEVICE_CODE_EXPIRES_IN,
+      interval: DEVICE_POLL_INTERVAL,
+      userCodeLength: USER_CODE_LENGTH,
+      validateClient: isDeviceClient,
+      verificationUri: deviceVerificationUri(),
     }),
 
     // TanStack Start cookie plugin (would have to be last) stays off: /api/auth/*

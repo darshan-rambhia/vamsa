@@ -39,10 +39,17 @@ export async function runCli(
     /** Fake PATH lookup: command name -> resolved path */
     path?: Record<string, string>;
     selfCommand?: string;
+    /** Records every sleep (ms); the fake clock advances by it */
+    sleeps?: Array<number>;
+    /** Records URLs the CLI tried to open */
+    opened?: Array<string>;
+    /** Fake clock start (ms since epoch) */
+    now?: number;
   }
 ): Promise<FakeRun> {
   let stdout = "";
   let stderr = "";
+  let clock = opts.now ?? Date.now();
   const rt: Runtime = {
     env: { HOME: opts.home, ...opts.env },
     stdout: (s) => {
@@ -66,6 +73,25 @@ export async function runCli(
     execPath: join(opts.home, ".local/bin/vamsa"),
     selfCommand: opts.selfCommand ?? join(opts.home, ".local/bin/vamsa"),
     which: (name) => opts.path?.[name],
+    sleep: async (ms) => {
+      clock += ms;
+      opts.sleeps?.push(ms);
+    },
+    now: () => clock,
+    openUrl: async (url) => {
+      opts.opened?.push(url);
+      return true;
+    },
+    hostname: "test-host",
+    platform: "darwin",
+    spinner: () => ({
+      start: (m) => {
+        stderr += `[spinner] ${m}\n`;
+      },
+      stop: (m) => {
+        stderr += `[spinner done] ${m}\n`;
+      },
+    }),
   };
   const code = await run(argv, rt);
   return { code, stdout, stderr };

@@ -1,6 +1,24 @@
 #!/usr/bin/env bun
+import { hostname } from "node:os";
+import { spinner } from "@clack/prompts";
 import { run } from "./main";
 import type { Runtime } from "./lib/context";
+
+/** Open a URL with the platform opener; never throws. */
+async function openUrl(url: string): Promise<boolean> {
+  const cmd =
+    process.platform === "darwin"
+      ? ["open", url]
+      : process.platform === "win32"
+        ? ["cmd", "/c", "start", "", url]
+        : ["xdg-open", url];
+  try {
+    const proc = Bun.spawn(cmd, { stdout: "ignore", stderr: "ignore" });
+    return (await proc.exited) === 0;
+  } catch {
+    return false;
+  }
+}
 
 async function readStdin(): Promise<string> {
   const chunks: Array<Buffer> = [];
@@ -34,6 +52,15 @@ const runtime: Runtime = {
     ? shellQuote(process.execPath)
     : `${shellQuote(process.execPath)} ${shellQuote(process.argv[1] ?? "")}`,
   which: (name) => Bun.which(name) ?? undefined,
+  sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+  now: () => Date.now(),
+  openUrl,
+  hostname: hostname(),
+  platform: process.platform,
+  spinner: () => {
+    const s = spinner();
+    return { start: (m) => s.start(m), stop: (m) => s.stop(m) };
+  },
 };
 
 process.exitCode = await run(process.argv.slice(2), runtime);
