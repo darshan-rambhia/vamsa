@@ -89,6 +89,36 @@ describe("Auto-Generated OpenAPI Specification", () => {
     expect(tagNames).toContain("Relationships");
     expect(tagNames).toContain("Calendar");
     expect(tagNames).toContain("Metrics");
+    expect(tagNames).toContain("Tokens");
+    expect(tagNames).toContain("Events");
+    expect(tagNames).toContain("Places");
+    expect(tagNames).toContain("Sources");
+  });
+
+  test("events, places and sources routes are documented", async () => {
+    const res = await apiV1.request("/openapi.json");
+    const spec = await res.json();
+    const expected: Array<[string, string]> = [
+      ["/events", "get"],
+      ["/events", "post"],
+      ["/events/{id}", "put"],
+      ["/events/{id}", "delete"],
+      ["/events/{id}/participants", "post"],
+      ["/events/{id}/participants/{personId}", "delete"],
+      ["/places", "get"],
+      ["/places/{id}", "get"],
+      ["/places/{id}/hierarchy", "get"],
+      ["/places/{id}/children", "get"],
+      ["/places/{id}/persons", "post"],
+      ["/places/links/{id}", "delete"],
+      ["/sources", "get"],
+      ["/sources/{id}", "get"],
+      ["/sources/{id}/events", "post"],
+      ["/sources/{id}/citation", "get"],
+    ];
+    for (const [path, method] of expected) {
+      expect(spec.paths[path]?.[method], `${method} ${path}`).toBeDefined();
+    }
   });
 
   test("OpenAPI spec has paths defined", async () => {

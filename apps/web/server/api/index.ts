@@ -12,6 +12,9 @@ import relationshipsRouter from "./relationships";
 import calendarRouter from "./calendar";
 import metricsRouter from "./metrics";
 import tokensRouter from "./tokens";
+import eventsRouter from "./events";
+import placesRouter from "./places";
+import sourcesRouter from "./sources";
 import batchRouter from "./batch";
 
 const log = loggers.api;
@@ -102,6 +105,20 @@ if (ENABLE_DOCS) {
         description: "Calendar feeds (RSS, iCal formats)",
       },
       {
+        name: "Events",
+        description: "Life events and participants (requires authentication)",
+      },
+      {
+        name: "Places",
+        description:
+          "Places, hierarchy and person links (requires authentication)",
+      },
+      {
+        name: "Sources",
+        description:
+          "Sources, citations and event links (requires authentication)",
+      },
+      {
         name: "Tokens",
         description:
           "Personal access tokens for the CLI and scripts (requires authentication)",
@@ -157,6 +174,7 @@ apiV1.get("/", (c) => {
  * Protected routes:
  * - /persons/* - VIEWER to read, MEMBER to create/update, ADMIN to delete
  * - /relationships/* - VIEWER to read, MEMBER to create/update, ADMIN to delete
+ * - /events/*, /places/*, /sources/* - same method-based rules
  * - /batch/* - Requires MEMBER role
  * - /metrics/* - Requires ADMIN role
  * - /tokens/* - Any signed-in user, for their own tokens
@@ -164,6 +182,9 @@ apiV1.get("/", (c) => {
 // Role follows the HTTP method: GET VIEWER, POST/PUT MEMBER, DELETE ADMIN
 apiV1.use("/persons/*", requireApiAuthForMethod());
 apiV1.use("/relationships/*", requireApiAuthForMethod());
+apiV1.use("/events/*", requireApiAuthForMethod());
+apiV1.use("/places/*", requireApiAuthForMethod());
+apiV1.use("/sources/*", requireApiAuthForMethod());
 // Batch: MEMBER minimum; the batch handler additionally requires ADMIN when it contains deletes
 apiV1.use("/batch/*", requireApiAuth("MEMBER"));
 apiV1.use("/metrics/*", requireApiAuth("ADMIN"));
@@ -190,6 +211,9 @@ apiV1.route("/batch", batchRouter);
 apiV1.route("/calendar", calendarRouter);
 apiV1.route("/metrics", metricsRouter);
 apiV1.route("/tokens", tokensRouter);
+apiV1.route("/events", eventsRouter);
+apiV1.route("/places", placesRouter);
+apiV1.route("/sources", sourcesRouter);
 
 // ============================================
 // Error Handling
