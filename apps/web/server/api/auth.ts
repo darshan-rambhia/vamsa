@@ -17,6 +17,25 @@ const log = loggers.auth;
 
 const authRouter = new OpenAPIHono();
 
+/** Header a non-browser client sends to receive the session token in the body. */
+export const CLIENT_HEADER = "X-Vamsa-Client";
+
+const clientHeaderSchema = z.object({
+  "x-vamsa-client": z.string().optional().openapi({
+    description:
+      'Set to "cli" to receive the session token in the response body (for use as a Bearer token). Browsers should omit it and rely on the HttpOnly cookie.',
+    example: "cli",
+  }),
+});
+
+/** Browsers get the token only via HttpOnly cookie; CLI clients opt in. */
+function tokenForClient(
+  clientHeader: string | undefined,
+  result: { token?: string | null }
+): string {
+  return clientHeader?.toLowerCase() === "cli" ? (result.token ?? "") : "";
+}
+
 // Response schema for auth endpoints
 const authSuccessSchema = z
   .object({
@@ -43,7 +62,8 @@ const authSuccessSchema = z
         description: "Authenticated user information",
       }),
     token: z.string().openapi({
-      description: "Session token",
+      description:
+        'Session token. Empty unless the request sent "X-Vamsa-Client: cli".',
       example: "eyJhbGciOiJIUzI1NiIs...",
     }),
   })
@@ -61,6 +81,7 @@ const loginRoute = createRoute({
   description: "Authenticate user and create session",
   operationId: "login",
   request: {
+    headers: clientHeaderSchema,
     body: {
       required: true,
       content: {
@@ -134,7 +155,7 @@ authRouter.openapi(loginRoute, async (c) => {
             ((result.user as Record<string, unknown>).role as string) ||
             "VIEWER",
         },
-        token: "", // Token is in HttpOnly cookie, not exposed to JS
+        token: tokenForClient(c.req.header(CLIENT_HEADER), result),
       },
       { status: 200 }
     );
@@ -166,6 +187,7 @@ const registerRoute = createRoute({
   description: "Create new user account and authenticate",
   operationId: "register",
   request: {
+    headers: clientHeaderSchema,
     body: {
       required: true,
       content: {
@@ -263,7 +285,7 @@ authRouter.openapi(registerRoute, async (c) => {
             ((result.user as Record<string, unknown>).role as string) ||
             "VIEWER",
         },
-        token: "", // Token is in HttpOnly cookie, not exposed to JS
+        token: tokenForClient(c.req.header(CLIENT_HEADER), result),
       },
       { status: 201 }
     );
