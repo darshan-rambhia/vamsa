@@ -17,6 +17,16 @@ const log = loggers.api;
 
 const tokensRouter = new OpenAPIHono();
 
+/**
+ * Creating and revoking tokens needs a real login. A leaked token must not be
+ * able to mint fresh tokens (outliving its own revocation) or revoke others.
+ */
+const SESSION_REQUIRED = {
+  error: "Forbidden",
+  details:
+    "Token management needs a password login, not a personal access token",
+} as const;
+
 const tokenSchema = z
   .object({
     id: z.string(),
@@ -37,7 +47,17 @@ const createTokenBodySchema = z
   .object({
     name: z.string().trim().min(1).max(100),
     scope: z.enum(API_TOKEN_SCOPES).default("read"),
-    expiresInDays: z.number().int().min(1).max(3650).optional(),
+    expiresInDays: z
+      .number()
+      .int()
+      .min(1)
+      .max(3650)
+      .nullable()
+      .optional()
+      .openapi({
+        description:
+          "Days until expiry (default 90). null for a token that never expires.",
+      }),
   })
   .openapi("CreateApiTokenRequest");
 
@@ -110,11 +130,15 @@ const createTokenRoute = createRoute({
     201: json(createdTokenSchema, "Token created"),
     400: json(errorResponseSchema, "Validation error"),
     401: json(errorResponseSchema, "Not authenticated"),
-    403: json(errorResponseSchema, "Scope above your role"),
+    403: json(
+      errorResponseSchema,
+      "Scope above your role, or the request used a personal access token"
+    ),
   },
 });
 
 tokensRouter.openapi(createTokenRoute, async (c) => {
+  if (c.get("apiTokenScope")) return c.json(SESSION_REQUIRED, { status: 403 });
   const user = c.get("user");
   const body = c.req.valid("json");
 
@@ -152,10 +176,12 @@ const revokeRoute = createRoute({
       "Token revoked (or already gone)"
     ),
     401: json(errorResponseSchema, "Not authenticated"),
+    403: json(errorResponseSchema, "Request used a personal access token"),
   },
 });
 
 tokensRouter.openapi(revokeRoute, async (c) => {
+  if (c.get("apiTokenScope")) return c.json(SESSION_REQUIRED, { status: 403 });
   const user = c.get("user");
   const { id } = c.req.valid("param");
   const result = await revokeApiTokenData(user.id, id);

@@ -5,6 +5,10 @@ import { bearer, genericOAuth } from "better-auth/plugins";
 import { drizzleDb, drizzleSchema, getDbDriver } from "@vamsa/api";
 import { assertUserCanStartSession } from "./auth-session-policy";
 import { isSelfSignupEnabled } from "./auth-registration";
+import {
+  revokeAllUserApiTokensSafe,
+  revokeTokensOnPasswordWrite,
+} from "./api-tokens";
 
 // Cross-runtime password hashing that works in both Node.js (Vite dev) and Bun
 const isBunRuntime = typeof globalThis.Bun !== "undefined";
@@ -136,6 +140,11 @@ export const auth = betterAuth({
     disableSignUp: !isSelfSignupEnabled(),
     minPasswordLength: 12,
     requireEmailVerification: process.env.NODE_ENV !== "test",
+    // Forgot-password reset updates accounts in bulk (the account hook below
+    // gets no user id there), so revoke personal access tokens here
+    onPasswordReset: async ({ user }: { user: { id: string } }) => {
+      await revokeAllUserApiTokensSafe(user.id, "password reset");
+    },
     // Cross-runtime password hashing (works in both Node.js/Vite and Bun)
     password: {
       hash: hashPassword,
@@ -151,6 +160,14 @@ export const auth = betterAuth({
       create: {
         before: async (session) => {
           await assertUserCanStartSession(session.userId);
+        },
+      },
+    },
+    // Any password change or set invalidates the user's personal access tokens
+    account: {
+      update: {
+        after: async (account, context) => {
+          await revokeTokensOnPasswordWrite(account, context?.path);
         },
       },
     },

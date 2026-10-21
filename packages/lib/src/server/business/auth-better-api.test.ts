@@ -430,10 +430,7 @@ describe("auth-better-api", () => {
 
   describe("betterAuthChangePassword", () => {
     it("should change password successfully", async () => {
-      mockBetterAuthApi.changePassword.mockResolvedValueOnce({
-        token: null,
-        user: { id: "user-1" },
-      });
+      mockBetterAuthApi.changePassword.mockResolvedValueOnce({ success: true });
 
       const result = await betterAuthChangePassword(
         "oldPassword",
@@ -441,7 +438,7 @@ describe("auth-better-api", () => {
         new Headers()
       );
 
-      expect(result as any).toEqual({ token: null, user: { id: "user-1" } });
+      expect(result as any).toEqual({ success: true });
       expect(mockBetterAuthApi.changePassword).toHaveBeenCalledWith({
         body: { currentPassword: "oldPassword", newPassword: "newPassword" },
         headers: {},
@@ -467,10 +464,7 @@ describe("auth-better-api", () => {
     });
 
     it("should log password change attempt", async () => {
-      mockBetterAuthApi.changePassword.mockResolvedValueOnce({
-        token: null,
-        user: { id: "user-1" },
-      });
+      mockBetterAuthApi.changePassword.mockResolvedValueOnce({ success: true });
 
       await betterAuthChangePassword(
         "oldPassword",

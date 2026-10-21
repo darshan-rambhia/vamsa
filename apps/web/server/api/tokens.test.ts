@@ -175,15 +175,43 @@ describe("/tokens router", () => {
     expect(mockCreate).not.toHaveBeenCalled();
   });
 
-  test("a read token cannot mint a write token", async () => {
-    withToken("ADMIN", "read");
-    const res = await post(
-      "/tokens",
-      { name: "x", scope: "write" },
-      patHeaders
-    );
+  test.each(["read", "admin"] as const)(
+    "a %s-scope token cannot create tokens (sessions only)",
+    async (scope) => {
+      withToken("ADMIN", scope);
+      const res = await post(
+        "/tokens",
+        { name: "x", scope: "read" },
+        patHeaders
+      );
+      expect(res.status).toBe(403);
+      expect((await res.json()).details).toMatch(/password login/);
+      expect(mockCreate).not.toHaveBeenCalled();
+    }
+  );
+
+  test("a token cannot revoke tokens", async () => {
+    withToken("ADMIN", "admin");
+    const res = await apiV1.request("/tokens/tok-1", {
+      method: "DELETE",
+      headers: patHeaders,
+    });
     expect(res.status).toBe(403);
-    expect(mockCreate).not.toHaveBeenCalled();
+    expect(mockRevoke).not.toHaveBeenCalled();
+  });
+
+  test("a token can still list its user's tokens", async () => {
+    withToken("VIEWER", "read");
+    expect(
+      (await apiV1.request("/tokens", { headers: patHeaders })).status
+    ).toBe(200);
+  });
+
+  test("expiresInDays: null is accepted (no expiry)", async () => {
+    mockSession.mockResolvedValue(user("MEMBER"));
+    const res = await post("/tokens", { name: "ci", expiresInDays: null });
+    expect(res.status).toBe(201);
+    expect(mockCreate.mock.calls[0][1]).toMatchObject({ expiresInDays: null });
   });
 
   test("rejects invalid scope and empty name", async () => {
@@ -244,6 +272,16 @@ describe("PAT authorization (role capped by scope)", () => {
     expect(created.status).not.toBe(403);
     expect(created.status).not.toBe(401);
 
+    const del = await apiV1.request("/persons/p1", {
+      method: "DELETE",
+      headers: patHeaders,
+    });
+    expect(del.status).toBe(403);
+    expect(mockDeletePerson).not.toHaveBeenCalled();
+  });
+
+  test("a demoted admin's admin-scope token is capped at the new role", async () => {
+    withToken("MEMBER", "admin");
     const del = await apiV1.request("/persons/p1", {
       method: "DELETE",
       headers: patHeaders,

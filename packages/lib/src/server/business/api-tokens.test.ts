@@ -8,11 +8,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   API_TOKEN_PREFIX,
+  LAST_USED_WRITE_INTERVAL_MS,
   createApiTokenData,
   hashApiToken,
   listApiTokensData,
   revokeAllUserApiTokensData,
+  revokeAllUserApiTokensSafe,
   revokeApiTokenData,
+  revokeTokensOnPasswordWrite,
   verifyApiTokenData,
 } from "./api-tokens";
 import type { ApiTokensDb } from "./api-tokens";
@@ -105,7 +108,20 @@ describe("createApiTokenData", () => {
     expect(stored).not.toHaveProperty("token");
     expect(stored.prefix).toBe(created.token.slice(0, 10));
     expect(stored.scope).toBe("write");
-    expect(stored.expiresAt).toBeNull();
+    // Default: 90 days
+    const days =
+      ((stored.expiresAt as Date).getTime() - Date.now()) / 86_400_000;
+    expect(days).toBeGreaterThan(89.99);
+    expect(days).toBeLessThan(90.01);
+  });
+
+  it("expiresInDays: null creates a token that never expires", async () => {
+    await createApiTokenData(
+      "user-1",
+      { name: "forever", scope: "read", expiresInDays: null },
+      fake.db
+    );
+    expect(fake.state.inserted[0].expiresAt).toBeNull();
   });
 
   it("sets expiresAt from expiresInDays", async () => {
@@ -225,5 +241,77 @@ describe("verifyApiTokenData", () => {
       lockedUntil: new Date(Date.now() - 60_000),
     };
     expect(await verifyApiTokenData("vms_x", fake.db)).not.toBeNull();
+  });
+});
+
+describe("lastUsedAt throttling", () => {
+  it("skips the write when lastUsedAt is recent", async () => {
+    fake.state.tokenRow = tokenRow({
+      lastUsedAt: new Date(Date.now() - LAST_USED_WRITE_INTERVAL_MS / 2),
+    });
+    fake.state.userRow = activeUser;
+    expect(await verifyApiTokenData("vms_x", fake.db)).not.toBeNull();
+    expect(fake.state.updates).toHaveLength(0);
+  });
+
+  it("writes when lastUsedAt is stale", async () => {
+    fake.state.tokenRow = tokenRow({
+      lastUsedAt: new Date(Date.now() - LAST_USED_WRITE_INTERVAL_MS * 2),
+    });
+    fake.state.userRow = activeUser;
+    await verifyApiTokenData("vms_x", fake.db);
+    expect(fake.state.updates).toHaveLength(1);
+  });
+});
+
+describe("role changes apply to existing tokens", () => {
+  it("returns the user's current role, so a demoted admin's admin-scope token is capped", async () => {
+    fake.state.tokenRow = tokenRow({ scope: "admin" });
+    fake.state.userRow = { ...activeUser, role: "MEMBER" };
+    const res = await verifyApiTokenData("vms_x", fake.db);
+    expect(res?.scope).toBe("admin");
+    expect(res?.user.role).toBe("MEMBER");
+  });
+});
+
+describe("password writes revoke tokens", () => {
+  it.each(["/change-password", "/set-password", "/reset-password"])(
+    "%s revokes the account owner's tokens",
+    async (path) => {
+      fake.state.updateReturning = [{ id: "t1" }];
+      expect(
+        await revokeTokensOnPasswordWrite({ userId: "user-1" }, path, fake.db)
+      ).toBe(true);
+      expect(fake.state.updates[0].revokedAt).toBeInstanceOf(Date);
+    }
+  );
+
+  it("ignores other account updates (e.g. OAuth token refresh)", async () => {
+    expect(
+      await revokeTokensOnPasswordWrite(
+        { userId: "user-1" },
+        "/callback/google",
+        fake.db
+      )
+    ).toBe(false);
+    expect(
+      await revokeTokensOnPasswordWrite(
+        { userId: "user-1" },
+        undefined,
+        fake.db
+      )
+    ).toBe(false);
+    expect(fake.state.updates).toHaveLength(0);
+  });
+
+  it("never throws if the revoke fails", async () => {
+    const broken = {
+      update: () => {
+        throw new Error("db down");
+      },
+    } as unknown as ApiTokensDb;
+    await expect(
+      revokeAllUserApiTokensSafe("user-1", "test", broken)
+    ).resolves.toBeUndefined();
   });
 });

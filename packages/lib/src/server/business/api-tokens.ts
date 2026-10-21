@@ -17,10 +17,17 @@ const DISPLAY_PREFIX_LENGTH = 10;
 export const API_TOKEN_SCOPES = ["read", "write", "admin"] as const;
 export type ApiTokenScope = (typeof API_TOKEN_SCOPES)[number];
 
+/** Tokens expire after this many days unless the caller says otherwise. */
+export const DEFAULT_TOKEN_EXPIRY_DAYS = 90;
+
+/** lastUsedAt is only rewritten when older than this, to avoid a write per request. */
+export const LAST_USED_WRITE_INTERVAL_MS = 60_000;
+
 export interface CreateApiTokenInput {
   name: string;
   scope: ApiTokenScope;
-  expiresInDays?: number;
+  /** Days until expiry. Omit for the 90-day default; null for no expiry. */
+  expiresInDays?: number | null;
 }
 
 /** Public view of a token. Never includes the hash or plaintext. */
@@ -88,9 +95,12 @@ export async function createApiTokenData(
   db: ApiTokensDb = drizzleDb
 ): Promise<CreatedApiToken> {
   const token = generateApiToken();
-  const expiresAt = input.expiresInDays
-    ? new Date(Date.now() + input.expiresInDays * 24 * 60 * 60 * 1000)
-    : null;
+  const days =
+    input.expiresInDays === undefined
+      ? DEFAULT_TOKEN_EXPIRY_DAYS
+      : input.expiresInDays;
+  const expiresAt =
+    days === null ? null : new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
   const [created] = await db
     .insert(drizzleSchema.apiTokens)
@@ -175,6 +185,48 @@ export async function revokeAllUserApiTokensData(
 }
 
 /**
+ * Revoke all of a user's tokens without ever throwing: used from auth hooks
+ * (password change/reset, deactivation) where a revoke failure must not
+ * break the operation itself. Failures are logged at error level.
+ */
+export async function revokeAllUserApiTokensSafe(
+  userId: string,
+  reason: string,
+  db: ApiTokensDb = drizzleDb
+): Promise<void> {
+  try {
+    const count = await revokeAllUserApiTokensData(userId, db);
+    if (count > 0) log.info({ userId, count, reason }, "API tokens revoked");
+  } catch (err) {
+    log.withErr(err).ctx({ userId, reason }).msg("Failed to revoke API tokens");
+  }
+}
+
+/** Better Auth endpoints that write a credential password. */
+const PASSWORD_WRITE_PATHS = new Set([
+  "/change-password",
+  "/set-password",
+  "/reset-password",
+]);
+
+/**
+ * Better Auth `account.update.after` hook body: when a password-writing
+ * endpoint updated a credential account, revoke the user's tokens.
+ * Returns true if it revoked.
+ */
+export async function revokeTokensOnPasswordWrite(
+  account: unknown,
+  path: string | undefined,
+  db: ApiTokensDb = drizzleDb
+): Promise<boolean> {
+  if (!path || !PASSWORD_WRITE_PATHS.has(path)) return false;
+  const userId = (account as { userId?: unknown } | null)?.userId;
+  if (typeof userId !== "string") return false;
+  await revokeAllUserApiTokensSafe(userId, `password write ${path}`, db);
+  return true;
+}
+
+/**
  * Verify a plaintext token. Returns null when the token is unknown, revoked,
  * expired, or its user is deactivated or locked out. Updates lastUsedAt.
  */
@@ -206,10 +258,13 @@ export async function verifyApiTokenData(
     return null;
   }
 
-  await db
-    .update(drizzleSchema.apiTokens)
-    .set({ lastUsedAt: now })
-    .where(eq(drizzleSchema.apiTokens.id, row.id));
+  const lastUsed = row.lastUsedAt?.getTime() ?? 0;
+  if (now.getTime() - lastUsed > LAST_USED_WRITE_INTERVAL_MS) {
+    await db
+      .update(drizzleSchema.apiTokens)
+      .set({ lastUsedAt: now })
+      .where(eq(drizzleSchema.apiTokens.id, row.id));
+  }
 
   return {
     tokenId: row.id,
