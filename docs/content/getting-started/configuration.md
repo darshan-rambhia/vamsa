@@ -125,6 +125,17 @@ xR7kM3nQ9pB2wY5tL8vJ1hF4dA6cG0eS+zU=
 !!! warning "Keep this secret"
     Anyone who knows this value can forge login sessions. Never share it publicly. If you suspect it has been leaked, generate a new one and restart Vamsa -- all users will need to log in again.
 
+### `API_TOKEN_SECRET`
+
+**Optional.** Key used to hash API tokens (personal access tokens for the CLI and API). If unset, Vamsa uses `BETTER_AUTH_SECRET`. Must be at least 32 characters.
+
+```ini
+API_TOKEN_SECRET="another-random-string-here"
+```
+
+!!! warning "Changing it invalidates API tokens"
+    Every existing API token stops working when this value (or `BETTER_AUTH_SECRET`, if you rely on the fallback) changes. Users have to create new tokens.
+
 ### `BETTER_AUTH_URL`
 
 The URL where your app is running. Used internally by the authentication system.
