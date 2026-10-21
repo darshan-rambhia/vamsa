@@ -46,6 +46,14 @@ vi.mock("better-auth/adapters/drizzle", () => ({
 vi.mock("better-auth/plugins", () => ({
   bearer: vi.fn(() => ({ id: "bearer" })),
   genericOAuth: vi.fn(() => ({ id: "genericOAuth" })),
+  deviceAuthorization: vi.fn((options: unknown) => ({
+    id: "device-authorization",
+    options,
+  })),
+}));
+
+vi.mock("better-auth/api", () => ({
+  createAuthMiddleware: vi.fn((fn: unknown) => fn),
 }));
 
 const { mockRevokeAllSafe } = vi.hoisted(() => ({
@@ -123,6 +131,68 @@ describe("password reset configuration", () => {
     expect(
       options.rateLimit.customRules["/request-password-reset"].max
     ).toBeLessThanOrEqual(3);
+  });
+});
+
+describe("device authorization (vamsa login)", () => {
+  type DeviceOptions = {
+    expiresIn: string;
+    interval: string;
+    userCodeLength: number;
+    validateClient: (id: string) => boolean;
+    verificationUri: string;
+  };
+
+  async function getAuth() {
+    vi.resetModules();
+    const { auth } = await import("./auth-better");
+    return auth as unknown as {
+      plugins: Array<{ id: string; options?: DeviceOptions }>;
+      rateLimit: {
+        customRules: Record<string, { window: number; max: number }>;
+      };
+      hooks: { after: (ctx: unknown) => Promise<void> };
+    };
+  }
+
+  it("configures the plugin: 10m codes, 5s polling, 8-char codes, /device page", async () => {
+    const auth = await getAuth();
+    const device = auth.plugins.find((p) => p.id === "device-authorization");
+    expect(device?.options).toMatchObject({
+      expiresIn: "10m",
+      interval: "5s",
+      userCodeLength: 8,
+    });
+    expect(device?.options?.verificationUri).toMatch(/\/device$/);
+  });
+
+  it("only allows the vamsa-cli client", async () => {
+    const auth = await getAuth();
+    const device = auth.plugins.find((p) => p.id === "device-authorization");
+    expect(device?.options?.validateClient("vamsa-cli")).toBe(true);
+    expect(device?.options?.validateClient("other")).toBe(false);
+    expect(device?.options?.validateClient("toString")).toBe(false);
+  });
+
+  it("rate limits code issuance, polling and approval", async () => {
+    const { rateLimit } = await getAuth();
+    expect(rateLimit.customRules["/device/code"]).toEqual({
+      window: 60,
+      max: 10,
+    });
+    // Must allow polling at the 5s interval (12/min) without tripping
+    expect(rateLimit.customRules["/device/token"].max).toBeGreaterThanOrEqual(
+      12
+    );
+    expect(rateLimit.customRules["/device/approve"]).toBeDefined();
+    expect(rateLimit.customRules["/device/deny"]).toBeDefined();
+  });
+
+  it("after-hook ignores other endpoints", async () => {
+    const { hooks } = await getAuth();
+    await expect(
+      hooks.after({ path: "/sign-in/email", context: {} })
+    ).resolves.toBeUndefined();
   });
 });
 

@@ -22,6 +22,7 @@ import {
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { CliError, usageError } from "./errors";
+import type { PendingLogin } from "./device";
 
 export type TokenType = "session" | "pat";
 
@@ -30,6 +31,8 @@ export interface Profile {
   token?: string;
   tokenType?: TokenType;
   email?: string;
+  /** Browser login started with --no-wait; `vamsa login --resume` finishes it */
+  pending?: PendingLogin;
 }
 
 export interface Config {

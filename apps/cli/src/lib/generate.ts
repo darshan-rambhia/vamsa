@@ -148,17 +148,22 @@ description: Read and edit a Vamsa family tree (people, relationships, events, p
 - Output is TOON by default (compact, YAML-like tables). Add \`--json\` when you need to parse it.
 - Lists print \`total\` and an explicit \`message\` when empty. Use \`--fields a,b,c\` for columns and \`--full\` to see untruncated text.
 - Errors print an \`error:\` block with \`code\`, \`message\` and a \`hint\` holding the next command to try. Exit codes: 0 ok, 1 error, 2 usage error.
-- Never prompts when not on a TTY. Pass values as flags: \`--email\`, \`--password-stdin\`, \`--yes\` for destructive admin actions.
+- Never prompts when not on a TTY. Pass values as flags, e.g. \`--yes\` for destructive admin actions.
 - Deletes are idempotent: deleting something already gone succeeds with a \`note\`.
 - Follow the \`help[]\` lines at the end of each output; they suggest concrete next commands (replace \`<id>\` placeholders).
 - Every command accepts \`--help\`.
 
 ## Auth
 
-- Interactive: \`vamsa login --url <url> --email <email>\`
-- Scripted: \`echo "$PW" | vamsa login --url <url> --email <email> --password-stdin\`
-- Long-lived token: \`vamsa token create --name agent --scope read\`, then \`VAMSA_TOKEN=vms_... vamsa ...\` or \`vamsa login --token vms_...\`
-- Prefer a \`read\` scoped token for agents unless edits are requested.
+Login happens in the user's browser (works with SSO). You cannot approve it yourself.
+
+1. \`vamsa login --url <url> --no-wait --scope read\` prints \`verificationUriComplete\` and \`userCode\`, then exits.
+2. Show the user that link and code; ask them to open it, sign in, check the code and press Approve.
+3. \`vamsa login --resume\` waits for the approval and saves a personal access token (\`--resume --no-wait\` checks once).
+
+- Without \`--no-wait\`, \`vamsa login\` prints the same block and keeps polling until approved, denied (\`access_denied\`) or expired (\`expired_token\`, after 10 minutes); both exit 1.
+- Existing token: \`vamsa login --token vms_...\` or \`VAMSA_TOKEN=vms_... vamsa ...\`
+- Prefer \`--scope read\` for agents unless edits are requested.
 
 ## Command reference
 

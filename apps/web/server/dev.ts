@@ -187,6 +187,11 @@ export function vamsaDevApiPlugin(): Plugin {
             if (req.headers["origin"]) {
               headers.set("origin", req.headers["origin"]);
             }
+            // Bearer sessions (CLI, mobile) and the device-login User-Agent
+            for (const name of ["authorization", "user-agent"]) {
+              const value = req.headers[name];
+              if (typeof value === "string") headers.set(name, value);
+            }
 
             const request = new Request(fullUrl, {
               method: req.method,

@@ -22,6 +22,7 @@ import {
 import { getCurrentUser, getRegistrationStatus } from "~/server/auth.functions";
 import { signIn } from "~/lib/auth-client";
 import { SSOButtons } from "~/components/auth/sso-buttons";
+import { safeRedirect } from "~/lib/safe-redirect";
 
 // SSO cannot know the person up front; /visualize defaults to the user's own person
 const POST_LOGIN_PATH = "/visualize?type=tree&view=focused";
@@ -32,6 +33,8 @@ const searchSchema = z.object({
   invited: z.boolean().optional(),
   verify: z.boolean().optional(),
   reset: z.boolean().optional(),
+  // Return path after sign-in (e.g. /device?user_code=...), same-site only
+  redirect: z.string().optional(),
 });
 
 export const Route = createFileRoute("/login")({
@@ -46,9 +49,10 @@ function LoginComponent() {
   const { t } = useTranslation(["auth", "common"]);
   const navigate = useNavigate();
   const { registration } = useLoaderData({ from: "/login" });
-  const { registered, claimed, invited, verify, reset } = useSearch({
+  const { registered, claimed, invited, verify, reset, redirect } = useSearch({
     from: "/login",
   });
+  const returnTo = safeRedirect(redirect);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -64,6 +68,10 @@ function LoginComponent() {
       if (result.error) {
         setError(result.error.message || "Login failed");
         setIsLoading(false);
+        return;
+      }
+      if (returnTo) {
+        navigate({ href: returnTo });
         return;
       }
       // Land on the tree centered on the user's own person; fall back to /people
@@ -255,7 +263,10 @@ function LoginComponent() {
             </Button>
 
             {/* SSO Buttons */}
-            <SSOButtons redirectTo={POST_LOGIN_PATH} disabled={isLoading} />
+            <SSOButtons
+              redirectTo={returnTo ?? POST_LOGIN_PATH}
+              disabled={isLoading}
+            />
 
             {registration.selfSignupEnabled && (
               <div className="text-center text-sm">

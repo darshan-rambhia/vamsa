@@ -22,14 +22,28 @@ pnpm --filter @vamsa/cli build:bin  # standalone binaries in apps/cli/dist/
 ## Log in
 
 ```bash
-vamsa login --url https://vamsa.example --email me@example.com          # prompts for the password on a TTY
-echo "$PASSWORD" | vamsa login --url https://vamsa.example --email me@example.com --password-stdin
-vamsa token create --name laptop --scope read                           # long-lived token, shown once
-vamsa login --profile ci --token vms_...                                # store a token in another profile
-vamsa                                                                   # home view: who, where, counts, next steps
+vamsa login --url https://vamsa.example      # prints a link + code, opens the browser, waits for Approve
+vamsa login --url https://vamsa.example --no-wait   # print the link + code and exit (agents)
+vamsa login --resume                         # finish a --no-wait login after approving it
+vamsa login --profile ci --token vms_...     # store an existing token in another profile
+vamsa                                        # home view: who, where, counts, next steps
 ```
 
-Token scopes cap what a token can do: `read` (VIEWER), `write` (MEMBER), `admin` (ADMIN). A token never gets more than its user's own role.
+`vamsa login` uses the OAuth 2.0 device flow (RFC 8628). It prints `verificationUri`, `verificationUriComplete`, `userCode` and `expiresIn` straight away. You open the link, sign in to the web app however you normally do (SSO or password), check that the code matches and press **Approve**. Codes last 10 minutes. On a TTY the CLI also opens the browser (`--no-browser` turns that off) and shows a spinner. Without a TTY it polls quietly every 5 seconds, slows down when the server asks, and exits 1 with `access_denied` or `expired_token` if the login is denied or runs out of time.
+
+Once approved, the CLI uses the short-lived session to create a personal access token, saves the token to the profile and then ends the session. The saved credential is always a revocable token that shows up in `vamsa token list` and in the web app.
+
+| Flag                    | Default  | Meaning                                                    |
+| ----------------------- | -------- | ---------------------------------------------------------- |
+| `--scope`               | `write`  | `read` (VIEWER), `write` (MEMBER), `admin` (ADMIN)         |
+| `--name`                | hostname | Token name                                                 |
+| `--expires-in-days`     | `90`     | Token lifetime                                             |
+| `--no-wait`, `--resume` |          | Split the flow: print the link now, finish later           |
+| `--password`            |          | Fallback: email + password (`--email`, `--password-stdin`) |
+
+Scopes cap what a token can do. A token never gets more than its user's role, and a scope above your role is lowered (with a `note`). A token cannot create more tokens, so `vamsa token create` needs a `--password` session. To get another token, run `vamsa login --profile <name> --name <token name>` again.
+
+For agents: run `vamsa login --no-wait`, show the user `verificationUriComplete` and `userCode`, then run `vamsa login --resume`. `vamsa login --resume --no-wait` checks once without blocking.
 
 Every prompt has a flag or env var that replaces it:
 
@@ -48,7 +62,7 @@ Profiles live in `$XDG_CONFIG_HOME/vamsa/config.json` (default `~/.config/vamsa/
 
 ```
 vamsa                                   home view
-vamsa login | logout | whoami
+vamsa login [--no-wait|--resume] | logout | whoami
 vamsa profile list | use <name> | remove <name>
 vamsa token create | list | revoke <id>
 vamsa person list [--q] [--limit] [--page] | get | create | update | delete
