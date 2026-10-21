@@ -611,7 +611,8 @@ export class AdminPage {
 
   async goto() {
     await this.page.goto("/admin", { waitUntil: "domcontentloaded" });
-    // Wait for admin nav to be visible
+    // Tab links are inert until hydration; clicking earlier leaves waitForURL hanging
+    await waitForAppSettled(this.page);
     await this.tabs.waitFor({ state: "visible", timeout: 5000 });
   }
 
