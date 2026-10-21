@@ -11,6 +11,7 @@ import personsRouter from "./persons";
 import relationshipsRouter from "./relationships";
 import calendarRouter from "./calendar";
 import metricsRouter from "./metrics";
+import tokensRouter from "./tokens";
 import batchRouter from "./batch";
 
 const log = loggers.api;
@@ -101,6 +102,11 @@ if (ENABLE_DOCS) {
         description: "Calendar feeds (RSS, iCal formats)",
       },
       {
+        name: "Tokens",
+        description:
+          "Personal access tokens for the CLI and scripts (requires authentication)",
+      },
+      {
         name: "Metrics",
         description: "Monitoring and performance metrics (requires ADMIN role)",
       },
@@ -153,6 +159,7 @@ apiV1.get("/", (c) => {
  * - /relationships/* - VIEWER to read, MEMBER to create/update, ADMIN to delete
  * - /batch/* - Requires MEMBER role
  * - /metrics/* - Requires ADMIN role
+ * - /tokens/* - Any signed-in user, for their own tokens
  */
 // Role follows the HTTP method: GET VIEWER, POST/PUT MEMBER, DELETE ADMIN
 apiV1.use("/persons/*", requireApiAuthForMethod());
@@ -160,6 +167,8 @@ apiV1.use("/relationships/*", requireApiAuthForMethod());
 // Batch: MEMBER minimum; the batch handler additionally requires ADMIN when it contains deletes
 apiV1.use("/batch/*", requireApiAuth("MEMBER"));
 apiV1.use("/metrics/*", requireApiAuth("ADMIN"));
+// Own tokens only; the create handler caps the scope at the caller's role
+apiV1.use("/tokens/*", requireApiAuth("VIEWER"));
 
 // Rate limit the REST auth endpoints (brute-force and signup spam)
 apiV1.use("/auth/login", rateLimitMiddleware("login"));
@@ -179,6 +188,7 @@ apiV1.route("/relationships", relationshipsRouter);
 apiV1.route("/batch", batchRouter);
 apiV1.route("/calendar", calendarRouter);
 apiV1.route("/metrics", metricsRouter);
+apiV1.route("/tokens", tokensRouter);
 
 // ============================================
 // Error Handling

@@ -1,5 +1,6 @@
 import { loggers } from "@vamsa/lib/logger";
 import { auth } from "./auth-better";
+import { revokeAllUserApiTokensData } from "./api-tokens";
 
 const log = loggers.auth;
 
@@ -161,6 +162,9 @@ export async function betterAuthChangePassword(
     log.warn({}, "Better Auth password change failed - no result returned");
     throw new Error("Password change failed");
   }
+
+  // A new password invalidates every personal access token
+  await revokeAllUserApiTokensData(result.user.id);
 
   log.info({}, "Better Auth password changed successfully");
   return result;
