@@ -243,6 +243,11 @@ jobs:
           fi
           echo "Build successful"
 
+      # Mirrors the Dockerfile's `pnpm deploy --prod`: catches runtime deps
+      # declared only as devDependencies (e.g. the fflate outage).
+      - name: Prod-install smoke test
+        run: ./scripts/ci/prod-install-smoke.sh
+
   docker:
     name: Docker Build
     runs-on: ubuntu-latest
