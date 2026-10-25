@@ -14,6 +14,7 @@ import {
 } from "@vamsa/lib/server/business/device-auth";
 import { loggers } from "@vamsa/lib/logger";
 import { requireAuth } from "./middleware/require-auth";
+import { checkRateLimit } from "./middleware/rate-limiter";
 
 const log = loggers.auth;
 
@@ -58,7 +59,9 @@ function cleanCode(input: string): string {
 export async function getDeviceRequestHandler(
   userCode: string
 ): Promise<DeviceRequestView> {
-  await requireAuth("VIEWER");
+  const user = await requireAuth("VIEWER");
+  // auth.api calls skip Better Auth's per-IP limiter; cap code guessing here
+  await checkRateLimit("deviceAuth", user.id);
   const code = cleanCode(userCode);
   const display = formatUserCode(code);
   let verified: { status?: string; client_id?: string | null };
@@ -71,14 +74,18 @@ export async function getDeviceRequestHandler(
     return { state: stateFromError(err), userCode: display };
   }
 
-  // client_id is only returned to the user who claimed the code
-  if (!verified.client_id) return { state: "invalid", userCode: display };
+  const details = await getDeviceRequestDetails(code);
+  // client_id is only returned to the user who claimed the code. Two lookups
+  // at once (React StrictMode, a double tab) race on the claim and the loser
+  // gets no client_id even though the claim is ours, so check the row too.
+  const claimedByMe =
+    !!verified.client_id || (!!details && details.userId === user.id);
+  if (!claimedByMe) return { state: "invalid", userCode: display };
   const status = verified.status;
   if (status !== "pending" && status !== "approved" && status !== "denied") {
     return { state: "invalid", userCode: display };
   }
 
-  const details = await getDeviceRequestDetails(code);
   return {
     state: status,
     userCode: display,
@@ -97,6 +104,7 @@ export async function decideDeviceRequestHandler(input: {
   approve: boolean;
 }): Promise<DeviceRequestView> {
   const user = await requireAuth("VIEWER");
+  await checkRateLimit("deviceAuth", user.id);
   const code = cleanCode(input.userCode);
   const display = formatUserCode(code);
   try {

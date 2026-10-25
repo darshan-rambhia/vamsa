@@ -15,7 +15,9 @@ export type { DeviceRequestView, DeviceState } from "./device.server";
  * Server function: details of a device login request
  * @requires VIEWER role or higher (any signed-in user)
  */
-export const getDeviceRequest = createServerFn({ method: "GET" })
+// POST, not GET: the lookup claims the code for the viewer, and a GET could be
+// fired by a cross-site top-level navigation carrying the Lax session cookie
+export const getDeviceRequest = createServerFn({ method: "POST" })
   .validator((data: { userCode: string }) => data)
   .handler(async ({ data }) => getDeviceRequestHandler(data.userCode));
 

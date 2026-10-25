@@ -90,6 +90,11 @@ export const RATE_LIMITS = {
     limit: parseEnvInt("RATE_LIMIT_PASSWORD_RESET_MAX", 3),
     windowMs: parseEnvInt("RATE_LIMIT_PASSWORD_RESET_WINDOW", 3600) * 1000, // 1 hour default
   },
+  // /device code lookups and approve/deny, per signed-in user
+  deviceAuth: {
+    limit: parseEnvInt("RATE_LIMIT_DEVICE_AUTH_MAX", 20),
+    windowMs: parseEnvInt("RATE_LIMIT_DEVICE_AUTH_WINDOW", 60) * 1000,
+  },
   search: {
     limit: parseEnvInt("RATE_LIMIT_SEARCH_MAX", 30),
     windowMs: parseEnvInt("RATE_LIMIT_SEARCH_WINDOW", 60) * 1000, // Per minute

@@ -88,6 +88,8 @@ export async function recordDeviceUserAgent(
 
 export interface DeviceRequestDetails {
   userCode: string;
+  /** User who claimed the code on /device (null until someone opens it) */
+  userId: string | null;
   clientId: string | null;
   clientName: string | null;
   scope: string | null;
@@ -110,6 +112,7 @@ export async function getDeviceRequestDetails(
   if (!row) return null;
   return {
     userCode: formatUserCode(row.userCode),
+    userId: row.userId,
     clientId: row.clientId,
     clientName: row.clientId ? (DEVICE_CLIENTS[row.clientId] ?? null) : null,
     scope: row.scope,

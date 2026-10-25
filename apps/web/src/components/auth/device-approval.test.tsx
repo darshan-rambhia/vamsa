@@ -41,6 +41,20 @@ function setup(
 }
 
 describe("DeviceApproval", () => {
+  it("never approves or denies without a click", async () => {
+    const { decide } = setup({ initialCode: "ABCDEFGH" });
+    const view = await screen.findByTestId("device-pending");
+    // Enter on the focused heading / anywhere in the view is not a decision
+    fireEvent.keyDown(document.activeElement ?? view, { key: "Enter" });
+    fireEvent.keyDown(view, { key: "Enter" });
+    expect(view.querySelector("form")).toBeNull();
+    expect(screen.getByTestId("device-approve").getAttribute("type")).not.toBe(
+      "submit"
+    );
+    await new Promise((r) => setTimeout(r, 20));
+    expect(decide).not.toHaveBeenCalled();
+  });
+
   it("prefilled code: shows who is asking, with the code to compare", async () => {
     const { load } = setup({ initialCode: "abcdefgh" });
     expect(load).toHaveBeenCalledWith("abcdefgh");
