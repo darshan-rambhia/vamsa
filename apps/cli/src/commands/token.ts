@@ -1,6 +1,6 @@
 import { group, leaf } from "../lib/command";
 import { intFlag, str } from "../lib/context";
-import { usageError } from "../lib/errors";
+import { CliError, usageError } from "../lib/errors";
 import { listView, parseFields } from "../lib/output";
 
 interface ApiToken {
@@ -86,6 +86,14 @@ const create = leaf({
   },
   handler: async (ctx, args) => {
     ctx.requireAuth();
+    if (ctx.target.tokenType === "pat") {
+      // The server refuses: a token must not be able to mint more tokens
+      throw new CliError(
+        "session_required",
+        "Creating a token needs a browser login, not a personal access token",
+        `vamsa login --profile <new-profile> --name <token name>  (each browser login mints its own token)`
+      );
+    }
     const name = str(args.name);
     if (!name) {
       throw usageError("Missing --name", "vamsa token create --name <name>");

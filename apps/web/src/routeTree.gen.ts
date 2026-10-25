@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as ClaimProfileRouteImport } from './routes/claim-profile'
+import { Route as DeviceRouteImport } from './routes/device'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -52,6 +53,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const ClaimProfileRoute = ClaimProfileRouteImport.update({
   id: '/claim-profile',
   path: '/claim-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DeviceRoute = DeviceRouteImport.update({
+  id: '/device',
+  path: '/device',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -206,6 +212,7 @@ const AuthenticatedPeoplePersonIdEditRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/claim-profile': typeof ClaimProfileRoute
+  '/device': typeof DeviceRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
@@ -237,6 +244,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/claim-profile': typeof ClaimProfileRoute
+  '/device': typeof DeviceRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
@@ -270,6 +278,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/claim-profile': typeof ClaimProfileRoute
+  '/device': typeof DeviceRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
@@ -303,6 +312,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/claim-profile'
+    | '/device'
     | '/forgot-password'
     | '/login'
     | '/register'
@@ -334,6 +344,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/claim-profile'
+    | '/device'
     | '/forgot-password'
     | '/login'
     | '/register'
@@ -366,6 +377,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/claim-profile'
+    | '/device'
     | '/forgot-password'
     | '/login'
     | '/register'
@@ -399,6 +411,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   ClaimProfileRoute: typeof ClaimProfileRoute
+  DeviceRoute: typeof DeviceRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
@@ -427,6 +440,13 @@ declare module '@tanstack/react-router' {
       path: '/claim-profile'
       fullPath: '/claim-profile'
       preLoaderRoute: typeof ClaimProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/device': {
+      id: '/device'
+      path: '/device'
+      fullPath: '/device'
+      preLoaderRoute: typeof DeviceRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/forgot-password': {
@@ -689,6 +709,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   ClaimProfileRoute: ClaimProfileRoute,
+  DeviceRoute: DeviceRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,

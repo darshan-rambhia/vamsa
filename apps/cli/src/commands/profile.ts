@@ -25,7 +25,7 @@ const list = leaf({
       }),
       help: items.length
         ? ["vamsa profile use <name>", "vamsa profile remove <name>"]
-        : ["vamsa login --url <url> --email <email> --password-stdin"],
+        : ["vamsa login --url <url>"],
     });
   },
 });

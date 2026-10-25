@@ -29,8 +29,17 @@ export async function homeView(ctx: Ctx): Promise<void> {
 
   if (!target.token) {
     view.user = null;
+    const pending = ctx.config.profiles[target.profileName]?.pending;
+    if (pending) {
+      view.pendingLogin = {
+        verificationUriComplete: pending.verificationUriComplete,
+        expiresAt: pending.expiresAt,
+      };
+    }
     view.help = [
-      "vamsa login --url <url> --email <email> --password-stdin",
+      ...(pending ? ["vamsa login --resume  (finish the pending login)"] : []),
+      "vamsa login --url <url>  (approve in the browser)",
+      "vamsa login --url <url> --no-wait  (agents: show the link, then vamsa login --resume)",
       "vamsa login --token vms_...  (personal access token)",
       "vamsa --help",
     ];
@@ -53,16 +62,13 @@ export async function homeView(ctx: Ctx): Promise<void> {
       "vamsa person list",
       "vamsa person get <id>",
       "vamsa relationship list --person <id>",
-      "vamsa token create --name <name> --scope read",
+      "vamsa token list",
     ];
   } catch (err) {
     const e = err as CliError;
     view.user = null;
     view.status = `${e.code}: ${e.message}`;
-    view.help = [
-      e.hint ?? "vamsa login --email <email> --password-stdin",
-      "vamsa whoami --verbose",
-    ];
+    view.help = [e.hint ?? "vamsa login", "vamsa whoami --verbose"];
   }
   ctx.print(view);
 }

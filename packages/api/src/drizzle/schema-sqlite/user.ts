@@ -282,3 +282,31 @@ export const apiTokensRelations = relations(apiTokens, ({ one }) => ({
     relationName: "ApiTokens",
   }),
 }));
+
+/**
+ * DeviceCode table - OAuth 2.0 device authorization grant (RFC 8628) for
+ * `vamsa login`. Columns follow Better Auth's deviceAuthorization plugin;
+ * userAgent and createdAt are Vamsa additions shown on the /device page.
+ */
+export const deviceCodes = sqliteTable(
+  "DeviceCode",
+  {
+    id: text("id").primaryKey(),
+    deviceCode: text("deviceCode").notNull().unique(),
+    userCode: text("userCode").notNull().unique(),
+    userId: text("userId").references(() => users.id, { onDelete: "cascade" }),
+    expiresAt: integer("expiresAt", { mode: "timestamp" }).notNull(),
+    // "pending" | "approved" | "denied"
+    status: text("status").notNull(),
+    lastPolledAt: integer("lastPolledAt", { mode: "timestamp" }),
+    // Milliseconds between polls
+    pollingInterval: integer("pollingInterval"),
+    clientId: text("clientId"),
+    scope: text("scope"),
+    userAgent: text("userAgent"),
+    createdAt: integer("createdAt", { mode: "timestamp" })
+      .notNull()
+      .$defaultFn(() => new Date()),
+  },
+  (table) => [index("idx_deviceCode_userId").on(table.userId)]
+);
