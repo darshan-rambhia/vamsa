@@ -46,11 +46,8 @@ export function isDeviceClient(clientId: string): boolean {
 export function deviceVerificationUri(
   env: Record<string, string | undefined> = process.env
 ): string {
-  const base = (
-    env.APP_URL ||
-    env.BETTER_AUTH_URL ||
-    "http://localhost:3000"
-  ).replace(/\/+$/, "");
+  let base = env.APP_URL || env.BETTER_AUTH_URL || "http://localhost:3000";
+  while (base.endsWith("/")) base = base.slice(0, -1);
   return `${base}/device`;
 }
 
