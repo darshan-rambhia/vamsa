@@ -16,6 +16,7 @@ import {
   createTestUser,
   findUserById,
   eq,
+  sql,
   randomUUID,
 } from "./setup";
 
@@ -151,17 +152,26 @@ describe("Authentication Integration Tests", () => {
 
     // SQLite stores timestamps as epoch seconds (loses ms precision)
     it.skipIf(isSqlite)("maintains created/updated timestamps", async () => {
-      const before = new Date();
+      // createdAt comes from the DB's defaultNow(), so bracket it with the
+      // DB clock rather than the host clock (they can disagree by a few ms).
+      const dbNow = async (): Promise<number> => {
+        const result = await testDb.db.execute(
+          sql`SELECT clock_timestamp() AS now`
+        );
+        const rows = Array.isArray(result)
+          ? result
+          : (result as { rows: Array<{ now: string | Date }> }).rows;
+        return new Date((rows[0] as { now: string | Date }).now).getTime();
+      };
+
+      const before = await dbNow();
       const user = await createTestUser("MEMBER");
-      const after = new Date();
+      const after = await dbNow();
 
       expect(user.createdAt).toBeDefined();
-      expect(new Date(user.createdAt).getTime()).toBeGreaterThanOrEqual(
-        before.getTime()
-      );
-      expect(new Date(user.createdAt).getTime()).toBeLessThanOrEqual(
-        after.getTime()
-      );
+      const createdAt = new Date(user.createdAt).getTime();
+      expect(createdAt).toBeGreaterThanOrEqual(before);
+      expect(createdAt).toBeLessThanOrEqual(after);
     });
   });
 

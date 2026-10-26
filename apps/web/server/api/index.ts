@@ -24,6 +24,10 @@ import batchRouter from "./batch";
 const log = loggers.api;
 
 const IS_PRODUCTION = process.env.NODE_ENV === "production";
+// Deliberate: /docs and /openapi.json 404 in production unless
+// ENABLE_API_DOCS=true (see docs/content/operations/security.md). Nothing at
+// runtime depends on the spec (the CLI calls endpoints directly), so the
+// default stays closed; self-hosters opt in when building integrations.
 const ENABLE_DOCS = process.env.ENABLE_API_DOCS === "true" || !IS_PRODUCTION;
 
 /**
