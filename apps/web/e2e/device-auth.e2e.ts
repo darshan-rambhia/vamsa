@@ -6,7 +6,12 @@
  * token poll reflects the decision.
  */
 
-import { TEST_USERS, expect, test } from "./fixtures/test-base";
+import {
+  TEST_USERS,
+  expect,
+  test,
+  waitForHydration,
+} from "./fixtures/test-base";
 import { bdd } from "./fixtures/bdd-helpers";
 import type { APIRequestContext, Page } from "@playwright/test";
 
@@ -43,10 +48,18 @@ async function pollToken(request: APIRequestContext, deviceCode: string) {
 async function signInAndOpenDevice(page: Page, userCode: string) {
   await page.goto(`/device?user_code=${encodeURIComponent(userCode)}`);
   await expect(page).toHaveURL(/\/login/);
-  await page.getByTestId("login-email-input").fill(TEST_USERS.member.email);
-  await page
-    .getByTestId("login-password-input")
-    .fill(TEST_USERS.member.password);
+  // WebKit can drop input before React hydrates; wait, then verify each fill
+  await waitForHydration(page, 15000);
+  const email = page.getByTestId("login-email-input");
+  const password = page.getByTestId("login-password-input");
+  await expect(async () => {
+    await email.fill(TEST_USERS.member.email);
+    await password.fill(TEST_USERS.member.password);
+    await expect(email).toHaveValue(TEST_USERS.member.email, { timeout: 500 });
+    await expect(password).toHaveValue(TEST_USERS.member.password, {
+      timeout: 500,
+    });
+  }).toPass({ timeout: 10000 });
   await page.getByTestId("login-submit-button").click();
   await expect(page).toHaveURL(/\/device/, { timeout: 15000 });
   await expect(page.getByTestId("device-pending")).toBeVisible({
