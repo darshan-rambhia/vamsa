@@ -101,7 +101,7 @@ export async function startTelemetry(): Promise<void> {
     sdk = new NodeSDK({
       resource,
       traceExporter,
-      metricReader,
+      metricReaders: [metricReader],
       instrumentations: [
         getNodeAutoInstrumentations({
           // Disable fs instrumentation (too noisy for file-based operations)
