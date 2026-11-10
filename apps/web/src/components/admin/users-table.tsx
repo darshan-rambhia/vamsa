@@ -16,8 +16,8 @@ import {
 } from "@vamsa/ui/primitives";
 import { formatDate } from "@vamsa/lib";
 import { useTranslation } from "react-i18next";
-import { LinkPersonDialog } from "./link-person-dialog";
 import { deleteUser, toggleUserActive, updateUserRole } from "~/server/users";
+import { LinkPersonDialog } from "./link-person-dialog";
 
 interface UserItem {
   id: string;

@@ -6,9 +6,9 @@ import {
   SMALL_FAMILY,
 } from "@vamsa/lib";
 import { loggers } from "@vamsa/lib/logger";
-import type { Story } from "@ladle/react";
 import { TreeChart } from "~/components/charts/TreeChart";
 import { StoryDecorator } from "~/stories/decorators";
+import type { Story } from "@ladle/react";
 
 const log = loggers.api;
 

@@ -8,7 +8,6 @@ import React, {
 } from "react";
 import { Platform } from "react-native";
 
-import type { ServerConfig } from "@/src/lib/server-config";
 import { getAuthClient, resetAuthClient } from "@/src/lib/auth-client";
 import {
   getActiveServerUrl,
@@ -18,6 +17,7 @@ import {
   saveServers,
   setActiveServerUrl,
 } from "@/src/lib/server-config";
+import type { ServerConfig } from "@/src/lib/server-config";
 
 interface ServerConfigContextValue {
   servers: Array<ServerConfig>;

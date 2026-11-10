@@ -15,8 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui";
-import type { ChartType } from "~/components/charts/ChartControls";
-import type { BowtieNode } from "~/server/charts";
 import { getCurrentUser } from "~/server/auth.functions";
 import { listPersons } from "~/server/persons.functions";
 import {
@@ -38,6 +36,8 @@ import { PersonSelector } from "~/components/charts/PersonSelector";
 import { FloatingInfoPanel } from "~/components/charts/FloatingInfoPanel";
 import { GenerationSlider } from "~/components/charts/GenerationSlider";
 import { CompactRouteError } from "~/components/error";
+import type { BowtieNode } from "~/server/charts";
+import type { ChartType } from "~/components/charts/ChartControls";
 
 // Lazy-load chart components — each becomes its own Vite chunk
 const AncestorChart = lazy(() =>

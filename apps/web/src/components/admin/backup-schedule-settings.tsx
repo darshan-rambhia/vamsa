@@ -13,8 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui";
-import type { BackupSettings } from "@vamsa/schemas";
 import { getBackupSettings, updateBackupSettings } from "~/server/backup";
+import type { BackupSettings } from "@vamsa/schemas";
 
 const DAYS_OF_WEEK = [
   { value: 0, label: "Sunday" },

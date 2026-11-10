@@ -3,13 +3,12 @@
  * https://docs.expo.io/guides/color-schemes/
  */
 import { Text as DefaultText, View as DefaultView } from "react-native";
+import Colors from "@/constants/Colors";
 import { useColorScheme } from "./useColorScheme";
 import type {
   TextProps as DefaultTextProps,
   ViewProps as DefaultViewProps,
 } from "react-native";
-
-import Colors from "@/constants/Colors";
 
 type ThemeProps = {
   lightColor?: string;

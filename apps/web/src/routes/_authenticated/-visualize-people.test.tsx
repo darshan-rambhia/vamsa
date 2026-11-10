@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render } from "@testing-library/react";
 import { QueryClient } from "@tanstack/react-query";
+import { PersonSelector } from "~/components/charts/PersonSelector";
 import { Route } from "./visualize";
 import type * as ReactI18next from "react-i18next";
-import { PersonSelector } from "~/components/charts/PersonSelector";
 
 const { listPersons } = vi.hoisted(() => ({ listPersons: vi.fn() }));
 vi.mock("~/server/persons.functions", () => ({ listPersons }));

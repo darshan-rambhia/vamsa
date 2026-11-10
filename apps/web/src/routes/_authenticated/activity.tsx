@@ -10,13 +10,13 @@ import {
   Container,
   PageHeader,
 } from "@vamsa/ui";
-import type { ActivityFilters } from "~/components/activity/ActivityFilterPanel";
 import {
   getActivityFilterOptions,
   getRecentActivity,
 } from "~/server/dashboard";
 import { ActivityFilterPanel } from "~/components/activity/ActivityFilterPanel";
 import { CompactRouteError } from "~/components/error";
+import type { ActivityFilters } from "~/components/activity/ActivityFilterPanel";
 
 export const Route = createFileRoute("/_authenticated/activity")({
   component: ActivityComponent,

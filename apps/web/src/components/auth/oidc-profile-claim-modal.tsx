@@ -13,12 +13,12 @@ import {
   DialogTitle,
   Input,
 } from "@vamsa/ui";
-import { ProfileCard } from "./profile-card";
 import {
   claimProfileOIDC,
   getOIDCClaimableProfiles,
   skipProfileClaim,
 } from "~/server/claim.functions";
+import { ProfileCard } from "./profile-card";
 
 interface OIDCProfileClaimModalProps {
   open: boolean;

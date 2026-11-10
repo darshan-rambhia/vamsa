@@ -1,3 +1,5 @@
+import { getApiBaseUrl } from "@/src/lib/api-base-url";
+import { getAuthCookie } from "@/src/features/auth/api";
 import { PEOPLE_FIXTURE, RELATIONSHIP_FIXTURE } from "./data";
 import { filterPeople } from "./search";
 import type {
@@ -5,8 +7,6 @@ import type {
   RelationshipSummary,
   RelationshipType,
 } from "./types";
-import { getApiBaseUrl } from "@/src/lib/api-base-url";
-import { getAuthCookie } from "@/src/features/auth/api";
 
 type ApiPerson = {
   id: string;

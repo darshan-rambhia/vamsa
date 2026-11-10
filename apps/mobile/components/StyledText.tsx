@@ -1,6 +1,6 @@
+import Tokens from "@/constants/Tokens";
 import { Text } from "./Themed";
 import type { TextProps } from "./Themed";
-import Tokens from "@/constants/Tokens";
 
 export function MonoText(props: TextProps) {
   return (

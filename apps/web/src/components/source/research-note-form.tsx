@@ -14,16 +14,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui/primitives";
-import type {
-  Reliability,
-  ResearchNoteCreateInput,
-  ResearchNoteUpdateInput,
-} from "@vamsa/schemas";
 import {
   createResearchNote,
   listSources,
   updateResearchNote,
 } from "~/server/sources";
+import type {
+  Reliability,
+  ResearchNoteCreateInput,
+  ResearchNoteUpdateInput,
+} from "@vamsa/schemas";
 
 interface ResearchNoteFormProps {
   noteId?: string;

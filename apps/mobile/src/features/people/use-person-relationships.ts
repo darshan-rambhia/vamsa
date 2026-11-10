@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 
+import { useAuthState } from "@/src/features/auth/use-auth-state";
 import { listRelationshipsForPerson } from "./api";
 import type { PeopleDataSource } from "./api";
 import type { RelationshipSummary } from "./types";
-import { useAuthState } from "@/src/features/auth/use-auth-state";
 
 type UsePersonRelationshipsState = {
   relationships: Array<RelationshipSummary>;

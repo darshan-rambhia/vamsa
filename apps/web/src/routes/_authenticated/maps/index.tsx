@@ -3,11 +3,11 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Card, CardContent, Container, PageHeader } from "@vamsa/ui";
-import type { MapMarker } from "~/components/maps/interactive-map";
 import { InteractiveMap } from "~/components/maps/interactive-map";
 import { TimelineSlider } from "~/components/maps/timeline-slider";
 import { MapControls } from "~/components/maps/map-controls";
 import { getFamilyLocations, getPlacesByTimeRange } from "~/server/maps";
+import type { MapMarker } from "~/components/maps/interactive-map";
 
 export const Route = createFileRoute("/_authenticated/maps/")({
   component: MapsComponent,

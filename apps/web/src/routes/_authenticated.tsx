@@ -10,7 +10,6 @@ import { useTranslation } from "react-i18next";
 // Note: Server-only modules are dynamically imported inside checkAuthInline
 // to prevent them from leaking into the client bundle (react-dom/server, i18next-fs-backend)
 import { Button, Nav, NavLink } from "@vamsa/ui";
-import type { ErrorComponentProps } from "@tanstack/react-router";
 import { signOut } from "~/lib/auth-client";
 import { LanguageSwitcher } from "~/components/layout/language-switcher";
 import { OIDCProfileClaimModal } from "~/components/auth/oidc-profile-claim-modal";
@@ -20,6 +19,7 @@ import { CommandPalette } from "~/components/search/command-palette";
 import { CommandPaletteTrigger } from "~/components/search/command-palette-trigger";
 import { AIProvider } from "~/contexts/ai-context";
 import { AIChatPanel } from "~/components/ai/chat-panel";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 
 // Inline server function to check authentication
 // This avoids the bundler circular dependency that occurs when importing from auth.functions.ts

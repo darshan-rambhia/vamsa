@@ -1,6 +1,6 @@
-import type { Story } from "@ladle/react";
 import { ChartSkeleton } from "~/components/charts/ChartSkeleton";
 import { StoryDecorator } from "~/stories/decorators";
+import type { Story } from "@ladle/react";
 
 export default {
   title: "Charts/UI/ChartSkeleton",

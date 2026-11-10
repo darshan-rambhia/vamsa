@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui/primitives";
+import { createSource, updateSource } from "~/server/sources";
 import type {
   CitationFormat,
   Confidence,
@@ -22,7 +23,6 @@ import type {
   SourceType,
   SourceUpdateInput,
 } from "@vamsa/schemas";
-import { createSource, updateSource } from "~/server/sources";
 
 interface SourceFormProps {
   sourceId?: string;

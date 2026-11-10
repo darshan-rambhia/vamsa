@@ -10,8 +10,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@vamsa/ui/primitives";
-import type { ValidateGedcomResult } from "~/server/gedcom";
 import { importGedcom } from "~/server/gedcom";
+import type { ValidateGedcomResult } from "~/server/gedcom";
 
 interface GedcomImportPreviewProps {
   result: ValidateGedcomResult;
