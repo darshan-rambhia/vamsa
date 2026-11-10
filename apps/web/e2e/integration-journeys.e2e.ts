@@ -246,15 +246,12 @@ test.describe("Integration Journey: Create Person → Add Relationship → View 
           await typeSelect.click();
           await page.waitForTimeout(300);
 
-          const childOption = page.locator(`text="Child"`);
-          const hasChildOption = await childOption
-            .isVisible()
-            .catch(() => false);
-
-          if (hasChildOption) {
-            await childOption.click();
-            await page.waitForTimeout(300);
-          }
+          await page
+            .getByRole("option", { name: "Child", exact: true })
+            .click();
+          // An open select marks the rest of the dialog inert, and Playwright
+          // 1.65+ refuses to fill inert inputs. Wait for the popup to close.
+          await expect(page.getByRole("listbox")).toBeHidden();
         }
 
         // Search for the second person
