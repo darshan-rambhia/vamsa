@@ -4,18 +4,18 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { Circle, G, Line, Path, Svg } from "react-native-svg";
 import * as d3 from "d3";
 import { useNavigate } from "@tanstack/react-router";
-import { CircleNode } from "./ChartElements";
-import { ChartTooltip } from "./ChartTooltip";
-import { ChartSkeleton } from "./ChartSkeleton";
-import { ZoomControls } from "./ZoomControls";
-import { calculateRadialBounds, useChartViewport } from "./useChartViewport";
-import type { ChartEdge, ChartNode } from "~/server/charts";
 import {
   useChartLoadingState,
   usePerformanceMonitor,
   useVisibleEdges,
   useVisibleNodes,
 } from "~/lib/chart-performance";
+import { CircleNode } from "./ChartElements";
+import { ChartTooltip } from "./ChartTooltip";
+import { ChartSkeleton } from "./ChartSkeleton";
+import { ZoomControls } from "./ZoomControls";
+import { calculateRadialBounds, useChartViewport } from "./useChartViewport";
+import type { ChartEdge, ChartNode } from "~/server/charts";
 
 interface FanChartProps {
   nodes: Array<ChartNode>;

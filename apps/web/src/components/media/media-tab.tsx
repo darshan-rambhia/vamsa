@@ -5,10 +5,6 @@ import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@vamsa/ui/primitives";
-import { MediaUploader } from "./media-uploader";
-import { MediaGallery } from "./media-gallery";
-import { MediaViewerModal } from "./media-viewer-modal";
-import { MediaMetadataEditor } from "./media-metadata-editor";
 import {
   deleteMedia,
   getMediaObject,
@@ -17,6 +13,10 @@ import {
   updateMediaMetadata,
   uploadMedia,
 } from "~/server/media";
+import { MediaUploader } from "./media-uploader";
+import { MediaGallery } from "./media-gallery";
+import { MediaViewerModal } from "./media-viewer-modal";
+import { MediaMetadataEditor } from "./media-metadata-editor";
 
 export function MediaTab() {
   const { t } = useTranslation(["people", "common"]);

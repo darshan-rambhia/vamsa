@@ -22,8 +22,8 @@ import {
 } from "@vamsa/ui/primitives";
 import { Link } from "@tanstack/react-router";
 import { formatDate, formatDateForInput } from "@vamsa/lib";
-import { AddRelationshipButton } from "./add-relationship-button";
 import { deleteRelationship, updateRelationship } from "~/server/relationships";
+import { AddRelationshipButton } from "./add-relationship-button";
 
 interface Relationship {
   id: string;

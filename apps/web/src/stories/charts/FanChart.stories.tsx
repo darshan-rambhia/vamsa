@@ -6,9 +6,9 @@ import {
   resetIdCounter,
 } from "@vamsa/lib";
 import { loggers } from "@vamsa/lib/logger";
-import type { Story } from "@ladle/react";
 import { FanChart } from "~/components/charts/FanChart";
 import { StoryDecorator } from "~/stories/decorators";
+import type { Story } from "@ladle/react";
 
 const log = loggers.api;
 

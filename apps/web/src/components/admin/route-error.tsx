@@ -1,5 +1,5 @@
-import type { ErrorComponentProps } from "@tanstack/react-router";
 import { CompactRouteError } from "~/components/error";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 
 /**
  * Reusable error component for admin child routes.

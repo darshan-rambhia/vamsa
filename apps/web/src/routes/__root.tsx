@@ -19,8 +19,6 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
-import type { ErrorComponentProps } from "@tanstack/react-router";
-import type { QueryClient } from "@tanstack/react-query";
 import appCss from "~/styles.css?url";
 import printCss from "~/styles/print.css?url";
 import i18n from "~/i18n/config";
@@ -32,6 +30,8 @@ import {
   FALLBACK_ID,
   MODULE_FALLBACK_SCRIPT,
 } from "~/lib/module-load-fallback";
+import type { QueryClient } from "@tanstack/react-query";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 
 /**
  * Server function to get the CSP nonce for the current request

@@ -1,12 +1,12 @@
 import { useSyncExternalStore } from "react";
 
+import { getAuthClient } from "@/src/lib/auth-client";
 import {
   getAuthCookie,
   getAuthCookieSource,
   getAuthVersionSnapshot,
   subscribeAuthChange,
 } from "./api";
-import { getAuthClient } from "@/src/lib/auth-client";
 
 export function useAuthState() {
   const { data: session, isPending } = getAuthClient().useSession();

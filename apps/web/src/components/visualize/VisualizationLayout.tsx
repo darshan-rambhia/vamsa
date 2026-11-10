@@ -13,12 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui";
-import type { ReactNode } from "react";
-import type { ChartMetadata } from "~/components/charts/ChartStatsPanel";
-import type { ChartType } from "~/components/charts/ChartControls";
 import { PersonSelector } from "~/components/charts/PersonSelector";
 import { ChartStatsPanel } from "~/components/charts/ChartStatsPanel";
 import { ChartLegend } from "~/components/charts/ChartLegend";
+import type { ReactNode } from "react";
+import type { ChartMetadata } from "~/components/charts/ChartStatsPanel";
+import type { ChartType } from "~/components/charts/ChartControls";
 
 interface Person {
   id: string;

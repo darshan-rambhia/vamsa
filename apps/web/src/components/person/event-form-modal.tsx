@@ -18,8 +18,8 @@ import {
   Textarea,
 } from "@vamsa/ui/primitives";
 import { formatDateForInput } from "@vamsa/lib";
-import type { EventType } from "@vamsa/schemas";
 import { createEvent, updateEvent } from "~/server/events";
+import type { EventType } from "@vamsa/schemas";
 
 interface EventFormModalProps {
   personId: string;

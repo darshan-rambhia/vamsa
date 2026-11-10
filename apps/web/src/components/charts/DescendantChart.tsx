@@ -3,6 +3,12 @@
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { G, Svg } from "react-native-svg";
 import { useNavigate } from "@tanstack/react-router";
+import {
+  useChartLoadingState,
+  usePerformanceMonitor,
+  useVisibleEdges,
+  useVisibleNodes,
+} from "~/lib/chart-performance";
 import { ParentChildEdge, RectNode, SpouseEdge } from "./ChartElements";
 import { ChartTooltip } from "./ChartTooltip";
 import { ChartSkeleton } from "./ChartSkeleton";
@@ -13,12 +19,6 @@ import {
 } from "./useChartViewport";
 import type { Position } from "~/lib/d3-utils";
 import type { ChartEdge, ChartNode } from "~/server/charts";
-import {
-  useChartLoadingState,
-  usePerformanceMonitor,
-  useVisibleEdges,
-  useVisibleNodes,
-} from "~/lib/chart-performance";
 
 interface DescendantChartProps {
   nodes: Array<ChartNode>;

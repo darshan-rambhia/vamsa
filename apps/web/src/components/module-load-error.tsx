@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ErrorComponent } from "@tanstack/react-router";
-import type { ErrorComponentProps } from "@tanstack/react-router";
 import { isModuleLoadError, tryAutoReload } from "~/lib/module-load-recovery";
+import type { ErrorComponentProps } from "@tanstack/react-router";
 
 /** Shown when a lazy route chunk fails to load and the auto-reload was spent. */
 export function ModuleLoadError() {

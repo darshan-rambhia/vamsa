@@ -3,7 +3,6 @@ import { cluster, hierarchy, max, scaleBand, scaleLinear, tree } from "d3";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import Svg, { G, Line, Rect, Text as SvgText } from "react-native-svg";
-import type { PersonSummary } from "@/src/features/people/types";
 import { calculateBoundingBox } from "@/src/lib/chart-utils";
 
 import {
@@ -11,6 +10,7 @@ import {
   RELATIONSHIP_FIXTURE,
 } from "@/src/features/people/data";
 import { getDisplayName } from "@/src/features/people/types";
+import type { PersonSummary } from "@/src/features/people/types";
 
 type TreeDatum = {
   id: string;

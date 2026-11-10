@@ -19,12 +19,12 @@ import {
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
-import type { Theme } from "@react-navigation/native";
 import "react-native-reanimated";
 
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
 import { ServerConfigProvider } from "@/src/context/server-config-context";
+import type { Theme } from "@react-navigation/native";
 
 const CustomLightTheme: Theme = {
   ...DefaultTheme,

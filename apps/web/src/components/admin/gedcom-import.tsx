@@ -4,9 +4,9 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Button, Input, Label } from "@vamsa/ui/primitives";
+import { validateGedcom } from "~/server/gedcom";
 import { GedcomImportPreview } from "./gedcom-import-preview";
 import type { ValidateGedcomResult } from "~/server/gedcom";
-import { validateGedcom } from "~/server/gedcom";
 
 export function GedcomImport() {
   const { t } = useTranslation(["admin", "common"]);

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import type { Story } from "@ladle/react";
 import { GenerationSlider } from "~/components/charts/GenerationSlider";
 import { ThemeDecorator } from "~/stories/decorators";
+import type { Story } from "@ladle/react";
 
 export default {
   title: "Charts/UI/GenerationSlider",

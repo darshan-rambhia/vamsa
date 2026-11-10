@@ -1,5 +1,5 @@
-import type { TreeLayout } from "~/lib/tree-layout";
 import { CARD_WIDTH } from "~/lib/tree-layout";
+import type { TreeLayout } from "~/lib/tree-layout";
 
 const PAD = 40;
 const FONT = "Source Sans 3, system-ui, sans-serif";

@@ -2,6 +2,12 @@
 
 import { memo, useCallback, useEffect, useMemo } from "react";
 import { G, Line, Svg } from "react-native-svg";
+import {
+  useChartLoadingState,
+  usePerformanceMonitor,
+  useVisibleEdges,
+  useVisibleNodes,
+} from "~/lib/chart-performance";
 import { ParentChildEdge, RectNode } from "./ChartElements";
 import { ChartSkeleton } from "./ChartSkeleton";
 import { ZoomControls } from "./ZoomControls";
@@ -11,12 +17,6 @@ import {
 } from "./useChartViewport";
 import type { Position } from "~/lib/d3-utils";
 import type { ChartEdge, ChartNode } from "~/server/charts";
-import {
-  useChartLoadingState,
-  usePerformanceMonitor,
-  useVisibleEdges,
-  useVisibleNodes,
-} from "~/lib/chart-performance";
 
 interface HourglassChartProps {
   nodes: Array<ChartNode>;

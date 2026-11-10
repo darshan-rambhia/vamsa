@@ -9,9 +9,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui/primitives";
-import type { SupportedLanguage } from "~/i18n/config";
 import { setUserLanguagePreference } from "~/server/settings";
 import { SUPPORTED_LANGUAGES } from "~/i18n/config";
+import type { SupportedLanguage } from "~/i18n/config";
 
 export function LanguageSwitcher() {
   const { i18n } = useTranslation();

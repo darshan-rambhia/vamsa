@@ -4,10 +4,10 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Card, CardContent, CardHeader, CardTitle } from "@vamsa/ui";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
-import { PersonForm } from "../person/person-form";
 import { createRelationship } from "~/server/relationships";
 import { updateUser } from "~/server/users";
 import { getSession } from "~/server/auth.functions";
+import { PersonForm } from "../person/person-form";
 
 interface SetupWizardProps {
   onComplete: () => void;

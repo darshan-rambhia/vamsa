@@ -1,9 +1,9 @@
 import { createMockEdges, createMockPerson, resetIdCounter } from "@vamsa/lib";
 import { loggers } from "@vamsa/lib/logger";
-import type { Story } from "@ladle/react";
-import type { ChartEdge, ChartNode } from "~/server/charts";
 import { HourglassChart } from "~/components/charts/HourglassChart";
 import { StoryDecorator } from "~/stories/decorators";
+import type { Story } from "@ladle/react";
+import type { ChartEdge, ChartNode } from "~/server/charts";
 
 const log = loggers.api;
 

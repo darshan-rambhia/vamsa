@@ -9,8 +9,8 @@ import {
   View,
 } from "react-native";
 
-import type { ServerConfig } from "@/src/lib/server-config";
 import { useServerConfig } from "@/src/context/server-config-context";
+import type { ServerConfig } from "@/src/lib/server-config";
 
 type ProbeStatus = "idle" | "probing" | "ok" | "fail";
 

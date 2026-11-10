@@ -11,6 +11,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@vamsa/ui/primitives";
+import {
+  deleteResearchNote,
+  deleteSource,
+  getPersonSources,
+  getResearchNotes,
+  getSource,
+} from "~/server/sources";
 import { ResearchNotesList } from "../source/research-notes-list";
 import { SourceForm } from "../source/source-form";
 import { ResearchNoteForm } from "../source/research-note-form";
@@ -24,13 +31,6 @@ import type {
   Reliability,
   SourceType,
 } from "@vamsa/schemas";
-import {
-  deleteResearchNote,
-  deleteSource,
-  getPersonSources,
-  getResearchNotes,
-  getSource,
-} from "~/server/sources";
 
 interface SourcesManagementTabProps {
   personId: string;

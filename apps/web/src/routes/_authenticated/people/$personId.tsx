@@ -12,7 +12,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "@vamsa/ui/primitives";
-import type { PersonDetail } from "~/server/persons.functions";
 import { getPerson } from "~/server/persons.functions";
 import { getPersonEvents } from "~/server/events";
 import { getPersonPlaces } from "~/server/places";
@@ -25,6 +24,7 @@ import { SourcesManagementTab } from "~/components/person/sources-management-tab
 import { MediaTab } from "~/components/media/media-tab";
 import { StoryGenerator } from "~/components/ai/story-generator";
 import { CompactRouteError } from "~/components/error";
+import type { PersonDetail } from "~/server/persons.functions";
 
 export const Route = createFileRoute("/_authenticated/people/$personId")({
   loader: async ({ params, context }) => {

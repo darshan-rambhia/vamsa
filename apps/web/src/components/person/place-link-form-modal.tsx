@@ -16,9 +16,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@vamsa/ui/primitives";
+import { linkPersonToPlace, updatePlacePersonLink } from "~/server/places";
 import { PlaceSearch } from "../place/place-search";
 import type { PersonPlaceType } from "@vamsa/schemas";
-import { linkPersonToPlace, updatePlacePersonLink } from "~/server/places";
 
 interface PlaceLinkFormModalProps {
   personId: string;

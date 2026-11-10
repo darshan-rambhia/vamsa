@@ -3,6 +3,12 @@
 import { memo, useCallback, useEffect, useMemo, useState } from "react";
 import { G, Line, Path, Rect, Svg, Text } from "react-native-svg";
 import * as d3 from "d3";
+import {
+  useChartLoadingState,
+  usePerformanceMonitor,
+  useVisibleEdges,
+  useVisibleNodes,
+} from "~/lib/chart-performance";
 import { ChartSkeleton } from "./ChartSkeleton";
 import { ZoomControls } from "./ZoomControls";
 import { MiniMap } from "./MiniMap";
@@ -11,12 +17,6 @@ import {
   useChartViewport,
 } from "./useChartViewport";
 import type { BowtieNode, ChartEdge } from "~/server/charts";
-import {
-  useChartLoadingState,
-  usePerformanceMonitor,
-  useVisibleEdges,
-  useVisibleNodes,
-} from "~/lib/chart-performance";
 
 interface BowtieChartProps {
   nodes: Array<BowtieNode>;

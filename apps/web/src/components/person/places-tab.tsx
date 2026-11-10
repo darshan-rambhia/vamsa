@@ -16,9 +16,9 @@ import {
   Card,
   CardContent,
 } from "@vamsa/ui/primitives";
+import { unlinkPersonFromPlace } from "~/server/places";
 import { PlaceDetailModal } from "../place/place-detail-modal";
 import { PlaceLinkFormModal } from "./place-link-form-modal";
-import { unlinkPersonFromPlace } from "~/server/places";
 
 interface PersonPlace {
   id: string;
