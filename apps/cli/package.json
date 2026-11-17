@@ -14,7 +14,7 @@
     "build:bin": "bun scripts/build.ts"
   },
   "dependencies": {
-    "@clack/prompts": "1.8.1",
+    "@clack/prompts": "1.9.0",
     "@toon-format/toon": "4.4.0",
     "citty": "0.2.2"
   },
